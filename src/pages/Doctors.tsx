@@ -13,7 +13,7 @@ const Doctors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
-  const [doctors, setDoctors] = useState([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,19 +47,28 @@ const Doctors = () => {
       
       // Get appointment counts for each doctor
       for (const doctor of formattedDoctors) {
-        const { count: appointmentCount } = await supabase
+        // Count appointments
+        const { count: appointmentCount, error: apptError } = await supabase
           .from('appointments')
           .select('*', { count: 'exact', head: true })
           .eq('doctor_id', doctor.id);
+        
+        if (apptError) throw apptError;
           
-        const { count: patientCount } = await supabase
+        // Count unique patients
+        const { data: patientData, error: patientError } = await supabase
           .from('appointments')
-          .select('patient_id', { count: 'exact', head: true })
-          .eq('doctor_id', doctor.id)
-          .distinct('patient_id');
+          .select('patient_id')
+          .eq('doctor_id', doctor.id);
+        
+        if (patientError) throw patientError;
           
+        // Calculate unique patient count
+        const uniquePatients = new Set();
+        patientData?.forEach(app => uniquePatients.add(app.patient_id));
+        
         doctor.appointments = appointmentCount || 0;
-        doctor.patients = patientCount || 0;
+        doctor.patients = uniquePatients.size || 0;
       }
       
       setDoctors(formattedDoctors);
@@ -71,7 +80,8 @@ const Doctors = () => {
     }
   };
 
-  const getInitials = (name) => {
+  const getInitials = (name: string) => {
+    if (!name) return "";
     return name
       .split(' ')
       .map(word => word[0])
@@ -79,7 +89,7 @@ const Doctors = () => {
       .toUpperCase();
   };
 
-  const handleDoctorClick = (doctor) => {
+  const handleDoctorClick = (doctor: any) => {
     setSelectedDoctor(doctor);
     setOpenModal(true);
   };
@@ -89,7 +99,7 @@ const Doctors = () => {
     setOpenModal(true);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch(status) {
       case "Available": return "bg-green-500";
       case "Busy": return "bg-amber-500";

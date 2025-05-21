@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -19,9 +18,8 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AppointmentModalProps {
   open: boolean;
@@ -30,7 +28,6 @@ interface AppointmentModalProps {
 }
 
 export function AppointmentModal({ open, onOpenChange, appointment }: AppointmentModalProps) {
-  const { toast } = useToast();
   const isNewAppointment = !appointment;
   const [doctors, setDoctors] = useState([]);
   const [patients, setPatients] = useState([]);

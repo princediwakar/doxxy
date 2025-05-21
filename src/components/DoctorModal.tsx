@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -16,9 +15,8 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Calendar, FileText } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DoctorModalProps {
   open: boolean;
@@ -27,8 +25,6 @@ interface DoctorModalProps {
 }
 
 export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("details");
   const isNewDoctor = !doctor;
   const [patientList, setPatientList] = useState([]);
   const [todayAppointments, setTodayAppointments] = useState([]);
@@ -114,26 +110,28 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
       const uniquePatients = [];
       const patientMap = new Map();
       
-      appointments.forEach(app => {
-        if (!patientMap.has(app.patients.id)) {
-          patientMap.set(app.patients.id, {
-            id: app.patients.id,
-            name: app.patients.name,
-            lastVisit: app.date
-          });
-          uniquePatients.push({
-            id: app.patients.id,
-            name: app.patients.name,
-            lastVisit: app.date
-          });
-        }
-      });
+      if (appointments) {
+        appointments.forEach(app => {
+          if (app.patients && !patientMap.has(app.patients.id)) {
+            patientMap.set(app.patients.id, {
+              id: app.patients.id,
+              name: app.patients.name,
+              lastVisit: app.date
+            });
+            uniquePatients.push({
+              id: app.patients.id,
+              name: app.patients.name,
+              lastVisit: app.date
+            });
+          }
+        });
+      }
       
       setPatientList(uniquePatients);
       
       // Get today's appointments
       const today = new Date().toISOString().split('T')[0];
-      const todayApps = appointments.filter(app => app.date === today);
+      const todayApps = appointments ? appointments.filter(app => app.date === today) : [];
       setTodayAppointments(todayApps);
     } catch (error) {
       console.error("Error fetching doctor details:", error);

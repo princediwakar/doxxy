@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,10 +37,10 @@ const Appointments = () => {
   const [viewMode, setViewMode] = useState("list");
   const [openModal, setOpenModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [doctors, setDoctors] = useState([]);
-  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [patients, setPatients] = useState<any[]>([]);
 
   useEffect(() => {
     fetchAppointments();
@@ -66,7 +65,7 @@ const Appointments = () => {
         throw error;
       }
       
-      setAppointments(data);
+      setAppointments(data || []);
     } catch (error) {
       console.error("Error fetching appointments:", error);
       toast.error("Failed to load appointments");
@@ -85,7 +84,7 @@ const Appointments = () => {
         throw error;
       }
       
-      setDoctors(data);
+      setDoctors(data || []);
     } catch (error) {
       console.error("Error fetching doctors:", error);
     }
@@ -101,13 +100,13 @@ const Appointments = () => {
         throw error;
       }
       
-      setPatients(data);
+      setPatients(data || []);
     } catch (error) {
       console.error("Error fetching patients:", error);
     }
   };
 
-  const getDateGroupLabel = (dateString) => {
+  const getDateGroupLabel = (dateString: string) => {
     try {
       const date = parseISO(dateString);
       if (isToday(date)) return "Today";
@@ -119,12 +118,12 @@ const Appointments = () => {
     }
   };
 
-  const handleAppointmentClick = (appointment) => {
+  const handleAppointmentClick = (appointment: any) => {
     const formattedAppointment = {
       ...appointment,
-      patient: appointment.patients.name,
-      doctor: appointment.doctors.name,
-      doctorSpecialty: appointment.doctors.specialization
+      patient: appointment.patients?.name,
+      doctor: appointment.doctors?.name,
+      doctorSpecialty: appointment.doctors?.specialization
     };
     
     setSelectedAppointment(formattedAppointment);
@@ -136,7 +135,7 @@ const Appointments = () => {
     setOpenModal(true);
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch(status) {
       case "Scheduled": return "default";
       case "In Progress": return "outline";
@@ -146,7 +145,7 @@ const Appointments = () => {
     }
   };
 
-  const updateAppointmentStatus = async (id, status) => {
+  const updateAppointmentStatus = async (id: string, status: string) => {
     try {
       const { data, error } = await supabase
         .from('appointments')
@@ -165,7 +164,7 @@ const Appointments = () => {
     }
   };
 
-  const handleDeleteAppointment = async (id) => {
+  const handleDeleteAppointment = async (id: string) => {
     if (window.confirm("Are you sure you want to delete this appointment?")) {
       try {
         const { error } = await supabase
@@ -188,9 +187,9 @@ const Appointments = () => {
   // Filter appointments
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesSearch =
-      appointment.patients.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.doctors.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      appointment.type.toLowerCase().includes(searchTerm.toLowerCase());
+      (appointment.patients?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (appointment.doctors?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (appointment.type || '').toLowerCase().includes(searchTerm.toLowerCase());
       
     const matchesStatus = statusFilter === "all" || appointment.status === statusFilter;
     
@@ -198,7 +197,7 @@ const Appointments = () => {
   });
 
   // Group appointments by date for card view
-  const groupedAppointments = filteredAppointments.reduce((acc, appointment) => {
+  const groupedAppointments = filteredAppointments.reduce<{[key: string]: any[]}>((acc, appointment) => {
     const dateGroup = getDateGroupLabel(appointment.date);
     if (!acc[dateGroup]) {
       acc[dateGroup] = [];
@@ -206,6 +205,93 @@ const Appointments = () => {
     acc[dateGroup].push(appointment);
     return acc;
   }, {});
+
+  const renderAppointmentCards = () => (
+    <div className="space-y-8">
+      {Object.entries(groupedAppointments).map(([dateGroup, appointments]) => (
+        <div key={dateGroup}>
+          <div className="flex items-center mb-4">
+            <h2 className="text-lg font-semibold">{dateGroup}</h2>
+            <div className="ml-2 h-px bg-border flex-1"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {appointments.map((appointment) => (
+              <Card key={appointment.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleAppointmentClick(appointment)}>
+                <CardHeader className="pb-2">
+                  <div className="flex justify-between items-start">
+                    <CardTitle className="text-base">{appointment.patients?.name}</CardTitle>
+                    <Badge variant={getStatusColor(appointment.status)}>
+                      {appointment.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pb-3">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Time:</span>
+                      <span className="font-medium">{appointment.time}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Type:</span>
+                      <span>{appointment.type}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Doctor:</span>
+                      <span>{appointment.doctors?.name}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Department:</span>
+                      <span>{appointment.doctors?.specialization}</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-0 flex justify-between">
+                  <div className="flex space-x-1">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAppointmentClick(appointment);
+                      }}
+                    >
+                      <FileEdit className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteAppointment(appointment.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Select 
+                      value={appointment.status}
+                      onValueChange={(value) => updateAppointmentStatus(appointment.id, value)}
+                    >
+                      <SelectTrigger className="w-32 h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Scheduled">Scheduled</SelectItem>
+                        <SelectItem value="In Progress">In Progress</SelectItem>
+                        <SelectItem value="Completed">Completed</SelectItem>
+                        <SelectItem value="Cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
@@ -297,16 +383,16 @@ const Appointments = () => {
                   className="cursor-pointer"
                   onClick={() => handleAppointmentClick(appointment)}
                 >
-                  <TableCell className="font-medium">{appointment.patients.name}</TableCell>
+                  <TableCell className="font-medium">{appointment.patients?.name}</TableCell>
                   <TableCell>
                     {format(new Date(appointment.date), "MMM d, yyyy")}
                     <br />
                     <span className="text-muted-foreground text-sm">{appointment.time}</span>
                   </TableCell>
                   <TableCell>
-                    {appointment.doctors.name}
+                    {appointment.doctors?.name}
                     <br />
-                    <span className="text-muted-foreground text-sm">{appointment.doctors.specialization}</span>
+                    <span className="text-muted-foreground text-sm">{appointment.doctors?.specialization}</span>
                   </TableCell>
                   <TableCell>{appointment.type}</TableCell>
                   <TableCell>
@@ -342,89 +428,7 @@ const Appointments = () => {
           </Table>
         </Card>
       ) : (
-        <div className="space-y-8">
-          {Object.entries(groupedAppointments).map(([dateGroup, appointments]) => (
-            <div key={dateGroup}>
-              <div className="flex items-center mb-4">
-                <h2 className="text-lg font-semibold">{dateGroup}</h2>
-                <div className="ml-2 h-px bg-border flex-1"></div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {appointments.map((appointment) => (
-                  <Card key={appointment.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleAppointmentClick(appointment)}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-base">{appointment.patients.name}</CardTitle>
-                        <Badge variant={getStatusColor(appointment.status)}>
-                          {appointment.status}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="pb-3">
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Time:</span>
-                          <span className="font-medium">{appointment.time}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Type:</span>
-                          <span>{appointment.type}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Doctor:</span>
-                          <span>{appointment.doctors.name}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Department:</span>
-                          <span>{appointment.doctors.specialization}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="pt-0 flex justify-between">
-                      <div className="flex space-x-1">
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleAppointmentClick(appointment);
-                          }}
-                        >
-                          <FileEdit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="icon" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteAppointment(appointment.id);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <Select 
-                        defaultValue={appointment.status}
-                        onValueChange={(value) => updateAppointmentStatus(appointment.id, value)}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <SelectTrigger className="w-32 h-8">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Scheduled">Scheduled</SelectItem>
-                          <SelectItem value="In Progress">In Progress</SelectItem>
-                          <SelectItem value="Completed">Completed</SelectItem>
-                          <SelectItem value="Cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+        renderAppointmentCards()
       )}
 
       <AppointmentModal

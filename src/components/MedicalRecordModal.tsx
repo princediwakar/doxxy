@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -17,9 +16,8 @@ import { Separator } from "@/components/ui/separator";
 import { NeurologyForm } from "./medical-records/NeurologyForm";
 import { OphthalmologyForm } from "./medical-records/OphthalmologyForm";
 import { PrescriptionForm } from "./medical-records/PrescriptionForm";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MedicalRecordModalProps {
   open: boolean;
@@ -34,7 +32,6 @@ export function MedicalRecordModal({
   appointment, 
   existingRecord 
 }: MedicalRecordModalProps) {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(false);
   const isExistingRecord = !!existingRecord;
