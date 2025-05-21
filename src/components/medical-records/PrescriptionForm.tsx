@@ -82,11 +82,52 @@ export function PrescriptionForm({
     setNewMedicine(prev => ({ ...prev, [name]: value }));
   };
 
+  // Department-specific styling
+  const getDepartmentStyle = () => {
+    if (specialty === "Neurology") {
+      return {
+        headerBg: "bg-purple-50 border-purple-200",
+        borderColor: "border-purple-200",
+        titleColor: "text-purple-700",
+        accentColor: "bg-purple-100",
+        buttonColor: "hover:bg-purple-100",
+        gradientBg: "bg-gradient-to-r from-purple-50 to-blue-50",
+        icon: "🧠"
+      };
+    } else if (specialty === "Ophthalmology") {
+      return {
+        headerBg: "bg-teal-50 border-teal-200",
+        borderColor: "border-teal-200",
+        titleColor: "text-teal-700",
+        accentColor: "bg-teal-100",
+        buttonColor: "hover:bg-teal-100",
+        gradientBg: "bg-gradient-to-r from-teal-50 to-green-50",
+        icon: "👁️"
+      };
+    } else {
+      return {
+        headerBg: "bg-gray-50 border-gray-200",
+        borderColor: "border-gray-200",
+        titleColor: "text-gray-700",
+        accentColor: "bg-gray-100",
+        buttonColor: "hover:bg-gray-100",
+        gradientBg: "bg-gradient-to-r from-gray-50 to-gray-100",
+        icon: "📋"
+      };
+    }
+  };
+
+  const style = getDepartmentStyle();
+
   return (
     <div className="space-y-6">
-      <div className="border rounded-md p-4">
-        <div className="text-center mb-4">
-          <h2 className="text-xl font-bold mb-1">MediClinic</h2>
+      <div className={cn("border rounded-md p-4", style.borderColor, style.gradientBg)}>
+        <div className={cn("text-center mb-4 pb-3 border-b", style.borderColor)}>
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-xl">{style.icon}</span>
+            <h2 className={cn("text-xl font-bold", style.titleColor)}>MediClinic</h2>
+            <span className="text-xl">{style.icon}</span>
+          </div>
           <p className="text-sm text-muted-foreground">{specialty} Department</p>
         </div>
         
@@ -108,6 +149,57 @@ export function PrescriptionForm({
             </p>
           </div>
         </div>
+
+        {specialty === "Ophthalmology" && (
+          <div className={cn("p-3 mb-4 rounded-md", style.accentColor)}>
+            <h4 className="text-sm font-medium mb-2">Vision Prescription</h4>
+            <div className="grid grid-cols-5 gap-2 text-xs font-medium border-b pb-1 mb-1">
+              <div>Eye</div>
+              <div>SPH</div>
+              <div>CYL</div>
+              <div>AXIS</div>
+              <div>VA</div>
+            </div>
+            <div className="grid grid-cols-5 gap-2 text-xs mb-1">
+              <div>Right (OD)</div>
+              <div>—</div>
+              <div>—</div>
+              <div>—</div>
+              <div>—</div>
+            </div>
+            <div className="grid grid-cols-5 gap-2 text-xs">
+              <div>Left (OS)</div>
+              <div>—</div>
+              <div>—</div>
+              <div>—</div>
+              <div>—</div>
+            </div>
+            <div className="text-xs mt-2">
+              <span className="font-medium">Add:</span> —  
+              <span className="ml-4 font-medium">PD:</span> —
+            </div>
+          </div>
+        )}
+        
+        {specialty === "Neurology" && (
+          <div className={cn("p-3 mb-4 rounded-md", style.accentColor)}>
+            <h4 className="text-sm font-medium mb-2">Neurological Assessment</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="font-medium">Motor Function:</span> WNL
+              </div>
+              <div>
+                <span className="font-medium">Sensory Function:</span> WNL
+              </div>
+              <div>
+                <span className="font-medium">Reflexes:</span> Normal
+              </div>
+              <div>
+                <span className="font-medium">Coordination:</span> Normal
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="space-y-4 mb-6">
           <div>
@@ -116,7 +208,7 @@ export function PrescriptionForm({
             {data.medicines.length > 0 ? (
               <div className="space-y-2 mb-4">
                 {data.medicines.map((medicine: Medicine, index: number) => (
-                  <div key={index} className="flex items-center space-x-2 p-2 border rounded-md">
+                  <div key={index} className={cn("flex items-center space-x-2 p-2 border rounded-md", style.borderColor)}>
                     <div className="flex-1 space-y-1">
                       <p className="font-medium">{medicine.name}</p>
                       <div className="text-sm text-muted-foreground">
@@ -139,7 +231,7 @@ export function PrescriptionForm({
               <p className="text-sm text-muted-foreground italic mb-4">No medications added yet</p>
             )}
             
-            <div className="border rounded-md p-3">
+            <div className={cn("border rounded-md p-3", style.borderColor)}>
               <h4 className="text-sm font-medium mb-2">Add New Medication</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
                 <Input
@@ -171,7 +263,7 @@ export function PrescriptionForm({
                 type="button" 
                 variant="outline"
                 size="sm"
-                className="w-full"
+                className={cn("w-full", style.buttonColor)}
                 onClick={handleAddMedicine}
                 disabled={!newMedicine.name || !newMedicine.dosage}
               >
@@ -190,8 +282,13 @@ export function PrescriptionForm({
               name="instructions"
               value={data.instructions}
               onChange={handleInputChange}
-              className="w-full h-24 px-3 py-2 border rounded-md"
-              placeholder="Special instructions for the patient..."
+              className={cn("w-full h-24 px-3 py-2 border rounded-md", style.borderColor)}
+              placeholder={specialty === "Ophthalmology" 
+                ? "Special instructions for eye care..."
+                : specialty === "Neurology"
+                ? "Follow-up instructions for neurological care..."
+                : "Special instructions for the patient..."
+              }
             />
           </div>
           
@@ -203,7 +300,8 @@ export function PrescriptionForm({
                   variant="outline"
                   className={cn(
                     "w-full justify-start text-left",
-                    !data.follow_up_date && "text-muted-foreground"
+                    !data.follow_up_date && "text-muted-foreground",
+                    style.buttonColor
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
@@ -217,10 +315,21 @@ export function PrescriptionForm({
                   onSelect={handleDateChange}
                   initialFocus
                   disabled={(date) => date < new Date()}
+                  className="pointer-events-auto"
                 />
               </PopoverContent>
             </Popover>
           </div>
+        </div>
+
+        <div className="mt-6 pt-4 border-t text-center text-xs text-muted-foreground">
+          {specialty === "Neurology" ? (
+            <p>This prescription is issued by the Neurology Department of MediClinic. For emergencies, call: (123) 456-7890</p>
+          ) : specialty === "Ophthalmology" ? (
+            <p>This prescription is issued by the Ophthalmology Department of MediClinic. For vision emergencies, call: (123) 456-7890</p>
+          ) : (
+            <p>This prescription is issued by MediClinic. For emergencies, call: (123) 456-7890</p>
+          )}
         </div>
       </div>
     </div>

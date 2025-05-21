@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,7 @@ const Appointments = () => {
       case "In Progress":
         return "secondary";
       case "Completed":
-        return "success";
+        return "secondary"; // Changed from "success" to "secondary"
       case "Cancelled":
         return "destructive";
       default:
@@ -235,6 +236,7 @@ const Appointments = () => {
                 setSelectedDate(date);
               }}
               initialFocus
+              className="pointer-events-auto"
             />
           </PopoverContent>
         </Popover>
