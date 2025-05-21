@@ -41,7 +41,9 @@ export function MedicalRecordModal({
   const [generalData, setGeneralData] = useState({
     chief_complaint: "",
     diagnosis: "",
-    notes: ""
+    notes: "",
+    symptoms: "",
+    treatment_plan: ""
   });
   
   const [neurologyData, setNeurologyData] = useState({
@@ -77,7 +79,9 @@ export function MedicalRecordModal({
       setGeneralData({
         chief_complaint: existingRecord.chief_complaint || "",
         diagnosis: existingRecord.diagnosis || "",
-        notes: existingRecord.notes || ""
+        notes: existingRecord.notes || "",
+        symptoms: existingRecord.symptoms || "",
+        treatment_plan: existingRecord.treatment_plan || ""
       });
       
       // If record type specific data exists, load it
@@ -118,7 +122,9 @@ export function MedicalRecordModal({
       setGeneralData({
         chief_complaint: "",
         diagnosis: "",
-        notes: ""
+        notes: "",
+        symptoms: "",
+        treatment_plan: ""
       });
       
       setNeurologyData({
@@ -174,7 +180,9 @@ export function MedicalRecordModal({
             record_type: recordType,
             chief_complaint: generalData.chief_complaint,
             diagnosis: generalData.diagnosis,
-            notes: generalData.notes
+            notes: generalData.notes,
+            symptoms: generalData.symptoms,
+            treatment_plan: generalData.treatment_plan
           })
           .select()
           .single();
@@ -188,7 +196,9 @@ export function MedicalRecordModal({
           .update({
             chief_complaint: generalData.chief_complaint,
             diagnosis: generalData.diagnosis,
-            notes: generalData.notes
+            notes: generalData.notes,
+            symptoms: generalData.symptoms,
+            treatment_plan: generalData.treatment_plan
           })
           .eq('id', medicalRecordId)
           .select()
@@ -350,6 +360,18 @@ export function MedicalRecordModal({
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="symptoms">Symptoms</Label>
+                <textarea
+                  id="symptoms"
+                  name="symptoms"
+                  value={generalData.symptoms}
+                  onChange={handleGeneralChange}
+                  className="w-full h-24 px-3 py-2 border rounded-md"
+                  placeholder="Detailed description of symptoms"
+                />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="diagnosis">Diagnosis</Label>
                 <Input
                   id="diagnosis"
@@ -361,13 +383,25 @@ export function MedicalRecordModal({
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="treatment_plan">Treatment Plan</Label>
+                <textarea
+                  id="treatment_plan"
+                  name="treatment_plan"
+                  value={generalData.treatment_plan}
+                  onChange={handleGeneralChange}
+                  className="w-full h-24 px-3 py-2 border rounded-md"
+                  placeholder="Treatment plan and recommendations"
+                />
+              </div>
+              
+              <div className="space-y-2">
                 <Label htmlFor="notes">Clinical Notes</Label>
                 <textarea
                   id="notes"
                   name="notes"
                   value={generalData.notes}
                   onChange={handleGeneralChange}
-                  className="w-full h-32 px-3 py-2 border rounded-md"
+                  className="w-full h-24 px-3 py-2 border rounded-md"
                   placeholder="Additional observations and clinical notes"
                 />
               </div>
