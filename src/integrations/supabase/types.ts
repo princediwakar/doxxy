@@ -9,7 +9,342 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          created_at: string
+          date: string
+          doctor_id: string
+          id: string
+          notes: string | null
+          patient_id: string
+          status: string
+          time: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          doctor_id: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          status?: string
+          time: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          doctor_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          status?: string
+          time?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          specialization: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          specialization: string
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          specialization?: string
+        }
+        Relationships: []
+      }
+      medical_records: {
+        Row: {
+          appointment_id: string
+          chief_complaint: string | null
+          created_at: string
+          diagnosis: string | null
+          doctor_id: string
+          id: string
+          notes: string | null
+          patient_id: string
+          record_type: string
+        }
+        Insert: {
+          appointment_id: string
+          chief_complaint?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          record_type: string
+        }
+        Update: {
+          appointment_id?: string
+          chief_complaint?: string | null
+          created_at?: string
+          diagnosis?: string | null
+          doctor_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          record_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_records_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_records_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_records_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      neurology_records: {
+        Row: {
+          cognitive_assessment: string | null
+          coordination: string | null
+          created_at: string
+          id: string
+          medical_record_id: string
+          motor_function: string | null
+          neurological_exam: string | null
+          reflexes: string | null
+          scan_results: string | null
+          sensory_function: string | null
+        }
+        Insert: {
+          cognitive_assessment?: string | null
+          coordination?: string | null
+          created_at?: string
+          id?: string
+          medical_record_id: string
+          motor_function?: string | null
+          neurological_exam?: string | null
+          reflexes?: string | null
+          scan_results?: string | null
+          sensory_function?: string | null
+        }
+        Update: {
+          cognitive_assessment?: string | null
+          coordination?: string | null
+          created_at?: string
+          id?: string
+          medical_record_id?: string
+          motor_function?: string | null
+          neurological_exam?: string | null
+          reflexes?: string | null
+          scan_results?: string | null
+          sensory_function?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neurology_records_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ophthalmology_records: {
+        Row: {
+          color_vision: string | null
+          created_at: string
+          eye_examination: string | null
+          fundoscopy: string | null
+          id: string
+          intraocular_pressure_left: string | null
+          intraocular_pressure_right: string | null
+          medical_record_id: string
+          peripheral_vision: string | null
+          visual_acuity_left: string | null
+          visual_acuity_right: string | null
+        }
+        Insert: {
+          color_vision?: string | null
+          created_at?: string
+          eye_examination?: string | null
+          fundoscopy?: string | null
+          id?: string
+          intraocular_pressure_left?: string | null
+          intraocular_pressure_right?: string | null
+          medical_record_id: string
+          peripheral_vision?: string | null
+          visual_acuity_left?: string | null
+          visual_acuity_right?: string | null
+        }
+        Update: {
+          color_vision?: string | null
+          created_at?: string
+          eye_examination?: string | null
+          fundoscopy?: string | null
+          id?: string
+          intraocular_pressure_left?: string | null
+          intraocular_pressure_right?: string | null
+          medical_record_id?: string
+          peripheral_vision?: string | null
+          visual_acuity_left?: string | null
+          visual_acuity_right?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ophthalmology_records_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          address: string | null
+          age: number | null
+          allergies: string | null
+          blood_type: string | null
+          created_at: string
+          email: string | null
+          gender: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string
+        }
+        Insert: {
+          address?: string | null
+          age?: number | null
+          allergies?: string | null
+          blood_type?: string | null
+          created_at?: string
+          email?: string | null
+          gender?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone: string
+        }
+        Update: {
+          address?: string | null
+          age?: number | null
+          allergies?: string | null
+          blood_type?: string | null
+          created_at?: string
+          email?: string | null
+          gender?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string
+        }
+        Relationships: []
+      }
+      prescriptions: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          follow_up_date: string | null
+          id: string
+          instructions: string | null
+          medical_record_id: string
+          medicines: Json
+          patient_id: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          follow_up_date?: string | null
+          id?: string
+          instructions?: string | null
+          medical_record_id: string
+          medicines?: Json
+          patient_id: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          follow_up_date?: string | null
+          id?: string
+          instructions?: string | null
+          medical_record_id?: string
+          medicines?: Json
+          patient_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

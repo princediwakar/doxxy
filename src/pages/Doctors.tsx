@@ -1,92 +1,85 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Search, Plus, Calendar } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { DoctorModal } from "@/components/DoctorModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-// Mock doctor data
-const doctorData = [
-  { 
-    id: 1, 
-    name: "Dr. Michael Chen", 
-    specialty: "General Practitioner", 
-    patients: 342, 
-    appointments: 18, 
-    availability: "Available",
-    image: null,
-    initials: "MC" 
-  },
-  { 
-    id: 2, 
-    name: "Dr. Emily Parker", 
-    specialty: "Pediatrician", 
-    patients: 286, 
-    appointments: 15, 
-    availability: "Available",
-    image: null, 
-    initials: "EP" 
-  },
-  { 
-    id: 3, 
-    name: "Dr. James Wilson", 
-    specialty: "Cardiologist", 
-    patients: 210, 
-    appointments: 12, 
-    availability: "Busy",
-    image: null,
-    initials: "JW" 
-  },
-  { 
-    id: 4, 
-    name: "Dr. Sarah Adams", 
-    specialty: "Dermatologist", 
-    patients: 178, 
-    appointments: 10, 
-    availability: "Available",
-    image: null,
-    initials: "SA" 
-  },
-  { 
-    id: 5, 
-    name: "Dr. Robert Johnson", 
-    specialty: "Orthopedic Surgeon", 
-    patients: 195, 
-    appointments: 8, 
-    availability: "Away",
-    image: null,
-    initials: "RJ" 
-  },
-  { 
-    id: 6, 
-    name: "Dr. Lisa Thompson", 
-    specialty: "Neurologist", 
-    patients: 165, 
-    appointments: 9, 
-    availability: "Available",
-    image: null,
-    initials: "LT" 
-  },
-];
+import { DoctorModal } from "@/components/DoctorModal";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Doctors = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter doctors based on search term
-  const filteredDoctors = doctorData.filter((doctor) =>
-    doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
 
-  const handleDoctorClick = (doctor: any) => {
+  const fetchDoctors = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Process doctors data for display
+      const formattedDoctors = data.map(doctor => ({
+        id: doctor.id,
+        name: doctor.name,
+        specialty: doctor.specialization,
+        email: doctor.email,
+        phone: doctor.phone,
+        availability: "Available", // We'll add this to the database later
+        image: doctor.avatar_url,
+        initials: getInitials(doctor.name),
+        patients: 0, // We'll calculate this in a follow-up query
+        appointments: 0 // We'll calculate this in a follow-up query
+      }));
+      
+      // Get appointment counts for each doctor
+      for (const doctor of formattedDoctors) {
+        const { count: appointmentCount } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctor.id);
+          
+        const { count: patientCount } = await supabase
+          .from('appointments')
+          .select('patient_id', { count: 'exact', head: true })
+          .eq('doctor_id', doctor.id)
+          .distinct('patient_id');
+          
+        doctor.appointments = appointmentCount || 0;
+        doctor.patients = patientCount || 0;
+      }
+      
+      setDoctors(formattedDoctors);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      toast.error("Failed to load doctors");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase();
+  };
+
+  const handleDoctorClick = (doctor) => {
     setSelectedDoctor(doctor);
     setOpenModal(true);
   };
@@ -96,7 +89,7 @@ const Doctors = () => {
     setOpenModal(true);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status) => {
     switch(status) {
       case "Available": return "bg-green-500";
       case "Busy": return "bg-amber-500";
@@ -104,6 +97,12 @@ const Doctors = () => {
       default: return "bg-gray-500";
     }
   };
+
+  // Filter doctors based on search term
+  const filteredDoctors = doctors.filter((doctor) =>
+    doctor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    doctor.specialty.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -131,54 +130,68 @@ const Doctors = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredDoctors.map((doctor) => (
-          <Card 
-            key={doctor.id} 
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => handleDoctorClick(doctor)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center">
-                  <Avatar className="h-12 w-12 mr-4">
-                    <AvatarImage src={doctor.image || undefined} />
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {doctor.initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-medium">{doctor.name}</h3>
-                    <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6 h-48"></CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : filteredDoctors.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-muted-foreground">No doctors found. Try a different search term or add a new doctor.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredDoctors.map((doctor) => (
+            <Card 
+              key={doctor.id} 
+              className="cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleDoctorClick(doctor)}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center">
+                    <Avatar className="h-12 w-12 mr-4">
+                      <AvatarImage src={doctor.image || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {doctor.initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-medium">{doctor.name}</h3>
+                      <p className="text-sm text-muted-foreground">{doctor.specialty}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center">
+                    <div className={`w-2 h-2 rounded-full ${getStatusColor(doctor.availability)} mr-1`}></div>
+                    <span className="text-xs font-medium">{doctor.availability}</span>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <div className={`w-2 h-2 rounded-full ${getStatusColor(doctor.availability)} mr-1`}></div>
-                  <span className="text-xs font-medium">{doctor.availability}</span>
-                </div>
-              </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-2">
-                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-                  <span className="text-lg font-semibold">{doctor.patients}</span>
-                  <span className="text-xs text-muted-foreground">Patients</span>
+                <div className="mt-6 grid grid-cols-2 gap-2">
+                  <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+                    <span className="text-lg font-semibold">{doctor.patients}</span>
+                    <span className="text-xs text-muted-foreground">Patients</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
+                    <span className="text-lg font-semibold">{doctor.appointments}</span>
+                    <span className="text-xs text-muted-foreground">Today</span>
+                  </div>
                 </div>
-                <div className="flex flex-col items-center p-3 bg-muted/50 rounded-lg">
-                  <span className="text-lg font-semibold">{doctor.appointments}</span>
-                  <span className="text-xs text-muted-foreground">Today</span>
-                </div>
-              </div>
 
-              <div className="mt-4 flex justify-center">
-                <Button variant="outline" size="sm" className="w-full">
-                  <Calendar size={16} className="mr-2" />
-                  View Schedule
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <div className="mt-4 flex justify-center">
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Calendar size={16} className="mr-2" />
+                    View Schedule
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <DoctorModal
         open={openModal}

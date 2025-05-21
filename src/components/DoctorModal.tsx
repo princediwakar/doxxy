@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -17,6 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Calendar, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface DoctorModalProps {
   open: boolean;
@@ -28,14 +30,17 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("details");
   const isNewDoctor = !doctor;
+  const [patientList, setPatientList] = useState([]);
+  const [todayAppointments, setTodayAppointments] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Form fields
   const [formData, setFormData] = useState({
-    name: doctor?.name || "",
-    specialty: doctor?.specialty || "",
+    name: "",
+    specialty: "",
     email: "",
     phone: "",
-    availability: doctor?.availability || "Available",
+    availability: "Available",
     bio: "",
     workDays: [],
     workHours: {
@@ -43,6 +48,100 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
       end: "17:00"
     }
   });
+
+  useEffect(() => {
+    if (open && doctor) {
+      setFormData({
+        name: doctor.name || "",
+        specialty: doctor.specialty || "",
+        email: doctor.email || "",
+        phone: doctor.phone || "",
+        availability: doctor.availability || "Available",
+        bio: doctor.bio || "",
+        workDays: doctor.workDays || [],
+        workHours: {
+          start: doctor.workHours?.start || "09:00",
+          end: doctor.workHours?.end || "17:00"
+        }
+      });
+
+      fetchDoctorDetails(doctor.id);
+    } else if (open && !doctor) {
+      // Reset form for new doctor
+      setFormData({
+        name: "",
+        specialty: "",
+        email: "",
+        phone: "",
+        availability: "Available",
+        bio: "",
+        workDays: [],
+        workHours: {
+          start: "09:00",
+          end: "17:00"
+        }
+      });
+      setPatientList([]);
+      setTodayAppointments([]);
+    }
+  }, [open, doctor]);
+
+  const fetchDoctorDetails = async (doctorId) => {
+    setLoading(true);
+    try {
+      // Fetch doctor's patients
+      const { data: appointments, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select(`
+          id,
+          date,
+          time,
+          type,
+          status,
+          patients (
+            id,
+            name,
+            email,
+            phone
+          )
+        `)
+        .eq('doctor_id', doctorId)
+        .order('date', { ascending: false });
+
+      if (appointmentsError) throw appointmentsError;
+      
+      // Get unique patients
+      const uniquePatients = [];
+      const patientMap = new Map();
+      
+      appointments.forEach(app => {
+        if (!patientMap.has(app.patients.id)) {
+          patientMap.set(app.patients.id, {
+            id: app.patients.id,
+            name: app.patients.name,
+            lastVisit: app.date
+          });
+          uniquePatients.push({
+            id: app.patients.id,
+            name: app.patients.name,
+            lastVisit: app.date
+          });
+        }
+      });
+      
+      setPatientList(uniquePatients);
+      
+      // Get today's appointments
+      const today = new Date().toISOString().split('T')[0];
+      const todayApps = appointments.filter(app => app.date === today);
+      setTodayAppointments(todayApps);
+    } catch (error) {
+      console.error("Error fetching doctor details:", error);
+      toast.error("Failed to load doctor details");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -53,13 +152,54 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = () => {
-    // Here you would typically save the data to your backend
-    toast({
-      title: isNewDoctor ? "Doctor profile created" : "Doctor profile updated",
-      description: `${formData.name} has been ${isNewDoctor ? 'added to' : 'updated in'} your doctors list.`,
-    });
-    onOpenChange(false);
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const doctorData = {
+        name: formData.name,
+        specialization: formData.specialty,
+        email: formData.email,
+        phone: formData.phone,
+        bio: formData.bio
+      };
+
+      if (isNewDoctor) {
+        // Insert new doctor
+        const { data, error } = await supabase
+          .from('doctors')
+          .insert(doctorData)
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        toast.success("Doctor profile created", {
+          description: `${formData.name} has been added to your doctors list.`,
+        });
+      } else {
+        // Update existing doctor
+        const { data, error } = await supabase
+          .from('doctors')
+          .update(doctorData)
+          .eq('id', doctor.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        toast.success("Doctor profile updated", {
+          description: `${formData.name} has been updated in your doctors list.`,
+        });
+      }
+      
+      window.location.reload(); // Refresh the page to show the changes
+    } catch (error) {
+      console.error("Error saving doctor:", error);
+      toast.error(isNewDoctor ? "Failed to create doctor profile" : "Failed to update doctor profile");
+    } finally {
+      setLoading(false);
+      onOpenChange(false);
+    }
   };
   
   // For displaying initials when no image is available
@@ -137,12 +277,8 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
                     <SelectValue placeholder="Select specialty" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="General Practitioner">General Practitioner</SelectItem>
-                    <SelectItem value="Pediatrician">Pediatrician</SelectItem>
-                    <SelectItem value="Cardiologist">Cardiologist</SelectItem>
-                    <SelectItem value="Dermatologist">Dermatologist</SelectItem>
-                    <SelectItem value="Orthopedic Surgeon">Orthopedic Surgeon</SelectItem>
-                    <SelectItem value="Neurologist">Neurologist</SelectItem>
+                    <SelectItem value="Neurology">Neurology</SelectItem>
+                    <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -259,29 +395,23 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
                 
                 <div>
                   <h4 className="font-medium mb-2">Today's Schedule</h4>
-                  <div className="space-y-2">
-                    <div className="p-3 border rounded-md flex justify-between">
-                      <div>
-                        <p className="font-medium">Sarah Johnson</p>
-                        <p className="text-sm text-muted-foreground">General Checkup</p>
-                      </div>
-                      <p className="text-sm font-medium">10:00 AM</p>
+                  {loading ? (
+                    <p className="text-sm text-muted-foreground">Loading schedule...</p>
+                  ) : todayAppointments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No appointments scheduled for today.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {todayAppointments.map(appointment => (
+                        <div key={appointment.id} className="p-3 border rounded-md flex justify-between">
+                          <div>
+                            <p className="font-medium">{appointment.patients.name}</p>
+                            <p className="text-sm text-muted-foreground">{appointment.type}</p>
+                          </div>
+                          <p className="text-sm font-medium">{appointment.time}</p>
+                        </div>
+                      ))}
                     </div>
-                    <div className="p-3 border rounded-md flex justify-between">
-                      <div>
-                        <p className="font-medium">Robert Williams</p>
-                        <p className="text-sm text-muted-foreground">Follow-up</p>
-                      </div>
-                      <p className="text-sm font-medium">11:30 AM</p>
-                    </div>
-                    <div className="p-3 border rounded-md flex justify-between">
-                      <div>
-                        <p className="font-medium">Emma Davis</p>
-                        <p className="text-sm text-muted-foreground">Consultation</p>
-                      </div>
-                      <p className="text-sm font-medium">2:15 PM</p>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </>
             )}
@@ -292,47 +422,33 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h4 className="font-medium">Patient List</h4>
-                  <span className="text-sm text-muted-foreground">Total: {doctor?.patients || 0} patients</span>
+                  <span className="text-sm text-muted-foreground">Total: {patientList.length} patients</span>
                 </div>
                 <Separator />
-                <div className="space-y-2">
-                  <div className="p-3 border rounded-md flex justify-between items-center">
-                    <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">SJ</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">Sarah Johnson</p>
-                        <p className="text-xs text-muted-foreground">Last visit: May 10, 2023</p>
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Loading patients...</p>
+                ) : patientList.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No patients assigned to this doctor yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {patientList.map(patient => (
+                      <div key={patient.id} className="p-3 border rounded-md flex justify-between items-center">
+                        <div className="flex items-center">
+                          <Avatar className="h-8 w-8 mr-2">
+                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                              {getInitials(patient.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium">{patient.name}</p>
+                            <p className="text-xs text-muted-foreground">Last visit: {new Date(patient.lastVisit).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm">View</Button>
                       </div>
-                    </div>
-                    <Button variant="outline" size="sm">View</Button>
+                    ))}
                   </div>
-                  <div className="p-3 border rounded-md flex justify-between items-center">
-                    <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">RW</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">Robert Williams</p>
-                        <p className="text-xs text-muted-foreground">Last visit: Apr 22, 2023</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm">View</Button>
-                  </div>
-                  <div className="p-3 border rounded-md flex justify-between items-center">
-                    <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarFallback className="bg-primary/10 text-primary text-xs">ED</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">Emma Davis</p>
-                        <p className="text-xs text-muted-foreground">Last visit: Mar 15, 2023</p>
-                      </div>
-                    </div>
-                    <Button variant="outline" size="sm">View</Button>
-                  </div>
-                </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">Save doctor profile first to assign patients.</p>
@@ -341,8 +457,10 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
         </Tabs>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit}>{isNewDoctor ? "Create Profile" : "Update Profile"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? "Saving..." : isNewDoctor ? "Create Profile" : "Update Profile"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

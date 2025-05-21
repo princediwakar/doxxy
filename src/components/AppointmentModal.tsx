@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Dialog, 
   DialogContent, 
@@ -20,6 +20,8 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AppointmentModalProps {
   open: boolean;
@@ -30,21 +32,80 @@ interface AppointmentModalProps {
 export function AppointmentModal({ open, onOpenChange, appointment }: AppointmentModalProps) {
   const { toast } = useToast();
   const isNewAppointment = !appointment;
+  const [doctors, setDoctors] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Form fields
   const [formData, setFormData] = useState({
-    patient: appointment?.patient || "",
-    doctor: appointment?.doctor || "",
-    date: appointment?.date ? new Date(appointment.date) : new Date(),
-    time: appointment?.time || "10:00 AM",
-    type: appointment?.type || "Check-up",
-    status: appointment?.status || "Scheduled",
+    patient_id: "",
+    doctor_id: "",
+    date: new Date(),
+    time: "10:00 AM",
+    type: "Check-up",
+    status: "Scheduled",
     notes: ""
   });
 
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
-    appointment?.date ? new Date(appointment.date) : new Date()
-  );
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  useEffect(() => {
+    if (open) {
+      fetchDoctors();
+      fetchPatients();
+      
+      if (appointment) {
+        setFormData({
+          patient_id: appointment.patient_id,
+          doctor_id: appointment.doctor_id,
+          date: new Date(appointment.date),
+          time: appointment.time,
+          type: appointment.type,
+          status: appointment.status,
+          notes: appointment.notes || ""
+        });
+        setSelectedDate(new Date(appointment.date));
+      } else {
+        // Reset form for new appointment
+        setFormData({
+          patient_id: "",
+          doctor_id: "",
+          date: new Date(),
+          time: "10:00 AM",
+          type: "Check-up",
+          status: "Scheduled",
+          notes: ""
+        });
+        setSelectedDate(new Date());
+      }
+    }
+  }, [open, appointment]);
+
+  const fetchDoctors = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id, name, specialization');
+      
+      if (error) throw error;
+      setDoctors(data || []);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
+  };
+
+  const fetchPatients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('patients')
+        .select('id, name');
+      
+      if (error) throw error;
+      setPatients(data || []);
+    } catch (error) {
+      console.error("Error fetching patients:", error);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -62,13 +123,59 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
     }
   };
 
-  const handleSubmit = () => {
-    // Here you would typically save the data to your backend
-    toast({
-      title: isNewAppointment ? "Appointment scheduled" : "Appointment updated",
-      description: `Appointment for ${formData.patient} on ${format(formData.date, 'PP')} at ${formData.time} has been ${isNewAppointment ? 'scheduled' : 'updated'}.`,
-    });
-    onOpenChange(false);
+  const handleSubmit = async () => {
+    if (!formData.patient_id || !formData.doctor_id) {
+      toast.error("Please select both a patient and a doctor");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const appointmentData = {
+        patient_id: formData.patient_id,
+        doctor_id: formData.doctor_id,
+        date: format(formData.date, 'yyyy-MM-dd'),
+        time: formData.time,
+        type: formData.type,
+        status: formData.status,
+        notes: formData.notes
+      };
+      
+      if (isNewAppointment) {
+        // Create new appointment
+        const { data, error } = await supabase
+          .from('appointments')
+          .insert(appointmentData)
+          .select();
+          
+        if (error) throw error;
+        
+        toast.success("Appointment scheduled", {
+          description: `Appointment on ${format(formData.date, 'PP')} at ${formData.time} has been scheduled.`,
+        });
+      } else {
+        // Update existing appointment
+        const { data, error } = await supabase
+          .from('appointments')
+          .update(appointmentData)
+          .eq('id', appointment.id)
+          .select();
+          
+        if (error) throw error;
+        
+        toast.success("Appointment updated", {
+          description: `Appointment on ${format(formData.date, 'PP')} at ${formData.time} has been updated.`,
+        });
+      }
+      
+      window.location.reload(); // Refresh to see the changes
+    } catch (error) {
+      console.error("Error saving appointment:", error);
+      toast.error(isNewAppointment ? "Failed to schedule appointment" : "Failed to update appointment");
+    } finally {
+      setLoading(false);
+      onOpenChange(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -81,6 +188,17 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
     }
   };
 
+  // Find selected patient and doctor names for display
+  const getPatientName = (id: string) => {
+    const patient = patients.find(p => p.id === id);
+    return patient ? patient.name : "Select patient";
+  };
+  
+  const getDoctorName = (id: string) => {
+    const doctor = doctors.find(d => d.id === id);
+    return doctor ? doctor.name : "Select doctor";
+  };
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -105,50 +223,42 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="patient">Patient</Label>
-            {isNewAppointment ? (
-              <Select 
-                value={formData.patient} 
-                onValueChange={(value) => handleSelectChange("patient", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Sarah Johnson">Sarah Johnson</SelectItem>
-                  <SelectItem value="Robert Williams">Robert Williams</SelectItem>
-                  <SelectItem value="Emma Davis">Emma Davis</SelectItem>
-                  <SelectItem value="Thomas Brown">Thomas Brown</SelectItem>
-                  <SelectItem value="Lisa Wilson">Lisa Wilson</SelectItem>
-                  <SelectItem value="Kevin Miller">Kevin Miller</SelectItem>
-                </SelectContent>
-              </Select>
-            ) : (
-              <Input 
-                id="patient" 
-                name="patient"
-                value={formData.patient} 
-                onChange={handleChange} 
-                disabled={!isNewAppointment}
-              />
-            )}
+            <Select 
+              value={formData.patient_id} 
+              onValueChange={(value) => handleSelectChange("patient_id", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select patient">
+                  {formData.patient_id ? getPatientName(formData.patient_id) : "Select patient"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {patients.map(patient => (
+                  <SelectItem key={patient.id} value={patient.id}>
+                    {patient.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="doctor">Doctor</Label>
             <Select 
-              value={formData.doctor} 
-              onValueChange={(value) => handleSelectChange("doctor", value)}
+              value={formData.doctor_id} 
+              onValueChange={(value) => handleSelectChange("doctor_id", value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select doctor" />
+                <SelectValue placeholder="Select doctor">
+                  {formData.doctor_id ? getDoctorName(formData.doctor_id) : "Select doctor"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Dr. Michael Chen">Dr. Michael Chen</SelectItem>
-                <SelectItem value="Dr. Emily Parker">Dr. Emily Parker</SelectItem>
-                <SelectItem value="Dr. James Wilson">Dr. James Wilson</SelectItem>
-                <SelectItem value="Dr. Sarah Adams">Dr. Sarah Adams</SelectItem>
-                <SelectItem value="Dr. Robert Johnson">Dr. Robert Johnson</SelectItem>
-                <SelectItem value="Dr. Lisa Thompson">Dr. Lisa Thompson</SelectItem>
+                {doctors.map(doctor => (
+                  <SelectItem key={doctor.id} value={doctor.id}>
+                    {doctor.name} - {doctor.specialization}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -174,7 +284,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
                   selected={selectedDate}
                   onSelect={handleDateChange}
                   initialFocus
-                  disabled={(date) => date < new Date()}
+                  disabled={(date) => date < new Date() && !isToday(date)}
                 />
               </PopoverContent>
             </Popover>
@@ -263,10 +373,20 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         </div>
 
         <DialogFooter className="mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSubmit}>{isNewAppointment ? "Schedule" : "Update"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? "Saving..." : isNewAppointment ? "Schedule" : "Update"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+function isToday(date: Date) {
+  const today = new Date();
+  return date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear();
+}
+
