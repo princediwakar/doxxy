@@ -29,6 +29,7 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
   const [patientList, setPatientList] = useState([]);
   const [todayAppointments, setTodayAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
 
   // Form fields
   const [formData, setFormData] = useState({
