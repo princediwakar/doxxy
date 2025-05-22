@@ -1,6 +1,7 @@
 
 import { AppointmentCard } from "./AppointmentCard";
 import { EmptyState } from "./EmptyState";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AppointmentListProps {
   appointments: any[];
@@ -18,7 +19,15 @@ export function AppointmentList({
   onStartConsultation 
 }: AppointmentListProps) {
   if (loading) {
-    return <div className="text-center py-10">Loading appointments...</div>;
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="space-y-2">
+            <Skeleton className="h-24 w-full" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (appointments.length === 0) {

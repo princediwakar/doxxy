@@ -1,11 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Search } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +26,21 @@ export function AppointmentFilters({
   searchTerm,
   setSearchTerm,
 }: AppointmentFiltersProps) {
-  const [date, setDate] = useState<Date | undefined>(selectedDate || new Date());
+  const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
+  // Sync local date state with parent component's selectedDate
+  useEffect(() => {
+    if (selectedDate !== null && (!date || date.getTime() !== selectedDate.getTime())) {
+      setDate(selectedDate);
+    }
+  }, [selectedDate, date]);
+
+  const handleClearDate = () => {
+    setDate(undefined);
+    setSelectedDate(null);
+    setIsCalendarOpen(false);
+  };
 
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -39,29 +53,56 @@ export function AppointmentFilters({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        {searchTerm && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="absolute right-1 top-1 h-8 w-8 p-0" 
+            onClick={() => setSearchTerm("")}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Clear search</span>
+          </Button>
+        )}
       </div>
-      <Popover>
+      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
         <PopoverTrigger asChild>
           <Button
             variant={"outline"}
             className={cn(
-              "w-full sm:w-[300px] justify-start text-left font-normal",
+              "w-full sm:w-[240px] justify-start text-left font-normal",
               !date && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {date ? format(date, "PPP") : "Pick a date"}
+            {date && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-auto h-6 w-6 p-0" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClearDate();
+                }}
+              >
+                <X className="h-3 w-3" />
+                <span className="sr-only">Clear date</span>
+              </Button>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
             selected={date}
-            onSelect={(date) => {
-              setDate(date);
-              setSelectedDate(date);
+            onSelect={(selectedDate) => {
+              setDate(selectedDate);
+              setSelectedDate(selectedDate || null);
+              setIsCalendarOpen(false);
             }}
             initialFocus
+            className={cn("p-3 pointer-events-auto")}
           />
         </PopoverContent>
       </Popover>
