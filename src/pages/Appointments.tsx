@@ -1,23 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar as CalendarIcon, Search } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import { AppointmentModal } from "@/components/AppointmentModal";
+import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AppointmentModal } from "@/components/AppointmentModal";
 import { ConsultationModal } from "@/components/ConsultationModal";
+import { AppointmentFilters } from "@/components/appointments/AppointmentFilters";
+import { AppointmentList } from "@/components/appointments/AppointmentList";
 
 const Appointments = () => {
-  const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [type, setType] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,6 +59,8 @@ const Appointments = () => {
       // Format the appointments for easy use
       const formattedAppointments = data.map(app => ({
         id: app.id,
+        patient_id: app.patient_id,
+        doctor_id: app.doctor_id,
         patient: app.patients.name,
         doctor: app.doctors.name,
         date: app.date,
@@ -94,103 +89,9 @@ const Appointments = () => {
     setOpenModal(true);
   };
 
-  const getBadgeVariant = (status: string) => {
-    switch (status) {
-      case "Scheduled":
-        return "default";
-      case "In Progress":
-        return "secondary";
-      case "Completed":
-        return "secondary"; // Changed from "success" to "secondary"
-      case "Cancelled":
-        return "destructive";
-      default:
-        return "default";
-    }
-  };
-
   const handleStartConsultation = (appointment: any) => {
     setSelectedAppointmentForConsultation(appointment);
     setOpenConsultationModal(true);
-  };
-
-  const renderAppointments = (appointments: any[]) => {
-    return appointments.length === 0 ? (
-      <div className="text-center py-10">
-        <Calendar className="mx-auto h-12 w-12 text-muted-foreground" />
-        <h3 className="mt-4 text-lg font-semibold">No appointments found</h3>
-        <p className="text-muted-foreground">
-          {selectedDate 
-            ? "There are no appointments scheduled for this date." 
-            : "Use the filters above to find appointments."}
-        </p>
-      </div>
-    ) : (
-      <div className="space-y-4">
-        {appointments.map((appointment) => (
-          <Card key={appointment.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-                  <div className="space-y-1 mb-3 sm:mb-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium">{appointment.patient}</h3>
-                      <Badge variant={getBadgeVariant(appointment.status)}>{appointment.status}</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(appointment.date), 'MMM dd, yyyy')} • {appointment.time} • {appointment.type}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {appointment.status === "Scheduled" && (
-                      <Button 
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleStartConsultation(appointment)}
-                      >
-                        Start Consultation
-                      </Button>
-                    )}
-                    {appointment.status === "In Progress" && (
-                      <Button 
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleStartConsultation(appointment)}
-                      >
-                        Continue Consultation
-                      </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedAppointment(appointment);
-                        setOpenModal(true);
-                      }}
-                    >
-                      Edit
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <div className="px-4 py-2 bg-muted/20 border-t">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm">
-                    <span className="font-medium">Doctor:</span> {appointment.doctor}
-                  </div>
-                  <div className="text-sm text-right">
-                    {appointment.notes && (
-                      <span className="font-medium">Notes: </span>
-                    )}
-                    {appointment.notes}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
   };
 
   return (
@@ -203,56 +104,14 @@ const Appointments = () => {
         <Button onClick={handleCreateAppointment}>Add Appointment</Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search appointments..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant={"outline"}
-              className={cn(
-                "w-[300px] justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, "PPP") : "Pick a date"}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(date) => {
-                setDate(date);
-                setSelectedDate(date);
-              }}
-              initialFocus
-              className="pointer-events-auto"
-            />
-          </PopoverContent>
-        </Popover>
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Select type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All</SelectItem>
-            <SelectItem value="Check-up">Check-up</SelectItem>
-            <SelectItem value="Consultation">Consultation</SelectItem>
-            <SelectItem value="Follow-up">Follow-up</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <AppointmentFilters
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        type={type}
+        setType={setType}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+      />
 
       <Card>
         <CardHeader>
@@ -261,11 +120,13 @@ const Appointments = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
-            <div className="text-center py-10">Loading appointments...</div>
-          ) : (
-            renderAppointments(appointments)
-          )}
+          <AppointmentList
+            appointments={appointments}
+            loading={loading}
+            selectedDate={selectedDate}
+            onEdit={handleUpdateAppointment}
+            onStartConsultation={handleStartConsultation}
+          />
         </CardContent>
       </Card>
       
