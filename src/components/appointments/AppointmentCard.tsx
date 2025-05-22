@@ -1,122 +1,105 @@
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { CalendarCheck, Clock, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { Clock, Edit, Play, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { format, parseISO } from "date-fns";
 
 interface AppointmentCardProps {
-  appointment: {
-    id: string;
-    patient: string;
-    doctor: string;
-    date: string;
-    time: string;
-    type: string;
-    status: string;
-    notes?: string;
-  };
+  appointment: any;
   onEdit: (appointment: any) => void;
   onStartConsultation: (appointment: any) => void;
 }
 
-export function AppointmentCard({ appointment, onEdit, onStartConsultation }: AppointmentCardProps) {
-  const getBadgeVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "scheduled":
-        return "default";
-      case "in progress":
-        return "secondary";
-      case "completed":
-        return "success"; 
-      case "cancelled":
-        return "destructive";
-      default:
-        return "default";
+export function AppointmentCard({ 
+  appointment, 
+  onEdit, 
+  onStartConsultation 
+}: AppointmentCardProps) {
+  // Get department based on doctor name (this is temporary)
+  const department = 
+    appointment.doctor?.toLowerCase().includes("neuro") 
+      ? "Neurology" 
+      : appointment.doctor?.toLowerCase().includes("eye") || appointment.doctor?.toLowerCase().includes("ophthal")
+      ? "Ophthalmology"
+      : "General";
+  
+  // Generate department-specific styles
+  const getBadgeClass = () => {
+    if (department === "Neurology") return "bg-purple-100 text-purple-800";
+    if (department === "Ophthalmology") return "bg-teal-100 text-teal-800";
+    return "bg-blue-100 text-blue-800";
+  };
+
+  // Format date
+  const formattedDate = appointment.date 
+    ? format(typeof appointment.date === 'string' ? parseISO(appointment.date) : appointment.date, 'MMM dd, yyyy')
+    : 'Date not specified';
+
+  // Handle appointment status
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "Scheduled": return "default";
+      case "In Progress": return "outline";
+      case "Completed": return "secondary";
+      case "Cancelled": return "destructive";
+      default: return "default";
     }
   };
 
-  // Determine department (placeholder logic - to be replaced with actual department data)
-  const getDepartmentFromType = (type: string) => {
-    if (type.includes('Neuro')) return 'Neurology';
-    if (type.includes('Eye') || type.includes('Vision')) return 'Ophthalmology';
-    return 'General';
-  };
-  
-  const department = getDepartmentFromType(appointment.type);
+  const canStartConsultation = appointment.status === 'Scheduled' || appointment.status === 'In Progress';
   
   return (
-    <Card className="overflow-hidden border-l-4" style={{ 
-      borderLeftColor: department === 'Neurology' ? '#8b5cf6' : department === 'Ophthalmology' ? '#10b981' : '#6b7280' 
-    }}>
-      <CardContent className="p-0">
-        <div className="p-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-            <div className="space-y-1 mb-3 sm:mb-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium">{appointment.patient}</h3>
-                <Badge variant={getBadgeVariant(appointment.status)}>{appointment.status}</Badge>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <Clock className="mr-1 h-3 w-3" />
-                  {format(new Date(appointment.date), 'MMM dd, yyyy')} • {appointment.time}
-                </div>
-                <div className="hidden sm:block">•</div>
-                <div>{appointment.type}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {appointment.status === "Scheduled" && (
-                <Button 
-                  variant="default"
-                  size="sm"
-                  onClick={() => onStartConsultation(appointment)}
-                  className={department === 'Neurology' ? 'bg-purple-600 hover:bg-purple-700' : department === 'Ophthalmology' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
-                >
-                  <Play className="mr-1 h-3 w-3" />
-                  Start Consultation
-                </Button>
-              )}
-              {appointment.status === "In Progress" && (
-                <Button 
-                  variant="default"
-                  size="sm"
-                  onClick={() => onStartConsultation(appointment)}
-                  className={department === 'Neurology' ? 'bg-purple-600 hover:bg-purple-700' : department === 'Ophthalmology' ? 'bg-emerald-600 hover:bg-emerald-700' : ''}
-                >
-                  <Play className="mr-1 h-3 w-3" />
-                  Continue Consultation
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit(appointment)}
-              >
-                <Edit className="mr-1 h-3 w-3" />
-                Edit
-              </Button>
-            </div>
+    <div className={`border rounded-md p-4 ${department === "Neurology" ? "border-l-4 border-l-purple-500" : department === "Ophthalmology" ? "border-l-4 border-l-teal-500" : ""}`}>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="font-medium">{appointment.patient}</h3>
+            <Badge variant={getStatusVariant(appointment.status)}>
+              {appointment.status}
+            </Badge>
           </div>
+          <p className="text-sm text-muted-foreground">with {appointment.doctor}</p>
         </div>
-        <div className="px-4 py-2 bg-muted/20 border-t">
-          <div className="flex items-center justify-between text-sm">
-            <div>
-              <span className="font-medium flex items-center">
-                <User className="mr-1 h-3 w-3" /> 
-                {appointment.doctor}
-              </span>
-            </div>
-            {appointment.notes && (
-              <div className="text-right truncate max-w-[50%]" title={appointment.notes}>
-                <span className="font-medium">Notes: </span>
-                {appointment.notes}
-              </div>
-            )}
-          </div>
+        
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className={getBadgeClass()}>
+            {department}
+          </Badge>
+          <Badge variant="outline" className="bg-gray-100">
+            {appointment.type}
+          </Badge>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-4">
+        <div className="flex items-center text-sm text-muted-foreground">
+          <CalendarCheck size={16} className="mr-1" />
+          {formattedDate}
+        </div>
+        <div className="flex items-center text-sm text-muted-foreground">
+          <Clock size={16} className="mr-1" />
+          {appointment.time}
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2 justify-end">
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => onEdit(appointment)}
+        >
+          Edit
+        </Button>
+        <Button 
+          variant="default" 
+          size="sm"
+          disabled={!canStartConsultation}
+          onClick={() => onStartConsultation(appointment)}
+          className={department === "Neurology" ? "bg-purple-600 hover:bg-purple-700" : department === "Ophthalmology" ? "bg-teal-600 hover:bg-teal-700" : ""}
+        >
+          <Eye size={16} className="mr-1" /> Consultation
+        </Button>
+      </div>
+    </div>
   );
 }

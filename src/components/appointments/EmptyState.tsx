@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 
 interface EmptyStateProps {
   hasDateFilter: boolean;
+  onNewAppointment?: () => void;
 }
 
-export function EmptyState({ hasDateFilter }: EmptyStateProps) {
+export function EmptyState({ hasDateFilter, onNewAppointment }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-12 text-center">
       {hasDateFilter ? (
@@ -22,8 +23,18 @@ export function EmptyState({ hasDateFilter }: EmptyStateProps) {
       <p className="text-muted-foreground mt-2 max-w-sm">
         {hasDateFilter
           ? "Try selecting a different date or clearing the filters to see more appointments."
-          : "Create your first appointment by clicking the button above."}
+          : "Create your first appointment by clicking the button below."}
       </p>
+      
+      {!hasDateFilter && onNewAppointment && (
+        <Button 
+          onClick={onNewAppointment}
+          className="mt-4"
+        >
+          <FilePlus2 className="mr-2 h-4 w-4" />
+          New Appointment
+        </Button>
+      )}
     </div>
   );
 }

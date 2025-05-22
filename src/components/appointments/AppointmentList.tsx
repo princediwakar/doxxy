@@ -9,6 +9,7 @@ interface AppointmentListProps {
   selectedDate: Date | null;
   onEdit: (appointment: any) => void;
   onStartConsultation: (appointment: any) => void;
+  onNewAppointment?: () => void;
 }
 
 export function AppointmentList({ 
@@ -16,7 +17,8 @@ export function AppointmentList({
   loading, 
   selectedDate,
   onEdit,
-  onStartConsultation 
+  onStartConsultation,
+  onNewAppointment
 }: AppointmentListProps) {
   if (loading) {
     return (
@@ -31,7 +33,7 @@ export function AppointmentList({
   }
 
   if (appointments.length === 0) {
-    return <EmptyState hasDateFilter={!!selectedDate} />;
+    return <EmptyState hasDateFilter={!!selectedDate} onNewAppointment={onNewAppointment} />;
   }
 
   return (
