@@ -5,7 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Calendar as CalendarIcon, Search, X } from "lucide-react";
+import { Calendar as CalendarIcon, Filter, Search, X } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +16,8 @@ interface AppointmentFiltersProps {
   setType: (type: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
+  filterStatus?: string;
+  setFilterStatus?: (status: string) => void;
 }
 
 export function AppointmentFilters({
@@ -25,6 +27,8 @@ export function AppointmentFilters({
   setType,
   searchTerm,
   setSearchTerm,
+  filterStatus = "all",
+  setFilterStatus = () => {},
 }: AppointmentFiltersProps) {
   const [date, setDate] = useState<Date | undefined>(selectedDate || undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -116,6 +120,18 @@ export function AppointmentFilters({
           <SelectItem value="Consultation">Consultation</SelectItem>
           <SelectItem value="Follow-up">Follow-up</SelectItem>
           <SelectItem value="Other">Other</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="Scheduled">Scheduled</SelectItem>
+          <SelectItem value="In Progress">In Progress</SelectItem>
+          <SelectItem value="Completed">Completed</SelectItem>
+          <SelectItem value="Cancelled">Cancelled</SelectItem>
         </SelectContent>
       </Select>
     </div>

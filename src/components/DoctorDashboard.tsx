@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ConsultationModal } from "./ConsultationModal";
 
 export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
   const { toast } = useToast();
@@ -18,6 +19,8 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
     completedConsultations: 0
   });
   const [loading, setLoading] = useState(true);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [openConsultationModal, setOpenConsultationModal] = useState(false);
 
   // Current date in ISO format for filtering appointments
   const today = new Date().toISOString().split('T')[0];
@@ -32,7 +35,7 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         const { data: appointments, error: appointmentsError } = await supabase
           .from('appointments')
           .select(`
-            id, date, time, type, status,
+            id, date, time, type, status, department,
             patients (id, name),
             doctors (id, name, specialization)
           `)
@@ -45,40 +48,58 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         // Transform appointments data
         const formattedAppointments = (appointments || []).map(appointment => ({
           id: appointment.id,
+          patientId: appointment.patients?.id,
           patientName: appointment.patients?.name || 'Unknown Patient',
+          doctorName: appointment.doctors?.name,
+          department: appointment.department,
           time: appointment.time,
           type: appointment.type,
-          status: appointment.status
+          status: appointment.status,
+          date: appointment.date
         }));
 
         setTodayAppointments(formattedAppointments);
 
-        // Fetch statistics
-        const { count: totalPatients } = await supabase
+        // Fetch unique patients count
+        const { data: uniquePatients, error: patientsError } = await supabase
           .from('appointments')
-          .select('patient_id', { count: 'exact', head: true })
-          .eq('doctor_id', doctorId)
-          .is('patient_id', 'not.null');
+          .select('patient_id', { count: 'exact', head: false })
+          .eq('doctor_id', doctorId);
+          
+        if (patientsError) throw patientsError;
+        
+        // Count unique patient IDs
+        const uniquePatientIds = new Set(uniquePatients?.map(item => item.patient_id));
+        const totalUniquePatients = uniquePatientIds.size;
 
-        const { count: totalAppointments } = await supabase
+        // Fetch total appointments count
+        const { count: totalAppointments, error: totalError } = await supabase
           .from('appointments')
           .select('id', { count: 'exact', head: true })
           .eq('doctor_id', doctorId);
 
-        const { count: pendingAppointments } = await supabase
+        if (totalError) throw totalError;
+
+        // Fetch pending appointments count
+        const { count: pendingAppointments, error: pendingError } = await supabase
           .from('appointments')
           .select('id', { count: 'exact', head: true })
           .eq('doctor_id', doctorId)
           .eq('status', 'Scheduled');
 
-        const { count: completedConsultations } = await supabase
+        if (pendingError) throw pendingError;
+
+        // Fetch completed consultations count
+        const { count: completedConsultations, error: completedError } = await supabase
           .from('appointments')
           .select('id', { count: 'exact', head: true })
           .eq('doctor_id', doctorId)
           .eq('status', 'Completed');
 
+        if (completedError) throw completedError;
+
         setStats({
-          totalPatients: totalPatients || 0,
+          totalPatients: totalUniquePatients || 0,
           totalAppointments: totalAppointments || 0,
           pendingAppointments: pendingAppointments || 0,
           completedConsultations: completedConsultations || 0
@@ -120,11 +141,9 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
     }
   }, [doctorId, loading]);
 
-  const startConsultation = (appointmentId: string) => {
-    toast({
-      title: "Consultation started",
-      description: "The patient consultation has been started."
-    });
+  const startConsultation = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setOpenConsultationModal(true);
   };
 
   return (
@@ -220,8 +239,8 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
                       {appointment.status}
                     </Badge>
                     {(appointment.status === "Scheduled" || appointment.status === "In Progress") && (
-                      <Button size="sm" onClick={() => startConsultation(appointment.id)}>
-                        Start Consultation
+                      <Button size="sm" onClick={() => startConsultation(appointment)}>
+                        {appointment.status === "Scheduled" ? "Start" : "Continue"} Consultation
                       </Button>
                     )}
                   </div>
@@ -231,6 +250,12 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
           )}
         </CardContent>
       </Card>
+
+      <ConsultationModal
+        open={openConsultationModal}
+        onOpenChange={setOpenConsultationModal}
+        appointment={selectedAppointment}
+      />
     </div>
   );
 }
