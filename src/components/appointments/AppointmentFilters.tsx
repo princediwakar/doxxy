@@ -70,7 +70,7 @@ export function AppointmentFilters({
           <SelectValue placeholder="Select type" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">All</SelectItem>
+          <SelectItem value="all">All Types</SelectItem>
           <SelectItem value="Check-up">Check-up</SelectItem>
           <SelectItem value="Consultation">Consultation</SelectItem>
           <SelectItem value="Follow-up">Follow-up</SelectItem>

@@ -12,7 +12,7 @@ import { AppointmentList } from "@/components/appointments/AppointmentList";
 
 const Appointments = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [type, setType] = useState("");
+  const [type, setType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ const Appointments = () => {
         query = query.eq('date', isoDate);
       }
 
-      if (type) {
+      if (type && type !== "all") {
         query = query.eq('type', type);
       }
 
