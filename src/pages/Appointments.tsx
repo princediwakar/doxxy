@@ -217,7 +217,6 @@ const Appointments = () => {
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
         appointment={null}
-        onSuccess={fetchAppointments}
       />
     </div>
   );
