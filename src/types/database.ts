@@ -49,14 +49,13 @@ export interface MedicalRecord {
   notes?: string;
   symptoms?: string;
   treatment_plan?: string;
+  medications?: any[];
+  follow_up_date?: string;
   created_at?: string;
   // Relations
   patients?: Patient;
   doctors?: Doctor;
   appointments?: Appointment;
-  neurologyRecord?: NeurologyRecord;
-  ophthalmologyRecord?: OphthalmologyRecord;
-  prescription?: Prescription;
 }
 
 export interface NeurologyRecord {
@@ -88,7 +87,7 @@ export interface OphthalmologyRecord {
 
 export interface Prescription {
   id: string;
-  consultation_id: string;
+  consultation_id?: string;
   patient_id: string;
   doctor_id?: string;
   medications: any[];
@@ -97,20 +96,20 @@ export interface Prescription {
   created_at?: string;
   // For medical records
   medical_record_id?: string;
-  medicines?: any[];
 }
 
 export interface Bill {
   id: string;
   patient_id: string;
-  consultation_id: string;
+  appointment_id?: string;
   amount: number;
   status: 'Paid' | 'Pending' | 'Overdue';
   invoice_number?: string;
+  description?: string;
   created_at?: string;
   // Relations
   patients?: Patient;
-  consultations?: any;
+  appointments?: Appointment;
 }
 
 export interface Consultation {
@@ -125,4 +124,12 @@ export interface Consultation {
   patients?: Patient;
   doctors?: Doctor;
   prescriptions?: Prescription[];
+}
+
+export interface Profile {
+  id: string;
+  email: string;
+  role: 'admin' | 'doctor';
+  department?: 'Neurology' | 'Ophthalmology';
+  created_at?: string;
 }

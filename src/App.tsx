@@ -11,6 +11,7 @@ import Patients from "./pages/Patients";
 import Doctors from "./pages/Doctors";
 import Appointments from "./pages/Appointments";
 import MedicalRecords from "./pages/MedicalRecords";
+import Billing from "./pages/Billing";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import PrivateRoute from "./components/PrivateRoute";
@@ -36,6 +37,7 @@ const App = () => (
                 <Route path="doctors" element={<Doctors />} />
                 <Route path="appointments" element={<Appointments />} />
                 <Route path="medical-records" element={<MedicalRecords />} />
+                <Route path="billing" element={<Billing />} />
               </Route>
             </Route>
             

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarCheck, Users, User, Clock, Activity } from "lucide-react";
@@ -31,80 +30,78 @@ const Dashboard = () => {
         // Get today's date
         const today = new Date().toISOString().split('T')[0];
         
-        // Fetch total patients
-        const { count: totalPatients, error: patientsError } = await supabase
-          .from('patients')
-          .select('*', { count: 'exact', head: true });
+        // Fetch total patients using RPC
+        const { data: patientsData, error: patientsError } = await supabase
+          .rpc('get_patients');
           
-        if (patientsError) throw patientsError;
+        if (patientsError) {
+          console.error("Error fetching patients:", patientsError);
+        }
         
-        // Fetch total doctors
-        const { count: totalDoctors, error: doctorsError } = await supabase
-          .from('doctors')
-          .select('*', { count: 'exact', head: true });
+        // Fetch total doctors using RPC
+        const { data: doctorsData, error: doctorsError } = await supabase
+          .rpc('get_doctors');
           
-        if (doctorsError) throw doctorsError;
+        if (doctorsError) {
+          console.error("Error fetching doctors:", doctorsError);
+        }
         
-        // Fetch today's appointments
-        const { count: todayAppointments, error: appointmentsError } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true })
-          .eq('date', today);
+        // Fetch appointments using RPC
+        const { data: appointmentsData, error: appointmentsError } = await supabase
+          .rpc('get_appointments_with_details');
           
-        if (appointmentsError) throw appointmentsError;
+        if (appointmentsError) {
+          console.error("Error fetching appointments:", appointmentsError);
+        }
+        
+        // Filter today's appointments
+        const todayAppointments = (appointmentsData || []).filter((app: any) => 
+          app.date === today
+        );
         
         // Set stats
         setStats({
-          totalPatients: totalPatients || 0,
-          totalDoctors: totalDoctors || 0,
-          appointmentsToday: todayAppointments || 0,
+          totalPatients: patientsData?.length || 0,
+          totalDoctors: doctorsData?.length || 0,
+          appointmentsToday: todayAppointments.length || 0,
           avgWaitTime: "18 min" // This would be calculated from actual data in a real app
         });
         
-        // Fetch weekly appointments data
+        // Create weekly appointments data
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const weeklyData = await Promise.all(
-          days.map(async (day, index) => {
-            const date = new Date();
-            date.setDate(date.getDate() - date.getDay() + index);
-            const dateStr = date.toISOString().split('T')[0];
-            
-            const { count, error } = await supabase
-              .from('appointments')
-              .select('*', { count: 'exact', head: true })
-              .eq('date', dateStr);
-              
-            if (error) throw error;
-            
-            return {
-              name: day,
-              appointments: count || 0
-            };
-          })
-        );
+        const weeklyData = days.map((day, index) => {
+          const date = new Date();
+          date.setDate(date.getDate() - date.getDay() + index);
+          const dateStr = date.toISOString().split('T')[0];
+          
+          const dayAppointments = (appointmentsData || []).filter((app: any) => 
+            app.date === dateStr
+          );
+          
+          return {
+            name: day,
+            appointments: dayAppointments.length
+          };
+        });
         
         setAppointmentData(weeklyData);
         
-        // Fetch upcoming appointments
-        const { data: upcoming, error: upcomingError } = await supabase
-          .from('appointments')
-          .select(`
-            id, date, time, type,
-            patients (name),
-            doctors (name)
-          `)
-          .gte('date', today)
-          .order('date')
-          .order('time')
-          .limit(5);
-          
-        if (upcomingError) throw upcomingError;
+        // Get upcoming appointments
+        const upcoming = (appointmentsData || [])
+          .filter((app: any) => app.date >= today)
+          .sort((a: any, b: any) => {
+            if (a.date === b.date) {
+              return a.time.localeCompare(b.time);
+            }
+            return a.date.localeCompare(b.date);
+          })
+          .slice(0, 5);
         
         // Transform data for display
-        const formattedAppointments = (upcoming || []).map(appointment => ({
+        const formattedAppointments = upcoming.map((appointment: any) => ({
           id: appointment.id,
-          patient: appointment.patients?.name || 'Unknown Patient',
-          doctor: appointment.doctors?.name || 'Unknown Doctor',
+          patient: appointment.patient_name || 'Unknown Patient',
+          doctor: appointment.doctor_name || 'Unknown Doctor',
           time: appointment.time,
           date: new Date(appointment.date).toLocaleDateString(),
           type: appointment.type
