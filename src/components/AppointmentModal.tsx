@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -39,9 +40,10 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
     doctor_id: "",
     date: new Date(),
     time: "10:00 AM",
-    type: "Check-up",
-    status: "Scheduled",
-    notes: ""
+    type: "Walk-in" as "Walk-in" | "Digital",
+    status: "Scheduled" as "Scheduled" | "In Progress" | "Completed" | "Cancelled",
+    notes: "",
+    department: "Neurology" as "Neurology" | "Ophthalmology"
   });
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -53,25 +55,26 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
       
       if (appointment) {
         setFormData({
-          patient_id: appointment.patient_id,
-          doctor_id: appointment.doctor_id,
+          patient_id: appointment.patient_id || "",
+          doctor_id: appointment.doctor_id || "",
           date: new Date(appointment.date),
-          time: appointment.time,
-          type: appointment.type,
-          status: appointment.status,
-          notes: appointment.notes || ""
+          time: appointment.time || "10:00 AM",
+          type: appointment.type as "Walk-in" | "Digital" || "Walk-in",
+          status: appointment.status as "Scheduled" | "In Progress" | "Completed" | "Cancelled" || "Scheduled",
+          notes: appointment.notes || "",
+          department: appointment.department as "Neurology" | "Ophthalmology" || "Neurology"
         });
         setSelectedDate(new Date(appointment.date));
       } else {
-        // Reset form for new appointment
         setFormData({
           patient_id: "",
           doctor_id: "",
           date: new Date(),
           time: "10:00 AM",
-          type: "Check-up",
+          type: "Walk-in",
           status: "Scheduled",
-          notes: ""
+          notes: "",
+          department: "Neurology"
         });
         setSelectedDate(new Date());
       }
@@ -110,7 +113,18 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === "doctor_id") {
+      const selectedDoctor = doctors.find((d: any) => d.id === value);
+      if (selectedDoctor) {
+        setFormData(prev => ({ 
+          ...prev, 
+          [name]: value,
+          department: selectedDoctor.specialization as "Neurology" | "Ophthalmology"
+        }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -135,11 +149,11 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         time: formData.time,
         type: formData.type,
         status: formData.status,
+        department: formData.department,
         notes: formData.notes
       };
       
       if (isNewAppointment) {
-        // Create new appointment
         const { data, error } = await supabase
           .from('appointments')
           .insert(appointmentData)
@@ -147,11 +161,8 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
           
         if (error) throw error;
         
-        toast.success("Appointment scheduled", {
-          description: `Appointment on ${format(formData.date, 'PP')} at ${formData.time} has been scheduled.`,
-        });
+        toast.success("Appointment scheduled");
       } else {
-        // Update existing appointment
         const { data, error } = await supabase
           .from('appointments')
           .update(appointmentData)
@@ -160,12 +171,10 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
           
         if (error) throw error;
         
-        toast.success("Appointment updated", {
-          description: `Appointment on ${format(formData.date, 'PP')} at ${formData.time} has been updated.`,
-        });
+        toast.success("Appointment updated");
       }
       
-      window.location.reload(); // Refresh to see the changes
+      window.location.reload();
     } catch (error) {
       console.error("Error saving appointment:", error);
       toast.error(isNewAppointment ? "Failed to schedule appointment" : "Failed to update appointment");
@@ -185,14 +194,13 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
     }
   };
 
-  // Find selected patient and doctor names for display
   const getPatientName = (id: string) => {
-    const patient = patients.find(p => p.id === id);
+    const patient = patients.find((p: any) => p.id === id);
     return patient ? patient.name : "Select patient";
   };
   
   const getDoctorName = (id: string) => {
-    const doctor = doctors.find(d => d.id === id);
+    const doctor = doctors.find((d: any) => d.id === id);
     return doctor ? doctor.name : "Select doctor";
   };
   
@@ -230,7 +238,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {patients.map(patient => (
+                {patients.map((patient: any) => (
                   <SelectItem key={patient.id} value={patient.id}>
                     {patient.name}
                   </SelectItem>
@@ -251,7 +259,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {doctors.map(doctor => (
+                {doctors.map((doctor: any) => (
                   <SelectItem key={doctor.id} value={doctor.id}>
                     {doctor.name} - {doctor.specialization}
                   </SelectItem>
@@ -325,36 +333,48 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Check-up">Check-up</SelectItem>
-                <SelectItem value="Follow-up">Follow-up</SelectItem>
-                <SelectItem value="Consultation">Consultation</SelectItem>
-                <SelectItem value="Procedure">Procedure</SelectItem>
-                <SelectItem value="Emergency">Emergency</SelectItem>
+                <SelectItem value="Walk-in">Walk-in</SelectItem>
+                <SelectItem value="Digital">Digital</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            {!isNewAppointment && (
-              <>
-                <Label htmlFor="status">Status</Label>
-                <Select 
-                  value={formData.status} 
-                  onValueChange={(value) => handleSelectChange("status", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Scheduled">Scheduled</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Completed">Completed</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
+            <Label htmlFor="department">Department</Label>
+            <Select 
+              value={formData.department} 
+              onValueChange={(value) => handleSelectChange("department", value)}
+              disabled={!!formData.doctor_id}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Neurology">Neurology</SelectItem>
+                <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+
+          {!isNewAppointment && (
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Select 
+                value={formData.status} 
+                onValueChange={(value) => handleSelectChange("status", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Scheduled">Scheduled</SelectItem>
+                  <SelectItem value="In Progress">In Progress</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -386,4 +406,3 @@ function isToday(date: Date) {
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
 }
-
