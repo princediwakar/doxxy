@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarCheck, Users, User, Clock, Activity } from "lucide-react";
@@ -131,7 +132,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
         <p className="text-muted-foreground">Overview of your clinic's performance and schedule.</p>
       </div>
 
