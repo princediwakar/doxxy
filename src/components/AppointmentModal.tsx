@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -20,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Doctor, Patient } from "@/types/database";
 
 interface AppointmentModalProps {
   open: boolean;
@@ -29,8 +29,8 @@ interface AppointmentModalProps {
 
 export function AppointmentModal({ open, onOpenChange, appointment }: AppointmentModalProps) {
   const isNewAppointment = !appointment;
-  const [doctors, setDoctors] = useState<any[]>([]);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -82,15 +82,13 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
   const fetchDoctors = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('get_doctors');
-      
+        .from('doctors')
+        .select('*')
+        .order('name');
+        
       if (error) {
         console.error("Error fetching doctors:", error);
-        // Fallback query
-        const { data: fallbackData } = await supabase
-          .from('doctors')
-          .select('*');
-        setDoctors(fallbackData || []);
+        setDoctors([]);
       } else {
         setDoctors(data || []);
       }
@@ -103,15 +101,13 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
   const fetchPatients = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('get_patients');
-      
+        .from('patients')
+        .select('*')
+        .order('name');
+        
       if (error) {
         console.error("Error fetching patients:", error);
-        // Fallback query
-        const { data: fallbackData } = await supabase
-          .from('patients')
-          .select('*');
-        setPatients(fallbackData || []);
+        setPatients([]);
       } else {
         setPatients(data || []);
       }
@@ -169,7 +165,8 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
       
       if (isNewAppointment) {
         const { error } = await supabase
-          .rpc('create_appointment', appointmentData);
+          .from('appointments')
+          .insert(appointmentData);
           
         if (error) {
           console.error("Error creating appointment:", error);
@@ -179,10 +176,9 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         toast.success("Appointment scheduled successfully");
       } else {
         const { error } = await supabase
-          .rpc('update_appointment', { 
-            appointment_id: appointment.id, 
-            ...appointmentData 
-          });
+          .from('appointments')
+          .update(appointmentData)
+          .eq('id', appointment.id);
           
         if (error) {
           console.error("Error updating appointment:", error);

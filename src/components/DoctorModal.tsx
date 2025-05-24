@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -88,7 +87,7 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
   const fetchDoctorDetails = async (doctorId: string) => {
     setLoading(true);
     try {
-      // Fetch doctor's patients
+      // Fetch doctor's appointments with patient details
       const { data: appointments, error: appointmentsError } = await supabase
         .from('appointments')
         .select(`
@@ -97,7 +96,7 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
           time,
           type,
           status,
-          patients (
+          patients!inner(
             id,
             name,
             email,

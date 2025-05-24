@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,19 +30,21 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         setLoading(true);
         if (!doctorId) return;
 
-        // Fetch appointments using RPC
+        // Fetch appointments with patient details
         const { data: appointments, error: appointmentsError } = await supabase
-          .rpc('get_appointments_with_details');
+          .from('appointments')
+          .select(`
+            *,
+            patients!inner(id, name),
+            doctors!inner(id, name)
+          `)
+          .eq('doctor_id', doctorId)
+          .order('date', { ascending: false });
 
         if (appointmentsError) throw appointmentsError;
 
-        // Filter appointments for this doctor
-        const doctorAppointments = (appointments || []).filter((app: any) => 
-          app.doctor_id === doctorId
-        );
-
         // Filter today's appointments
-        const todayAppts = doctorAppointments.filter((app: any) => 
+        const todayAppts = (appointments || []).filter((app: any) => 
           app.date === today
         );
 
@@ -51,8 +52,8 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         const formattedAppointments = todayAppts.map(appointment => ({
           id: appointment.id,
           patientId: appointment.patient_id,
-          patientName: appointment.patient_name || 'Unknown Patient',
-          doctorName: appointment.doctor_name,
+          patientName: appointment.patients?.name || 'Unknown Patient',
+          doctorName: appointment.doctors?.name,
           department: appointment.department,
           time: appointment.time,
           type: appointment.type,
@@ -63,13 +64,13 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         setTodayAppointments(formattedAppointments);
 
         // Calculate stats
-        const uniquePatients = new Set(doctorAppointments.map(app => app.patient_id));
-        const pendingAppointments = doctorAppointments.filter(app => app.status === 'Scheduled').length;
-        const completedAppointments = doctorAppointments.filter(app => app.status === 'Completed').length;
+        const uniquePatients = new Set((appointments || []).map(app => app.patient_id));
+        const pendingAppointments = (appointments || []).filter(app => app.status === 'Scheduled').length;
+        const completedAppointments = (appointments || []).filter(app => app.status === 'Completed').length;
 
         setStats({
           totalPatients: uniquePatients.size || 0,
-          totalAppointments: doctorAppointments.length || 0,
+          totalAppointments: (appointments || []).length || 0,
           pendingAppointments: pendingAppointments || 0,
           completedConsultations: completedAppointments || 0
         });

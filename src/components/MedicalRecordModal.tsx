@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -112,7 +111,7 @@ export function MedicalRecordModal({
       
       if (existingRecord.prescription) {
         setPrescriptionData({
-          medicines: existingRecord.prescription.medicines || [],
+          medicines: existingRecord.prescription.medications || [],
           instructions: existingRecord.prescription.instructions || "",
           follow_up_date: existingRecord.prescription.follow_up_date ? new Date(existingRecord.prescription.follow_up_date) : null
         });

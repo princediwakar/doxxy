@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -15,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Appointment, Patient } from "@/types/database";
 
 interface BillingModalProps {
   open: boolean;
@@ -24,8 +24,8 @@ interface BillingModalProps {
 
 export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
   const isNewBill = !bill;
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -67,7 +67,13 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
   const fetchAppointments = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('get_appointments_with_details');
+        .from('appointments')
+        .select(`
+          *,
+          patients!inner(id, name),
+          doctors!inner(id, name)
+        `)
+        .order('date', { ascending: false });
       
       if (error) {
         console.error("Error fetching appointments:", error);
@@ -84,7 +90,9 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
   const fetchPatients = async () => {
     try {
       const { data, error } = await supabase
-        .rpc('get_patients');
+        .from('patients')
+        .select('*')
+        .order('name');
       
       if (error) {
         console.error("Error fetching patients:", error);
@@ -137,7 +145,8 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
       
       if (isNewBill) {
         const { error } = await supabase
-          .rpc('create_bill', billData);
+          .from('bills')
+          .insert(billData);
           
         if (error) {
           console.error("Error creating bill:", error);
@@ -147,10 +156,9 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
         toast.success("Bill created successfully");
       } else {
         const { error } = await supabase
-          .rpc('update_bill', { 
-            bill_id: bill.id, 
-            ...billData 
-          });
+          .from('bills')
+          .update(billData)
+          .eq('id', bill.id);
           
         if (error) {
           console.error("Error updating bill:", error);
