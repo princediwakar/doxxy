@@ -20,8 +20,8 @@ interface Appointment {
   department: 'Neurology' | 'Ophthalmology';
   patient_id: string;
   doctor_id: string;
-  patients?: { name: string };
-  doctors?: { name: string };
+  patient_name?: string;
+  doctor_name?: string;
 }
 
 const Appointments = () => {
@@ -42,36 +42,26 @@ const Appointments = () => {
     try {
       setLoading(true);
       
-      let query = supabase
-        .from('appointments')
-        .select(`
-          id,
-          date,
-          time,
-          type,
-          status,
-          department,
-          patient_id,
-          doctor_id,
-          patients (name),
-          doctors (name)
-        `)
-        .order('date', { ascending: false })
-        .order('time', { ascending: true });
+      let { data, error } = await supabase
+        .rpc('get_appointments_with_details');
+
+      if (error) {
+        console.error('Error fetching appointments:', error);
+        toast.error('Failed to load appointments');
+        setAppointments([]);
+        return;
+      }
 
       // If user is a doctor, filter by their appointments only
       if (userRole === 'doctor' && user) {
-        query = query.eq('doctor_id', user.id);
+        data = data?.filter((appointment: any) => appointment.doctor_id === user.id) || [];
       }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
 
       setAppointments(data || []);
     } catch (error) {
       console.error('Error fetching appointments:', error);
       toast.error('Failed to load appointments');
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -195,11 +185,11 @@ const Appointments = () => {
                     </div>
                     <div>
                       <h3 className="font-medium">
-                        {appointment.patients?.name || 'Unknown Patient'}
+                        {appointment.patient_name || 'Unknown Patient'}
                       </h3>
                       <div className="flex items-center text-sm text-muted-foreground mt-1">
                         <User className="h-4 w-4 mr-1" />
-                        <span>Dr. {appointment.doctors?.name || 'Unknown Doctor'}</span>
+                        <span>Dr. {appointment.doctor_name || 'Unknown Doctor'}</span>
                         <span className="mx-2">•</span>
                         <span>{appointment.department}</span>
                       </div>

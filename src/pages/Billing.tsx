@@ -39,23 +39,19 @@ const Billing = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('bills')
-        .select(`
-          *,
-          patients (name, email),
-          consultations (
-            created_at,
-            doctors (name)
-          )
-        `)
-        .order('created_at', { ascending: false });
+        .rpc('get_bills_with_details');
 
-      if (error) throw error;
-
-      setBills(data || []);
+      if (error) {
+        console.error("Error fetching bills:", error);
+        toast.error("Failed to load bills");
+        setBills([]);
+      } else {
+        setBills(data || []);
+      }
     } catch (error: any) {
       console.error("Error fetching bills:", error);
       toast.error("Failed to load bills");
+      setBills([]);
     } finally {
       setLoading(false);
     }
@@ -63,42 +59,26 @@ const Billing = () => {
 
   const fetchStats = async () => {
     try {
-      // Total revenue (all paid bills)
-      const { data: paidBills, error: paidError } = await supabase
-        .from('bills')
-        .select('amount')
-        .eq('status', 'Paid');
+      const { data: statsData, error } = await supabase
+        .rpc('get_billing_stats');
 
-      if (paidError) throw paidError;
-
-      const totalRevenue = paidBills?.reduce((sum, bill) => sum + (bill.amount || 0), 0) || 0;
-
-      // Pending amount
-      const { data: pendingBills, error: pendingError } = await supabase
-        .from('bills')
-        .select('amount')
-        .eq('status', 'Pending');
-
-      if (pendingError) throw pendingError;
-
-      const pendingAmount = pendingBills?.reduce((sum, bill) => sum + (bill.amount || 0), 0) || 0;
-
-      // Overdue amount
-      const { data: overdueBills, error: overdueError } = await supabase
-        .from('bills')
-        .select('amount')
-        .eq('status', 'Overdue');
-
-      if (overdueError) throw overdueError;
-
-      const overdueAmount = overdueBills?.reduce((sum, bill) => sum + (bill.amount || 0), 0) || 0;
-
-      setStats({
-        totalRevenue,
-        pendingAmount,
-        paidBills: paidBills?.length || 0,
-        overdueAmount
-      });
+      if (error) {
+        console.error("Error fetching stats:", error);
+        setStats({
+          totalRevenue: 0,
+          pendingAmount: 0,
+          paidBills: 0,
+          overdueAmount: 0
+        });
+      } else if (statsData && statsData.length > 0) {
+        const stat = statsData[0];
+        setStats({
+          totalRevenue: stat.total_revenue || 0,
+          pendingAmount: stat.pending_amount || 0,
+          paidBills: stat.paid_bills || 0,
+          overdueAmount: stat.overdue_amount || 0
+        });
+      }
     } catch (error: any) {
       console.error("Error fetching stats:", error);
     }
@@ -121,7 +101,7 @@ const Billing = () => {
   };
 
   const filteredBills = bills.filter((bill) =>
-    bill.patients?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    bill.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     bill.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     bill.status?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -225,9 +205,9 @@ const Billing = () => {
               <TableRow>
                 <TableHead>Invoice</TableHead>
                 <TableHead>Patient</TableHead>
-                <TableHead className="hidden sm:table-cell">Doctor</TableHead>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
                 <TableHead>Amount</TableHead>
-                <TableHead className="hidden md:table-cell">Date</TableHead>
+                <TableHead className="hidden md:table-cell">Description</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
@@ -246,13 +226,13 @@ const Billing = () => {
                     onClick={() => handleBillClick(bill)}
                   >
                     <TableCell className="font-medium">{bill.invoice_number}</TableCell>
-                    <TableCell>{bill.patients?.name || "-"}</TableCell>
+                    <TableCell>{bill.patient_name || "-"}</TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      {bill.consultations?.doctors?.name || "-"}
+                      {new Date(bill.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="font-medium">${bill.amount?.toFixed(2)}</TableCell>
                     <TableCell className="hidden md:table-cell">
-                      {new Date(bill.created_at).toLocaleDateString()}
+                      {bill.description || "-"}
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusColor(bill.status)}>

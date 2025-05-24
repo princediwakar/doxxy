@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -11,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar } from "@/components/ui/calendar";
-import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -29,11 +29,10 @@ interface AppointmentModalProps {
 
 export function AppointmentModal({ open, onOpenChange, appointment }: AppointmentModalProps) {
   const isNewAppointment = !appointment;
-  const [doctors, setDoctors] = useState([]);
-  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Form fields
   const [formData, setFormData] = useState({
     patient_id: "",
     doctor_id: "",
@@ -83,26 +82,42 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
   const fetchDoctors = async () => {
     try {
       const { data, error } = await supabase
-        .from('doctors')
-        .select('id, name, specialization');
+        .rpc('get_doctors');
       
-      if (error) throw error;
-      setDoctors(data || []);
+      if (error) {
+        console.error("Error fetching doctors:", error);
+        // Fallback query
+        const { data: fallbackData } = await supabase
+          .from('doctors')
+          .select('*');
+        setDoctors(fallbackData || []);
+      } else {
+        setDoctors(data || []);
+      }
     } catch (error) {
       console.error("Error fetching doctors:", error);
+      setDoctors([]);
     }
   };
 
   const fetchPatients = async () => {
     try {
       const { data, error } = await supabase
-        .from('patients')
-        .select('id, name');
+        .rpc('get_patients');
       
-      if (error) throw error;
-      setPatients(data || []);
+      if (error) {
+        console.error("Error fetching patients:", error);
+        // Fallback query
+        const { data: fallbackData } = await supabase
+          .from('patients')
+          .select('*');
+        setPatients(fallbackData || []);
+      } else {
+        setPatients(data || []);
+      }
     } catch (error) {
       console.error("Error fetching patients:", error);
+      setPatients([]);
     }
   };
 
@@ -154,19 +169,25 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
       
       if (isNewAppointment) {
         const { error } = await supabase
-          .from('appointments')
-          .insert(appointmentData);
+          .rpc('create_appointment', appointmentData);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating appointment:", error);
+          throw error;
+        }
         
         toast.success("Appointment scheduled successfully");
       } else {
         const { error } = await supabase
-          .from('appointments')
-          .update(appointmentData)
-          .eq('id', appointment.id);
+          .rpc('update_appointment', { 
+            appointment_id: appointment.id, 
+            ...appointmentData 
+          });
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating appointment:", error);
+          throw error;
+        }
         
         toast.success("Appointment updated successfully");
       }
@@ -201,7 +222,6 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
     return doctor ? doctor.name : "Select doctor";
   };
   
-  // Filter doctors by selected department
   const filteredDoctors = doctors.filter((doctor: any) => 
     doctor.specialization === formData.department
   );
@@ -234,7 +254,6 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
               value={formData.department} 
               onValueChange={(value) => {
                 handleSelectChange("department", value);
-                // Reset doctor selection when department changes
                 setFormData(prev => ({ ...prev, doctor_id: "" }));
               }}
             >

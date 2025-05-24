@@ -24,85 +24,102 @@ interface BillingModalProps {
 
 export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
   const isNewBill = !bill;
-  const [consultations, setConsultations] = useState([]);
-  const [patients, setPatients] = useState([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [patients, setPatients] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     patient_id: "",
-    consultation_id: "",
+    appointment_id: "",
     amount: "",
     status: "Pending" as "Paid" | "Pending" | "Overdue",
-    invoice_number: ""
+    invoice_number: "",
+    description: ""
   });
 
   useEffect(() => {
     if (open) {
-      fetchConsultations();
+      fetchAppointments();
       fetchPatients();
       
       if (bill) {
         setFormData({
           patient_id: bill.patient_id || "",
-          consultation_id: bill.consultation_id || "",
+          appointment_id: bill.appointment_id || "",
           amount: bill.amount?.toString() || "",
           status: bill.status as "Paid" | "Pending" | "Overdue" || "Pending",
-          invoice_number: bill.invoice_number || ""
+          invoice_number: bill.invoice_number || "",
+          description: bill.description || ""
         });
       } else {
         setFormData({
           patient_id: "",
-          consultation_id: "",
+          appointment_id: "",
           amount: "",
           status: "Pending",
-          invoice_number: `INV-${Date.now()}`
+          invoice_number: `INV-${Date.now()}`,
+          description: ""
         });
       }
     }
   }, [open, bill]);
 
-  const fetchConsultations = async () => {
+  const fetchAppointments = async () => {
     try {
       const { data, error } = await supabase
-        .from('consultations')
-        .select(`
-          id, 
-          created_at,
-          patients (name),
-          doctors (name)
-        `);
+        .rpc('get_appointments_with_details');
       
-      if (error) throw error;
-      setConsultations(data || []);
+      if (error) {
+        console.error("Error fetching appointments:", error);
+        setAppointments([]);
+      } else {
+        setAppointments(data || []);
+      }
     } catch (error) {
-      console.error("Error fetching consultations:", error);
+      console.error("Error fetching appointments:", error);
+      setAppointments([]);
     }
   };
 
   const fetchPatients = async () => {
     try {
       const { data, error } = await supabase
-        .from('patients')
-        .select('id, name');
+        .rpc('get_patients');
       
-      if (error) throw error;
-      setPatients(data || []);
+      if (error) {
+        console.error("Error fetching patients:", error);
+        setPatients([]);
+      } else {
+        setPatients(data || []);
+      }
     } catch (error) {
       console.error("Error fetching patients:", error);
+      setPatients([]);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === "appointment_id") {
+      const selectedAppointment = appointments.find((a: any) => a.id === value);
+      if (selectedAppointment) {
+        setFormData(prev => ({ 
+          ...prev, 
+          [name]: value,
+          patient_id: selectedAppointment.patient_id
+        }));
+      }
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async () => {
-    if (!formData.patient_id || !formData.consultation_id || !formData.amount) {
+    if (!formData.patient_id || !formData.appointment_id || !formData.amount) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -111,29 +128,34 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
     try {
       const billData = {
         patient_id: formData.patient_id,
-        consultation_id: formData.consultation_id,
+        appointment_id: formData.appointment_id,
         amount: parseFloat(formData.amount),
         status: formData.status,
-        invoice_number: formData.invoice_number
+        invoice_number: formData.invoice_number,
+        description: formData.description
       };
       
       if (isNewBill) {
-        const { data, error } = await supabase
-          .from('bills')
-          .insert(billData)
-          .select();
+        const { error } = await supabase
+          .rpc('create_bill', billData);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating bill:", error);
+          throw error;
+        }
         
         toast.success("Bill created successfully");
       } else {
-        const { data, error } = await supabase
-          .from('bills')
-          .update(billData)
-          .eq('id', bill.id)
-          .select();
+        const { error } = await supabase
+          .rpc('update_bill', { 
+            bill_id: bill.id, 
+            ...billData 
+          });
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating bill:", error);
+          throw error;
+        }
         
         toast.success("Bill updated successfully");
       }
@@ -157,6 +179,10 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
     }
   };
 
+  const filteredAppointments = formData.patient_id 
+    ? appointments.filter((a: any) => a.patient_id === formData.patient_id)
+    : appointments;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -164,7 +190,7 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
           <DialogTitle>{isNewBill ? "Create Bill" : "Bill Details"}</DialogTitle>
           <DialogDescription>
             {isNewBill 
-              ? "Create a new bill for a consultation." 
+              ? "Create a new bill for an appointment." 
               : "View and edit bill details."}
           </DialogDescription>
         </DialogHeader>
@@ -210,18 +236,19 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="consultation">Consultation</Label>
+            <Label htmlFor="appointment">Appointment</Label>
             <Select 
-              value={formData.consultation_id} 
-              onValueChange={(value) => handleSelectChange("consultation_id", value)}
+              value={formData.appointment_id} 
+              onValueChange={(value) => handleSelectChange("appointment_id", value)}
+              disabled={!formData.patient_id}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select consultation" />
+                <SelectValue placeholder="Select appointment" />
               </SelectTrigger>
               <SelectContent>
-                {consultations.map((consultation: any) => (
-                  <SelectItem key={consultation.id} value={consultation.id}>
-                    {consultation.patients?.name} - {new Date(consultation.created_at).toLocaleDateString()}
+                {filteredAppointments.map((appointment: any) => (
+                  <SelectItem key={appointment.id} value={appointment.id}>
+                    {appointment.date} - {appointment.time} ({appointment.department})
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -238,6 +265,18 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
               value={formData.amount}
               onChange={handleChange}
               placeholder="0.00"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full h-20 px-3 py-2 border rounded-md"
+              placeholder="Bill description or notes..."
             />
           </div>
 
