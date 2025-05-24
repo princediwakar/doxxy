@@ -1,4 +1,7 @@
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+
 interface AppointmentFiltersProps {
   onTypeChange: (type: string) => void;
   onStatusChange: (status: string) => void;
@@ -20,42 +23,39 @@ export function AppointmentFilters({
         <label htmlFor="type-filter" className="text-sm font-medium">
           Type:
         </label>
-        <select
-          id="type-filter"
-          value={filterType}
-          onChange={(e) => onTypeChange(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
-        >
-          <option value="">All Types</option>
-          <option value="Walk-in">Walk-in</option>
-          <option value="Digital">Digital</option>
-        </select>
+        <Select value={filterType} onValueChange={onTypeChange}>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue placeholder="All Types" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Types</SelectItem>
+            <SelectItem value="Walk-in">Walk-in</SelectItem>
+            <SelectItem value="Digital">Digital</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
       <div className="flex items-center space-x-2">
         <label htmlFor="status-filter" className="text-sm font-medium">
           Status:
         </label>
-        <select
-          id="status-filter"
-          value={filterStatus}
-          onChange={(e) => onStatusChange(e.target.value)}
-          className="border rounded px-2 py-1 text-sm"
-        >
-          <option value="">All Statuses</option>
-          <option value="Scheduled">Scheduled</option>
-          <option value="In Progress">In Progress</option>
-          <option value="Completed">Completed</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
+        <Select value={filterStatus} onValueChange={onStatusChange}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="Scheduled">Scheduled</SelectItem>
+            <SelectItem value="In Progress">In Progress</SelectItem>
+            <SelectItem value="Completed">Completed</SelectItem>
+            <SelectItem value="Cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       
-      <button
-        onClick={onClearFilters}
-        className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded"
-      >
+      <Button variant="outline" onClick={onClearFilters}>
         Clear Filters
-      </button>
+      </Button>
     </div>
   );
 }

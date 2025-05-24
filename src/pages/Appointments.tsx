@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Calendar, Clock, User } from "lucide-react";
 import { AppointmentModal } from "@/components/AppointmentModal";
+import { ConsultationModal } from "@/components/ConsultationModal";
 import { AppointmentFilters } from "@/components/appointments/AppointmentFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +18,8 @@ interface Appointment {
   type: 'Walk-in' | 'Digital';
   status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
   department: 'Neurology' | 'Ophthalmology';
+  patient_id: string;
+  doctor_id: string;
   patients?: { name: string };
   doctors?: { name: string };
 }
@@ -26,6 +29,8 @@ const Appointments = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConsultationOpen, setIsConsultationOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
@@ -46,6 +51,8 @@ const Appointments = () => {
           type,
           status,
           department,
+          patient_id,
+          doctor_id,
           patients (name),
           doctors (name)
         `)
@@ -89,6 +96,16 @@ const Appointments = () => {
     setFilterStatus("");
   };
 
+  const handleEditAppointment = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsModalOpen(true);
+  };
+
+  const handleStartConsultation = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setIsConsultationOpen(true);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Scheduled':
@@ -120,7 +137,10 @@ const Appointments = () => {
           </p>
         </div>
         {userRole === 'admin' && (
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button onClick={() => {
+            setSelectedAppointment(null);
+            setIsModalOpen(true);
+          }}>
             <Plus className="h-4 w-4 mr-2" />
             New Appointment
           </Button>
@@ -205,6 +225,25 @@ const Appointments = () => {
                         {appointment.type}
                       </Badge>
                     </div>
+
+                    <div className="flex flex-col space-y-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleEditAppointment(appointment)}
+                      >
+                        Edit
+                      </Button>
+                      {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
+                        <Button 
+                          variant="default" 
+                          size="sm"
+                          onClick={() => handleStartConsultation(appointment)}
+                        >
+                          Start Consultation
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -216,7 +255,13 @@ const Appointments = () => {
       <AppointmentModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        appointment={null}
+        appointment={selectedAppointment}
+      />
+
+      <ConsultationModal
+        open={isConsultationOpen}
+        onOpenChange={setIsConsultationOpen}
+        appointment={selectedAppointment}
       />
     </div>
   );

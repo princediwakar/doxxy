@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -154,24 +153,22 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
       };
       
       if (isNewAppointment) {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('appointments')
-          .insert(appointmentData)
-          .select();
+          .insert(appointmentData);
           
         if (error) throw error;
         
-        toast.success("Appointment scheduled");
+        toast.success("Appointment scheduled successfully");
       } else {
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('appointments')
           .update(appointmentData)
-          .eq('id', appointment.id)
-          .select();
+          .eq('id', appointment.id);
           
         if (error) throw error;
         
-        toast.success("Appointment updated");
+        toast.success("Appointment updated successfully");
       }
       
       window.location.reload();
@@ -204,6 +201,11 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
     return doctor ? doctor.name : "Select doctor";
   };
   
+  // Filter doctors by selected department
+  const filteredDoctors = doctors.filter((doctor: any) => 
+    doctor.specialization === formData.department
+  );
+  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -227,6 +229,47 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
           <div className="space-y-2">
+            <Label htmlFor="department">Department</Label>
+            <Select 
+              value={formData.department} 
+              onValueChange={(value) => {
+                handleSelectChange("department", value);
+                // Reset doctor selection when department changes
+                setFormData(prev => ({ ...prev, doctor_id: "" }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select department" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Neurology">Neurology</SelectItem>
+                <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="doctor">Doctor</Label>
+            <Select 
+              value={formData.doctor_id} 
+              onValueChange={(value) => handleSelectChange("doctor_id", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select doctor">
+                  {formData.doctor_id ? getDoctorName(formData.doctor_id) : "Select doctor"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {filteredDoctors.map((doctor: any) => (
+                  <SelectItem key={doctor.id} value={doctor.id}>
+                    {doctor.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="patient">Patient</Label>
             <Select 
               value={formData.patient_id} 
@@ -241,27 +284,6 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
                 {patients.map((patient: any) => (
                   <SelectItem key={patient.id} value={patient.id}>
                     {patient.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="doctor">Doctor</Label>
-            <Select 
-              value={formData.doctor_id} 
-              onValueChange={(value) => handleSelectChange("doctor_id", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select doctor">
-                  {formData.doctor_id ? getDoctorName(formData.doctor_id) : "Select doctor"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {doctors.map((doctor: any) => (
-                  <SelectItem key={doctor.id} value={doctor.id}>
-                    {doctor.name} - {doctor.specialization}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -335,23 +357,6 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
               <SelectContent>
                 <SelectItem value="Walk-in">Walk-in</SelectItem>
                 <SelectItem value="Digital">Digital</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="department">Department</Label>
-            <Select 
-              value={formData.department} 
-              onValueChange={(value) => handleSelectChange("department", value)}
-              disabled={!!formData.doctor_id}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select department" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Neurology">Neurology</SelectItem>
-                <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
               </SelectContent>
             </Select>
           </div>
