@@ -163,6 +163,7 @@ export type Database = {
       doctors: {
         Row: {
           availability: string | null
+          bio: string | null
           created_at: string | null
           email: string
           id: string
@@ -172,6 +173,7 @@ export type Database = {
         }
         Insert: {
           availability?: string | null
+          bio?: string | null
           created_at?: string | null
           email: string
           id: string
@@ -181,6 +183,7 @@ export type Database = {
         }
         Update: {
           availability?: string | null
+          bio?: string | null
           created_at?: string | null
           email?: string
           id?: string
@@ -194,6 +197,167 @@ export type Database = {
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medical_records: {
+        Row: {
+          appointment_id: string
+          chief_complaint: string | null
+          created_at: string | null
+          diagnosis: string | null
+          doctor_id: string
+          id: string
+          notes: string | null
+          patient_id: string
+          record_type: string
+          symptoms: string | null
+          treatment_plan: string | null
+        }
+        Insert: {
+          appointment_id: string
+          chief_complaint?: string | null
+          created_at?: string | null
+          diagnosis?: string | null
+          doctor_id: string
+          id?: string
+          notes?: string | null
+          patient_id: string
+          record_type: string
+          symptoms?: string | null
+          treatment_plan?: string | null
+        }
+        Update: {
+          appointment_id?: string
+          chief_complaint?: string | null
+          created_at?: string | null
+          diagnosis?: string | null
+          doctor_id?: string
+          id?: string
+          notes?: string | null
+          patient_id?: string
+          record_type?: string
+          symptoms?: string | null
+          treatment_plan?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medical_records_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_records_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "medical_records_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      neurology_records: {
+        Row: {
+          cognitive_assessment: string | null
+          coordination: string | null
+          created_at: string | null
+          id: string
+          medical_record_id: string
+          motor_function: string | null
+          neurological_exam: string | null
+          reflexes: string | null
+          scan_results: string | null
+          sensory_function: string | null
+        }
+        Insert: {
+          cognitive_assessment?: string | null
+          coordination?: string | null
+          created_at?: string | null
+          id?: string
+          medical_record_id: string
+          motor_function?: string | null
+          neurological_exam?: string | null
+          reflexes?: string | null
+          scan_results?: string | null
+          sensory_function?: string | null
+        }
+        Update: {
+          cognitive_assessment?: string | null
+          coordination?: string | null
+          created_at?: string | null
+          id?: string
+          medical_record_id?: string
+          motor_function?: string | null
+          neurological_exam?: string | null
+          reflexes?: string | null
+          scan_results?: string | null
+          sensory_function?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "neurology_records_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ophthalmology_records: {
+        Row: {
+          color_vision: string | null
+          created_at: string | null
+          eye_examination: string | null
+          fundoscopy: string | null
+          id: string
+          intraocular_pressure_left: string | null
+          intraocular_pressure_right: string | null
+          medical_record_id: string
+          peripheral_vision: string | null
+          visual_acuity_left: string | null
+          visual_acuity_right: string | null
+        }
+        Insert: {
+          color_vision?: string | null
+          created_at?: string | null
+          eye_examination?: string | null
+          fundoscopy?: string | null
+          id?: string
+          intraocular_pressure_left?: string | null
+          intraocular_pressure_right?: string | null
+          medical_record_id: string
+          peripheral_vision?: string | null
+          visual_acuity_left?: string | null
+          visual_acuity_right?: string | null
+        }
+        Update: {
+          color_vision?: string | null
+          created_at?: string | null
+          eye_examination?: string | null
+          fundoscopy?: string | null
+          id?: string
+          intraocular_pressure_left?: string | null
+          intraocular_pressure_right?: string | null
+          medical_record_id?: string
+          peripheral_vision?: string | null
+          visual_acuity_left?: string | null
+          visual_acuity_right?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ophthalmology_records_medical_record_id_fkey"
+            columns: ["medical_record_id"]
+            isOneToOne: false
+            referencedRelation: "medical_records"
             referencedColumns: ["id"]
           },
         ]
@@ -238,6 +402,8 @@ export type Database = {
         Row: {
           consultation_id: string
           created_at: string | null
+          doctor_id: string | null
+          follow_up_date: string | null
           id: string
           instructions: string | null
           medications: Json
@@ -246,6 +412,8 @@ export type Database = {
         Insert: {
           consultation_id: string
           created_at?: string | null
+          doctor_id?: string | null
+          follow_up_date?: string | null
           id?: string
           instructions?: string | null
           medications?: Json
@@ -254,6 +422,8 @@ export type Database = {
         Update: {
           consultation_id?: string
           created_at?: string | null
+          doctor_id?: string | null
+          follow_up_date?: string | null
           id?: string
           instructions?: string | null
           medications?: Json
@@ -265,6 +435,13 @@ export type Database = {
             columns: ["consultation_id"]
             isOneToOne: false
             referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
             referencedColumns: ["id"]
           },
           {

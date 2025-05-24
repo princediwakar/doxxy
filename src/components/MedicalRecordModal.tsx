@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   Dialog, 
@@ -11,19 +12,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { NeurologyForm } from "./medical-records/NeurologyForm";
 import { OphthalmologyForm } from "./medical-records/OphthalmologyForm";
 import { PrescriptionForm } from "./medical-records/PrescriptionForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { MedicalRecord, Appointment, NeurologyRecord, OphthalmologyRecord, Prescription } from "@/types/database";
 
 interface MedicalRecordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment: any | null;
-  existingRecord?: any;
+  appointment: Appointment | null;
+  existingRecord?: MedicalRecord;
 }
 
 export function MedicalRecordModal({ 
@@ -35,7 +35,7 @@ export function MedicalRecordModal({
   const [activeTab, setActiveTab] = useState("general");
   const [loading, setLoading] = useState(false);
   const isExistingRecord = !!existingRecord;
-  const recordType = appointment?.doctorSpecialty || '';
+  const recordType = appointment?.department || '';
 
   // Form states
   const [generalData, setGeneralData] = useState({
@@ -68,9 +68,9 @@ export function MedicalRecordModal({
   });
   
   const [prescriptionData, setPrescriptionData] = useState({
-    medicines: [],
+    medicines: [] as any[],
     instructions: "",
-    follow_up_date: null
+    follow_up_date: null as Date | null
   });
 
   useEffect(() => {
@@ -257,7 +257,7 @@ export function MedicalRecordModal({
           const { error: prescriptionError } = await supabase
             .from('prescriptions')
             .update({
-              medicines: prescriptionData.medicines,
+              medications: prescriptionData.medicines,
               instructions: prescriptionData.instructions,
               follow_up_date: prescriptionData.follow_up_date ? 
                 new Date(prescriptionData.follow_up_date).toISOString().split('T')[0] : null
@@ -270,10 +270,10 @@ export function MedicalRecordModal({
           const { error: prescriptionError } = await supabase
             .from('prescriptions')
             .insert({
-              medical_record_id: medicalRecordId,
+              consultation_id: appointment.id, // Using appointment_id as consultation_id for now
               patient_id: appointment.patient_id,
               doctor_id: appointment.doctor_id,
-              medicines: prescriptionData.medicines,
+              medications: prescriptionData.medicines,
               instructions: prescriptionData.instructions,
               follow_up_date: prescriptionData.follow_up_date ? 
                 new Date(prescriptionData.follow_up_date).toISOString().split('T')[0] : null
@@ -313,8 +313,8 @@ export function MedicalRecordModal({
           <DialogTitle>{isExistingRecord ? "Edit Medical Record" : "New Medical Record"}</DialogTitle>
           <DialogDescription>
             {isExistingRecord 
-              ? `Updating medical record for ${appointment?.patient}`
-              : `Creating medical record for ${appointment?.patient}`}
+              ? `Updating medical record for ${appointment?.patients?.name}`
+              : `Creating medical record for ${appointment?.patients?.name}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -322,16 +322,16 @@ export function MedicalRecordModal({
           <div className="bg-muted/50 p-3 rounded-md">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span className="font-medium">Patient:</span> {appointment.patient}
+                <span className="font-medium">Patient:</span> {appointment.patients?.name}
               </div>
               <div>
-                <span className="font-medium">Doctor:</span> {appointment.doctor}
+                <span className="font-medium">Doctor:</span> {appointment.doctors?.name}
               </div>
               <div>
                 <span className="font-medium">Date:</span> {new Date(appointment.date).toLocaleDateString()}
               </div>
               <div>
-                <span className="font-medium">Department:</span> {appointment.doctorSpecialty}
+                <span className="font-medium">Department:</span> {appointment.department}
               </div>
             </div>
           </div>
@@ -426,8 +426,8 @@ export function MedicalRecordModal({
             <PrescriptionForm
               data={prescriptionData}
               setData={setPrescriptionData}
-              doctorName={appointment?.doctor || ''}
-              patientName={appointment?.patient || ''}
+              doctorName={appointment?.doctors?.name || ''}
+              patientName={appointment?.patients?.name || ''}
               specialty={recordType}
             />
           </TabsContent>

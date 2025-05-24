@@ -7,33 +7,26 @@ import {
   CardContent, 
   CardHeader, 
   CardTitle,
-  CardDescription,
-  CardFooter
+  CardDescription
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
 import { Search, FileText, Eye, Printer } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { MedicalRecordModal } from "@/components/MedicalRecordModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MedicalRecord, Appointment } from "@/types/database";
 
 const MedicalRecords = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [openModal, setOpenModal] = useState(false);
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [medicalRecords, setMedicalRecords] = useState([]);
+  const [selectedRecord, setSelectedRecord] = useState<MedicalRecord | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [appointments, setAppointments] = useState([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   useEffect(() => {
     fetchMedicalRecords();
@@ -56,7 +49,7 @@ const MedicalRecords = () => {
       if (error) throw error;
       
       // Fetch specialty-specific records and prescriptions for each medical record
-      const enhancedRecords = await Promise.all(data.map(async (record) => {
+      const enhancedRecords = await Promise.all((data || []).map(async (record: any) => {
         // Get neurology records if applicable
         const { data: neurologyData } = await supabase
           .from('neurology_records')
@@ -75,7 +68,7 @@ const MedicalRecords = () => {
         const { data: prescriptionData } = await supabase
           .from('prescriptions')
           .select('*')
-          .eq('medical_record_id', record.id)
+          .eq('consultation_id', record.appointment_id)
           .maybeSingle();
           
         return {
@@ -83,7 +76,7 @@ const MedicalRecords = () => {
           neurologyRecord: neurologyData || null,
           ophthalmologyRecord: ophthalmologyData || null,
           prescription: prescriptionData || null
-        };
+        } as MedicalRecord;
       }));
       
       setMedicalRecords(enhancedRecords);
@@ -110,18 +103,12 @@ const MedicalRecords = () => {
       if (error) throw error;
       
       // Format the appointments for easy use
-      const formattedAppointments = data.map(app => ({
-        id: app.id,
-        patient_id: app.patient_id,
-        doctor_id: app.doctor_id,
-        patient: app.patients.name,
-        doctor: app.doctors.name,
-        doctorSpecialty: app.doctors.specialization,
-        date: app.date,
-        time: app.time,
-        status: app.status,
-        type: app.type
-      }));
+      const formattedAppointments = (data || []).map((app: any) => ({
+        ...app,
+        patient: app.patients?.name,
+        doctor: app.doctors?.name,
+        doctorSpecialty: app.doctors?.specialization
+      })) as Appointment[];
       
       setAppointments(formattedAppointments);
     } catch (error) {
@@ -129,18 +116,19 @@ const MedicalRecords = () => {
     }
   };
 
-  const handleViewRecord = (record) => {
+  const handleViewRecord = (record: MedicalRecord) => {
     // Prepare the appointment data needed for the modal
-    const appointmentData = {
+    const appointmentData: Appointment = {
       id: record.appointment_id,
       patient_id: record.patient_id,
       doctor_id: record.doctor_id,
-      patient: record.patients.name,
-      doctor: record.doctors.name,
-      doctorSpecialty: record.doctors.specialization,
-      date: record.appointments.date,
-      time: record.appointments.time,
-      status: record.appointments.status
+      date: record.appointments?.date || '',
+      time: record.appointments?.time || '',
+      status: record.appointments?.status || 'Completed',
+      type: 'Walk-in',
+      department: record.doctors?.specialization || 'Neurology',
+      patients: record.patients,
+      doctors: record.doctors
     };
     
     setSelectedRecord(record);
@@ -148,13 +136,13 @@ const MedicalRecords = () => {
     setOpenModal(true);
   };
 
-  const handleCreateRecord = (appointment) => {
+  const handleCreateRecord = (appointment: Appointment) => {
     setSelectedRecord(null);
     setSelectedAppointment(appointment);
     setOpenModal(true);
   };
 
-  const handlePrint = (record) => {
+  const handlePrint = (record: MedicalRecord) => {
     // Create a printable view in a new window
     const printWindow = window.open('', '_blank');
     
@@ -198,13 +186,13 @@ const MedicalRecords = () => {
     // Prescription section
     let prescriptionData = '';
     if (record.prescription) {
-      const medicines = record.prescription.medicines || [];
+      const medicines = record.prescription.medications || [];
       let medicinesList = '';
       
       if (medicines.length > 0) {
         medicinesList = `
           <ul class="list-disc pl-5 mt-2">
-            ${medicines.map(med => `<li>
+            ${medicines.map((med: any) => `<li>
               <strong>${med.name}</strong> - ${med.dosage}
               ${med.frequency ? ` • ${med.frequency}` : ''}
               ${med.duration ? ` • ${med.duration}` : ''}
@@ -233,7 +221,7 @@ const MedicalRecords = () => {
     printWindow.document.write(`
       <html>
         <head>
-          <title>Medical Record - ${record.patients.name}</title>
+          <title>Medical Record - ${record.patients?.name}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             .header { text-align: center; margin-bottom: 20px; }
@@ -251,7 +239,7 @@ const MedicalRecords = () => {
           </div>
           
           <div class="header">
-            <h1 style="margin-bottom: 5px;">MediClinic</h1>
+            <h1 style="margin-bottom: 5px;">Neurovision Clinic</h1>
             <h2>${record.record_type} Department</h2>
             <p>Medical Record</p>
           </div>
@@ -259,12 +247,12 @@ const MedicalRecords = () => {
           <div class="section">
             <table style="width: 100%;">
               <tr>
-                <td><strong>Patient:</strong> ${record.patients.name}</td>
-                <td><strong>Date:</strong> ${format(new Date(record.created_at), 'MMM dd, yyyy')}</td>
+                <td><strong>Patient:</strong> ${record.patients?.name}</td>
+                <td><strong>Date:</strong> ${format(new Date(record.created_at || ''), 'MMM dd, yyyy')}</td>
               </tr>
               <tr>
-                <td><strong>Doctor:</strong> ${record.doctors.name}</td>
-                <td><strong>Department:</strong> ${record.doctors.specialization}</td>
+                <td><strong>Doctor:</strong> ${record.doctors?.name}</td>
+                <td><strong>Department:</strong> ${record.doctors?.specialization}</td>
               </tr>
             </table>
           </div>
@@ -285,7 +273,7 @@ const MedicalRecords = () => {
           <hr />
           
           <div class="footer">
-            <p>This is an official medical record from MediClinic. Please keep for your records.</p>
+            <p>This is an official medical record from Neurovision Clinic. Please keep for your records.</p>
             <p>Generated on ${format(new Date(), 'MMMM dd, yyyy - h:mm a')}</p>
           </div>
         </body>
@@ -372,7 +360,7 @@ const MedicalRecords = () => {
                                   <Badge variant="outline">{record.record_type}</Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                  Dr. {record.doctors?.name} • {format(new Date(record.created_at), 'MMM dd, yyyy')}
+                                  Dr. {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
                                 </p>
                               </div>
                               <div className="flex gap-2 mt-2 sm:mt-0">
@@ -428,12 +416,12 @@ const MedicalRecords = () => {
                         <div key={appointment.id} className="p-3 border rounded-md">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">{appointment.patient}</p>
+                              <p className="font-medium">{appointment.patients?.name}</p>
                               <p className="text-xs text-muted-foreground">
                                 {format(new Date(appointment.date), 'MMM dd')} • {appointment.time}
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                {appointment.doctorSpecialty} • Dr. {appointment.doctor}
+                                {appointment.department} • Dr. {appointment.doctors?.name}
                               </p>
                             </div>
                             <Button 
@@ -484,7 +472,7 @@ const MedicalRecords = () => {
                             <Badge variant="outline">Neurology</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">
-                            Dr. {record.doctors?.name} • {format(new Date(record.created_at), 'MMM dd, yyyy')}
+                            Dr. {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
                           </p>
                           <div className="text-sm mb-4">
                             <p className="font-medium">Diagnosis:</p>
@@ -561,7 +549,7 @@ const MedicalRecords = () => {
                             <Badge variant="outline">Ophthalmology</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">
-                            Dr. {record.doctors?.name} • {format(new Date(record.created_at), 'MMM dd, yyyy')}
+                            Dr. {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
                           </p>
                           <div className="text-sm mb-4">
                             <p className="font-medium">Diagnosis:</p>
