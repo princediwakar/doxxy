@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Doctor, Patient } from "@/types/database";
 
-interface Appointment {
+export interface AppointmentType {
   id: string;
   patient_id: string;
   doctor_id: string;
@@ -32,15 +32,20 @@ interface Appointment {
   department: "Neurology" | "Ophthalmology";
   notes?: string;
   created_at?: string;
+  patients?: { name: string }[] | null;
+  doctors?: { name: string, specialization: string }[] | null;
 }
 
 interface AppointmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment: Appointment | null;
+  appointment: AppointmentType | null;
+  patient?: Patient;
+  initialPatient?: Patient;
+  onAppointmentScheduled?: () => void;
 }
 
-export function AppointmentModal({ open, onOpenChange, appointment }: AppointmentModalProps) {
+export function AppointmentModal({ open, onOpenChange, appointment, patient, initialPatient, onAppointmentScheduled }: AppointmentModalProps) {
   const isNewAppointment = !appointment;
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -62,7 +67,9 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
   useEffect(() => {
     if (open) {
       fetchDoctors();
-      fetchPatients();
+      if (!patient) {
+        fetchPatients();
+      }
       
       if (appointment) {
         setFormData({
@@ -76,9 +83,21 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
           department: appointment.department || "Neurology"
         });
         setSelectedDate(new Date(appointment.date));
+      } else if (patient) {
+        setFormData({
+          patient_id: patient.id || "",
+          doctor_id: "",
+          date: new Date(),
+          time: "10:00 AM",
+          type: "Walk-in",
+          status: "Scheduled",
+          notes: "",
+          department: "Neurology"
+        });
+        setSelectedDate(new Date());
       } else {
         setFormData({
-          patient_id: "",
+          patient_id: initialPatient?.id || "",
           doctor_id: "",
           date: new Date(),
           time: "10:00 AM",
@@ -89,9 +108,21 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         });
         setSelectedDate(new Date());
       }
+      if (initialPatient) {
+        setFormData(prev => ({
+          ...prev,
+          patient_id: initialPatient.id || "",
+        }));
+        setPatients(prevPatients => {
+          if (!prevPatients.find(p => p.id === initialPatient.id)) {
+            return [...prevPatients, initialPatient];
+          }
+          return prevPatients;
+        });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, appointment]);
+  }, [open, appointment, patient, initialPatient]);
 
   const fetchDoctors = async () => {
     try {
@@ -188,6 +219,10 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         }
         
         toast.success("Appointment scheduled successfully");
+        onOpenChange(true);
+        if (onAppointmentScheduled) {
+          onAppointmentScheduled();
+        }
       } else {
         const { error } = await supabase
           .from('appointments')
@@ -201,8 +236,6 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         
         toast.success("Appointment updated successfully");
       }
-      
-      window.location.reload();
     } catch (error) {
       console.error("Error saving appointment:", error);
       toast.error(isNewAppointment ? "Failed to schedule appointment" : "Failed to update appointment");
@@ -254,6 +287,15 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
             <Badge variant={getStatusColor(appointment?.status)}>
               {appointment?.status}
             </Badge>
+          </div>
+        )}
+
+        {patient && !appointment && (
+          <div className="mb-4">
+            <Label>Patient</Label>
+            <div className="flex items-center">
+              <Badge>{patient.name}</Badge>
+            </div>
           </div>
         )}
 

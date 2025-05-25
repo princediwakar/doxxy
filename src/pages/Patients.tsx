@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { PatientModal } from "@/components/PatientModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { AppointmentModal } from "@/components/AppointmentModal";
 
 // Patient type from your DB
 interface Patient {
@@ -45,7 +46,9 @@ interface EnhancedPatient extends Patient {
 
 const Patients = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [openModal, setOpenModal] = useState(false);
+  const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const [patientForAppointment, setPatientForAppointment] = useState<Patient | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<EnhancedPatient | null>(null);
   const [patients, setPatients] = useState<EnhancedPatient[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,14 +136,13 @@ const Patients = () => {
           }
         }
 
-        // Format last visit date if exists
+        // Format last visit date if exists - TEMPORARILY REMOVING STATUS FILTER FOR DEBUGGING
         let lastVisit = '';
         try {
           const { data: lastVisitData } = await supabase
             .from('appointments')
             .select('date')
             .eq('patient_id', patient.id)
-            .eq('status', 'Completed')
             .order('date', { ascending: false })
             .limit(1)
             .single();
@@ -169,19 +171,30 @@ const Patients = () => {
 
   const handlePatientClick = (patient: EnhancedPatient) => {
     setSelectedPatient(patient);
-    setOpenModal(true);
+    setIsPatientModalOpen(true);
   };
 
   const handleNewPatient = () => {
     setSelectedPatient(null);
-    setOpenModal(true);
+    setIsPatientModalOpen(true);
   };
 
   const handleModalClose = (newPatient?: boolean) => {
-    if (newPatient) {
-      fetchPatients();
+    if (isPatientModalOpen) {
+      setIsPatientModalOpen(false);
+      if (newPatient) {
+        fetchPatients();
+      }
+    } else if (isAppointmentModalOpen) {
+      setIsAppointmentModalOpen(false);
+      setPatientForAppointment(null);
     }
-    setOpenModal(false);
+  };
+
+  const handlePatientCreated = (patient: Patient) => {
+    setPatientForAppointment(patient);
+    setIsPatientModalOpen(false);
+    setIsAppointmentModalOpen(true);
   };
 
   // Filter patients based on search term
@@ -326,9 +339,17 @@ const Patients = () => {
       )}
 
       <PatientModal
-        open={openModal}
+        open={isPatientModalOpen}
         onOpenChange={handleModalClose}
-        patient={selectedPatient}
+        patient={selectedPatient ? patients.find(p => p.id === selectedPatient.id) || null : null}
+        onPatientCreated={handlePatientCreated}
+      />
+
+      <AppointmentModal
+        open={isAppointmentModalOpen}
+        onOpenChange={handleModalClose}
+        appointment={null}
+        initialPatient={patientForAppointment}
       />
     </div>
   );

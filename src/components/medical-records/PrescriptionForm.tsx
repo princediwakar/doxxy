@@ -124,9 +124,7 @@ export function PrescriptionForm({
       <div className={cn("border rounded-md p-4", style.borderColor, style.gradientBg)}>
         <div className={cn("text-center mb-4 pb-3 border-b", style.borderColor)}>
           <div className="flex items-center justify-center gap-2 mb-1">
-            <span className="text-xl">{style.icon}</span>
             <h2 className={cn("text-xl font-bold", style.titleColor)}>MediClinic</h2>
-            <span className="text-xl">{style.icon}</span>
           </div>
           <p className="text-sm text-muted-foreground">{specialty} Department</p>
         </div>

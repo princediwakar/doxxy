@@ -16,13 +16,21 @@ import { OphthalmologyForm } from "./medical-records/OphthalmologyForm";
 import { PrescriptionForm } from "./medical-records/PrescriptionForm";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { MedicalRecord, Appointment, NeurologyRecord, OphthalmologyRecord, Prescription } from "@/types/database";
+import { Tables } from "@/integrations/supabase/types";
+import { AppointmentType } from "./AppointmentModal";
+
+// Define a type for MedicalRecord with potential joined tables
+interface MedicalRecordWithJoins extends Tables<'medical_records'> {
+  neurology_records?: Tables<'neurology_records'>[] | null; // Joined neurology records
+  ophthalmology_records?: Tables<'ophthalmology_records'>[] | null; // Joined ophthalmology records
+  prescriptions?: Tables<'prescriptions'>[] | null; // Joined prescriptions
+}
 
 interface MedicalRecordModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment: Appointment | null;
-  existingRecord?: MedicalRecord;
+  appointment: AppointmentType | null;
+  existingRecord?: MedicalRecordWithJoins;
 }
 
 export function MedicalRecordModal({ 
@@ -67,7 +75,7 @@ export function MedicalRecordModal({
   });
   
   const [prescriptionData, setPrescriptionData] = useState({
-    medicines: [] as any[],
+    medicines: [] as { name: string; dosage: string; frequency: string; duration: string; }[],
     instructions: "",
     follow_up_date: null as Date | null
   });
@@ -83,39 +91,50 @@ export function MedicalRecordModal({
         treatment_plan: existingRecord.treatment_plan || ""
       });
       
-      // If record type specific data exists, load it
-      if (existingRecord.neurologyRecord) {
+      // If record type specific data exists, load it using correct property names from join/fetch
+      // Assume existingRecord includes joined data or fetch separately if needed
+      // For now, assuming existingRecord might have properties matching joined table names or fetched data shape
+      if (existingRecord.neurology_records?.[0]) {
+        const neuroRecord = existingRecord.neurology_records[0];
         setNeurologyData({
-          neurological_exam: existingRecord.neurologyRecord.neurological_exam || "",
-          motor_function: existingRecord.neurologyRecord.motor_function || "",
-          sensory_function: existingRecord.neurologyRecord.sensory_function || "",
-          reflexes: existingRecord.neurologyRecord.reflexes || "",
-          coordination: existingRecord.neurologyRecord.coordination || "",
-          cognitive_assessment: existingRecord.neurologyRecord.cognitive_assessment || "",
-          scan_results: existingRecord.neurologyRecord.scan_results || ""
+          neurological_exam: neuroRecord.neurological_exam || "",
+          motor_function: neuroRecord.motor_function || "",
+          sensory_function: neuroRecord.sensory_function || "",
+          reflexes: neuroRecord.reflexes || "",
+          coordination: neuroRecord.coordination || "",
+          cognitive_assessment: neuroRecord.cognitive_assessment || "",
+          scan_results: neuroRecord.scan_results || ""
         });
       }
       
-      if (existingRecord.ophthalmologyRecord) {
+      if (existingRecord.ophthalmology_records?.[0]) {
+        const ophthRecord = existingRecord.ophthalmology_records[0];
         setOphthalmologyData({
-          visual_acuity_right: existingRecord.ophthalmologyRecord.visual_acuity_right || "",
-          visual_acuity_left: existingRecord.ophthalmologyRecord.visual_acuity_left || "",
-          intraocular_pressure_right: existingRecord.ophthalmologyRecord.intraocular_pressure_right || "",
-          intraocular_pressure_left: existingRecord.ophthalmologyRecord.intraocular_pressure_left || "",
-          eye_examination: existingRecord.ophthalmologyRecord.eye_examination || "",
-          fundoscopy: existingRecord.ophthalmologyRecord.fundoscopy || "",
-          color_vision: existingRecord.ophthalmologyRecord.color_vision || "",
-          peripheral_vision: existingRecord.ophthalmologyRecord.peripheral_vision || ""
+          visual_acuity_right: ophthRecord.visual_acuity_right || "",
+          visual_acuity_left: ophthRecord.visual_acuity_left || "",
+          intraocular_pressure_right: ophthRecord.intraocular_pressure_right || "",
+          intraocular_pressure_left: ophthRecord.intraocular_pressure_left || "",
+          eye_examination: ophthRecord.eye_examination || "",
+          fundoscopy: ophthRecord.fundoscopy || "",
+          color_vision: ophthRecord.color_vision || "",
+          peripheral_vision: ophthRecord.peripheral_vision || ""
         });
       }
       
-      if (existingRecord.prescription) {
+      // Assuming prescription might be a direct property or fetched separately
+      // If fetched via join on medical_records, the property might be 'prescriptions' (array) or 'prescription' (single object) depending on the query
+      // For now, assuming a 'prescriptions' array property on the fetched medical record
+      if (existingRecord.prescriptions?.[0]) {
+        const prescriptionRecord = existingRecord.prescriptions[0];
         setPrescriptionData({
-          medicines: existingRecord.prescription.medications || [],
-          instructions: existingRecord.prescription.instructions || "",
-          follow_up_date: existingRecord.prescription.follow_up_date ? new Date(existingRecord.prescription.follow_up_date) : null
+          medicines: Array.isArray(prescriptionRecord.medications)
+            ? prescriptionRecord.medications as { name: string; dosage: string; frequency: string; duration: string; }[]
+            : [],
+          instructions: prescriptionRecord.instructions || "",
+          follow_up_date: prescriptionRecord.follow_up_date ? new Date(prescriptionRecord.follow_up_date) : null
         });
       }
+      
     } else if (open) {
       // Reset form for new record
       setGeneralData({
@@ -208,12 +227,13 @@ export function MedicalRecordModal({
       
       // Step 2: Save specialty-specific data
       if (recordType === 'Neurology') {
-        if (existingRecord?.neurologyRecord?.id) {
+        // Check if existing neurology record exists based on the fetched data structure
+        if (existingRecord?.neurology_records?.[0]?.id) {
           // Update existing neurology record
           const { error: neurologyError } = await supabase
             .from('neurology_records')
-            .update(neurologyData)
-            .eq('id', existingRecord.neurologyRecord.id);
+            .update(neurologyData as any)
+            .eq('id', existingRecord.neurology_records[0].id);
             
           if (neurologyError) throw neurologyError;
         } else {
@@ -228,12 +248,13 @@ export function MedicalRecordModal({
           if (neurologyError) throw neurologyError;
         }
       } else if (recordType === 'Ophthalmology') {
-        if (existingRecord?.ophthalmologyRecord?.id) {
+        // Check if existing ophthalmology record exists based on the fetched data structure
+        if (existingRecord?.ophthalmology_records?.[0]?.id) {
           // Update existing ophthalmology record
           const { error: ophthalmologyError } = await supabase
             .from('ophthalmology_records')
-            .update(ophthalmologyData)
-            .eq('id', existingRecord.ophthalmologyRecord.id);
+            .update(ophthalmologyData as any)
+            .eq('id', existingRecord.ophthalmology_records[0].id);
             
           if (ophthalmologyError) throw ophthalmologyError;
         } else {
@@ -251,7 +272,8 @@ export function MedicalRecordModal({
       
       // Step 3: Save prescription if it exists
       if (prescriptionData.medicines.length > 0) {
-        if (existingRecord?.prescription?.id) {
+        // Check if existing prescription exists based on the fetched data structure
+        if (existingRecord?.prescriptions?.[0]?.id) {
           // Update existing prescription
           const { error: prescriptionError } = await supabase
             .from('prescriptions')
@@ -261,7 +283,7 @@ export function MedicalRecordModal({
               follow_up_date: prescriptionData.follow_up_date ? 
                 new Date(prescriptionData.follow_up_date).toISOString().split('T')[0] : null
             })
-            .eq('id', existingRecord.prescription.id);
+            .eq('id', existingRecord.prescriptions[0].id);
             
           if (prescriptionError) throw prescriptionError;
         } else {
@@ -269,7 +291,7 @@ export function MedicalRecordModal({
           const { error: prescriptionError } = await supabase
             .from('prescriptions')
             .insert({
-              consultation_id: appointment.id, // Using appointment_id as consultation_id for now
+              consultation_id: appointment.id,
               patient_id: appointment.patient_id,
               doctor_id: appointment.doctor_id,
               medications: prescriptionData.medicines,
@@ -312,8 +334,8 @@ export function MedicalRecordModal({
           <DialogTitle>{isExistingRecord ? "Edit Medical Record" : "New Medical Record"}</DialogTitle>
           <DialogDescription>
             {isExistingRecord 
-              ? `Updating medical record for ${appointment?.patients?.name}`
-              : `Creating medical record for ${appointment?.patients?.name}`}
+              ? `Updating medical record for ${appointment?.patients?.[0]?.name}`
+              : `Creating medical record for ${appointment?.patients?.[0]?.name}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -321,10 +343,10 @@ export function MedicalRecordModal({
           <div className="bg-muted/50 p-3 rounded-md">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <span className="font-medium">Patient:</span> {appointment.patients?.name}
+                <span className="font-medium">Patient:</span> {appointment.patients?.[0]?.name || 'N/A'}
               </div>
               <div>
-                <span className="font-medium">Doctor:</span> {appointment.doctors?.name}
+                <span className="font-medium">Doctor:</span> {appointment.doctors?.[0]?.name || 'N/A'}
               </div>
               <div>
                 <span className="font-medium">Date:</span> {new Date(appointment.date).toLocaleDateString()}
@@ -425,8 +447,8 @@ export function MedicalRecordModal({
             <PrescriptionForm
               data={prescriptionData}
               setData={setPrescriptionData}
-              doctorName={appointment?.doctors?.name || ''}
-              patientName={appointment?.patients?.name || ''}
+              doctorName={appointment?.doctors?.[0]?.name || ''}
+              patientName={appointment?.patients?.[0]?.name || ''}
               specialty={recordType}
             />
           </TabsContent>

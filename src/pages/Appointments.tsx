@@ -1,49 +1,54 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Calendar, Clock, User } from "lucide-react";
 import { AppointmentModal } from "@/components/AppointmentModal";
-import { ConsultationModal } from "@/components/ConsultationModal";
+import { MedicalRecordModal } from "@/components/MedicalRecordModal";
 import { AppointmentFilters } from "@/components/appointments/AppointmentFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { AppointmentType } from "@/components/AppointmentModal";
+import { BillingModal } from "@/components/BillingModal";
 
-interface Appointment {
+// Define interface for the exact structure returned by the get_appointments_with_details RPC
+interface RpcAppointmentResult {
   id: string;
-  date: string;
-  time: string;
-  type: 'Walk-in' | 'Digital';
-  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
-  department: 'Neurology' | 'Ophthalmology';
+  date: string; // Assuming date is string from RPC
+  appointment_time: string; // Name from RPC
+  type: string; // Type from RPC is string
+  status: string; // Status from RPC is string
+  department: string; // Department from RPC is string
   patient_id: string;
   doctor_id: string;
-  patient_name?: string;
-  doctor_name?: string;
+  notes?: string | null; // Assuming notes can be null
+  created_at?: string; // Assuming created_at is string
+  patient_name: string; // Flattened patient name from RPC
+  doctor_name: string; // Flattened doctor name from RPC
+  doctor_specialization?: string; // Assuming specialization is also returned
 }
 
 const Appointments = () => {
   const { userRole, user } = useAuth();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  // State should hold AppointmentType[]
+  const [appointments, setAppointments] = useState<AppointmentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isConsultationOpen, setIsConsultationOpen] = useState(false);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isMedicalRecordModalOpen, setIsMedicalRecordModalOpen] = useState(false);
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  // selectedAppointment should also be AppointmentType
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
   const [filterType, setFilterType] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [userRole, user]);
-
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     try {
       setLoading(true);
-      
-      let { data, error } = await supabase
-        .rpc('get_appointments_with_details');
+
+      // Explicitly type the data from RPC
+      const { data, error } = await supabase
+        .rpc('get_appointments_with_details', {}, { count: 'exact' }) as { data: RpcAppointmentResult[] | null, error: unknown }; // Type the data, changed any to unknown
 
       if (error) {
         console.error('Error fetching appointments:', error);
@@ -52,24 +57,54 @@ const Appointments = () => {
         return;
       }
 
-      // If user is a doctor, filter by their appointments only
+      // Map the RpcAppointmentResult[] to AppointmentType[]
+      const formattedAppointments: AppointmentType[] = (data || []).map(rpcApt => ({
+        id: rpcApt.id,
+        patient_id: rpcApt.patient_id,
+        doctor_id: rpcApt.doctor_id,
+        date: rpcApt.date,
+        time: rpcApt.appointment_time, // Map RPC's appointment_time to time
+        type: rpcApt.type as 'Walk-in' | 'Digital', // Cast string to union type
+        status: rpcApt.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled', // Cast string to union type
+        department: rpcApt.department as 'Neurology' | 'Ophthalmology', // Cast string to union type
+        notes: rpcApt.notes || undefined, // Map notes, handle null
+        created_at: rpcApt.created_at || undefined, // Map created_at, handle null
+        // Create nested patient object from flattened name
+        patients: rpcApt.patient_name ? [{ name: rpcApt.patient_name }] : null, // Supabase often returns relationships as arrays even for one-to-one
+        // Create nested doctor object from flattened name and specialization
+        doctors: rpcApt.doctor_name ? [{ name: rpcApt.doctor_name, specialization: rpcApt.doctor_specialization || '' }] : null, // Assuming doctors relationship is also array
+      }));
+
+      // If user is a doctor, filter by their appointments only after mapping
+      let appointmentsToSet = formattedAppointments;
       if (userRole === 'doctor' && user) {
-        data = data?.filter((appointment: any) => appointment.doctor_id === user.id) || [];
+        appointmentsToSet = appointmentsToSet.filter(appointment => appointment.doctor_id === user.id);
       }
 
-      setAppointments(data || []);
-    } catch (error) {
+      setAppointments(appointmentsToSet);
+    } catch (error: unknown) { // Use unknown for catch clause variable
       console.error('Error fetching appointments:', error);
       toast.error('Failed to load appointments');
       setAppointments([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [userRole, user, setAppointments, toast]); // Add dependencies for useCallback
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]); // Include the memoized function in useEffect dependencies
 
   const filteredAppointments = appointments.filter(appointment => {
-    if (filterType && appointment.type !== filterType) return false;
-    if (filterStatus && appointment.status !== filterStatus) return false;
+    // Filtering logic should now work correctly with AppointmentType
+    // Apply type filter if filterType is not 'all' and not empty
+    if (filterType && filterType !== 'all' && appointment.type !== filterType) {
+      return false;
+    }
+    // Apply status filter if filterStatus is not 'all' and not empty
+    if (filterStatus && filterStatus !== 'all' && appointment.status !== filterStatus) {
+      return false;
+    }
     return true;
   });
 
@@ -86,14 +121,20 @@ const Appointments = () => {
     setFilterStatus("");
   };
 
-  const handleEditAppointment = (appointment: Appointment) => {
+  const handleEditAppointment = (appointment: AppointmentType) => {
     setSelectedAppointment(appointment);
     setIsModalOpen(true);
   };
 
-  const handleStartConsultation = (appointment: Appointment) => {
+  const handleStartConsultation = (appointment: AppointmentType) => {
     setSelectedAppointment(appointment);
-    setIsConsultationOpen(true);
+    setIsMedicalRecordModalOpen(true);
+  };
+
+  const handleRaiseBill = (appointment: AppointmentType) => {
+    console.log("Raise Bill clicked for appointment:", appointment);
+    setSelectedAppointment(appointment);
+    setIsBillingModalOpen(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -185,11 +226,11 @@ const Appointments = () => {
                     </div>
                     <div>
                       <h3 className="font-medium">
-                        {appointment.patient_name || 'Unknown Patient'}
+                        {appointment.patients?.[0]?.name || 'Unknown Patient'}
                       </h3>
                       <div className="flex items-center text-sm text-muted-foreground mt-1">
                         <User className="h-4 w-4 mr-1" />
-                        <span>Dr. {appointment.doctor_name || 'Unknown Doctor'}</span>
+                        <span>{appointment.doctors?.[0]?.name || 'Unknown Doctor'}</span>
                         <span className="mx-2">•</span>
                         <span>{appointment.department}</span>
                       </div>
@@ -203,7 +244,7 @@ const Appointments = () => {
                         {appointment.time}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {new Date(appointment.date).toLocaleDateString()}
+                        {appointment.date ? new Date(appointment.date).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                     
@@ -224,7 +265,7 @@ const Appointments = () => {
                       >
                         Edit
                       </Button>
-                      {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
+                      {appointment.status === 'Scheduled' || appointment.status === 'In Progress' ? (
                         <Button 
                           variant="default" 
                           size="sm"
@@ -232,7 +273,17 @@ const Appointments = () => {
                         >
                           Start Consultation
                         </Button>
-                      )}
+                      ) : null}
+                      
+                      {appointment.status === 'In Progress' || appointment.status === 'Completed' ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleRaiseBill(appointment)}
+                        >
+                          Raise Bill
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -248,9 +299,16 @@ const Appointments = () => {
         appointment={selectedAppointment}
       />
 
-      <ConsultationModal
-        open={isConsultationOpen}
-        onOpenChange={setIsConsultationOpen}
+      <MedicalRecordModal
+        open={isMedicalRecordModalOpen}
+        onOpenChange={setIsMedicalRecordModalOpen}
+        appointment={selectedAppointment}
+      />
+
+      <BillingModal
+        open={isBillingModalOpen}
+        onOpenChange={setIsBillingModalOpen}
+        bill={null}
         appointment={selectedAppointment}
       />
     </div>

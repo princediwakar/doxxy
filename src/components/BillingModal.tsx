@@ -14,17 +14,36 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Appointment, Patient } from "@/types/database";
+import { Patient } from "@/types/database";
+import { AppointmentType } from "./AppointmentModal";
+
+// Define interface for the fetched appointment data with joined patient and doctor details
+interface FetchedAppointment {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  date: string;
+  time: string;
+  type: "Walk-in" | "Digital";
+  status: "Scheduled" | "In Progress" | "Completed" | "Cancelled";
+  department: "Neurology" | "Ophthalmology";
+  notes: string | null;
+  created_at: string;
+  // Joined patient and doctor details
+  patients: { id: string; name: string } | null; // Assuming single object from inner join
+  doctors: { id: string; name: string } | null; // Assuming single object from inner join
+}
 
 interface BillingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bill: any | null;
+  appointment?: AppointmentType | null;
 }
 
-export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
+export function BillingModal({ open, onOpenChange, bill, appointment }: BillingModalProps) {
   const isNewBill = !bill;
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentType[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -60,9 +79,16 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
           invoice_number: `INV-${Date.now()}`,
           description: ""
         });
+        if (appointment) {
+          setFormData(prev => ({
+            ...prev,
+            patient_id: appointment.patient_id || "",
+            appointment_id: appointment.id || "",
+          }));
+        }
       }
     }
-  }, [open, bill]);
+  }, [open, bill, appointment]);
 
   const fetchAppointments = async () => {
     try {
@@ -73,13 +99,25 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
           patients!inner(id, name),
           doctors!inner(id, name)
         `)
-        .order('date', { ascending: false });
+        .order('date', { ascending: false }) as { data: FetchedAppointment[] | null, error: any }; // Cast fetched data
       
       if (error) {
         console.error("Error fetching appointments:", error);
         setAppointments([]);
       } else {
-        setAppointments(data || []);
+        // Map fetched data to match AppointmentType structure
+        const formattedAppointments: AppointmentType[] = (data || []).map(apt => ({
+          ...apt,
+          // Assuming fetched patients and doctors are single objects from inner join
+          patients: apt.patients ? [{ name: apt.patients.name }] : null, // Map to { name: string }[]
+          doctors: apt.doctors ? [{ name: apt.doctors.name, specialization: '' }] : null, // Map to { name: string, specialization: string }[]
+          // Add other properties from AppointmentType that might be missing in the fetched data if necessary
+          time: apt.time || '', // Ensure time is a string
+          type: apt.type || 'Walk-in', // Ensure type has a default or is mapped correctly
+          status: apt.status || 'Scheduled', // Ensure status has a default or is mapped correctly
+          department: apt.department || 'Neurology', // Ensure department has a default or is mapped correctly
+        }));
+        setAppointments(formattedAppointments);
       }
     } catch (error) {
       console.error("Error fetching appointments:", error);
@@ -264,7 +302,7 @@ export function BillingModal({ open, onOpenChange, bill }: BillingModalProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount ($)</Label>
+            <Label htmlFor="amount">Amount (₹)</Label>
             <Input
               id="amount"
               name="amount"

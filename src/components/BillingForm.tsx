@@ -143,7 +143,7 @@ export const BillingForm = ({ bill, onSubmit, onCancel }: BillingFormProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="amount">Amount ($)</Label>
+        <Label htmlFor="amount">Amount (₹)</Label>
         <Input
           id="amount"
           name="amount"

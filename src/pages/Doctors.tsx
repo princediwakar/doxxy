@@ -72,8 +72,8 @@ const Doctors = () => {
 
   const getSpecializationColor = (specialization: string) => {
     return specialization === 'Neurology' 
-      ? 'bg-blue-100 text-blue-800' 
-      : 'bg-green-100 text-green-800';
+      ? 'bg-purple-100 text-purple-800' 
+      : 'bg-teal-100 text-teal-800';
   };
 
   const getAvailabilityColor = (availability: string) => {

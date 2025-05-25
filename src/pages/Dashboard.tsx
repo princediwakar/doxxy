@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, Users, User, Clock, Activity } from "lucide-react";
+import { CalendarCheck, Users, User, Clock, Activity, Plus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { DoctorDashboard } from "@/components/DoctorDashboard";
+import { Button } from "@/components/ui/button";
+import { PatientModal } from "@/components/PatientModal";
+import { AppointmentModal, AppointmentType } from "@/components/AppointmentModal";
+import { Patient } from "@/types/database";
 
 // Define the type for appointments returned by get_appointments_with_details
 interface AppointmentWithDetails {
@@ -47,6 +51,9 @@ const Dashboard = () => {
   const [appointmentData, setAppointmentData] = useState<{ name: string; appointments: number }[]>([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState<FormattedAppointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const [patientForAppointment, setPatientForAppointment] = useState<Patient | null>(null);
 
   useEffect(() => {
     // If the user is a doctor, don't fetch admin dashboard data
@@ -158,6 +165,37 @@ const Dashboard = () => {
     fetchDashboardData();
   }, [userRole]);
 
+  // Handle opening patient modal
+  const handleAddPatientClick = () => {
+    setIsPatientModalOpen(true);
+  };
+
+  // Handle patient created callback
+  const handlePatientCreated = (patient: Patient) => {
+    setPatientForAppointment(patient);
+    setIsPatientModalOpen(false);
+    setIsAppointmentModalOpen(true);
+  };
+
+  // Handle closing patient modal
+  const handlePatientModalClose = (open: boolean) => {
+    setIsPatientModalOpen(open);
+    if (!open) {
+       // Optional: Refetch patient data if needed after modal closes without creating a new patient
+       // fetchPatients(); // You might have a fetchPatients function in admin dashboard if displaying a list
+    }
+  };
+
+  // Handle closing appointment modal
+  const handleAppointmentModalClose = (open: boolean) => {
+    setIsAppointmentModalOpen(open);
+    if (!open) {
+      setPatientForAppointment(null);
+      // Optional: Refetch appointment data if needed
+      // fetchAppointments(); // You might have a fetchAppointments function in admin dashboard
+    }
+  };
+
   // If user is a doctor, render the doctor dashboard
   if (userRole === "doctor" && user) {
     return <DoctorDashboard doctorId={user.id} />;
@@ -166,9 +204,18 @@ const Dashboard = () => {
   // Otherwise, render the admin dashboard
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your clinic's performance and schedule.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your clinic's performance and schedule.</p>
+        </div>
+        {/* Add Patient button visible only for admin */}
+        {userRole === 'admin' && (
+          <Button onClick={handleAddPatientClick}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Patient
+          </Button>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -293,6 +340,23 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Patient Modal */}
+      <PatientModal
+        open={isPatientModalOpen}
+        onOpenChange={handlePatientModalClose}
+        patient={null}
+        onPatientCreated={handlePatientCreated}
+      />
+
+      {/* Appointment Modal */}
+      <AppointmentModal
+        open={isAppointmentModalOpen}
+        onOpenChange={handleAppointmentModalClose}
+        appointment={null}
+        initialPatient={patientForAppointment}
+      />
+
     </div>
   );
 };

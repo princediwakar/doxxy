@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, DollarSign, Calendar, User } from "lucide-react";
+import { Search, Plus, Calendar, User, IndianRupee } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BillingModal } from "@/components/BillingModal";
@@ -42,7 +41,7 @@ const Billing = () => {
         .rpc('get_bills_with_details');
 
       if (error) {
-        console.error("Error fetching bills:", error);
+        console.error("Error fetching bills RPC:", error);
         toast.error("Failed to load bills");
         setBills([]);
       } else {
@@ -63,7 +62,7 @@ const Billing = () => {
         .rpc('get_billing_stats');
 
       if (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Error fetching billing stats RPC:", error);
         setStats({
           totalRevenue: 0,
           pendingAmount: 0,
@@ -136,8 +135,8 @@ const Billing = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <DollarSign className="h-5 w-5 text-green-500 mr-2" />
-              <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
+              <IndianRupee className="h-5 w-5 text-green-500 mr-2" />
+              <div className="text-2xl font-bold">{stats.totalRevenue.toFixed(2)}</div>
             </div>
           </CardContent>
         </Card>
@@ -149,7 +148,7 @@ const Billing = () => {
           <CardContent>
             <div className="flex items-center">
               <Calendar className="h-5 w-5 text-orange-500 mr-2" />
-              <div className="text-2xl font-bold">${stats.pendingAmount.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{stats.pendingAmount.toFixed(2)}</div>
             </div>
           </CardContent>
         </Card>
@@ -172,8 +171,8 @@ const Billing = () => {
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <DollarSign className="h-5 w-5 text-red-500 mr-2" />
-              <div className="text-2xl font-bold">${stats.overdueAmount.toFixed(2)}</div>
+              <IndianRupee className="h-5 w-5 text-red-500 mr-2" />
+              <div className="text-2xl font-bold">{stats.overdueAmount.toFixed(2)}</div>
             </div>
           </CardContent>
         </Card>
@@ -230,7 +229,7 @@ const Billing = () => {
                     <TableCell className="hidden sm:table-cell">
                       {new Date(bill.created_at).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="font-medium">${bill.amount?.toFixed(2)}</TableCell>
+                    <TableCell className="font-medium">₹{bill.amount?.toFixed(2)}</TableCell>
                     <TableCell className="hidden md:table-cell">
                       {bill.description || "-"}
                     </TableCell>

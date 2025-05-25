@@ -360,7 +360,7 @@ const MedicalRecords = () => {
                                   <Badge variant="outline">{record.record_type}</Badge>
                                 </div>
                                 <p className="text-sm text-muted-foreground">
-                                  Dr. {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
+                                  {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
                                 </p>
                               </div>
                               <div className="flex gap-2 mt-2 sm:mt-0">
@@ -421,7 +421,7 @@ const MedicalRecords = () => {
                                 {format(new Date(appointment.date), 'MMM dd')} • {appointment.time}
                               </p>
                               <p className="text-xs text-muted-foreground mt-1">
-                                {appointment.department} • Dr. {appointment.doctors?.name}
+                                {appointment.department} • {appointment.doctors?.name}
                               </p>
                             </div>
                             <Button 
@@ -472,7 +472,7 @@ const MedicalRecords = () => {
                             <Badge variant="outline">Neurology</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">
-                            Dr. {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
+                            {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
                           </p>
                           <div className="text-sm mb-4">
                             <p className="font-medium">Diagnosis:</p>
@@ -549,7 +549,7 @@ const MedicalRecords = () => {
                             <Badge variant="outline">Ophthalmology</Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mb-2">
-                            Dr. {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
+                            {record.doctors?.name} • {format(new Date(record.created_at || ''), 'MMM dd, yyyy')}
                           </p>
                           <div className="text-sm mb-4">
                             <p className="font-medium">Diagnosis:</p>
