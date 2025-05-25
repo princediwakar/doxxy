@@ -8,18 +8,46 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ConsultationModal } from "./ConsultationModal";
 
+interface Appointment {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  date: string;
+  time: string;
+  type: string;
+  status: string;
+  department: string;
+  notes?: string;
+  created_at?: string;
+  patients?: { id: string; name: string };
+  doctors?: { id: string; name: string };
+}
+
+interface Patient {
+  id: string;
+  name: string;
+}
+
+interface Stat {
+  totalPatients: number;
+  totalAppointments: number;
+  pendingAppointments: number;
+  completedConsultations: number;
+}
+
 export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
   const { toast } = useToast();
-  const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
-  const [stats, setStats] = useState({
+  const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
+  const [stats, setStats] = useState<Stat>({
     totalPatients: 0,
     totalAppointments: 0,
     pendingAppointments: 0,
     completedConsultations: 0
   });
   const [loading, setLoading] = useState(true);
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [openConsultationModal, setOpenConsultationModal] = useState(false);
+  const [patients, setPatients] = useState<Patient[]>([]);
 
   // Current date in ISO format for filtering appointments
   const today = new Date().toISOString().split('T')[0];
@@ -30,50 +58,49 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         setLoading(true);
         if (!doctorId) return;
 
-        // Fetch appointments with patient details
+        // Fetch all appointments for this doctor
         const { data: appointments, error: appointmentsError } = await supabase
           .from('appointments')
-          .select(`
-            *,
-            patients!inner(id, name),
-            doctors!inner(id, name)
-          `)
+          .select(`*, patients(id, name), doctors(id, name)`)
           .eq('doctor_id', doctorId)
           .order('date', { ascending: false });
 
         if (appointmentsError) throw appointmentsError;
 
         // Filter today's appointments
-        const todayAppts = (appointments || []).filter((app: any) => 
+        const todayAppts = (appointments || []).filter((app: Appointment) => 
           app.date === today
         );
+        setTodayAppointments(todayAppts);
 
-        // Transform appointments data
-        const formattedAppointments = todayAppts.map(appointment => ({
-          id: appointment.id,
-          patientId: appointment.patient_id,
-          patientName: appointment.patients?.name || 'Unknown Patient',
-          doctorName: appointment.doctors?.name,
-          department: appointment.department,
-          time: appointment.time,
-          type: appointment.type,
-          status: appointment.status,
-          date: appointment.date
-        }));
-
-        setTodayAppointments(formattedAppointments);
+        // Get unique patient IDs from all appointments
+        const patientIds = Array.from(new Set((appointments || []).map((app: Appointment) => app.patient_id)));
+        let patientsList: Patient[] = [];
+        if (patientIds.length > 0) {
+          const { data: patientsData, error: patientsError } = await supabase
+            .from('patients')
+            .select('id, name')
+            .in('id', patientIds);
+          if (patientsError) throw patientsError;
+          patientsList = patientsData || [];
+        }
+        setPatients(patientsList);
 
         // Calculate stats
-        const uniquePatients = new Set((appointments || []).map(app => app.patient_id));
-        const pendingAppointments = (appointments || []).filter(app => app.status === 'Scheduled').length;
-        const completedAppointments = (appointments || []).filter(app => app.status === 'Completed').length;
+        const pendingAppointments = (appointments || []).filter((app: Appointment) => app.status === 'Scheduled').length;
+        const completedAppointments = (appointments || []).filter((app: Appointment) => app.status === 'Completed').length;
 
         setStats({
-          totalPatients: uniquePatients.size || 0,
-          totalAppointments: (appointments || []).length || 0,
-          pendingAppointments: pendingAppointments || 0,
-          completedConsultations: completedAppointments || 0
+          totalPatients: patientsList.length,
+          totalAppointments: (appointments || []).length,
+          pendingAppointments: pendingAppointments,
+          completedConsultations: completedAppointments
         });
+        
+        // Log fetched data for debugging
+        console.log('Fetched appointments for doctor:', appointments);
+        console.log("Today's appointments for doctor:", todayAppts);
+        console.log('Doctor ID:', doctorId);
 
       } catch (error) {
         console.error('Error fetching doctor dashboard data:', error);
@@ -86,32 +113,10 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, [doctorId, toast]);
+  }, [doctorId, toast, today]);
 
-  // In case no doctorId is provided, show mock data
-  useEffect(() => {
-    if (!doctorId && loading) {
-      // Mock data
-      setTodayAppointments([
-        { id: "1", patientName: "Sarah Johnson", time: "10:00 AM", type: "Check-up", status: "Scheduled" },
-        { id: "2", patientName: "Robert Williams", time: "11:30 AM", type: "Follow-up", status: "In Progress" },
-        { id: "3", patientName: "Emma Davis", time: "2:00 PM", type: "Consultation", status: "Scheduled" },
-      ]);
-      
-      setStats({
-        totalPatients: 28,
-        totalAppointments: 45,
-        pendingAppointments: 5,
-        completedConsultations: 40
-      });
-      
-      setLoading(false);
-    }
-  }, [doctorId, loading]);
-
-  const startConsultation = (appointment: any) => {
+  const startConsultation = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
     setOpenConsultationModal(true);
   };
@@ -130,7 +135,6 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Appointments</CardTitle>
@@ -142,7 +146,6 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Appointments</CardTitle>
@@ -154,7 +157,6 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
             </div>
           </CardContent>
         </Card>
-        
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Completed Consultations</CardTitle>
@@ -195,7 +197,7 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
                       <User size={16} className="text-primary" />
                     </div>
                     <div>
-                      <div className="font-medium">{appointment.patientName}</div>
+                      <div className="font-medium">{appointment.patients?.name || 'Unknown Patient'}</div>
                       <div className="text-sm text-muted-foreground flex items-center">
                         <Clock size={14} className="mr-1" /> {appointment.time} • {appointment.type}
                       </div>
@@ -214,6 +216,37 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
                       </Button>
                     )}
                   </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            My Patients
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-10 bg-muted/50 rounded-md animate-pulse"></div>
+              ))}
+            </div>
+          ) : patients.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">
+              No patients found for this doctor.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {patients.map((patient) => (
+                <div key={patient.id} className="p-3 border rounded-md flex items-center">
+                  <User size={16} className="text-primary mr-2" />
+                  <span className="font-medium">{patient.name}</span>
                 </div>
               ))}
             </div>

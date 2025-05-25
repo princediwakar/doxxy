@@ -1,22 +1,29 @@
-
 import { useState } from "react";
-import { Outlet, NavLink, useLocation } from "react-router-dom";
-import { CalendarPlus, Users, User, Home, Menu } from "lucide-react";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { CalendarPlus, Users, User, Home, Menu, LogOut, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
     { icon: Home, label: "Dashboard", path: "/" },
     { icon: Users, label: "Patients", path: "/patients" },
     { icon: User, label: "Doctors", path: "/doctors" },
     { icon: CalendarPlus, label: "Appointments", path: "/appointments" },
+    { icon: CreditCard, label: "Billing", path: "/billing" },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-50">
@@ -56,7 +63,7 @@ const Layout = () => {
           </Button>
         </div>
 
-        <nav className="mt-6">
+        <nav className="mt-6 flex flex-col h-[calc(100vh-80px)] justify-between">
           <ul className="space-y-2 px-2">
             {navItems.map((item) => (
               <li key={item.path}>
@@ -80,6 +87,21 @@ const Layout = () => {
               </li>
             ))}
           </ul>
+          <div className="px-2 pb-4">
+            <Button 
+              variant="ghost" 
+              className="w-full flex items-center justify-start"
+              onClick={handleLogout}
+            >
+              <LogOut size={20} className="flex-shrink-0" />
+              <span className={cn(
+                "ml-3 transition-opacity duration-200",
+                sidebarOpen ? "opacity-100" : "opacity-0 md:opacity-0 hidden md:block"
+              )}>
+                Logout
+              </span>
+            </Button>
+          </div>
         </nav>
       </aside>
 

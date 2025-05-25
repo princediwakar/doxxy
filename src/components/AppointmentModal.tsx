@@ -21,10 +21,23 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Doctor, Patient } from "@/types/database";
 
+interface Appointment {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  date: string;
+  time: string;
+  type: "Walk-in" | "Digital";
+  status: "Scheduled" | "In Progress" | "Completed" | "Cancelled";
+  department: "Neurology" | "Ophthalmology";
+  notes?: string;
+  created_at?: string;
+}
+
 interface AppointmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment: any | null;
+  appointment: Appointment | null;
 }
 
 export function AppointmentModal({ open, onOpenChange, appointment }: AppointmentModalProps) {
@@ -57,10 +70,10 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
           doctor_id: appointment.doctor_id || "",
           date: new Date(appointment.date),
           time: appointment.time || "10:00 AM",
-          type: appointment.type as "Walk-in" | "Digital" || "Walk-in",
-          status: appointment.status as "Scheduled" | "In Progress" | "Completed" | "Cancelled" || "Scheduled",
+          type: appointment.type || "Walk-in",
+          status: appointment.status || "Scheduled",
           notes: appointment.notes || "",
-          department: appointment.department as "Neurology" | "Ophthalmology" || "Neurology"
+          department: appointment.department || "Neurology"
         });
         setSelectedDate(new Date(appointment.date));
       } else {
@@ -77,6 +90,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         setSelectedDate(new Date());
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, appointment]);
 
   const fetchDoctors = async () => {
@@ -85,7 +99,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         .from('doctors')
         .select('*')
         .order('name');
-        
+      
       if (error) {
         console.error("Error fetching doctors:", error);
         setDoctors([]);
@@ -104,7 +118,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         .from('patients')
         .select('*')
         .order('name');
-        
+      
       if (error) {
         console.error("Error fetching patients:", error);
         setPatients([]);
@@ -124,7 +138,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
 
   const handleSelectChange = (name: string, value: string) => {
     if (name === "doctor_id") {
-      const selectedDoctor = doctors.find((d: any) => d.id === value);
+      const selectedDoctor = doctors.find((d) => d.id === value);
       if (selectedDoctor) {
         setFormData(prev => ({ 
           ...prev, 
@@ -167,7 +181,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         const { error } = await supabase
           .from('appointments')
           .insert(appointmentData);
-          
+        
         if (error) {
           console.error("Error creating appointment:", error);
           throw error;
@@ -178,8 +192,8 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
         const { error } = await supabase
           .from('appointments')
           .update(appointmentData)
-          .eq('id', appointment.id);
-          
+          .eq('id', appointment!.id);
+        
         if (error) {
           console.error("Error updating appointment:", error);
           throw error;
@@ -209,16 +223,16 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
   };
 
   const getPatientName = (id: string) => {
-    const patient = patients.find((p: any) => p.id === id);
+    const patient = patients.find((p) => p.id === id);
     return patient ? patient.name : "Select patient";
   };
   
   const getDoctorName = (id: string) => {
-    const doctor = doctors.find((d: any) => d.id === id);
+    const doctor = doctors.find((d) => d.id === id);
     return doctor ? doctor.name : "Select doctor";
   };
   
-  const filteredDoctors = doctors.filter((doctor: any) => 
+  const filteredDoctors = doctors.filter((doctor) => 
     doctor.specialization === formData.department
   );
   
@@ -275,7 +289,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {filteredDoctors.map((doctor: any) => (
+                {filteredDoctors.map((doctor) => (
                   <SelectItem key={doctor.id} value={doctor.id}>
                     {doctor.name}
                   </SelectItem>
@@ -296,7 +310,7 @@ export function AppointmentModal({ open, onOpenChange, appointment }: Appointmen
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {patients.map((patient: any) => (
+                {patients.map((patient) => (
                   <SelectItem key={patient.id} value={patient.id}>
                     {patient.name}
                   </SelectItem>

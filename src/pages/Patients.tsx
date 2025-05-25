@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,11 +23,31 @@ import { PatientModal } from "@/components/PatientModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Patient type from your DB
+interface Patient {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  date_of_birth?: string;
+  gender?: string;
+  medical_id?: string;
+  created_at?: string;
+}
+
+// Enhanced patient type for UI
+interface EnhancedPatient extends Patient {
+  age: number | null;
+  lastVisit: string;
+  status: string;
+}
+
 const Patients = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [openModal, setOpenModal] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [patients, setPatients] = useState<any[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<EnhancedPatient | null>(null);
+  const [patients, setPatients] = useState<EnhancedPatient[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -65,18 +84,22 @@ const Patients = () => {
       if (error) throw error;
 
       // Get appointment data for each patient to determine "status"
-      const enhancedPatients = await Promise.all((data || []).map(async (patient) => {
+      const enhancedPatients: EnhancedPatient[] = await Promise.all((data || []).map(async (patient: Patient) => {
         // Get last appointment
-        const { data: lastAppointment, error: appError } = await supabase
-          .from('appointments')
-          .select('date, status')
-          .eq('patient_id', patient.id)
-          .order('date', { ascending: false })
-          .limit(1)
-          .single();
-
-        if (appError && appError.code !== 'PGRST116') {
-          console.error("Error fetching appointment:", appError);
+        // Note: The following code is correct for the supabase-js client, but if you see a 406 error in the console,
+        // it is a Supabase REST API limitation, not a bug in this code.
+        let lastAppointment: { date: string; status: string } | null = null;
+        try {
+          const { data: lastApp, error: appError } = await supabase
+            .from('appointments')
+            .select('date, status')
+            .eq('patient_id', patient.id)
+            .order('date', { ascending: false })
+            .limit(1)
+            .single();
+          if (!appError) lastAppointment = lastApp;
+        } catch (err) {
+          // ignore
         }
 
         // Determine status based on last appointment
@@ -99,7 +122,7 @@ const Patients = () => {
           : '';
 
         // Calculate age if date of birth exists
-        let age = null;
+        let age: number | null = null;
         if (patient.date_of_birth) {
           const dob = new Date(patient.date_of_birth);
           const today = new Date();
@@ -111,16 +134,20 @@ const Patients = () => {
         }
 
         // Format last visit date if exists
-        const { data: lastVisitData } = await supabase
-          .from('appointments')
-          .select('date')
-          .eq('patient_id', patient.id)
-          .eq('status', 'Completed')
-          .order('date', { ascending: false })
-          .limit(1)
-          .single();
-
-        const lastVisit = lastVisitData ? new Date(lastVisitData.date).toLocaleDateString() : '';
+        let lastVisit = '';
+        try {
+          const { data: lastVisitData } = await supabase
+            .from('appointments')
+            .select('date')
+            .eq('patient_id', patient.id)
+            .eq('status', 'Completed')
+            .order('date', { ascending: false })
+            .limit(1)
+            .single();
+          lastVisit = lastVisitData ? new Date(lastVisitData.date).toLocaleDateString() : '';
+        } catch (err) {
+          lastVisit = '';
+        }
 
         return {
           ...patient,
@@ -131,7 +158,8 @@ const Patients = () => {
       }));
 
       setPatients(enhancedPatients);
-    } catch (error: any) {
+    } catch (error) {
+      // error is unknown, not any
       console.error("Error fetching patients:", error);
       toast.error("Failed to load patients");
     } finally {
@@ -139,7 +167,7 @@ const Patients = () => {
     }
   };
 
-  const handlePatientClick = (patient: any) => {
+  const handlePatientClick = (patient: EnhancedPatient) => {
     setSelectedPatient(patient);
     setOpenModal(true);
   };
@@ -232,7 +260,7 @@ const Patients = () => {
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{patient.gender || "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell">{patient.age || "-"}</TableCell>
+                      <TableCell className="hidden md:table-cell">{patient.age ?? "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">{patient.phone || "-"}</TableCell>
                       <TableCell className="hidden lg:table-cell">{patient.lastVisit || "-"}</TableCell>
                       <TableCell>

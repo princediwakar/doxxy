@@ -7,16 +7,45 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { DoctorDashboard } from "@/components/DoctorDashboard";
 
+// Define the type for appointments returned by get_appointments_with_details
+interface AppointmentWithDetails {
+  id: string;
+  patient_id: string;
+  doctor_id: string;
+  date: string;
+  appointment_time: string;
+  type: string;
+  status: string;
+  department: string;
+  notes: string;
+  created_at: string;
+  patient_name: string;
+  patient_email: string;
+  patient_phone: string;
+  patient_medical_id: string;
+  doctor_name: string;
+  doctor_email: string;
+  doctor_specialization: string;
+}
+
+interface FormattedAppointment {
+  id: string;
+  patient: string;
+  doctor: string;
+  time: string;
+  date: string;
+  type: string;
+}
+
 const Dashboard = () => {
   const { user, userRole, userDepartment } = useAuth();
   const [stats, setStats] = useState({
     totalPatients: 0,
     totalDoctors: 0,
-    appointmentsToday: 0,
-    avgWaitTime: "0 min"
+    appointmentsToday: 0
   });
-  const [appointmentData, setAppointmentData] = useState<any[]>([]);
-  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [appointmentData, setAppointmentData] = useState<{ name: string; appointments: number }[]>([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<FormattedAppointment[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,23 +56,29 @@ const Dashboard = () => {
       try {
         setLoading(true);
         
-        // Get today's date
+        // Get today's date in ISO format
         const today = new Date().toISOString().split('T')[0];
         
-        // Fetch total patients using RPC
+        // Fetch total patients using direct table query
         const { data: patientsData, error: patientsError } = await supabase
-          .rpc('get_patients');
+          .from('patients')
+          .select('*');
           
         if (patientsError) {
           console.error("Error fetching patients:", patientsError);
+          toast.error("Failed to load patient data");
+          return;
         }
         
-        // Fetch total doctors using RPC
+        // Fetch total doctors using direct table query
         const { data: doctorsData, error: doctorsError } = await supabase
-          .rpc('get_doctors');
+          .from('doctors')
+          .select('*');
           
         if (doctorsError) {
           console.error("Error fetching doctors:", doctorsError);
+          toast.error("Failed to load doctor data");
+          return;
         }
         
         // Fetch appointments using RPC
@@ -52,10 +87,12 @@ const Dashboard = () => {
           
         if (appointmentsError) {
           console.error("Error fetching appointments:", appointmentsError);
+          toast.error("Failed to load appointment data");
+          return;
         }
         
         // Filter today's appointments
-        const todayAppointments = (appointmentsData || []).filter((app: any) => 
+        const todayAppointments = (appointmentsData as AppointmentWithDetails[] || []).filter((app) => 
           app.date === today
         );
         
@@ -63,8 +100,7 @@ const Dashboard = () => {
         setStats({
           totalPatients: patientsData?.length || 0,
           totalDoctors: doctorsData?.length || 0,
-          appointmentsToday: todayAppointments.length || 0,
-          avgWaitTime: "18 min" // This would be calculated from actual data in a real app
+          appointmentsToday: todayAppointments.length || 0
         });
         
         // Create weekly appointments data
@@ -74,7 +110,7 @@ const Dashboard = () => {
           date.setDate(date.getDate() - date.getDay() + index);
           const dateStr = date.toISOString().split('T')[0];
           
-          const dayAppointments = (appointmentsData || []).filter((app: any) => 
+          const dayAppointments = (appointmentsData as AppointmentWithDetails[] || []).filter((app) => 
             app.date === dateStr
           );
           
@@ -87,27 +123,29 @@ const Dashboard = () => {
         setAppointmentData(weeklyData);
         
         // Get upcoming appointments
-        const upcoming = (appointmentsData || [])
-          .filter((app: any) => app.date >= today)
-          .sort((a: any, b: any) => {
+        const upcoming = (appointmentsData as AppointmentWithDetails[] || [])
+          .filter((app) => app.date >= today)
+          .sort((a, b) => {
             if (a.date === b.date) {
-              return a.time.localeCompare(b.time);
+              return a.appointment_time.localeCompare(b.appointment_time);
             }
             return a.date.localeCompare(b.date);
           })
           .slice(0, 5);
         
         // Transform data for display
-        const formattedAppointments = upcoming.map((appointment: any) => ({
+        const formattedAppointments: FormattedAppointment[] = upcoming.map((appointment) => ({
           id: appointment.id,
           patient: appointment.patient_name || 'Unknown Patient',
           doctor: appointment.doctor_name || 'Unknown Doctor',
-          time: appointment.time,
+          time: appointment.appointment_time,
           date: new Date(appointment.date).toLocaleDateString(),
           type: appointment.type
         }));
         
         setUpcomingAppointments(formattedAppointments);
+        
+        console.log('Fetched appointments:', appointmentsData);
         
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -137,7 +175,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {loading ? (
           // Loading skeletons for stats
-          Array.from({ length: 4 }).map((_, index) => (
+          Array.from({ length: 3 }).map((_, index) => (
             <Card key={index} className="animate-pulse">
               <CardContent className="p-6 h-[88px]"></CardContent>
             </Card>
@@ -177,18 +215,6 @@ const Dashboard = () => {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Appointments Today</p>
                   <h3 className="text-2xl font-bold">{stats.appointmentsToday}</h3>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-2 rounded-full bg-pink-50 text-pink-500">
-                  <Clock size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Avg. Wait Time</p>
-                  <h3 className="text-2xl font-bold">{stats.avgWaitTime}</h3>
                 </div>
               </CardContent>
             </Card>

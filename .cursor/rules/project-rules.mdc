@@ -1,0 +1,247 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Neurovision Project Rules and Guidelines
+
+## Code Organization and Structure
+
+### Directory Structure
+```
+neurovision/
+├── app/                    # Next.js app directory
+│   ├── admin/             # Admin routes and components
+│   ├── doctor/            # Doctor routes and components
+│   ├── api/               # API routes
+│   └── (auth)/           # Authentication routes
+├── components/            # Reusable UI components
+│   ├── admin/            # Admin-specific components
+│   ├── doctor/           # Doctor-specific components
+│   └── shared/           # Shared components
+├── lib/                   # Utility functions and helpers
+├── types/                 # TypeScript type definitions
+├── styles/               # Global styles and Tailwind config
+└── public/               # Static assets
+```
+
+### Naming Conventions
+- **Files**: Use kebab-case for file names (e.g., `patient-form.tsx`)
+- **Components**: Use PascalCase for component names (e.g., `PatientForm.tsx`)
+- **Functions**: Use camelCase for function names (e.g., `handleSubmit`)
+- **Types/Interfaces**: Use PascalCase with descriptive names (e.g., `PatientRecord`)
+- **Constants**: Use UPPER_SNAKE_CASE (e.g., `MAX_APPOINTMENTS_PER_DAY`)
+
+## Development Standards
+
+### TypeScript
+- Enable strict mode in `tsconfig.json`
+- Define explicit types for all props, state, and function parameters
+- Use interfaces for object shapes and types for unions/primitives
+- Avoid using `any` type; use `unknown` if type is truly unknown
+
+### React/Next.js
+- Use Server Components by default, Client Components only when necessary
+- Implement proper error boundaries for error handling
+- Use React Server Actions for form submissions and data mutations
+- Follow the React hooks rules and best practices
+- Use proper loading states and error handling
+
+### State Management
+- Use React Server Components for server-side state
+- Use React Context for global client-side state
+- Use local state for component-specific state
+- Implement proper loading and error states
+
+### Database (Supabase)
+- Use Row Level Security (RLS) for all tables
+- Implement proper indexes for frequently queried columns
+- Use transactions for related operations
+- Follow naming conventions for tables and columns
+- Document all database triggers and functions
+
+### Authentication
+- Implement role-based access control (RBAC)
+- Use Supabase Auth for authentication
+- Protect all routes with proper middleware
+- Handle authentication errors gracefully
+
+## UI/UX Guidelines
+
+### Shadcn UI
+- Use Shadcn UI components as the primary UI library
+- Maintain consistent component usage across the application
+- Customize components through the theme configuration
+- Follow accessibility guidelines for all components
+
+### Tailwind CSS
+- Use Tailwind utility classes for styling
+- Follow mobile-first responsive design
+- Use consistent spacing and sizing
+- Maintain a consistent color palette
+- Use semantic class names
+
+### Forms
+- Implement proper form validation using Zod
+- Show clear error messages
+- Use proper input types and labels
+- Implement proper loading states
+- Handle form submission errors gracefully
+
+## Security Guidelines
+
+### Authentication & Authorization
+- Implement proper session management
+- Use secure HTTP-only cookies
+- Implement proper CSRF protection
+- Follow OWASP security guidelines
+
+### Data Protection
+- Sanitize all user inputs
+- Implement proper data validation
+- Use proper encryption for sensitive data
+- Follow HIPAA guidelines for medical data
+
+### API Security
+- Implement rate limiting
+- Use proper CORS policies
+- Validate all API requests
+- Use proper error handling
+
+## Testing Guidelines
+
+### Unit Tests
+- Write tests for all utility functions
+- Test component rendering and interactions
+- Use proper mocking for external dependencies
+- Maintain good test coverage
+
+### Integration Tests
+- Test form submissions
+- Test authentication flows
+- Test API endpoints
+- Test database operations
+
+### E2E Tests
+- Test critical user flows
+- Test cross-browser compatibility
+- Test responsive design
+- Test accessibility
+
+## Documentation
+
+### Code Documentation
+- Document all complex functions and components
+- Use JSDoc comments for TypeScript
+- Keep documentation up to date
+- Document all environment variables
+### API Documentation
+- Document all API endpoints
+- Document request/response formats
+- Document error codes and messages
+- Keep API documentation up to date
+
+## Git Workflow
+
+### Branching Strategy
+- `main` - Production branch
+- `develop` - Development branch
+- `feature/*` - Feature branches
+- `bugfix/*` - Bug fix branches
+- `hotfix/*` - Hot fix branches
+
+### Commit Messages
+- Use conventional commits format
+- Write clear and descriptive commit messages
+- Reference issue numbers in commit messages
+- Keep commits atomic and focused
+
+### Pull Requests
+- Write clear PR descriptions
+- Include relevant issue numbers
+- Request reviews from team members
+- Ensure CI/CD checks pass
+
+## Performance Guidelines
+
+### Frontend Performance
+- Optimize images and assets
+- Implement proper code splitting
+- Use proper caching strategies
+- Monitor and optimize bundle size
+
+### Backend Performance
+- Optimize database queries
+- Implement proper caching
+- Use proper indexing
+- Monitor API response times
+
+## Accessibility Guidelines
+
+### WCAG Compliance
+- Follow WCAG 2.1 guidelines
+- Implement proper ARIA labels
+- Ensure proper color contrast
+- Support keyboard navigation
+
+### Responsive Design
+- Support all major screen sizes
+- Test on multiple devices
+- Implement proper touch targets
+- Use responsive images
+
+## Monitoring and Logging
+
+### Error Tracking
+- Implement proper error tracking
+- Log all errors with context
+- Set up error alerts
+- Monitor error rates
+
+### Performance Monitoring
+- Monitor page load times
+- Track API response times
+- Monitor database performance
+- Set up performance alerts
+
+## Deployment Guidelines
+
+### Environment Configuration
+- Use proper environment variables
+- Document all environment variables
+- Use different environments for development/staging/production
+- Secure sensitive information
+
+### CI/CD
+- Implement automated testing
+- Use proper deployment strategies
+- Implement proper rollback procedures
+- Monitor deployment health
+
+## Maintenance Guidelines
+
+### Code Review
+- Review all code changes
+- Check for security vulnerabilities
+- Ensure code quality
+- Verify test coverage
+
+### Updates and Dependencies
+- Keep dependencies up to date
+- Monitor security advisories
+- Test updates before deployment
+- Document breaking changes
+
+## Emergency Procedures
+
+### Incident Response
+- Document incident response procedures
+- Set up proper monitoring
+- Implement proper alerting
+- Have rollback procedures ready
+
+### Data Recovery
+- Implement proper backup procedures
+- Test recovery procedures
+- Document recovery steps
+- Maintain backup logs
