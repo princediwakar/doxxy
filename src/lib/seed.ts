@@ -3,8 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 import { format } from 'date-fns';
 
 // Replace with your actual values
-const SUPABASE_URL = 'https://chftygsapwhahqbqlfdx.supabase.co';
-const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNoZnR5Z3NhcHdoYWhxYnFsZmR4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0Nzg1NTg2MywiZXhwIjoyMDYzNDMxODYzfQ.ASnmMNUF7Sa0FN6z_ug0H_v5Q-qFjEErrvAXa8-cDSg';
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 

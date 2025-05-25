@@ -10,33 +10,29 @@ import { Button } from "@/components/ui/button";
 import { PatientModal } from "@/components/PatientModal";
 import { AppointmentModal, AppointmentType } from "@/components/AppointmentModal";
 import { Patient } from "@/types/database";
+import { format, parseISO, isToday } from "date-fns";
 
-// Define the type for appointments returned by get_appointments_with_details
-interface AppointmentWithDetails {
+// Define the type for appointments fetched directly from the table with joins
+interface FetchedAppointmentRaw {
   id: string;
   patient_id: string;
   doctor_id: string;
   date: string;
-  appointment_time: string;
+  time: string; // Assuming time is stored as a string like 'HH:MM:SS'
   type: string;
   status: string;
   department: string;
-  notes: string;
-  created_at: string;
-  patient_name: string;
-  patient_email: string;
-  patient_phone: string;
-  patient_medical_id: string;
-  doctor_name: string;
-  doctor_email: string;
-  doctor_specialization: string;
+  notes?: string | null;
+  created_at?: string;
+  patients?: { id: string; name: string } | null; // Joined patient data
+  doctors?: { id: string; name: string; specialization: string } | null; // Joined doctor data
 }
 
 interface FormattedAppointment {
   id: string;
   patient: string;
   doctor: string;
-  time: string;
+  time: string; // Keep as string for display
   date: string;
   type: string;
 }
@@ -63,9 +59,6 @@ const Dashboard = () => {
       try {
         setLoading(true);
         
-        // Get today's date in ISO format
-        const today = new Date().toISOString().split('T')[0];
-        
         // Fetch total patients using direct table query
         const { data: patientsData, error: patientsError } = await supabase
           .from('patients')
@@ -88,9 +81,10 @@ const Dashboard = () => {
           return;
         }
         
-        // Fetch appointments using RPC
-        const { data: appointmentsData, error: appointmentsError } = await supabase
-          .rpc('get_appointments_with_details');
+        // Fetch all appointments with patient and doctor names
+        const { data: appointmentsRaw, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('*, patients(id, name), doctors(id, name)') as { data: FetchedAppointmentRaw[] | null, error: unknown };
           
         if (appointmentsError) {
           console.error("Error fetching appointments:", appointmentsError);
@@ -98,10 +92,24 @@ const Dashboard = () => {
           return;
         }
         
-        // Filter today's appointments
-        const todayAppointments = (appointmentsData as AppointmentWithDetails[] || []).filter((app) => 
-          app.date === today
-        );
+        // Map raw fetched data to a format suitable for calculations and display
+        const formattedAppointments = (appointmentsRaw || []).map(apt => ({
+          id: apt.id,
+          patient_id: apt.patient_id,
+          doctor_id: apt.doctor_id,
+          date: apt.date, // YYYY-MM-DD format
+          time: apt.time, // Assuming HH:MM:SS format
+          type: apt.type,
+          status: apt.status,
+          department: apt.department,
+          notes: apt.notes || undefined,
+          created_at: apt.created_at || undefined,
+          patient: apt.patients?.name || 'Unknown Patient', // Get patient name
+          doctor: apt.doctors?.name || 'Unknown Doctor', // Get doctor name
+        }));
+        
+        // Filter today's appointments using date-fns
+        const todayAppointments = formattedAppointments.filter(app => isToday(parseISO(app.date)));
         
         // Set stats
         setStats({
@@ -115,9 +123,11 @@ const Dashboard = () => {
         const weeklyData = days.map((day, index) => {
           const date = new Date();
           date.setDate(date.getDate() - date.getDay() + index);
-          const dateStr = date.toISOString().split('T')[0];
+          // Format date for comparison
+          const dateStr = format(date, 'yyyy-MM-dd');
           
-          const dayAppointments = (appointmentsData as AppointmentWithDetails[] || []).filter((app) => 
+          const dayAppointments = formattedAppointments.filter((app) => 
+            // Compare formatted date string
             app.date === dateStr
           );
           
@@ -130,29 +140,29 @@ const Dashboard = () => {
         setAppointmentData(weeklyData);
         
         // Get upcoming appointments
-        const upcoming = (appointmentsData as AppointmentWithDetails[] || [])
-          .filter((app) => app.date >= today)
+        const upcoming = formattedAppointments
+          // Filter appointments from today onwards using parseISO and >= comparison
+          .filter((app) => parseISO(app.date) >= new Date())
           .sort((a, b) => {
             if (a.date === b.date) {
-              return a.appointment_time.localeCompare(b.appointment_time);
+              // Sort by time string if dates are the same
+              return a.time.localeCompare(b.time);
             }
             return a.date.localeCompare(b.date);
           })
           .slice(0, 5);
         
         // Transform data for display
-        const formattedAppointments: FormattedAppointment[] = upcoming.map((appointment) => ({
+        const upcomingFormattedAppointments: FormattedAppointment[] = upcoming.map((appointment) => ({
           id: appointment.id,
-          patient: appointment.patient_name || 'Unknown Patient',
-          doctor: appointment.doctor_name || 'Unknown Doctor',
-          time: appointment.appointment_time,
-          date: new Date(appointment.date).toLocaleDateString(),
+          patient: appointment.patient,
+          doctor: appointment.doctor,
+          time: appointment.time, // Use time string directly
+          date: new Date(appointment.date).toLocaleDateString(), // Keep locale date string for display
           type: appointment.type
         }));
         
-        setUpcomingAppointments(formattedAppointments);
-        
-        console.log('Fetched appointments:', appointmentsData);
+        setUpcomingAppointments(upcomingFormattedAppointments);
         
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
