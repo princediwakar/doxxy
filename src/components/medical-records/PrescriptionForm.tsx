@@ -124,7 +124,7 @@ export function PrescriptionForm({
       <div className={cn("border rounded-md p-4", style.borderColor, style.gradientBg)}>
         <div className={cn("text-center mb-4 pb-3 border-b", style.borderColor)}>
           <div className="flex items-center justify-center gap-2 mb-1">
-            <h2 className={cn("text-xl font-bold", style.titleColor)}>MediClinic</h2>
+            <h2 className={cn("text-xl font-bold", style.titleColor)}>Neurovision</h2>
           </div>
           <p className="text-sm text-muted-foreground">{specialty} Department</p>
         </div>
@@ -322,11 +322,11 @@ export function PrescriptionForm({
 
         <div className="mt-6 pt-4 border-t text-center text-xs text-muted-foreground">
           {specialty === "Neurology" ? (
-            <p>This prescription is issued by the Neurology Department of MediClinic. For emergencies, call: (123) 456-7890</p>
+            <p>This prescription is issued by the Neurology Department of Neurovision. For emergencies, call: (123) 456-7890</p>
           ) : specialty === "Ophthalmology" ? (
-            <p>This prescription is issued by the Ophthalmology Department of MediClinic. For vision emergencies, call: (123) 456-7890</p>
+            <p>This prescription is issued by the Ophthalmology Department of Neurovision. For vision emergencies, call: (123) 456-7890</p>
           ) : (
-            <p>This prescription is issued by MediClinic. For emergencies, call: (123) 456-7890</p>
+            <p>This prescription is issued by Neurovision. For emergencies, call: (123) 456-7890</p>
           )}
         </div>
       </div>
