@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 
 // Replace with your actual values
 
-const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SERVICE_ROLE_KEY);
 
 async function main() {
   console.log("Starting database seeding...");
