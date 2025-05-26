@@ -290,11 +290,11 @@ export function AppointmentModal({ open, onOpenChange, appointment, patient, ini
           </div>
         )}
 
-        {patient && !appointment && (
+        {(patient || initialPatient) && !appointment && (
           <div className="mb-4">
             <Label>Patient</Label>
             <div className="flex items-center">
-              <Badge>{patient.name}</Badge>
+              <Badge>{patient?.name || initialPatient?.name}</Badge>
             </div>
           </div>
         )}

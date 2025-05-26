@@ -99,8 +99,8 @@ const Patients = () => {
             .eq('patient_id', patient.id)
             .order('date', { ascending: false })
             .limit(1)
-            .single();
-          if (!appError) lastAppointment = lastApp;
+            ;
+          if (!appError && lastApp && lastApp.length > 0) lastAppointment = lastApp[0];
         } catch (err) {
           // ignore
         }
@@ -145,8 +145,8 @@ const Patients = () => {
             .eq('patient_id', patient.id)
             .order('date', { ascending: false })
             .limit(1)
-            .single();
-          lastVisit = lastVisitData ? new Date(lastVisitData.date).toLocaleDateString() : '';
+            ;
+          lastVisit = (lastVisitData && lastVisitData.length > 0) ? new Date(lastVisitData[0].date).toLocaleDateString() : '';
         } catch (err) {
           lastVisit = '';
         }
@@ -213,7 +213,7 @@ const Patients = () => {
         </div>
         <Button onClick={handleNewPatient}>
           <Plus size={18} className="mr-2" />
-          Add Patient
+          New Patient
         </Button>
       </div>
 

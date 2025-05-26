@@ -173,7 +173,6 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
         const { data, error } = await supabase
           .from('doctors')
           .insert({
-            id: crypto.randomUUID(), // Generate a UUID for new doctor
             ...doctorData
           })
           .select()

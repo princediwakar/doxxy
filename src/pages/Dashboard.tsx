@@ -223,7 +223,7 @@ const Dashboard = () => {
         {userRole === 'admin' && (
           <Button onClick={handleAddPatientClick}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Patient
+            New Patient
           </Button>
         )}
       </div>
