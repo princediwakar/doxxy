@@ -11,6 +11,9 @@ import { PatientModal } from "@/components/PatientModal";
 import { AppointmentModal, AppointmentType } from "@/components/AppointmentModal";
 import { Patient } from "@/types/database";
 import { format, parseISO, isToday } from "date-fns";
+import { AdminStatsGrid } from "@/components/AdminStatsGrid";
+import { WeeklyAppointmentsChart } from "@/components/WeeklyAppointmentsChart";
+import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
 
 // Define the type for appointments fetched directly from the table with joins
 interface FetchedAppointmentRaw {
@@ -59,75 +62,75 @@ const Dashboard = () => {
       try {
         setLoading(true);
         
-        // Fetch total patients using direct table query
-        const { data: patientsData, error: patientsError } = await supabase
+        // Fetch total patients count
+        const { count: totalPatientsCount, error: patientsError } = await supabase
           .from('patients')
-          .select('*');
+          .select('*', { count: 'exact', head: true });
           
-        if (patientsError) {
-          console.error("Error fetching patients:", patientsError);
-          toast.error("Failed to load patient data");
-          return;
-        }
-        
-        // Fetch total doctors using direct table query
-        const { data: doctorsData, error: doctorsError } = await supabase
+        if (patientsError) console.error("Error fetching patients count:", patientsError); // Log error, don't block
+
+        // Fetch total doctors count
+        const { count: totalDoctorsCount, error: doctorsError } = await supabase
           .from('doctors')
-          .select('*');
+          .select('*', { count: 'exact', head: true });
           
-        if (doctorsError) {
-          console.error("Error fetching doctors:", doctorsError);
-          toast.error("Failed to load doctor data");
-          return;
-        }
-        
-        // Fetch all appointments with patient and doctor names
-        const { data: appointmentsRaw, error: appointmentsError } = await supabase
+        if (doctorsError) console.error("Error fetching doctors count:", doctorsError); // Log error, don't block
+
+        // Fetch count of today's appointments
+        const today = new Date();
+        const todayIso = today.toISOString().split('T')[0];
+        const { count: appointmentsTodayCount, error: appointmentsTodayError } = await supabase
           .from('appointments')
-          .select('*, patients(id, name), doctors(id, name)') as { data: FetchedAppointmentRaw[] | null, error: unknown };
-          
-        if (appointmentsError) {
-          console.error("Error fetching appointments:", appointmentsError);
-          toast.error("Failed to load appointment data");
-          return;
-        }
+          .select('*', { count: 'exact', head: true })
+          .eq('date', todayIso);
+
+        if (appointmentsTodayError) console.error("Error fetching appointments today count:", appointmentsTodayError); // Log error, don't block
         
-        // Map raw fetched data to a format suitable for calculations and display
-        const formattedAppointments = (appointmentsRaw || []).map(apt => ({
+        // Set stats
+        setStats({
+          totalPatients: totalPatientsCount || 0,
+          totalDoctors: totalDoctorsCount || 0,
+          appointmentsToday: appointmentsTodayCount || 0
+        });
+        
+        // Fetch appointments for the weekly chart and upcoming appointments
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoIso = sevenDaysAgo.toISOString().split('T')[0];
+
+        const { data: appointmentsData, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('id, date, time, type, status, patients(id, name), doctors(id, name)')
+          .gte('date', sevenDaysAgoIso) // Get appointments from the last 7 days onwards
+          .order('date', { ascending: true })
+          .order('time', { ascending: true });
+
+        if (appointmentsError) throw appointmentsError; // Throw error if fetching appointments fails
+
+        // Process fetched appointments for weekly chart and upcoming list
+        const allRelevantAppointments = (appointmentsData || []).map(apt => ({
           id: apt.id,
-          patient_id: apt.patient_id,
-          doctor_id: apt.doctor_id,
+          patient_id: apt.patients.id,
+          doctor_id: apt.doctors.id,
           date: apt.date, // YYYY-MM-DD format
           time: apt.time, // Assuming HH:MM:SS format
           type: apt.type,
           status: apt.status,
-          department: apt.department,
-          notes: apt.notes || undefined,
-          created_at: apt.created_at || undefined,
+          department: '', // Department is not fetched in this query, might need to add if needed for display/filtering
+          notes: undefined,
+          created_at: undefined,
           patient: apt.patients?.name || 'Unknown Patient', // Get patient name
           doctor: apt.doctors?.name || 'Unknown Doctor', // Get doctor name
         }));
         
-        // Filter today's appointments using date-fns
-        const todayAppointments = formattedAppointments.filter(app => isToday(parseISO(app.date)));
-        
-        // Set stats
-        setStats({
-          totalPatients: patientsData?.length || 0,
-          totalDoctors: doctorsData?.length || 0,
-          appointmentsToday: todayAppointments.length || 0
-        });
-        
-        // Create weekly appointments data
+        // Create weekly appointments data (last 7 days)
         const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         const weeklyData = days.map((day, index) => {
-          const date = new Date();
-          date.setDate(date.getDate() - date.getDay() + index);
-          // Format date for comparison
+          const date = new Date(sevenDaysAgo);
+          date.setDate(sevenDaysAgo.getDate() + index);
           const dateStr = format(date, 'yyyy-MM-dd');
           
-          const dayAppointments = formattedAppointments.filter((app) => 
-            // Compare formatted date string
+          const dayAppointments = allRelevantAppointments.filter((app) => 
             app.date === dateStr
           );
           
@@ -139,29 +142,21 @@ const Dashboard = () => {
         
         setAppointmentData(weeklyData);
         
-        // Get upcoming appointments
-        const upcoming = formattedAppointments
-          // Filter appointments from today onwards using parseISO and >= comparison
-          .filter((app) => parseISO(app.date) >= new Date())
-          .sort((a, b) => {
-            if (a.date === b.date) {
-              // Sort by time string if dates are the same
-              return a.time.localeCompare(b.time);
-            }
-            return a.date.localeCompare(b.date);
-          })
-          .slice(0, 5);
+        // Get upcoming appointments (today onwards, limit 5)
+        const upcoming = allRelevantAppointments
+          .filter((app) => parseISO(app.date) >= today) // Filter appointments from today onwards
+          .slice(0, 5); // Limit to the next 5
         
-        // Transform data for display
-        const upcomingFormattedAppointments: FormattedAppointment[] = upcoming.map((appointment) => ({
-          id: appointment.id,
-          patient: appointment.patient,
-          doctor: appointment.doctor,
-          time: appointment.time, // Use time string directly
-          date: new Date(appointment.date).toLocaleDateString(), // Keep locale date string for display
-          type: appointment.type
-        }));
-        
+        // Transform data for display (already done in allRelevantAppointments, just re-mapping for clarity if needed)
+        const upcomingFormattedAppointments: FormattedAppointment[] = upcoming.map((appointment) => ({ // Use allRelevantAppointments structure
+           id: appointment.id,
+           patient: appointment.patient,
+           doctor: appointment.doctor,
+           time: appointment.time, // Use time string directly
+           date: new Date(parseISO(appointment.date)).toLocaleDateString(), // Use parseISO before creating Date
+           type: appointment.type
+         }));
+
         setUpcomingAppointments(upcomingFormattedAppointments);
         
       } catch (error) {
@@ -229,126 +224,14 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {loading ? (
-          // Loading skeletons for stats
-          Array.from({ length: 3 }).map((_, index) => (
-            <Card key={index} className="animate-pulse">
-              <CardContent className="p-6 h-[88px]"></CardContent>
-            </Card>
-          ))
-        ) : (
-          // Actual stats
-          <>
-            <Card>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-2 rounded-full bg-blue-50 text-blue-500">
-                  <Users size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Patients</p>
-                  <h3 className="text-2xl font-bold">{stats.totalPatients}</h3>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-2 rounded-full bg-indigo-50 text-indigo-500">
-                  <User size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Doctors</p>
-                  <h3 className="text-2xl font-bold">{stats.totalDoctors}</h3>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6 flex items-center space-x-4">
-                <div className="p-2 rounded-full bg-purple-50 text-purple-500">
-                  <CalendarCheck size={24} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Appointments Today</p>
-                  <h3 className="text-2xl font-bold">{stats.appointmentsToday}</h3>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
+      <AdminStatsGrid stats={stats} loading={loading} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weekly Appointments Chart */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Activity size={18} className="mr-2 text-purple-500" />
-              Weekly Appointments
-            </CardTitle>
-            <CardDescription>Number of appointments per day this week</CardDescription>
-          </CardHeader>
-          <CardContent className="h-64">
-            {loading ? (
-              <div className="w-full h-full animate-pulse bg-muted/30 rounded-md"></div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={appointmentData}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="appointments" fill="#9b87f5" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <WeeklyAppointmentsChart appointmentData={appointmentData} loading={loading} />
 
         {/* Today's Appointments */}
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <CalendarCheck size={18} className="mr-2 text-purple-500" />
-              Upcoming Appointments
-            </CardTitle>
-            <CardDescription>Next scheduled appointments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="space-y-4">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div key={index} className="animate-pulse h-12 bg-muted/30 rounded-md"></div>
-                ))}
-              </div>
-            ) : upcomingAppointments.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No upcoming appointments scheduled.
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {upcomingAppointments.map((appointment) => (
-                  <div key={appointment.id} className="flex items-center justify-between border-b pb-3 last:border-0">
-                    <div className="space-y-1">
-                      <p className="font-medium">{appointment.patient}</p>
-                      <div className="flex items-center text-sm text-muted-foreground">
-                        <User size={14} className="mr-1" />
-                        <span>{appointment.doctor}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">{appointment.time}</p>
-                      <div className="flex items-center text-sm text-muted-foreground justify-end">
-                        <CalendarCheck size={14} className="mr-1" />
-                        <span>{appointment.date}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <UpcomingAppointmentsList upcomingAppointments={upcomingAppointments} loading={loading} />
       </div>
 
       {/* Patient Modal */}

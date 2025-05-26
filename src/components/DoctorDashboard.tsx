@@ -10,23 +10,10 @@ import { MedicalRecordModal } from "./MedicalRecordModal";
 import { AppointmentModal, AppointmentType } from "./AppointmentModal";
 import { PatientModal } from "./PatientModal";
 import { Patient } from "@/types/database";
+import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from "@/components/ui/pagination";
+import { TodaysAppointmentsList } from "./TodaysAppointmentsList";
+import { DoctorPatientsList } from "./DoctorPatientsList";
 
-// Define interface for the data fetched, aligning with AppointmentType
-// The fetched data structure from Supabase will be mapped to AppointmentType
-interface FetchedAppointmentRaw {
-  id: string;
-  patient_id: string;
-  doctor_id: string;
-  date: string;
-  time: string;
-  type: string; // Raw type is string
-  status: string; // Raw status is string
-  department: string; // Raw department is string
-  notes?: string | null;
-  created_at?: string;
-  patients?: { id: string; name: string }; // Joined patient data
-  doctors?: { id: string; name: string; specialization: string }; // Joined doctor data with specialization
-}
 
 interface Stat {
   totalPatients: number;
@@ -54,28 +41,36 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [patientForAppointment, setPatientForAppointment] = useState<Patient | null>(null);
 
+  // Pagination state for My Patients list
+  const [currentPatientPage, setCurrentPatientPage] = useState(1);
+  const patientsPerPage = 5; // Adjust as needed
+  const [totalPatientPages, setTotalPatientPages] = useState(1);
+  const [patientsLoading, setPatientsLoading] = useState(false);
+
   // Current date in ISO format for filtering appointments
   const today = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        setLoading(true); // Main loading indicator
         if (!doctorId) return;
 
-        // Fetch all appointments for this doctor, include doctor specialization
-        const { data: appointmentsRaw, error: appointmentsError } = await supabase
+        // Fetch only today's appointments directly
+        const { data: todayAppointmentsData, error: todayAppointmentsError } = await supabase
           .from('appointments')
-          .select(`*, patients(id, name), doctors(id, name, specialization)`)
-          .eq('doctor_id', doctorId) as { data: FetchedAppointmentRaw[] | null, error: unknown }; // Cast to raw type, changed any to unknown
+          .select(`id, date, time, type, status, department, notes, created_at, patients!inner(id, name)`)
+          .eq('doctor_id', doctorId)
+          .eq('date', today) // Filter by today's date directly in the query
+          .order('time', { ascending: true }); // Order by time for display
 
-        if (appointmentsError) throw appointmentsError;
+        if (todayAppointmentsError) console.error("Error fetching today's appointments:", todayAppointmentsError); // Log error but don't block
 
-        // Map raw fetched data to AppointmentType
-        const formattedAppointments: AppointmentType[] = (appointmentsRaw || []).map(apt => ({
+        // Map fetched data to AppointmentType
+        const formattedTodayAppointments: AppointmentType[] = (todayAppointmentsData || []).map(apt => ({
           id: apt.id,
-          patient_id: apt.patient_id,
-          doctor_id: apt.doctor_id,
+          patient_id: apt.patients.id,
+          doctor_id: doctorId,
           date: apt.date,
           time: apt.time,
           type: apt.type as 'Walk-in' | 'Digital', // Cast string to union type
@@ -83,60 +78,154 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
           department: apt.department as 'Neurology' | 'Ophthalmology', // Cast string to union type
           notes: apt.notes || undefined,
           created_at: apt.created_at || undefined,
-          // Create nested arrays from joined data
-          patients: apt.patients ? [apt.patients] : null, // Map to { id: string, name: string }[] or null
-          doctors: apt.doctors ? [apt.doctors] : null, // Map to { id: string, name: string, specialization: string }[] or null
+          patients: apt.patients ? [apt.patients] : null, // Format as expected by AppointmentType
+          doctors: null, // We are not fetching doctor details here
         }));
 
-        // Filter today's appointments from formatted data
-        const todayAppts = formattedAppointments.filter((app: AppointmentType) => {
-          // Use isToday to check if the appointment date is today's date
-          try {
-            return isToday(parseISO(app.date));
-          } catch (error) {
-            console.error('Error parsing appointment date:', app.date, error);
-            return false; // Exclude appointments with invalid dates
-          }
-        });
-        setTodayAppointments(todayAppts);
+        setTodayAppointments(formattedTodayAppointments);
 
-        // Get unique patient IDs from all formatted appointments
-        const patientIds = Array.from(new Set(formattedAppointments.map((app: AppointmentType) => app.patient_id)));
-        let patientsList: Patient[] = [];
-        if (patientIds.length > 0) {
-          const { data: patientsData, error: patientsError } = await supabase
-            .from('patients')
-            .select('id, name')
-            .in('id', patientIds);
-          if (patientsError) throw patientsError;
-          patientsList = patientsData || [];
-        }
-        setPatients(patientsList);
+        // Fetch aggregate counts for stats (more targeted counts)
+        const { count: totalAppointmentsCount, error: totalAppointmentsError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctorId);
 
-        // Calculate stats from formatted appointments
-        const pendingAppointments = formattedAppointments.filter((app: AppointmentType) => app.status === 'Scheduled').length;
-        const completedAppointments = formattedAppointments.filter((app: AppointmentType) => app.status === 'Completed').length;
+        if (totalAppointmentsError) console.error("Error fetching total appointments count:", totalAppointmentsError);
 
-        setStats({
-          totalPatients: patientsList.length,
-          totalAppointments: formattedAppointments.length,
-          pendingAppointments: pendingAppointments,
-          completedConsultations: completedAppointments
-        });
+        const { count: pendingAppointmentsCount, error: pendingAppointmentsError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctorId)
+          .eq('status', 'Scheduled');
+          
+        if (pendingAppointmentsError) console.error("Error fetching pending appointments count:", pendingAppointmentsError);
+
+        const { count: completedConsultationsCount, error: completedConsultationsError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctorId)
+          .eq('status', 'Completed');
+
+        if (completedConsultationsError) console.error("Error fetching completed consultations count:", completedConsultationsError);
+
+         // Fetch total unique patient count for stats display (fetch all patient_ids and count client-side)
+         const { data: allPatientIdsData, error: allPatientIdsError } = await supabase
+          .from('appointments')
+          .select('patient_id')
+          .eq('doctor_id', doctorId);
+
+        if (allPatientIdsError) console.error("Error fetching all patient IDs for count:", allPatientIdsError); // Log but don't block
+
+        const totalUniquePatientsCount = new Set((allPatientIdsData || []).map(item => item.patient_id)).size;
+
+        setStats(prevStats => ({
+          ...prevStats,
+          totalPatients: totalUniquePatientsCount || 0,
+          totalAppointments: totalAppointmentsCount || 0,
+          pendingAppointments: pendingAppointmentsCount || 0,
+          completedConsultations: completedConsultationsCount || 0
+        }));
         
       } catch (error) {
-        console.error('Error fetching doctor dashboard data:', error);
+        console.error('Error fetching doctor dashboard initial data:', error); // Updated log message
         toast({
           title: 'Error',
           description: 'Failed to load dashboard data.',
           variant: 'destructive'
         });
       } finally {
-        setLoading(false);
+        setLoading(false); // Main loading indicator off
       }
     };
+    
     fetchData();
-  }, [doctorId, toast, today]);
+    
+  }, [doctorId, toast, today]); // Dependencies for initial fetch
+
+  // Effect for fetching paginated patient list
+  useEffect(() => {
+    if (doctorId) {
+      fetchDoctorPatients(doctorId, currentPatientPage, patientsPerPage);
+    }
+  }, [doctorId, currentPatientPage]); // Dependencies for patient list fetch
+
+  // New function to fetch paginated patients and their last visit date
+  const fetchDoctorPatients = async (doctorId: string, page: number, limit: number) => {
+    setPatientsLoading(true); // Patient list loading indicator
+    try {
+      // Fetch ALL unique patient IDs to get the total count and the full list for slicing
+      // This is a necessary step to implement client-side pagination on the unique list
+      const { data: allUniquePatientIdsData, error: allUniquePatientIdsError } = await supabase
+        .from('appointments')
+        .select('patient_id')
+        .eq('doctor_id', doctorId);
+
+      if (allUniquePatientIdsError) throw allUniquePatientIdsError; // Throw error as this is crucial for pagination
+      
+      const uniquePatientIds = Array.from(new Set((allUniquePatientIdsData || []).map(item => item.patient_id)));
+
+      // Calculate total pages based on the full unique list
+      const calculatedTotalPatientPages = Math.ceil(uniquePatientIds.length / limit);
+      setTotalPatientPages(calculatedTotalPatientPages > 0 ? calculatedTotalPatientPages : 1);
+
+      // Slice the unique patient IDs for the current page
+      const fromIndex = (page - 1) * limit;
+      const toIndex = fromIndex + limit;
+      const paginatedPatientIds = uniquePatientIds.slice(fromIndex, toIndex);
+
+      let patientsList: (Patient & { lastVisit?: string })[] = [];
+      const lastVisitsMap = new Map<string, string>();
+
+      if (paginatedPatientIds.length > 0) {
+        // Fetch patient details for the paginated IDs
+        const { data: patientsData, error: patientsError } = await supabase
+          .from('patients')
+          .select('id, name') // Fetch only necessary patient details
+          .in('id', paginatedPatientIds);
+
+        if (patientsError) console.error("Error fetching patient details for pagination:", patientsError); // Log error
+        patientsList = patientsData || [];
+
+        // Fetch the latest appointment date for each of these patients (N+1 per page)
+        const lastVisitPromises = patientsList.map(async (patient) => {
+           const { data: lastApp, error: lastAppError } = await supabase
+             .from('appointments')
+             .select('date')
+             .eq('doctor_id', doctorId) // Ensure we only get appointments for this doctor
+             .eq('patient_id', patient.id)
+             .order('date', { ascending: false })
+             .limit(1);
+
+           if (lastAppError) console.error(`Error fetching last appointment for patient ${patient.id}:`, lastAppError); // Log error
+           return { patientId: patient.id, date: (lastApp && lastApp.length > 0) ? lastApp[0].date : null };
+        });
+
+        const lastVisitsResults = await Promise.all(lastVisitPromises);
+
+        lastVisitsResults.forEach(result => { if (result.date) lastVisitsMap.set(result.patientId, result.date); });
+
+        // Add last visit date to patientsList
+        patientsList = patientsList.map(patient => ({
+           ...patient,
+           lastVisit: lastVisitsMap.get(patient.id) || 'N/A'
+        }));
+      }
+      
+      setPatients(patientsList as Patient[]); // Cast back to Patient[] for state
+
+    } catch (error) {
+      console.error('Error fetching paginated doctor patients:', error); // Updated log message
+      toast({
+        title: 'Error',
+        description: 'Failed to load patient list.',
+        variant: 'destructive'
+      });
+      setPatients([]); // Clear list on error
+      setTotalPatientPages(1); // Reset total pages on error
+    } finally {
+      setPatientsLoading(false); // Patient list loading indicator off
+    }
+  };
 
   const startConsultation = (appointment: AppointmentType) => {
     setSelectedAppointment(appointment);
@@ -235,89 +324,22 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <CalendarIcon className="h-5 w-5 mr-2" />
-            Today's Appointments ({format(new Date(), "MMMM d, yyyy")})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-muted/50 rounded-md animate-pulse"></div>
-              ))}
-            </div>
-          ) : todayAppointments.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No appointments scheduled for today.
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {todayAppointments.map((appointment) => (
-                <div key={appointment.id} className="flex items-center justify-between border-b pb-3">
-                  <div className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
-                      <User size={16} className="text-primary" />
-                    </div>
-                    <div>
-                      <div className="font-medium">{appointment.patients?.[0]?.name || 'Unknown Patient'}</div>
-                      <div className="text-sm text-muted-foreground flex items-center">
-                        <Clock size={14} className="mr-1" /> {appointment.time} • {appointment.type}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={
-                      appointment.status === "Scheduled" ? "outline" :
-                      appointment.status === "In Progress" ? "default" : "secondary"
-                    }>
-                      {appointment.status}
-                    </Badge>
-                    {(appointment.status === "Scheduled" || appointment.status === "In Progress") && (
-                      <Button size="sm" onClick={() => startConsultation(appointment)}>
-                        {appointment.status === "Scheduled" ? "Start" : "Continue"} Consultation
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Today's Appointments */}
+      <TodaysAppointmentsList
+        todayAppointments={todayAppointments}
+        loading={loading}
+        startConsultation={startConsultation}
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Users className="h-5 w-5 mr-2" />
-            My Patients
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-10 bg-muted/50 rounded-md animate-pulse"></div>
-              ))}
-            </div>
-          ) : patients.length === 0 ? (
-            <div className="text-center py-4 text-muted-foreground">
-              No patients found for this doctor.
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {patients.map((patient) => (
-                <div key={patient.id} className="p-3 border rounded-md flex items-center">
-                  <User size={16} className="text-primary mr-2" />
-                  <span className="font-medium">{patient.name}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* My Patients */}
+      <DoctorPatientsList
+        patients={patients}
+        patientsLoading={patientsLoading}
+        currentPatientPage={currentPatientPage}
+        patientsPerPage={patientsPerPage}
+        totalPatientPages={totalPatientPages}
+        setCurrentPatientPage={setCurrentPatientPage}
+      />
 
       <MedicalRecordModal
         open={openMedicalRecordModal}

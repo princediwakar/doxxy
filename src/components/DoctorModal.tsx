@@ -19,6 +19,20 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Doctor, Patient, Appointment } from "@/types/database";
 
+// Define a type for the fetched appointment data with nested patient information
+interface FetchedAppointmentWithPatient {
+  id?: string; // id is not always fetched (e.g., in fetchDoctorPatientList)
+  date: string;
+  time?: string; // time is not always fetched
+  type?: string; // type is not always fetched
+  status?: string; // status is not always fetched
+  department?: string; // department is not always fetched
+  patients: { // Nested patient object
+    id: string;
+    name: string;
+  } | null;
+}
+
 interface DoctorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,6 +45,8 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("details");
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [patientsLoading, setPatientsLoading] = useState(false);
 
   // Form fields
   const [formData, setFormData] = useState({
@@ -49,6 +65,11 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
 
   useEffect(() => {
     if (open && doctor) {
+      fetchDoctorBasicDetails(doctor.id);
+      setActiveTab("details");
+      setPatientList([]);
+      setTodayAppointments([]);
+
       setFormData({
         name: doctor.name || "",
         specialization: doctor.specialization || "",
@@ -62,10 +83,7 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
           end: "17:00"
         }
       });
-
-      fetchDoctorDetails(doctor.id);
     } else if (open && !doctor) {
-      // Reset form for new doctor
       setFormData({
         name: "",
         specialization: "",
@@ -81,14 +99,49 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
       });
       setPatientList([]);
       setTodayAppointments([]);
+      setActiveTab("details");
     }
   }, [open, doctor]);
 
-  const fetchDoctorDetails = async (doctorId: string) => {
+  const fetchDoctorBasicDetails = async (doctorId: string) => {
     setLoading(true);
     try {
-      // Fetch doctor's appointments with patient details
-      const { data: appointments, error: appointmentsError } = await supabase
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('name, specialization, email, phone, availability, bio')
+        .eq('id', doctorId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setFormData({
+          name: data.name || "",
+          specialization: data.specialization || "",
+          email: data.email || "",
+          phone: data.phone || "",
+          availability: data.availability || "Available",
+          bio: data.bio || "",
+          workDays: [],
+          workHours: {
+            start: "09:00",
+            end: "17:00"
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching doctor basic details:", error);
+      toast.error("Failed to load doctor basic details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTodayAppointments = async (doctorId: string) => {
+    setScheduleLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const { data, error } = await supabase
         .from('appointments')
         .select(`
           id,
@@ -98,48 +151,76 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
           status,
           patients!inner(
             id,
-            name,
-            email,
-            phone
+            name
+          )
+        `)
+        .eq('doctor_id', doctorId)
+        .eq('date', today)
+        .order('time', { ascending: true });
+
+      if (error) throw error;
+
+      // Cast data to the new interface array
+      setTodayAppointments(data as Appointment[] || []); // Keep as Appointment[] for state compatibility for now, casting fetched data internally if needed for processing
+    } catch (error) {
+      console.error("Error fetching today's appointments:", error);
+      toast.error("Failed to load today's appointments");
+      setTodayAppointments([]);
+    } finally {
+      setScheduleLoading(false);
+    }
+  };
+
+  const fetchDoctorPatientList = async (doctorId: string) => {
+    setPatientsLoading(true);
+    try {
+      const { data: appointments, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select(`
+          date,
+          patients!inner(
+            id,
+            name
           )
         `)
         .eq('doctor_id', doctorId)
         .order('date', { ascending: false });
 
       if (appointmentsError) throw appointmentsError;
-      
-      // Get unique patients
-      const uniquePatients: Patient[] = [];
-      const patientMap = new Map();
-      
+
+      const uniquePatients: (Patient & { lastVisit: string })[] = [];
+      const patientMap = new Map<string, boolean>(); // Use a map to track seen patient IDs
+
+      // Use the new interface for appointments data
       if (appointments) {
-        appointments.forEach((app: any) => {
+        const patientLatestVisitMap = new Map<string, string>();
+        (appointments as FetchedAppointmentWithPatient[]).forEach((app) => {
+          if (app.patients && !patientLatestVisitMap.has(app.patients.id)) {
+            patientLatestVisitMap.set(app.patients.id, app.date);
+          }
+        });
+
+        (appointments as FetchedAppointmentWithPatient[]).forEach((app) => {
           if (app.patients && !patientMap.has(app.patients.id)) {
-            patientMap.set(app.patients.id, {
-              id: app.patients.id,
-              name: app.patients.name,
-              lastVisit: app.date
-            });
+            patientMap.set(app.patients.id, true);
             uniquePatients.push({
               id: app.patients.id,
               name: app.patients.name,
-              lastVisit: app.date
+              lastVisit: patientLatestVisitMap.get(app.patients.id) || ''
             } as Patient & { lastVisit: string });
           }
         });
       }
-      
+
+      uniquePatients.sort((a, b) => a.name.localeCompare(b.name));
+
       setPatientList(uniquePatients);
-      
-      // Get today's appointments
-      const today = new Date().toISOString().split('T')[0];
-      const todayApps = appointments ? appointments.filter((app: any) => app.date === today) : [];
-      setTodayAppointments(todayApps as Appointment[]);
     } catch (error) {
-      console.error("Error fetching doctor details:", error);
-      toast.error("Failed to load doctor details");
+      console.error("Error fetching doctor's patient list:", error);
+      toast.error("Failed to load doctor's patient list");
+      setPatientList([]);
     } finally {
-      setLoading(false);
+      setPatientsLoading(false);
     }
   };
 
@@ -169,22 +250,29 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
       };
 
       if (isNewDoctor) {
-        // For new doctors, we need to generate an ID or let Supabase handle it
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('doctors')
           .insert({
             ...doctorData
-          })
-          .select()
-          .single();
+          });
 
         if (error) throw error;
         
-        toast.success("Doctor profile created", {
-          description: `${formData.name} has been added to your doctors list.`,
-        });
+        // Call the new Edge Function to invite the doctor via email
+        const { data: inviteData, error: inviteError } = await supabase.functions.invoke('invite-doctor', { body: { email: formData.email } });
+
+        if (inviteError) {
+          console.error("Error inviting user:", inviteError);
+          // Optionally handle the error, e.g., show a warning that the doctor was added but invite failed
+          toast.warning("Doctor profile created, but failed to send invitation email.");
+        } else {
+           toast.success("Doctor profile created and invitation email sent", {
+             description: `${formData.name} has been added to your doctors list and an invitation email has been sent to ${formData.email}.`,
+           });
+           console.log("Invitation data:", inviteData); // Log invitation data for debugging
+        }
+        
       } else {
-        // Update existing doctor
         const { data, error } = await supabase
           .from('doctors')
           .update(doctorData)
@@ -199,7 +287,6 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
         });
       }
       
-      window.location.reload(); // Refresh the page to show the changes
     } catch (error) {
       console.error("Error saving doctor:", error);
       toast.error(isNewDoctor ? "Failed to create doctor profile" : "Failed to update doctor profile");
@@ -246,7 +333,17 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
           </div>
         )}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+        <Tabs value={activeTab} onValueChange={(value) => {
+          setActiveTab(value);
+          // Fetch data for the selected tab if the doctor is not new
+          if (doctor) {
+            if (value === 'schedule') {
+              fetchTodayAppointments(doctor.id);
+            } else if (value === 'patients') {
+              fetchDoctorPatientList(doctor.id);
+            }
+          }
+        }} className="mt-4">
           <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="details" className="flex items-center">
               <User size={16} className="mr-2" />
@@ -346,13 +443,13 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
             {!isNewDoctor && (
               <div>
                 <h4 className="font-medium mb-2">Today's Schedule</h4>
-                {loading ? (
+                {scheduleLoading ? (
                   <p className="text-sm text-muted-foreground">Loading schedule...</p>
                 ) : todayAppointments.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No appointments scheduled for today.</p>
                 ) : (
                   <div className="space-y-2">
-                    {todayAppointments.map((appointment: any) => (
+                    {todayAppointments.map((appointment: Appointment) => (
                       <div key={appointment.id} className="p-3 border rounded-md flex justify-between">
                         <div>
                           <p className="font-medium">{appointment.patients?.name}</p>
@@ -375,13 +472,13 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
                   <span className="text-sm text-muted-foreground">Total: {patientList.length} patients</span>
                 </div>
                 <Separator />
-                {loading ? (
+                {patientsLoading ? (
                   <p className="text-sm text-muted-foreground">Loading patients...</p>
                 ) : patientList.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No patients assigned to this doctor yet.</p>
                 ) : (
                   <div className="space-y-2">
-                    {patientList.map((patient: any) => (
+                    {patientList.map((patient: Patient & { lastVisit: string }) => (
                       <div key={patient.id} className="p-3 border rounded-md flex justify-between items-center">
                         <div className="flex items-center">
                           <Avatar className="h-8 w-8 mr-2">
@@ -391,7 +488,7 @@ export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
                           </Avatar>
                           <div>
                             <p className="font-medium">{patient.name}</p>
-                            <p className="text-xs text-muted-foreground">Last visit: {new Date(patient.lastVisit).toLocaleDateString()}</p>
+                            <p className="text-xs text-muted-foreground">Last visit: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'N/A'}</p>
                           </div>
                         </div>
                         <Button variant="outline" size="sm">View</Button>

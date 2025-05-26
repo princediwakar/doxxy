@@ -7,31 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          operationName?: string
-          query?: string
-          variables?: Json
-          extensions?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       appointments: {
@@ -519,9 +494,9 @@ export type Database = {
           doctor_id: string
           date: string
           appointment_time: string
-          type: string
-          status: string
-          department: string
+          type: Database["public"]["Enums"]["appointment_type"]
+          status: Database["public"]["Enums"]["appointment_status"]
+          department: Database["public"]["Enums"]["department_type"]
           notes: string
           created_at: string
           patient_name: string
@@ -530,7 +505,30 @@ export type Database = {
           patient_medical_id: string
           doctor_name: string
           doctor_email: string
-          doctor_specialization: string
+          doctor_specialization: Database["public"]["Enums"]["department_type"]
+        }[]
+      }
+      get_billing_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_revenue: number
+          pending_amount: number
+          paid_bills: number
+          overdue_amount: number
+        }[]
+      }
+      get_bills_with_details: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          appointment_id: string
+          created_at: string
+          description: string
+          invoice_number: string
+          patient_id: string
+          status: Database["public"]["Enums"]["bill_status"]
+          amount: number
+          patient_name: string
         }[]
       }
       get_doctors: {
@@ -680,9 +678,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       appointment_status: [

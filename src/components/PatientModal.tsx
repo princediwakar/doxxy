@@ -67,7 +67,6 @@ export function PatientModal({ open, onOpenChange, patient, onPatientCreated }: 
         toast({ title: "Error fetching appointments", description: error.message, variant: "destructive" });
         setPatientAppointments([]);
       } else {
-        console.log("Fetched patient appointments:", data);
         const formattedAppointments: AppointmentType[] = (data || []).map(apt => ({
           ...apt,
           patients: apt.patients ? [apt.patients] : null,

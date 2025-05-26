@@ -86,24 +86,26 @@ const Patients = () => {
 
       if (error) throw error;
 
-      // Get appointment data for each patient to determine "status"
-      const enhancedPatients: EnhancedPatient[] = await Promise.all((data || []).map(async (patient: Patient) => {
-        // Get last appointment
-        // Note: The following code is correct for the supabase-js client, but if you see a 406 error in the console,
-        // it is a Supabase REST API limitation, not a bug in this code.
-        let lastAppointment: { date: string; status: string } | null = null;
-        try {
-          const { data: lastApp, error: appError } = await supabase
-            .from('appointments')
-            .select('date, status')
-            .eq('patient_id', patient.id)
-            .order('date', { ascending: false })
-            .limit(1)
-            ;
-          if (!appError && lastApp && lastApp.length > 0) lastAppointment = lastApp[0];
-        } catch (err) {
-          // ignore
-        }
+      // Extract patient IDs from the current page
+      const patientIds = (data || []).map(patient => patient.id);
+
+      // Fetch all relevant appointments for these patients in a single query
+      let appointments: { patient_id: string; date: string; status: string }[] = [];
+      if (patientIds.length > 0) {
+        const { data: appointmentsData, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('patient_id, date, status')
+          .in('patient_id', patientIds)
+          .order('date', { ascending: false }); // Order by date to easily find the last visit
+          
+        if (appointmentsError) console.error("Error fetching appointments for patients:", appointmentsError); // Log error but don't block patient display
+        appointments = appointmentsData || [];
+      }
+
+      // Process patients and find the last appointment/status efficiently
+      const enhancedPatients: EnhancedPatient[] = (data || []).map((patient: Patient) => {
+        // Find the latest appointment for the current patient from the fetched list
+        const lastAppointment = appointments.find(app => app.patient_id === patient.id);
 
         // Determine status based on last appointment
         let status = "Inactive";
@@ -136,20 +138,8 @@ const Patients = () => {
           }
         }
 
-        // Format last visit date if exists - TEMPORARILY REMOVING STATUS FILTER FOR DEBUGGING
-        let lastVisit = '';
-        try {
-          const { data: lastVisitData } = await supabase
-            .from('appointments')
-            .select('date')
-            .eq('patient_id', patient.id)
-            .order('date', { ascending: false })
-            .limit(1)
-            ;
-          lastVisit = (lastVisitData && lastVisitData.length > 0) ? new Date(lastVisitData[0].date).toLocaleDateString() : '';
-        } catch (err) {
-          lastVisit = '';
-        }
+        // Determine last visit date from the found lastAppointment
+        const lastVisit = lastAppointment ? new Date(lastAppointment.date).toLocaleDateString() : '';
 
         return {
           ...patient,
@@ -157,7 +147,7 @@ const Patients = () => {
           lastVisit,
           status,
         };
-      }));
+      });
 
       setPatients(enhancedPatients);
     } catch (error) {

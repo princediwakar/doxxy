@@ -411,7 +411,11 @@ export function AppointmentModal({ open, onOpenChange, appointment, patient, ini
                 <SelectItem value="3:00 PM">3:00 PM</SelectItem>
                 <SelectItem value="3:30 PM">3:30 PM</SelectItem>
                 <SelectItem value="4:00 PM">4:00 PM</SelectItem>
-                <SelectItem value="4:30 PM">4:30 PM</SelectItem>
+                <SelectItem value="5:30 PM">5:30 PM</SelectItem>
+                <SelectItem value="6:30 PM">6:30 PM</SelectItem>
+                <SelectItem value="7:30 PM">7:30 PM</SelectItem>
+                <SelectItem value="8:30 PM">8:30 PM</SelectItem>
+                <SelectItem value="9:30 PM">9:30 PM</SelectItem>
               </SelectContent>
             </Select>
           </div>
