@@ -1,257 +1,223 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useCallback } from "react";
 import { CalendarCheck, Users, User, Clock, Activity, Plus } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { DoctorDashboard } from "@/components/DoctorDashboard";
 import { Button } from "@/components/ui/button";
 import { PatientModal } from "@/components/PatientModal";
-import { AppointmentModal, AppointmentType } from "@/components/AppointmentModal";
-import { Patient } from "@/types/database";
-import { format, parseISO, isToday } from "date-fns";
+import { AppointmentModal } from "@/components/AppointmentModal";
+import { Tables, Database } from "@/integrations/supabase/types";
+import { format, parseISO } from "date-fns";
 import { AdminStatsGrid } from "@/components/AdminStatsGrid";
 import { WeeklyAppointmentsChart } from "@/components/WeeklyAppointmentsChart";
 import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-// Define the type for appointments fetched directly from the table with joins
-interface FetchedAppointmentRaw {
+type Patient = Tables<'patients'>;
+
+// Define the return type of the get_dashboard_data RPC
+type DashboardRpcResult = Database['public']['Functions']['get_dashboard_data']['Returns'][0];
+
+// Define the structure of the processed appointment data for frontend components
+interface ProcessedAppointment {
   id: string;
+    date: string; // yyyy-MM-dd
+    time: string; // HH:mm
+    type: string; // Should match appointment_type enum
+    status: string; // Should match appointment_status enum
   patient_id: string;
+    patient_name: string; // Ensure this is expected from RPC JSONB
   doctor_id: string;
-  date: string;
-  time: string; // Assuming time is stored as a string like 'HH:MM:SS'
-  type: string;
-  status: string;
-  department: string;
-  notes?: string | null;
-  created_at?: string;
-  patients?: { id: string; name: string } | null; // Joined patient data
-  doctors?: { id: string; name: string; specialization: string } | null; // Joined doctor data
+    doctor_name: string; // Ensure this is expected from RPC JSONB
 }
 
-interface FormattedAppointment {
-  id: string;
-  patient: string;
-  doctor: string;
-  time: string; // Keep as string for display
-  date: string;
-  type: string;
-}
+const fetchDashboardData = async (clinicId: string) => {
+  console.log("fetchDashboardData: Fetching for clinic", clinicId);
+
+  // Call the new RPC to get all dashboard data
+  const { data: rpcData, error: rpcError } = await supabase.rpc('get_dashboard_data', { _clinic_id: clinicId }).single();
+  if (rpcError) throw rpcError;
+
+  // Extract data from the RPC result (it returns an array with one object)
+  const { total_patients, total_doctors, appointments_today, all_relevant_appointments }: DashboardRpcResult = rpcData;
+
+  // Process the JSONB array of appointments with a more careful type assertion
+  const processedAppointments: ProcessedAppointment[] = (all_relevant_appointments as unknown as ProcessedAppointment[] || []).map(apt => ({
+    id: apt.id,
+    date: apt.date,
+    time: apt.time,
+    type: apt.type,
+    status: apt.status,
+      patient_id: apt.patient_id,
+      patient_name: apt.patient_name || 'Unknown Patient', // Handle potential null names from JSONB
+      doctor_id: apt.doctor_id,
+      doctor_name: apt.doctor_name || 'Unknown Doctor', // Handle potential null names from JSONB
+  }));
+
+  // Re-calculate weekly data and upcoming appointments from the processed data
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0); // Reset time to start of the day
+
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const weeklyData = days.map((day, index) => {
+    const date = new Date(sevenDaysAgo);
+    date.setDate(sevenDaysAgo.getDate() + index);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const dayAppointments = processedAppointments.filter(app => app.date === dateStr);
+    return { name: day, appointments: dayAppointments.length };
+  });
+
+  // Upcoming appointments (today onwards, limit 5)
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+  const upcomingFormattedAppointments = processedAppointments
+    .filter(app => parseISO(app.date) >= todayDate)
+    .sort((a, b) => {
+        // Sort by date, then time
+        const dateTimeA = new Date(`${a.date}T${a.time}`);
+        const dateTimeB = new Date(`${b.date}T${b.time}`);
+        return dateTimeA.getTime() - dateTimeB.getTime();
+    })
+    .slice(0, 5)
+    .map(appointment => ({
+    id: appointment.id,
+      patient: appointment.patient_name,
+      doctor: appointment.doctor_name,
+    time: appointment.time,
+      date: format(parseISO(appointment.date), 'PPP'), // Format date for display
+    type: appointment.type,
+  }));
+
+  return {
+    stats: { totalPatients: total_patients || 0, totalDoctors: total_doctors || 0, appointmentsToday: appointments_today || 0 },
+    appointmentData: weeklyData,
+    upcomingAppointments: upcomingFormattedAppointments,
+  };
+};
 
 const Dashboard = () => {
-  const { user, userRole, userDepartment } = useAuth();
-  const [stats, setStats] = useState({
-    totalPatients: 0,
-    totalDoctors: 0,
-    appointmentsToday: 0
-  });
-  const [appointmentData, setAppointmentData] = useState<{ name: string; appointments: number }[]>([]);
-  const [upcomingAppointments, setUpcomingAppointments] = useState<FormattedAppointment[]>([]);
-  const [loading, setLoading] = useState(true);
+  console.log("Dashboard component rendered.");
+  const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient(); // Get query client
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [patientForAppointment, setPatientForAppointment] = useState<Patient | null>(null);
 
-  useEffect(() => {
-    // If the user is a doctor, don't fetch admin dashboard data
-    if (userRole === "doctor") return;
-    
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        
-        // Fetch total patients count
-        const { count: totalPatientsCount, error: patientsError } = await supabase
-          .from('patients')
-          .select('*', { count: 'exact', head: true });
-          
-        if (patientsError) console.error("Error fetching patients count:", patientsError); // Log error, don't block
+  console.log("Dashboard: authLoading=", authLoading, "activeClinic=", !!activeClinic, "activeClinicRole=", activeClinicRole);
 
-        // Fetch total doctors count
-        const { count: totalDoctorsCount, error: doctorsError } = await supabase
-          .from('doctors')
-          .select('*', { count: 'exact', head: true });
-          
-        if (doctorsError) console.error("Error fetching doctors count:", doctorsError); // Log error, don't block
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['dashboardData', activeClinic?.clinic_id],
+    queryFn: () => fetchDashboardData(activeClinic!.clinic_id),
+    enabled: !!activeClinic && !authLoading && activeClinicRole !== 'doctor',
+    retry: 1,
+  });
 
-        // Fetch count of today's appointments
-        const today = new Date();
-        const todayIso = today.toISOString().split('T')[0];
-        const { count: appointmentsTodayCount, error: appointmentsTodayError } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true })
-          .eq('date', todayIso);
-
-        if (appointmentsTodayError) console.error("Error fetching appointments today count:", appointmentsTodayError); // Log error, don't block
-        
-        // Set stats
-        setStats({
-          totalPatients: totalPatientsCount || 0,
-          totalDoctors: totalDoctorsCount || 0,
-          appointmentsToday: appointmentsTodayCount || 0
-        });
-        
-        // Fetch appointments for the weekly chart and upcoming appointments
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        const sevenDaysAgoIso = sevenDaysAgo.toISOString().split('T')[0];
-
-        const { data: appointmentsData, error: appointmentsError } = await supabase
-          .from('appointments')
-          .select('id, date, time, type, status, patients(id, name), doctors(id, name)')
-          .gte('date', sevenDaysAgoIso) // Get appointments from the last 7 days onwards
-          .order('date', { ascending: true })
-          .order('time', { ascending: true });
-
-        if (appointmentsError) throw appointmentsError; // Throw error if fetching appointments fails
-
-        // Process fetched appointments for weekly chart and upcoming list
-        const allRelevantAppointments = (appointmentsData || []).map(apt => ({
-          id: apt.id,
-          patient_id: apt.patients.id,
-          doctor_id: apt.doctors.id,
-          date: apt.date, // YYYY-MM-DD format
-          time: apt.time, // Assuming HH:MM:SS format
-          type: apt.type,
-          status: apt.status,
-          department: '', // Department is not fetched in this query, might need to add if needed for display/filtering
-          notes: undefined,
-          created_at: undefined,
-          patient: apt.patients?.name || 'Unknown Patient', // Get patient name
-          doctor: apt.doctors?.name || 'Unknown Doctor', // Get doctor name
-        }));
-        
-        // Create weekly appointments data (last 7 days)
-        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        const weeklyData = days.map((day, index) => {
-          const date = new Date(sevenDaysAgo);
-          date.setDate(sevenDaysAgo.getDate() + index);
-          const dateStr = format(date, 'yyyy-MM-dd');
-          
-          const dayAppointments = allRelevantAppointments.filter((app) => 
-            app.date === dateStr
-          );
-          
-          return {
-            name: day,
-            appointments: dayAppointments.length
-          };
-        });
-        
-        setAppointmentData(weeklyData);
-        
-        // Get upcoming appointments (today onwards, limit 5)
-        const upcoming = allRelevantAppointments
-          .filter((app) => parseISO(app.date) >= today) // Filter appointments from today onwards
-          .slice(0, 5); // Limit to the next 5
-        
-        // Transform data for display (already done in allRelevantAppointments, just re-mapping for clarity if needed)
-        const upcomingFormattedAppointments: FormattedAppointment[] = upcoming.map((appointment) => ({ // Use allRelevantAppointments structure
-           id: appointment.id,
-           patient: appointment.patient,
-           doctor: appointment.doctor,
-           time: appointment.time, // Use time string directly
-           date: new Date(parseISO(appointment.date)).toLocaleDateString(), // Use parseISO before creating Date
-           type: appointment.type
-         }));
-
-        setUpcomingAppointments(upcomingFormattedAppointments);
-        
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        toast.error("Failed to load dashboard data");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchDashboardData();
-  }, [userRole]);
-
-  // Handle opening patient modal
   const handleAddPatientClick = () => {
     setIsPatientModalOpen(true);
   };
 
-  // Handle patient created callback
   const handlePatientCreated = (patient: Patient) => {
     setPatientForAppointment(patient);
     setIsPatientModalOpen(false);
     setIsAppointmentModalOpen(true);
   };
 
-  // Handle closing patient modal
   const handlePatientModalClose = (open: boolean) => {
     setIsPatientModalOpen(open);
-    if (!open) {
-       // Optional: Refetch patient data if needed after modal closes without creating a new patient
-       // fetchPatients(); // You might have a fetchPatients function in admin dashboard if displaying a list
+    if (!open && activeClinic && activeClinicRole !== 'doctor') {
+      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic.clinic_id] });
     }
   };
 
-  // Handle closing appointment modal
   const handleAppointmentModalClose = (open: boolean) => {
     setIsAppointmentModalOpen(open);
-    if (!open) {
+    if (!open && activeClinic && activeClinicRole !== 'doctor') {
       setPatientForAppointment(null);
-      // Optional: Refetch appointment data if needed
-      // fetchAppointments(); // You might have a fetchAppointments function in admin dashboard
+      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic.clinic_id] });
     }
   };
 
-  // If user is a doctor, render the doctor dashboard
-  if (userRole === "doctor" && user) {
-    return <DoctorDashboard doctorId={user.id} />;
+  if (authLoading) {
+    console.log("Dashboard: Rendering null due to authLoading");
+    return null;
   }
 
-  // Otherwise, render the admin dashboard
+  if (!activeClinic) {
+    console.log("Dashboard: Rendering no clinic message");
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] text-muted-foreground">
+        Please select a clinic to view the dashboard.
+      </div>
+    );
+  }
+
+  if (activeClinicRole === 'doctor') {
+    console.log("Dashboard: Rendering doctor access message");
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] text-muted-foreground">
+        Doctors do not have access to the admin dashboard.
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    console.log("Dashboard: Rendering loading spinner");
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error("Dashboard: Error fetching data", error);
+    toast.error("Failed to load dashboard data");
+    return (
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] text-red-500">
+        Error loading dashboard data. Please try again.
+      </div>
+    );
+  }
+
+  console.log("Dashboard: Rendering main UI with data", data);
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-muted-foreground">Overview of your clinic's performance and schedule.</p>
         </div>
-        {/* Add Patient button visible only for admin */}
-        {userRole === 'admin' && (
+        {(activeClinicRole === 'admin' || activeClinicRole === 'superadmin') && (
           <Button onClick={handleAddPatientClick}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus size={18} className="mr-2" />
             New Patient
           </Button>
         )}
       </div>
 
-      {/* Stats Grid */}
-      <AdminStatsGrid stats={stats} loading={loading} />
-
+      <AdminStatsGrid stats={data?.stats || { totalPatients: 0, totalDoctors: 0, appointmentsToday: 0 }} loading={isLoading} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Appointments Chart */}
-        <WeeklyAppointmentsChart appointmentData={appointmentData} loading={loading} />
-
-        {/* Today's Appointments */}
-        <UpcomingAppointmentsList upcomingAppointments={upcomingAppointments} loading={loading} />
+        <WeeklyAppointmentsChart appointmentData={data?.appointmentData || []} loading={isLoading} />
+        <UpcomingAppointmentsList upcomingAppointments={data?.upcomingAppointments || []} loading={isLoading} />
       </div>
 
-      {/* Patient Modal */}
       <PatientModal
         open={isPatientModalOpen}
         onOpenChange={handlePatientModalClose}
         patient={null}
         onPatientCreated={handlePatientCreated}
       />
-
-      {/* Appointment Modal */}
       <AppointmentModal
         open={isAppointmentModalOpen}
         onOpenChange={handleAppointmentModalClose}
         appointment={null}
-        initialPatient={patientForAppointment}
+        patient={patientForAppointment}
       />
-
     </div>
   );
+
 };
 
 export default Dashboard;

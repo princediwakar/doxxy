@@ -1,0 +1,26 @@
+## Cursor Agent Interaction Rules for Neurovision Clinic Management
+
+These rules govern the Cursor Agent's interaction and tool usage within the Cursor environment, building upon the project guidelines (`project-rules.md`, `cursor-agent-rules.md`) to ensure efficient and context-aware development.
+
+1.  **Contextual Awareness:** Always prioritize understanding the current context, including the active file, recent edits, attached files, and terminal state (CWD), before acting on a request. Refer back to `project-rules.md` and the main `cursor-agent-rules.md` for project-specific constraints, architecture, and best practices.
+
+2.  **Proactive Information Gathering:** Before proposing or implementing significant code changes, proactively use tools like `read_file`, `codebase_search`, or `grep_search` to gather relevant code snippets, function definitions, or data structures necessary for the task. Avoid making assumptions about code structure or dependencies.
+
+3.  **Efficient Tool Usage:**
+    *   Prefer `edit_file` for all code modifications, bundling logical changes together using `// ... existing code ...` to minimize multiple small edits.
+    *   Use `run_terminal_cmd` for necessary shell operations (e.g., installing dependencies, running scripts, executing linters/tests), always proposing the command for user approval. Be mindful of the current working directory.
+    *   Use search tools (`codebase_search`, `grep_search`, `file_search`) strategically; `grep_search` is good for exact string/regex matches, `codebase_search` for semantic queries, and `file_search` for locating files by name.
+    *   Use `list_dir` for exploring unknown directory structures.
+
+4.  **Automated Error Resolution:** After making code edits, automatically check for and attempt to fix common linter or simple TypeScript errors introduced by the change. If errors persist after a maximum of three attempts on the same file, report the specific errors to the user and ask for guidance.
+
+5.  **Clear Communication:**
+    *   Before executing a plan, briefly outline the steps you intend to take and the files that will be affected.
+    *   After completing a task or sequence of edits, summarize what was done and mention any potential next steps or observations (e.g., remaining errors, areas for further improvement).
+    *   When reporting terminal command failures, include the command that failed and the relevant error output.
+
+6.  **Respect User Environment:** Do not hardcode sensitive information (like API keys or database credentials) into code or commands. Always guide the user towards using environment variables (`.env.local`) as per `project-rules.md` and leverage tools like `dotenv-cli` via `run_terminal_cmd` when necessary for script execution, respecting the user's setup.
+
+7.  **Destructive Action Confirmation:** Reiterate the confirmation requirement for destructive tasks (as defined in the main `cursor-agent-rules.md`), clearly explaining the risk and suggesting backups where appropriate.
+
+8.  **Adherence to Project Standards:** Continuously ensure all generated code and proposed changes align with the standards, patterns, and technologies specified in `project-rules.md` (e.g., using React Query for data fetching, Zod for validation, Tailwind/Shadcn for UI, adhering to RLS principles). 

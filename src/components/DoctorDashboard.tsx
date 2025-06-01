@@ -1,19 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+// Restore removed imports used in the component
 import { Calendar as CalendarIcon, Clock, FileText, User, Users, Plus } from "lucide-react";
-import { format, isToday, parseISO } from "date-fns";
-import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns"; // Used for date display
+import { Badge } from "@/components/ui/badge"; // Used for appointment status badge
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MedicalRecordModal } from "./MedicalRecordModal";
-import { AppointmentModal, AppointmentType } from "./AppointmentModal";
+import { AppointmentModal } from "./AppointmentModal";
+import { AppointmentTypeWithClinic } from "./ConsultationModal"; // Import the consistent type
 import { PatientModal } from "./PatientModal";
-import { Patient } from "@/types/database";
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from "@/components/ui/pagination";
 import { TodaysAppointmentsList } from "./TodaysAppointmentsList";
 import { DoctorPatientsList } from "./DoctorPatientsList";
+import { Tables } from "@/integrations/supabase/types";
 
+// Define Patient type based on types.ts
+export interface Patient extends Tables<'patients'> {
+  // Add any joined properties if they are fetched with the patient data
+  lastVisit?: string;
+}
 
 interface Stat {
   totalPatients: number;
@@ -24,8 +30,7 @@ interface Stat {
 
 export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
   const { toast } = useToast();
-  // State should hold AppointmentType[]
-  const [todayAppointments, setTodayAppointments] = useState<AppointmentType[]>([]);
+  const [todayAppointments, setTodayAppointments] = useState<AppointmentTypeWithClinic[]>([]);
   const [stats, setStats] = useState<Stat>({
     totalPatients: 0,
     totalAppointments: 0,
@@ -33,9 +38,9 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
     completedConsultations: 0
   });
   const [loading, setLoading] = useState(true);
-  // selectedAppointment should be AppointmentType | null
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentType | null>(null);
-  const [openMedicalRecordModal, setOpenMedicalRecordModal] = useState(false);
+  // selectedAppointment and openMedicalRecordModal state removed as MedicalRecordModal is commented out
+  // const [selectedAppointment, setSelectedAppointment] = useState<AppointmentTypeWithClinic | null>(null);
+  // const [openMedicalRecordModal, setOpenMedicalRecordModal] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
@@ -50,107 +55,9 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
   // Current date in ISO format for filtering appointments
   const today = new Date().toISOString().split('T')[0];
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true); // Main loading indicator
-        if (!doctorId) return;
-
-        // Fetch only today's appointments directly
-        const { data: todayAppointmentsData, error: todayAppointmentsError } = await supabase
-          .from('appointments')
-          .select(`id, date, time, type, status, department, notes, created_at, patients!inner(id, name)`)
-          .eq('doctor_id', doctorId)
-          .eq('date', today) // Filter by today's date directly in the query
-          .order('time', { ascending: true }); // Order by time for display
-
-        if (todayAppointmentsError) console.error("Error fetching today's appointments:", todayAppointmentsError); // Log error but don't block
-
-        // Map fetched data to AppointmentType
-        const formattedTodayAppointments: AppointmentType[] = (todayAppointmentsData || []).map(apt => ({
-          id: apt.id,
-          patient_id: apt.patients.id,
-          doctor_id: doctorId,
-          date: apt.date,
-          time: apt.time,
-          type: apt.type as 'Walk-in' | 'Digital', // Cast string to union type
-          status: apt.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled', // Cast string to union type
-          department: apt.department as 'Neurology' | 'Ophthalmology', // Cast string to union type
-          notes: apt.notes || undefined,
-          created_at: apt.created_at || undefined,
-          patients: apt.patients ? [apt.patients] : null, // Format as expected by AppointmentType
-          doctors: null, // We are not fetching doctor details here
-        }));
-
-        setTodayAppointments(formattedTodayAppointments);
-
-        // Fetch aggregate counts for stats (more targeted counts)
-        const { count: totalAppointmentsCount, error: totalAppointmentsError } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true })
-          .eq('doctor_id', doctorId);
-
-        if (totalAppointmentsError) console.error("Error fetching total appointments count:", totalAppointmentsError);
-
-        const { count: pendingAppointmentsCount, error: pendingAppointmentsError } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true })
-          .eq('doctor_id', doctorId)
-          .eq('status', 'Scheduled');
-          
-        if (pendingAppointmentsError) console.error("Error fetching pending appointments count:", pendingAppointmentsError);
-
-        const { count: completedConsultationsCount, error: completedConsultationsError } = await supabase
-          .from('appointments')
-          .select('*', { count: 'exact', head: true })
-          .eq('doctor_id', doctorId)
-          .eq('status', 'Completed');
-
-        if (completedConsultationsError) console.error("Error fetching completed consultations count:", completedConsultationsError);
-
-         // Fetch total unique patient count for stats display (fetch all patient_ids and count client-side)
-         const { data: allPatientIdsData, error: allPatientIdsError } = await supabase
-          .from('appointments')
-          .select('patient_id')
-          .eq('doctor_id', doctorId);
-
-        if (allPatientIdsError) console.error("Error fetching all patient IDs for count:", allPatientIdsError); // Log but don't block
-
-        const totalUniquePatientsCount = new Set((allPatientIdsData || []).map(item => item.patient_id)).size;
-
-        setStats(prevStats => ({
-          ...prevStats,
-          totalPatients: totalUniquePatientsCount || 0,
-          totalAppointments: totalAppointmentsCount || 0,
-          pendingAppointments: pendingAppointmentsCount || 0,
-          completedConsultations: completedConsultationsCount || 0
-        }));
-        
-      } catch (error) {
-        console.error('Error fetching doctor dashboard initial data:', error); // Updated log message
-        toast({
-          title: 'Error',
-          description: 'Failed to load dashboard data.',
-          variant: 'destructive'
-        });
-      } finally {
-        setLoading(false); // Main loading indicator off
-      }
-    };
-    
-    fetchData();
-    
-  }, [doctorId, toast, today]); // Dependencies for initial fetch
-
-  // Effect for fetching paginated patient list
-  useEffect(() => {
-    if (doctorId) {
-      fetchDoctorPatients(doctorId, currentPatientPage, patientsPerPage);
-    }
-  }, [doctorId, currentPatientPage]); // Dependencies for patient list fetch
-
   // New function to fetch paginated patients and their last visit date
-  const fetchDoctorPatients = async (doctorId: string, page: number, limit: number) => {
+  // Wrap fetchDoctorPatients in useCallback and add dependencies
+  const fetchDoctorPatients = useCallback(async (doctorId: string, page: number, limit: number) => {
     setPatientsLoading(true); // Patient list loading indicator
     try {
       // Fetch ALL unique patient IDs to get the total count and the full list for slicing
@@ -161,7 +68,7 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         .eq('doctor_id', doctorId);
 
       if (allUniquePatientIdsError) throw allUniquePatientIdsError; // Throw error as this is crucial for pagination
-      
+
       const uniquePatientIds = Array.from(new Set((allUniquePatientIdsData || []).map(item => item.patient_id)));
 
       // Calculate total pages based on the full unique list
@@ -180,11 +87,12 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         // Fetch patient details for the paginated IDs
         const { data: patientsData, error: patientsError } = await supabase
           .from('patients')
-          .select('id, name') // Fetch only necessary patient details
+          .select('id, name, clinic_id') // Fetch clinic_id as well
           .in('id', paginatedPatientIds);
 
         if (patientsError) console.error("Error fetching patient details for pagination:", patientsError); // Log error
-        patientsList = patientsData || [];
+        // Ensure patientsData is mapped to the Patient type
+        patientsList = (patientsData || []).map(p => ({ ...p, clinic_id: p.clinic_id })) as Patient[];
 
         // Fetch the latest appointment date for each of these patients (N+1 per page)
         const lastVisitPromises = patientsList.map(async (patient) => {
@@ -210,8 +118,8 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
            lastVisit: lastVisitsMap.get(patient.id) || 'N/A'
         }));
       }
-      
-      setPatients(patientsList as Patient[]); // Cast back to Patient[] for state
+
+      setPatients(patientsList);
 
     } catch (error) {
       console.error('Error fetching paginated doctor patients:', error); // Updated log message
@@ -225,11 +133,176 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
     } finally {
       setPatientsLoading(false); // Patient list loading indicator off
     }
-  };
+  }, [toast]); // Add doctorId and toast as dependencies for useCallback
 
-  const startConsultation = (appointment: AppointmentType) => {
-    setSelectedAppointment(appointment);
-    setOpenMedicalRecordModal(true);
+  // Effect for fetching initial data (appointments and stats)
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true); // Main loading indicator
+        if (!doctorId) return;
+
+        // Fetch only today's appointments directly
+        const { data: todayAppointmentsData, error: todayAppointmentsError } = await supabase
+          .from('appointments')
+          .select(`id, date, time, type, status, department, notes, created_at, clinic_id, patients!inner(id, name)`) // Select clinic_id and joined patients
+          .eq('doctor_id', doctorId)
+          .eq('date', today) // Filter by today's date directly in the query
+          .order('time', { ascending: true }); // Order by time for display
+
+        if (todayAppointmentsError) {
+            console.error("Error fetching today's appointments:", todayAppointmentsError);
+            setTodayAppointments([]);
+        } else {
+             // Ensure todayAppointmentsData is not null before mapping
+            if (todayAppointmentsData) {
+                // Explicitly define the expected shape of each appointment object after the select with join
+                 interface FetchedAppointmentData {
+                  id: string;
+                  date: string;
+                  time: string;
+                  type: string;
+                  status: string;
+                  department: string; // Expect department based on select query
+                  notes: string | null; // Expect notes
+                  created_at: string | null; // Expect created_at
+                  clinic_id: string; // Expect clinic_id
+                  patients: { id: string; name: string }[]; // Expect joined patients as array
+                }
+                // Explicitly assert the type of the data array to unknown first, then to the expected shape
+                const formattedTodayAppointments: AppointmentTypeWithClinic[] = (todayAppointmentsData as unknown as FetchedAppointmentData[]).map(apt => ({
+                  id: apt.id,
+                  // Access patient ID from the joined patients array. Use optional chaining.
+                  patient_id: apt.patients?.[0]?.id || '', // Provide fallback for patient_id if patients array is empty or null
+                  doctor_id: doctorId, // Doctor ID is from the prop
+                  date: apt.date,
+                  time: apt.time,
+                  type: apt.type,
+                  status: apt.status,
+                  department: apt.department, // Access department directly
+                  notes: apt.notes,
+                  created_at: apt.created_at,
+                   // Map patients array to match the required structure, handle null/undefined
+                  patients: apt.patients ? apt.patients.map(p => ({ id: p.id, name: p.name })) : null,
+                  doctors: null,
+                  clinic_id: apt.clinic_id,
+                }));
+                setTodayAppointments(formattedTodayAppointments);
+            } else {
+                 // If no data and no explicit error (shouldn't happen with select), treat as empty
+                setTodayAppointments([]);
+            }
+        }
+
+        // Fetch aggregate counts for stats (more targeted counts)
+        const { count: totalAppointmentsCount, error: totalAppointmentsError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctorId);
+
+        if (totalAppointmentsError) console.error("Error fetching total appointments count:", totalAppointmentsError);
+
+        const { count: pendingAppointmentsCount, error: pendingAppointmentsError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctorId)
+          .eq('status', 'Scheduled');
+
+        if (pendingAppointmentsError) console.error("Error fetching pending appointments count:", pendingAppointmentsError);
+
+        const { count: completedConsultationsCount, error: completedConsultationsError } = await supabase
+          .from('appointments')
+          .select('*', { count: 'exact', head: true })
+          .eq('doctor_id', doctorId)
+          .eq('status', 'Completed');
+
+        if (completedConsultationsError) console.error("Error fetching completed consultations count:", completedConsultationsError);
+
+         // Fetch total unique patient count for stats display (fetch all patient_ids and count client-side)
+         const { data: allPatientIdsData, error: allPatientIdsError } = await supabase
+          .from('appointments')
+          .select('patient_id')
+          .eq('doctor_id', doctorId);
+
+        if (allPatientIdsError) console.error("Error fetching all patient IDs for count:", allPatientIdsError); // Log but don't block
+
+        const totalUniquePatientsCount = new Set((allPatientIdsData || []).map(item => item.patient_id)).size;
+
+        setStats(prevStats => ({
+          ...prevStats,
+          totalPatients: totalUniquePatientsCount || 0,
+          totalAppointments: totalAppointmentsCount || 0,
+          pendingAppointments: pendingAppointmentsCount || 0
+        }));
+
+      } catch (error) {
+        console.error('Error fetching doctor dashboard initial data:', error); // Updated log message
+        toast({
+          title: 'Error',
+          description: 'Failed to load dashboard data.',
+          variant: 'destructive'
+        });
+      } finally {
+        setLoading(false); // Main loading indicator off
+      }
+    };
+
+    fetchData();
+
+  }, [doctorId, toast, today]); // Dependencies for initial fetch
+
+  // Effect for fetching paginated patient list
+  // Add fetchDoctorPatients as a dependency
+  useEffect(() => {
+    if (doctorId) {
+      fetchDoctorPatients(doctorId, currentPatientPage, patientsPerPage);
+    }
+  }, [doctorId, currentPatientPage, fetchDoctorPatients]); // Add fetchDoctorPatients as dependency
+
+
+  // Start consultation function should take AppointmentTypeWithClinic
+  const startConsultation = async (appointment: AppointmentTypeWithClinic) => {
+    // Removed usage of selectedAppointment and openMedicalRecordModal as MedicalRecordModal is commented out
+    // setSelectedAppointment(appointment);
+    // setOpenMedicalRecordModal(true);
+    if (!appointment || !appointment.id || !appointment.clinic_id) return;
+
+    setLoading(true);
+    try {
+      // Update appointment status to 'In Progress'
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'In Progress' })
+        .eq('id', appointment.id)
+        .eq('clinic_id', appointment.clinic_id); // Ensure multi-tenancy
+
+      if (error) {
+        throw error;
+      }
+
+      console.log('Appointment status updated to In Progress:', appointment.id);
+      // Consider invalidating queries here if the UI needs to reflect the status change immediately
+      // queryClient.invalidateQueries(['appointments', activeClinic?.clinic_id]); // You might need queryClient here
+
+      // Now, open the Consultation Modal
+      // Assuming you have state and logic in DoctorDashboard to open the modal
+      // This part needs to be integrated with your existing modal handling
+      // Example: setOpenConsultationModal(true); setSelectedAppointmentForModal(appointment);
+
+    toast({
+      title: 'Consultation Started',
+        description: `Appointment ${appointment.id} is now In Progress.`,
+    });
+    } catch (error: unknown) {
+      console.error('Error updating appointment status to In Progress:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to start consultation.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle opening patient modal
@@ -339,13 +412,17 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         patientsPerPage={patientsPerPage}
         totalPatientPages={totalPatientPages}
         setCurrentPatientPage={setCurrentPatientPage}
+        onPatientClick={(patient) => console.log('Patient clicked:', patient)} // Add placeholder prop
       />
 
+      {/* Remove MedicalRecordModal component usage as it was deleted */}
+      {/*
       <MedicalRecordModal
         open={openMedicalRecordModal}
         onOpenChange={setOpenMedicalRecordModal}
-        appointment={selectedAppointment}
+        appointment={selectedAppointment} // Pass selectedAppointment
       />
+      */}
 
       {/* Patient Modal */}
       <PatientModal
@@ -360,7 +437,8 @@ export function DoctorDashboard({ doctorId }: { doctorId?: string }) {
         open={isAppointmentModalOpen}
         onOpenChange={handleAppointmentModalClose}
         appointment={null}
-        initialPatient={patientForAppointment}
+        // Remove initialPatient prop as it doesn't exist on AppointmentModalProps
+        // initialPatient={patientForAppointment} // Keep or remove based on AppointmentModalProps
       />
 
     </div>

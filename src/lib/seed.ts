@@ -1,489 +1,402 @@
-// seed.ts
 import { createClient } from '@supabase/supabase-js';
+import { Database } from '@/integrations/supabase/types';
+import { v4 as uuidv4 } from 'uuid';
+import dotenv from 'dotenv';
 import { format } from 'date-fns';
 
-// Replace with your actual values
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' });
 
-const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SERVICE_ROLE_KEY);
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Use service role key for seeding
 
-async function main() {
-  console.log("Starting database seeding...");
-
-  // 1. Seed Auth users and link to profiles and doctors
-  const usersToCreate = [
-    {
-      email: 'admin@clinic.com',
-      password: 'AdminPass123!',
-      user_metadata: { role: 'admin' }
-    },
-    {
-      email: 'doctor1@clinic.com',
-      password: 'DoctorPass123!',
-      user_metadata: { role: 'doctor', department: 'Neurology' }
-    },
-    {
-      email: 'doctor2@clinic.com',
-      password: 'DoctorPass456!',
-      user_metadata: { role: 'doctor', department: 'Ophthalmology' }
-    }
-    // Add more users as needed
-  ];
-
-  const createdUsers = [];
-
-  console.log("Seeding Auth users...");
-  for (const user of usersToCreate) {
-    const { data, error } = await supabase.auth.admin.createUser({
-      email: user.email,
-      password: user.password,
-      email_confirm: true,
-      user_metadata: user.user_metadata
-    });
-    if (error) {
-      console.error(`Error creating user ${user.email}:`, error.message);
-    } else if (data?.user) {
-      createdUsers.push(data.user);
-      console.log(`Created user: ${user.email} with ID ${data.user.id}`);
-    }
-  }
-
-  if (createdUsers.length === usersToCreate.length) {
-      console.log("All Auth users created successfully.");
-  } else {
-      console.warn(`Only created ${createdUsers.length}/${usersToCreate.length} Auth users. Check errors above.`);
-  }
-
-  const doctorUsers = createdUsers.filter(user => user.user_metadata?.role === 'doctor');
-  const adminUser = createdUsers.find(user => user.user_metadata?.role === 'admin');
-
-  // 3. Seed doctors (link to Auth users by ID)
-  const doctorsToInsert = [
-    { // Ensure ID is present and is the user ID
-      id: doctorUsers.find(u => u.email === 'doctor1@clinic.com')?.id,
-      name: 'Dr. John Smith',
-      email: 'doctor1@clinic.com',
-      specialization: 'Neurology',
-      phone: '+1234567890',
-      bio: 'Neurology specialist with 10 years of experience'
-    },
-    { // Ensure ID is present and is the user ID
-      id: doctorUsers.find(u => u.email === 'doctor2@clinic.com')?.id,
-      name: 'Dr. Jane Doe',
-      email: 'doctor2@clinic.com',
-      specialization: 'Ophthalmology',
-      phone: '+1234567891',
-      bio: 'Ophthalmology specialist with 8 years of experience'
-    }
-  ].filter(doc => doc.id) as { id: string; name: string; email: string; specialization: string; phone?: string | null; bio?: string | null; }[]; // Filter out any docs where id is null
-
-  if (doctorsToInsert.length > 0) {
-      console.log(`Seeding ${doctorsToInsert.length} doctors...`);
-      const { data: insertedDoctors, error: docError } = await supabase
-        .from('doctors')
-        .insert(doctorsToInsert)
-        .select(); // Select inserted data to get generated IDs if any (though we provide IDs here)
-
-      if (docError) {
-        console.error('Error inserting doctors:', docError.message);
-      } else if (insertedDoctors) {
-        console.log('Inserted doctors:', insertedDoctors);
-
-        // 4. Seed patients
-        const patientsToInsert = [
-          {
-            name: 'Alice Johnson',
-            email: 'alice.johnson@email.com',
-            phone: '+1234567890',
-            date_of_birth: '1985-05-15',
-            gender: 'Female',
-            address: '123 Main St, City, State',
-            medical_id: 'MED123456'
-          },
-          {
-            name: 'Bob Wilson',
-            email: 'bob.wilson@email.com',
-            phone: '+1234567892',
-            date_of_birth: '1978-08-22',
-            gender: 'Male',
-            address: '456 Oak Ave, City, State',
-            medical_id: 'MED789012'
-          }
-        ];
-
-        console.log(`Seeding ${patientsToInsert.length} patients...`);
-        const { data: insertedPatients, error: patientError } = await supabase
-          .from('patients')
-          .insert(patientsToInsert)
-          .select(); // Select inserted data to get generated IDs
-
-        if (patientError) {
-          console.error('Error inserting patients:', patientError.message);
-        } else if (insertedPatients && insertedPatients.length > 0) {
-          console.log('Inserted patients:', insertedPatients);
-
-          // 5. Seed appointments
-          const appointmentsToInsert = [
-            {
-              patient_id: insertedPatients[0].id,
-              doctor_id: insertedDoctors.find(d => d.email === 'doctor1@clinic.com')?.id,
-              date: format(new Date(), 'yyyy-MM-dd'), // Set date to today
-              time: '09:00:00',
-              type: 'Walk-in',
-              status: 'Scheduled',
-              department: 'Neurology',
-              notes: 'Patient requested morning appointment'
-            },
-            {
-              patient_id: insertedPatients[1].id,
-              doctor_id: insertedDoctors.find(d => d.email === 'doctor2@clinic.com')?.id,
-              date: format(new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), // Tomorrow
-              time: '14:30:00',
-              type: 'Digital',
-              status: 'Scheduled',
-              department: 'Ophthalmology',
-              notes: 'Virtual appointment requested'
-            },
-             {
-              patient_id: insertedPatients[0].id,
-              doctor_id: insertedDoctors.find(d => d.email === 'doctor1@clinic.com')?.id,
-              date: format(new Date(), 'yyyy-MM-dd'), // Today
-              time: '10:00:00',
-              type: 'Walk-in',
-              status: 'Completed',
-              department: 'Neurology',
-              notes: 'Completed today'
-            },
-             {
-              patient_id: insertedPatients[1].id,
-              doctor_id: insertedDoctors.find(d => d.email === 'doctor2@clinic.com')?.id,
-              date: format(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), // Last week
-              time: '11:00:00',
-              type: 'Digital',
-              status: 'Completed',
-              department: 'Ophthalmology',
-              notes: 'Completed last week'
-            }
-          ].filter(appt => appt.patient_id && appt.doctor_id);
-
-          if (appointmentsToInsert.length > 0) {
-              console.log(`Seeding ${appointmentsToInsert.length} appointments...`);
-              const { data: insertedAppointments, error: appointmentError } = await supabase
-                .from('appointments')
-                .insert(appointmentsToInsert)
-                .select(); // Select inserted data to get generated IDs
-
-              if (appointmentError) {
-                console.error('Error inserting appointments:', appointmentError.message);
-              } else if (insertedAppointments && insertedAppointments.length > 0) {
-                console.log('Inserted appointments:', insertedAppointments);
-
-                // 6. Seed bills
-                const billsToInsert = [
-                  {
-                    // Find the correct appointment ID from the inserted appointments
-                    appointment_id: insertedAppointments.find(a => a.patient_id === insertedPatients[0].id && a.date === format(new Date(), 'yyyy-MM-dd') && a.time === '09:00:00')?.id,
-                    patient_id: insertedPatients[0].id,
-                    amount: 150.00,
-                    status: 'Pending',
-                    // Ensure date format is correct (YYYY-MM-DD)
-                    due_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-                    // payment_method is nullable, no need to include if not needed.
-                    insurance_info: 'Provider: HealthCare Plus, Policy: HC123456'
-                  },
-                  {
-                     // Find the correct appointment ID from the inserted appointments
-                     appointment_id: insertedAppointments.find(a => a.patient_id === insertedPatients[1].id && a.date === format(new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd') && a.time === '14:30:00')?.id,
-                    patient_id: insertedPatients[1].id,
-                    amount: 200.00,
-                    status: 'Paid',
-                    // Ensure date format is correct (YYYY-MM-DD)
-                     due_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
-                    // payment_method is nullable, no need to include if not needed.
-                    insurance_info: 'Provider: MediCover, Policy: MC789012'
-                  }
-                ].filter(bill => bill.patient_id && bill.appointment_id); // Only insert if patient and appointment exist
-
-                if (billsToInsert.length > 0) {
-                    console.log(`Seeding ${billsToInsert.length} bills...`);
-                    const { data: insertedBills, error: billError } = await supabase
-                      .from('bills')
-                      .insert(billsToInsert)
-                      .select();
-
-                    if (billError) {
-                      console.error('Error inserting bills:', billError.message);
-                    } else {
-                      console.log('Inserted bills:', insertedBills);
-                    }
-                } else {
-                     console.warn("No valid bills to insert after filtering. Check appointment IDs.");
-                }
-
-                // 7. Seed medical records
-                const medicalRecordsToInsert = [
-                  {
-                     // Find the correct appointment ID
-                     appointment_id: insertedAppointments.find(a => a.patient_id === insertedPatients[0].id && a.date === format(new Date(), 'yyyy-MM-dd') && a.time === '09:00:00')?.id,
-                    patient_id: insertedPatients[0].id,
-                    // Find the correct doctor ID
-                    doctor_id: insertedDoctors.find(d => d.email === 'doctor1@clinic.com')?.id,
-                    record_type: 'Neurology',
-                    chief_complaint: 'Headaches and dizziness',
-                    diagnosis: 'Migraine',
-                    symptoms: 'Severe headache, sensitivity to light, nausea',
-                    treatment_plan: 'Prescribed medication and lifestyle changes',
-                    medications: [
-                      {
-                        name: 'Sumatriptan',
-                        dosage: '50mg',
-                        frequency: 'As needed',
-                        duration: '7 days'
-                      }
-                    ],
-                    // Ensure date format is correct (YYYY-MM-DD)
-                     follow_up_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
-                  },
-                  {
-                     // Find the correct appointment ID
-                     appointment_id: insertedAppointments.find(a => a.patient_id === insertedPatients[1].id && a.date === format(new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd') && a.time === '14:30:00')?.id,
-                    patient_id: insertedPatients[1].id,
-                    // Find the correct doctor ID
-                    doctor_id: insertedDoctors.find(d => d.email === 'doctor2@clinic.com')?.id,
-                    record_type: 'Ophthalmology',
-                    chief_complaint: 'Blurred vision',
-                    diagnosis: 'Myopia',
-                    symptoms: 'Difficulty seeing distant objects',
-                    treatment_plan: 'Prescription glasses',
-                    medications: [],
-                    // Ensure date format is correct (YYYY-MM-DD)
-                     follow_up_date: format(new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
-                  }
-                ].filter(mr => mr.patient_id && mr.doctor_id && mr.appointment_id); // Only insert if patient, doctor, and appointment exist
-
-                if (medicalRecordsToInsert.length > 0) {
-                  console.log(`Seeding ${medicalRecordsToInsert.length} medical records...`);
-                  const { data: insertedMedicalRecords, error: medicalRecordError } = await supabase
-                    .from('medical_records')
-                    .insert(medicalRecordsToInsert)
-                    .select();
-
-                  if (medicalRecordError) {
-                    console.error('Error inserting medical records:', medicalRecordError.message);
-                  } else if (insertedMedicalRecords && insertedMedicalRecords.length > 0) {
-                    console.log('Inserted medical records:', insertedMedicalRecords);
-
-                    // 8. Seed neurology records
-                    const neurologyRecordsToInsert = [
-                      {
-                        // Find the correct medical record ID
-                        medical_record_id: insertedMedicalRecords.find(mr => mr.patient_id === insertedPatients[0].id && mr.record_type === 'Neurology')?.id,
-                        neurological_exam: 'Normal cranial nerves, no focal deficits',
-                        motor_function: 'Normal strength in all extremities',
-                        sensory_function: 'Intact to light touch and pinprick',
-                        reflexes: '2+ throughout',
-                        coordination: 'Normal finger-to-nose and heel-to-shin',
-                        cognitive_assessment: 'Alert and oriented x3',
-                        scan_results: 'MRI shows no acute abnormalities'
-                      }
-                    ].filter(nr => nr.medical_record_id); // Only insert if medical record exists
-
-                    if (neurologyRecordsToInsert.length > 0) {
-                      console.log(`Seeding ${neurologyRecordsToInsert.length} neurology records...`);
-                      const { data: neurologyRecords, error: neurologyRecordError } = await supabase
-                        .from('neurology_records')
-                        .insert(neurologyRecordsToInsert)
-                        .select();
-
-                      if (neurologyRecordError) {
-                        console.error('Error inserting neurology records:', neurologyRecordError.message);
-                      } else {
-                        console.log('Inserted neurology records:', neurologyRecords);
-                      }
-                    } else {
-                        console.warn("No valid neurology records to insert after filtering. Check medical record IDs.");
-                    }
-
-                    // 9. Seed ophthalmology records
-                    const ophthalmologyRecordsToInsert = [
-                      {
-                         // Find the correct medical record ID
-                         medical_record_id: insertedMedicalRecords.find(mr => mr.patient_id === insertedPatients[1].id && mr.record_type === 'Ophthalmology')?.id,
-                        visual_acuity_right: '20/40',
-                        visual_acuity_left: '20/40',
-                        intraocular_pressure_right: '14 mmHg',
-                        intraocular_pressure_left: '15 mmHg',
-                        eye_examination: 'Normal anterior segment',
-                        fundoscopy: 'Normal optic nerve and retina',
-                        color_vision: 'Normal',
-                        peripheral_vision: 'Full to confrontation'
-                      }
-                    ].filter(or => or.medical_record_id); // Only insert if medical record exists
-
-                     if (ophthalmologyRecordsToInsert.length > 0) {
-                      console.log(`Seeding ${ophthalmologyRecordsToInsert.length} ophthalmology records...`);
-                      const { data: ophthalmologyRecords, error: ophthalmologyRecordError } = await supabase
-                        .from('ophthalmology_records')
-                        .insert(ophthalmologyRecordsToInsert)
-                        .select();
-
-                      if (ophthalmologyRecordError) {
-                        console.error('Error inserting ophthalmology records:', ophthalmologyRecordError.message);
-                      } else {
-                        console.log('Inserted ophthalmology records:', ophthalmologyRecords);
-                      }
-                     } else {
-                         console.warn("No valid ophthalmology records to insert after filtering. Check medical record IDs.");
-                     }
-
-                    // 10. Seed consultations
-                    const consultationsToInsert = [
-                      {
-                         // Find the correct appointment ID
-                         appointment_id: insertedAppointments.find(a => a.patient_id === insertedPatients[0].id && a.date === format(new Date(), 'yyyy-MM-dd') && a.time === '09:00:00')?.id,
-                        patient_id: insertedPatients[0].id,
-                        // Find the correct doctor ID
-                        doctor_id: insertedDoctors.find(d => d.email === 'doctor1@clinic.com')?.id,
-                        department: 'Neurology',
-                        clinical_notes: {
-                          history: 'Patient reports 3-day history of severe headaches',
-                          examination: 'Neurological exam normal',
-                          assessment: 'Migraine with aura',
-                          plan: 'Start preventive medication'
-                        }
-                      },
-                      {
-                         // Find the correct appointment ID
-                         appointment_id: insertedAppointments.find(a => a.patient_id === insertedPatients[1].id && a.date === format(new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd') && a.time === '14:30:00')?.id,
-                        patient_id: insertedPatients[1].id,
-                        // Find the correct doctor ID
-                        doctor_id: insertedDoctors.find(d => d.email === 'doctor2@clinic.com')?.id,
-                        department: 'Ophthalmology',
-                        clinical_notes: {
-                          history: 'Progressive blurry vision over 6 months',
-                          examination: 'Refraction shows -2.00 in both eyes',
-                          assessment: 'Simple myopia',
-                          plan: 'Prescribe corrective lenses'
-                        }
-                      }
-                    ].filter(c => c.patient_id && c.doctor_id && c.appointment_id); // Only insert if patient, doctor, and appointment exist
-
-                     if (consultationsToInsert.length > 0) {
-                      console.log(`Seeding ${consultationsToInsert.length} consultations...`);
-                      const { data: insertedConsultations, error: consultationError } = await supabase
-                        .from('consultations')
-                        .insert(consultationsToInsert)
-                        .select();
-
-                      if (consultationError) {
-                        console.error('Error inserting consultations:', consultationError.message);
-                      } else if (insertedConsultations && insertedConsultations.length > 0) {
-                        console.log('Inserted consultations:', insertedConsultations);
-
-                        // 11. Seed prescriptions
-                        const prescriptionsToInsert = [
-                          {
-                            // Find the correct consultation ID
-                            consultation_id: insertedConsultations.find(c => c.patient_id === insertedPatients[0].id && c.department === 'Neurology')?.id,
-                            patient_id: insertedPatients[0].id,
-                            // Find the correct doctor ID
-                            doctor_id: insertedDoctors.find(d => d.email === 'doctor1@clinic.com')?.id,
-                            // Find the correct medical record ID
-                             medical_record_id: insertedMedicalRecords.find(mr => mr.patient_id === insertedPatients[0].id && mr.record_type === 'Neurology')?.id,
-                            medications: [
-                              {
-                                name: 'Sumatriptan',
-                                dosage: '50mg',
-                                frequency: 'As needed',
-                                duration: '7 days',
-                                instructions: 'Take at first sign of migraine'
-                              },
-                              {
-                                name: 'Propranolol',
-                                dosage: '40mg',
-                                frequency: 'Twice daily',
-                                duration: '30 days',
-                                instructions: 'Take with food'
-                              }
-                            ],
-                            instructions: 'Take medications as prescribed. Follow up in 30 days.',
-                            // Ensure date format is correct (YYYY-MM-DD)
-                             follow_up_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
-                          },
-                          {
-                             // Find the correct consultation ID
-                             consultation_id: insertedConsultations.find(c => c.patient_id === insertedPatients[1].id && c.department === 'Ophthalmology')?.id,
-                            patient_id: insertedPatients[1].id,
-                            // Find the correct doctor ID
-                            doctor_id: insertedDoctors.find(d => d.email === 'doctor2@clinic.com')?.id,
-                            // Find the correct medical record ID
-                             medical_record_id: insertedMedicalRecords.find(mr => mr.patient_id === insertedPatients[1].id && mr.record_type === 'Ophthalmology')?.id,
-                            medications: [],
-                            instructions: 'Wear prescribed glasses for distance vision. Follow up in 60 days.',
-                            // Ensure date format is correct (YYYY-MM-DD)
-                             follow_up_date: format(new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd')
-                          }
-                        ].filter(p => p.patient_id && p.doctor_id && p.medical_record_id && p.consultation_id); // Only insert if all foreign keys exist
-
-                        if (prescriptionsToInsert.length > 0) {
-                          console.log(`Seeding ${prescriptionsToInsert.length} prescriptions...`);
-                          const { data: insertedPrescriptions, error: prescriptionError } = await supabase
-                            .from('prescriptions')
-                            .insert(prescriptionsToInsert)
-                            .select();
-
-                          if (prescriptionError) {
-                            console.error('Error inserting prescriptions:', prescriptionError.message);
-                          } else {
-                            console.log('Inserted prescriptions:', insertedPrescriptions);
-                          }
-                        } else {
-                             console.warn("No valid prescriptions to insert after filtering. Check foreign key IDs.");
-                        }
-
-                        console.log('Seeding process completed.');
-
-                      } else {
-                          console.warn("No consultations were inserted. Skipping prescriptions seed.");
-                          console.log('Seeding process completed (without prescriptions).');
-                      }
-                   } else {
-                      console.warn("No valid consultations to insert after filtering. Check foreign key IDs.");
-                      console.log('Seeding process completed (without consultations and prescriptions).');
-                   }
-
-                } else {
-                    console.warn("No medical records were inserted. Skipping neurology, ophthalmology, consultations, and prescriptions seeds.");
-                     console.log('Seeding process completed (without neurology, ophthalmology, consultations, prescriptions).');
-                }
-              } else {
-                   console.warn("No valid medical records to insert after filtering. Check foreign key IDs.");
-                   console.log('Seeding process completed (without medical records, neurology, ophthalmology, consultations, prescriptions).');
-              }
-
-            } else {
-              console.warn("No appointments were inserted. Skipping bills, medical records, consultations, and prescriptions seeds.");
-               console.log('Seeding process completed (without bills, medical records, neurology, ophthalmology, consultations, prescriptions).');
-            }
-          } else {
-             console.warn("No valid appointments to insert after filtering. Check patient and doctor IDs.");
-              console.log('Seeding process completed (without appointments, bills, medical records, neurology, ophthalmology, consultations, prescriptions).');
-          }
-
-        } else {
-           console.warn("No patients were inserted. Skipping appointments, bills, medical records, consultations, and prescriptions seeds.");
-            console.log('Seeding process completed (without appointments, bills, medical records, neurology, ophthalmology, consultations, prescriptions).');
-        }
-      } else {
-         console.warn("No doctors were inserted. Skipping patient, appointment, bill, medical record, consultation, and prescription seeds.");
-          console.log('Seeding process completed (without patients, appointments, bills, medical records, neurology, ophthalmology, consultations, prescriptions).');
-      }
-
-    } else {
-      console.warn("No valid doctors to insert after filtering. Check user IDs.");
-      console.log('Seeding process completed (without doctors, patients, appointments, bills, medical records, neurology, ophthalmology, consultations, prescriptions).');
-    }
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be defined.');
+  console.error('Please ensure you have a .env.local file in the project root with these variables.');
+  console.error(`VITE_SUPABASE_URL is: ${supabaseUrl}`);
+  console.error(`SUPABASE_SERVICE_ROLE_KEY is: ${supabaseServiceRoleKey ? '***defined***' : '***undefined***'}`);
+  process.exit(1);
 }
 
-main().catch((err) => {
-  console.error('Seeding failed:', err);
-});
+// Create a Supabase client with the service role key
+// This bypasses RLS for seeding purposes
+const supabase = createClient<Database>(
+  supabaseUrl,
+  supabaseServiceRoleKey,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
+
+async function seedDatabase() {
+  console.log('Starting database seeding...');
+
+  try {
+    // Clear existing data (optional, but good for idempotent seeding)
+    console.log('Clearing existing data...');
+    // Delete in reverse order of dependencies
+    await supabase.from('prescriptions').delete().neq('id', uuidv4());
+    await supabase.from('consultations').delete().neq('id', uuidv4());
+    await supabase.from('medical_records').delete().neq('id', uuidv4());
+    await supabase.from('bills').delete().neq('id', uuidv4());
+    await supabase.from('appointments').delete().neq('id', uuidv4());
+    await supabase.from('patients').delete().neq('id', uuidv4());
+    await supabase.from('doctors').delete().neq('id', uuidv4());
+    await supabase.from('clinic_members').delete().neq('id', uuidv4());
+    await supabase.from('clinic_departments').delete().neq('id', uuidv4());
+    await supabase.from('department_types').delete().neq('id', uuidv4());
+    await supabase.from('clinics').delete().neq('id', uuidv4());
+    // Note: We don't typically delete from `profiles` as it's linked to auth.users
+    // For a clean seed, one might manually clear auth.users and profiles if needed,
+    // but for seeding sample clinic data, clearing dependent tables is sufficient.
+    console.log('Existing data cleared.');
+
+    // --- Seed Department Types ---
+    console.log('Seeding department types...');
+    const { data: departmentTypes, error: departmentTypeError } = await supabase
+      .from('department_types')
+      .insert([
+        { name: 'Neurology' },
+        { name: 'Ophthalmology' },
+      ])
+      .select();
+    if (departmentTypeError) throw departmentTypeError;
+    const neurologyDeptType = departmentTypes.find(dt => dt.name === 'Neurology');
+    const ophthalmologyDeptType = departmentTypes.find(dt => dt.name === 'Ophthalmology');
+    console.log('Department types seeded.');
+
+    // --- Seed Clinics ---
+    console.log('Seeding clinics...');
+    // Create a dummy user profile to be the creator of the clinics
+    const { data: adminProfileData, error: adminProfileError } = await supabase
+      .from('profiles')
+      .insert({ id: uuidv4(), email: 'admin@example.com', name: 'Super Admin' })
+      .select()
+      .single();
+    if (adminProfileError) {
+        // If profile already exists (e.g., from a previous partial run or auth user), fetch it
+        if (adminProfileError.code === '23505') { // Unique violation code
+             const { data: existingAdmin, error: fetchAdminError } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('email', 'admin@example.com')
+                .single();
+            if (fetchAdminError) throw fetchAdminError;
+            adminProfileData.id = existingAdmin.id; // Use the existing user ID
+            console.log('Admin profile already exists, using existing ID.');
+        } else {
+            throw adminProfileError;
+        }
+    }
+    const adminUserId = adminProfileData.id;
+
+    const { data: clinics, error: clinicError } = await supabase
+      .from('clinics')
+      .insert([
+        { name: 'NeuroCare Clinic', created_by: adminUserId, address: '123 Neural Ave', phone: '555-1111', email: 'info@neurocare.com' },
+        { name: 'Vision Plus Center', created_by: adminUserId, address: '456 Optic Way', phone: '555-2222', email: 'info@visionplus.com' },
+      ])
+      .select();
+    if (clinicError) throw clinicError;
+    const neuroCareClinic = clinics.find(c => c.name === 'NeuroCare Clinic');
+    const visionPlusClinic = clinics.find(c => c.name === 'Vision Plus Center');
+    console.log('Clinics seeded.');
+
+    // --- Seed Clinic Departments (linking clinics to department types) ---
+    console.log('Seeding clinic departments...');
+    const { data: clinicDepartments, error: clinicDepartmentError } = await supabase
+        .from('clinic_departments')
+        .insert([
+            { clinic_id: neuroCareClinic!.id, department_type_id: neurologyDeptType!.id },
+            { clinic_id: visionPlusClinic!.id, department_type_id: ophthalmologyDeptType!.id },
+        ])
+        .select();
+    if (clinicDepartmentError) throw clinicDepartmentError;
+    const neuroCareNeurologyDept = clinicDepartments.find(cd => cd.clinic_id === neuroCareClinic!.id && cd.department_type_id === neurologyDeptType!.id);
+    const visionPlusOphthalmologyDept = clinicDepartments.find(cd => cd.clinic_id === visionPlusClinic!.id && cd.department_type_id === ophthalmologyDeptType!.id);
+    console.log('Clinic departments seeded.');
+
+    // --- Seed Profiles, Doctors, and Clinic Members ---
+    console.log('Seeding profiles, doctors, and clinic members...');
+    const usersToSeed = [
+      { email: 'doctor.neuro@neurocare.com', name: 'Dr. Anya Sharma', role: 'doctor' as Database['public']['Enums']['user_role'], clinic: neuroCareClinic, department: neuroCareNeurologyDept },
+      { email: 'staff.neuro@neurocare.com', name: 'Jane Smith', role: 'staff' as Database['public']['Enums']['user_role'], clinic: neuroCareClinic, department: null },
+      { email: 'superadmin.neuro@neurocare.com', name: 'David Lee', role: 'superadmin' as Database['public']['Enums']['user_role'], clinic: neuroCareClinic, department: null },
+      { email: 'doctor.ophtha@visionplus.com', name: 'Dr. Ben Carter', role: 'doctor' as Database['public']['Enums']['user_role'], clinic: visionPlusClinic, department: visionPlusOphthalmologyDept },
+      { email: 'staff.ophtha@visionplus.com', name: 'Sarah Chen', role: 'staff' as Database['public']['Enums']['user_role'], clinic: visionPlusClinic, department: null },
+      { email: 'superadmin.ophtha@visionplus.com', name: 'Emily Wong', role: 'superadmin' as Database['public']['Enums']['user_role'], clinic: visionPlusClinic, department: null },
+    ];
+
+    const seededUsers = [];
+    for (const user of usersToSeed) {
+        let userId: string;
+
+        // Attempt to get user by email first by listing users and filtering
+        const { data: existingAuthUsersResponse, error: fetchAuthUserError } = await supabase.auth.admin.listUsers();
+
+        if (fetchAuthUserError) { // Throw any error during listing users
+            throw fetchAuthUserError;
+        }
+
+        // Find the user by email in the list
+        // Use a type assertion or careful access as types might be inaccurate
+        const existingAuthUser = existingAuthUsersResponse?.users.find((u: { id: string; email?: string | null }) => u.email === user.email);
+
+        if (existingAuthUser) {
+            // User already exists in auth.users, use their ID
+            userId = existingAuthUser.id;
+            console.log(`Auth user with email ${user.email} already exists. Using existing ID: ${userId}`);
+        } else {
+            // User does not exist in auth.users, create them
+             const newUserId = uuidv4();
+             const { data: newAuthUserData, error: authUserError } = await supabase.auth.admin.createUser({
+                id: newUserId, // Use the generated UUID
+                email: user.email,
+                password: 'password', // Dummy password for seed users
+                email_confirm: true, // Auto-confirm email
+            });
+
+            if (authUserError) {
+                 // If creation failed for any reason, throw the error
+                 throw authUserError;
+            }
+            userId = newAuthUserData.user.id; // Use the newly created auth user ID
+            console.log(`Created auth user and got ID: ${userId}`);
+        }
+
+        // Now seed or update Profile using the SAME userId obtained above
+        // Use upsert to handle cases where the profile might exist without a proper auth.users link
+        const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+                id: userId, // Always use the auth.users ID
+                email: user.email,
+                name: user.name
+            })
+            .select() // Select the upserted data to confirm
+            .single();
+
+        if (profileError) { // Throw any error during profile upsert
+            throw profileError;
+        }
+
+        // 2. Seed Doctor (if role is doctor)
+        if (user.role === 'doctor') {
+            // Find the department type name using the department_type_id from clinic_department
+            const departmentTypeName = user.department?.department_type_id
+                ? departmentTypes.find(dt => dt.id === user.department.department_type_id)?.name || 'medical field'
+                : 'medical field';
+
+            const { error: doctorError } = await supabase
+                .from('doctors')
+                .insert({
+                    id: userId, // doctors.id is the same as profiles.id/user_id
+                    name: user.name,
+                    email: user.email,
+                    phone: '555-3333',
+                    availability: 'Mon-Fri, 9 AM - 5 PM',
+                    bio: `Specializes in ${departmentTypeName}.`, // Use the found department type name
+                });
+            if (doctorError && doctorError.code !== '23505') throw doctorError; // Ignore unique constraint errors if doctor already exists
+        }
+
+        // 3. Seed Clinic Member
+        const { error: memberError } = await supabase
+            .from('clinic_members')
+            .insert({
+                user_id: userId,
+                clinic_id: user.clinic!.id,
+                role: user.role,
+                department_id: user.department?.id || null,
+            });
+         if (memberError && memberError.code !== '23505') throw memberError; // Ignore unique constraint errors if member already exists
+
+        seededUsers.push({...user, id: userId});
+    }
+     const doctorNeuro = seededUsers.find(u => u.email === 'doctor.neuro@neurocare.com')!;
+     const doctorOphtha = seededUsers.find(u => u.email === 'doctor.ophtha@visionplus.com')!;
+     const staffNeuro = seededUsers.find(u => u.email === 'staff.neuro@neurocare.com')!;
+
+
+    console.log('Profiles, doctors, and clinic members seeded.');
+
+    // --- Seed Patients ---
+    console.log('Seeding patients...');
+    const { data: patients, error: patientError } = await supabase
+      .from('patients')
+      .insert([
+        { clinic_id: neuroCareClinic!.id, name: 'Alice Wonderland', date_of_birth: '1990-01-15', gender: 'Female', email: 'alice@example.com', phone: '555-4444', address: '101 Fairyland Ln' },
+        { clinic_id: neuroCareClinic!.id, name: 'Bob Thebuilder', date_of_birth: '1985-05-20', gender: 'Male', email: 'bob@example.com', phone: '555-5555', address: '202 Construction St' },
+        { clinic_id: visionPlusClinic!.id, name: 'Charlie Bucket', date_of_birth: '2000-11-11', gender: 'Male', email: 'charlie@example.com', phone: '555-6666', address: '303 Chocolate Rd' },
+      ])
+      .select();
+    if (patientError) throw patientError;
+    const alice = patients.find(p => p.name === 'Alice Wonderland');
+    const bob = patients.find(p => p.name === 'Bob Thebuilder');
+    const charlie = patients.find(p => p.name === 'Charlie Bucket');
+    console.log('Patients seeded.');
+
+    // --- Seed Appointments ---
+    console.log('Seeding appointments...');
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const { data: appointments, error: appointmentError } = await supabase
+      .from('appointments')
+      .insert([
+        { clinic_id: neuroCareClinic!.id, patient_id: alice!.id, doctor_id: doctorNeuro!.id, date: today, time: '10:00', type: 'Walk-in', status: 'Scheduled', notes: 'Initial consultation' },
+        { clinic_id: neuroCareClinic!.id, patient_id: bob!.id, doctor_id: doctorNeuro!.id, date: today, time: '11:00', type: 'Digital', status: 'In Progress', notes: 'Follow-up call' },
+        { clinic_id: visionPlusClinic!.id, patient_id: charlie!.id, doctor_id: doctorOphtha!.id, date: today, time: '14:00', type: 'Walk-in', status: 'Scheduled', notes: 'Eye exam' },
+      ])
+      .select();
+    if (appointmentError) throw appointmentError;
+    const aliceAppt = appointments.find(a => a.patient_id === alice!.id);
+    const bobAppt = appointments.find(a => a.patient_id === bob!.id);
+    const charlieAppt = appointments.find(a => a.patient_id === charlie!.id);
+    console.log('Appointments seeded.');
+
+    // --- Seed Consultations (one-to-one with appointments) ---
+    console.log('Seeding consultations...');
+    const { data: consultations, error: consultationError } = await supabase
+      .from('consultations')
+      .insert([
+        {
+            appointment_id: aliceAppt!.id,
+            clinic_id: neuroCareClinic!.id,
+            doctor_id: doctorNeuro!.id,
+            patient_id: alice!.id,
+            clinical_notes: { summary: 'Patient reported headaches.', diagnosis: 'Migraine', treatment: 'Prescribed medication.' },
+            specialty_data: { type: 'Neurology', symptoms: ['headache', 'nausea'] }
+        },
+         {
+            appointment_id: charlieAppt!.id,
+            clinic_id: visionPlusClinic!.id,
+            doctor_id: doctorOphtha!.id,
+            patient_id: charlie!.id,
+            clinical_notes: { summary: 'Patient needs new glasses.', diagnosis: 'Myopia', treatment: 'Prescribed new lenses.' },
+            specialty_data: { type: 'Ophthalmology', prescription: { sphere: -2.5, cylinder: -0.5 } }
+        },
+      ])
+      .select();
+    if (consultationError) throw consultationError;
+     const aliceConsultation = consultations.find(c => c.patient_id === alice!.id);
+     const charlieConsultation = consultations.find(c => c.patient_id === charlie!.id);
+    console.log('Consultations seeded.');
+
+     // --- Seed Medical Records ---
+    console.log('Seeding medical records...');
+    const { data: medicalRecords, error: medicalRecordError } = await supabase
+      .from('medical_records')
+      .insert([
+        {
+            clinic_id: neuroCareClinic!.id,
+            patient_id: alice!.id,
+            chief_complaint: 'Chronic headaches',
+            symptoms: 'Severe throbbing pain, nausea, sensitivity to light and sound',
+            diagnosis: 'Migraine without aura',
+            treatment_plan: 'Acute medication, lifestyle changes, trigger identification',
+            notes: 'Patient needs follow up in 1 month.'
+        },
+         {
+            clinic_id: visionPlusClinic!.id,
+            patient_id: charlie!.id,
+            chief_complaint: 'Blurred vision',
+            symptoms: 'Difficulty seeing distant objects clearly',
+            diagnosis: 'Myopia',
+            treatment_plan: 'Prescribe corrective lenses',
+            notes: 'Annual eye exams recommended.'
+        },
+      ])
+      .select();
+    if (medicalRecordError) throw medicalRecordError;
+     const aliceMedicalRecord = medicalRecords.find(mr => mr.patient_id === alice!.id);
+     const charlieMedicalRecord = medicalRecords.find(mr => mr.patient_id === charlie!.id);
+    console.log('Medical records seeded.');
+
+
+    // --- Seed Prescriptions ---
+    console.log('Seeding prescriptions...');
+     const { data: prescriptions, error: prescriptionError } = await supabase
+       .from('prescriptions')
+       .insert([
+         {
+           clinic_id: neuroCareClinic!.id,
+           patient_id: alice!.id,
+           doctor_id: doctorNeuro!.id,
+           consultation_id: aliceConsultation!.id,
+           medical_record_id: aliceMedicalRecord!.id,
+           medications: [
+             { name: 'Sumatriptan', dosage: '50mg', frequency: 'As needed for migraine', duration: 'Until symptoms resolve' },
+             { name: 'Propranolol', dosage: '20mg', frequency: 'Twice daily', duration: 'Ongoing' },
+           ],
+           instructions: 'Take Sumatriptan at first sign of migraine. Take Propranolol regularly as a preventative.',
+           follow_up_date: format(new Date(new Date().setDate(new Date().getDate() + 30)), 'yyyy-MM-dd'), // 30 days from now
+         },
+          {
+            clinic_id: visionPlusClinic!.id,
+            patient_id: charlie!.id,
+            doctor_id: doctorOphtha!.id,
+            consultation_id: charlieConsultation!.id,
+            medical_record_id: charlieMedicalRecord!.id,
+            medications: [
+              { name: 'Corrective Lenses', type: 'Glasses', strength: 'Sphere -2.5, Cylinder -0.5' },
+            ],
+            instructions: 'Wear glasses for distance vision.',
+            follow_up_date: format(new Date(new Date().setFullYear(new Date().getFullYear() + 1)), 'yyyy-MM-dd'), // 1 year from now
+          },
+       ])
+       .select();
+     if (prescriptionError) throw prescriptionError;
+     console.log('Prescriptions seeded.');
+
+     // --- Seed Bills ---
+    console.log('Seeding bills...');
+    const { data: bills, error: billError } = await supabase
+      .from('bills')
+      .insert([
+        {
+            clinic_id: neuroCareClinic!.id,
+            patient_id: alice!.id,
+            appointment_id: aliceAppt!.id,
+            amount: 150.00,
+            description: 'Initial Consultation Fee',
+            status: 'Pending',
+            invoice_number: 'INV-NC-001'
+        },
+         {
+            clinic_id: neuroCareClinic!.id,
+            patient_id: bob!.id,
+            appointment_id: bobAppt!.id,
+            amount: 75.00,
+            description: 'Follow-up Consultation Fee',
+            status: 'Paid',
+            invoice_number: 'INV-NC-002'
+        },
+         {
+            clinic_id: visionPlusClinic!.id,
+            patient_id: charlie!.id,
+            appointment_id: charlieAppt!.id,
+            amount: 200.00,
+            description: 'Comprehensive Eye Exam',
+            status: 'Overdue',
+            invoice_number: 'INV-VP-001'
+        },
+      ])
+      .select();
+    if (billError) throw billError;
+    console.log('Bills seeded.');
+
+
+    console.log('Database seeding completed successfully!');
+
+  } catch (error: unknown) {
+    console.error('Database seeding failed:', (error as Error).message);
+    console.error('Details:', error);
+  } finally {
+      // Note: In a real application, you might want to manually disconnect the client if needed,
+      // but tsx usually handles process exit correctly.
+  }
+}
+
+seedDatabase();

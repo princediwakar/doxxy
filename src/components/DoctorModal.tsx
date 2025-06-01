@@ -1,515 +1,477 @@
-import { useState, useEffect } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Calendar, FileText } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Doctor, Patient, Appointment } from "@/types/database";
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
-// Define a type for the fetched appointment data with nested patient information
-interface FetchedAppointmentWithPatient {
-  id?: string; // id is not always fetched (e.g., in fetchDoctorPatientList)
-  date: string;
-  time?: string; // time is not always fetched
-  type?: string; // type is not always fetched
-  status?: string; // status is not always fetched
-  department?: string; // department is not always fetched
-  patients: { // Nested patient object
-    id: string;
-    name: string;
-  } | null;
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  FormDescription,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Database, Constants } from '@/integrations/supabase/types';
+import { useAuth } from '@/contexts/AuthContext';
+
+// Type for the return of the get_doctors_by_clinic RPC from generated types.ts
+type RpcDoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+
+// Define a local type for the Doctor object used within this modal.
+// It extends the RPC return type (which only includes department_name)
+// to explicitly include department_id, as the current generated types.ts
+// does not reflect the RPC change to return department_id.
+// This is a necessary workaround until the Supabase type generation is corrected.
+interface ModalDoctorDetails extends RpcDoctorDetails {
+  department_id: string | null; // Explicitly added because generated types are outdated
 }
+
+// Type for clinic departments
+type ClinicDepartment = Database['public']['Tables']['clinic_departments']['Row'];
+// Type for department types (Neurology, Ophthalmology) - used for department name display
+type DepartmentType = Database['public']['Tables']['department_types']['Row'];
+
+// Get the valid user roles from the generated types for use in Zod and the form.
+// This ensures consistency with the database enum definition.
+type DbUserRole = Database['public']['Enums']['user_role'];
+// Explicitly define the valid roles as a readonly tuple using 'as const'.
+// This provides the specific string literal types required by z.enum.
+const DbUserRoles = ['staff', 'doctor', 'superadmin'] as const;
+
+// Zod schema for doctor form validation
+const doctorFormSchema = z.object({
+  name: z.string().nonempty('Name is required'),
+  email: z.string().email('Invalid email format').nullable().optional().transform(e => e === '' ? null : e),
+  phone: z.string().nullable().optional().transform(e => e === '' ? null : e),
+  availability: z.string().nullable().optional().transform(e => e === '' ? null : e),
+  bio: z.string().nullable().optional().transform(e => e === '' ? null : e),
+  // Use the generated enum values directly for Zod validation
+  role: z.enum(DbUserRoles, { required_error: 'Role is required' }), // Use the readonly tuple directly
+  department_id: z.string().uuid('Invalid department ID').nullable(), // Can be null
+});
+
+type DoctorFormValues = z.infer<typeof doctorFormSchema>;
 
 interface DoctorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  doctor: Doctor | null;
+  // Doctor prop uses the local type with explicit department_id for modal functionality
+  doctor: ModalDoctorDetails | null; // Null for adding a new doctor (existing user)
 }
 
-export function DoctorModal({ open, onOpenChange, doctor }: DoctorModalProps) {
-  const isNewDoctor = !doctor;
-  const [patientList, setPatientList] = useState<Patient[]>([]);
-  const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("details");
-  const [scheduleLoading, setScheduleLoading] = useState(false);
-  const [patientsLoading, setPatientsLoading] = useState(false);
+const DoctorModal: React.FC<DoctorModalProps> = ({
+  open,
+  onOpenChange,
+  doctor,
+}) => {
+  const queryClient = useQueryClient();
+  const { activeClinic } = useAuth();
 
-  // Form fields
-  const [formData, setFormData] = useState({
-    name: "",
-    specialization: "" as 'Neurology' | 'Ophthalmology' | "",
-    email: "",
-    phone: "",
-    availability: "Available",
-    bio: "",
-    workDays: [] as string[],
-    workHours: {
-      start: "09:00",
-      end: "17:00"
-    }
+  // Helper to safely get a role from the doctor object that is compatible with DbUserRole
+  const getSafeDoctorRole = (doctor: ModalDoctorDetails | null): DbUserRole => {
+      // Cast DbUserRoles to a standard array for the includes check.
+      const validRolesArray = Array.from(DbUserRoles);
+      const defaultRole = validRolesArray[0]; // Default to the first role (should be 'staff' based on enum order)
+
+      if (!doctor?.role) return defaultRole;
+      // Check if the doctor's role is included in the valid database roles.
+      if (validRolesArray.includes(doctor.role as DbUserRole)) { // Cast doctor.role to the expected union type
+          return doctor.role as DbUserRole;
+      }
+      return defaultRole;
+  };
+
+  const form = useForm<DoctorFormValues>({
+    resolver: zodResolver(doctorFormSchema),
+    defaultValues: {
+      name: doctor?.name || '',
+      email: doctor?.email || '',
+      phone: doctor?.phone || '',
+      availability: doctor?.availability || '',
+      bio: doctor?.bio || '',
+      // Default role is 'doctor' for new users, otherwise use existing doctor's role safely
+      role: doctor ? getSafeDoctorRole(doctor) : 'doctor', // Explicitly default to 'doctor' for add mode
+      department_id: doctor?.department_id || null,
+    },
   });
 
+  // Effect to update form defaults if doctor prop changes while modal is open
   useEffect(() => {
-    if (open && doctor) {
-      fetchDoctorBasicDetails(doctor.id);
-      setActiveTab("details");
-      setPatientList([]);
-      setTodayAppointments([]);
-
-      setFormData({
-        name: doctor.name || "",
-        specialization: doctor.specialization || "",
-        email: doctor.email || "",
-        phone: doctor.phone || "",
-        availability: doctor.availability || "Available",
-        bio: doctor.bio || "",
-        workDays: [],
-        workHours: {
-          start: "09:00",
-          end: "17:00"
-        }
-      });
-    } else if (open && !doctor) {
-      setFormData({
-        name: "",
-        specialization: "",
-        email: "",
-        phone: "",
-        availability: "Available",
-        bio: "",
-        workDays: [],
-        workHours: {
-          start: "09:00",
-          end: "17:00"
-        }
-      });
-      setPatientList([]);
-      setTodayAppointments([]);
-      setActiveTab("details");
+    if (open) {
+        form.reset({
+            name: doctor?.name || '',
+            email: doctor?.email || '',
+            phone: doctor?.phone || '',
+            availability: doctor?.availability || '',
+            bio: doctor?.bio || '',
+            // Default role is 'doctor' for new users, otherwise use existing doctor's role safely
+            role: doctor ? getSafeDoctorRole(doctor) : 'doctor', // Explicitly default to 'doctor' for add mode
+            department_id: doctor?.department_id || null,
+        });
     }
-  }, [open, doctor]);
+  }, [open, doctor, form]); // Add DbUserRoles to dependency array
 
-  const fetchDoctorBasicDetails = async (doctorId: string) => {
-    setLoading(true);
-    try {
+  // Fetch clinic departments and their types for the dropdown
+  const { data: clinicDepartments, isLoading: isLoadingDepartments } = useQuery({
+    queryKey: ['clinicDepartments', activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id) return [];
+      // Fetch clinic departments and join with department_types to get names
       const { data, error } = await supabase
-        .from('doctors')
-        .select('name, specialization, email, phone, availability, bio')
-        .eq('id', doctorId)
-        .single();
+        .from('clinic_departments')
+        .select('id, department_types(name)')
+        .eq('clinic_id', activeClinic.clinic_id);
 
       if (error) throw error;
 
-      if (data) {
-        setFormData({
-          name: data.name || "",
-          specialization: data.specialization || "",
-          email: data.email || "",
-          phone: data.phone || "",
-          availability: data.availability || "Available",
-          bio: data.bio || "",
-          workDays: [],
-          workHours: {
-            start: "09:00",
-            end: "17:00"
-          }
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching doctor basic details:", error);
-      toast.error("Failed to load doctor basic details");
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Map results to include department id and name
+      return data.map(cd => ({
+        id: cd.id,
+        name: (cd.department_types as DepartmentType | null)?.name || 'Unknown Department',
+      })) || [];
+    },
+    enabled: open && !!activeClinic?.clinic_id,
+  });
 
-  const fetchTodayAppointments = async (doctorId: string) => {
-    setScheduleLoading(true);
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          date,
-          time,
-          type,
-          status,
-          patients!inner(
-            id,
-            name
-          )
-        `)
-        .eq('doctor_id', doctorId)
-        .eq('date', today)
-        .order('time', { ascending: true });
-
-      if (error) throw error;
-
-      // Cast data to the new interface array
-      setTodayAppointments(data as Appointment[] || []); // Keep as Appointment[] for state compatibility for now, casting fetched data internally if needed for processing
-    } catch (error) {
-      console.error("Error fetching today's appointments:", error);
-      toast.error("Failed to load today's appointments");
-      setTodayAppointments([]);
-    } finally {
-      setScheduleLoading(false);
-    }
-  };
-
-  const fetchDoctorPatientList = async (doctorId: string) => {
-    setPatientsLoading(true);
-    try {
-      const { data: appointments, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select(`
-          date,
-          patients!inner(
-            id,
-            name
-          )
-        `)
-        .eq('doctor_id', doctorId)
-        .order('date', { ascending: false });
-
-      if (appointmentsError) throw appointmentsError;
-
-      const uniquePatients: (Patient & { lastVisit: string })[] = [];
-      const patientMap = new Map<string, boolean>(); // Use a map to track seen patient IDs
-
-      // Use the new interface for appointments data
-      if (appointments) {
-        const patientLatestVisitMap = new Map<string, string>();
-        (appointments as FetchedAppointmentWithPatient[]).forEach((app) => {
-          if (app.patients && !patientLatestVisitMap.has(app.patients.id)) {
-            patientLatestVisitMap.set(app.patients.id, app.date);
-          }
-        });
-
-        (appointments as FetchedAppointmentWithPatient[]).forEach((app) => {
-          if (app.patients && !patientMap.has(app.patients.id)) {
-            patientMap.set(app.patients.id, true);
-            uniquePatients.push({
-              id: app.patients.id,
-              name: app.patients.name,
-              lastVisit: patientLatestVisitMap.get(app.patients.id) || ''
-            } as Patient & { lastVisit: string });
-          }
-        });
+  // Mutation for updating doctor and clinic member details
+  const updateMutation = useMutation({ // Renamed to updateMutation for clarity
+    mutationFn: async (values: DoctorFormValues) => {
+      // Doctor.id from the RPC is the user_id (profiles.id) and also the doctors.id
+      if (!activeClinic?.clinic_id || !doctor?.id) {
+         throw new Error('Invalid state: Cannot update doctor without active clinic or doctor ID.');
       }
 
-      uniquePatients.sort((a, b) => a.name.localeCompare(b.name));
+      // 1. Update the 'doctors' table using doctor.id (which is the doctors.id)
+      const { error: doctorUpdateError } = await supabase
+         .from('doctors')
+         .update({
+            name: values.name || null,
+            email: values.email || null,
+            phone: values.phone || null,
+            availability: values.availability || null,
+            bio: values.bio || null,
+          })
+         .eq('id', doctor.id); // Use doctor.id directly
 
-      setPatientList(uniquePatients);
-    } catch (error) {
-      console.error("Error fetching doctor's patient list:", error);
-      toast.error("Failed to load doctor's patient list");
-      setPatientList([]);
-    } finally {
-      setPatientsLoading(false);
-    }
-  };
+      if (doctorUpdateError) throw doctorUpdateError;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+      // 2. Update the 'clinic_members' table using the RPC
+      const { error: memberUpdateError } = await supabase.rpc('update_clinic_member_details', {
+         member_user_id: doctor.id, // Use doctor.id (which is the user_id)
+         target_clinic_id: activeClinic.clinic_id,
+         updated_role: values.role, // Use role from form values - This now aligns with DbUserRole
+         updated_department_id: values.department_id, // Use department_id from form values
+      });
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+      if (memberUpdateError) throw memberUpdateError;
 
-  const handleSubmit = async () => {
-    if (!formData.specialization) {
-      toast.error("Please select a specialization");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const doctorData = {
-        name: formData.name,
-        specialization: formData.specialization as 'Neurology' | 'Ophthalmology',
-        email: formData.email,
-        phone: formData.phone,
-        bio: formData.bio
-      };
-
-      if (isNewDoctor) {
-        const { error } = await supabase
-          .from('doctors')
-          .insert({
-            ...doctorData
-          });
-
-        if (error) throw error;
-        
-        // Call the new Edge Function to invite the doctor via email
-        const { data: inviteData, error: inviteError } = await supabase.functions.invoke('invite-doctor', { body: { email: formData.email } });
-
-        if (inviteError) {
-          console.error("Error inviting user:", inviteError);
-          // Optionally handle the error, e.g., show a warning that the doctor was added but invite failed
-          toast.warning("Doctor profile created, but failed to send invitation email.");
-        } else {
-           toast.success("Doctor profile created and invitation email sent", {
-             description: `${formData.name} has been added to your doctors list and an invitation email has been sent to ${formData.email}.`,
-           });
-           console.log("Invitation data:", inviteData); // Log invitation data for debugging
-        }
-        
-      } else {
-        const { data, error } = await supabase
-          .from('doctors')
-          .update(doctorData)
-          .eq('id', doctor.id)
-          .select()
-          .single();
-
-        if (error) throw error;
-        
-        toast.success("Doctor profile updated", {
-          description: `${formData.name} has been updated in your doctors list.`,
-        });
-      }
-      
-    } catch (error) {
-      console.error("Error saving doctor:", error);
-      toast.error(isNewDoctor ? "Failed to create doctor profile" : "Failed to update doctor profile");
-    } finally {
-      setLoading(false);
+       return doctor; // Return the original doctor object on success
+    },
+    onSuccess: () => {
+      toast.success('Doctor details updated successfully!');
+      queryClient.invalidateQueries({ queryKey: ['doctors', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
       onOpenChange(false);
-    }
+    },
+    onError: (error) => {
+      console.error('Doctor update mutation error:', error);
+      toast.error('Failed to update doctor details.', {
+        description: error.message,
+      });
+    },
+   });
+
+   // Mutation for adding an existing user as a doctor to the clinic
+   const addMutation = useMutation({
+    mutationFn: async (values: DoctorFormValues) => {
+       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
+       if (!values.email) throw new Error('Email is required to add a doctor.');
+
+       let existingUserId = null;
+       let profileError = null;
+
+       try {
+           const { data: profileData, error: fetchError } = await supabase
+               .from('profiles')
+               .select('id')
+               .eq('email', values.email)
+               .single();
+
+           if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected
+               // Catch other errors like RLS errors here
+               profileError = fetchError;
+               console.error("DoctorModal: Profile lookup failed with error:", fetchError);
+           } else if (profileData) {
+               // User found
+               existingUserId = profileData.id;
+               console.log("DoctorModal: Found existing user with ID:", existingUserId);
+           } else { // profileData is null and error is PGRST116
+               // User not found (expected case for new user)
+               console.log("DoctorModal: User not found by email, proceeding to Edge Function.");
+           }
+       } catch (error) {
+           // Catch any unexpected errors during the fetch
+           profileError = error;
+           console.error("DoctorModal: Unexpected error during profile lookup:", error);
+       }
+
+       if (existingUserId) {
+           // Scenario 1: User exists and was found by the client-side query (unlikely with RLS)
+           console.log("DoctorModal: Processing existing user found via client-side query.");
+           // Check if the user is already a member of this clinic
+           const { data: memberData, error: memberCheckError } = await supabase
+             .from('clinic_members')
+             .select('id')
+             .eq('clinic_id', activeClinic.clinic_id)
+             .eq('user_id', existingUserId)
+             .single();
+
+           if (memberCheckError && memberCheckError.code !== 'PGRST116') { throw memberCheckError; }
+
+           if (memberData) {
+               throw new Error(`User with email ${values.email} is already a member of this clinic.`);
+           }
+
+           // Add the existing user as a clinic member using the RPC
+           const { error: addMemberError } = await supabase.rpc('add_clinic_member', {
+               new_user_id: existingUserId,
+               target_clinic_id: activeClinic.clinic_id,
+               new_role: 'doctor', // Explicitly set role to 'doctor'
+               new_department_id: values.department_id,
+           });
+
+           if (addMemberError) { throw addMemberError; }
+
+           // Also ensure entry in doctors table if not exists (based on our previous fix)
+           const { data: doctorData, error: doctorCheckError } = await supabase
+              .from('doctors')
+              .select('id')
+              .eq('id', existingUserId)
+              .single();
+
+           if (doctorCheckError && doctorCheckError.code !== 'PGRST116') { throw doctorCheckError; }
+
+           if (!doctorData) {
+              const { error: insertDoctorError } = await supabase
+                 .from('doctors')
+                 .insert({
+                    id: existingUserId,
+                    name: values.name,
+                 });
+              if (insertDoctorError) { throw insertDoctorError; }
+           }
+
+           // Return partial info, invalidate queries will refetch
+           return { id: existingUserId, name: values.name || '' } as ModalDoctorDetails;
+
+       } else { // Scenario 2: User not found by client-side query or lookup failed (use Edge Function)
+            console.log("DoctorModal: Using invite-doctor Edge Function.");
+            if (!values.name) throw new Error('Name is required to invite or add a doctor.');
+            // Assuming invite-doctor Edge Function handles both new user creation and adding existing users to clinic
+            const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('invite-doctor', {
+               body: {
+                   email: values.email,
+                   name: values.name, // Pass name for new user creation or updating doctors table
+                   role: 'doctor', // Edge Function should handle setting the role in clinic_members
+                   department_id: values.department_id, // Pass department_id
+                   clinic_id: activeClinic.clinic_id,
+               },
+               method: 'POST', // Assuming invite-doctor is a POST function
+            });
+
+            if (edgeFunctionError) { throw edgeFunctionError; }
+
+            // The Edge Function is responsible for creating the user (if new),
+            // adding them to clinic_members, and adding/updating the doctors table entry.
+            // We can assume success if no edgeFunctionError.
+            // The response from the Edge Function might contain relevant data like the new user ID.
+            // For now, we'll return a simple success indicator.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return { message: 'Doctor added/invited successfully!', result: edgeFunctionData } as any; // Use any temporarily based on unknown EF return type
+       }
+    },
+     onSuccess: () => {
+       toast.success('Doctor added successfully!');
+       queryClient.invalidateQueries({ queryKey: ['doctors', activeClinic?.clinic_id] });
+       queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
+       onOpenChange(false);
+     },
+     onError: (error) => {
+       console.error('Add Doctor mutation error:', error);
+       console.error('Add Doctor mutation full error object:', JSON.stringify(error, null, 2));
+       toast.error('Failed to add doctor.', {
+         description: error.message,
+       });
+     },
+   });
+
+
+  const onSubmit = (values: DoctorFormValues) => {
+     if (doctor) {
+       updateMutation.mutate(values); // Use updateMutation for editing
+     } else {
+       addMutation.mutate(values); // Use addMutation for adding
+     }
   };
-  
-  // For displaying initials when no image is available
-  const getInitials = (name: string) => {
-    if (!name) return "";
-    return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
-      .toUpperCase();
-  };
+
+  const isSubmitting = updateMutation.isPending || addMutation.isPending;
+  const modalTitle = doctor ? 'Edit Doctor' : 'New Doctor';
+  const submitButtonText = doctor ? 'Save Changes' : 'Add Doctor';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      {/* DialogContent handles responsiveness */}
+      <DialogContent className="sm:max-w-[425px]"> {/* Reduced max width */}
         <DialogHeader>
-          <DialogTitle>{isNewDoctor ? "Add New Doctor" : "Doctor Profile"}</DialogTitle>
+          <DialogTitle>{modalTitle}</DialogTitle>
           <DialogDescription>
-            {isNewDoctor 
-              ? "Enter the information of the new doctor." 
-              : "View and edit doctor information."}
+            Fill in the details to {doctor ? 'edit' : 'add'} doctor information.
           </DialogDescription>
         </DialogHeader>
 
-        {!isNewDoctor && (
-          <div className="flex items-center space-x-4 my-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary text-xl">
-                {getInitials(doctor?.name || "")}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h3 className="font-medium text-lg">{doctor?.name}</h3>
-              <p className="text-muted-foreground">{doctor?.specialization}</p>
-            </div>
-          </div>
-        )}
+        {/* Redesigned Form Layout */}
+        <Form {...form}> {/* Wrap form with Form component */}
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
 
-        <Tabs value={activeTab} onValueChange={(value) => {
-          setActiveTab(value);
-          // Fetch data for the selected tab if the doctor is not new
-          if (doctor) {
-            if (value === 'schedule') {
-              fetchTodayAppointments(doctor.id);
-            } else if (value === 'patients') {
-              fetchDoctorPatientList(doctor.id);
-            }
-          }
-        }} className="mt-4">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="details" className="flex items-center">
-              <User size={16} className="mr-2" />
-              <span className="hidden sm:inline">Details</span>
-            </TabsTrigger>
-            <TabsTrigger value="schedule" className="flex items-center">
-              <Calendar size={16} className="mr-2" />
-              <span className="hidden sm:inline">Schedule</span>
-            </TabsTrigger>
-            <TabsTrigger value="patients" className="flex items-center">
-              <FileText size={16} className="mr-2" />
-              <span className="hidden sm:inline">Patients</span>
-            </TabsTrigger>
-          </TabsList>
+            {/* Name - Spans full width */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2"> {/* Name spans full width */}
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} disabled={!!doctor} />
+                  </FormControl>
+                  {!!doctor && <FormDescription>Name cannot be changed for existing doctors.</FormDescription>}
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <TabsContent value="details" className="space-y-4 mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input 
-                  id="name" 
-                  name="name"
-                  value={formData.name} 
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="specialty">Specialty</Label>
-                <Select 
-                  value={formData.specialization} 
-                  onValueChange={(value) => handleSelectChange("specialization", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select specialty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Neurology">Neurology</SelectItem>
-                    <SelectItem value="Ophthalmology">Ophthalmology</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} disabled={!!doctor} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email"
-                  type="email" 
-                  value={formData.email} 
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  name="phone"
-                  value={formData.phone} 
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="availability">Availability Status</Label>
-                <Select 
-                  value={formData.availability} 
-                  onValueChange={(value) => handleSelectChange("availability", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Available">Available</SelectItem>
-                    <SelectItem value="Busy">Busy</SelectItem>
-                    <SelectItem value="Away">Away</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            {/* Phone */}
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input type="tel" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-            <div className="space-y-2">
-              <Label htmlFor="bio">Biography</Label>
-              <textarea
-                id="bio"
-                name="bio"
-                value={formData.bio}
-                onChange={handleChange}
-                className="w-full h-24 px-3 py-2 border rounded-md"
-                placeholder="Enter doctor's professional biography..."
-              />
-            </div>
-          </TabsContent>
+            {/* Role */}
 
-          <TabsContent value="schedule" className="space-y-4 mt-4">
-            {!isNewDoctor && (
-              <div>
-                <h4 className="font-medium mb-2">Today's Schedule</h4>
-                {scheduleLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading schedule...</p>
-                ) : todayAppointments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No appointments scheduled for today.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {todayAppointments.map((appointment: Appointment) => (
-                      <div key={appointment.id} className="p-3 border rounded-md flex justify-between">
-                        <div>
-                          <p className="font-medium">{appointment.patients?.name}</p>
-                          <p className="text-sm text-muted-foreground">{appointment.type}</p>
-                        </div>
-                        <p className="text-sm font-medium">{appointment.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </TabsContent>
+            {/* Department */}
+            <FormField
+              control={form.control}
+              name="department_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Department</FormLabel>
+                  <Select
+                     onValueChange={(value) => field.onChange(value === 'no-department' ? null : value)}
+                     value={field.value || 'no-department'}
+                     disabled={isLoadingDepartments}
+                   >
+                     <FormControl>
+                       <SelectTrigger><SelectValue placeholder={isLoadingDepartments ? "Loading..." : "Select a department"} /></SelectTrigger>
+                     </FormControl>
+                     <SelectContent>
+                        <SelectItem value="no-department">No Department</SelectItem>
+                        {(clinicDepartments || []).map(department => (
+                          <SelectItem key={department.id} value={department.id}>{department.name}</SelectItem>
+                        ))}
+                     </SelectContent>
+                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <TabsContent value="patients" className="mt-4">
-            {!isNewDoctor ? (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-medium">Patient List</h4>
-                  <span className="text-sm text-muted-foreground">Total: {patientList.length} patients</span>
-                </div>
-                <Separator />
-                {patientsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading patients...</p>
-                ) : patientList.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No patients assigned to this doctor yet.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {patientList.map((patient: Patient & { lastVisit: string }) => (
-                      <div key={patient.id} className="p-3 border rounded-md flex justify-between items-center">
-                        <div className="flex items-center">
-                          <Avatar className="h-8 w-8 mr-2">
-                            <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                              {getInitials(patient.name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium">{patient.name}</p>
-                            <p className="text-xs text-muted-foreground">Last visit: {patient.lastVisit ? new Date(patient.lastVisit).toLocaleDateString() : 'N/A'}</p>
-                          </div>
-                        </div>
-                        <Button variant="outline" size="sm">View</Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Save doctor profile first to assign patients.</p>
-            )}
-          </TabsContent>
-        </Tabs>
+            {/* Availability - Spans full width */}
+            <FormField
+               control={form.control}
+               name="availability"
+               render={({ field }) => (
+                 <FormItem className="md:col-span-2"> {/* Spans full width */}
+                   <FormLabel>Availability (Optional)</FormLabel>
+                   <FormControl>
+                     <Input {...field} />
+                   </FormControl>
+                   <FormMessage />
+                 </FormItem>
+               )}
+             />
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Saving..." : isNewDoctor ? "Create Profile" : "Update Profile"}
-          </Button>
-        </DialogFooter>
+            {/* Bio - Spans full width */}
+            <FormField
+               control={form.control}
+               name="bio"
+               render={({ field }) => (
+                 <FormItem className="md:col-span-2"> {/* Spans full width */}
+                   <FormLabel>Bio (Optional)</FormLabel>
+                   <FormControl>
+                     <Textarea {...field} />
+                   </FormControl>
+                   <FormMessage />
+                 </FormItem>
+               )}
+             />
+
+            {/* Dialog Footer - Spans full width */}
+            <DialogFooter className="md:col-span-2"> {/* Footer spans full width */}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (doctor ? 'Saving...' : 'Adding...') : submitButtonText}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+export { DoctorModal };

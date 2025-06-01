@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { AppointmentType } from "@/components/AppointmentModal";
+import { AppointmentTypeWithClinic } from "./ConsultationModal";
 
 interface TodaysAppointmentsListProps {
-  todayAppointments: AppointmentType[];
+  todayAppointments: AppointmentTypeWithClinic[];
   loading: boolean;
-  startConsultation: (appointment: AppointmentType) => void;
+  startConsultation: (appointment: AppointmentTypeWithClinic) => void;
 }
 
 export function TodaysAppointmentsList({

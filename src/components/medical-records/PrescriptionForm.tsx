@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -22,7 +21,7 @@ interface PrescriptionFormProps {
     instructions: string;
     follow_up_date: Date | null;
   };
-  setData: (data: any) => void;
+  setData: React.Dispatch<React.SetStateAction<PrescriptionFormProps['data']>>;
   doctorName: string;
   patientName: string;
   specialty: string;
@@ -44,18 +43,18 @@ export function PrescriptionForm({
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setData((prev: any) => ({ ...prev, [name]: value }));
+    setData((prev) => ({ ...prev, [name]: value }));
   };
   
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-      setData((prev: any) => ({ ...prev, follow_up_date: date }));
+      setData((prev) => ({ ...prev, follow_up_date: date }));
     }
   };
   
   const handleAddMedicine = () => {
     if (newMedicine.name && newMedicine.dosage) {
-      setData((prev: any) => ({ 
+      setData((prev) => ({ 
         ...prev, 
         medicines: [...prev.medicines, { ...newMedicine }] 
       }));
@@ -71,9 +70,9 @@ export function PrescriptionForm({
   };
   
   const handleRemoveMedicine = (index: number) => {
-    setData((prev: any) => ({
+    setData((prev) => ({
       ...prev,
-      medicines: prev.medicines.filter((_: any, i: number) => i !== index)
+      medicines: prev.medicines.filter((_, i: number) => i !== index)
     }));
   };
   
@@ -124,7 +123,7 @@ export function PrescriptionForm({
       <div className={cn("border rounded-md p-4", style.borderColor, style.gradientBg)}>
         <div className={cn("text-center mb-4 pb-3 border-b", style.borderColor)}>
           <div className="flex items-center justify-center gap-2 mb-1">
-            <h2 className={cn("text-xl font-bold", style.titleColor)}>Neurovision</h2>
+            <h2 className={cn("text-xl font-bold", style.titleColor)}>Doxxy</h2>
           </div>
           <p className="text-sm text-muted-foreground">{specialty} Department</p>
         </div>
@@ -322,11 +321,11 @@ export function PrescriptionForm({
 
         <div className="mt-6 pt-4 border-t text-center text-xs text-muted-foreground">
           {specialty === "Neurology" ? (
-            <p>This prescription is issued by the Neurology Department of Neurovision. For emergencies, call: (123) 456-7890</p>
+            <p>This prescription is issued by the Neurology Department of Doxxy. For emergencies, call: (123) 456-7890</p>
           ) : specialty === "Ophthalmology" ? (
-            <p>This prescription is issued by the Ophthalmology Department of Neurovision. For vision emergencies, call: (123) 456-7890</p>
+            <p>This prescription is issued by the Ophthalmology Department of Doxxy. For vision emergencies, call: (123) 456-7890</p>
           ) : (
-            <p>This prescription is issued by Neurovision. For emergencies, call: (123) 456-7890</p>
+            <p>This prescription is issued by Doxxy. For emergencies, call: (123) 456-7890</p>
           )}
         </div>
       </div>

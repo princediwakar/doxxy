@@ -18,148 +18,78 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Search, Plus, User } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { PatientModal } from "@/components/PatientModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AppointmentModal } from "@/components/AppointmentModal";
+// import { AppointmentModal } from "@/components/AppointmentModal";
+import { useAuth } from "@/contexts/AuthContext";
+import { Database, Tables } from "@/integrations/supabase/types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { PostgrestError } from "@supabase/supabase-js";
+import { Label } from '@/components/ui/label';
 
-// Patient type from your DB
-interface Patient {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  date_of_birth?: string;
-  gender?: string;
-  medical_id?: string;
-  created_at?: string;
-}
+type Patient = Database['public']['Tables']['patients']['Row'];
+type GetPatientsByClinicResult = Patient[];
+type RpcPatientDetails = Database['public']['Functions']['get_patients_by_clinic']['Returns'][0];
 
-// Enhanced patient type for UI
-interface EnhancedPatient extends Patient {
-  age: number | null;
-  lastVisit: string;
-  status: string;
-}
+const fetchPatients = async (clinicId: string, page: number, itemsPerPage: number, searchTerm: string) => {
+  console.log("fetchPatients: Fetching for clinic", clinicId, "page", page, "search", searchTerm);
+  const from = (page - 1) * itemsPerPage;
+
+  // Fetch total count
+  let countQuery = supabase
+    .from('patients')
+    .select('id', { count: 'exact', head: true })
+    .eq('clinic_id', clinicId);
+
+  if (searchTerm.trim()) {
+    countQuery = countQuery.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+  }
+
+  const { count, error: countError } = await countQuery;
+  if (countError) throw countError;
+
+  // Fetch patients
+  const { data, error } = searchTerm
+    ? await supabase
+        .from('patients')
+        .select()
+        .eq('clinic_id', clinicId)
+        .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+        .range(from, from + itemsPerPage - 1)
+    : await supabase.rpc('get_patients_by_clinic', {
+        _clinic_id: clinicId,
+        _limit: itemsPerPage,
+        _offset: from,
+      }) as { data: GetPatientsByClinicResult, error: PostgrestError };
+
+  if (error) throw error;
+
+  return { patients: data || [], totalCount: count || 0 };
+};
 
 const Patients = () => {
-  const [searchTerm, setSearchTerm] = useState("");
+  console.log("Patients: Rendering component");
+  const { activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [patientForAppointment, setPatientForAppointment] = useState<Patient | null>(null);
-  const [selectedPatient, setSelectedPatient] = useState<EnhancedPatient | null>(null);
-  const [patients, setPatients] = useState<EnhancedPatient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    fetchPatients();
-  }, [currentPage]);
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['patients', activeClinic?.clinic_id, currentPage, searchTerm],
+    queryFn: () => fetchPatients(activeClinic!.clinic_id, currentPage, itemsPerPage, searchTerm),
+    enabled: !!activeClinic && !authLoading,
+    retry: 1,
+  });
 
-  const fetchPatients = async () => {
-    setLoading(true);
-    try {
-      // Calculate pagination
-      const from = (currentPage - 1) * itemsPerPage;
-      const to = from + itemsPerPage - 1;
+  console.log("Patients: authLoading=", authLoading, "activeClinic=", !!activeClinic, "patients=", data?.patients);
 
-      // Get total count for pagination
-      const { count, error: countError } = await supabase
-        .from('patients')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) throw countError;
-
-      // Set total pages
-      setTotalPages(Math.ceil((count || 0) / itemsPerPage));
-
-      // Fetch patients with pagination
-      const { data, error } = await supabase
-        .from('patients')
-        .select('*')
-        .range(from, to)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Extract patient IDs from the current page
-      const patientIds = (data || []).map(patient => patient.id);
-
-      // Fetch all relevant appointments for these patients in a single query
-      let appointments: { patient_id: string; date: string; status: string }[] = [];
-      if (patientIds.length > 0) {
-        const { data: appointmentsData, error: appointmentsError } = await supabase
-          .from('appointments')
-          .select('patient_id, date, status')
-          .in('patient_id', patientIds)
-          .order('date', { ascending: false }); // Order by date to easily find the last visit
-          
-        if (appointmentsError) console.error("Error fetching appointments for patients:", appointmentsError); // Log error but don't block patient display
-        appointments = appointmentsData || [];
-      }
-
-      // Process patients and find the last appointment/status efficiently
-      const enhancedPatients: EnhancedPatient[] = (data || []).map((patient: Patient) => {
-        // Find the latest appointment for the current patient from the fetched list
-        const lastAppointment = appointments.find(app => app.patient_id === patient.id);
-
-        // Determine status based on last appointment
-        let status = "Inactive";
-        if (lastAppointment) {
-          const today = new Date().toISOString().split('T')[0];
-          const appointmentDate = lastAppointment.date;
-
-          if (lastAppointment.status === "Scheduled" && appointmentDate >= today) {
-            status = "Scheduled";
-          } else if (lastAppointment.status === "Completed" && 
-                    new Date(appointmentDate) >= new Date(new Date().setDate(new Date().getDate() - 30))) {
-            status = "Active";
-          }
-        }
-
-        // Format date of birth if exists
-        const formattedDob = patient.date_of_birth 
-          ? new Date(patient.date_of_birth).toLocaleDateString() 
-          : '';
-
-        // Calculate age if date of birth exists
-        let age: number | null = null;
-        if (patient.date_of_birth) {
-          const dob = new Date(patient.date_of_birth);
-          const today = new Date();
-          age = today.getFullYear() - dob.getFullYear();
-          const monthDiff = today.getMonth() - dob.getMonth();
-          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            age--;
-          }
-        }
-
-        // Determine last visit date from the found lastAppointment
-        const lastVisit = lastAppointment ? new Date(lastAppointment.date).toLocaleDateString() : '';
-
-        return {
-          ...patient,
-          age,
-          lastVisit,
-          status,
-        };
-      });
-
-      setPatients(enhancedPatients);
-    } catch (error) {
-      // error is unknown, not any
-      console.error("Error fetching patients:", error);
-      toast.error("Failed to load patients");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePatientClick = (patient: EnhancedPatient) => {
+  const handlePatientClick = (patient: Patient) => {
     setSelectedPatient(patient);
     setIsPatientModalOpen(true);
   };
@@ -169,16 +99,11 @@ const Patients = () => {
     setIsPatientModalOpen(true);
   };
 
-  const handleModalClose = (newPatient?: boolean) => {
-    if (isPatientModalOpen) {
-      setIsPatientModalOpen(false);
-      if (newPatient) {
-        fetchPatients();
-      }
-    } else if (isAppointmentModalOpen) {
-      setIsAppointmentModalOpen(false);
-      setPatientForAppointment(null);
-    }
+  const handleModalClose = () => {
+    setIsPatientModalOpen(false);
+    setIsAppointmentModalOpen(false);
+    setPatientForAppointment(null);
+    queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
   };
 
   const handlePatientCreated = (patient: Patient) => {
@@ -187,40 +112,55 @@ const Patients = () => {
     setIsAppointmentModalOpen(true);
   };
 
-  // Filter patients based on search term
-  const filteredPatients = patients.filter((patient) =>
-    patient.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    patient.phone?.includes(searchTerm)
-  );
+  if (authLoading) {
+    console.log("Patients: Rendering null due to authLoading");
+    return null;
+  }
+
+  if (!activeClinic) {
+    console.log("Patients: Rendering no clinic message");
+    return <div className="text-center py-4">Please select a clinic to view patients.</div>;
+  }
+
+  if (error) {
+    console.error("Patients: Error fetching data", error);
+    toast.error("Failed to load patients");
+    return <div className="text-center py-4 text-red-500">Error loading patients.</div>;
+  }
+
+  const patients = data?.patients || [];
+  const totalPages = Math.ceil((data?.totalCount || 0) / itemsPerPage);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+      <div className="flex justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Patients</h1>
-          <p className="text-muted-foreground">Manage and view patient records</p>
+          <h1 className="text-2xl font-bold">Patients</h1>
+          <p className="text-muted-foreground">Manage patient records</p>
         </div>
-        <Button onClick={handleNewPatient}>
-          <Plus size={18} className="mr-2" />
-          New Patient
-        </Button>
+        {(activeClinicRole === 'admin' || activeClinicRole === 'superadmin') && (
+          <Button onClick={handleNewPatient}>
+            <Plus size={18} className="mr-2" />
+            New Patient
+          </Button>
+        )}
       </div>
 
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search patients by name, email, or phone..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search by name or email..."
+          className="pl-8"
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+        />
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="space-y-4">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="h-12 bg-muted/50 rounded-md animate-pulse"></div>
@@ -228,29 +168,30 @@ const Patients = () => {
         </div>
       ) : (
         <>
-          <div className="border rounded-lg overflow-hidden">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead className="hidden sm:table-cell">Gender</TableHead>
-                  <TableHead className="hidden md:table-cell">Age</TableHead>
                   <TableHead className="hidden md:table-cell">Phone</TableHead>
-                  <TableHead className="hidden lg:table-cell">Last Visit</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden lg:table-cell">Email</TableHead>
+                  <TableHead className="hidden xl:table-cell">Address</TableHead>
+                  <TableHead className="hidden xl:table-cell">Date of Birth</TableHead>
+                  <TableHead className="hidden xl:table-cell">Medical ID</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPatients.length === 0 ? (
+                {patients.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={7} className="text-center py-4">
                       {searchTerm ? "No patients match your search" : "No patients found"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPatients.map((patient) => (
-                    <TableRow 
-                      key={patient.id} 
+                  patients.map((patient) => (
+                    <TableRow
+                      key={patient.id}
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handlePatientClick(patient)}
                     >
@@ -263,17 +204,11 @@ const Patients = () => {
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{patient.gender || "-"}</TableCell>
-                      <TableCell className="hidden md:table-cell">{patient.age ?? "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">{patient.phone || "-"}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{patient.lastVisit || "-"}</TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          patient.status === "Active" ? "default" :
-                          patient.status === "Scheduled" ? "outline" : "secondary"
-                        }>
-                          {patient.status}
-                        </Badge>
-                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">{patient.email || "-"}</TableCell>
+                      <TableCell className="hidden xl:table-cell">{patient.address || "-"}</TableCell>
+                      <TableCell className="hidden xl:table-cell">{patient.date_of_birth || "-"}</TableCell>
+                      <TableCell className="hidden xl:table-cell">{patient.medical_id || "-"}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -281,45 +216,35 @@ const Patients = () => {
             </Table>
           </div>
 
-          {!searchTerm && totalPages > 1 && (
+          {totalPages > 1 && (
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
+                  <PaginationPrevious
                     onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
-                
                 {Array.from({ length: Math.min(totalPages, 3) }).map((_, i) => {
-                  // Show max 3 pages with current page in middle when possible
-                  let pageNum = currentPage;
-                  if (currentPage === 1) {
-                    pageNum = i + 1;
-                  } else if (currentPage === totalPages && totalPages >= 3) {
-                    pageNum = totalPages - 2 + i;
-                  } else if (totalPages >= 3) {
-                    pageNum = currentPage - 1 + i;
-                  } else {
-                    pageNum = i + 1;
+                  const pageNum = currentPage <= 2 ? i + 1 : currentPage - 1 + i;
+                  if (pageNum <= totalPages) {
+                    return (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(pageNum)}
+                          isActive={currentPage === pageNum}
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
                   }
-                  
-                  return (
-                    <PaginationItem key={i}>
-                      <PaginationLink 
-                        onClick={() => setCurrentPage(pageNum)}
-                        isActive={currentPage === pageNum}
-                      >
-                        {pageNum}
-                      </PaginationLink>
-                    </PaginationItem>
-                  );
+                  return null;
                 })}
-                
                 <PaginationItem>
-                  <PaginationNext 
+                  <PaginationNext
                     onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -331,16 +256,16 @@ const Patients = () => {
       <PatientModal
         open={isPatientModalOpen}
         onOpenChange={handleModalClose}
-        patient={selectedPatient ? patients.find(p => p.id === selectedPatient.id) || null : null}
+        patient={selectedPatient}
         onPatientCreated={handlePatientCreated}
       />
 
-      <AppointmentModal
+      {/* <AppointmentModal
         open={isAppointmentModalOpen}
         onOpenChange={handleModalClose}
         appointment={null}
-        initialPatient={patientForAppointment}
-      />
+        patient={patientForAppointment}
+      /> */}
     </div>
   );
 };

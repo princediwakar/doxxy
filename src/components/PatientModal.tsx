@@ -1,405 +1,311 @@
-import { useState, useEffect, useCallback } from "react";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarCheck, FileText, User } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { Patient as PatientType } from "@/types/database";
-import { Database } from "@/integrations/supabase/types";
-import { AppointmentModal, AppointmentType } from "./AppointmentModal";
-import { supabase } from "@/integrations/supabase/client";
-import { MedicalRecordModal } from "./MedicalRecordModal";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { format } from "date-fns";
-import { Badge } from "@/components/ui/badge";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { Database } from "@/integrations/supabase/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
+import { DatePickerWithYear } from "@/components/ui/DatePickerWithYear";
+
+type Patient = Database['public']['Tables']['patients']['Row'];
+type PatientInsert = Database['public']['Tables']['patients']['Insert'];
 
 interface PatientModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  patient: PatientType | null;
-  onPatientCreated?: (patient: PatientType) => void;
+  patient: Patient | null; // For editing existing patient
+  onPatientCreated: (patient: Patient) => void; // Callback after creation
 }
 
-export function PatientModal({ open, onOpenChange, patient, onPatientCreated }: PatientModalProps) {
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("details");
-  const isNewPatient = !patient;
-  const [loading, setLoading] = useState(false);
-  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
-  const [patientAppointments, setPatientAppointments] = useState<AppointmentType[]>([]);
+const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  gender: z.string().optional(),
+  date_of_birth: z.date().optional().nullable(),
+  phone: z.string().optional(),
+  email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')), // Allow empty string or valid email
+  address: z.string().optional(),
+  medical_id: z.string().optional(),
+});
 
-  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
-  const [appointmentPatient, setAppointmentPatient] = useState<PatientType | null>(null);
+export const PatientModal = ({
+  open,
+  onOpenChange,
+  patient,
+  onPatientCreated,
+}: PatientModalProps) => {
+  const { activeClinic } = useAuth();
+  const queryClient = useQueryClient();
 
-  const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
-  const [selectedAppointmentForConsultation, setSelectedAppointmentForConsultation] = useState<AppointmentType | null>(null);
-
-  const [formData, setFormData] = useState<Partial<PatientType>>({
-    name: patient?.name || "",
-    gender: patient?.gender || "",
-    phone: patient?.phone || "",
-    email: patient?.email || "",
-    address: patient?.address || "",
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: patient?.name || "",
+      gender: patient?.gender || "",
+      date_of_birth: patient?.date_of_birth ? new Date(patient.date_of_birth) : undefined,
+      phone: patient?.phone || "",
+      email: patient?.email || "",
+      address: patient?.address || "",
+      medical_id: patient?.medical_id || "",
+    },
   });
 
-  const fetchPatientAppointments = useCallback(async (patientId: string) => {
-    setAppointmentsLoading(true);
-    try {
+  // Reset form when dialog opens or patient prop changes
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        name: patient?.name || "",
+        gender: patient?.gender || "",
+        date_of_birth: patient?.date_of_birth ? new Date(patient.date_of_birth) : undefined,
+        phone: patient?.phone || "",
+        email: patient?.email || "",
+        address: patient?.address || "",
+        medical_id: patient?.medical_id || "",
+      });
+    }
+  }, [open, patient, form]);
+
+  const createPatientMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (!activeClinic?.clinic_id) {
+        throw new Error("No active clinic selected.");
+      }
+
+      const patientData: PatientInsert = {
+        name: values.name,
+        clinic_id: activeClinic.clinic_id,
+        gender: values.gender || null,
+        date_of_birth: values.date_of_birth ? format(values.date_of_birth, "yyyy-MM-dd") : null,
+        phone: values.phone || null,
+        email: values.email || null,
+        address: values.address || null,
+        medical_id: values.medical_id || null,
+      };
+
       const { data, error } = await supabase
-        .from('appointments')
-        .select('*, patients(name)')
-        .eq('patient_id', patientId)
-        .order('date', { ascending: false });
+        .from('patients')
+        .insert([patientData])
+        .select()
+        .single();
 
       if (error) {
-        console.error("Error fetching patient appointments:", error);
-        toast({ title: "Error fetching appointments", description: error.message, variant: "destructive" });
-        setPatientAppointments([]);
-      } else {
-        const formattedAppointments: AppointmentType[] = (data || []).map(apt => ({
-          ...apt,
-          patients: apt.patients ? [apt.patients] : null,
-          doctors: null,
-        })) as AppointmentType[];
-        setPatientAppointments(formattedAppointments);
+        throw error;
       }
-    } catch (error: unknown) {
-      console.error("Error fetching patient appointments:", error);
-      toast({ title: "Error fetching appointments", description: (error as Error).message || "An unexpected error occurred.", variant: "destructive" });
-      setPatientAppointments([]);
-    } finally {
-      setAppointmentsLoading(false);
-    }
-  }, [setAppointmentsLoading, setPatientAppointments, toast]);
+      return data;
+    },
+    onSuccess: (newPatient) => {
+      toast.success("Patient created successfully.");
+      onPatientCreated(newPatient);
+      form.reset();
+    },
+    onError: (error) => {
+      console.error("Error creating patient:", error);
+      toast.error(`Failed to create patient: ${error.message}`);
+    },
+  });
 
-  useEffect(() => {
-    if (open && patient) {
-      setFormData({
-        name: patient.name || "",
-        gender: patient.gender || "",
-        phone: patient.phone || "",
-        email: patient.email || "",
-        address: patient.address || "",
-      });
-      setActiveTab("details");
-      fetchPatientAppointments(patient.id);
-    } else if (open && isNewPatient) {
-      setActiveTab("details");
-    }
+  const updatePatientMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (!patient?.id) {
+        throw new Error("Patient ID is missing for update.");
+      }
 
-    if (open && isNewPatient) {
-      setFormData({
-        name: "",
-        gender: "",
-        phone: "",
-    email: "",
-    address: "",
-      });
-    }
+      const patientData: Partial<Patient> = {
+        name: values.name,
+        gender: values.gender || null,
+        date_of_birth: values.date_of_birth ? format(values.date_of_birth, "yyyy-MM-dd") : null,
+        phone: values.phone || null,
+        email: values.email || null,
+        address: values.address || null,
+        medical_id: values.medical_id || null,
+      };
 
+      const { data, error } = await supabase
+        .from('patients')
+        .update(patientData)
+        .eq('id', patient.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: (updatedPatient) => {
+      toast.success("Patient updated successfully.");
+      // Invalidate patients query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
+      onOpenChange(false); // Close modal on success
+    },
+    onError: (error) => {
+      console.error("Error updating patient:", error);
+      toast.error(`Failed to update patient: ${error.message}`);
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (patient) {
-      fetchPatientAppointments(patient.id);
-    }
-  }, [open, patient, isNewPatient, fetchPatientAppointments]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: keyof Partial<PatientType>, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async () => {
-    if (!formData.name) {
-      toast({ title: "Name is required", description: "Please enter the patient's full name.", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    try {
-      if (isNewPatient) {
-        const patientToInsert: Database["public"]["Tables"]["patients"]["Insert"] = {
-          name: formData.name,
-          gender: formData.gender,
-          phone: formData.phone,
-          email: formData.email,
-          address: formData.address,
-        };
-        const { data, error } = await supabase
-          .from('patients')
-          .insert([patientToInsert])
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Error creating patient:", error);
-          toast({ title: "Error creating patient", description: error.message, variant: "destructive" });
-          setLoading(false);
-          return;
-        }
-
-        console.log("Created patient:", data);
-        toast({ title: "Patient created", description: `${data.name} has been added to your patients list.` });
-        setAppointmentPatient(data);
-        setSelectedAppointmentForConsultation(null);
-
-        if (onPatientCreated && data) {
-          onPatientCreated(data);
-        }
-
-      } else {
-        const { data, error } = await supabase
-          .from('patients')
-          .update(formData)
-          .eq('id', patient.id!)
-          .select()
-          .single();
-
-        if (error) {
-          console.error("Error updating patient:", error);
-          toast({ title: "Error updating patient", description: error.message, variant: "destructive" });
-          setLoading(false);
-          return;
-        }
-
-        console.log("Updated patient:", data);
-        toast({ title: "Patient updated", description: `${data.name} has been updated in your patients list.` });
-        onOpenChange(false);
-      }
-    } catch (error: unknown) {
-      console.error("Error saving patient:", error);
-      toast({ title: "Error saving patient", description: (error as Error).message || "An unexpected error occurred.", variant: "destructive" });
-    } finally {
-      setLoading(false);
+      updatePatientMutation.mutate(values);
+    } else {
+      createPatientMutation.mutate(values);
     }
   };
 
-  const handleScheduleAppointment = () => {
-    if (!patient) {
-      toast({ title: "Cannot schedule appointment", description: "Please save patient details first.", variant: "default" });
-      return;
-    }
-    setAppointmentPatient(patient);
-    setIsAppointmentModalOpen(true);
-  };
-
-  const handleAppointmentModalClose = (newAppointmentScheduled?: boolean) => {
-    setIsAppointmentModalOpen(false);
-    if (newAppointmentScheduled) {
-      fetchPatientAppointments(patient.id);
-      if (!isNewPatient) {
-        onOpenChange(false);
-      }
-    } else if (isNewPatient) {
-      onOpenChange(false);
-    }
-  };
-
-  const handleAppointmentScheduledForNewPatient = () => {
-    setIsAppointmentModalOpen(false);
-    onOpenChange(false);
-  };
-
-  const handleConsultationClick = (appointment: AppointmentType) => {
-    console.log("Selected appointment for consultation:", appointment);
-    setSelectedAppointmentForConsultation(appointment);
-    setIsConsultationModalOpen(true);
-  };
-
-  const handleConsultationModalClose = () => {
-    setIsConsultationModalOpen(false);
-    setSelectedAppointmentForConsultation(null);
-    if (patient) {
-      fetchPatientAppointments(patient.id);
-    }
-  };
+  const isSubmitting = createPatientMutation.isPending || updatePatientMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{isNewPatient ? "Add New Patient" : "Patient Details"}</DialogTitle>
-          <DialogDescription>
-            {isNewPatient 
-              ? "Enter the information of the new patient." 
-              : "View and edit patient information."}
-          </DialogDescription>
+          <DialogTitle>{patient ? "Edit Patient" : "New Patient"}</DialogTitle>
         </DialogHeader>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid grid-cols-3 w-full">
-            <TabsTrigger value="details" className="flex items-center">
-              <User size={16} className="mr-2" />
-              <span className="hidden sm:inline">Details</span>
-            </TabsTrigger>
-            <TabsTrigger value="medical" className="flex items-center">
-              <FileText size={16} className="mr-2" />
-              <span className="hidden sm:inline">Medical</span>
-            </TabsTrigger>
-            <TabsTrigger value="appointments" className="flex items-center">
-              <CalendarCheck size={16} className="mr-2" />
-              <span className="hidden sm:inline">Appointments</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="details" className="space-y-4 mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input 
-                  id="name" 
-                  name="name"
-                  value={formData.name || ''}
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Select 
-                  value={formData.gender || ''}
-                  onValueChange={(value) => handleSelectChange("gender", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
-                  id="phone" 
-                  name="phone"
-                  value={formData.phone || ''}
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  name="email"
-                  type="email" 
-                  value={formData.email || ''}
-                  onChange={handleChange} 
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Input 
-                  id="address" 
-                  name="address"
-                  value={formData.address || ''}
-                  onChange={handleChange} 
-                />
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="medical" className="space-y-4 mt-4">
-            {!isNewPatient ? (
-              <div className="pt-4">
-                <h4 className="font-medium mb-2">Medical History / Consultations</h4>
-                <Separator className="my-2" />
-                {appointmentsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading consultations...</p>
-                ) : patientAppointments.length > 0 ? (
-                  <div className="space-y-3">
-                    {patientAppointments.map((appointment) => (
-                      <div key={appointment.id} className="flex justify-between items-center p-3 border rounded-md">
-                        <div>
-                          <p className="font-medium">{appointment.department} Consultation</p>
-                          <p className="text-sm text-muted-foreground">{appointment.date ? format(new Date(appointment.date), 'PPP') : 'N/A'} at {appointment.time}</p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => handleConsultationClick(appointment)}>
-                          View Consultation
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Patient Name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="gender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Gender</FormLabel>
+                    <FormControl>
+                    <div className="flex flex-wrap gap-2">
+                      {['Male', 'Female'].map(genderOption => (
+                        <Button
+                          key={genderOption}
+                          type="button"
+                          variant={field.value === genderOption ? "default" : "outline"}
+                          onClick={() => field.onChange(genderOption)}
+                          className={cn(
+                            "rounded-full px-4 py-2 text-sm",
+                            field.value !== genderOption && "hover:bg-accent hover:text-accent-foreground"
+                          )}
+                        >
+                          {genderOption}
                         </Button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No past consultations found for this patient.</p>
-                )}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Save patient details first to view medical history.</p>
-            )}
-          </TabsContent>
-
-          <TabsContent value="appointments" className="space-y-4 mt-4">
-            {!isNewPatient ? (
-              <>
-                <div className="flex justify-between items-center">
-                  <h4 className="font-medium">Appointment History</h4>
-                  <Button variant="outline" size="sm" onClick={handleScheduleAppointment}>Schedule New</Button>
-                </div>
-                <Separator className="my-2" />
-                 {appointmentsLoading ? (
-                  <p className="text-sm text-muted-foreground">Loading appointments...</p>
-                ) : patientAppointments.length > 0 ? (
-                <div className="space-y-3">
-                    {patientAppointments.map((appointment) => (
-                      <div key={appointment.id} className="flex justify-between items-center p-3 border rounded-md">
-                      <div>
-                          <p className="font-medium">{appointment.department} - {appointment.type}</p>
-                          <div className="text-sm text-muted-foreground">{appointment.date ? format(new Date(appointment.date), 'PPP') : 'N/A'} at {appointment.time} - Status: <Badge variant={appointment.status === 'Completed' ? 'secondary' : appointment.status === 'Cancelled' ? 'destructive' : 'default'}>{appointment.status}</Badge></div>
-                      </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No appointments found for this patient.</p>
-                )}
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground">Save patient details first to schedule appointments.</p>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={loading}>{loading ? (isNewPatient ? "Creating..." : "Updating...") : (isNewPatient ? "Create Patient" : "Update Patient")}</Button>
+                      ))}
+                    </div>
+                    </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="date_of_birth"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date of Birth</FormLabel>
+                  <DatePickerWithYear
+                    date={field.value || undefined}
+                    setDate={field.onChange}
+                    disabled={field.disabled}
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="phone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Phone</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., +1 123 456 7890" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input placeholder="patient@example.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Address</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Patient Address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="medical_id"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Medical ID</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Optional Medical ID" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter className="md:col-span-2">
+              <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting
+              ? (patient ? "Saving..." : "Creating...")
+              : (patient ? "Save Changes" : "Create Patient")}
+          </Button>
         </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
-
-      <AppointmentModal
-        open={isAppointmentModalOpen}
-        onOpenChange={(open) => {
-          if (!open) handleAppointmentModalClose();
-          setIsAppointmentModalOpen(open);
-        }}
-        appointment={null}
-        patient={appointmentPatient}
-        initialPatient={appointmentPatient}
-        onAppointmentScheduled={handleAppointmentScheduledForNewPatient}
-      />
-
-      <MedicalRecordModal
-        open={isConsultationModalOpen}
-        onOpenChange={handleConsultationModalClose}
-        appointment={selectedAppointmentForConsultation}
-      />
     </Dialog>
   );
-}
+};

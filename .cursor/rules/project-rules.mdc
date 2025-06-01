@@ -1,247 +1,196 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
-# Neurovision Project Rules and Guidelines
+# Project Rules for Neurovision Clinic Management Web App
 
-## Code Organization and Structure
+## Overview
+Neurovision is a multi-tenant web app for Neurology and Ophthalmology clinics, managing appointments, patient records, prescriptions, billing, and notifications (WhatsApp/email). It uses Vite (React + TypeScript), Tailwind CSS with Shadcn UI, and Supabase, with role-based access (`superadmin`, `staff`, `doctor`) via Google OAuth. A single `/dashboard` route renders role-specific components (`SuperadminDashboard`, `StaffDashboard`, `DoctorDashboard`).
 
-### Directory Structure
-```
-neurovision/
-├── app/                    # Next.js app directory
-│   ├── admin/             # Admin routes and components
-│   ├── doctor/            # Doctor routes and components
-│   ├── api/               # API routes
-│   └── (auth)/           # Authentication routes
-├── components/            # Reusable UI components
-│   ├── admin/            # Admin-specific components
-│   ├── doctor/           # Doctor-specific components
-│   └── shared/           # Shared components
-├── lib/                   # Utility functions and helpers
-├── types/                 # TypeScript type definitions
-├── styles/               # Global styles and Tailwind config
-└── public/               # Static assets
-```
+## Database and Multi-Tenancy
+- **Multi-Tenancy**: Isolate data by `clinic_id` across tables (`clinics`, `patients`, `appointments`, `consultations`, `medical_records`, `prescriptions`, `bills`, `clinic_members`, `clinic_departments`). Use Row-Level Security (RLS) to enforce access.
+- **Key Tables and Enums**:
+  - `clinics`: Clinic details (name, address).
+  - `clinic_members`: Links users (`profiles`) to clinics with `role` (`superadmin`, `staff`, `doctor`) and optional `department_id`.
+  - `department_types`, `clinic_departments`: Define Neurology/Ophthalmology departments.
+  - `patients`, `doctors`, `appointments`, `consultations` (`specialty_data` JSONB), `medical_records`, `prescriptions` (`medications` JSONB), `bills`: Core data, linked to `clinic_id`.
+  - `Enums`: `appointment_status` (Scheduled, In Progress, Completed, Cancelled), `appointment_type` (Walk-in, Digital), `bill_status` (Paid, Pending, Overdue), `user_role` (superadmin, staff, doctor).
+- **RLS**:
+  - Filter by `clinic_id` and `role` via `clinic_members`.
+  - `superadmin`: Full clinic access.
+  - `staff`: Manage patients, appointments, bills.
+  - `doctor`: Access own appointments, consultations, patients.
+  - Example: `CREATE POLICY doctor_appointments ON appointments FOR ALL TO authenticated USING (clinic_id = (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid() AND role = 'doctor') AND doctor_id = (SELECT id FROM doctors WHERE user_id = auth.uid()));`
 
-### Naming Conventions
-- **Files**: Use kebab-case for file names (e.g., `patient-form.tsx`)
-- **Components**: Use PascalCase for component names (e.g., `PatientForm.tsx`)
-- **Functions**: Use camelCase for function names (e.g., `handleSubmit`)
-- **Types/Interfaces**: Use PascalCase with descriptive names (e.g., `PatientRecord`)
-- **Constants**: Use UPPER_SNAKE_CASE (e.g., `MAX_APPOINTMENTS_PER_DAY`)
+## Tech Stack
+- **Frontend**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, React Query, React Router DOM, zod.
+- **Backend**: Supabase (PostgreSQL with RLS), Google OAuth, Twilio (WhatsApp), Resend (email).
+- **Deployment**: Vercel (frontend), Supabase Edge Functions (backend).
+- **Tools**: Cursor (Agent mode), Vitest, ESLint, Prettier.
 
-## Development Standards
+## Setup
+1. Initialize: `npm create vite@latest neurovision --template react-ts`.
+2. Install Tailwind: `npx tailwindcss init -p`.
+3. Install Shadcn UI: `npx shadcn@latest init`.
+4. Install Supabase: `npm install @supabase/supabase-js`.
+5. Configure `.env.local`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+6. Run: `npm run dev`.
 
-### TypeScript
-- Enable strict mode in `tsconfig.json`
-- Define explicit types for all props, state, and function parameters
-- Use interfaces for object shapes and types for unions/primitives
-- Avoid using `any` type; use `unknown` if type is truly unknown
+## Code Structure
+- **Routes**: `/login`, `/dashboard` (protected, renders `SuperadminDashboard`, `StaffDashboard`, or `DoctorDashboard` based on `AuthContext` role and `clinic_id`).
+- **Components**: `src/components/ui/NavBar.tsx` (with clinic switcher), `src/components/ui/Layout.tsx`, `src/components/role/RoleComponent.tsx`.
+- **Naming**:
+  - Components: PascalCase (e.g., `DoctorDashboard`).
+  - Functions/Hooks: camelCase (e.g., `useAppointments`).
+  - Files: `src/hooks/useFeature.ts`, `src/lib/schemas/feature.ts`.
 
-### React/Next.js
-- Use Server Components by default, Client Components only when necessary
-- Implement proper error boundaries for error handling
-- Use React Server Actions for form submissions and data mutations
-- Follow the React hooks rules and best practices
-- Use proper loading states and error handling
+## Best Practices
+- **TypeScript**:
+  - Use Supabase `Database` types (`src/integrations/supabase/types.ts`).
+  - Define props/state with `Tables<"table_name">` or `Enums<"enum_name">`.
+  - Example:
+    ```ts
+    import { Tables } from "@/integrations/supabase/types";
+    interface AppointmentProps { appointment: Tables<"appointments">; }
+    ```
+- **React Query**:
+  - Fetch data with Supabase functions (e.g., `get_appointments_with_details_by_clinic`), filter by `clinic_id`.
+  - Cache non-critical data (5min stale time).
+  - Example:
+    ```ts
+    import { useQuery } from "@tanstack/react-query";
+    import { supabase } from "@/integrations/supabase";
+    import { Tables } from "@/integrations/supabase/types";
+    export const useAppointments = (clinicId: string) => useQuery({
+      queryKey: ["appointments", clinicId],
+      queryFn: async () => {
+        const { data, error } = await supabase.from("appointments").select("*").eq("clinic_id", clinicId);
+        if (error) throw error;
+        return data as Tables<"appointments">[];
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+    ```
+- **zod**:
+  - Validate forms/API payloads in `src/lib/schemas/feature.ts`.
+  - Example:
+    ```ts
+    import { z } from "zod";
+    import { Enums } from "@/integrations/supabase/types";
+    export const appointmentSchema = z.object({
+      clinic_id: z.string().uuid(),
+      patient_id: z.string().uuid(),
+      doctor_id: z.string().uuid(),
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      time: z.string().regex(/^\d{2}:\d{2}$/),
+      type: z.enum(["Walk-in", "Digital"] as const),
+      status: z.enum(["Scheduled", "In Progress", "Completed", "Cancelled"] as const),
+    });
+    ```
+- **Routing**:
+  - Protect `/dashboard` with `PrivateRoute.tsx`.
+  - Example:
+    ```ts
+    import { Navigate, Outlet } from "react-router-dom";
+    import { useAuth } from "@/context/AuthContext";
+    export const PrivateRoute = () => {
+      const { user } = useAuth();
+      return user ? <Outlet /> : <Navigate to="/login" />;
+    };
+    ```
+- **UI**:
+  - Use Tailwind with Shadcn UI, support dark/light themes.
+  - Example `NavBar`:
+    ```ts
+    import { useAuth } from "@/context/AuthContext";
+    import { Select } from "@/components/ui/select";
+    export const NavBar = () => {
+      const { user, clinicId, setClinicId } = useAuth();
+      const { data: clinics } = useQuery({
+        queryKey: ["clinics", user?.id],
+        queryFn: async () => {
+          const { data } = await supabase.from("clinic_members").select("clinics(id, name)").eq("user_id", user!.id);
+          return data?.map((m) => m.clinics) as Tables<"clinics">[];
+        },
+      });
+      return (
+        <nav className="flex p-4 bg-primary text-primary-foreground">
+          <Select value={clinicId} onValueChange={setClinicId}>
+            {clinics?.map((clinic) => (
+              <option key={clinic.id} value={clinic.id}>{clinic.name}</option>
+            ))}
+          </Select>
+        </nav>
+      );
+    };
+    ```
+- **Error Handling**:
+  - Use Shadcn UI `Toast` for user feedback.
+  - Example:
+    ```ts
+    import { useToast } from "@/components/ui/use-toast";
+    const { toast } = useToast();
+    const handleError = (error: Error) => toast({ variant: "destructive", title: "Error", description: error.message });
+    ```
 
-### State Management
-- Use React Server Components for server-side state
-- Use React Context for global client-side state
-- Use local state for component-specific state
-- Implement proper loading and error states
+## Security
+- **RLS**: Enforce `clinic_id` and `role` checks via `clinic_members`. Example for `bills`:
+  ```sql
+  CREATE POLICY staff_bills ON bills FOR ALL TO authenticated
+  USING (clinic_id = (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid() AND role IN ('staff', 'superadmin')));
+  ```
+- **Input**: Validate with zod, sanitize to prevent XSS/SQL injection.
+- **Auth**: Supabase Google OAuth, manage sessions in `AuthContext`.
+- **Secrets**: Store in `.env.local` or Vercel secrets, never log.
 
-### Database (Supabase)
-- Use Row Level Security (RLS) for all tables
-- Implement proper indexes for frequently queried columns
-- Use transactions for related operations
-- Follow naming conventions for tables and columns
-- Document all database triggers and functions
+## Scalability
+- Support clinic switching via `NavBar` dropdown.
+- Add new roles by updating `Enums.user_role`, RLS, and UI.
+- Optimize queries with indexes (e.g., `CREATE INDEX idx_clinic_id ON appointments (clinic_id);`).
 
-### Authentication
-- Implement role-based access control (RBAC)
-- Use Supabase Auth for authentication
-- Protect all routes with proper middleware
-- Handle authentication errors gracefully
-
-## UI/UX Guidelines
-
-### Shadcn UI
-- Use Shadcn UI components as the primary UI library
-- Maintain consistent component usage across the application
-- Customize components through the theme configuration
-- Follow accessibility guidelines for all components
-
-### Tailwind CSS
-- Use Tailwind utility classes for styling
-- Follow mobile-first responsive design
-- Use consistent spacing and sizing
-- Maintain a consistent color palette
-- Use semantic class names
-
-### Forms
-- Implement proper form validation using Zod
-- Show clear error messages
-- Use proper input types and labels
-- Implement proper loading states
-- Handle form submission errors gracefully
-
-## Security Guidelines
-
-### Authentication & Authorization
-- Implement proper session management
-- Use secure HTTP-only cookies
-- Implement proper CSRF protection
-- Follow OWASP security guidelines
-
-### Data Protection
-- Sanitize all user inputs
-- Implement proper data validation
-- Use proper encryption for sensitive data
-- Follow HIPAA guidelines for medical data
-
-### API Security
-- Implement rate limiting
-- Use proper CORS policies
-- Validate all API requests
-- Use proper error handling
-
-## Testing Guidelines
-
-### Unit Tests
-- Write tests for all utility functions
-- Test component rendering and interactions
-- Use proper mocking for external dependencies
-- Maintain good test coverage
-
-### Integration Tests
-- Test form submissions
-- Test authentication flows
-- Test API endpoints
-- Test database operations
-
-### E2E Tests
-- Test critical user flows
-- Test cross-browser compatibility
-- Test responsive design
-- Test accessibility
+## Testing
+- Use Vitest for unit (components, hooks), integration (API), and RLS tests.
+- Target 80%+ coverage.
+- Example:
+  ```ts
+  import { renderHook, waitFor } from "@testing-library/react";
+  import { useAppointments } from "@/hooks/useAppointments";
+  import { supabase } from "@/integrations/supabase";
+  vi.mock("@/integrations/supabase", () => ({
+    supabase: { from: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ data: [{ id: "1" }], error: null }) },
+  }));
+  test("useAppointments fetches by clinic_id", async () => {
+    const { result } = renderHook(() => useAppointments("123"));
+    await waitFor(() => expect(result.current.data).toEqual([{ id: "1" }]));
+  });
+  ```
 
 ## Documentation
+- **development-log.md**: Log tasks, errors, resolutions with timestamps.
+- **README.md**: Update with setup/deployment steps.
+  ```markdown
+  ## Setup
+  1. Clone: `git clone <repo>`
+  2. Install: `npm install`
+  3. Configure: Copy `.env.example` to `.env.local`, add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+  4. Run: `npm run dev`
+  ## Deployment
+  - Vercel: `vercel --prod`
+  - Supabase: `supabase db push`, `supabase functions deploy`
+  ```
 
-### Code Documentation
-- Document all complex functions and components
-- Use JSDoc comments for TypeScript
-- Keep documentation up to date
-- Document all environment variables
-### API Documentation
-- Document all API endpoints
-- Document request/response formats
-- Document error codes and messages
-- Keep API documentation up to date
-
-## Git Workflow
-
-### Branching Strategy
-- `main` - Production branch
-- `develop` - Development branch
-- `feature/*` - Feature branches
-- `bugfix/*` - Bug fix branches
-- `hotfix/*` - Hot fix branches
-
-### Commit Messages
-- Use conventional commits format
-- Write clear and descriptive commit messages
-- Reference issue numbers in commit messages
-- Keep commits atomic and focused
-
-### Pull Requests
-- Write clear PR descriptions
-- Include relevant issue numbers
-- Request reviews from team members
-- Ensure CI/CD checks pass
-
-## Performance Guidelines
-
-### Frontend Performance
-- Optimize images and assets
-- Implement proper code splitting
-- Use proper caching strategies
-- Monitor and optimize bundle size
-
-### Backend Performance
-- Optimize database queries
-- Implement proper caching
-- Use proper indexing
-- Monitor API response times
-
-## Accessibility Guidelines
-
-### WCAG Compliance
-- Follow WCAG 2.1 guidelines
-- Implement proper ARIA labels
-- Ensure proper color contrast
-- Support keyboard navigation
-
-### Responsive Design
-- Support all major screen sizes
-- Test on multiple devices
-- Implement proper touch targets
-- Use responsive images
-
-## Monitoring and Logging
-
-### Error Tracking
-- Implement proper error tracking
-- Log all errors with context
-- Set up error alerts
-- Monitor error rates
-
-### Performance Monitoring
-- Monitor page load times
-- Track API response times
-- Monitor database performance
-- Set up performance alerts
-
-## Deployment Guidelines
-
-### Environment Configuration
-- Use proper environment variables
-- Document all environment variables
-- Use different environments for development/staging/production
-- Secure sensitive information
-
-### CI/CD
-- Implement automated testing
-- Use proper deployment strategies
-- Implement proper rollback procedures
-- Monitor deployment health
-
-## Maintenance Guidelines
-
-### Code Review
-- Review all code changes
-- Check for security vulnerabilities
-- Ensure code quality
-- Verify test coverage
-
-### Updates and Dependencies
-- Keep dependencies up to date
-- Monitor security advisories
-- Test updates before deployment
-- Document breaking changes
-
-## Emergency Procedures
-
-### Incident Response
-- Document incident response procedures
-- Set up proper monitoring
-- Implement proper alerting
-- Have rollback procedures ready
-
-### Data Recovery
-- Implement proper backup procedures
-- Test recovery procedures
-- Document recovery steps
-- Maintain backup logs
+## Deployment
+- **Frontend**: Vercel with `vite.config.ts`:
+  ```ts
+  import { defineConfig } from "vite";
+  import react from "@vitejs/plugin-react";
+  export default defineConfig({ plugins: [react()], server: { port: 3000 }, build: { outDir: "dist" } });
+  ```
+- **Backend**: Deploy Edge Functions with `supabase functions deploy`.
+- **Debug**: Use Supabase/Vercel logs for RLS/query issues.
+## Task Examples
+- "Generate RLS policy for `prescriptions`."
+- "Create React Query hook for `bills`."
+- "Style `DoctorDashboard.tsx` with Tailwind."
+- "Add `billing_admin` role with RLS, UI, and tests."
