@@ -1,6 +1,7 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Users } from "lucide-react";
-import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
 
 // Import Supabase generated types
 import { Tables } from "@/integrations/supabase/types";
@@ -34,6 +35,22 @@ export function DoctorPatientsList({
   setCurrentPatientPage,
   onPatientClick,
 }: DoctorPatientsListProps) {
+  const handlePreviousPage = () => {
+    if (currentPatientPage > 1) {
+      setCurrentPatientPage(currentPatientPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPatientPage < totalPatientPages) {
+      setCurrentPatientPage(currentPatientPage + 1);
+    }
+  };
+
+  const handlePageClick = (page: number) => {
+    setCurrentPatientPage(page);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -58,60 +75,65 @@ export function DoctorPatientsList({
             {patients.map((patient) => (
               <div 
                 key={patient.id} 
-                className="p-3 border rounded-md flex justify-between items-center cursor-pointer hover:bg-muted/50"
+                className="p-3 border rounded-md flex justify-between items-center cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => onPatientClick(patient)}
               >
                 <div className="flex items-center">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
+                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-3">
                     <User size={16} className="text-primary" />
                   </div>
-                  <span className="font-medium">{patient.name}</span>
+                  <div>
+                    <span className="font-medium">{patient.name}</span>
+                    <p className="text-sm text-muted-foreground">ID: {patient.medical_id || 'N/A'}</p>
+                  </div>
                 </div>
-                {/* Ensure lastVisit is displayed correctly, using fallback if undefined */}
-                <div className="text-sm text-muted-foreground">Last visit: {patient.lastVisit || 'N/A'}</div>
+                <div className="text-sm text-muted-foreground">
+                  Last visit: {patient.lastVisit || 'N/A'}
+                </div>
               </div>
             ))}
           </div>
         )}
+        
         {totalPatientPages > 1 && (
-           <div className="flex justify-center mt-4">
-             <Pagination>
-               <PaginationContent>
-                 <PaginationItem>
-                   <PaginationPrevious 
-                     onClick={() => setCurrentPatientPage(prev => Math.max(prev - 1, 1))}
-                     className={currentPatientPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                     disabled={patientsLoading}
-                   />
-                 </PaginationItem>
-                 
-                 {[...Array(totalPatientPages)].map((_, i) => {
-                   const pageNum = i + 1;
-                   return (
-                     <PaginationItem key={i}>
-                       <PaginationLink 
-                         onClick={() => setCurrentPatientPage(pageNum)}
-                         isActive={currentPatientPage === pageNum}
-                         disabled={patientsLoading}
-                       >
-                         {pageNum}
-                       </PaginationLink>
-                     </PaginationItem>
-                   );
-                 })}
-                 
-                 <PaginationItem>
-                   <PaginationNext 
-                     onClick={() => setCurrentPatientPage(prev => Math.min(prev + 1, totalPatientPages))}
-                     className={currentPatientPage === totalPatientPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                     disabled={patientsLoading}
-                   />
-                 </PaginationItem>
-               </PaginationContent>
-             </Pagination>
-           </div>
+          <div className="flex justify-between items-center mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={currentPatientPage === 1 || patientsLoading}
+            >
+              Previous
+            </Button>
+            
+            <div className="flex space-x-1">
+              {[...Array(totalPatientPages)].map((_, i) => {
+                const pageNum = i + 1;
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPatientPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageClick(pageNum)}
+                    disabled={patientsLoading}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={currentPatientPage === totalPatientPages || patientsLoading}
+            >
+              Next
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
   );
-} 
+}
