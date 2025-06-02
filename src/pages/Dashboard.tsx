@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CalendarCheck, User, Users, Stethoscope } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
@@ -8,6 +9,19 @@ import { FormattedAppointment } from "@/types/dashboard";
 import { DoctorPatientsList } from "@/components/DoctorPatientsList";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+
+// Type for the appointment data returned from the database
+interface DatabaseAppointment {
+  id: string;
+  date: string;
+  time: string;
+  type: string;
+  status: string;
+  patient_id: string;
+  patient_name: string;
+  doctor_id: string;
+  doctor_name: string;
+}
 
 export default function Dashboard() {
   const { activeClinic, user, activeClinicRole, loading: authLoading } = useAuth();
@@ -89,12 +103,15 @@ export default function Dashboard() {
   }
 
   // Format appointments for the components
-  const allAppointments = dashboardData?.all_relevant_appointments || [];
+  const allAppointments: DatabaseAppointment[] = Array.isArray(dashboardData?.all_relevant_appointments) 
+    ? dashboardData.all_relevant_appointments as DatabaseAppointment[]
+    : [];
+  
   const today = new Date().toISOString().split('T')[0];
   
   const todaysAppointments = allAppointments
-    .filter((apt: any) => apt.date === today)
-    .map((apt: any) => ({
+    .filter((apt: DatabaseAppointment) => apt.date === today)
+    .map((apt: DatabaseAppointment) => ({
       id: apt.id,
       patient: apt.patient_name,
       doctor: apt.doctor_name,
@@ -105,9 +122,9 @@ export default function Dashboard() {
     }));
 
   const upcomingAppointments = allAppointments
-    .filter((apt: any) => apt.date > today)
+    .filter((apt: DatabaseAppointment) => apt.date > today)
     .slice(0, 5)
-    .map((apt: any) => ({
+    .map((apt: DatabaseAppointment) => ({
       id: apt.id,
       patient: apt.patient_name,
       doctor: apt.doctor_name,
