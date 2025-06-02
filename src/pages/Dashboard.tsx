@@ -1,223 +1,194 @@
-import { useState, useCallback } from "react";
-import { CalendarCheck, Users, User, Clock, Activity, Plus } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { PatientModal } from "@/components/PatientModal";
-import { AppointmentModal } from "@/components/AppointmentModal";
-import { Tables, Database } from "@/integrations/supabase/types";
-import { format, parseISO } from "date-fns";
-import { AdminStatsGrid } from "@/components/AdminStatsGrid";
-import { WeeklyAppointmentsChart } from "@/components/WeeklyAppointmentsChart";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CalendarCheck, User, Users, Stethoscope } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { FormattedAppointment } from "@/types/dashboard";
+import { DoctorPatientsList } from "@/components/DoctorPatientsList";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 
-type Patient = Tables<'patients'>;
+export default function Dashboard() {
+  const { activeClinic, user, activeClinicRole, loading: authLoading } = useAuth();
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [totalDoctors, setTotalDoctors] = useState(0);
+  const [appointmentsToday, setAppointmentsToday] = useState(0);
+  const [upcomingAppointmentsData, setUpcomingAppointmentsData] = useState<FormattedAppointment[]>([]);
+  const [todaysAppointmentsData, setTodaysAppointmentsData] = useState<FormattedAppointment[]>([]);
+  const [patients, setPatients] = useState([]);
+  const [patientsLoading, setPatientsLoading] = useState(false);
+  const [currentPatientPage, setCurrentPatientPage] = useState(1);
+  const patientsPerPage = 5;
+  const [totalPatientPages, setTotalPatientPages] = useState(1);
 
-// Define the return type of the get_dashboard_data RPC
-type DashboardRpcResult = Database['public']['Functions']['get_dashboard_data']['Returns'][0];
-
-// Define the structure of the processed appointment data for frontend components
-interface ProcessedAppointment {
-  id: string;
-    date: string; // yyyy-MM-dd
-    time: string; // HH:mm
-    type: string; // Should match appointment_type enum
-    status: string; // Should match appointment_status enum
-  patient_id: string;
-    patient_name: string; // Ensure this is expected from RPC JSONB
-  doctor_id: string;
-    doctor_name: string; // Ensure this is expected from RPC JSONB
-}
-
-const fetchDashboardData = async (clinicId: string) => {
-  console.log("fetchDashboardData: Fetching for clinic", clinicId);
-
-  // Call the new RPC to get all dashboard data
-  const { data: rpcData, error: rpcError } = await supabase.rpc('get_dashboard_data', { _clinic_id: clinicId }).single();
-  if (rpcError) throw rpcError;
-
-  // Extract data from the RPC result (it returns an array with one object)
-  const { total_patients, total_doctors, appointments_today, all_relevant_appointments }: DashboardRpcResult = rpcData;
-
-  // Process the JSONB array of appointments with a more careful type assertion
-  const processedAppointments: ProcessedAppointment[] = (all_relevant_appointments as unknown as ProcessedAppointment[] || []).map(apt => ({
-    id: apt.id,
-    date: apt.date,
-    time: apt.time,
-    type: apt.type,
-    status: apt.status,
-      patient_id: apt.patient_id,
-      patient_name: apt.patient_name || 'Unknown Patient', // Handle potential null names from JSONB
-      doctor_id: apt.doctor_id,
-      doctor_name: apt.doctor_name || 'Unknown Doctor', // Handle potential null names from JSONB
-  }));
-
-  // Re-calculate weekly data and upcoming appointments from the processed data
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  sevenDaysAgo.setHours(0, 0, 0, 0); // Reset time to start of the day
-
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  const weeklyData = days.map((day, index) => {
-    const date = new Date(sevenDaysAgo);
-    date.setDate(sevenDaysAgo.getDate() + index);
-    const dateStr = format(date, 'yyyy-MM-dd');
-    const dayAppointments = processedAppointments.filter(app => app.date === dateStr);
-    return { name: day, appointments: dayAppointments.length };
-  });
-
-  // Upcoming appointments (today onwards, limit 5)
-  const todayDate = new Date();
-  todayDate.setHours(0, 0, 0, 0);
-  const upcomingFormattedAppointments = processedAppointments
-    .filter(app => parseISO(app.date) >= todayDate)
-    .sort((a, b) => {
-        // Sort by date, then time
-        const dateTimeA = new Date(`${a.date}T${a.time}`);
-        const dateTimeB = new Date(`${b.date}T${b.time}`);
-        return dateTimeA.getTime() - dateTimeB.getTime();
-    })
-    .slice(0, 5)
-    .map(appointment => ({
-    id: appointment.id,
-      patient: appointment.patient_name,
-      doctor: appointment.doctor_name,
-    time: appointment.time,
-      date: format(parseISO(appointment.date), 'PPP'), // Format date for display
-    type: appointment.type,
-  }));
-
-  return {
-    stats: { totalPatients: total_patients || 0, totalDoctors: total_doctors || 0, appointmentsToday: appointments_today || 0 },
-    appointmentData: weeklyData,
-    upcomingAppointments: upcomingFormattedAppointments,
-  };
-};
-
-const Dashboard = () => {
-  console.log("Dashboard component rendered.");
-  const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
-  const queryClient = useQueryClient(); // Get query client
-  const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
-  const [patientForAppointment, setPatientForAppointment] = useState<Patient | null>(null);
-
-  console.log("Dashboard: authLoading=", authLoading, "activeClinic=", !!activeClinic, "activeClinicRole=", activeClinicRole);
-
-  const { data, isLoading, error } = useQuery({
+  const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['dashboardData', activeClinic?.clinic_id],
-    queryFn: () => fetchDashboardData(activeClinic!.clinic_id),
-    enabled: !!activeClinic && !authLoading && activeClinicRole !== 'doctor',
-    retry: 1,
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id) return null;
+      
+      const { data, error } = await supabase.rpc('get_dashboard_data', { 
+        _clinic_id: activeClinic.clinic_id 
+      });
+      
+      if (error) throw error;
+      return data?.[0] || null;
+    },
+    enabled: !!activeClinic?.clinic_id && !authLoading,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const handleAddPatientClick = () => {
-    setIsPatientModalOpen(true);
-  };
-
-  const handlePatientCreated = (patient: Patient) => {
-    setPatientForAppointment(patient);
-    setIsPatientModalOpen(false);
-    setIsAppointmentModalOpen(true);
-  };
-
-  const handlePatientModalClose = (open: boolean) => {
-    setIsPatientModalOpen(open);
-    if (!open && activeClinic && activeClinicRole !== 'doctor') {
-      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic.clinic_id] });
+  useEffect(() => {
+    if (dashboardData) {
+      setTotalPatients(dashboardData.total_patients || 0);
+      setTotalDoctors(dashboardData.total_doctors || 0);
+      setAppointmentsToday(dashboardData.appointments_today || 0);
     }
-  };
+  }, [dashboardData]);
 
-  const handleAppointmentModalClose = (open: boolean) => {
-    setIsAppointmentModalOpen(open);
-    if (!open && activeClinic && activeClinicRole !== 'doctor') {
-      setPatientForAppointment(null);
-      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic.clinic_id] });
-    }
-  };
+  useEffect(() => {
+    const fetchPatients = async () => {
+      if (!activeClinic) return;
+
+      setPatientsLoading(true);
+      try {
+        const { data: patientsData, error: patientsError, count } = await supabase.from('patients')
+          .select('*', { count: 'exact' })
+          .eq('clinic_id', activeClinic.clinic_id)
+          .range((currentPatientPage - 1) * patientsPerPage, currentPatientPage * patientsPerPage - 1);
+
+        if (patientsError) {
+          console.error("Error fetching patients:", patientsError);
+          return;
+        }
+
+        setPatients(patientsData || []);
+        setTotalPatientPages(Math.ceil((count || 0) / patientsPerPage));
+      } finally {
+        setPatientsLoading(false);
+      }
+    };
+
+    fetchPatients();
+  }, [activeClinic, currentPatientPage]);
 
   if (authLoading) {
-    console.log("Dashboard: Rendering null due to authLoading");
-    return null;
+    return <p>Loading...</p>;
   }
 
   if (!activeClinic) {
-    console.log("Dashboard: Rendering no clinic message");
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] text-muted-foreground">
-        Please select a clinic to view the dashboard.
-      </div>
-    );
-  }
-
-  if (activeClinicRole === 'doctor') {
-    console.log("Dashboard: Rendering doctor access message");
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] text-muted-foreground">
-        Doctors do not have access to the admin dashboard.
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    console.log("Dashboard: Rendering loading spinner");
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <p>Please select a clinic.</p>;
   }
 
   if (error) {
-    console.error("Dashboard: Error fetching data", error);
-    toast.error("Failed to load dashboard data");
-    return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] text-red-500">
-        Error loading dashboard data. Please try again.
-      </div>
-    );
+    return <p>Error: {error.message}</p>;
   }
 
-  console.log("Dashboard: Rendering main UI with data", data);
+  if (isLoading) {
+    return <p>Loading dashboard data...</p>;
+  }
+
+  // Format appointments for the components
+  const allAppointments = dashboardData?.all_relevant_appointments || [];
+  const today = new Date().toISOString().split('T')[0];
+  
+  const todaysAppointments = allAppointments
+    .filter((apt: any) => apt.date === today)
+    .map((apt: any) => ({
+      id: apt.id,
+      patient: apt.patient_name,
+      doctor: apt.doctor_name,
+      time: apt.time,
+      date: apt.date,
+      status: apt.status,
+      type: apt.type,
+    }));
+
+  const upcomingAppointments = allAppointments
+    .filter((apt: any) => apt.date > today)
+    .slice(0, 5)
+    .map((apt: any) => ({
+      id: apt.id,
+      patient: apt.patient_name,
+      doctor: apt.doctor_name,
+      time: apt.time,
+      date: apt.date,
+      status: apt.status,
+      type: apt.type,
+    }));
+
+  const handlePatientClick = (patient: any) => {
+    alert(`Clicked patient: ${patient.name}`);
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your clinic's performance and schedule.</p>
-        </div>
-        {(activeClinicRole === 'admin' || activeClinicRole === 'superadmin') && (
-          <Button onClick={handleAddPatientClick}>
-            <Plus size={18} className="mr-2" />
-            New Patient
-          </Button>
-        )}
+    <div className="container mx-auto py-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Users size={18} className="mr-2 text-blue-500" />
+              Total Patients
+            </CardTitle>
+            <CardDescription>Number of patients in the clinic</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalPatients}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Stethoscope size={18} className="mr-2 text-green-500" />
+              Total Doctors
+            </CardTitle>
+            <CardDescription>Number of doctors in the clinic</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalDoctors}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CalendarCheck size={18} className="mr-2 text-orange-500" />
+              Appointments Today
+            </CardTitle>
+            <CardDescription>Number of appointments scheduled today</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{appointmentsToday}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <User size={18} className="mr-2 text-purple-500" />
+              Your Role
+            </CardTitle>
+            <CardDescription>Your role in the active clinic</CardDescription>
+          </CardHeader>
+          <CardContent>
+             <Badge variant="secondary">{activeClinicRole}</Badge>
+          </CardContent>
+        </Card>
       </div>
 
-      <AdminStatsGrid stats={data?.stats || { totalPatients: 0, totalDoctors: 0, appointmentsToday: 0 }} loading={isLoading} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <WeeklyAppointmentsChart appointmentData={data?.appointmentData || []} loading={isLoading} />
-        <UpcomingAppointmentsList upcomingAppointments={data?.upcomingAppointments || []} loading={isLoading} />
+        <UpcomingAppointmentsList upcomingAppointments={upcomingAppointments} loading={isLoading} />
+        <DoctorPatientsList
+          patients={patients}
+          patientsLoading={patientsLoading}
+          currentPatientPage={currentPatientPage}
+          patientsPerPage={patientsPerPage}
+          totalPatientPages={totalPatientPages}
+          setCurrentPatientPage={setCurrentPatientPage}
+          onPatientClick={handlePatientClick}
+        />
       </div>
-
-      <PatientModal
-        open={isPatientModalOpen}
-        onOpenChange={handlePatientModalClose}
-        patient={null}
-        onPatientCreated={handlePatientCreated}
-      />
-      <AppointmentModal
-        open={isAppointmentModalOpen}
-        onOpenChange={handleAppointmentModalClose}
-        appointment={null}
-        patient={patientForAppointment}
-      />
     </div>
   );
-
-};
-
-export default Dashboard;
+}
