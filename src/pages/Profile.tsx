@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,11 +7,11 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from "@/components/ui/button"; // Import Button for potential edit functionality later
-import { useToast } from "@/hooks/use-toast"; // Import toast
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const Profile = () => {
-  const { user, userRole, loading: authLoading } = useAuth();
+  const { user, activeClinicRole, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(user?.user_metadata?.name || '');
@@ -19,14 +20,12 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // No data fetching needed for basic info, only check auth loading
-    // Initialize state when user loads/changes
     if (user) {
       setEditedName(user.user_metadata?.name || '');
       setEditedEmail(user.email || '');
       setEditedPhotoUrl(user.user_metadata?.avatar_url || '');
     }
-  }, [authLoading, user]); // Added user to dependency array
+  }, [authLoading, user]);
 
   const handleSaveChanges = async () => {
     if (!user) return;
@@ -44,9 +43,8 @@ const Profile = () => {
         updates.email = editedEmail;
     }
 
-    // Only proceed if there are changes to save
     if (Object.keys(updates).length === 0 || (updates.data && Object.keys(updates.data).length === 0 && !updates.email)) {
-      setIsEditing(false); // Exit editing if no changes
+      setIsEditing(false);
       setSaving(false);
       toast({ title: "No changes detected." });
       return;
@@ -59,7 +57,7 @@ const Profile = () => {
       toast({ title: 'Error', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Profile updated successfully!' });
-      setIsEditing(false); // Exit editing mode on success
+      setIsEditing(false);
     }
     setSaving(false);
   };
@@ -114,6 +112,9 @@ const Profile = () => {
                  <>
                    <p className="text-xl font-semibold">{user?.user_metadata?.name || user?.email}</p>
                    <p className="text-sm text-muted-foreground">{user?.email}</p>
+                   {activeClinicRole && (
+                     <p className="text-sm text-muted-foreground">Role: {activeClinicRole}</p>
+                   )}
                  </>
                )}
              </div>
@@ -131,5 +132,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-

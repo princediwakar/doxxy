@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 export function AppHeader() {
-  const { user, userRole, signOut } = useAuth();
+  const { user, activeClinicRole, signOut } = useAuth();
   const navigate = useNavigate();
   
   const handleSignOut = async () => {
@@ -66,7 +66,7 @@ export function AppHeader() {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">{user?.email}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : "User"}
+                      {activeClinicRole ? activeClinicRole.charAt(0).toUpperCase() + activeClinicRole.slice(1) : "User"}
                     </p>
                   </div>
                 </DropdownMenuLabel>

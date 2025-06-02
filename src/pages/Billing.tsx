@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,14 +16,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BillingModal } from "@/components/BillingModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+
+interface BillWithDetails {
+  id: string;
+  amount: number;
+  status: string;
+  invoice_number?: string;
+  description?: string;
+  created_at: string;
+  patient_name?: string;
+}
+
+interface BillingStats {
+  totalRevenue: number;
+  pendingAmount: number;
+  paidBills: number;
+  overdueAmount: number;
+}
 
 const Billing = () => {
+  const { activeClinic } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
-  const [bills, setBills] = useState<any[]>([]);
+  const [bills, setBills] = useState<BillWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<BillingStats>({
     totalRevenue: 0,
     pendingAmount: 0,
     paidBills: 0,
@@ -30,22 +50,41 @@ const Billing = () => {
   });
 
   useEffect(() => {
-    fetchBills();
-    fetchStats();
-  }, []);
+    if (activeClinic?.clinic_id) {
+      fetchBills();
+      fetchStats();
+    }
+  }, [activeClinic?.clinic_id]);
 
   const fetchBills = async () => {
+    if (!activeClinic?.clinic_id) return;
+    
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .rpc('get_bills_with_details');
+        .from('bills')
+        .select(`
+          *,
+          patients(name)
+        `)
+        .eq('clinic_id', activeClinic.clinic_id)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching bills RPC:", error);
+        console.error("Error fetching bills:", error);
         toast.error("Failed to load bills");
         setBills([]);
       } else {
-        setBills(data || []);
+        const formattedBills: BillWithDetails[] = (data || []).map(bill => ({
+          id: bill.id,
+          amount: Number(bill.amount),
+          status: bill.status,
+          invoice_number: bill.invoice_number,
+          description: bill.description,
+          created_at: bill.created_at,
+          patient_name: bill.patients?.name
+        }));
+        setBills(formattedBills);
       }
     } catch (error: any) {
       console.error("Error fetching bills:", error);
@@ -57,25 +96,37 @@ const Billing = () => {
   };
 
   const fetchStats = async () => {
+    if (!activeClinic?.clinic_id) return;
+    
     try {
-      const { data: statsData, error } = await supabase
-        .rpc('get_billing_stats');
+      const { data, error } = await supabase
+        .from('bills')
+        .select('amount, status')
+        .eq('clinic_id', activeClinic.clinic_id);
 
       if (error) {
-        console.error("Error fetching billing stats RPC:", error);
+        console.error("Error fetching billing stats:", error);
         setStats({
           totalRevenue: 0,
           pendingAmount: 0,
           paidBills: 0,
           overdueAmount: 0
         });
-      } else if (statsData && statsData.length > 0) {
-        const stat = statsData[0];
+      } else if (data) {
+        const totalRevenue = data.reduce((sum, bill) => sum + Number(bill.amount), 0);
+        const pendingAmount = data
+          .filter(bill => bill.status === 'Pending')
+          .reduce((sum, bill) => sum + Number(bill.amount), 0);
+        const paidBills = data.filter(bill => bill.status === 'Paid').length;
+        const overdueAmount = data
+          .filter(bill => bill.status === 'Overdue')
+          .reduce((sum, bill) => sum + Number(bill.amount), 0);
+
         setStats({
-          totalRevenue: stat.total_revenue || 0,
-          pendingAmount: stat.pending_amount || 0,
-          paidBills: stat.paid_bills || 0,
-          overdueAmount: stat.overdue_amount || 0
+          totalRevenue,
+          pendingAmount,
+          paidBills,
+          overdueAmount
         });
       }
     } catch (error: any) {
@@ -113,6 +164,10 @@ const Billing = () => {
       default: return "outline";
     }
   };
+
+  if (!activeClinic) {
+    return <div className="text-center py-4">Please select a clinic to view billing.</div>;
+  }
 
   return (
     <div className="space-y-6">
