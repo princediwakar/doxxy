@@ -5,22 +5,26 @@ import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList"
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { FormattedAppointment } from "@/types/dashboard";
+import { FormattedAppointment, DatabaseAppointment } from "@/types/dashboard";
 import { DoctorPatientsList } from "@/components/DoctorPatientsList";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 
-// Type for the appointment data returned from the database
-interface DatabaseAppointment {
-  id: string;
-  date: string;
-  time: string;
-  type: string;
-  status: string;
-  patient_id: string;
-  patient_name: string;
-  doctor_id: string;
-  doctor_name: string;
+// Type guard to check if an object is a valid DatabaseAppointment
+function isValidDatabaseAppointment(obj: any): obj is DatabaseAppointment {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    typeof obj.id === 'string' &&
+    typeof obj.date === 'string' &&
+    typeof obj.time === 'string' &&
+    typeof obj.type === 'string' &&
+    typeof obj.status === 'string' &&
+    typeof obj.patient_id === 'string' &&
+    typeof obj.patient_name === 'string' &&
+    typeof obj.doctor_id === 'string' &&
+    typeof obj.doctor_name === 'string'
+  );
 }
 
 export default function Dashboard() {
@@ -28,8 +32,6 @@ export default function Dashboard() {
   const [totalPatients, setTotalPatients] = useState(0);
   const [totalDoctors, setTotalDoctors] = useState(0);
   const [appointmentsToday, setAppointmentsToday] = useState(0);
-  const [upcomingAppointmentsData, setUpcomingAppointmentsData] = useState<FormattedAppointment[]>([]);
-  const [todaysAppointmentsData, setTodaysAppointmentsData] = useState<FormattedAppointment[]>([]);
   const [patients, setPatients] = useState([]);
   const [patientsLoading, setPatientsLoading] = useState(false);
   const [currentPatientPage, setCurrentPatientPage] = useState(1);
@@ -87,29 +89,91 @@ export default function Dashboard() {
   }, [activeClinic, currentPatientPage]);
 
   if (authLoading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    );
   }
 
   if (!activeClinic) {
-    return <p>Please select a clinic.</p>;
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2">No Clinic Selected</h2>
+            <p className="text-muted-foreground">Please select a clinic to view the dashboard.</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {
-    return <p>Error: {error.message}</p>;
+    return (
+      <div className="container mx-auto py-10">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold mb-2 text-destructive">Error Loading Dashboard</h2>
+            <p className="text-muted-foreground">{error.message}</p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isLoading) {
-    return <p>Loading dashboard data...</p>;
+    return (
+      <div className="container mx-auto py-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <Card key={index} className="animate-pulse">
+              <CardHeader>
+                <div className="h-6 bg-muted rounded w-3/4"></div>
+                <div className="h-4 bg-muted rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-muted rounded w-1/3"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
   }
 
+  // Safely parse appointments data from Json to DatabaseAppointment[]
+  const parseAppointmentsData = (jsonData: any): DatabaseAppointment[] => {
+    if (!jsonData) return [];
+    
+    try {
+      // If it's already an array, validate each item
+      if (Array.isArray(jsonData)) {
+        return jsonData.filter(isValidDatabaseAppointment);
+      }
+      
+      // If it's a string, try to parse it
+      if (typeof jsonData === 'string') {
+        const parsed = JSON.parse(jsonData);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(isValidDatabaseAppointment);
+        }
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('Error parsing appointments data:', error);
+      return [];
+    }
+  };
+
   // Format appointments for the components
-  const allAppointments: DatabaseAppointment[] = Array.isArray(dashboardData?.all_relevant_appointments) 
-    ? dashboardData.all_relevant_appointments as DatabaseAppointment[]
-    : [];
-  
+  const allAppointments: DatabaseAppointment[] = parseAppointmentsData(dashboardData?.all_relevant_appointments);
   const today = new Date().toISOString().split('T')[0];
   
-  const todaysAppointments = allAppointments
+  const todaysAppointments: FormattedAppointment[] = allAppointments
     .filter((apt: DatabaseAppointment) => apt.date === today)
     .map((apt: DatabaseAppointment) => ({
       id: apt.id,
@@ -121,7 +185,7 @@ export default function Dashboard() {
       type: apt.type,
     }));
 
-  const upcomingAppointments = allAppointments
+  const upcomingAppointments: FormattedAppointment[] = allAppointments
     .filter((apt: DatabaseAppointment) => apt.date > today)
     .slice(0, 5)
     .map((apt: DatabaseAppointment) => ({
@@ -135,7 +199,8 @@ export default function Dashboard() {
     }));
 
   const handlePatientClick = (patient: any) => {
-    alert(`Clicked patient: ${patient.name}`);
+    console.log('Patient clicked:', patient);
+    // TODO: Navigate to patient details page or open modal
   };
 
   return (
@@ -189,13 +254,18 @@ export default function Dashboard() {
             <CardDescription>Your role in the active clinic</CardDescription>
           </CardHeader>
           <CardContent>
-             <Badge variant="secondary">{activeClinicRole}</Badge>
+             <Badge variant="secondary" className="capitalize">
+               {activeClinicRole}
+             </Badge>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <UpcomingAppointmentsList upcomingAppointments={upcomingAppointments} loading={isLoading} />
+        <UpcomingAppointmentsList 
+          upcomingAppointments={upcomingAppointments} 
+          loading={isLoading} 
+        />
         <DoctorPatientsList
           patients={patients}
           patientsLoading={patientsLoading}
