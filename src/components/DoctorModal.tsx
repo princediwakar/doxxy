@@ -210,122 +210,60 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
        if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
        if (!values.email) throw new Error('Email is required to add a doctor.');
 
-       let existingUserId = null;
-       let profileError = null;
-
-       try {
-           const { data: profileData, error: fetchError } = await supabase
-               .from('profiles')
-               .select('id')
-               .eq('email', values.email)
-               .single();
-
-           if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 means no rows found, which is expected
-               // Catch other errors like RLS errors here
-               profileError = fetchError;
-               console.error("DoctorModal: Profile lookup failed with error:", fetchError);
-           } else if (profileData) {
-               // User found
-               existingUserId = profileData.id;
-               console.log("DoctorModal: Found existing user with ID:", existingUserId);
-           } else { // profileData is null and error is PGRST116
-               // User not found (expected case for new user)
-               console.log("DoctorModal: User not found by email, proceeding to Edge Function.");
-           }
-       } catch (error) {
-           // Catch any unexpected errors during the fetch
-           profileError = error;
-           console.error("DoctorModal: Unexpected error during profile lookup:", error);
-       }
-
-       if (existingUserId) {
-           // Scenario 1: User exists and was found by the client-side query (unlikely with RLS)
-           console.log("DoctorModal: Processing existing user found via client-side query.");
-           // Check if the user is already a member of this clinic
-           const { data: memberData, error: memberCheckError } = await supabase
-             .from('clinic_members')
-             .select('id')
-             .eq('clinic_id', activeClinic.clinic_id)
-             .eq('user_id', existingUserId)
-             .single();
-
-           if (memberCheckError && memberCheckError.code !== 'PGRST116') { throw memberCheckError; }
-
-           if (memberData) {
-               throw new Error(`User with email ${values.email} is already a member of this clinic.`);
-           }
-
-           // Add the existing user as a clinic member using the RPC
-           const { error: addMemberError } = await supabase.rpc('add_clinic_member', {
-               new_user_id: existingUserId,
-               target_clinic_id: activeClinic.clinic_id,
-               new_role: 'doctor', // Explicitly set role to 'doctor'
-               new_department_id: values.department_id,
-           });
-
-           if (addMemberError) { throw addMemberError; }
-
-           // Also ensure entry in doctors table if not exists (based on our previous fix)
-           const { data: doctorData, error: doctorCheckError } = await supabase
-              .from('doctors')
-              .select('id')
-              .eq('id', existingUserId)
-              .single();
-
-           if (doctorCheckError && doctorCheckError.code !== 'PGRST116') { throw doctorCheckError; }
-
-           if (!doctorData) {
-              const { error: insertDoctorError } = await supabase
-                 .from('doctors')
-                 .insert({
-                    id: existingUserId,
-                    name: values.name,
-                 });
-              if (insertDoctorError) { throw insertDoctorError; }
-           }
-
-           // Return partial info, invalidate queries will refetch
-           return { id: existingUserId, name: values.name || '' } as ModalDoctorDetails;
-
-       } else { // Scenario 2: User not found by client-side query or lookup failed (use Edge Function)
-            console.log("DoctorModal: Using invite-doctor Edge Function.");
-            if (!values.name) throw new Error('Name is required to invite or add a doctor.');
-            // Assuming invite-doctor Edge Function handles both new user creation and adding existing users to clinic
-            const { data: edgeFunctionData, error: edgeFunctionError } = await supabase.functions.invoke('invite-doctor', {
-               body: {
-                   email: values.email,
-                   name: values.name, // Pass name for new user creation or updating doctors table
-                   role: 'doctor', // Edge Function should handle setting the role in clinic_members
-                   department_id: values.department_id, // Pass department_id
-                   clinic_id: activeClinic.clinic_id,
-               },
-               method: 'POST', // Assuming invite-doctor is a POST function
-            });
-
-            if (edgeFunctionError) { throw edgeFunctionError; }
-
-            // The Edge Function is responsible for creating the user (if new),
-            // adding them to clinic_members, and adding/updating the doctors table entry.
-            // We can assume success if no edgeFunctionError.
-            // The response from the Edge Function might contain relevant data like the new user ID.
-            // For now, we'll return a simple success indicator.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return { message: 'Doctor added/invited successfully!', result: edgeFunctionData } as any; // Use any temporarily based on unknown EF return type
-       }
-    },
-     onSuccess: () => {
-       toast.success('Doctor added successfully!');
-       queryClient.invalidateQueries({ queryKey: ['doctors', activeClinic?.clinic_id] });
-       queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
-       onOpenChange(false);
-     },
-     onError: (error) => {
-       console.error('Add Doctor mutation error:', error);
-       console.error('Add Doctor mutation full error object:', JSON.stringify(error, null, 2));
-       toast.error('Failed to add doctor.', {
-         description: error.message,
+       // Call the invite-doctor Edge Function directly.
+       // The Edge Function will handle finding/creating the user,
+       // and adding/updating the clinic_member and doctor records.
+       console.log("DoctorModal: Using invite-doctor Edge Function.");
+       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-doctor`, {
+           method: 'POST',
+           headers: {
+               'Content-Type': 'application/json',
+               'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, // Use ANON key for Edge Function call
+           },
+           body: JSON.stringify({
+               email: values.email,
+               clinic_id: activeClinic.clinic_id,
+               role: values.role, // Pass the selected role
+               // Pass other relevant doctor details for the Edge Function to use
+               name: values.name,
+               phone: values.phone,
+               availability: values.availability,
+               bio: values.bio,
+               department_id: values.department_id, // Pass selected department
+           }),
        });
-     },
+
+       if (!response.ok) {
+           const errorData = await response.json();
+           console.error("DoctorModal: Edge Function error response:", errorData);
+           throw new Error(errorData.error || 'Failed to invite doctor via Edge Function.');
+       }
+
+       const result = await response.json();
+       console.log("DoctorModal: Edge Function successful response:", result);
+
+       // The Edge Function should return the invited user ID or success status
+       return result;
+    },
+    onSuccess: () => {
+      toast.success('Doctor invited/added successfully!');
+      // Invalidate queries for both doctors and clinic members to refresh lists
+      queryClient.invalidateQueries({ queryKey: ['doctors', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['clinicMembers', activeClinic?.clinic_id] }); // Assuming a similar query for members exists
+      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
+      onOpenChange(false);
+    },
+    onError: (error) => {
+      console.error('Add Doctor mutation error:', error);
+      // Check for specific duplicate key error from the Edge Function/Supabase
+      const errorMessage = error.message.includes('duplicate key value violates unique constraint "clinic_members_clinic_id_user_id_key"')
+        ? 'This user is already a member of this clinic.'
+        : 'Failed to add doctor.';
+
+      toast.error(errorMessage, {
+        description: error.message,
+      });
+    },
    });
 
 

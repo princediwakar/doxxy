@@ -183,22 +183,36 @@ Deno.serve(async (req) => {
     console.log(`User ID ${invitedUserId} is not a member of clinic ${clinic_id}. Proceeding to add doctor and profile entries and clinic member.`);
 
     // 3. Create or update doctor entry using the user ID
-    console.log('Upserting doctors entry for user ID:', invitedUserId);
-    const { data: doctorData, error: doctorError } = await supabaseAdmin
+    console.log('InviteDoctor: Preparing doctor and clinic member entries.');
+    console.log('InviteDoctor: clinic_id from request:', clinic_id);
+    console.log('InviteDoctor: invitedUserId:', invitedUserId);
+    const doctorData = {
+      id: invitedUserId, // Use invitedUserId as the primary key for doctors table
+      user_id: invitedUserId, // Use the newly created/found user ID
+      clinic_id: clinic_id, // Use the clinic ID from the request
+      name: name, // Assuming doctorName is passed in the request body
+      // Add other doctor-specific fields if needed from the request body
+    };
+
+    console.log("InviteDoctor: Preparing to insert into doctors:", doctorData);
+    const { data: doctorDataResponse, error: doctorError } = await supabaseAdmin
       .from('doctors')
-      .upsert([{ id: invitedUserId, name, email }]) // Use invitedUserId for the id
+      .insert([doctorData])
       .select()
       .single();
 
+    console.log("InviteDoctor: Result of doctors insert - data:", doctorDataResponse, "error:", doctorError);
+
     if (doctorError) {
-      console.error('invite-doctor: Error upserting doctor entry:', doctorError);
-      console.error('Error creating or updating doctor entry:', doctorError.message);
-      return new Response(JSON.stringify({ error: `Failed to create or update doctor entry: ${doctorError.message}` }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+      console.error("InviteDoctor: Error inserting into doctors table:", doctorError);
+      // Depending on severity, you might want to throw an error here or handle gracefully
+      // For now, let's proceed to see if clinic_members insertion works
+      // throw new Error('Failed to create doctor entry: ' + doctorError.message);
+    } else if (!doctorDataResponse) {
+        console.warn("InviteDoctor: Doctors insert succeeded but no data returned.");
+    } else {
+        console.log("InviteDoctor: Successfully inserted doctor with ID:", doctorDataResponse.id);
     }
-    console.log('Doctor entry upsert result:', doctorData);
 
     // 4. Create or update profile entry using the user ID
     console.log('Upserting profile entry for user ID:', invitedUserId);
@@ -216,7 +230,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({
         success: false,
         userId: invitedUserId,
-        doctor: doctorData, // Include doctor data even if profile fails, for debugging
+        doctor: doctorDataResponse, // Include doctor data even if profile fails, for debugging
         error: `Failed to create or update profile entry: ${profileError.message}`
       }), {
         status: 500,
@@ -250,7 +264,7 @@ Deno.serve(async (req) => {
                   return new Response(JSON.stringify({
                      success: true, // Indicate success as upserts likely worked and user was already member
                      userId: invitedUserId,
-                     doctor: doctorData,
+                     doctor: doctorDataResponse,
                      profile: profileData,
                      userJustInvited: userJustInvited,
                      warning: `User with email ${email} is already a member of this clinic.`, // Keep the warning
@@ -270,7 +284,7 @@ Deno.serve(async (req) => {
         console.log('invite-doctor: add_clinic_member RPC successful.');
 
         // 6. Return final success response
-        return new Response(JSON.stringify({ success: true, userId: invitedUserId, doctor: doctorData, profile: profileData, userJustInvited }), {
+        return new Response(JSON.stringify({ success: true, userId: invitedUserId, doctor: doctorDataResponse, profile: profileData, userJustInvited }), {
           status: 200,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
         });

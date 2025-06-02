@@ -36,7 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Tables, Enums, Database, Constants, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { Tables, Database, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Popover,
@@ -48,7 +48,6 @@ import { Badge } from "@/components/ui/badge";
 // Define types for convenience
 type Appointment = Tables<'appointments'>;
 type Patient = Tables<'patients'>;
-// Use the return type of the RPC for doctors, as it includes name which is needed for the select
 type Doctor = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 
 // Define JS enums for Zod validation
@@ -76,7 +75,7 @@ const appointmentFormSchema = z.object({
   status: z.nativeEnum(AppointmentStatusEnum, {
     required_error: 'Status is required',
   }),
-  notes: z.string().nullable().optional().transform(e => (e === "" ? null : e)),
+  notes: z.string().nullable().optional().transform(e => e === "" ? null : e),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
@@ -84,8 +83,8 @@ type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
 interface AppointmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment: Appointment | null; // Null for creating a new appointment
-  patient?: Patient | null; // Optional: pre-select a patient if modal is opened from patient context
+  appointment: Appointment | null;
+  patient?: Patient | null;
 }
 
 const AppointmentModal: React.FC<AppointmentModalProps> = ({
@@ -110,38 +109,35 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     },
   });
 
-  // Effect to update form defaults if appointment or patient props change while modal is open
+  // Effect to reset form when modal opens or props change
   useEffect(() => {
     if (open) {
-        console.log("AppointmentModal: Modal opened.", { activeClinicId: activeClinic?.clinic_id });
-        const defaultDate = appointment ? new Date(appointment.date) : new Date();
-        const defaultTime = appointment?.time || format(new Date(), 'HH:mm');
-
-        form.reset({
-            date: defaultDate,
-            time: appointment?.time || '',
-            patient_id: appointment?.patient_id || patient?.id || '',
-            doctor_id: appointment?.doctor_id || '',
-            type: appointment?.type as AppointmentTypeEnum | undefined,
-            status: appointment?.status as AppointmentStatusEnum | undefined,
-            notes: appointment?.notes || '',
-        });
+      console.log("AppointmentModal: Modal opened", { activeClinicId: activeClinic?.clinic_id });
+      const defaultDate = appointment ? new Date(appointment.date) : new Date();
+      const defaultValues = {
+        date: isNaN(defaultDate.getTime()) ? new Date() : defaultDate,
+        time: appointment?.time || '',
+        patient_id: appointment?.patient_id || patient?.id || '',
+        doctor_id: appointment?.doctor_id || '',
+        type: appointment ? (appointment.type as AppointmentTypeEnum) : AppointmentTypeEnum['Walk-in'],
+        status: appointment ? (appointment.status as AppointmentStatusEnum) : AppointmentStatusEnum.Scheduled,
+        notes: appointment?.notes || '',
+      };
+      console.log("AppointmentModal: Resetting form with defaults", defaultValues);
+      form.reset(defaultValues);
     }
-  }, [open, appointment, patient, form]);
+  }, [open, appointment, patient, form, activeClinic?.clinic_id]);
 
-  // Helper function to determine badge variant based on appointment type
+  // Helper function for badge variant
   const getTypeBadgeVariant = (type: AppointmentTypeEnum) => {
     switch (type) {
-      case AppointmentTypeEnum['Walk-in']:
-        return 'default'; // Or another suitable variant
-      case AppointmentTypeEnum.Digital:
-        return 'secondary'; // Or another suitable variant
-      default:
-        return 'outline';
+      case AppointmentTypeEnum['Walk-in']: return 'default';
+      case AppointmentTypeEnum.Digital: return 'secondary';
+      default: return 'outline';
     }
   };
 
-  // Fetch patients for the dropdown
+  // Fetch patients
   const { data: patients, isLoading: isLoadingPatients } = useQuery({
     queryKey: ['patients', activeClinic?.clinic_id],
     queryFn: async () => {
@@ -154,134 +150,125 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id, // Only fetch when modal is open and clinic is active
+    enabled: open && !!activeClinic?.clinic_id,
   });
 
-  // Fetch doctors (clinic members with role 'doctor') for the dropdown
+  // Fetch doctors
   const { data: doctors, isLoading: isLoadingDoctors } = useQuery({
     queryKey: ['doctors', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
       console.log("AppointmentModal: Fetching doctors for clinic:", activeClinic.clinic_id);
       const { data, error } = await supabase
-        .rpc('get_doctors_by_clinic', { clinic_id: activeClinic.clinic_id }); // Using the RPC here
+        .rpc('get_doctors_by_clinic', { clinic_id: activeClinic.clinic_id });
       if (error) throw error;
       console.log("AppointmentModal: Doctors fetched:", data);
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id, // Only fetch when modal is open and clinic is active
+    enabled: open && !!activeClinic?.clinic_id,
   });
 
-  // Mutation for creating or updating an appointment
+  // Mutation for creating/updating appointment
   const mutation = useMutation({
     mutationFn: async (values: AppointmentFormValues) => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
-
-      // Ensure types match Supabase expectations
-      const appointmentData: TablesInsert<'appointments'> = {
+      const baseAppointmentData = {
         clinic_id: activeClinic.clinic_id,
-        date: format(values.date as Date, 'yyyy-MM-dd'), // Cast date to Date
-        time: values.time || null, // Ensure null for empty time
+        date: format(values.date, 'yyyy-MM-dd'),
+        time: values.time || null,
         patient_id: values.patient_id,
         doctor_id: values.doctor_id,
-        type: values.type as Database['public']['Enums']['appointment_type'], // Cast through unknown
-        status: values.status as Database['public']['Enums']['appointment_status'], // Cast through unknown
-        notes: values.notes || null, // Ensure null for empty notes
+        type: values.type as Database['public']['Enums']['appointment_type'],
+        status: values.status as Database['public']['Enums']['appointment_status'],
+        notes: values.notes || null,
       };
-
-      if (appointment) {
-        // Update existing appointment
-        const updateData: TablesUpdate<'appointments'> = appointmentData; // Use update type
-        const { data, error } = await supabase
-          .from('appointments')
-          .update(updateData)
-          .eq('id', appointment.id)
-          .select()
-          .single();
-        if (error) throw error;
-        return data;
-      } else {
-        // Create new appointment
-        const insertData: TablesInsert<'appointments'> = appointmentData; // Use insert type
-        const { data, error } = await supabase
-          .from('appointments')
-          .insert(insertData)
-          .select()
-          .single();
-        if (error) throw error;
-        return data;
+      console.log("AppointmentModal: Sending to Supabase:", baseAppointmentData);
+      const timeout = setTimeout(() => {
+        throw new Error('Supabase mutation timed out');
+      }, 10000); // 10-second timeout
+      try {
+        let result;
+        if (appointment) {
+          const updateData: TablesUpdate<'appointments'> = baseAppointmentData;
+          result = await supabase
+            .from('appointments')
+            .update(updateData)
+            .eq('id', appointment.id)
+            .select()
+            .single();
+        } else {
+          const insertData: TablesInsert<'appointments'> = baseAppointmentData;
+          result = await supabase
+            .from('appointments')
+            .insert(insertData)
+            .select()
+            .single();
+        }
+        if (result.error) throw result.error;
+        clearTimeout(timeout);
+        console.log("AppointmentModal: Supabase response:", result.data);
+        return result.data;
+      } catch (error) {
+        clearTimeout(timeout);
+        throw error;
       }
     },
     onSuccess: () => {
-      toast.success(
-        appointment
-          ? 'Appointment updated successfully!'
-          : 'Appointment created successfully!'
-      );
-      // Invalidate relevant queries to refetch data after mutation
+      toast.success(appointment ? 'Appointment updated!' : 'Appointment created!');
       queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
-      onOpenChange(false); // Close modal on success
+      onOpenChange(false);
     },
-    onError: (error) => {
-      console.error('Appointment mutation error:', error);
-      console.error('AppointmentModal: Doctor fetch error:', error);
-      toast.error(
-        appointment
-          ? 'Failed to update appointment.'
-          : 'Failed to create appointment.',
-        {
-          description: error.message,
-        }
-      );
+    onError: (error: Error) => {
+      console.error("AppointmentModal: Mutation error:", error);
+      toast.error(appointment ? 'Failed to update appointment.' : 'Failed to create appointment.', {
+        description: error.message,
+      });
     },
   });
 
   const onSubmit = (values: AppointmentFormValues) => {
+    console.log("AppointmentModal: onSubmit triggered with values:", values);
+    console.log("AppointmentModal: Form state errors:", form.formState.errors);
+    if (Object.keys(form.formState.errors).length > 0) {
+      toast.error("Please fix form errors before submitting.");
+      return;
+    }
     mutation.mutate(values);
   };
 
-  const isSubmitting = mutation.isPending; // Use isPending instead of isLoading
-  const modalTitle = appointment ? 'Edit Appointment' : 'New Appointment';
+  const isSubmitting = mutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{modalTitle}</DialogTitle>
+          <DialogTitle>{appointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
           <DialogDescription>
             Fill in the details to {appointment ? 'edit' : 'create'} an appointment.
           </DialogDescription>
         </DialogHeader>
 
-        {/* Redesigned Form Layout */}
-        <Form {...form}> {/* Wrap form with Form component */}
-          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
 
-            {/* Date and Time Row */}
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             {/* Date Picker */}
             <FormField
               control={form.control}
               name="date"
               render={({ field }) => (
-                <FormItem className="flex flex-col"> {/* Date field within the two-column grid */}
+                <FormItem className="flex flex-col">
                   <FormLabel>Date</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
+                          variant="outline"
+                          className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
+                          {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -291,7 +278,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
-                        disabled={(date) => date < new Date("1900-01-01")} // Example disable past dates if needed
+                        disabled={(date) => date < new Date("1900-01-01")}
                         captionLayout="dropdown"
                       />
                     </PopoverContent>
@@ -306,7 +293,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               control={form.control}
               name="time"
               render={({ field }) => (
-                <FormItem className="flex flex-col"> {/* Time field, ensuring flex-col for alignment consistency */}
+                <FormItem className="flex flex-col">
                   <FormLabel>Time</FormLabel>
                   <FormControl>
                     <Input type="time" {...field} />
@@ -321,7 +308,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               control={form.control}
               name="patient_id"
               render={({ field }) => (
-                <FormItem className="md:col-span-2"> {/* Patient and Doctor can be side-by-side or stacked, or span full width */}
+                <FormItem className="md:col-span-2">
                   <FormLabel>Patient</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingPatients || !!patient}>
                     <FormControl>
@@ -347,7 +334,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               control={form.control}
               name="doctor_id"
               render={({ field }) => (
-                <FormItem className="md:col-span-2"> {/* Patient and Doctor can be side-by-side or stacked, or span full width */}
+                <FormItem className="md:col-span-2">
                   <FormLabel>Doctor</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingDoctors}>
                     <FormControl>
@@ -368,90 +355,95 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               )}
             />
 
-            {/* Type Selection (Chips/Badge) */}
+            {/* Type Selection */}
             <FormField
               control={form.control}
               name="type"
               render={({ field }) => (
-                <FormItem> {/* Type and Status can be side-by-side */}
+                <FormItem>
                   <FormLabel>Type</FormLabel>
-                   <FormControl>
-                     {appointment ? (
-                       // Display chips when editing existing appointment
-                       <div className="flex flex-wrap gap-2"> {/* Container for chips */}
-                         {Object.values(AppointmentTypeEnum).map(typeOption => (
-                           <Button
-                             key={typeOption}
-                             type="button" // Prevent form submission
-                             variant={field.value === typeOption ? "default" : "outline"} // Highlight selected chip
-                             onClick={() => field.onChange(typeOption)} // Update form value on click
-                             className={cn(
-                               "rounded-full px-4 py-2 text-sm",
-                               field.value !== typeOption && "hover:bg-accent hover:text-accent-foreground"
-                             )} // Chip styling
-                           >
-                             {typeOption}
-                           </Button>
-                         ))}
-                       </div>
-                     ) : (
-                        // Display badge with default 'Walk-in' when creating new appointment
-                        <Badge variant={getTypeBadgeVariant(field.value)}>{field.value}</Badge>
-                     )}
-                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Status Selection (Badge) */}
-            {appointment && (
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem> {/* Type and Status can be side-by-side */}
-                    <FormLabel>Status</FormLabel>
-                    <FormControl>
-                       <Badge variant={
-                         field.value === "Scheduled" ? "outline" :
-                         field.value === "In Progress" ? "default" :
-                         field.value === "Completed" ? "success" : "destructive" // Add 'success' variant or use base color classes
-                       }> {/* Use Badge component */}
-                         {field.value}
-                       </Badge>
-                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {/* Notes Textarea - Spans full width */}
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2"> {/* Spans full width */}
-                  <FormLabel>Notes (Optional)</FormLabel>
                   <FormControl>
-                    <Textarea {...field} />
+                    {appointment ? (
+                      <div className="flex flex-wrap gap-2">
+                        {Object.values(AppointmentTypeEnum).map(typeOption => (
+                          <Button
+                            key={typeOption}
+                            type="button"
+                            variant={field.value === typeOption ? "default" : "outline"}
+                            onClick={() => field.onChange(typeOption)}
+                            className={cn("rounded-full px-4 py-2 text-sm", field.value !== typeOption && "hover:bg-accent hover:text-accent-foreground")}
+                          >
+                            {typeOption}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <Badge variant={getTypeBadgeVariant(field.value)}>{field.value}</Badge>
+                    )}
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Dialog Footer - Spans full width */}
-            <DialogFooter className="md:col-span-2"> {/* Footer spans full width */}
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting
-                  ? appointment
-                    ? 'Saving...'
-                    : 'Creating...'
-                  : appointment
-                  ? 'Save Changes'
-                  : 'Create Appointment'}
+            {/* Status Selection */}
+            {appointment && (
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <FormControl>
+                      <Badge
+                        variant={
+                          field.value === "Scheduled" ? "outline" :
+                          field.value === "In Progress" ? "default" :
+                          field.value === "Completed" ? "default" : "destructive"
+                        }
+                      >
+                        {field.value}
+                      </Badge>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+
+            {/* Notes Textarea */}
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Notes (Optional)</FormLabel>
+                  <FormControl>
+                    <Textarea {...field} value={field.value || ''} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Dialog Footer */}
+            <DialogFooter className="md:col-span-2">
+              <Button
+                type="submit"
+                disabled={isSubmitting || Object.keys(form.formState.errors).length > 0}
+                onClick={() => console.log("AppointmentModal: Submit button clicked")}
+              >
+                {isSubmitting ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z" />
+                    </svg>
+                    {appointment ? 'Saving...' : 'Creating...'}
+                  </span>
+                ) : (
+                  appointment ? 'Save Changes' : 'Create Appointment'
+                )}
               </Button>
             </DialogFooter>
           </form>
