@@ -1,8 +1,8 @@
 ## Cursor Agent Interaction Rules for Neurovision Clinic Management
 
-These rules govern the Cursor Agent's interaction and tool usage within the Cursor environment, building upon the project guidelines (`project-rules.md`, `cursor-agent-rules.md`) to ensure efficient and context-aware development.
+These rules govern the Cursor Agent's interaction and tool usage within the Cursor environment, building upon the project guidelines (`project-rules.mdc`, `cursor-agent-rules.md`) to ensure efficient and context-aware development.
 
-1.  **Contextual Awareness:** Always prioritize understanding the current context, including the active file, recent edits, attached files, and terminal state (CWD), before acting on a request. Refer back to `project-rules.md` and the main `cursor-agent-rules.md` for project-specific constraints, architecture, and best practices.
+1.  **Contextual Awareness:** Always prioritize understanding the current context, including the active file, recent edits, attached files, and terminal state (CWD), before acting on a request. Refer back to `project-rules.mdc` and the main `cursor-agent-rules.md` for project-specific constraints, architecture, and best practices.
 
 2.  **Proactive Information Gathering:** Before proposing or implementing significant code changes, proactively use tools like `read_file`, `codebase_search`, or `grep_search` to gather relevant code snippets, function definitions, or data structures necessary for the task. Avoid making assumptions about code structure or dependencies.
 

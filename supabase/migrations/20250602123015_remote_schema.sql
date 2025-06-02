@@ -51,6 +51,17 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 
 
+CREATE TYPE "public"."appointment_status" AS ENUM (
+    'Scheduled',
+    'In Progress',
+    'Completed',
+    'Cancelled'
+);
+
+
+ALTER TYPE "public"."appointment_status" OWNER TO "postgres";
+
+
 CREATE TYPE "public"."appointment_type" AS ENUM (
     'Walk-in',
     'Digital'
@@ -104,7 +115,7 @@ ALTER FUNCTION "public"."add_clinic_member"("new_user_id" "uuid", "target_clinic
 
 
 CREATE OR REPLACE FUNCTION "public"."get_appointments_with_details_by_clinic"("clinic_id" "uuid") RETURNS TABLE("id" "uuid", "patient_id" "uuid", "doctor_id" "uuid", "date" "date", "time" character varying, "type" character varying, "status" character varying, "notes" "text", "created_at" timestamp with time zone, "patient_name" character varying, "doctor_name" character varying, "department_name" character varying)
-    LANGUAGE "sql" STABLE
+    LANGUAGE "sql" STABLE SECURITY DEFINER
     AS $$
   SELECT
     a.id,
@@ -133,7 +144,7 @@ CREATE OR REPLACE FUNCTION "public"."get_appointments_with_details_by_clinic"("c
     public.department_types dt ON cd.department_type_id = dt.id
   WHERE
     a.clinic_id = get_appointments_with_details_by_clinic.clinic_id
-    AND cm.clinic_id = get_appointments_with_details_by_clinic.clinic_id; -- Ensure the doctor is also a member of the same clinic
+    AND cm.clinic_id = get_appointments_with_details_by_clinic.clinic_id;
 $$;
 
 
@@ -193,29 +204,31 @@ ALTER FUNCTION "public"."get_dashboard_data"("_clinic_id" "uuid") OWNER TO "post
 
 
 CREATE OR REPLACE FUNCTION "public"."get_doctors_by_clinic"("clinic_id" "uuid") RETURNS TABLE("id" "uuid", "name" "text", "email" "text", "phone" "text", "availability" "text", "bio" "text", "created_at" timestamp with time zone, "role" "public"."user_role", "department_name" "text", "department_id" "uuid")
-    LANGUAGE "sql" STABLE
-    AS $$SELECT
-    d.id, -- Select doctor ID as the main ID
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    AS $$
+  SELECT
+    d.id,
     p.name,
     p.email,
     d.phone,
     d.availability,
     d.bio,
-    p.created_at, -- Select created_at from profiles
-    cm.role::public.user_role, -- Explicitly cast role to the enum type
+    p.created_at,
+    cm.role::public.user_role,
     dt.name AS department_name,
     cm.department_id
   FROM
-    public.clinic_members cm
+    public.doctors d
   JOIN
-    public.profiles p ON cm.user_id = p.id
-  JOIN
-    public.doctors d ON cm.clinic_id = d.clinic_id AND cm.user_id = d.user_id -- Join doctors table on clinic_id and user_id
+    public.profiles p ON d.user_id = p.id
+  LEFT JOIN
+    public.clinic_members cm ON d.user_id = cm.user_id AND d.clinic_id = cm.clinic_id AND cm.role = 'doctor'
   LEFT JOIN
     public.clinic_departments cd ON cm.department_id = cd.id
   LEFT JOIN
     public.department_types dt ON cd.department_type_id = dt.id
-  WHERE cm.clinic_id = get_doctors_by_clinic.clinic_id AND cm.role = 'doctor'; -- Filter by clinic and role$$;
+  WHERE d.clinic_id = get_doctors_by_clinic.clinic_id;
+$$;
 
 
 ALTER FUNCTION "public"."get_doctors_by_clinic"("clinic_id" "uuid") OWNER TO "postgres";
@@ -737,12 +750,6 @@ ALTER TABLE ONLY "public"."profiles"
 
 
 
-CREATE POLICY "Allow authenticated users to view clinic doctors" ON "public"."clinic_members" FOR SELECT TO "authenticated" USING ((("role" = 'doctor'::"text") AND ("clinic_id" IN ( SELECT "clinic_members_1"."clinic_id"
-   FROM "public"."clinic_members" "clinic_members_1"
-  WHERE ("clinic_members_1"."user_id" = "auth"."uid"())))));
-
-
-
 CREATE POLICY "Allow authenticated users to view clinics they are members of" ON "public"."clinics" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."clinic_members" "cm"
   WHERE (("cm"."clinic_id" = "clinics"."id") AND ("cm"."user_id" = "auth"."uid"())))));
@@ -763,13 +770,17 @@ CREATE POLICY "Allow authenticated users to view profiles for clinic members" ON
 
 
 
-CREATE POLICY "Allow authenticated users to view their own clinic_member" ON "public"."clinic_members" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+CREATE POLICY "Allow clinic members to view doctors in their clinic" ON "public"."doctors" FOR SELECT TO "authenticated" USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
 
 
 
-CREATE POLICY "Allow clinic creator to be superadmin" ON "public"."clinic_members" FOR INSERT WITH CHECK ((("role" = 'superadmin'::"text") AND ("user_id" = "auth"."uid"()) AND ("clinic_id" IN ( SELECT "clinics"."id"
-   FROM "public"."clinics"
-  WHERE ("clinics"."created_by" = "auth"."uid"())))));
+CREATE POLICY "Allow clinic members to view profiles in their clinic" ON "public"."profiles" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."clinic_members" "cm"
+  WHERE (("cm"."user_id" = "profiles"."id") AND ("cm"."clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+           FROM "public"."clinic_members"
+          WHERE ("clinic_members"."user_id" = "auth"."uid"())))))));
 
 
 
@@ -778,6 +789,40 @@ CREATE POLICY "Allow public read on department_types" ON "public"."department_ty
 
 
 ALTER TABLE "public"."appointments" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "authenticated_appointments_delete" ON "public"."appointments" FOR DELETE TO "authenticated" USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "authenticated_appointments_insert" ON "public"."appointments" FOR INSERT TO "authenticated" WITH CHECK (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "authenticated_appointments_select" ON "public"."appointments" FOR SELECT TO "authenticated" USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "authenticated_appointments_update" ON "public"."appointments" FOR UPDATE TO "authenticated" USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"())))) WITH CHECK (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "authenticated_clinic_members_insert" ON "public"."clinic_members" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "authenticated_clinic_members_select" ON "public"."clinic_members" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
 
 
 CREATE POLICY "clinic_data_access" ON "public"."appointments" FOR SELECT USING ((EXISTS ( SELECT 1

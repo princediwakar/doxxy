@@ -36,7 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Tables, Database, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Popover,
@@ -46,8 +46,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 // Define types for convenience
-type Appointment = Tables<'appointments'>;
-type Patient = Tables<'patients'>;
+type Appointment = Database['public']['Tables']['appointments']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
 type Doctor = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 
 // Define JS enums for Zod validation
@@ -154,7 +154,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   });
 
   // Fetch doctors
-  const { data: doctors, isLoading: isLoadingDoctors } = useQuery({
+  const { data: doctors, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
     queryKey: ['doctors', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
@@ -189,7 +189,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       try {
         let result;
         if (appointment) {
-          const updateData: TablesUpdate<'appointments'> = baseAppointmentData;
+          const updateData: Database['public']['Tables']['appointments']['Update'] = baseAppointmentData;
           result = await supabase
             .from('appointments')
             .update(updateData)
@@ -197,7 +197,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             .select()
             .single();
         } else {
-          const insertData: TablesInsert<'appointments'> = baseAppointmentData;
+          const insertData: Database['public']['Tables']['appointments']['Insert'] = baseAppointmentData;
           result = await supabase
             .from('appointments')
             .insert(insertData)

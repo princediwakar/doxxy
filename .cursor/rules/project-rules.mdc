@@ -21,11 +21,27 @@ Neurovision is a multi-tenant web app for Neurology and Ophthalmology clinics, m
   - `superadmin`: Full clinic access.
   - `staff`: Manage patients, appointments, bills.
   - `doctor`: Access own appointments, consultations, patients.
-  - Example: `CREATE POLICY doctor_appointments ON appointments FOR ALL TO authenticated USING (clinic_id = (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid() AND role = 'doctor') AND doctor_id = (SELECT id FROM doctors WHERE user_id = auth.uid()));`
+  - **Note on `clinic_members` RLS**: Due to potential recursion issues, the primary SELECT policy on `clinic_members` is simplified to `user_id = auth.uid()`. This allows users to see their own membership records. Policies on other tables should filter by `clinic_id` directly or leverage `SECURITY DEFINER` RPCs.
+  - Examples:
+    ```sql
+    -- Basic clinic_members SELECT policy to avoid recursion
+    CREATE POLICY user_clinic_members ON clinic_members FOR SELECT TO authenticated USING (user_id = auth.uid());
+
+    -- Policy for appointments filtering by clinic_id
+    CREATE POLICY clinic_appointments ON appointments FOR ALL TO authenticated USING (clinic_id IN (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid()));
+
+    -- Policy for doctors filtering by clinic_id
+    CREATE POLICY clinic_doctors ON doctors FOR SELECT TO authenticated USING (clinic_id IN (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid()));
+
+    -- Example staff policy for bills (allows staff/superadmin to manage bills in their clinics)
+    CREATE POLICY staff_bills ON bills FOR ALL TO authenticated
+    USING (clinic_id = (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid() AND role IN ('staff', 'superadmin')));
+    ```
+  - **RLS and RPCs**: For RPCs that join across multiple tables with RLS (e.g., `get_doctors_by_clinic`, `get_appointments_with_details_by_clinic`), set the RPCs to `SECURITY DEFINER` to bypass RLS filtering on the joined tables within the RPC execution context. Ensure the RPC logic itself correctly filters data by the provided `clinic_id` parameter.
 
 ## Tech Stack
 - **Frontend**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, React Query, React Router DOM, zod.
-- **Backend**: Supabase (PostgreSQL with RLS), Google OAuth, Twilio (WhatsApp), Resend (email).
+- **Backend**: Supabase (PostgreSQL with RLS), Google OAuth, Twilio (WhatsApp), Resend (email), Supabase Edge Functions (for specific logic like user invitation).
 - **Deployment**: Vercel (frontend), Supabase Edge Functions (backend).
 - **Tools**: Cursor (Agent mode), Vitest, ESLint, Prettier.
 
@@ -48,28 +64,40 @@ Neurovision is a multi-tenant web app for Neurology and Ophthalmology clinics, m
 ## Best Practices
 - **TypeScript**:
   - Use Supabase `Database` types (`src/integrations/supabase/types.ts`).
-  - Define props/state with `Tables<"table_name">` or `Enums<"enum_name">`.
+  - **Always regenerate types** after schema changes (adding tables, columns, enums, RPCs) using the command: `supabase gen types typescript --schema public > src/integrations/supabase/types.ts`.
+  - Define props/state with `Tables<"table_name">`, `Enums<"enum_name">`, or RPC return types from the generated `types.ts`.
   - Example:
     ```ts
-    import { Tables } from "@/integrations/supabase/types";
+    import { Tables, Database } from "@/integrations/supabase/types";
+    // Using a table type
     interface AppointmentProps { appointment: Tables<"appointments">; }
+    // Using an RPC return type (adjust index based on your types.ts structure)
+    type RpcDoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
     ```
 - **React Query**:
-  - Fetch data with Supabase functions (e.g., `get_appointments_with_details_by_clinic`), filter by `clinic_id`.
+  - Fetch data with Supabase functions/RPCs (e.g., `get_appointments_with_details_by_clinic`, `get_doctors_by_clinic`), always filtering by `clinic_id` in the function/RPC call.
+  - Invalidate relevant queries (`doctors`, `appointments`, `clinicMembers`, `dashboardData`) after mutations that affect these lists (e.g., adding a doctor/member, creating an appointment).
   - Cache non-critical data (5min stale time).
-  - Example:
+  - Example (updated to show RPC call with clinic_id):
     ```ts
     import { useQuery } from "@tanstack/react-query";
     import { supabase } from "@/integrations/supabase";
-    import { Tables } from "@/integrations/supabase/types";
-    export const useAppointments = (clinicId: string) => useQuery({
+    import { Database } from "@/integrations/supabase/types";
+
+    // Define the RPC return type based on your generated types
+    type RpcAppointmentDetails = Database['public']['Functions']['get_appointments_with_details_by_clinic']['Returns'][0];
+
+    export const useAppointments = (clinicId: string) => useQuery<RpcAppointmentDetails[], Error>({
       queryKey: ["appointments", clinicId],
       queryFn: async () => {
-        const { data, error } = await supabase.from("appointments").select("*").eq("clinic_id", clinicId);
+        // Call the SECURITY DEFINER RPC and pass the clinic_id
+        const { data, error } = await supabase.rpc("get_appointments_with_details_by_clinic", { current_clinic_id: clinicId });
         if (error) throw error;
-        return data as Tables<"appointments">[];
+        return data;
       },
-      staleTime: 5 * 60 * 1000,
+      // Only enable the query if clinicId is available
+      enabled: !!clinicId,
+      staleTime: 5 * 60 * 1000, // 5 minutes
     });
     ```
 - **zod**:
@@ -187,7 +215,8 @@ Neurovision is a multi-tenant web app for Neurology and Ophthalmology clinics, m
   import react from "@vitejs/plugin-react";
   export default defineConfig({ plugins: [react()], server: { port: 3000 }, build: { outDir: "dist" } });
   ```
-- **Backend**: Deploy Edge Functions with `supabase functions deploy`.
+- **Backend**: Deploy Edge Functions with `supabase functions deploy <function_name>`. Ensure Edge Functions interacting with the database use the `supabaseAdmin` client or handle RLS appropriately (e.g., using the Service Role Key where necessary and secure).
+- **Doctor Invitation Flow**: The process for inviting and adding doctors to a clinic is handled by the `invite-doctor` Edge Function. The frontend (`DoctorModal.tsx`) calls this function directly, passing the user's email and doctor/member details. The Edge Function is responsible for the end-to-end logic of user creation/lookup, adding to `clinic_members`, and adding/updating the `doctors` table entry.
 - **Debug**: Use Supabase/Vercel logs for RLS/query issues.
 ## Task Examples
 - "Generate RLS policy for `prescriptions`."
