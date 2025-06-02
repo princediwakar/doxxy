@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,18 +20,16 @@ import {
 } from "@/components/ui/pagination";
 import { Search, Plus, User } from "lucide-react";
 import { PatientModal } from "@/components/PatientModal";
+import { PatientDetailsModal } from "@/components/PatientDetailsModal";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-// import { AppointmentModal } from "@/components/AppointmentModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { Database, Tables } from "@/integrations/supabase/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostgrestError } from "@supabase/supabase-js";
-import { Label } from '@/components/ui/label';
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 type GetPatientsByClinicResult = Patient[];
-type RpcPatientDetails = Database['public']['Functions']['get_patients_by_clinic']['Returns'][0];
 
 const fetchPatients = async (clinicId: string, page: number, itemsPerPage: number, searchTerm: string) => {
   console.log("fetchPatients: Fetching for clinic", clinicId, "page", page, "search", searchTerm);
@@ -74,8 +73,7 @@ const Patients = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
-  const [patientForAppointment, setPatientForAppointment] = useState<Patient | null>(null);
+  const [isPatientDetailsModalOpen, setIsPatientDetailsModalOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -91,7 +89,7 @@ const Patients = () => {
 
   const handlePatientClick = (patient: Patient) => {
     setSelectedPatient(patient);
-    setIsPatientModalOpen(true);
+    setIsPatientDetailsModalOpen(true);
   };
 
   const handleNewPatient = () => {
@@ -99,17 +97,14 @@ const Patients = () => {
     setIsPatientModalOpen(true);
   };
 
-  const handleModalClose = () => {
+  const handlePatientModalClose = () => {
     setIsPatientModalOpen(false);
-    setIsAppointmentModalOpen(false);
-    setPatientForAppointment(null);
     queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
   };
 
-  const handlePatientCreated = (patient: Patient) => {
-    setPatientForAppointment(patient);
-    setIsPatientModalOpen(false);
-    setIsAppointmentModalOpen(true);
+  const handlePatientDetailsModalClose = () => {
+    setIsPatientDetailsModalOpen(false);
+    setSelectedPatient(null);
   };
 
   if (authLoading) {
@@ -255,17 +250,16 @@ const Patients = () => {
 
       <PatientModal
         open={isPatientModalOpen}
-        onOpenChange={handleModalClose}
+        onOpenChange={handlePatientModalClose}
         patient={selectedPatient}
-        onPatientCreated={handlePatientCreated}
+        onPatientCreated={() => {}}
       />
 
-      {/* <AppointmentModal
-        open={isAppointmentModalOpen}
-        onOpenChange={handleModalClose}
-        appointment={null}
-        patient={patientForAppointment}
-      /> */}
+      <PatientDetailsModal
+        open={isPatientDetailsModalOpen}
+        onOpenChange={handlePatientDetailsModalClose}
+        patient={selectedPatient}
+      />
     </div>
   );
 };

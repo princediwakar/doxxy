@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
@@ -137,7 +138,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   };
 
-  // Fetch patients
+  // Fetch patients using direct query instead of RPC
   const { data: patients, isLoading: isLoadingPatients } = useQuery({
     queryKey: ['patients', activeClinic?.clinic_id],
     queryFn: async () => {
@@ -153,7 +154,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     enabled: open && !!activeClinic?.clinic_id,
   });
 
-  // Fetch doctors
+  // Fetch doctors using RPC
   const { data: doctors, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
     queryKey: ['doctors', activeClinic?.clinic_id],
     queryFn: async () => {
@@ -175,41 +176,35 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       const baseAppointmentData = {
         clinic_id: activeClinic.clinic_id,
         date: format(values.date, 'yyyy-MM-dd'),
-        time: values.time || null,
+        time: values.time || '',
         patient_id: values.patient_id,
         doctor_id: values.doctor_id,
-        type: values.type as Database['public']['Enums']['appointment_type'],
-        status: values.status as Database['public']['Enums']['appointment_status'],
-        notes: values.notes || null,
+        type: values.type,
+        status: values.status,
+        notes: values.notes || '',
       };
       console.log("AppointmentModal: Sending to Supabase:", baseAppointmentData);
-      const timeout = setTimeout(() => {
-        throw new Error('Supabase mutation timed out');
-      }, 10000); // 10-second timeout
+      
       try {
         let result;
         if (appointment) {
-          const updateData: Database['public']['Tables']['appointments']['Update'] = baseAppointmentData;
           result = await supabase
             .from('appointments')
-            .update(updateData)
+            .update(baseAppointmentData)
             .eq('id', appointment.id)
             .select()
             .single();
         } else {
-          const insertData: Database['public']['Tables']['appointments']['Insert'] = baseAppointmentData;
           result = await supabase
             .from('appointments')
-            .insert(insertData)
+            .insert(baseAppointmentData)
             .select()
             .single();
         }
         if (result.error) throw result.error;
-        clearTimeout(timeout);
         console.log("AppointmentModal: Supabase response:", result.data);
         return result.data;
       } catch (error) {
-        clearTimeout(timeout);
         throw error;
       }
     },
@@ -217,6 +212,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       toast.success(appointment ? 'Appointment updated!' : 'Appointment created!');
       queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['patientAppointments'] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
@@ -248,8 +244,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             Fill in the details to {appointment ? 'edit' : 'create'} an appointment.
           </DialogDescription>
         </DialogHeader>
-
-
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
@@ -362,54 +356,50 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type</FormLabel>
-                  <FormControl>
-                    {appointment ? (
-                      <div className="flex flex-wrap gap-2">
-                        {Object.values(AppointmentTypeEnum).map(typeOption => (
-                          <Button
-                            key={typeOption}
-                            type="button"
-                            variant={field.value === typeOption ? "default" : "outline"}
-                            onClick={() => field.onChange(typeOption)}
-                            className={cn("rounded-full px-4 py-2 text-sm", field.value !== typeOption && "hover:bg-accent hover:text-accent-foreground")}
-                          >
-                            {typeOption}
-                          </Button>
-                        ))}
-                      </div>
-                    ) : (
-                      <Badge variant={getTypeBadgeVariant(field.value)}>{field.value}</Badge>
-                    )}
-                  </FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select appointment type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {Object.values(AppointmentTypeEnum).map(typeOption => (
+                        <SelectItem key={typeOption} value={typeOption}>
+                          {typeOption}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
             {/* Status Selection */}
-            {appointment && (
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
+            <FormField
+              control={form.control}
+              name="status"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Status</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <Badge
-                        variant={
-                          field.value === "Scheduled" ? "outline" :
-                          field.value === "In Progress" ? "default" :
-                          field.value === "Completed" ? "default" : "destructive"
-                        }
-                      >
-                        {field.value}
-                      </Badge>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+                    <SelectContent>
+                      {Object.values(AppointmentStatusEnum).map(statusOption => (
+                        <SelectItem key={statusOption} value={statusOption}>
+                          {statusOption}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Notes Textarea */}
             <FormField
