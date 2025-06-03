@@ -14,14 +14,14 @@ import { Separator } from "@/components/ui/separator";
 const navItems = [
   { icon: Home, label: "Dashboard", path: "/", roles: ['superadmin', 'staff', 'doctor'] },
   { icon: Users, label: "Patients", path: "/patients", roles: ['staff', 'doctor', 'superadmin'] },
-  { icon: User, label: "Doctors", path: "/doctors", roles: ['staff', 'superadmin'] },
   { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ['staff', 'doctor', 'superadmin'] },
-  { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'superadmin'] },
+  { icon: User, label: "Doctors", path: "/doctors", roles: ['staff', 'superadmin'] },
+  // { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'superadmin'] },
   { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
 ];
 
 export function AppSidebar() {
-  const { user, activeClinic, activeClinicRole, signOut, loading } = useAuth();
+  const { user, activeClinic, activeClinicRole, signOut, loading, profileName } = useAuth();
   const location = useLocation();
 
   // Helper to determine if a link is active, handling root path specifically
@@ -106,7 +106,7 @@ export function AppSidebar() {
                 </Avatar>
                 <div className="flex-1 overflow-hidden">
                   <span className="text-sm font-medium overflow-hidden text-ellipsis whitespace-nowrap">
-                    {user?.user_metadata?.name || user?.email}
+                    {profileName || user?.email}
                   </span>
                 </div>
               </Button>
@@ -120,7 +120,7 @@ export function AppSidebar() {
                 </Avatar>
                 <div className="flex-1 overflow-hidden">
                    <span className="text-sm font-semibold overflow-hidden text-ellipsis whitespace-nowrap"> {/* Adjusted font-weight */}
-                     {user?.user_metadata?.name || user?.email}
+                     {profileName || user?.email}
                    </span>
                 </div>
               </div>

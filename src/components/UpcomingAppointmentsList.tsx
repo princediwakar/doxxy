@@ -1,17 +1,31 @@
-
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { CalendarCheck, User, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FormattedAppointment } from "@/types/dashboard";
+import { Button } from "@/components/ui/button";
 
 interface UpcomingAppointmentsListProps {
   upcomingAppointments: FormattedAppointment[];
   loading: boolean;
+  appointmentsPerPage?: number;
+  currentPage?: number;
+  setCurrentPage?: (page: number) => void;
+  totalPages?: number;
+  onAppointmentClick?: (appointmentId: string) => void;
+  showViewAllButton?: boolean;
+  onViewAll?: () => void;
 }
 
 export function UpcomingAppointmentsList({
   upcomingAppointments,
   loading,
+  appointmentsPerPage = 5,
+  currentPage = 1,
+  setCurrentPage,
+  totalPages,
+  onAppointmentClick,
+  showViewAllButton = false,
+  onViewAll,
 }: UpcomingAppointmentsListProps) {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -28,20 +42,36 @@ export function UpcomingAppointmentsList({
     }
   };
 
+  // Pagination logic
+  const startIdx = (currentPage - 1) * appointmentsPerPage;
+  const endIdx = startIdx + appointmentsPerPage;
+  const paginatedAppointments = upcomingAppointments.slice(startIdx, endIdx);
+  const showPagination = (upcomingAppointments.length > appointmentsPerPage) && setCurrentPage && totalPages;
+
   return (
     <Card className="col-span-1">
-      <CardHeader>
-        <CardTitle className="flex items-center">
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <div className="flex items-center">
           <CalendarCheck size={18} className="mr-2 text-purple-500" />
-          Upcoming Appointments
-        </CardTitle>
-        <CardDescription>Next scheduled appointments</CardDescription>
+          <CardTitle className="text-base">Upcoming Appointments</CardTitle>
+        </div>
+        {showViewAllButton && onViewAll && (
+          <Button
+            variant="link"
+            size="sm"
+            className="text-primary px-0 h-auto"
+            onClick={onViewAll}
+            aria-label="View all upcoming appointments"
+          >
+            View All
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {loading ? (
           <div className="space-y-4">
             {Array.from({ length: 4 }).map((_, index) => (
-              <div key={index} className="animate-pulse h-16 bg-muted/30 rounded-md"></div>
+              <div key={index} className="animate-pulse h-14 bg-muted/30 rounded-md"></div>
             ))}
           </div>
         ) : upcomingAppointments.length === 0 ? (
@@ -50,34 +80,55 @@ export function UpcomingAppointmentsList({
             <p>No upcoming appointments scheduled.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {upcomingAppointments.map((appointment) => (
-              <div key={appointment.id} className="border border-border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="space-y-1">
-                    <p className="font-medium text-foreground">{appointment.patient}</p>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <User size={14} className="mr-1" />
-                      <span>Dr. {appointment.doctor}</span>
-                    </div>
+          <>
+            <div className="space-y-2">
+              {paginatedAppointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  role={onAppointmentClick ? "button" : undefined}
+                  tabIndex={onAppointmentClick ? 0 : undefined}
+                  aria-label={onAppointmentClick ? `View appointment for ${appointment.patient}` : undefined}
+                  className={
+                    "border border-border rounded-lg px-3 py-2 transition-colors " +
+                    (onAppointmentClick ? "hover:bg-muted/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary" : "")
+                  }
+                  onClick={onAppointmentClick ? () => onAppointmentClick(appointment.id) : undefined}
+                  onKeyDown={onAppointmentClick ? (e) => { if (e.key === 'Enter') onAppointmentClick(appointment.id); } : undefined}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-foreground truncate">{appointment.patient}</span>
+                    <Badge variant={getStatusColor(appointment.status)}>{appointment.status}</Badge>
                   </div>
-                  <Badge variant={getStatusColor(appointment.status)}>
-                    {appointment.status}
-                  </Badge>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
+                    <span className="flex items-center"><User size={14} className="mr-1" />{appointment.doctor}</span>
+                    <span className="flex items-center"><CalendarCheck size={14} className="mr-1" />{appointment.date}</span>
+                    <span className="flex items-center"><Clock size={14} className="mr-1" />{appointment.time}</span>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center text-muted-foreground">
-                    <CalendarCheck size={14} className="mr-1" />
-                    <span>{appointment.date}</span>
-                  </div>
-                  <div className="flex items-center text-muted-foreground">
-                    <Clock size={14} className="mr-1" />
-                    <span>{appointment.time}</span>
-                  </div>
-                </div>
+              ))}
+            </div>
+            {showPagination && (
+              <div className="flex justify-center items-center gap-2 mt-4">
+                <button
+                  className="px-3 py-1 rounded bg-muted text-foreground disabled:opacity-50"
+                  onClick={() => setCurrentPage && setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Prev
+                </button>
+                <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  className="px-3 py-1 rounded bg-muted text-foreground disabled:opacity-50"
+                  onClick={() => setCurrentPage && setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

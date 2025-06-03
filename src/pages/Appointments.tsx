@@ -21,7 +21,7 @@ import { Search, Plus, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 // Assuming AppointmentModal exists and is correctly exported
 import { AppointmentModal } from '@/components/AppointmentModal';
 import { format, parseISO } from 'date-fns';
@@ -33,6 +33,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { ConsultationModal } from '@/components/ConsultationModal';
 
 // Type for the return of the get_appointments_with_details_by_clinic RPC
 interface AppointmentWithDetails {
@@ -167,6 +168,50 @@ const Appointments = () => {
     }
   };
 
+  // State for ConsultationModal
+  const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
+  const [selectedAppointmentForConsultation, setSelectedAppointmentForConsultation] = useState<AppointmentWithDetails | null>(null);
+
+  // Handle opening ConsultationModal
+  const handleStartConsultation = async (appointment: AppointmentWithDetails) => {
+    if (appointment.status !== 'In Progress') {
+      try {
+        await updateAppointmentStatusMutation.mutateAsync({ appointmentId: appointment.id, status: 'In Progress' });
+      } catch (e) {
+        toast.error('Failed to update appointment status.');
+        return;
+      }
+    }
+    setSelectedAppointmentForConsultation(appointment);
+    setIsConsultationModalOpen(true);
+  };
+
+  // Handle closing ConsultationModal and refreshing data (if needed)
+  const handleConsultationModalClose = (open: boolean) => {
+    setIsConsultationModalOpen(open);
+    if (!open && activeClinic) {
+      // Optionally invalidate appointments query if consultation saves change appointment status
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinic_id] });
+       // Consider also invalidating dashboard data if it shows appointment status
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data', activeClinic.clinic_id] });
+    }
+  };
+
+  const updateAppointmentStatusMutation = useMutation({
+    mutationFn: async ({ appointmentId, status }: { appointmentId: string, status: string }) => {
+      if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status })
+        .eq('id', appointmentId)
+        .eq('clinic_id', activeClinic.clinic_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
+    },
+  });
+
   if (authLoading) {
     console.log("Appointments: Rendering null due to authLoading");
     return null;
@@ -231,18 +276,22 @@ const Appointments = () => {
                   <TableHead>Doctor</TableHead>
                   <TableHead className="hidden sm:table-cell">Type</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
+                  {/* Add a new header for Consultation action if user is a doctor */}
+                  {activeClinicRole === 'doctor' && <TableHead>Consultation</TableHead>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAppointments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
+                    <TableCell colSpan={activeClinicRole === 'doctor' ? 8 : 7} className="text-center py-4"> {/* Adjust colspan */}
                       {searchTerm ? "No appointments match your search" : "No appointments found"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredAppointments.map((appointment) => (
+                  filteredAppointments.map((appointment) => {
+                    console.log("Appointment ID:", appointment.id, "Status:", appointment.status, "Active Role:", activeClinicRole);
+                    return (
                     <TableRow
                       key={appointment.id}
                       className="hover:bg-muted/50"
@@ -253,7 +302,22 @@ const Appointments = () => {
                       <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{appointment.doctor_name}</TableCell>
                       <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.type}</TableCell>
                       <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.status}</TableCell>
-                      <TableCell>
+
+                      {/* Add a cell for the Start Consultation button if user is a doctor and appointment is not completed/cancelled */}
+                      {activeClinicRole === 'doctor' && appointment.status !== 'Completed' && appointment.status !== 'Cancelled' && (
+                         <TableCell>
+                           <Button size="sm" onClick={() => handleStartConsultation(appointment)}>
+                             {appointment.status === "Scheduled" ? "Start" : "Continue"}
+                           </Button>
+                         </TableCell>
+                      )}
+
+                       {/* Add an empty cell if the button is not shown to maintain table structure */}
+                       {activeClinicRole === 'doctor' && (appointment.status === 'Completed' || appointment.status === 'Cancelled') && (
+                           <TableCell></TableCell>
+                       )}
+
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -263,23 +327,31 @@ const Appointments = () => {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            {/* Option to view/edit appointment details */}
                             <DropdownMenuItem onClick={() => handleAppointmentClick(appointment)}>
-                              Edit Appointment
+                                View/Edit Appointment
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {appointment.status !== 'Cancelled' && (
-                               <DropdownMenuItem
-                                 onClick={() => handleCancelAppointment(appointment.id)}
-                                 className="text-red-600 focus:text-red-600"
-                               >
-                                 Cancel Appointment
-                               </DropdownMenuItem>
+                             {/* Remove Start Consultation option from dropdown */}
+                             {/*
+                            {activeClinicRole === 'doctor' && appointment.status !== 'Completed' && appointment.status !== 'Cancelled' && (
+                               <DropdownMenuItem onClick={() => handleStartConsultation(appointment)}>
+                                    Start Consultation
+                                </DropdownMenuItem>
                             )}
+                            */}
+                            <DropdownMenuSeparator />
+                             {/* Option to cancel appointment - visible for staff/superadmin, or potentially doctors depending on policy */}
+                             {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && appointment.status !== 'Cancelled' && appointment.status !== 'Completed' && (
+                                <DropdownMenuItem onClick={() => handleCancelAppointment(appointment.id)} disabled={loading}>
+                                    Cancel Appointment
+                                </DropdownMenuItem>
+                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
@@ -318,6 +390,13 @@ const Appointments = () => {
         open={isAppointmentModalOpen}
         onOpenChange={handleModalClose}
         appointment={selectedAppointment}
+      />
+
+      {/* Consultation Modal component */}
+      <ConsultationModal
+        open={isConsultationModalOpen}
+        onOpenChange={handleConsultationModalClose}
+        appointment={selectedAppointmentForConsultation}
       />
     </div>
   );

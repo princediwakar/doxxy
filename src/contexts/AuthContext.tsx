@@ -19,6 +19,7 @@ interface AuthContextProps {
   setActiveClinicId: (clinicId: string | null) => void;
   activeClinicRole: string | null;
   fetchUserAndClinicData: (userFromSession: User | null) => Promise<void>;
+  profileName: string | null;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [clinicLoading, setClinicLoading] = useState(false);
   const [userClinics, setUserClinics] = useState<ClinicMemberWithClinic[]>([]);
   const [activeClinic, setActiveClinicState] = useState<ClinicMemberWithClinic | null>(null);
+  const [profileName, setProfileName] = useState<string | null>(null);
 
   const activeClinicRole = activeClinic ? activeClinic.role : null;
 
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     setUserClinics([]);
     setActiveClinicState(null);
+    setProfileName(null);
     localStorage.removeItem('activeClinicId');
     console.log("AuthContext: Signed out, cleared state and local storage.");
   };
@@ -50,15 +53,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const setActiveClinicId = useCallback((clinicId: string | null) => {
     if (clinicId === null) {
       setActiveClinicState(null);
+      setProfileName(null);
       localStorage.removeItem('activeClinicId');
       console.log("AuthContext: Cleared active clinic.");
     } else {
       const selectedClinic = userClinics.find(clinic => clinic.clinic_id === clinicId);
       if (selectedClinic) {
         setActiveClinicState(selectedClinic);
+        setProfileName(selectedClinic.clinics?.name || null);
         localStorage.setItem('activeClinicId', selectedClinic.clinic_id);
         console.log("AuthContext: Set active clinic:", selectedClinic.clinics?.name);
       } else {
+        setProfileName(null);
         localStorage.removeItem('activeClinicId');
         console.log("AuthContext: Clinic ID not found in userClinics, cleared local storage.");
       }
@@ -69,6 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!userFromSession) {
       setUserClinics([]);
       setActiveClinicState(null);
+      setProfileName(null);
       localStorage.removeItem('activeClinicId');
       console.log("AuthContext: No user, cleared clinics and active clinic.");
       return;
@@ -96,6 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (clinicIds.length === 0) {
         setUserClinics([]);
         setActiveClinicState(null);
+        setProfileName(null);
         localStorage.removeItem('activeClinicId');
         console.log("AuthContext: User is not a member of any clinics.");
         return; // Exit if no clinics found
@@ -144,10 +152,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setActiveClinicState(initialActiveClinic);
       console.log("fetchUserAndClinicData: Final active clinic set to:", initialActiveClinic?.clinics?.name || null);
 
+      // After setting clinics, fetch profile name
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', userFromSession.id)
+        .maybeSingle();
+      if (profileError) {
+        console.error('AuthContext: Error fetching profile name:', profileError);
+        setProfileName(null);
+      } else {
+        setProfileName(profile?.name || null);
+      }
+
     } catch (error) {
       console.error("fetchUserAndClinicData: Error:", error);
       setUserClinics([]);
       setActiveClinicState(null);
+      setProfileName(null);
       localStorage.removeItem('activeClinicId');
     } finally {
       setClinicLoading(false);
@@ -157,7 +179,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         finalActiveClinicName: activeClinic?.clinics?.name, // Note: This might log stale activeClinic name
       });
     }
-  }, [user, userClinics, activeClinic]); // Removed userFromSession from dependencies
+  }, [user, userClinics, activeClinic]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -171,6 +193,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else {
         setUserClinics([]);
         setActiveClinicState(null);
+        setProfileName(null);
         localStorage.removeItem('activeClinicId');
         console.log("AuthContext: No user session, cleared state.");
       }
@@ -188,6 +211,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } else {
           setUserClinics([]);
           setActiveClinicState(null);
+          setProfileName(null);
           localStorage.removeItem('activeClinicId');
         }
       } catch (error) {
@@ -213,7 +237,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setActiveClinicId,
     activeClinicRole,
     fetchUserAndClinicData,
-  }), [session, user, initialLoading, clinicLoading, userClinics, activeClinic, setActiveClinicId, activeClinicRole, fetchUserAndClinicData]);
+    profileName,
+  }), [session, user, initialLoading, clinicLoading, userClinics, activeClinic, setActiveClinicId, activeClinicRole, fetchUserAndClinicData, profileName]);
 
   return (
     <AuthContext.Provider value={authContextValue}>

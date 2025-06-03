@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { Calendar, Phone, Mail, MapPin, User, Clock, Plus, CreditCard } from 'lucide-react';
@@ -19,6 +18,7 @@ import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentModal } from './AppointmentModal';
 import { BillingModal } from './BillingModal';
+import { getAge, renderGender } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
@@ -128,6 +128,12 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
             <DialogTitle className="flex items-center gap-2">
               <User className="h-5 w-5" />
               {patient.name}
+              <span className="ml-2 flex items-center gap-2 text-base text-muted-foreground">
+                
+                {getAge(patient.date_of_birth) && (
+                  <span className="ml-1">{getAge(patient.date_of_birth)}, {patient.gender}</span>
+                )}
+              </span>
             </DialogTitle>
           </DialogHeader>
 
@@ -150,10 +156,13 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>{patient.date_of_birth ? format(parseISO(patient.date_of_birth), 'PPP') : 'No DOB provided'}</span>
+                    {getAge(patient.date_of_birth) && (
+                      <span className="ml-2">({getAge(patient.date_of_birth)} yrs)</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{patient.gender || 'Not specified'}</span>
+                    <span>{patient.gender}</span>
                   </div>
                 </div>
                 {patient.address && (
@@ -172,15 +181,17 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
 
             {/* Tabs for Appointments and Bills */}
             <Tabs defaultValue="appointments" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-1">
                 <TabsTrigger value="appointments" className="flex items-center gap-2">
                   <Clock className="h-4 w-4" />
                   Appointments
                 </TabsTrigger>
+                {/*
                 <TabsTrigger value="bills" className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4" />
                   Bills
                 </TabsTrigger>
+                */}
               </TabsList>
 
               <TabsContent value="appointments" className="space-y-4">
@@ -242,6 +253,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                 )}
               </TabsContent>
 
+              {/*
               <TabsContent value="bills" className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold">Bills</h3>
@@ -295,6 +307,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                   </div>
                 )}
               </TabsContent>
+              */}
             </Tabs>
           </div>
         </DialogContent>

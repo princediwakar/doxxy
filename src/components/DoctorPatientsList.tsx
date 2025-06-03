@@ -1,16 +1,16 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Import Supabase generated types
 import { Tables } from "@/integrations/supabase/types";
+import { getAge, renderGender } from "@/lib/utils";
 
 // Define local Patient type using generated types
 type Patient = Tables<'patients'>;
 
 // Define local enhanced patient type to match what's passed from parent
-interface EnhancedPatientForDoctorList extends Patient {
+export interface EnhancedPatientForDoctorList extends Patient {
   lastVisit?: string;
 }
 
@@ -83,8 +83,13 @@ export function DoctorPatientsList({
                     <User size={16} className="text-primary" />
                   </div>
                   <div>
-                    <span className="font-medium">{patient.name}</span>
-                    <p className="text-sm text-muted-foreground">ID: {patient.medical_id || 'N/A'}</p>
+                    <span className="font-medium flex items-center gap-2">
+                      {patient.name}
+                    </span>
+                      {getAge(patient.date_of_birth) && (
+                        <span className="text-xs text-muted-foreground">{getAge(patient.date_of_birth)}, {(patient.gender)}</span>
+                      )}
+                    {/* <p className="text-sm text-muted-foreground">ID: {patient.medical_id || 'N/A'}</p> */}
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">

@@ -601,7 +601,19 @@ export type Database = {
           total_patients: number
           total_doctors: number
           appointments_today: number
+          pending_consultations: number
           all_relevant_appointments: Json
+        }[]
+      }
+      get_doctor_dashboard_data: {
+        Args: { _clinic_id: string; _user_id: string }
+        Returns: {
+          total_patients: number
+          total_appointments: number
+          pending_consultations: number
+          completed_consultations: number
+          upcoming_appointments: Json
+          my_patients: Json
         }[]
       }
       get_doctors_by_clinic: {

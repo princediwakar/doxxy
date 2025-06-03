@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +26,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Database, Tables } from "@/integrations/supabase/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostgrestError } from "@supabase/supabase-js";
+import { AppointmentModal } from "@/components/AppointmentModal";
+import { getAge } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 type GetPatientsByClinicResult = Patient[];
@@ -77,6 +78,8 @@ const Patients = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const [appointmentPatient, setAppointmentPatient] = useState<Patient | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['patients', activeClinic?.clinic_id, currentPage, searchTerm],
@@ -133,7 +136,7 @@ const Patients = () => {
           <h1 className="text-2xl font-bold">Patients</h1>
           <p className="text-muted-foreground">Manage patient records</p>
         </div>
-        {(activeClinicRole === 'admin' || activeClinicRole === 'superadmin') && (
+        {(activeClinicRole === 'superadmin') && (
           <Button onClick={handleNewPatient}>
             <Plus size={18} className="mr-2" />
             New Patient
@@ -168,18 +171,21 @@ const Patients = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead className="hidden sm:table-cell">Age</TableHead>
                   <TableHead className="hidden sm:table-cell">Gender</TableHead>
                   <TableHead className="hidden md:table-cell">Phone</TableHead>
                   <TableHead className="hidden lg:table-cell">Email</TableHead>
-                  <TableHead className="hidden xl:table-cell">Address</TableHead>
                   <TableHead className="hidden xl:table-cell">Date of Birth</TableHead>
                   <TableHead className="hidden xl:table-cell">Medical ID</TableHead>
+                  {(activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
+                    <TableHead>Actions</TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {patients.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-4">
+                    <TableCell colSpan={8} className="text-center py-4">
                       {searchTerm ? "No patients match your search" : "No patients found"}
                     </TableCell>
                   </TableRow>
@@ -198,12 +204,26 @@ const Patients = () => {
                           {patient.name}
                         </div>
                       </TableCell>
+                      <TableCell className="hidden sm:table-cell">{getAge(patient.date_of_birth)}</TableCell>
                       <TableCell className="hidden sm:table-cell">{patient.gender || "-"}</TableCell>
                       <TableCell className="hidden md:table-cell">{patient.phone || "-"}</TableCell>
                       <TableCell className="hidden lg:table-cell">{patient.email || "-"}</TableCell>
-                      <TableCell className="hidden xl:table-cell">{patient.address || "-"}</TableCell>
                       <TableCell className="hidden xl:table-cell">{patient.date_of_birth || "-"}</TableCell>
                       <TableCell className="hidden xl:table-cell">{patient.medical_id || "-"}</TableCell>
+                      {(activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
+                        <TableCell onClick={e => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setAppointmentPatient(patient);
+                              setIsAppointmentModalOpen(true);
+                            }}
+                          >
+                            <Plus size={14} className="mr-1" />
+                            Schedule
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))
                 )}
@@ -259,6 +279,16 @@ const Patients = () => {
         open={isPatientDetailsModalOpen}
         onOpenChange={handlePatientDetailsModalClose}
         patient={selectedPatient}
+      />
+
+      <AppointmentModal
+        open={isAppointmentModalOpen}
+        onOpenChange={(open) => {
+          setIsAppointmentModalOpen(open);
+          if (!open) setAppointmentPatient(null);
+        }}
+        appointment={null}
+        patient={appointmentPatient}
       />
     </div>
   );

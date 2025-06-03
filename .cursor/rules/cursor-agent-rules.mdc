@@ -1,3 +1,8 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
 # Cursor Agent User Rules for Neurovision Clinic Management
 
 ## 1. Project Context
@@ -35,7 +40,6 @@
 - **Edge Functions:** `supabase/functions/function-name/index.ts`.
 - **Migrations:** `supabase/migrations/timestamp_description.sql`.
 - **Tests:** Use Vitest for all new features and bug fixes.
-
 ---
 
 ## 5. Documentation and Logging

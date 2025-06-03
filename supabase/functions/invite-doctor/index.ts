@@ -78,7 +78,8 @@ Deno.serve(async (req) => {
 
     // Attempt to invite the user first. If they already exist, inviteUserByEmail will return an error.
     console.log(`Attempting to invite user with email: ${email}`);
-    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email);
+    // Set user_metadata.name for new users
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, { data: { name } });
 
     if (inviteError) {
       // Check if the error is because the user already exists
@@ -89,7 +90,7 @@ Deno.serve(async (req) => {
         console.log(`User already exists. Searching auth.users for ID for email: ${email}`);
         const { data: userList, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers(); // No email filter in params
 
-        if (listUsersError) {
+    if (listUsersError) {
           console.error('Error listing users after invite error:', listUsersError.message);
           return new Response(JSON.stringify({ error: `Failed to find existing user ID: ${listUsersError.message}` }), {
             status: 500,
@@ -108,12 +109,12 @@ Deno.serve(async (req) => {
           // This case is unexpected: inviteUserByEmail said user exists, but couldn't find in listUsers
           console.error('User exists according to invite, but not found in listUsers result.');
           return new Response(JSON.stringify({ error: 'Failed to find existing user ID after invite error.' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json', ...corsHeaders },
-          });
-        }
+        status: 500,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
 
-      } else {
+    } else {
         // Handle other invitation errors
         console.error('Error inviting new user:', inviteError.message);
         return new Response(JSON.stringify({ error: `Failed to invite user: ${inviteError.message}` }), {
@@ -191,7 +192,10 @@ Deno.serve(async (req) => {
       user_id: invitedUserId, // Use the newly created/found user ID
       clinic_id: clinic_id, // Use the clinic ID from the request
       name: name, // Assuming doctorName is passed in the request body
-      // Add other doctor-specific fields if needed from the request body
+      email: body.email || null, // Add email
+      phone: body.phone || null, // Add phone
+      availability: body.availability || null, // Add availability if present
+      bio: body.bio || null, // Add bio if present
     };
 
     console.log("InviteDoctor: Preparing to insert into doctors:", doctorData);
@@ -285,11 +289,11 @@ Deno.serve(async (req) => {
 
         // 6. Return final success response
         return new Response(JSON.stringify({ success: true, userId: invitedUserId, doctor: doctorDataResponse, profile: profileData, userJustInvited }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        });
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    });
 
-    } catch (error) {
+  } catch (error) {
         console.error('invite-doctor: Uncaught error during add_clinic_member RPC call:', error);
         return new Response(JSON.stringify({ error: 'Internal server error during clinic member add' }), {
           status: 500,
