@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ConsultationModal } from '@/components/ConsultationModal';
+import { Enums } from "@/integrations/supabase/types";
 
 // Type for the return of the get_appointments_with_details_by_clinic RPC
 interface AppointmentWithDetails {
@@ -42,8 +43,8 @@ interface AppointmentWithDetails {
   doctor_id: string;
   date: string;
   time: string;
-  type: string;
-  status: string;
+  type: Enums<'appointment_type'>;
+  status: Enums<'appointment_status'>;
   notes: string;
   created_at: string;
   clinic_id: string;
@@ -150,7 +151,7 @@ const Appointments = () => {
       setLoading(true); // Assuming you have a loading state
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'Cancelled' })
+        .update({ status: "Cancelled" as Enums<'appointment_status'> })
         .eq('id', appointmentId)
         .eq('clinic_id', activeClinic.clinic_id); // Ensure multi-tenancy
 
@@ -198,7 +199,7 @@ const Appointments = () => {
   };
 
   const updateAppointmentStatusMutation = useMutation({
-    mutationFn: async ({ appointmentId, status }: { appointmentId: string, status: string }) => {
+    mutationFn: async ({ appointmentId, status }: { appointmentId: string, status: Enums<'appointment_status'> }) => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
       const { error } = await supabase
         .from('appointments')
@@ -389,14 +390,14 @@ const Appointments = () => {
       <AppointmentModal
         open={isAppointmentModalOpen}
         onOpenChange={handleModalClose}
-        appointment={selectedAppointment}
+        appointment={selectedAppointment ? { ...selectedAppointment, status: selectedAppointment.status as Enums<'appointment_status'>, type: selectedAppointment.type as Enums<'appointment_type'> } : null}
       />
 
       {/* Consultation Modal component */}
       <ConsultationModal
         open={isConsultationModalOpen}
         onOpenChange={handleConsultationModalClose}
-        appointment={selectedAppointmentForConsultation}
+        appointment={selectedAppointmentForConsultation ? { ...selectedAppointmentForConsultation, status: selectedAppointmentForConsultation.status as Enums<'appointment_status'>, type: selectedAppointmentForConsultation.type as Enums<'appointment_type'> } : null}
       />
     </div>
   );

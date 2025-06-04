@@ -40,7 +40,7 @@ export function AppSidebar() {
       {/* Header with Logo and Clinic Switcher */}
       {/* Adjusted padding and alignment */}
       <div className="flex items-center gap-2 p-4 h-14 border-b">
-          {/* <img src="/doxxy_logo.png" alt="Doxxy Logo" className="h-8 w-8" /> */}
+          <img src="/logo.svg" alt="Doxxy Logo" className="h-8 w-8" />
         <span className="text-xl font-semibold text-primary">Doxxy</span> {/* Use font-semibold for slightly bolder */}
       </div>
 

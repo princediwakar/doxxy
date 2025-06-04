@@ -5,50 +5,41 @@ import { Button } from "@/components/ui/button";
 // Import Supabase generated types
 import { Tables } from "@/integrations/supabase/types";
 import { getAge, renderGender } from "@/lib/utils";
-
-// Define local Patient type using generated types
-type Patient = Tables<'patients'>;
-
-// Define local enhanced patient type to match what's passed from parent
-export interface EnhancedPatientForDoctorList extends Patient {
-  lastVisit?: string;
-}
+import { EnhancedPatientForDoctorList } from "@/types/dashboard";
 
 interface DoctorPatientsListProps {
-  // Use the local enhanced patient type for the patients prop
   patients: EnhancedPatientForDoctorList[];
-  patientsLoading: boolean;
-  currentPatientPage: number;
+  loading: boolean;
   patientsPerPage: number;
-  totalPatientPages: number;
-  setCurrentPatientPage: (page: number) => void;
-  // Use local Patient type for onPatientClick
-  onPatientClick: (patient: Patient) => void;
+  currentPage: number;
+  totalPages: number;
+  setCurrentPage: (page: number) => void;
+  onPatientClick: (patient: EnhancedPatientForDoctorList) => void;
 }
 
 export function DoctorPatientsList({
   patients,
-  patientsLoading,
-  currentPatientPage,
+  loading,
   patientsPerPage,
-  totalPatientPages,
-  setCurrentPatientPage,
+  currentPage,
+  totalPages,
+  setCurrentPage,
   onPatientClick,
 }: DoctorPatientsListProps) {
   const handlePreviousPage = () => {
-    if (currentPatientPage > 1) {
-      setCurrentPatientPage(currentPatientPage - 1);
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
     }
   };
 
   const handleNextPage = () => {
-    if (currentPatientPage < totalPatientPages) {
-      setCurrentPatientPage(currentPatientPage + 1);
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
     }
   };
 
   const handlePageClick = (page: number) => {
-    setCurrentPatientPage(page);
+    setCurrentPage(page);
   };
 
   return (
@@ -60,7 +51,7 @@ export function DoctorPatientsList({
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {patientsLoading ? (
+        {loading ? (
           <div className="space-y-3">
             {[...Array(patientsPerPage)].map((_, i) => (
               <div key={i} className="h-10 bg-muted/50 rounded-md animate-pulse"></div>
@@ -86,41 +77,41 @@ export function DoctorPatientsList({
                     <span className="font-medium flex items-center gap-2">
                       {patient.name}
                     </span>
-                      {getAge(patient.date_of_birth) && (
-                        <span className="text-xs text-muted-foreground">{getAge(patient.date_of_birth)}, {(patient.gender)}</span>
+                      {patient.date_of_birth && (
+                        <span className="text-xs text-muted-foreground">{getAge(patient.date_of_birth)}, {patient.gender}</span>
                       )}
                     {/* <p className="text-sm text-muted-foreground">ID: {patient.medical_id || 'N/A'}</p> */}
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Last visit: {patient.lastVisit || 'N/A'}
+                  Last visit: {patient.last_visit || 'N/A'}
                 </div>
               </div>
             ))}
           </div>
         )}
         
-        {totalPatientPages > 1 && (
+        {totalPages > 1 && (
           <div className="flex justify-between items-center mt-4">
             <Button
               variant="outline"
               size="sm"
               onClick={handlePreviousPage}
-              disabled={currentPatientPage === 1 || patientsLoading}
+              disabled={currentPage === 1 || loading}
             >
               Previous
             </Button>
             
             <div className="flex space-x-1">
-              {[...Array(totalPatientPages)].map((_, i) => {
+              {[...Array(totalPages)].map((_, i) => {
                 const pageNum = i + 1;
                 return (
                   <Button
                     key={pageNum}
-                    variant={currentPatientPage === pageNum ? "default" : "outline"}
+                    variant={currentPage === pageNum ? "default" : "outline"}
                     size="sm"
                     onClick={() => handlePageClick(pageNum)}
-                    disabled={patientsLoading}
+                    disabled={loading}
                   >
                     {pageNum}
                   </Button>
@@ -132,7 +123,7 @@ export function DoctorPatientsList({
               variant="outline"
               size="sm"
               onClick={handleNextPage}
-              disabled={currentPatientPage === totalPatientPages || patientsLoading}
+              disabled={currentPage === totalPages || loading}
             >
               Next
             </Button>

@@ -210,11 +210,11 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
        if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
        if (!values.email) throw new Error('Email is required to add a doctor.');
 
-       // Call the invite-doctor Edge Function directly.
+       // Call the invite-member Edge Function directly.
        // The Edge Function will handle finding/creating the user,
        // and adding/updating the clinic_member and doctor records.
-       console.log("DoctorModal: Using invite-doctor Edge Function.");
-       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-doctor`, {
+       console.log("DoctorModal: Using invite-member Edge Function.");
+       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-member`, {
            method: 'POST',
            headers: {
                'Content-Type': 'application/json',

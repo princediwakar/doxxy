@@ -1,73 +1,93 @@
-# Welcome to your Lovable project
+# Neurovision Clinic Management Platform
 
-## Project info
+## Overview
 
-**URL**: https://lovable.dev/projects/97323110-b9f7-40b6-966c-fea195386693
+Neurovision is a multi-tenant web application for Neurology and Ophthalmology clinics. It provides robust management of appointments, patients, medical records, billing, and notifications, with strict data isolation and role-based access.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+### Multi-Tenancy & Security
+- **Clinic Isolation:** All data is partitioned by `clinic_id` with Row-Level Security (RLS) enforced at the database level.
+- **Role-Based Access:** Supports `superadmin`, `staff`, and `doctor` roles, each with tailored permissions and UI.
+- **Google OAuth:** Secure authentication and session management.
 
-**Use Lovable**
+### User & Member Management
+- **Unified Member Invitation:** Invite any user (doctor, staff, superadmin) to a clinic via the `invite-member` Edge Function. Handles user creation, clinic membership, and doctor profile setup.
+- **Profile Completion:** Invited users set their password and complete their profile on first login.
+- **Role & Department Management:** Assign and edit roles and departments for each member. Remove members with confirmation.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/97323110-b9f7-40b6-966c-fea195386693) and start prompting.
+### Clinic & Department Management
+- **Settings Page:** Manage clinic details, departments, and members from a unified settings interface.
+- **Department Types:** Support for Neurology, Ophthalmology, and custom departments.
 
-Changes made via Lovable will be committed automatically to this repo.
+### Appointments & Consultations
+- **Appointment Scheduling:** Book, view, and manage appointments with status tracking.
+- **Consultations:** Record clinical notes and specialty data, linked to appointments.
 
-**Use your preferred IDE**
+### Patients & Medical Records
+- **Patient Profiles:** Add, edit, and view patient information.
+- **Medical Records:** Manage diagnoses, treatment plans, and prescriptions.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Billing
+- **Bill Management:** Create, update, and track bills and payment status.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Dashboards
+- **Role-Specific Dashboards:** Superadmin, Staff, and Doctor dashboards with relevant stats, charts, and quick actions.
 
-Follow these steps:
+### UI/UX
+- **Modern Interface:** Built with Vite, React, TypeScript, Tailwind CSS, and Shadcn UI.
+- **React Query:** Efficient data fetching and caching.
+- **Form Validation:** All forms use zod for validation.
+- **Notifications:** User feedback via toast notifications.
+
+### Integrations
+- **Supabase:** Database, authentication, and Edge Functions.
+- **Twilio & Resend:** WhatsApp and email notifications (planned/partial).
+- **Vitest:** Comprehensive testing for components and API.
+
+## Developer Guide
+
+### Setup
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+npm install
+cp .env.example .env.local # Add your Supabase keys
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- **Frontend:** Deploy on Vercel.
+- **Backend:** Use Supabase CLI for migrations and Edge Function deployment.
+- **Edge Functions:** Deploy with `supabase functions deploy invite-member`.
 
-**Use GitHub Codespaces**
+### Member Invitation Flow
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The process for inviting and adding any member (doctor, staff, superadmin) to a clinic is handled by the `invite-member` Edge Function. The frontend calls this function directly, passing the user's email, role, department, and other details. The Edge Function is responsible for user creation/lookup, adding to `clinic_members`, and adding/updating the `doctors` table entry if the role is doctor.
 
-## What technologies are used for this project?
+### Code Structure
 
-This project is built with:
+- `src/components/`: All UI components, including role-based dashboards, modals, and management screens.
+- `src/pages/`: Main route pages (Dashboard, Appointments, Patients, Billing, Settings, etc.).
+- `src/contexts/`: Context providers (e.g., AuthContext).
+- `src/hooks/`: Custom React hooks for data fetching and logic.
+- `src/integrations/supabase/`: Supabase client and generated types.
+- `supabase/functions/`: Edge Functions (notably `invite-member`).
+- `supabase/migrations/`, `supabase/migrations_2/`: Database migrations.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Testing
 
-## How can I deploy this project?
+- Run all tests with `npm run test`.
+- Target 80%+ coverage for components, hooks, and API.
 
-Simply open [Lovable](https://lovable.dev/projects/97323110-b9f7-40b6-966c-fea195386693) and click on Share -> Publish.
+### Contributing
 
-## Can I connect a custom domain to my Lovable project?
+- Follow code style enforced by ESLint and Prettier.
+- Document all major changes in `development-log.md`.
+- Update `README.md` and `.env.example` as needed.
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+For more details, see the project rules in `.cursor/rules/project-rules.mdc` and the full codebase.

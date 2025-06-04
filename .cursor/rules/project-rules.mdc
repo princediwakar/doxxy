@@ -1,8 +1,3 @@
----
-description: 
-globs: 
-alwaysApply: true
----
 # Project Rules for Neurovision Clinic Management Web App
 
 ## Overview
@@ -216,7 +211,7 @@ Neurovision is a multi-tenant web app for Neurology and Ophthalmology clinics, m
   export default defineConfig({ plugins: [react()], server: { port: 3000 }, build: { outDir: "dist" } });
   ```
 - **Backend**: Deploy Edge Functions with `supabase functions deploy <function_name>`. Ensure Edge Functions interacting with the database use the `supabaseAdmin` client or handle RLS appropriately (e.g., using the Service Role Key where necessary and secure).
-- **Doctor Invitation Flow**: The process for inviting and adding doctors to a clinic is handled by the `invite-doctor` Edge Function. The frontend (`DoctorModal.tsx`) calls this function directly, passing the user's email and doctor/member details. The Edge Function is responsible for the end-to-end logic of user creation/lookup, adding to `clinic_members`, and adding/updating the `doctors` table entry.
+- **Member Invitation Flow**: The process for inviting and adding any member (doctor, staff, superadmin) to a clinic is handled by the `invite-member` Edge Function. The frontend (`DoctorModal.tsx` and Members tab) calls this function directly, passing the user's email, role, department, and other details. The Edge Function is responsible for the end-to-end logic of user creation/lookup, adding to `clinic_members`, and adding/updating the `doctors` table entry if the role is doctor.
 - **Debug**: Use Supabase/Vercel logs for RLS/query issues.
 ## Task Examples
 - "Generate RLS policy for `prescriptions`."

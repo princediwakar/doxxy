@@ -1,4 +1,4 @@
-// supabase/functions/invite-doctor/index.ts
+// supabase/functions/invite-member/index.ts
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -65,8 +65,9 @@ Deno.serve(async (req) => {
 
     const { email, name, clinic_id, role, department_id } = body;
 
-    if (!email || !name || !clinic_id || !role) {
-      return new Response(JSON.stringify({ error: 'Email, name, clinic_id, and role are required.' }), {
+    // Only require email, clinic_id, and role (name is optional)
+    if (!email || !clinic_id || !role) {
+      return new Response(JSON.stringify({ error: 'Email, clinic_id, and role are required.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });
@@ -184,18 +185,16 @@ Deno.serve(async (req) => {
     console.log(`User ID ${invitedUserId} is not a member of clinic ${clinic_id}. Proceeding to add doctor and profile entries and clinic member.`);
 
     // 3. Create or update doctor entry using the user ID
-    console.log('InviteDoctor: Preparing doctor and clinic member entries.');
-    console.log('InviteDoctor: clinic_id from request:', clinic_id);
-    console.log('InviteDoctor: invitedUserId:', invitedUserId);
+    // Only set name if provided; otherwise, let it be null (users will complete profile later)
     const doctorData = {
-      id: invitedUserId, // Use invitedUserId as the primary key for doctors table
-      user_id: invitedUserId, // Use the newly created/found user ID
-      clinic_id: clinic_id, // Use the clinic ID from the request
-      name: name, // Assuming doctorName is passed in the request body
-      email: body.email || null, // Add email
-      phone: body.phone || null, // Add phone
-      availability: body.availability || null, // Add availability if present
-      bio: body.bio || null, // Add bio if present
+      id: invitedUserId,
+      user_id: invitedUserId,
+      clinic_id: clinic_id,
+      name: name || null, // Only set if provided
+      email: body.email || null,
+      phone: body.phone || null,
+      availability: body.availability || null,
+      bio: body.bio || null,
     };
 
     console.log("InviteDoctor: Preparing to insert into doctors:", doctorData);
@@ -219,17 +218,16 @@ Deno.serve(async (req) => {
     }
 
     // 4. Create or update profile entry using the user ID
-    console.log('Upserting profile entry for user ID:', invitedUserId);
+    // Only set name if provided; otherwise, let it be null (users will complete profile later)
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .upsert([{ id: invitedUserId, name, email }], { onConflict: 'id' }) // Use invitedUserId for the id
+      .upsert([{ id: invitedUserId, name: name || null, email }], { onConflict: 'id' })
       .select()
-      .single(); // Use single() here, should always return one row on successful upsert
+      .single();
 
-    console.log('invite-doctor: Profile entry upsert result:', profileData, 'Error:', profileError);
-    console.log('Profile entry upsert result:', profileData, 'Error:', profileError);
+    console.log('invite-member: Profile entry upsert result:', profileData, 'Error:', profileError);
     if (profileError) {
-      console.error('invite-doctor: Error upserting profile entry:', profileError);
+      console.error('invite-member: Error upserting profile entry:', profileError);
       console.error('Error creating or updating profile entry:', profileError.message);
       return new Response(JSON.stringify({
         success: false,
@@ -249,7 +247,7 @@ Deno.serve(async (req) => {
     console.log('  new_role', role);
     console.log('  new_department_id:', department_id);
 
-    console.log('invite-doctor: Executing add_clinic_member RPC.');
+    console.log('invite-member: Executing add_clinic_member RPC.');
     try {
         const { error: addMemberError } = await supabaseAdmin.rpc('add_clinic_member', {
             new_user_id: invitedUserId,
@@ -259,8 +257,8 @@ Deno.serve(async (req) => {
         });
 
         if (addMemberError) {
-            console.error('invite-doctor: Error adding clinic member via RPC:', addMemberError);
-            console.error('invite-doctor: add_clinic_member RPC failed.', addMemberError);
+            console.error('invite-member: Error adding clinic member via RPC:', addMemberError);
+            console.error('invite-member: add_clinic_member RPC failed.', addMemberError);
             // Check for "duplicate key" error (23505) explicitly, though the earlier check should prevent this path
             if (addMemberError.code === '23505') {
                  console.warn(`RPC add_clinic_member hit duplicate key for user ${email} (ID: ${invitedUserId}) in clinic ${clinic_id}. This should have been caught by the earlier check.`);
@@ -285,7 +283,7 @@ Deno.serve(async (req) => {
         }
 
         console.log('Clinic member added successfully.');
-        console.log('invite-doctor: add_clinic_member RPC successful.');
+        console.log('invite-member: add_clinic_member RPC successful.');
 
         // 6. Return final success response
         return new Response(JSON.stringify({ success: true, userId: invitedUserId, doctor: doctorDataResponse, profile: profileData, userJustInvited }), {
@@ -294,7 +292,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (error) {
-        console.error('invite-doctor: Uncaught error during add_clinic_member RPC call:', error);
+        console.error('invite-member: Uncaught error during add_clinic_member RPC call:', error);
         return new Response(JSON.stringify({ error: 'Internal server error during clinic member add' }), {
           status: 500,
           headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -302,7 +300,7 @@ Deno.serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('invite-doctor: Internal server error in invite-doctor function (main catch):', error);
+    console.error('invite-member: Internal server error in invite-member function (main catch):', error);
     return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },

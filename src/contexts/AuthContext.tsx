@@ -12,6 +12,7 @@ interface AuthContextProps {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  initialLoading: boolean;
   clinicLoading: boolean;
   signOut: () => Promise<void>;
   userClinics: ClinicMemberWithClinic[];
@@ -20,6 +21,7 @@ interface AuthContextProps {
   activeClinicRole: string | null;
   fetchUserAndClinicData: (userFromSession: User | null) => Promise<void>;
   profileName: string | null;
+  needsProfileCompletion: boolean;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [userClinics, setUserClinics] = useState<ClinicMemberWithClinic[]>([]);
   const [activeClinic, setActiveClinicState] = useState<ClinicMemberWithClinic | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
+  const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
   const activeClinicRole = activeClinic ? activeClinic.role : null;
 
@@ -165,6 +168,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setProfileName(profile?.name || null);
       }
 
+      // After setting clinics, fetch profile completion
+      const checkProfileCompletion = async () => {
+        if (user) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('name, phone')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (!profileError && profile) {
+            setNeedsProfileCompletion(!profile.name || !profile.phone);
+          } else {
+            setNeedsProfileCompletion(true);
+          }
+        } else {
+          setNeedsProfileCompletion(false);
+        }
+      };
+      checkProfileCompletion();
+
     } catch (error) {
       console.error("fetchUserAndClinicData: Error:", error);
       setUserClinics([]);
@@ -230,6 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     session,
     user,
     loading: initialLoading || clinicLoading,
+    initialLoading,
     clinicLoading,
     signOut,
     userClinics,
@@ -238,7 +261,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     activeClinicRole,
     fetchUserAndClinicData,
     profileName,
-  }), [session, user, initialLoading, clinicLoading, userClinics, activeClinic, setActiveClinicId, activeClinicRole, fetchUserAndClinicData, profileName]);
+    needsProfileCompletion,
+  }), [session, user, initialLoading, clinicLoading, userClinics, activeClinic, setActiveClinicId, activeClinicRole, fetchUserAndClinicData, profileName, needsProfileCompletion]);
 
   return (
     <AuthContext.Provider value={authContextValue}>

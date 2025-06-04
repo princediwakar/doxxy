@@ -1,7 +1,8 @@
-import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ClinicDepartmentsManagement from '@/components/superadmin/ClinicDepartmentsManagement';
+import ClinicMembersManagement from '@/components/superadmin/ClinicMembersManagement';
+import ClinicDetailsManagement from '@/components/superadmin/ClinicDetailsManagement';
 
 const SettingsPage = () => {
   const { activeClinicRole } = useAuth();
@@ -12,21 +13,23 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="">
       <h1 className="text-2xl font-bold mb-4">Clinic Settings</h1>
-      <Tabs defaultValue="departments">
+      <Tabs defaultValue="members">
         <TabsList>
+          <TabsTrigger value="members">Members</TabsTrigger>
           <TabsTrigger value="departments">Departments</TabsTrigger>
-          {/* Add more settings tabs here */}
-          {/* <TabsTrigger value="members">Members</TabsTrigger> */}
-          {/* <TabsTrigger value="details">Details</TabsTrigger> */}
+          <TabsTrigger value="details">Details</TabsTrigger>
         </TabsList>
+        <TabsContent value="members" className="mt-4">
+          <ClinicMembersManagement />
+        </TabsContent>
         <TabsContent value="departments" className="mt-4">
           <ClinicDepartmentsManagement />
         </TabsContent>
-        {/* Add more settings content here */}
-        {/* <TabsContent value="members" className="mt-4">Clinic Members Management Component</TabsContent> */}
-        {/* <TabsContent value="details" className="mt-4">Clinic Details Management Component</TabsContent> */}
+        <TabsContent value="details" className="mt-4">
+          <ClinicDetailsManagement />
+        </TabsContent>
       </Tabs>
     </div>
   );

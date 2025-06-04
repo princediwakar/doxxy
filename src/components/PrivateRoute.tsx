@@ -5,8 +5,20 @@ import { AppSidebar } from "@/components/app-sidebar";
 import ClinicSelectionPage from "@/pages/ClinicSelectionPage"; // Import ClinicSelectionPage
 
 const PrivateRoute = () => {
-  const { user, activeClinic, loading } = useAuth();
+  const { user, activeClinic, loading, initialLoading } = useAuth();
   const location = useLocation();
+
+  // Wait for initial session check to complete before rendering anything
+  if (initialLoading) {
+    return (
+      <div className="flex min-h-screen bg-gray-100">
+        <AppSidebar />
+        <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto bg-white min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        </main>
+      </div>
+    );
+  }
 
   // Always render sidebar and layout chrome
   // Show spinner in main area while loading

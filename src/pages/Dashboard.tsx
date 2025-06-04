@@ -1,18 +1,17 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { CalendarCheck, User, Users, Stethoscope } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { FormattedAppointment, DatabaseAppointment } from "@/types/dashboard";
-import { DoctorPatientsList } from "@/components/DoctorPatientsList";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
-import { Database } from "@/integrations/supabase/types";
+import { supabase } from "@/integrations/supabase/client";
+import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData } from "@/types/dashboard";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
 import { WeeklyAppointmentsChart } from "@/components/WeeklyAppointmentsChart";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { DashboardStatsCard } from "@/components/DashboardStatsCard";
+import { useState } from "react";
+import { Enums } from "@/integrations/supabase/types";
 
 // Type guard to check if an object is a valid DatabaseAppointment
 function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
@@ -27,139 +26,77 @@ function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
     typeof o.patient_id === 'string' &&
     typeof o.patient_name === 'string' &&
     typeof o.doctor_id === 'string' &&
-    typeof o.doctor_name === 'string'
+    typeof o.doctor_name === 'string' &&
+    typeof o.clinic_id === 'string'
   );
-}
-
-// Add type for doctor dashboard RPC return
-type DoctorDashboardData = Database["public"]["Functions"]["get_doctor_dashboard_data"]["Returns"][0];
-
-// Add type for staff/superadmin dashboard RPC return
-type StaffDashboardData = {
-  total_patients: number;
-  total_doctors: number;
-  appointments_today: number;
-  pending_consultations: number;
-  all_relevant_appointments: unknown;
-};
-
-// Add EnhancedPatientForDoctorList type
-interface EnhancedPatientForDoctorList {
-  id: string;
-  name: string;
-  lastVisit?: string;
 }
 
 export default function Dashboard() {
   const { activeClinic, user, activeClinicRole, loading: authLoading, profileName } = useAuth();
-  const [totalPatients, setTotalPatients] = useState(0);
-  const [totalDoctors, setTotalDoctors] = useState(0);
-  const [appointmentsToday, setAppointmentsToday] = useState(0);
-  const [patients, setPatients] = useState([]);
-  const [patientsLoading, setPatientsLoading] = useState(false);
-  const [currentPatientPage, setCurrentPatientPage] = useState(1);
-  const patientsPerPage = 5;
-  const [totalPatientPages, setTotalPatientPages] = useState(1);
-  // Pagination state for upcoming appointments (declare at top)
-  const [currentUpcomingPage, setCurrentUpcomingPage] = useState(1);
-  const appointmentsPerPage = 5;
   const navigate = useNavigate();
-
-  // Format appointments for the components
   const today = new Date().toISOString().split('T')[0];
 
+  // Pagination state for upcoming appointments
+  const [currentUpcomingPage, setCurrentUpcomingPage] = useState(1);
+  const appointmentsPerPage = 5;
+
   // Doctor-specific dashboard query
-  const { data: doctorDashboardData, isLoading: isDoctorLoading, error: doctorError } = useQuery({
+  const { data: doctorDashboardData, isLoading: isDoctorLoading, error: doctorError } = useQuery<DoctorDashboardData | null>({
     queryKey: ['doctorDashboardData', activeClinic?.clinic_id, user?.id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id || !user?.id || activeClinicRole !== 'doctor') return null;
-      // Call the new RPC with user_id and clinic_id
       const { data, error } = await supabase.rpc('get_doctor_dashboard_data', {
         _clinic_id: activeClinic.clinic_id,
         _user_id: user.id,
       });
       if (error) throw error;
-      // Parse JSON fields if needed
-      const result = (data?.[0] ?? null) as DoctorDashboardData | null;
+      const result = (data?.[0] ?? null) as unknown as DoctorDashboardData | null;
       if (result) {
-        // Parse JSON fields if they are strings
-        if (typeof result.upcoming_appointments === 'string') {
-          try { result.upcoming_appointments = JSON.parse(result.upcoming_appointments); } catch { result.upcoming_appointments = []; }
-        }
-        if (!Array.isArray(result.upcoming_appointments)) result.upcoming_appointments = [];
-        if (typeof result.my_patients === 'string') {
-          try { result.my_patients = JSON.parse(result.my_patients); } catch { result.my_patients = []; }
-        }
-        if (!Array.isArray(result.my_patients)) result.my_patients = [];
+        // Ensure JSON fields are arrays, fallback to empty arrays if invalid
+        result.upcoming_appointments = Array.isArray(result.upcoming_appointments)
+          ? result.upcoming_appointments.filter(isValidDatabaseAppointment)
+          : [];
+        result.my_patients = Array.isArray(result.my_patients)
+          ? result.my_patients.map(p => ({
+              id: p.id ?? '',
+              name: p.name ?? '',
+              last_visit: p.last_visit ?? undefined,
+              address: p.address ?? undefined,
+              clinic_id: p.clinic_id ?? undefined,
+              created_at: p.created_at ?? null,
+              date_of_birth: p.date_of_birth ?? null,
+              email: p.email ?? '',
+              gender: p.gender ?? '',
+              medical_id: p.medical_id ?? '',
+              phone: p.phone ?? '',
+            }))
+          : [];
       }
-      return result || null;
+      return result;
     },
     enabled: !!activeClinic?.clinic_id && !!user?.id && activeClinicRole === 'doctor',
     staleTime: 5 * 60 * 1000,
   });
 
-  // Existing clinic-wide dashboard query
+  // Clinic-wide dashboard query
   const { data: dashboardData, isLoading, error } = useQuery<StaffDashboardData | null>({
     queryKey: ['dashboardData', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id || activeClinicRole === 'doctor') return null;
       const { data, error } = await supabase.rpc('get_dashboard_data', { _clinic_id: activeClinic.clinic_id });
       if (error) throw error;
-      const d: Partial<StaffDashboardData> = data?.[0] || {};
-      console.log('Raw dashboardData from RPC:', d);
-      return {
-        total_patients: d.total_patients ?? 0,
-        total_doctors: d.total_doctors ?? 0,
-        appointments_today: d.appointments_today ?? 0,
-        pending_consultations: d.pending_consultations ?? 0,
-        all_relevant_appointments: d.all_relevant_appointments ?? [],
-      };
+      const result = (data?.[0] ?? null) as unknown as StaffDashboardData | null;
+      if (result) {
+        // Ensure all_relevant_appointments is an array of valid appointments
+        result.all_relevant_appointments = Array.isArray(result.all_relevant_appointments)
+          ? result.all_relevant_appointments.filter(isValidDatabaseAppointment)
+          : [];
+      }
+      return result;
     },
     enabled: !!activeClinic?.clinic_id && activeClinicRole !== 'doctor' && !authLoading,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
-
-  useEffect(() => {
-    if (activeClinicRole === 'doctor' && doctorDashboardData) {
-      setTotalPatients(doctorDashboardData.total_patients || 0);
-      setTotalDoctors(1); // Only the current doctor
-      setAppointmentsToday(0); // Not used for doctor
-      setPatients((Array.isArray(doctorDashboardData.my_patients) ? doctorDashboardData.my_patients : []).map((p: { id: string; name: string; last_visit: string }) => ({
-        id: p.id,
-        name: p.name,
-        last_visit: p.last_visit,
-      })));
-      // Optionally set totalPatientPages if you want pagination
-    } else if (dashboardData) {
-      setTotalPatients(dashboardData.total_patients || 0);
-      setTotalDoctors(dashboardData.total_doctors || 0);
-      setAppointmentsToday(dashboardData.appointments_today || 0);
-      // Optionally set patients for staff/superadmin
-    }
-  }, [doctorDashboardData, dashboardData, activeClinicRole]);
-
-  useEffect(() => {
-    const fetchPatients = async () => {
-      if (!activeClinic) return;
-      setPatientsLoading(true);
-      try {
-        const { data: patientsData, error: patientsError, count } = await supabase
-          .from('patients')
-          .select('*', { count: 'exact' })
-          .eq('clinic_id', activeClinic.clinic_id)
-          .range((currentPatientPage - 1) * patientsPerPage, currentPatientPage * patientsPerPage - 1);
-        if (patientsError) {
-          console.error("Error fetching patients:", patientsError);
-          return;
-        }
-        setPatients(patientsData || []);
-        setTotalPatientPages(Math.ceil((count || 0) / patientsPerPage));
-      } finally {
-        setPatientsLoading(false);
-      }
-    };
-    fetchPatients();
-  }, [activeClinic, currentPatientPage]);
 
   // Greeting logic
   const getGreeting = () => {
@@ -171,46 +108,31 @@ export default function Dashboard() {
   const userName = profileName || user?.email || "there";
   const greeting = `${getGreeting()}, ${userName}`;
 
-  if (authLoading) {
+  // Guard: Only render dashboard when activeClinic and activeClinicRole are defined and not loading
+  if (authLoading || !activeClinic || !activeClinicRole) {
     return (
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-lg text-muted-foreground">Loading...</div>
-        </div>
+      <div className="flex items-center justify-center min-h-[300px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
 
-  if (!activeClinic) {
-    return (
-      <div className="container mx-auto py-10">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">No Clinic Selected</h2>
-            <p className="text-muted-foreground">Please select a clinic to view the dashboard.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
+  if (error || doctorError) {
     return (
       <div className="container mx-auto py-10">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2 text-destructive">Error Loading Dashboard</h2>
-            <p className="text-muted-foreground">{error.message}</p>
+            <p className="text-muted-foreground">{(error || doctorError)?.message}</p>
           </div>
         </div>
       </div>
     );
   }
 
-  if (isLoading) {
+  if (isLoading || isDoctorLoading) {
     return (
       <div className="space-y-6">
-        {/* Greeting skeleton or actual greeting */}
         {user ? (
           <h2 className="text-2xl font-semibold mb-6">{greeting}</h2>
         ) : (
@@ -237,91 +159,40 @@ export default function Dashboard() {
     return <DoctorDashboard />;
   }
 
-  // Safely parse appointments data from Json to DatabaseAppointment[]
-  const parseAppointmentsData = (jsonData: unknown): DatabaseAppointment[] => {
-    if (!jsonData) return [];
-    try {
-      if (Array.isArray(jsonData)) {
-        return jsonData.filter(isValidDatabaseAppointment);
-      }
-      if (typeof jsonData === 'string') {
-        const parsed = JSON.parse(jsonData);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(isValidDatabaseAppointment);
-        }
-      }
-      return [];
-    } catch (error) {
-      console.error('Error parsing appointments data:', error);
-      return [];
-    }
-  };
-
-  let allAppointments: DatabaseAppointment[] = [];
-  if (dashboardData && dashboardData.all_relevant_appointments) {
-    allAppointments = parseAppointmentsData(dashboardData.all_relevant_appointments);
-  }
+  // Prepare appointments data
+  const allAppointments: DatabaseAppointment[] = dashboardData?.all_relevant_appointments ?? [];
   console.log('All appointments for chart:', allAppointments);
 
-  // For doctor role, map my_patients to EnhancedPatientForDoctorList[]
-  const doctorPatients: EnhancedPatientForDoctorList[] =
-    activeClinicRole === 'doctor' && doctorDashboardData && Array.isArray(doctorDashboardData.my_patients)
-      ? doctorDashboardData.my_patients.map((p: { id: string; name: string; last_visit?: string }) => ({
-          id: p.id,
-          name: p.name,
-          lastVisit: p.last_visit,
-        }))
-      : [];
-  
   const todaysAppointments: FormattedAppointment[] = allAppointments
-    .filter((apt: DatabaseAppointment) => apt.date === today)
-    .sort((a: DatabaseAppointment, b: DatabaseAppointment) => {
-      if (a.time && b.time) {
-        return b.time.localeCompare(a.time);
-      }
-      return 0;
-    })
-    .map((apt: DatabaseAppointment) => ({
+    .filter(apt => apt.date === today)
+    .sort((a, b) => b.time.localeCompare(a.time))
+    .map(apt => ({
       id: apt.id,
       patient: apt.patient_name,
       doctor: apt.doctor_name,
       time: apt.time,
       date: apt.date,
-      status: apt.status,
-      type: apt.type,
+      status: apt.status as Enums<'appointment_status'>,
+      type: apt.type as Enums<'appointment_type'>,
     }));
 
-  console.log("All upcoming appointments raw:", allAppointments, "Today:", today);
   const upcomingAppointments: FormattedAppointment[] = allAppointments
-    .filter((apt: DatabaseAppointment) => apt.date >= today)
-    .sort((a: DatabaseAppointment, b: DatabaseAppointment) => {
-      if (a.date && b.date) {
-        if (a.date !== b.date) {
-          return a.date.localeCompare(b.date);
-        }
-        if (a.time && b.time) {
-          return a.time.localeCompare(b.time);
-        }
-      }
-      return 0;
+    .filter(apt => apt.date >= today)
+    .sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return a.time.localeCompare(b.time);
     })
-    .map((apt: DatabaseAppointment) => ({
+    .map(apt => ({
       id: apt.id,
       patient: apt.patient_name,
       doctor: apt.doctor_name,
       time: apt.time,
       date: apt.date,
-      status: apt.status,
-      type: apt.type,
+      status: apt.status as Enums<'appointment_status'>,
+      type: apt.type as Enums<'appointment_type'>,
     }));
 
-  // Compute total pages after upcomingAppointments is defined
   const totalUpcomingPages = Math.max(1, Math.ceil(upcomingAppointments.length / appointmentsPerPage));
-
-  const handlePatientClick = (patient: { id: string; name: string; last_visit?: string }) => {
-    console.log('Patient clicked:', patient);
-    // TODO: Navigate to patient details page or open modal
-  };
 
   // Card click handlers
   const handlePatientsCardClick = () => navigate('/patients');
@@ -342,154 +213,41 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Personalized Greeting */}
-      <h2 className="text-2xl font-semibold mb-6">{greeting}</h2>
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">{greeting}</h1>
+          <p className="text-muted-foreground">Here's a quick overview of your clinic's activity today.</p>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Doctor-specific cards */}
-        {activeClinicRole === 'doctor' ? (
-          <>
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Patients"
-              onClick={handlePatientsCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users size={18} className="mr-2 text-blue-500" />
-                  Total Patients
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{doctorDashboardData?.total_patients ?? 0}</div>
-              </CardContent>
-            </Card>
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Appointments"
-              onClick={handleAppointmentsTodayCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Stethoscope size={18} className="mr-2 text-green-500" />
-                  Total Appointments
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{doctorDashboardData?.total_appointments ?? 0}</div>
-              </CardContent>
-            </Card>
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Pending Consultations"
-              onClick={handlePendingConsultationsCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CalendarCheck size={18} className="mr-2 text-orange-500" />
-                  Pending Consultations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{doctorDashboardData?.pending_consultations ?? 0}</div>
-              </CardContent>
-            </Card>
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Completed Consultations"
-              onClick={handleCompletedConsultationsCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CalendarCheck size={18} className="mr-2 text-green-500" />
-                  Completed Consultations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{doctorDashboardData?.completed_consultations ?? 0}</div>
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          <>
-            {/* Staff/Superadmin cards */}
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Patients"
-              onClick={handlePatientsCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users size={18} className="mr-2 text-blue-500" />
-                  Total Patients
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{totalPatients}</div>
-              </CardContent>
-            </Card>
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Doctors"
-              onClick={handleDoctorsCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Stethoscope size={18} className="mr-2 text-green-500" />
-                  Total Doctors
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{totalDoctors}</div>
-              </CardContent>
-            </Card>
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Today's Appointments"
-              onClick={handleAppointmentsTodayCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CalendarCheck size={18} className="mr-2 text-orange-500" />
-                  Appointments Today
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{appointmentsToday}</div>
-              </CardContent>
-            </Card>
-            <Card
-              role="button"
-              tabIndex={0}
-              aria-label="View Pending Consultations"
-              onClick={handlePendingConsultationsCardClick}
-              className="col-span-1 h-full hover:ring-2 ring-primary focus:ring-2 cursor-pointer"
-            >
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <CalendarCheck size={18} className="mr-2 text-orange-500" />
-                  Pending Consultations
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="min-h-[80px] flex items-center justify-center">
-                <div className="text-2xl font-bold">{dashboardData?.pending_consultations ?? 0}</div>
-              </CardContent>
-            </Card>
-          </>
-        )}
+        <DashboardStatsCard
+          icon={<Users size={18} className="mr-2 text-blue-500" />}
+          label="Total Patients"
+          value={dashboardData?.total_patients ?? 0}
+          onClick={handlePatientsCardClick}
+          ariaLabel="View Patients"
+        />
+        <DashboardStatsCard
+          icon={<Stethoscope size={18} className="mr-2 text-green-500" />}
+          label="Total Appointments"
+          value={dashboardData?.total_appointments ?? 0}
+          onClick={handleAppointmentsTodayCardClick}
+          ariaLabel="View Appointments"
+        />
+        <DashboardStatsCard
+          icon={<CalendarCheck size={18} className="mr-2 text-orange-500" />}
+          label="Pending Consultations"
+          value={dashboardData?.pending_consultations ?? 0}
+          onClick={handlePendingConsultationsCardClick}
+          ariaLabel="View Pending Consultations"
+        />
+        <DashboardStatsCard
+          icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+          label="Completed Consultations"
+          value={dashboardData?.completed_consultations ?? 0}
+          onClick={handleCompletedConsultationsCardClick}
+          ariaLabel="View Completed Consultations"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

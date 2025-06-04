@@ -18,9 +18,9 @@ export type Database = {
           id: string
           notes: string | null
           patient_id: string
-          status: string
+          status: Database["public"]["Enums"]["appointment_status"]
           time: string
-          type: string
+          type: Database["public"]["Enums"]["appointment_type"]
         }
         Insert: {
           clinic_id: string
@@ -30,9 +30,9 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id: string
-          status: string
+          status: Database["public"]["Enums"]["appointment_status"]
           time: string
-          type: string
+          type: Database["public"]["Enums"]["appointment_type"]
         }
         Update: {
           clinic_id?: string
@@ -42,9 +42,9 @@ export type Database = {
           id?: string
           notes?: string | null
           patient_id?: string
-          status?: string
+          status?: Database["public"]["Enums"]["appointment_status"]
           time?: string
-          type?: string
+          type?: Database["public"]["Enums"]["appointment_type"]
         }
         Relationships: [
           {
@@ -80,7 +80,7 @@ export type Database = {
           id: string
           invoice_number: string | null
           patient_id: string
-          status: string
+          status: Database["public"]["Enums"]["bill_status"]
         }
         Insert: {
           amount: number
@@ -91,7 +91,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           patient_id: string
-          status?: string
+          status?: Database["public"]["Enums"]["bill_status"]
         }
         Update: {
           amount?: number
@@ -102,7 +102,7 @@ export type Database = {
           id?: string
           invoice_number?: string | null
           patient_id?: string
-          status?: string
+          status?: Database["public"]["Enums"]["bill_status"]
         }
         Relationships: [
           {
@@ -170,7 +170,7 @@ export type Database = {
           created_at: string | null
           department_id: string | null
           id: string
-          role: string
+          role: Database["public"]["Enums"]["user_role"]
           user_id: string
         }
         Insert: {
@@ -178,7 +178,7 @@ export type Database = {
           created_at?: string | null
           department_id?: string | null
           id?: string
-          role?: string
+          role: Database["public"]["Enums"]["user_role"]
           user_id: string
         }
         Update: {
@@ -186,7 +186,7 @@ export type Database = {
           created_at?: string | null
           department_id?: string | null
           id?: string
-          role?: string
+          role?: Database["public"]["Enums"]["user_role"]
           user_id?: string
         }
         Relationships: [
@@ -204,12 +204,19 @@ export type Database = {
             referencedRelation: "clinic_departments"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "clinic_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       clinics: {
         Row: {
           address: string | null
-          created_at: string
+          created_at: string | null
           created_by: string
           email: string | null
           id: string
@@ -219,7 +226,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
-          created_at?: string
+          created_at?: string | null
           created_by: string
           email?: string | null
           id?: string
@@ -229,7 +236,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
-          created_at?: string
+          created_at?: string | null
           created_by?: string
           email?: string | null
           id?: string
@@ -337,7 +344,7 @@ export type Database = {
           clinic_id?: string | null
           created_at?: string | null
           email?: string | null
-          id: string
+          id?: string
           name: string
           phone?: string | null
           user_id?: string | null
@@ -490,7 +497,7 @@ export type Database = {
           id?: string
           instructions?: string | null
           medical_record_id?: string | null
-          medications?: Json
+          medications: Json
           patient_id: string
         }
         Update: {
@@ -549,18 +556,21 @@ export type Database = {
           email: string | null
           id: string
           name: string | null
+          phone: string | null
         }
         Insert: {
           created_at?: string | null
           email?: string | null
-          id: string
+          id?: string
           name?: string | null
+          phone?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string | null
           id?: string
           name?: string | null
+          phone?: string | null
         }
         Relationships: []
       }
@@ -586,8 +596,8 @@ export type Database = {
           doctor_id: string
           date: string
           time: string
-          type: string
-          status: string
+          type: Database["public"]["Enums"]["appointment_type"]
+          status: Database["public"]["Enums"]["appointment_status"]
           notes: string
           created_at: string
           patient_name: string
@@ -600,8 +610,10 @@ export type Database = {
         Returns: {
           total_patients: number
           total_doctors: number
+          total_appointments: number
           appointments_today: number
           pending_consultations: number
+          completed_consultations: number
           all_relevant_appointments: Json
         }[]
       }
@@ -658,6 +670,46 @@ export type Database = {
           updated_department_id?: string
         }
         Returns: undefined
+      }
+      uuid_generate_v1: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_generate_v1mc: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_generate_v3: {
+        Args: { namespace: string; name: string }
+        Returns: string
+      }
+      uuid_generate_v4: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_generate_v5: {
+        Args: { namespace: string; name: string }
+        Returns: string
+      }
+      uuid_nil: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_dns: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_oid: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_url: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      uuid_ns_x500: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
     }
     Enums: {
