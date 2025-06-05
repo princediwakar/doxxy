@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/com
 import { CalendarCheck, User, Users, Stethoscope } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData } from "@/types/dashboard";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
@@ -12,6 +12,8 @@ import { toast } from "sonner";
 import { DashboardStatsCard } from "@/components/DashboardStatsCard";
 import { useState } from "react";
 import { Enums } from "@/integrations/supabase/types";
+import { DoctorModal } from '@/components/DoctorModal';
+import { Button } from "@/components/ui/button";
 
 // Type guard to check if an object is a valid DatabaseAppointment
 function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
@@ -34,11 +36,33 @@ function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
 export default function Dashboard() {
   const { activeClinic, user, activeClinicRole, loading: authLoading, profileName } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
 
   // Pagination state for upcoming appointments
   const [currentUpcomingPage, setCurrentUpcomingPage] = useState(1);
   const appointmentsPerPage = 5;
+
+  // State for onboarding doctor modal
+  const [showDoctorModal, setShowDoctorModal] = useState(false);
+
+  // Query: Does the current user have a doctor profile for this clinic?
+  const { data: hasDoctorProfile, isLoading: isDoctorProfileLoading } = useQuery({
+    queryKey: ['hasDoctorProfile', user?.id, activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!user?.id || !activeClinic?.clinic_id) return false;
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('id', user.id)
+        .eq('clinic_id', activeClinic.clinic_id)
+        .maybeSingle();
+      if (error) throw error;
+      return !!data;
+    },
+    enabled: !!user?.id && !!activeClinic?.clinic_id && activeClinicRole === 'superadmin',
+    staleTime: 60 * 1000,
+  });
 
   // Doctor-specific dashboard query
   const { data: doctorDashboardData, isLoading: isDoctorLoading, error: doctorError } = useQuery<DoctorDashboardData | null>({
@@ -213,6 +237,24 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Add Doctor Profile Button for Superadmin */}
+      {activeClinicRole === 'superadmin' && !isDoctorProfileLoading && !hasDoctorProfile && (
+        <div className="mb-4 flex justify-end">
+          <Button onClick={() => setShowDoctorModal(true)} variant="outline">
+            I am also a doctor
+          </Button>
+        </div>
+      )}
+      <DoctorModal
+        open={showDoctorModal}
+        onOpenChange={(open) => {
+          setShowDoctorModal(open);
+          if (!open) queryClient.invalidateQueries({ queryKey: ['hasDoctorProfile', user?.id, activeClinic?.clinic_id] });
+        }}
+        doctor={null}
+        onboardingUserId={user?.id || null}
+        onboardingClinicId={activeClinic?.clinic_id || null}
+      />
       <div className="flex justify-between items-end mb-6">
         <div>
           <h1 className="text-2xl font-bold">{greeting}</h1>

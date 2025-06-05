@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,7 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Database } from '@/integrations/supabase/types';
-import { DoctorModal } from '@/components/DoctorModal';
+import {DoctorModal} from '@/components/DoctorModal';
 import { debounce } from 'lodash'; // Added for search debouncing
 import {
   Tooltip,
@@ -21,7 +21,19 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'; // Added for text truncation tooltips
 
-type DoctorWithDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+type DoctorWithDetails = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  availability: string;
+  bio: string;
+  created_at: string;
+  role: "staff" | "doctor" | "superadmin";
+  department_name: string;
+  department_id: string;
+  is_active?: boolean;
+};
 
 const fetchDoctors = async (clinicId: string, searchTerm: string): Promise<DoctorWithDetails[]> => {
   console.log("fetchDoctors: Fetching for clinic", clinicId, "search", searchTerm);
@@ -117,11 +129,12 @@ const DoctorCard: React.FC<{ doctor: DoctorWithDetails } & React.HTMLAttributes<
 
 const Doctors = () => {
   console.log("Doctors: Rendering component");
-  const { activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const { activeClinic, activeClinicRole, loading: authLoading, user, profileName } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isDoctorModalOpen, setIsDoctorModalOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorWithDetails | null>(null);
+  const [showAddProfileCheckbox, setShowAddProfileCheckbox] = useState(false);
 
   // Debounced search handler
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -135,6 +148,24 @@ const Doctors = () => {
     queryFn: () => fetchDoctors(activeClinic!.clinic_id, searchTerm),
     enabled: !!activeClinic && !authLoading,
     retry: 1,
+  });
+
+  // Fetch current user's doctor profile for this clinic (for superadmin-as-doctor scenario)
+  const { data: myDoctorProfile } = useQuery({
+    queryKey: ['myDoctorProfile', user?.id, activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!user?.id || !activeClinic?.clinic_id) return null;
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('id', user.id)
+        .eq('clinic_id', activeClinic.clinic_id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!activeClinic?.clinic_id,
+    staleTime: 60 * 1000,
   });
 
   console.log("Doctors: authLoading=", authLoading, "activeClinic=", !!activeClinic, "doctors count=", doctors?.length);
@@ -171,6 +202,39 @@ const Doctors = () => {
     queryClient.invalidateQueries({ queryKey: ['doctors', activeClinic?.clinic_id, searchTerm] });
   };
 
+  // Only show active doctors in the list
+  let displayDoctors = (doctors || []).filter(doc => doc.is_active !== false);
+  if (myDoctorProfile && (myDoctorProfile.is_active !== false) && !displayDoctors.some(doc => doc.id === myDoctorProfile.id)) {
+    displayDoctors = [
+      {
+        id: myDoctorProfile.id,
+        name: myDoctorProfile.name || '',
+        email: myDoctorProfile.email || '',
+        phone: myDoctorProfile.phone || '',
+        availability: myDoctorProfile.availability || '',
+        bio: myDoctorProfile.bio || '',
+        created_at: myDoctorProfile.created_at || '',
+        role: activeClinicRole === 'superadmin' ? 'superadmin' : 'doctor',
+        department_name: myDoctorProfile['department_name'] || '',
+        department_id: myDoctorProfile['department_id'] || '',
+        is_active: myDoctorProfile.is_active ?? true,
+      },
+      ...displayDoctors,
+    ];
+  }
+
+  // Soft delete/reactivate logic
+  const handleSetDoctorActive = async (active: boolean) => {
+    if (!user?.id || !activeClinic?.clinic_id) return;
+    await supabase
+      .from('doctors')
+      .update({ is_active: active })
+      .eq('id', user.id)
+      .eq('clinic_id', activeClinic.clinic_id);
+    queryClient.invalidateQueries({ queryKey: ['doctors', activeClinic.clinic_id] });
+    queryClient.invalidateQueries({ queryKey: ['myDoctorProfile', user.id, activeClinic.clinic_id] });
+  };
+
   if (authLoading) {
     console.log("Doctors: Rendering null due to authLoading");
     return null;
@@ -196,8 +260,6 @@ const Doctors = () => {
       </div>
     );
   }
-
-  const displayDoctors = doctors || [];
 
   return (
     <div className="space-y-6">
@@ -279,6 +341,21 @@ const Doctors = () => {
               onKeyDown={(e) => handleDoctorKeyDown(e, doctor)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Remove/Reactivate Doctor Profile for superadmin */}
+      {(activeClinicRole === 'superadmin' && myDoctorProfile) && (
+        <div className="mb-4 flex justify-end">
+          {myDoctorProfile.is_active !== false ? (
+            <Button variant="destructive" onClick={() => handleSetDoctorActive(false)}>
+              Remove Doctor Profile
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={() => handleSetDoctorActive(true)}>
+              Reactivate Doctor Profile
+            </Button>
+          )}
         </div>
       )}
 

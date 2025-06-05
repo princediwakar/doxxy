@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,37 @@ type ProfileForm = z.infer<typeof profileSchema>;
 const CompleteProfile = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState<ProfileForm>({ name: "", phone: "" });
   const [loading, setLoading] = useState(false);
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    if (!user) return;
+    // Prefill from location state (invite flow), user object, or profile
+    const prefillName = location.state?.prefillName || user.user_metadata?.name || user.name || "";
+    const prefillEmail = location.state?.prefillEmail || user.email || "";
+    setEmail(prefillEmail);
+    // Fetch profile from Supabase
+    supabase
+      .from("profiles")
+      .select("name, phone")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          setForm({
+            name: data.name || prefillName,
+            phone: data.phone || "",
+          });
+        } else {
+          setForm({
+            name: prefillName,
+            phone: "",
+          });
+        }
+      });
+  }, [user, location.state]);
 
   if (!user) return null;
 
@@ -36,26 +63,7 @@ const CompleteProfile = () => {
       toast.error(parsed.error.errors[0].message);
       return;
     }
-    if (!password || !confirmPassword) {
-      toast.error("Please enter and confirm your password.");
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
     setLoading(true);
-    // Update password
-    const { error: pwError } = await supabase.auth.updateUser({ password });
-    if (pwError) {
-      setLoading(false);
-      toast.error("Failed to set password: " + pwError.message);
-      return;
-    }
     // Update profile
     const { error } = await supabase
       .from("profiles")
@@ -86,14 +94,12 @@ const CompleteProfile = () => {
               <label className="block mb-1 font-medium">Phone</label>
               <Input name="phone" value={form.phone} onChange={handleChange} disabled={loading} required />
             </div>
-            <div>
-              <label className="block mb-1 font-medium">Password</label>
-              <Input name="password" type="password" value={password} onChange={e => setPassword(e.target.value)} disabled={loading} required />
-            </div>
-            <div>
-              <label className="block mb-1 font-medium">Confirm Password</label>
-              <Input name="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} disabled={loading} required />
-            </div>
+            {email && (
+              <div>
+                <label className="block mb-1 font-medium">Email</label>
+                <Input name="email" value={email} disabled readOnly />
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Saving..." : "Save & Continue"}
             </Button>

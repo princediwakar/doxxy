@@ -204,13 +204,6 @@ export type Database = {
             referencedRelation: "clinic_departments"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "clinic_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
         ]
       }
       clinics: {
@@ -334,6 +327,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          is_active: boolean | null
           name: string
           phone: string | null
           user_id: string | null
@@ -345,6 +339,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          is_active?: boolean | null
           name: string
           phone?: string | null
           user_id?: string | null
@@ -356,6 +351,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          is_active?: boolean | null
           name?: string
           phone?: string | null
           user_id?: string | null
@@ -366,13 +362,6 @@ export type Database = {
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "doctors_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -5,7 +5,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import ClinicSelectionPage from "@/pages/ClinicSelectionPage"; // Import ClinicSelectionPage
 
 const PrivateRoute = () => {
-  const { user, activeClinic, loading, initialLoading } = useAuth();
+  const { user, activeClinic, loading, initialLoading, needsProfileCompletion } = useAuth();
   const location = useLocation();
 
   // Wait for initial session check to complete before rendering anything
@@ -37,6 +37,17 @@ const PrivateRoute = () => {
   if (!user) {
     console.log("PrivateRoute: No user, redirecting to /auth");
     return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  // If user is authenticated but needs to complete their profile
+  if (user && needsProfileCompletion && location.pathname !== '/complete-profile') {
+    console.log("PrivateRoute: User needs to complete profile, redirecting to /complete-profile");
+    return <Navigate to="/complete-profile" state={{ from: location }} replace />;
+  }
+
+  // Allow access to /complete-profile even if profile is incomplete
+  if (user && needsProfileCompletion && location.pathname === '/complete-profile') {
+    return <Outlet />;
   }
 
   // If user is authenticated but has no active clinic

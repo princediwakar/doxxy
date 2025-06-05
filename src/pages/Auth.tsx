@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, Mail, Lock, Text } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,6 +22,7 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const location = useLocation();
 
   const handleInvite = useCallback(async (inviteToken: string, inviteEmail: string | null) => {
     setLoading(true);
@@ -48,7 +49,7 @@ const Auth = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -85,7 +86,7 @@ const Auth = () => {
       };
     }
 
-  }, [navigate, searchParams, activeClinic, authLoading, isInviteFlow, handleInvite, user]);
+  }, [navigate, searchParams, activeClinic, authLoading, isInviteFlow, handleInvite, user, location.pathname]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,6 +190,31 @@ const Auth = () => {
       if (error) { throw error; }
 
       toast.success("Password set successfully! You are now logged in.");
+
+      // After setting password, check if profile is complete
+      const currentUser = user || data?.user || null;
+      if (currentUser) {
+        // Fetch profile
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("name, phone")
+          .eq("id", currentUser.id)
+          .maybeSingle();
+        if (!profileError && profile && profile.name && profile.phone) {
+          navigate("/dashboard");
+        } else {
+          // Pass invite name/email if available
+          navigate("/complete-profile", {
+            state: {
+              prefillName: name || undefined,
+              prefillEmail: email || undefined,
+            },
+            replace: true,
+          });
+        }
+      } else {
+        navigate("/complete-profile", { replace: true });
+      }
     } catch (error: unknown) {
       console.error("Set password error:", error);
       toast.error((error as Error).message || "An unknown error occurred during setting password.");

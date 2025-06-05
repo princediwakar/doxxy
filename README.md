@@ -45,6 +45,16 @@ Neurovision is a multi-tenant web application for Neurology and Ophthalmology cl
 - **Twilio & Resend:** WhatsApp and email notifications (planned/partial).
 - **Vitest:** Comprehensive testing for components and API.
 
+## Security: Row Level Security (RLS)
+
+- RLS is **enabled** on the `doctors` table.
+- Policies enforce strict multi-tenancy and role-based access:
+  - Users can only view/edit their own doctor profile.
+  - Clinic members can view all doctors in their clinic.
+  - No cross-clinic access is possible.
+- See migration: `supabase/migrations/20240608_enable_rls_doctors.sql`
+- This is critical for security and compliance in a multi-tenant environment.
+
 ## Developer Guide
 
 ### Setup

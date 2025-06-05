@@ -81,8 +81,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setProfileName(null);
       localStorage.removeItem('activeClinicId');
       console.log("AuthContext: No user, cleared clinics and active clinic.");
+      setNeedsProfileCompletion(false);
       return;
     }
+
+    // Always check profile completion for the user, regardless of clinic membership
+    const checkProfileCompletion = async () => {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('name, phone')
+        .eq('id', userFromSession.id)
+        .maybeSingle();
+      if (!profileError && profile) {
+        setNeedsProfileCompletion(!profile.name || !profile.phone);
+      } else {
+        setNeedsProfileCompletion(true);
+      }
+    };
+    await checkProfileCompletion();
 
     // Avoid refetching if user ID hasn't changed (compare user state with userFromSession parameter)
     if (user && user.id === userFromSession.id && userClinics.length > 0) {
@@ -168,25 +184,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setProfileName(profile?.name || null);
       }
 
-      // After setting clinics, fetch profile completion
-      const checkProfileCompletion = async () => {
-        if (user) {
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('name, phone')
-            .eq('id', user.id)
-            .maybeSingle();
-          if (!profileError && profile) {
-            setNeedsProfileCompletion(!profile.name || !profile.phone);
-          } else {
-            setNeedsProfileCompletion(true);
-          }
-        } else {
-          setNeedsProfileCompletion(false);
-        }
-      };
-      checkProfileCompletion();
-
     } catch (error) {
       console.error("fetchUserAndClinicData: Error:", error);
       setUserClinics([]);
@@ -229,6 +226,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUser(session?.user ?? null);
 
         if (session?.user) {
+          // Sync profiles table with Auth metadata
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, name, email')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          const authName = session.user.user_metadata?.name || session.user.name || '';
+          const authEmail = session.user.email || '';
+          if (!profile) {
+            // Create missing profile row
+            await supabase.from('profiles').insert({ id: session.user.id, name: authName, email: authEmail });
+          } else {
+            // Update if name/email differ
+            if (profile.name !== authName || profile.email !== authEmail) {
+              await supabase.from('profiles').update({ name: authName, email: authEmail }).eq('id', session.user.id);
+            }
+          }
           await fetchUserAndClinicData(session.user);
         } else {
           setUserClinics([]);

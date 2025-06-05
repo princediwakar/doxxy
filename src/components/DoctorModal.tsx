@@ -78,14 +78,21 @@ type DoctorFormValues = z.infer<typeof doctorFormSchema>;
 interface DoctorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  // Doctor prop uses the local type with explicit department_id for modal functionality
   doctor: ModalDoctorDetails | null; // Null for adding a new doctor (existing user)
+  onboardingUserId?: string | null; // For onboarding superadmin
+  onboardingClinicId?: string | null; // For onboarding superadmin
+  prefillName?: string;
+  prefillEmail?: string;
 }
 
 const DoctorModal: React.FC<DoctorModalProps> = ({
   open,
   onOpenChange,
   doctor,
+  onboardingUserId = null,
+  onboardingClinicId = null,
+  prefillName = '',
+  prefillEmail = '',
 }) => {
   const queryClient = useQueryClient();
   const { activeClinic } = useAuth();
@@ -107,8 +114,8 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
   const form = useForm<DoctorFormValues>({
     resolver: zodResolver(doctorFormSchema),
     defaultValues: {
-      name: doctor?.name || '',
-      email: doctor?.email || '',
+      name: doctor?.name || (onboardingUserId ? prefillName : '') || '',
+      email: doctor?.email || (onboardingUserId ? prefillEmail : '') || '',
       phone: doctor?.phone || '',
       availability: doctor?.availability || '',
       bio: doctor?.bio || '',
@@ -122,8 +129,8 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
   useEffect(() => {
     if (open) {
         form.reset({
-            name: doctor?.name || '',
-            email: doctor?.email || '',
+            name: doctor?.name || (onboardingUserId ? prefillName : '') || '',
+            email: doctor?.email || (onboardingUserId ? prefillEmail : '') || '',
             phone: doctor?.phone || '',
             availability: doctor?.availability || '',
             bio: doctor?.bio || '',
@@ -132,7 +139,24 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
             department_id: doctor?.department_id || null,
         });
     }
-  }, [open, doctor, form]); // Add DbUserRoles to dependency array
+  }, [open, doctor, form, onboardingUserId, prefillName, prefillEmail]);
+
+  // Prefill department_id in onboarding mode
+  useEffect(() => {
+    if (open && onboardingUserId && onboardingClinicId) {
+      (async () => {
+        const { data, error } = await supabase
+          .from('clinic_members')
+          .select('department_id')
+          .eq('user_id', onboardingUserId)
+          .eq('clinic_id', onboardingClinicId)
+          .maybeSingle();
+        if (!error && data && data.department_id) {
+          form.setValue('department_id', data.department_id);
+        }
+      })();
+    }
+  }, [open, onboardingUserId, onboardingClinicId, form]);
 
   // Fetch clinic departments and their types for the dropdown
   const { data: clinicDepartments, isLoading: isLoadingDepartments } = useQuery({
@@ -207,50 +231,75 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
    // Mutation for adding an existing user as a doctor to the clinic
    const addMutation = useMutation({
     mutationFn: async (values: DoctorFormValues) => {
-       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
-       if (!values.email) throw new Error('Email is required to add a doctor.');
+      // Onboarding mode: create doctor profile for current user/clinic directly
+      if (onboardingUserId && onboardingClinicId) {
+        // Insert directly into doctors table
+        const { error: doctorError } = await supabase
+          .from('doctors')
+          .insert({
+            id: onboardingUserId,
+            user_id: onboardingUserId,
+            clinic_id: onboardingClinicId,
+            name: values.name,
+            email: values.email,
+            phone: values.phone,
+            availability: values.availability,
+            bio: values.bio,
+          });
+        if (doctorError) throw doctorError;
+        // Update clinic_members role/department
+        const { error: memberUpdateError } = await supabase.rpc('update_clinic_member_details', {
+          member_user_id: onboardingUserId,
+          target_clinic_id: onboardingClinicId,
+          updated_role: values.role,
+          updated_department_id: values.department_id,
+        });
+        if (memberUpdateError) throw memberUpdateError;
+        return { id: onboardingUserId };
+      }
+      // Default: invite-member Edge Function for other cases
+      if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
+      if (!values.email) throw new Error('Email is required to add a doctor.');
 
-       // Call the invite-member Edge Function directly.
-       // The Edge Function will handle finding/creating the user,
-       // and adding/updating the clinic_member and doctor records.
-       console.log("DoctorModal: Using invite-member Edge Function.");
-       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-member`, {
-           method: 'POST',
-           headers: {
-               'Content-Type': 'application/json',
-               'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, // Use ANON key for Edge Function call
-           },
-           body: JSON.stringify({
-               email: values.email,
-               clinic_id: activeClinic.clinic_id,
-               role: values.role, // Pass the selected role
-               // Pass other relevant doctor details for the Edge Function to use
-               name: values.name,
-               phone: values.phone,
-               availability: values.availability,
-               bio: values.bio,
-               department_id: values.department_id, // Pass selected department
-           }),
-       });
+      // Call the invite-member Edge Function directly.
+      // The Edge Function will handle finding/creating the user,
+      // and adding/updating the clinic_member and doctor records.
+      console.log("DoctorModal: Using invite-member Edge Function.");
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-member`, {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`, // Use ANON key for Edge Function call
+          },
+          body: JSON.stringify({
+              email: values.email,
+              clinic_id: activeClinic.clinic_id,
+              role: values.role, // Pass the selected role
+              // Pass other relevant doctor details for the Edge Function to use
+              name: values.name,
+              phone: values.phone,
+              availability: values.availability,
+              bio: values.bio,
+          }),
+      });
 
-       if (!response.ok) {
-           const errorData = await response.json();
-           console.error("DoctorModal: Edge Function error response:", errorData);
-           throw new Error(errorData.error || 'Failed to invite doctor via Edge Function.');
-       }
+      if (!response.ok) {
+          const errorData = await response.json();
+          console.error("DoctorModal: Edge Function error response:", errorData);
+          throw new Error(errorData.error || 'Failed to invite doctor via Edge Function.');
+      }
 
-       const result = await response.json();
-       console.log("DoctorModal: Edge Function successful response:", result);
+      const result = await response.json();
+      console.log("DoctorModal: Edge Function successful response:", result);
 
-       // The Edge Function should return the invited user ID or success status
-       return result;
+      // The Edge Function should return the invited user ID or success status
+      return result;
     },
     onSuccess: () => {
-      toast.success('Doctor invited/added successfully!');
-      // Invalidate queries for both doctors and clinic members to refresh lists
-      queryClient.invalidateQueries({ queryKey: ['doctors', activeClinic?.clinic_id] });
-      queryClient.invalidateQueries({ queryKey: ['clinicMembers', activeClinic?.clinic_id] }); // Assuming a similar query for members exists
-      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
+      toast.success(onboardingUserId && onboardingClinicId ? 'Doctor profile created!' : 'Doctor invited/added successfully!');
+      queryClient.invalidateQueries({ queryKey: ['doctors', onboardingClinicId || activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['clinicMembers', onboardingClinicId || activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardData', onboardingClinicId || activeClinic?.clinic_id] });
       onOpenChange(false);
     },
     onError: (error) => {
@@ -318,7 +367,7 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled={!!doctor} />
+                    <Input type="email" {...field} disabled={!!doctor || !!onboardingUserId} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -412,4 +461,4 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
   );
 };
 
-export { DoctorModal };
+export {DoctorModal};

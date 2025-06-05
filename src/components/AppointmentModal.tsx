@@ -142,16 +142,16 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   };
 
-  // Fetch patients using direct query instead of RPC
+  // Fetch patients using RPC instead of direct query
   const { data: patients, isLoading: isLoadingPatients } = useQuery({
     queryKey: ['patients', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
-      const { data, error } = await supabase
-        .from('patients')
-        .select('id, name')
-        .eq('clinic_id', activeClinic.clinic_id)
-        .order('name');
+      const { data, error } = await supabase.rpc('get_patients_by_clinic', {
+        _clinic_id: activeClinic.clinic_id,
+        _limit: 100, // Reasonable limit for dropdown
+        _offset: 0,
+      });
       if (error) throw error;
       return data || [];
     },

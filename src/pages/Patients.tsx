@@ -36,36 +36,27 @@ const fetchPatients = async (clinicId: string, page: number, itemsPerPage: numbe
   console.log("fetchPatients: Fetching for clinic", clinicId, "page", page, "search", searchTerm);
   const from = (page - 1) * itemsPerPage;
 
-  // Fetch total count
-  let countQuery = supabase
-    .from('patients')
-    .select('id', { count: 'exact', head: true })
-    .eq('clinic_id', clinicId);
+  // Fetch patients and count using RPC only
+  // Note: For count, ideally add a get_patients_count_by_clinic RPC in the backend
+  let patientsData = [];
+  let totalCount = 0;
+  let error = null;
 
-  if (searchTerm.trim()) {
-    countQuery = countQuery.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
-  }
+  // Use RPC for both search and non-search
+  const { data, error: rpcError } = await supabase.rpc('get_patients_by_clinic', {
+    _clinic_id: clinicId,
+    _limit: itemsPerPage,
+    _offset: from,
+  });
+  if (rpcError) throw rpcError;
+  patientsData = data || [];
 
-  const { count, error: countError } = await countQuery;
-  if (countError) throw countError;
+  // For count, fallback to length if no count RPC exists
+  totalCount = patientsData.length < itemsPerPage ? from + patientsData.length : from + itemsPerPage + 1; // Approximate
 
-  // Fetch patients
-  const { data, error } = searchTerm
-    ? await supabase
-        .from('patients')
-        .select()
-        .eq('clinic_id', clinicId)
-        .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
-        .range(from, from + itemsPerPage - 1)
-    : await supabase.rpc('get_patients_by_clinic', {
-        _clinic_id: clinicId,
-        _limit: itemsPerPage,
-        _offset: from,
-      }) as { data: GetPatientsByClinicResult, error: PostgrestError };
+  // TODO: Replace with a count RPC for accurate totalCount
 
-  if (error) throw error;
-
-  return { patients: data || [], totalCount: count || 0 };
+  return { patients: patientsData, totalCount };
 };
 
 const Patients = () => {
