@@ -17,7 +17,6 @@ export const baseNotesSchema = z.object({
   prognosis: z.string().optional(),
   follow_up: z.string().optional(),
   referrals: z.string().optional(),
-  prescription: z.string().optional(),
 });
 
 export const neurologyNotesSchema = baseNotesSchema.extend({
@@ -33,8 +32,12 @@ export const ophthalmologyNotesSchema = baseNotesSchema.extend({
   visual_fields: z.string().optional(),
 });
 
+// General consultation schema (fallback for unspecialized consultations)
+export const generalNotesSchema = baseNotesSchema;
+
 export type NeurologyNotes = z.infer<typeof neurologyNotesSchema>;
 export type OphthalmologyNotes = z.infer<typeof ophthalmologyNotesSchema>;
+export type GeneralNotes = z.infer<typeof generalNotesSchema>;
 
 export type NoteFieldConfig = {
   name: string;
@@ -45,6 +48,23 @@ export type NoteFieldConfig = {
 };
 
 export const specialtyNoteFieldConfigs: Record<string, NoteFieldConfig[]> = {
+  General: [
+    { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 4, placeholder: "Enter chief complaint" },
+    { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Enter history" },
+    { name: "review_of_systems", label: "Review of Systems", type: "textarea", rows: 4, placeholder: "Enter review" },
+    { name: "past_medical_history", label: "Past Medical History", type: "textarea", rows: 4, placeholder: "Enter history" },
+    { name: "family_history", label: "Family History", type: "textarea", rows: 4, placeholder: "Enter family history" },
+    { name: "social_history", label: "Social History", type: "textarea", rows: 4, placeholder: "Enter social history" },
+    { name: "medications", label: "Medications", type: "textarea", rows: 4, placeholder: "Enter medications" },
+    { name: "allergies", label: "Allergies", type: "textarea", rows: 4, placeholder: "Enter allergies" },
+    { name: "physical_exam", label: "Physical Exam", type: "textarea", rows: 4, placeholder: "Enter physical exam findings" },
+    { name: "investigations", label: "Investigations", type: "textarea", rows: 4, placeholder: "Enter investigations" },
+    { name: "assessment", label: "Assessment", type: "textarea", rows: 4, placeholder: "Enter assessment" },
+    { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Enter treatment plan" },
+    { name: "prognosis", label: "Prognosis", type: "textarea", rows: 4, placeholder: "Enter prognosis" },
+    { name: "follow_up", label: "Follow-Up", type: "textarea", rows: 4, placeholder: "Enter follow-up plan" },
+    { name: "referrals", label: "Referrals", type: "textarea", rows: 4, placeholder: "Enter referrals" },
+  ],
   Neurology: [
     { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 4, placeholder: "Enter chief complaint" },
     { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Enter history" },
@@ -62,7 +82,6 @@ export const specialtyNoteFieldConfigs: Record<string, NoteFieldConfig[]> = {
     { name: "prognosis", label: "Prognosis", type: "textarea", rows: 4, placeholder: "Enter prognosis" },
     { name: "follow_up", label: "Follow-Up", type: "textarea", rows: 4, placeholder: "Enter follow-up plan" },
     { name: "referrals", label: "Referrals", type: "textarea", rows: 4, placeholder: "Enter referrals" },
-    { name: "prescription", label: "Prescription", type: "textarea", rows: 4, placeholder: "Enter prescription (e.g., Tab. Levetiracetam 500mg BD for 1 month)" },
   ],
   Ophthalmology: [
     { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 4, placeholder: "Enter chief complaint" },
@@ -86,6 +105,5 @@ export const specialtyNoteFieldConfigs: Record<string, NoteFieldConfig[]> = {
     { name: "prognosis", label: "Prognosis", type: "textarea", rows: 4, placeholder: "Enter prognosis" },
     { name: "follow_up", label: "Follow-Up", type: "textarea", rows: 4, placeholder: "Enter follow-up plan" },
     { name: "referrals", label: "Referrals", type: "textarea", rows: 4, placeholder: "Enter referrals" },
-    { name: "prescription", label: "Prescription", type: "textarea", rows: 4, placeholder: "Enter prescription (e.g., Latanoprost 0.005% eye drops OD at bedtime)" },
   ],
 };

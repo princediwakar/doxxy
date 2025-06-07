@@ -55,3 +55,26 @@ export interface DoctorDashboardData {
   upcoming_appointments: DatabaseAppointment[];
   my_patients: EnhancedPatientForDoctorList[];
 }
+
+// Enhanced dashboard data for superadmins
+export interface EnhancedDashboardData {
+  clinic: StaffDashboardData;
+  doctor?: DoctorDashboardData;
+  isEnhanced: boolean;
+}
+
+// Dashboard stats card configuration
+export interface DashboardStat {
+  id: string;
+  label: string;
+  value: number | string;
+  icon: string;
+  color: string;
+  onClick?: () => void;
+  description?: string;
+  change?: {
+    value: number;
+    type: 'increase' | 'decrease' | 'neutral';
+    period: string;
+  };
+}

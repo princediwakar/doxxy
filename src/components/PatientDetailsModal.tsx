@@ -13,11 +13,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentModal } from './AppointmentModal';
-import { BillingModal } from './BillingModal';
+import { EnhancedBillingModal } from './EnhancedBillingModal';
 import { getAge, renderGender } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
@@ -37,6 +37,8 @@ interface AppointmentWithDetails extends Appointment {
 interface BillWithDetails extends Bill {
   appointment_date?: string;
 }
+
+const supabase = getSupabase();
 
 const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   open,
@@ -320,7 +322,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
         patient={patient}
       />
 
-      <BillingModal
+      <EnhancedBillingModal
         open={isBillingModalOpen}
         onOpenChange={setIsBillingModalOpen}
         bill={null}

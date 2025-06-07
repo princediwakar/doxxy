@@ -1,9 +1,10 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
-## Cursor Agent Interaction Rules for Neurovision Clinic Management
+<!-- cursor-agent-interaction-rules.mdc -->
+## Cursor Agent Interaction Rules for  Clinic Management
 
 These rules govern the Cursor Agent's interaction and tool usage within the Cursor environment, building upon the project guidelines (`.cursor/rules/project-rules.mdc`, `.cursor/rules/cursor-agent-rules.md`) to ensure efficient and context-aware development.
 

@@ -1,220 +1,98 @@
-# Project Rules for Neurovision Clinic Management Web App
+---
+description: 
+globs: 
+alwaysApply: false
+---
+<!-- project-rules.mdc -->
+# Project Rules for Doxxy - Clinic Management App
 
 ## Overview
-Neurovision is a multi-tenant web app for Neurology and Ophthalmology clinics, managing appointments, patient records, prescriptions, billing, and notifications (WhatsApp/email). It uses Vite (React + TypeScript), Tailwind CSS with Shadcn UI, and Supabase, with role-based access (`superadmin`, `staff`, `doctor`) via Google OAuth. A single `/dashboard` route renders role-specific components (`SuperadminDashboard`, `StaffDashboard`, `DoctorDashboard`).
+Doxxy is a multi-tenant platform for Neurology and Ophthalmology clinics, supporting appointments, patient records, billing, and notifications. The stack is Vite (React + TypeScript), Tailwind CSS, Shadcn UI, Supabase (with RLS), Google OAuth, React Query, zod, and Edge Functions.
 
-## Database and Multi-Tenancy
-- **Multi-Tenancy**: Isolate data by `clinic_id` across tables (`clinics`, `patients`, `appointments`, `consultations`, `medical_records`, `prescriptions`, `bills`, `clinic_members`, `clinic_departments`). Use Row-Level Security (RLS) to enforce access.
-- **Key Tables and Enums**:
-  - `clinics`: Clinic details (name, address).
-  - `clinic_members`: Links users (`profiles`) to clinics with `role` (`superadmin`, `staff`, `doctor`) and optional `department_id`.
-  - `department_types`, `clinic_departments`: Define Neurology/Ophthalmology departments.
-  - `patients`, `doctors`, `appointments`, `consultations` (`specialty_data` JSONB), `medical_records`, `prescriptions` (`medications` JSONB), `bills`: Core data, linked to `clinic_id`.
-  - `Enums`: `appointment_status` (Scheduled, In Progress, Completed, Cancelled), `appointment_type` (Walk-in, Digital), `bill_status` (Paid, Pending, Overdue), `user_role` (superadmin, staff, doctor).
-- **RLS**:
-  - Filter by `clinic_id` and `role` via `clinic_members`.
-  - `superadmin`: Full clinic access.
-  - `staff`: Manage patients, appointments, bills.
-  - `doctor`: Access own appointments, consultations, patients.
-  - **Note on `clinic_members` RLS**: Due to potential recursion issues, the primary SELECT policy on `clinic_members` is simplified to `user_id = auth.uid()`. This allows users to see their own membership records. Policies on other tables should filter by `clinic_id` directly or leverage `SECURITY DEFINER` RPCs.
-  - Examples:
-    ```sql
-    -- Basic clinic_members SELECT policy to avoid recursion
-    CREATE POLICY user_clinic_members ON clinic_members FOR SELECT TO authenticated USING (user_id = auth.uid());
+## Multi-Tenancy & Roles
+- All core tables (patients, appointments, consultations, bills, medical_records, prescriptions, clinic_members, clinic_departments) are filtered by `clinic_id`.
+- Roles: `superadmin`, `staff`, `doctor` (see `src/integrations/supabase/types.ts` Enums).
+- RLS policies must always enforce `clinic_id` and role-based access.
+- Never expose data across clinics.
 
-    -- Policy for appointments filtering by clinic_id
-    CREATE POLICY clinic_appointments ON appointments FOR ALL TO authenticated USING (clinic_id IN (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid()));
+## Database & Types
+- All schema changes require a migration in `supabase/migrations/`.
+- After any schema change, regenerate types:
+  ```sh
+  supabase gen types typescript --schema public > src/integrations/supabase/types.ts
+  ```
+- Use `Tables<"table_name">` and `Enums<"enum_name">` from generated types for all data models and props.
 
-    -- Policy for doctors filtering by clinic_id
-    CREATE POLICY clinic_doctors ON doctors FOR SELECT TO authenticated USING (clinic_id IN (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid()));
+## Data Fetching & Mutations
+- Use React Query for all data fetching and mutations.
+- Always filter queries/mutations by `clinic_id` and user role.
+- Use Supabase RPCs for complex joins or cross-table logic (set as SECURITY DEFINER if needed).
+- Invalidate relevant queries after mutations (e.g., after adding a member, updating an appointment).
 
-    -- Example staff policy for bills (allows staff/superadmin to manage bills in their clinics)
-    CREATE POLICY staff_bills ON bills FOR ALL TO authenticated
-    USING (clinic_id = (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid() AND role IN ('staff', 'superadmin')));
-    ```
-  - **RLS and RPCs**: For RPCs that join across multiple tables with RLS (e.g., `get_doctors_by_clinic`, `get_appointments_with_details_by_clinic`), set the RPCs to `SECURITY DEFINER` to bypass RLS filtering on the joined tables within the RPC execution context. Ensure the RPC logic itself correctly filters data by the provided `clinic_id` parameter.
+## Validation
+- Use zod for all form and API payload validation.
+- Define schemas in `src/lib/schemas/`.
+- Validate on both frontend and backend (Edge Functions).
 
-## Tech Stack
-- **Frontend**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, React Query, React Router DOM, zod.
-- **Backend**: Supabase (PostgreSQL with RLS), Google OAuth, Twilio (WhatsApp), Resend (email), Supabase Edge Functions (for specific logic like user invitation).
-- **Deployment**: Vercel (frontend), Supabase Edge Functions (backend).
-- **Tools**: Cursor (Agent mode), Vitest, ESLint, Prettier.
+## Edge Functions
+- Place Edge Functions in `supabase/functions/<function-name>/index.ts`.
+- Use the service role key for admin actions.
+- Always return typed, clear responses.
+- Update and redeploy Edge Functions after any related schema or logic change.
 
-## Setup
-1. Initialize: `npm create vite@latest neurovision --template react-ts`.
-2. Install Tailwind: `npx tailwindcss init -p`.
-3. Install Shadcn UI: `npx shadcn@latest init`.
-4. Install Supabase: `npm install @supabase/supabase-js`.
-5. Configure `.env.local`: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
-6. Run: `npm run dev`.
+## UI & Components
+- Use Tailwind CSS and Shadcn UI for all styling and components.
+- Components: PascalCase, in `src/components/role/RoleComponent.tsx` or `src/components/ui/`.
+- Render UI based on user role and clinic context.
+- Use the NavBar clinic switcher for multi-clinic users.
+- Use Shadcn Toast for user feedback.
 
-## Code Structure
-- **Routes**: `/login`, `/dashboard` (protected, renders `SuperadminDashboard`, `StaffDashboard`, or `DoctorDashboard` based on `AuthContext` role and `clinic_id`).
-- **Components**: `src/components/ui/NavBar.tsx` (with clinic switcher), `src/components/ui/Layout.tsx`, `src/components/role/RoleComponent.tsx`.
-- **Naming**:
-  - Components: PascalCase (e.g., `DoctorDashboard`).
-  - Functions/Hooks: camelCase (e.g., `useAppointments`).
-  - Files: `src/hooks/useFeature.ts`, `src/lib/schemas/feature.ts`.
-
-## Best Practices
-- **TypeScript**:
-  - Use Supabase `Database` types (`src/integrations/supabase/types.ts`).
-  - **Always regenerate types** after schema changes (adding tables, columns, enums, RPCs) using the command: `supabase gen types typescript --schema public > src/integrations/supabase/types.ts`.
-  - Define props/state with `Tables<"table_name">`, `Enums<"enum_name">`, or RPC return types from the generated `types.ts`.
-  - Example:
-    ```ts
-    import { Tables, Database } from "@/integrations/supabase/types";
-    // Using a table type
-    interface AppointmentProps { appointment: Tables<"appointments">; }
-    // Using an RPC return type (adjust index based on your types.ts structure)
-    type RpcDoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
-    ```
-- **React Query**:
-  - Fetch data with Supabase functions/RPCs (e.g., `get_appointments_with_details_by_clinic`, `get_doctors_by_clinic`), always filtering by `clinic_id` in the function/RPC call.
-  - Invalidate relevant queries (`doctors`, `appointments`, `clinicMembers`, `dashboardData`) after mutations that affect these lists (e.g., adding a doctor/member, creating an appointment).
-  - Cache non-critical data (5min stale time).
-  - Example (updated to show RPC call with clinic_id):
-    ```ts
-    import { useQuery } from "@tanstack/react-query";
-    import { supabase } from "@/integrations/supabase";
-    import { Database } from "@/integrations/supabase/types";
-
-    // Define the RPC return type based on your generated types
-    type RpcAppointmentDetails = Database['public']['Functions']['get_appointments_with_details_by_clinic']['Returns'][0];
-
-    export const useAppointments = (clinicId: string) => useQuery<RpcAppointmentDetails[], Error>({
-      queryKey: ["appointments", clinicId],
-      queryFn: async () => {
-        // Call the SECURITY DEFINER RPC and pass the clinic_id
-        const { data, error } = await supabase.rpc("get_appointments_with_details_by_clinic", { current_clinic_id: clinicId });
-        if (error) throw error;
-        return data;
-      },
-      // Only enable the query if clinicId is available
-      enabled: !!clinicId,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    });
-    ```
-- **zod**:
-  - Validate forms/API payloads in `src/lib/schemas/feature.ts`.
-  - Example:
-    ```ts
-    import { z } from "zod";
-    import { Enums } from "@/integrations/supabase/types";
-    export const appointmentSchema = z.object({
-      clinic_id: z.string().uuid(),
-      patient_id: z.string().uuid(),
-      doctor_id: z.string().uuid(),
-      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-      time: z.string().regex(/^\d{2}:\d{2}$/),
-      type: z.enum(["Walk-in", "Digital"] as const),
-      status: z.enum(["Scheduled", "In Progress", "Completed", "Cancelled"] as const),
-    });
-    ```
-- **Routing**:
-  - Protect `/dashboard` with `PrivateRoute.tsx`.
-  - Example:
-    ```ts
-    import { Navigate, Outlet } from "react-router-dom";
-    import { useAuth } from "@/context/AuthContext";
-    export const PrivateRoute = () => {
-      const { user } = useAuth();
-      return user ? <Outlet /> : <Navigate to="/login" />;
-    };
-    ```
-- **UI**:
-  - Use Tailwind with Shadcn UI, support dark/light themes.
-  - Example `NavBar`:
-    ```ts
-    import { useAuth } from "@/context/AuthContext";
-    import { Select } from "@/components/ui/select";
-    export const NavBar = () => {
-      const { user, clinicId, setClinicId } = useAuth();
-      const { data: clinics } = useQuery({
-        queryKey: ["clinics", user?.id],
-        queryFn: async () => {
-          const { data } = await supabase.from("clinic_members").select("clinics(id, name)").eq("user_id", user!.id);
-          return data?.map((m) => m.clinics) as Tables<"clinics">[];
-        },
-      });
-      return (
-        <nav className="flex p-4 bg-primary text-primary-foreground">
-          <Select value={clinicId} onValueChange={setClinicId}>
-            {clinics?.map((clinic) => (
-              <option key={clinic.id} value={clinic.id}>{clinic.name}</option>
-            ))}
-          </Select>
-        </nav>
-      );
-    };
-    ```
-- **Error Handling**:
-  - Use Shadcn UI `Toast` for user feedback.
-  - Example:
-    ```ts
-    import { useToast } from "@/components/ui/use-toast";
-    const { toast } = useToast();
-    const handleError = (error: Error) => toast({ variant: "destructive", title: "Error", description: error.message });
-    ```
+## Routing & Auth
+- Protect `/dashboard` with a private route (see `PrivateRoute.tsx`).
+- Use Google OAuth via Supabase for authentication.
+- Store session in `AuthContext`.
+- Require profile completion for all new users.
 
 ## Security
-- **RLS**: Enforce `clinic_id` and `role` checks via `clinic_members`. Example for `bills`:
-  ```sql
-  CREATE POLICY staff_bills ON bills FOR ALL TO authenticated
-  USING (clinic_id = (SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid() AND role IN ('staff', 'superadmin')));
-  ```
-- **Input**: Validate with zod, sanitize to prevent XSS/SQL injection.
-- **Auth**: Supabase Google OAuth, manage sessions in `AuthContext`.
-- **Secrets**: Store in `.env.local` or Vercel secrets, never log.
+- Enforce RLS for all tables, especially `clinic_members`, `appointments`, `consultations`, `bills`, `medical_records`.
+- Never hardcode secrets; use `.env.local` for all environment variables.
+- Validate and sanitize all user input.
 
-## Scalability
-- Support clinic switching via `NavBar` dropdown.
-- Add new roles by updating `Enums.user_role`, RLS, and UI.
-- Optimize queries with indexes (e.g., `CREATE INDEX idx_clinic_id ON appointments (clinic_id);`).
-
-## Testing
-- Use Vitest for unit (components, hooks), integration (API), and RLS tests.
+## Testing & Quality
+- Use Vitest for all new features and bug fixes (unit, integration, RLS tests).
 - Target 80%+ coverage.
-- Example:
-  ```ts
-  import { renderHook, waitFor } from "@testing-library/react";
-  import { useAppointments } from "@/hooks/useAppointments";
-  import { supabase } from "@/integrations/supabase";
-  vi.mock("@/integrations/supabase", () => ({
-    supabase: { from: vi.fn().mockReturnThis(), select: vi.fn().mockReturnThis(), eq: vi.fn().mockResolvedValue({ data: [{ id: "1" }], error: null }) },
-  }));
-  test("useAppointments fetches by clinic_id", async () => {
-    const { result } = renderHook(() => useAppointments("123"));
-    await waitFor(() => expect(result.current.data).toEqual([{ id: "1" }]));
-  });
-  ```
+- Use ESLint and Prettier for code quality and formatting.
 
 ## Documentation
-- **development-log.md**: Log tasks, errors, resolutions with timestamps.
-- **README.md**: Update with setup/deployment steps.
-  ```markdown
-  ## Setup
-  1. Clone: `git clone <repo>`
-  2. Install: `npm install`
-  3. Configure: Copy `.env.example` to `.env.local`, add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-  4. Run: `npm run dev`
-  ## Deployment
-  - Vercel: `vercel --prod`
-  - Supabase: `supabase db push`, `supabase functions deploy`
-  ```
+- Update `development-log.md` after every significant change.
+- Update `README.md` if setup, deployment, or environment variables change.
+- Add comments to all non-trivial code, especially for RLS and onboarding logic.
 
-## Deployment
-- **Frontend**: Vercel with `vite.config.ts`:
-  ```ts
-  import { defineConfig } from "vite";
-  import react from "@vitejs/plugin-react";
-  export default defineConfig({ plugins: [react()], server: { port: 3000 }, build: { outDir: "dist" } });
-  ```
-- **Backend**: Deploy Edge Functions with `supabase functions deploy <function_name>`. Ensure Edge Functions interacting with the database use the `supabaseAdmin` client or handle RLS appropriately (e.g., using the Service Role Key where necessary and secure).
-- **Member Invitation Flow**: The process for inviting and adding any member (doctor, staff, superadmin) to a clinic is handled by the `invite-member` Edge Function. The frontend (`DoctorModal.tsx` and Members tab) calls this function directly, passing the user's email, role, department, and other details. The Edge Function is responsible for the end-to-end logic of user creation/lookup, adding to `clinic_members`, and adding/updating the `doctors` table entry if the role is doctor.
-- **Debug**: Use Supabase/Vercel logs for RLS/query issues.
-## Task Examples
-- "Generate RLS policy for `prescriptions`."
-- "Create React Query hook for `bills`."
-- "Style `DoctorDashboard.tsx` with Tailwind."
-- "Add `billing_admin` role with RLS, UI, and tests."
+## DevOps & Deployment
+- Deploy frontend via Vercel.
+- Deploy Edge Functions via Supabase CLI.
+- Use environment variables for all secrets and config.
+
+## Naming Conventions
+- Components: PascalCase (e.g., `DoctorDashboard`)
+- Hooks: camelCase (e.g., `useAppointments`)
+- Files: `src/hooks/useFeature.ts`, `src/lib/schemas/feature.ts`
+
+## Onboarding & Member Invitation
+- Use the `invite-member` Edge Function for all member invitations (doctor, staff, superadmin).
+- The function handles user creation/lookup, clinic membership, and doctor profile creation if needed.
+- The frontend (e.g., Members tab, DoctorModal) calls this function directly.
+
+## When Adding Features
+- Update types, migrations, RLS, and UI in one go.
+- Ensure all new features are multi-tenant and role-aware.
+- Add tests and documentation for all new features.
+
+## Example: Adding a Table
+1. Create migration in `supabase/migrations/`.
+2. Add RLS policies for multi-tenancy and roles.
+3. Regenerate types.
+4. Add React Query hooks and zod schemas.
+5. Update UI and Edge Functions as needed.
+6. Add tests and update documentation.
+

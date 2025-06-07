@@ -1,9 +1,10 @@
+import React from "react";
 import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, User, Users, Stethoscope } from "lucide-react";
+import { CalendarCheck, User, Users, Stethoscope, Activity, TrendingUp, Clock, Building2 } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/client";
 import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData } from "@/types/dashboard";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
 import { WeeklyAppointmentsChart } from "@/components/WeeklyAppointmentsChart";
@@ -14,6 +15,10 @@ import { useState } from "react";
 import { Enums } from "@/integrations/supabase/types";
 import { DoctorModal } from '@/components/DoctorModal';
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import SuperAdminDashboard from "@/components/role/SuperAdminDashboard";
+
+const supabase = getSupabase();
 
 // Type guard to check if an object is a valid DatabaseAppointment
 function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
@@ -33,7 +38,7 @@ function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
   );
 }
 
-export default function Dashboard() {
+const Dashboard = () => {
   const { activeClinic, user, activeClinicRole, loading: authLoading, profileName } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -64,11 +69,13 @@ export default function Dashboard() {
     staleTime: 60 * 1000,
   });
 
-  // Doctor-specific dashboard query
+  // Doctor-specific dashboard query for superadmins who have doctor profiles
   const { data: doctorDashboardData, isLoading: isDoctorLoading, error: doctorError } = useQuery<DoctorDashboardData | null>({
     queryKey: ['doctorDashboardData', activeClinic?.clinic_id, user?.id],
     queryFn: async () => {
-      if (!activeClinic?.clinic_id || !user?.id || activeClinicRole !== 'doctor') return null;
+      if (!activeClinic?.clinic_id || !user?.id || (activeClinicRole !== 'doctor' && activeClinicRole !== 'superadmin')) return null;
+      if (activeClinicRole === 'superadmin' && !hasDoctorProfile) return null;
+      
       const { data, error } = await supabase.rpc('get_doctor_dashboard_data', {
         _clinic_id: activeClinic.clinic_id,
         _user_id: user.id,
@@ -98,7 +105,9 @@ export default function Dashboard() {
       }
       return result;
     },
-    enabled: !!activeClinic?.clinic_id && !!user?.id && activeClinicRole === 'doctor',
+    enabled: !!activeClinic?.clinic_id && !!user?.id && 
+             ((activeClinicRole === 'doctor') || 
+              (activeClinicRole === 'superadmin' && hasDoctorProfile !== undefined)),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -154,7 +163,7 @@ export default function Dashboard() {
     );
   }
 
-  if (isLoading || isDoctorLoading) {
+  if (isLoading || isDoctorLoading || isDoctorProfileLoading) {
     return (
       <div className="space-y-6">
         {user ? (
@@ -179,13 +188,22 @@ export default function Dashboard() {
     );
   }
 
+  // For pure doctor role, use the dedicated DoctorDashboard component
   if (activeClinicRole === 'doctor') {
     return <DoctorDashboard />;
   }
 
-  // Prepare appointments data
+  // Enhanced logic for superadmins: show both clinic-wide and personal stats if applicable
+  const isEnhancedSuperadmin = activeClinicRole === 'superadmin' && hasDoctorProfile && doctorDashboardData;
+  
+  // Prepare appointments data with proper fallbacks
   const allAppointments: DatabaseAppointment[] = dashboardData?.all_relevant_appointments ?? [];
-  console.log('All appointments for chart:', allAppointments);
+  const doctorAppointments: DatabaseAppointment[] = doctorDashboardData?.upcoming_appointments ?? [];
+  
+  // Use doctor appointments for chart if superadmin has doctor profile, otherwise use clinic-wide
+  const chartAppointments = isEnhancedSuperadmin ? doctorAppointments : allAppointments;
+  
+  console.log('Dashboard appointments for chart:', chartAppointments);
 
   const todaysAppointments: FormattedAppointment[] = allAppointments
     .filter(apt => apt.date === today)
@@ -220,7 +238,7 @@ export default function Dashboard() {
 
   // Card click handlers
   const handlePatientsCardClick = () => navigate('/patients');
-  const handleDoctorsCardClick = () => navigate('/doctors');
+  const handleDoctorsCardClick = () => navigate('/settings');
   const handleAppointmentsTodayCardClick = () => navigate('/appointments?filter=today');
   const handlePendingConsultationsCardClick = () => navigate('/appointments?filter=pending');
   const handleCompletedConsultationsCardClick = () => navigate('/consultations?filter=completed');
@@ -237,60 +255,136 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Add Doctor Profile Button for Superadmin */}
-      {activeClinicRole === 'superadmin' && !isDoctorProfileLoading && !hasDoctorProfile && (
-        <div className="mb-4 flex justify-end">
-          <Button onClick={() => setShowDoctorModal(true)} variant="outline">
-            I am also a doctor
-          </Button>
-        </div>
-      )}
-      <DoctorModal
-        open={showDoctorModal}
-        onOpenChange={(open) => {
-          setShowDoctorModal(open);
-          if (!open) queryClient.invalidateQueries({ queryKey: ['hasDoctorProfile', user?.id, activeClinic?.clinic_id] });
-        }}
-        doctor={null}
-        onboardingUserId={user?.id || null}
-        onboardingClinicId={activeClinic?.clinic_id || null}
-      />
       <div className="flex justify-between items-end mb-6">
         <div>
           <h1 className="text-2xl font-bold">{greeting}</h1>
-          <p className="text-muted-foreground">Here's a quick overview of your clinic's activity today.</p>
+          <p className="text-muted-foreground">
+            {isEnhancedSuperadmin 
+              ? "Complete overview of clinic operations and your personal practice."
+              : "Here's a quick overview of your clinic's activity today."
+            }
+          </p>
+          {isEnhancedSuperadmin && (
+            <Badge variant="secondary" className="mt-2">
+              <Stethoscope size={12} className="mr-1" />
+              Enhanced View - Doctor Profile Active
+            </Badge>
+          )}
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <DashboardStatsCard
-          icon={<Users size={18} className="mr-2 text-blue-500" />}
-          label="Total Patients"
-          value={dashboardData?.total_patients ?? 0}
-          onClick={handlePatientsCardClick}
-          ariaLabel="View Patients"
-        />
-        <DashboardStatsCard
-          icon={<Stethoscope size={18} className="mr-2 text-green-500" />}
-          label="Total Appointments"
-          value={dashboardData?.total_appointments ?? 0}
-          onClick={handleAppointmentsTodayCardClick}
-          ariaLabel="View Appointments"
-        />
-        <DashboardStatsCard
-          icon={<CalendarCheck size={18} className="mr-2 text-orange-500" />}
-          label="Pending Consultations"
-          value={dashboardData?.pending_consultations ?? 0}
-          onClick={handlePendingConsultationsCardClick}
-          ariaLabel="View Pending Consultations"
-        />
-        <DashboardStatsCard
-          icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
-          label="Completed Consultations"
-          value={dashboardData?.completed_consultations ?? 0}
-          onClick={handleCompletedConsultationsCardClick}
-          ariaLabel="View Completed Consultations"
-        />
-      </div>
+
+      {/* Enhanced Stats Grid for Superadmins */}
+      {isEnhancedSuperadmin ? (
+        <>
+          {/* Clinic-wide Stats Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Building2 size={20} className="text-primary" />
+              <h2 className="text-lg font-semibold">Clinic Overview</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <DashboardStatsCard
+                icon={<Users size={18} className="mr-2 text-blue-500" />}
+                label="Total Patients"
+                value={dashboardData?.total_patients ?? 0}
+                onClick={handlePatientsCardClick}
+                ariaLabel="View All Patients"
+              />
+              <DashboardStatsCard
+                icon={<Stethoscope size={18} className="mr-2 text-indigo-500" />}
+                label="Total Doctors"
+                value={dashboardData?.total_doctors ?? 0}
+                onClick={handleDoctorsCardClick}
+                ariaLabel="Manage Clinic Members"
+              />
+              <DashboardStatsCard
+                icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+                label="Total Appointments"
+                value={dashboardData?.total_appointments ?? 0}
+                onClick={handleAppointmentsTodayCardClick}
+                ariaLabel="View All Appointments"
+              />
+              <DashboardStatsCard
+                icon={<Clock size={18} className="mr-2 text-orange-500" />}
+                label="Today's Appointments"
+                value={dashboardData?.appointments_today ?? 0}
+                onClick={handleAppointmentsTodayCardClick}
+                ariaLabel="View Today's Appointments"
+              />
+            </div>
+          </div>
+
+          {/* Personal Doctor Stats Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Stethoscope size={20} className="text-primary" />
+              <h2 className="text-lg font-semibold">My Practice</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <DashboardStatsCard
+                icon={<Users size={18} className="mr-2 text-blue-500" />}
+                label="My Patients"
+                value={doctorDashboardData?.total_patients ?? 0}
+                onClick={handlePatientsCardClick}
+                ariaLabel="View My Patients"
+              />
+              <DashboardStatsCard
+                icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+                label="My Appointments"
+                value={doctorDashboardData?.total_appointments ?? 0}
+                onClick={handleAppointmentsTodayCardClick}
+                ariaLabel="View My Appointments"
+              />
+              <DashboardStatsCard
+                icon={<Clock size={18} className="mr-2 text-orange-500" />}
+                label="Pending Consultations"
+                value={doctorDashboardData?.pending_consultations ?? 0}
+                onClick={handlePendingConsultationsCardClick}
+                ariaLabel="View Pending Consultations"
+              />
+              <DashboardStatsCard
+                icon={<Activity size={18} className="mr-2 text-emerald-500" />}
+                label="Completed Consultations"
+                value={doctorDashboardData?.completed_consultations ?? 0}
+                onClick={handleCompletedConsultationsCardClick}
+                ariaLabel="View Completed Consultations"
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        /* Standard Stats Grid for Staff/Admin */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <DashboardStatsCard
+            icon={<Users size={18} className="mr-2 text-blue-500" />}
+            label="Total Patients"
+            value={dashboardData?.total_patients ?? 0}
+            onClick={handlePatientsCardClick}
+            ariaLabel="View Patients"
+          />
+          <DashboardStatsCard
+            icon={<Stethoscope size={18} className="mr-2 text-green-500" />}
+            label="Total Appointments"
+            value={dashboardData?.total_appointments ?? 0}
+            onClick={handleAppointmentsTodayCardClick}
+            ariaLabel="View Appointments"
+          />
+          <DashboardStatsCard
+            icon={<CalendarCheck size={18} className="mr-2 text-orange-500" />}
+            label="Pending Consultations"
+            value={dashboardData?.pending_consultations ?? 0}
+            onClick={handlePendingConsultationsCardClick}
+            ariaLabel="View Pending Consultations"
+          />
+          <DashboardStatsCard
+            icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+            label="Completed Consultations"
+            value={dashboardData?.completed_consultations ?? 0}
+            onClick={handleCompletedConsultationsCardClick}
+            ariaLabel="View Completed Consultations"
+          />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <UpcomingAppointmentsList 
@@ -304,8 +398,13 @@ export default function Dashboard() {
           showViewAllButton={true}
           onViewAll={() => navigate('/appointments?filter=upcoming')}
         />
-        <WeeklyAppointmentsChart appointments={allAppointments} onBarClick={handleChartBarClick} />
+        <WeeklyAppointmentsChart 
+          appointments={chartAppointments} 
+          onBarClick={handleChartBarClick} 
+        />
       </div>
     </div>
   );
 }
+
+export default Dashboard;

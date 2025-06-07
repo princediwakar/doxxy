@@ -1,16 +1,21 @@
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, Users, Stethoscope } from "lucide-react";
+import { CalendarCheck, Users, Stethoscope, Activity, Clock, User } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from '@/integrations/supabase/client';
 import { FormattedAppointment, DatabaseAppointment, DoctorDashboardData, EnhancedPatientForDoctorList } from "@/types/dashboard";
 import { DoctorPatientsList } from "@/components/DoctorPatientsList";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { WeeklyAppointmentsChart } from "@/components/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/DashboardStatsCard";
 import { useNavigate } from "react-router-dom";
 import { Enums } from "@/integrations/supabase/types";
+import { Badge } from "@/components/ui/badge";
+import { Button } from '@/components/ui/button';
+
+const supabase = getSupabase();
 
 // Type guard to check if an object is a valid DatabaseAppointment
 function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
@@ -47,7 +52,7 @@ export default function DoctorDashboard() {
   const { data: doctorDashboardData, isLoading, error } = useQuery<DoctorDashboardData | null>({
     queryKey: ['doctorDashboardData', activeClinic?.clinic_id, user?.id],
     queryFn: async () => {
-      if (!activeClinic?.clinic_id || !user?.id || activeClinicRole !== 'doctor') return null;
+      if (!activeClinic?.clinic_id || !user?.id || (activeClinicRole !== 'doctor' && activeClinicRole !== 'superadmin')) return null;
       const { data, error } = await supabase.rpc('get_doctor_dashboard_data', {
         _clinic_id: activeClinic.clinic_id,
         _user_id: user.id,
@@ -77,7 +82,7 @@ export default function DoctorDashboard() {
       }
       return result;
     },
-    enabled: !!activeClinic?.clinic_id && !!user?.id && activeClinicRole === 'doctor',
+    enabled: !!activeClinic?.clinic_id && !!user?.id && (activeClinicRole === 'doctor' || activeClinicRole === 'superadmin'),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -160,6 +165,12 @@ export default function DoctorDashboard() {
     navigate(`/appointments?filter=date&date=${date}`);
   };
 
+  // Calculate some additional stats
+  const todayAppointmentCount = todaysAppointments.length;
+  const completionRate = doctorDashboardData?.total_appointments 
+    ? ((doctorDashboardData.completed_consultations / doctorDashboardData.total_appointments) * 100).toFixed(1)
+    : '0';
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -192,6 +203,9 @@ export default function DoctorDashboard() {
           <div className="text-center">
             <h2 className="text-xl font-semibold mb-2 text-destructive">Error Loading Dashboard</h2>
             <p className="text-muted-foreground">{error.message}</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Please ensure you have a doctor profile set up for this clinic.
+            </p>
           </div>
         </div>
       </div>
@@ -204,36 +218,53 @@ export default function DoctorDashboard() {
         <div>
           <h1 className="text-2xl font-bold">{greeting}</h1>
           <p className="text-muted-foreground">Review your appointments and patient updates for today.</p>
+          {activeClinicRole === 'superadmin' && (
+            <Badge variant="outline" className="mt-2">
+              <User size={12} className="mr-1" />
+              Doctor View - {activeClinic?.clinic_name}
+            </Badge>
+          )}
         </div>
+        {todayAppointmentCount > 0 && (
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Today</p>
+            <p className="text-2xl font-bold text-primary">{todayAppointmentCount}</p>
+            <p className="text-xs text-muted-foreground">appointments</p>
+          </div>
+        )}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <DashboardStatsCard
           icon={<Users size={18} className="mr-2 text-blue-500" />}
-          label="Total Patients"
+          label="My Patients"
           value={doctorDashboardData?.total_patients ?? 0}
-          ariaLabel="View Patients"
+          ariaLabel="View My Patients"
           onClick={handlePatientsCardClick}
+          description={`Active patient relationships`}
         />
         <DashboardStatsCard
           icon={<Stethoscope size={18} className="mr-2 text-green-500" />}
           label="Total Appointments"
           value={doctorDashboardData?.total_appointments ?? 0}
-          ariaLabel="View Appointments"
+          ariaLabel="View My Appointments"
           onClick={handleAppointmentsTodayCardClick}
+          description={`${completionRate}% completion rate`}
         />
         <DashboardStatsCard
-          icon={<CalendarCheck size={18} className="mr-2 text-orange-500" />}
+          icon={<Clock size={18} className="mr-2 text-orange-500" />}
           label="Pending Consultations"
           value={doctorDashboardData?.pending_consultations ?? 0}
           ariaLabel="View Pending Consultations"
           onClick={handlePendingConsultationsCardClick}
+          variant={doctorDashboardData?.pending_consultations ? "secondary" : "default"}
         />
         <DashboardStatsCard
-          icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+          icon={<Activity size={18} className="mr-2 text-emerald-500" />}
           label="Completed Consultations"
           value={doctorDashboardData?.completed_consultations ?? 0}
           ariaLabel="View Completed Consultations"
           onClick={handleCompletedConsultationsCardClick}
+          variant="primary"
         />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -256,6 +287,8 @@ export default function DoctorDashboard() {
           totalPages={totalPatientPages}
           onPatientClick={handlePatientClick}
         />
+      </div>
+      <div className="grid grid-cols-1 gap-6">
         <WeeklyAppointmentsChart appointments={allAppointments} onBarClick={handleChartBarClick} />
       </div>
     </div>

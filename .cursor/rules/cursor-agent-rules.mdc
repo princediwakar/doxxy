@@ -1,9 +1,10 @@
 ---
 description: 
 globs: 
-alwaysApply: true
+alwaysApply: false
 ---
-# Cursor Agent User Rules for Neurovision Clinic Management
+<!-- cursor-agent-rules.mdc -->
+# Cursor Agent User Rules for  Clinic Management
 
 ## 1. Project Context
 - This is a multi-tenant clinic management web app for Neurology and Ophthalmology clinics.
@@ -76,4 +77,4 @@ alwaysApply: true
 
 ---
 
-**With these rules, Cursor's Agent will be fully optimized for your Neurovision project, ensuring safe, robust, and autonomous development.** 
+**With these rules, Cursor's Agent will be fully optimized for your  project, ensuring safe, robust, and autonomous development.** 

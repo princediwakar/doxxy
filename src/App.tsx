@@ -2,16 +2,19 @@
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import Dashboard from "./pages/Dashboard";
 import Patients from "./pages/Patients";
-import Doctors from "./pages/Doctors";
+
 import Appointments from "./pages/Appointments";
-// import Billing from "./pages/Billing";
+import MedicalRecords from "./pages/MedicalRecords";
+import Prescriptions from "./pages/Prescriptions";
+import Billing from "./pages/Billing";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import PrivateRoute from "./components/PrivateRoute";
@@ -23,13 +26,6 @@ import CompleteProfile from "@/pages/CompleteProfile";
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
-  const { user, needsProfileCompletion } = useAuth();
-  const location = useLocation();
-
-  if (user && needsProfileCompletion && location.pathname !== "/complete-profile") {
-    return <Navigate to="/complete-profile" replace />;
-  }
-
   return (
     <Routes>
       {/* Public routes */}
@@ -40,9 +36,10 @@ const AppRoutes = () => {
         <Route element={<Layout />}> {/* Layout renders for main app paths */}
           <Route index element={<Dashboard />} />
           <Route path="patients" element={<Patients />} />
-          <Route path="doctors" element={<Doctors />} />
           <Route path="appointments" element={<Appointments />} />
-          {/* <Route path="billing" element={<Billing />} /> */}
+          <Route path="medical-records" element={<MedicalRecords />} />
+          <Route path="prescriptions" element={<Prescriptions />} />
+          <Route path="billing" element={<Billing />} />
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
@@ -59,6 +56,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>

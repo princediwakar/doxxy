@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
+import { getSupabase } from "@/integrations/supabase/client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +27,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Database } from "@/integrations/supabase/types";
@@ -43,6 +43,8 @@ interface PatientModalProps {
   patient: Patient | null; // For editing existing patient
   onPatientCreated: (patient: Patient) => void; // Callback after creation
 }
+
+const supabase = getSupabase();
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -109,14 +111,12 @@ export const PatientModal = ({
       };
 
       const { data, error } = await supabase
-        .from('patients')
-        .insert([patientData])
+        .from("patients")
+        .insert(patientData)
         .select()
         .single();
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
     onSuccess: (newPatient) => {
@@ -297,7 +297,10 @@ export const PatientModal = ({
               )}
             />
             <DialogFooter className="md:col-span-2">
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+              >
             {isSubmitting
               ? (patient ? "Saving..." : "Creating...")
               : (patient ? "Save Changes" : "Create Patient")}

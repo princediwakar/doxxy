@@ -1,8 +1,8 @@
-# Neurovision Clinic Management Platform
+#  Clinic Management Platform
 
 ## Overview
 
-Neurovision is a multi-tenant web application for Neurology and Ophthalmology clinics. It provides robust management of appointments, patients, medical records, billing, and notifications, with strict data isolation and role-based access.
+ is a multi-tenant web application for Neurology and Ophthalmology clinics. It provides robust management of appointments, patients, medical records, billing, and notifications, with strict data isolation and role-based access.
 
 ## Features
 

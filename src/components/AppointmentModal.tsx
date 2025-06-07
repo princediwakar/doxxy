@@ -35,7 +35,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -64,6 +64,8 @@ enum AppointmentStatusEnum {
   "Cancelled" = "Cancelled",
 }
 
+
+const supabase = getSupabase();
 // Zod schema for appointment form validation
 const appointmentFormSchema = z.object({
   date: z.date({ required_error: 'Date is required' }),

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import {
   Pagination,
-  PaginationContent,
+  PaginationContent,  
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/pagination';
 import { Search, Plus, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 // Assuming AppointmentModal exists and is correctly exported
@@ -34,6 +34,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ConsultationModal } from '@/components/ConsultationModal';
+import { ConsultationViewModal } from '@/components/ConsultationViewModal';
+import { EnhancedBillingModal } from '@/components/EnhancedBillingModal';
+import { PrescriptionModal } from '@/components/PrescriptionModal';
 import { Enums } from "@/integrations/supabase/types";
 
 // Type for the return of the get_appointments_with_details_by_clinic RPC
@@ -52,6 +55,8 @@ interface AppointmentWithDetails {
   doctor_name: string;
   department_name: string; // Although not explicitly in types.ts, it is in the RPC return type signature
 }
+
+const supabase = getSupabase();
 
 const fetchAppointments = async (clinicId: string, searchTerm: string) => {
   console.log("fetchAppointments: Fetching for clinic", clinicId, "search", searchTerm);
@@ -172,6 +177,14 @@ const Appointments = () => {
   // State for ConsultationModal
   const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
   const [selectedAppointmentForConsultation, setSelectedAppointmentForConsultation] = useState<AppointmentWithDetails | null>(null);
+  
+  // State for Consultation View Modal
+  const [isConsultationViewModalOpen, setIsConsultationViewModalOpen] = useState(false);
+  const [selectedAppointmentForView, setSelectedAppointmentForView] = useState<AppointmentWithDetails | null>(null);
+
+  // State for Billing Modal
+  const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [selectedAppointmentForBilling, setSelectedAppointmentForBilling] = useState<AppointmentWithDetails | null>(null);
 
   // Handle opening ConsultationModal
   const handleStartConsultation = async (appointment: AppointmentWithDetails) => {
@@ -187,6 +200,44 @@ const Appointments = () => {
     setIsConsultationModalOpen(true);
   };
 
+  // Handle viewing completed consultation
+  const handleViewConsultation = (appointment: AppointmentWithDetails) => {
+    setSelectedAppointmentForView(appointment);
+    setIsConsultationViewModalOpen(true);
+  };
+
+  // Handle creating bill for appointment
+  const handleCreateBill = (appointment: AppointmentWithDetails) => {
+    setSelectedAppointmentForBilling(appointment);
+    setIsBillingModalOpen(true);
+  };
+
+  // Handle billing modal close
+  const handleBillingModalClose = (open: boolean) => {
+    setIsBillingModalOpen(open);
+    if (!open && activeClinic) {
+      queryClient.invalidateQueries({ queryKey: ['bills', activeClinic.clinic_id] });
+    }
+  };
+
+  // State for Prescription Modal
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [selectedAppointmentForPrescription, setSelectedAppointmentForPrescription] = useState<AppointmentWithDetails | null>(null);
+
+  // Handle creating prescription for appointment
+  const handleCreatePrescription = (appointment: AppointmentWithDetails) => {
+    setSelectedAppointmentForPrescription(appointment);
+    setIsPrescriptionModalOpen(true);
+  };
+
+  // Handle prescription modal close
+  const handlePrescriptionModalClose = (open: boolean) => {
+    setIsPrescriptionModalOpen(open);
+    if (!open && activeClinic) {
+      queryClient.invalidateQueries({ queryKey: ['prescriptions', activeClinic.clinic_id] });
+    }
+  };
+
   // Handle closing ConsultationModal and refreshing data (if needed)
   const handleConsultationModalClose = (open: boolean) => {
     setIsConsultationModalOpen(open);
@@ -195,6 +246,14 @@ const Appointments = () => {
       queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinic_id] });
        // Consider also invalidating dashboard data if it shows appointment status
         queryClient.invalidateQueries({ queryKey: ['dashboard-data', activeClinic.clinic_id] });
+    }
+  };
+
+  // Handle closing Consultation View Modal
+  const handleConsultationViewModalClose = (open: boolean) => {
+    setIsConsultationViewModalOpen(open);
+    if (!open) {
+      setSelectedAppointmentForView(null);
     }
   };
 
@@ -237,7 +296,7 @@ const Appointments = () => {
           <p className="text-muted-foreground">View and manage clinic appointments</p>
         </div>
         {/* Show New Appointment button for Superadmins and Staff */}
-        {(activeClinicRole === 'admin' || activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
+        {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
           <Button
           onClick={handleNewAppointment}
           >
@@ -278,14 +337,14 @@ const Appointments = () => {
                   <TableHead className="hidden sm:table-cell">Type</TableHead>
                   <TableHead className="hidden sm:table-cell">Status</TableHead>
                   {/* Add a new header for Consultation action if user is a doctor */}
-                  {activeClinicRole === 'doctor' && <TableHead>Consultation</TableHead>}
+                  {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && <TableHead>Consultation</TableHead>}
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredAppointments.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={activeClinicRole === 'doctor' ? 8 : 7} className="text-center py-4"> {/* Adjust colspan */}
+                    <TableCell colSpan={(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') ? 8 : 7} className="text-center py-4"> {/* Adjust colspan */}
                       {searchTerm ? "No appointments match your search" : "No appointments found"}
                     </TableCell>
                   </TableRow>
@@ -304,8 +363,8 @@ const Appointments = () => {
                       <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.type}</TableCell>
                       <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.status}</TableCell>
 
-                      {/* Add a cell for the Start Consultation button if user is a doctor and appointment is not completed/cancelled */}
-                      {activeClinicRole === 'doctor' && appointment.status !== 'Completed' && appointment.status !== 'Cancelled' && (
+                      {/* Add a cell for the Start Consultation button if user is a doctor/superadmin and appointment is not completed/cancelled */}
+                      {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status !== 'Completed' && appointment.status !== 'Cancelled' && (
                          <TableCell>
                            <Button size="sm" onClick={() => handleStartConsultation(appointment)}>
                              {appointment.status === "Scheduled" ? "Start" : "Continue"}
@@ -313,8 +372,17 @@ const Appointments = () => {
                          </TableCell>
                       )}
 
-                       {/* Add an empty cell if the button is not shown to maintain table structure */}
-                       {activeClinicRole === 'doctor' && (appointment.status === 'Completed' || appointment.status === 'Cancelled') && (
+                      {/* Add View Consultation button for completed appointments */}
+                      {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status === 'Completed' && (
+                         <TableCell>
+                           <Button size="sm" variant="outline" onClick={() => handleViewConsultation(appointment)}>
+                             View Notes
+                           </Button>
+                         </TableCell>
+                      )}
+
+                       {/* Add an empty cell if neither button is shown to maintain table structure */}
+                       {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status === 'Cancelled' && (
                            <TableCell></TableCell>
                        )}
 
@@ -332,14 +400,18 @@ const Appointments = () => {
                             <DropdownMenuItem onClick={() => handleAppointmentClick(appointment)}>
                                 View/Edit Appointment
                             </DropdownMenuItem>
-                             {/* Remove Start Consultation option from dropdown */}
-                             {/*
-                            {activeClinicRole === 'doctor' && appointment.status !== 'Completed' && appointment.status !== 'Cancelled' && (
-                               <DropdownMenuItem onClick={() => handleStartConsultation(appointment)}>
-                                    Start Consultation
+                            {/* Option to create bill for appointment */}
+                            {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && (
+                               <DropdownMenuItem onClick={() => handleCreateBill(appointment)}>
+                                    Create Bill
                                 </DropdownMenuItem>
                             )}
-                            */}
+                            {/* Option to create prescription for appointment */}
+                            {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && (
+                               <DropdownMenuItem onClick={() => handleCreatePrescription(appointment)}>
+                                    Add Prescription
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuSeparator />
                              {/* Option to cancel appointment - visible for staff/superadmin, or potentially doctors depending on policy */}
                              {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && appointment.status !== 'Cancelled' && appointment.status !== 'Completed' && (
@@ -398,6 +470,32 @@ const Appointments = () => {
         open={isConsultationModalOpen}
         onOpenChange={handleConsultationModalClose}
         appointment={selectedAppointmentForConsultation ? { ...selectedAppointmentForConsultation, status: selectedAppointmentForConsultation.status as Enums<'appointment_status'>, type: selectedAppointmentForConsultation.type as Enums<'appointment_type'> } : null}
+      />
+
+      {/* Consultation View Modal component */}
+      <ConsultationViewModal
+        open={isConsultationViewModalOpen}
+        onOpenChange={handleConsultationViewModalClose}
+        appointment={selectedAppointmentForView}
+      />
+
+      {/* Enhanced Billing Modal component */}
+      <EnhancedBillingModal
+        open={isBillingModalOpen}
+        onOpenChange={handleBillingModalClose}
+        bill={null}
+        appointment={selectedAppointmentForBilling}
+      />
+
+      {/* Prescription Modal component */}
+      <PrescriptionModal
+        open={isPrescriptionModalOpen}
+        onOpenChange={handlePrescriptionModalClose}
+        consultationId={null}
+        appointment={selectedAppointmentForPrescription}
+        doctorId={selectedAppointmentForPrescription?.doctor_id || null}
+        patientId={selectedAppointmentForPrescription?.patient_id || null}
+        clinicId={activeClinic?.clinic_id || null}
       />
     </div>
   );

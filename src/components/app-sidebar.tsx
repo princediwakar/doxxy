@@ -1,6 +1,6 @@
 // File: src/components/app-sidebar.tsx
 import { NavLink, useLocation } from "react-router-dom";
-import { Users, User, CalendarPlus, CreditCard, Home, LogOut, Settings } from "lucide-react";
+import { Users, User, CalendarPlus, CreditCard, Home, LogOut, Settings, FileText, Pill } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,8 +15,10 @@ const navItems = [
   { icon: Home, label: "Dashboard", path: "/", roles: ['superadmin', 'staff', 'doctor'] },
   { icon: Users, label: "Patients", path: "/patients", roles: ['staff', 'doctor', 'superadmin'] },
   { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ['staff', 'doctor', 'superadmin'] },
-  { icon: User, label: "Doctors", path: "/doctors", roles: ['staff', 'superadmin'] },
-  // { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'superadmin'] },
+  { icon: FileText, label: "Medical Records", path: "/medical-records", roles: ['doctor', 'superadmin'] },
+  { icon: Pill, label: "Prescriptions", path: "/prescriptions", roles: ['doctor', 'superadmin'] },
+
+  { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'superadmin'] },
   { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
 ];
 
@@ -36,7 +38,7 @@ export function AppSidebar() {
     // Use a basic div structure for the sidebar
     // Apply Tailwind classes for fixed position, width, height, background, border
     // Add responsive width classes (e.g., w-64, md:w-72) if needed for larger screens
-    <div className="flex flex-col border-r bg-background h-screen sticky top-0 left-0 w-64 lg:w-72">
+    <div className="flex flex-col border-r bg-background h-screen sticky top-0 left-0 w-64 lg:w-72 flex-shrink-0">
       {/* Header with Logo and Clinic Switcher */}
       {/* Adjusted padding and alignment */}
       <div className="flex items-center gap-2 p-4 h-14 border-b">

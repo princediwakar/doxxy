@@ -13,13 +13,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Database } from "@/integrations/supabase/types";
+
+const supabase = getSupabase();
 
 // Step 1: Clinic details schema
 const clinicDetailsSchema = z.object({
@@ -111,46 +113,59 @@ const CreateClinicPage = () => {
       });
       return;
     }
+
     setIsSubmitting(true);
     try {
-      // 1. Insert into clinics table
-      const { data: clinicData, error: clinicError } = await supabase
+      // Use the new create_clinic_with_admin function which is safer and handles RLS properly
+      const { data: clinicResult, error: clinicError } = await supabase
+        .rpc('create_clinic_with_admin', {
+          clinic_name: clinicDetails.name,
+          user_phone: user.phone || null // Pass phone if available for profile completion
+        })
+        .single();
+
+      if (clinicError) throw clinicError;
+      if (!clinicResult) throw new Error("Clinic creation failed - no result returned.");
+      
+      const createdClinicId = clinicResult.clinic_id;
+      setNewClinicId(createdClinicId); // Save for DoctorModal
+
+      // Update additional clinic details (address, email, phone, website)
+      const { error: updateError } = await supabase
         .from('clinics')
-        .insert({
-          name: clinicDetails.name, // ensure required
+        .update({
           address: clinicDetails.address || null,
           email: clinicDetails.email || null,
           phone: clinicDetails.phone || null,
           website: clinicDetails.website || null,
-          created_by: user.id,
         })
-        .select()
-        .single();
-      if (clinicError) throw clinicError;
-      if (!clinicData) throw new Error("Clinic data not returned after insert.");
-      const createdClinicId = clinicData.id;
-      setNewClinicId(createdClinicId); // Save for DoctorModal
-      // 2. Insert into clinic_members table (linking user as superadmin)
-      const { error: memberError } = await supabase
-        .from('clinic_members')
-        .insert({
-          user_id: user.id,
-          clinic_id: createdClinicId,
-          role: 'superadmin',
-        });
-      if (memberError) throw memberError;
-      // 2b. Auto-create doctor profile for superadmin
-      const { error: doctorError } = await supabase
+        .eq('id', createdClinicId);
+
+      if (updateError) throw updateError;
+
+      // Auto-create doctor profile for superadmin (only if doesn't exist for this clinic)
+      const { data: existingDoctor, error: checkDoctorError } = await supabase
         .from('doctors')
-        .insert({
-          id: user.id,
-          user_id: user.id,
-          clinic_id: createdClinicId,
-          name: user.user_metadata?.name || user.email || '',
-          email: user.email,
-        });
-      if (doctorError) throw doctorError;
-      // 3. Insert selected departments into clinic_departments
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('clinic_id', createdClinicId)
+        .maybeSingle();
+      
+      if (checkDoctorError) throw checkDoctorError;
+      
+      if (!existingDoctor) {
+        const { error: doctorError } = await supabase
+          .from('doctors')
+          .insert({
+            user_id: user.id,
+            clinic_id: createdClinicId,
+            name: user.user_metadata?.name || user.email || '',
+            email: user.email,
+          });
+        if (doctorError) throw doctorError;
+      }
+
+      // Insert selected departments into clinic_departments
       if (data.departments.length > 0) {
         const departmentRows = data.departments.map((departmentTypeId) => ({
           clinic_id: createdClinicId,
@@ -161,13 +176,15 @@ const CreateClinicPage = () => {
           .insert(departmentRows);
         if (deptError) throw deptError;
       }
-      // 4. Update auth context
+
+      // Update auth context
       await fetchUserAndClinicData(user);
       toast({
         title: "Success",
         description: `Clinic "${clinicDetails.name}" created successfully.\nDepartments: ${departmentTypes?.filter(dt => data.departments.includes(dt.id)).map(dt => dt.name).join(", ")}`,
       });
-      // Instead of navigating, show doctor prompt
+      
+      // Navigate to dashboard
       navigate("/", { replace: true });
     } catch (error: unknown) {
       console.error("Error creating clinic:", error);
@@ -205,7 +222,7 @@ const CreateClinicPage = () => {
                   <FormItem>
                     <FormLabel>Clinic Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Neurovision Clinic" {...field} />
+                      <Input placeholder="e.g.,  Clinic" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

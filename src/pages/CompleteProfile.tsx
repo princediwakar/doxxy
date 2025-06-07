@@ -1,22 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { z } from "zod";
 import { toast } from "sonner";
+import { zodResolver } from '@hookform/resolvers/zod';
+
+const supabase = getSupabase();
 
 const profileSchema = z.object({
-  name: z.string().min(2, "Name is required"),
+  name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   phone: z.string().min(6, "Phone is required"),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
 
 const CompleteProfile = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, markProfileComplete } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState<ProfileForm>({ name: "", phone: "" });
@@ -26,7 +29,7 @@ const CompleteProfile = () => {
   useEffect(() => {
     if (!user) return;
     // Prefill from location state (invite flow), user object, or profile
-    const prefillName = location.state?.prefillName || user.user_metadata?.name || user.name || "";
+    const prefillName = location.state?.prefillName || user.user_metadata?.name || "";
     const prefillEmail = location.state?.prefillEmail || user.email || "";
     setEmail(prefillEmail);
     // Fetch profile from Supabase
@@ -64,17 +67,31 @@ const CompleteProfile = () => {
       return;
     }
     setLoading(true);
-    // Update profile
-    const { error } = await supabase
-      .from("profiles")
-      .update({ name: form.name, phone: form.phone })
-      .eq("id", user.id);
-    setLoading(false);
-    if (error) {
-      toast.error("Failed to update profile: " + error.message);
-    } else {
+    
+    try {
+      // Update profile
+      const { error } = await supabase
+        .from("profiles")
+        .update({ name: form.name, phone: form.phone })
+        .eq("id", user.id);
+      
+      if (error) {
+        console.error("CompleteProfile: Error updating profile:", error);
+        toast.error("Failed to update profile: " + error.message);
+        return;
+      }
+
+      // Mark profile as complete in auth context
+      markProfileComplete();
+      
       toast.success("Profile completed!");
-      navigate("/dashboard");
+      console.log("CompleteProfile: Profile completed successfully, navigating to dashboard");
+      navigate("/");
+    } catch (error) {
+      console.error("CompleteProfile: Exception during profile update:", error);
+      toast.error("An error occurred while updating your profile.");
+    } finally {
+      setLoading(false);
     }
   };
 

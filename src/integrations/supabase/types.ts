@@ -577,6 +577,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      create_clinic_with_admin: {
+        Args: { clinic_name: string; user_phone?: string }
+        Returns: {
+          clinic_id: string
+          membership_id: string
+        }[]
+      }
+      debug_clinic_creation: {
+        Args: { user_uuid: string }
+        Returns: {
+          can_create_clinic: boolean
+          auth_uid_value: string
+          user_exists: boolean
+        }[]
+      }
       get_appointments_with_details_by_clinic: {
         Args: { clinic_id: string }
         Returns: {
@@ -585,8 +600,8 @@ export type Database = {
           doctor_id: string
           date: string
           time: string
-          type: Database["public"]["Enums"]["appointment_type"]
-          status: Database["public"]["Enums"]["appointment_status"]
+          type: string
+          status: string
           notes: string
           created_at: string
           patient_name: string
@@ -621,15 +636,17 @@ export type Database = {
         Args: { clinic_id: string }
         Returns: {
           id: string
+          user_id: string
           name: string
           email: string
           phone: string
           availability: string
           bio: string
           created_at: string
-          role: Database["public"]["Enums"]["user_role"]
+          role: string
           department_name: string
           department_id: string
+          is_active: boolean
         }[]
       }
       get_patients_by_clinic: {
@@ -647,6 +664,41 @@ export type Database = {
           address: string
         }[]
       }
+      get_patients_by_doctor: {
+        Args: {
+          _clinic_id: string
+          _doctor_user_id: string
+          _limit?: number
+          _offset?: number
+        }
+        Returns: {
+          id: string
+          clinic_id: string
+          created_at: string
+          date_of_birth: string
+          email: string
+          gender: string
+          medical_id: string
+          name: string
+          phone: string
+          address: string
+        }[]
+      }
+      get_user_clinic_memberships: {
+        Args: { user_id: string }
+        Returns: {
+          membership_id: string
+          clinic_id: string
+          role: Database["public"]["Enums"]["user_role"]
+          department_id: string
+          clinic_name: string
+          clinic_created_by: string
+        }[]
+      }
+      repair_clinic_relationships: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       set_auth_uid: {
         Args: { uid: string }
         Returns: undefined
@@ -659,46 +711,6 @@ export type Database = {
           updated_department_id?: string
         }
         Returns: undefined
-      }
-      uuid_generate_v1: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      uuid_generate_v1mc: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      uuid_generate_v3: {
-        Args: { namespace: string; name: string }
-        Returns: string
-      }
-      uuid_generate_v4: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      uuid_generate_v5: {
-        Args: { namespace: string; name: string }
-        Returns: string
-      }
-      uuid_nil: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      uuid_ns_dns: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      uuid_ns_oid: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      uuid_ns_url: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      uuid_ns_x500: {
-        Args: Record<PropertyKey, never>
-        Returns: string
       }
     }
     Enums: {

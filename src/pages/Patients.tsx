@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,7 +20,7 @@ import {
 import { Search, Plus, User } from "lucide-react";
 import { PatientModal } from "@/components/PatientModal";
 import { PatientDetailsModal } from "@/components/PatientDetailsModal";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Database, Tables } from "@/integrations/supabase/types";
@@ -32,27 +32,84 @@ import { getAge } from "@/lib/utils";
 type Patient = Database['public']['Tables']['patients']['Row'];
 type GetPatientsByClinicResult = Patient[];
 
-const fetchPatients = async (clinicId: string, page: number, itemsPerPage: number, searchTerm: string) => {
-  console.log("fetchPatients: Fetching for clinic", clinicId, "page", page, "search", searchTerm);
+const supabase = getSupabase();
+
+const fetchPatients = async (clinicId: string, page: number, itemsPerPage: number, searchTerm: string, userRole: string, userId?: string) => {
+  console.log("fetchPatients: Fetching for clinic", clinicId, "page", page, "search", searchTerm, "role", userRole);
   const from = (page - 1) * itemsPerPage;
 
-  // Fetch patients and count using RPC only
-  // Note: For count, ideally add a get_patients_count_by_clinic RPC in the backend
   let patientsData = [];
-  let totalCount = 0;
   let error = null;
 
-  // Use RPC for both search and non-search
-  const { data, error: rpcError } = await supabase.rpc('get_patients_by_clinic', {
-    _clinic_id: clinicId,
-    _limit: itemsPerPage,
-    _offset: from,
-  });
-  if (rpcError) throw rpcError;
-  patientsData = data || [];
+  // Use different RPC based on user role
+  if (userRole === 'doctor' && userId) {
+    // Try to use the doctor-specific function, fall back to all patients with client-side filtering
+    try {
+      const { data, error: rpcError } = await supabase.rpc('get_patients_by_doctor', {
+        _clinic_id: clinicId,
+        _doctor_user_id: userId,
+        _limit: itemsPerPage,
+        _offset: from,
+      });
+      if (rpcError) throw rpcError;
+      patientsData = data || [];
+    } catch (err: any) {
+      // If the function doesn't exist, fall back to getting all patients and filtering client-side
+      console.warn("get_patients_by_doctor function not available, falling back to client-side filtering");
+      
+      // First, find the doctor ID for this user
+      const { data: doctor, error: doctorError } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('clinic_id', clinicId)
+        .single();
+      
+      if (doctorError || !doctor) {
+        console.warn("Doctor profile not found for user, showing no patients");
+        patientsData = [];
+      } else {
+        // Get all appointments for this doctor to find their patients
+        const { data: appointments, error: aptError } = await supabase
+          .from('appointments')
+          .select('patient_id')
+          .eq('clinic_id', clinicId)
+          .eq('doctor_id', doctor.id);
+        
+        if (aptError) throw aptError;
+        
+        const patientIds = [...new Set(appointments?.map(a => a.patient_id) || [])];
+        
+        if (patientIds.length === 0) {
+          patientsData = [];
+        } else {
+          // Get patients by IDs
+          const { data: patients, error: patientsError } = await supabase
+            .from('patients')
+            .select('*')
+            .eq('clinic_id', clinicId)
+            .in('id', patientIds)
+            .order('name')
+            .range(from, from + itemsPerPage - 1);
+            
+          if (patientsError) throw patientsError;
+          patientsData = patients || [];
+        }
+      }
+    }
+  } else {
+    // Staff and superadmin see all patients
+    const { data, error: rpcError } = await supabase.rpc('get_patients_by_clinic', {
+      _clinic_id: clinicId,
+      _limit: itemsPerPage,
+      _offset: from,
+    });
+    if (rpcError) throw rpcError;
+    patientsData = data || [];
+  }
 
   // For count, fallback to length if no count RPC exists
-  totalCount = patientsData.length < itemsPerPage ? from + patientsData.length : from + itemsPerPage + 1; // Approximate
+  const totalCount = patientsData.length < itemsPerPage ? from + patientsData.length : from + itemsPerPage + 1; // Approximate
 
   // TODO: Replace with a count RPC for accurate totalCount
 
@@ -60,8 +117,7 @@ const fetchPatients = async (clinicId: string, page: number, itemsPerPage: numbe
 };
 
 const Patients = () => {
-  console.log("Patients: Rendering component");
-  const { activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const { activeClinic, activeClinicRole, loading: authLoading, user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
@@ -73,13 +129,14 @@ const Patients = () => {
   const [appointmentPatient, setAppointmentPatient] = useState<Patient | null>(null);
 
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['patients', activeClinic?.clinic_id, currentPage, searchTerm],
-    queryFn: () => fetchPatients(activeClinic!.clinic_id, currentPage, itemsPerPage, searchTerm),
+    queryKey: ['patients', activeClinic?.clinic_id, currentPage, searchTerm, activeClinicRole, user?.id],
+    queryFn: () => fetchPatients(activeClinic!.clinic_id, currentPage, itemsPerPage, searchTerm, activeClinicRole || '', user?.id),
     enabled: !!activeClinic && !authLoading,
     retry: 1,
   });
 
   console.log("Patients: authLoading=", authLoading, "activeClinic=", !!activeClinic, "patients=", data?.patients);
+  console.log("Patients: Current role=", activeClinicRole, "Is superadmin=", activeClinicRole === 'superadmin');
 
   const handlePatientClick = (patient: Patient) => {
     setSelectedPatient(patient);
@@ -102,12 +159,10 @@ const Patients = () => {
   };
 
   if (authLoading) {
-    console.log("Patients: Rendering null due to authLoading");
     return null;
   }
 
   if (!activeClinic) {
-    console.log("Patients: Rendering no clinic message");
     return <div className="text-center py-4">Please select a clinic to view patients.</div>;
   }
 
@@ -124,10 +179,17 @@ const Patients = () => {
     <div className="space-y-6">
       <div className="flex justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Patients</h1>
-          <p className="text-muted-foreground">Manage patient records</p>
+          <h1 className="text-2xl font-bold">
+            {activeClinicRole === 'doctor' ? 'My Patients' : 'Patients'}
+          </h1>
+          <p className="text-muted-foreground">
+            {activeClinicRole === 'doctor' 
+              ? 'View and manage your assigned patients' 
+              : 'Manage patient records'
+            }
+          </p>
         </div>
-        {(activeClinicRole === 'superadmin') && (
+        {(activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
           <Button onClick={handleNewPatient}>
             <Plus size={18} className="mr-2" />
             New Patient
@@ -168,7 +230,7 @@ const Patients = () => {
                   <TableHead className="hidden lg:table-cell">Email</TableHead>
                   <TableHead className="hidden xl:table-cell">Date of Birth</TableHead>
                   <TableHead className="hidden xl:table-cell">Medical ID</TableHead>
-                  {(activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
+                  {(activeClinicRole === 'superadmin' || activeClinicRole === 'staff' || activeClinicRole === 'doctor') && (
                     <TableHead>Actions</TableHead>
                   )}
                 </TableRow>
@@ -177,7 +239,12 @@ const Patients = () => {
                 {patients.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-4">
-                      {searchTerm ? "No patients match your search" : "No patients found"}
+                      {searchTerm 
+                        ? `No patients match your search` 
+                        : activeClinicRole === 'doctor' 
+                          ? "You haven't been assigned any patients yet"
+                          : "No patients found"
+                      }
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -201,7 +268,7 @@ const Patients = () => {
                       <TableCell className="hidden lg:table-cell">{patient.email || "-"}</TableCell>
                       <TableCell className="hidden xl:table-cell">{patient.date_of_birth || "-"}</TableCell>
                       <TableCell className="hidden xl:table-cell">{patient.medical_id || "-"}</TableCell>
-                      {(activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
+                      {(activeClinicRole === 'superadmin' || activeClinicRole === 'staff' || activeClinicRole === 'doctor') && (
                         <TableCell onClick={e => e.stopPropagation()}>
                           <Button
                             size="sm"

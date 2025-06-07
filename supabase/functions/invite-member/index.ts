@@ -1,8 +1,12 @@
 // supabase/functions/invite-member/index.ts
 
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { corsHeaders } from "../_shared/cors.ts";
 
-Deno.serve(async (req) => {
+console.log("invite-member function invoked");
+
+serve(async (req) => {
   // Define CORS headers - IMPORTANT: In production, restrict origin to your actual frontend domain
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*', // Allow any origin for development. Change this in production!
@@ -32,14 +36,8 @@ Deno.serve(async (req) => {
 
   // Create a Supabase client with the service role key
   const supabaseAdmin = createClient(
-    supabaseUrl,
-    supabaseServiceRoleKey,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
+    Deno.env.get("SUPABASE_URL") ?? "",
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
   );
 
   if (req.method !== 'POST') {
@@ -221,7 +219,12 @@ Deno.serve(async (req) => {
     // Only set name if provided; otherwise, let it be null (users will complete profile later)
     const { data: profileData, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .upsert([{ id: invitedUserId, name: name || null, email }], { onConflict: 'id' })
+      .upsert([{ 
+        id: invitedUserId, 
+        name: name || null, 
+        email, 
+        phone: body.phone || null 
+      }], { onConflict: 'id' })
       .select()
       .single();
 

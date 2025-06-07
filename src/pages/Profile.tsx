@@ -1,14 +1,15 @@
-
 import React from 'react';
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+
+const supabase = getSupabase();
 
 const Profile = () => {
   const { user, activeClinicRole, loading: authLoading } = useAuth();

@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,10 +12,13 @@ import {
 import { Search, Plus, Calendar, User, IndianRupee } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BillingModal } from "@/components/BillingModal";
-import { supabase } from "@/integrations/supabase/client";
+import { EnhancedBillingModal } from "@/components/EnhancedBillingModal";
+import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+
+const supabase = getSupabase();
 
 interface BillWithDetails {
   id: string;
@@ -171,7 +173,7 @@ const Billing = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+      <div className="flex flex-col sm:flex-row  sm:justify-between space-y-2 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
           <p className="text-muted-foreground">Manage patient bills and payments</p>
@@ -301,7 +303,7 @@ const Billing = () => {
         </div>
       )}
 
-      <BillingModal
+      <EnhancedBillingModal
         open={openModal}
         onOpenChange={handleModalClose}
         bill={selectedBill}

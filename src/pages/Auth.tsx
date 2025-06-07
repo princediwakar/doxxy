@@ -5,9 +5,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/client";
 import { Eye, EyeOff, Mail, Lock, Text } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+
+const supabase = getSupabase();
+
+type AuthFlow = "login" | "signup" | "invite" | "reset" | "update-password";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -17,76 +21,128 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
-  const [isInviteFlow, setIsInviteFlow] = useState(false);
+  const [authFlow, setAuthFlow] = useState<AuthFlow>("login");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const { user, activeClinic, loading: authLoading, checkProfileCompletion } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
   const location = useLocation();
 
   const handleInvite = useCallback(async (inviteToken: string, inviteEmail: string | null) => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.verifyOtp({
+      console.log("Auth: Handling invite with token and email:", inviteToken, inviteEmail);
+      
+      const { data, error } = await supabase.auth.verifyOtp({
         email: inviteEmail || '',
         token: inviteToken,
         type: 'invite',
       });
 
       if (error) {
+        console.error("Auth: Invite verification error:", error);
         toast.error(error.message || "Invalid or expired invite token.");
-        console.error("Invite verification error:", error);
-        setIsInviteFlow(false);
+        setAuthFlow("login");
+        return;
+      }
+
+      if (data.session && data.user) {
+        console.log("Auth: Invite verified successfully, user logged in:", data.user.id);
+        setAuthFlow("invite");
+        setEmail(inviteEmail || data.user.email || '');
+        toast.info("Welcome! Please set your password to complete your account setup.");
       } else {
-        setIsInviteFlow(true);
-        toast.info("Please set your new password.");
-        navigate(location.pathname, { replace: true });
+        console.error("Auth: Invite verification succeeded but no session created");
+        toast.error("Failed to create session after invite verification.");
+        setAuthFlow("login");
       }
     } catch (error: unknown) {
-      console.error("An error occurred during invite verification:", error);
+      console.error("Auth: Exception during invite verification:", error);
       toast.error((error as Error).message || "An unknown error occurred during invite verification.");
-      setIsInviteFlow(false);
+      setAuthFlow("login");
     } finally {
       setLoading(false);
     }
-  }, [navigate, location.pathname]);
+  }, []);
+
+  const handlePasswordReset = useCallback(async (resetToken: string, resetEmail: string | null) => {
+    setLoading(true);
+    try {
+      console.log("Auth: Handling password reset with token and email:", resetToken, resetEmail);
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: resetEmail || '',
+        token: resetToken,
+        type: 'recovery',
+      });
+
+      if (error) {
+        console.error("Auth: Password reset verification error:", error);
+        toast.error(error.message || "Invalid or expired reset token.");
+        setAuthFlow("login");
+        return;
+      }
+
+      if (data.session && data.user) {
+        console.log("Auth: Password reset verified successfully, user logged in:", data.user.id);
+        setAuthFlow("update-password");
+        setEmail(resetEmail || data.user.email || '');
+        toast.info("Please enter your new password.");
+      } else {
+        console.error("Auth: Password reset verification succeeded but no session created");
+        toast.error("Failed to create session after password reset verification.");
+        setAuthFlow("login");
+      }
+    } catch (error: unknown) {
+      console.error("Auth: Exception during password reset verification:", error);
+      toast.error((error as Error).message || "An unknown error occurred during password reset verification.");
+      setAuthFlow("login");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const token = searchParams.get('token');
     const type = searchParams.get('type');
     const emailFromUrl = searchParams.get('email');
 
+    console.log("Auth: URL params:", { token, type, emailFromUrl, authLoading, user, activeClinic });
+
     if (authLoading) return;
 
-    if (activeClinic !== null && location.pathname === '/auth') {
-      console.log("Auth.tsx: Logged in user has active clinic, redirecting to /.");
+    // If user is already logged in and has active clinic, redirect to dashboard
+    if (user && activeClinic && location.pathname === '/auth') {
+      console.log("Auth: Logged in user with active clinic, redirecting to dashboard");
       navigate('/', { replace: true });
       return;
     }
 
-    if (!authLoading && user && activeClinic === null && !isInviteFlow) {
-      console.log("Auth.tsx: Logged in user has no active clinic, redirecting to / (clinic selection).");
+    // If user is logged in but no active clinic, redirect to main app (clinic selection)
+    if (!authLoading && user && !activeClinic && authFlow === "login") {
+      console.log("Auth: Logged in user without active clinic, redirecting to app");
       navigate('/', { replace: true });
       return;
     }
 
+    // Handle invite token
     if (token && type === 'invite' && !user) {
       handleInvite(token, emailFromUrl);
       return;
     }
 
-    if (!isInviteFlow && !user) {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          console.log('Auth state changed in Auth.tsx listener', event, session);
-        }
-      );
-      return () => {
-        subscription.unsubscribe();
-      };
+    // Handle password reset token
+    if (token && type === 'recovery') {
+      handlePasswordReset(token, emailFromUrl);
+      return;
     }
 
-  }, [navigate, searchParams, activeClinic, authLoading, isInviteFlow, handleInvite, user, location.pathname]);
+    // If no special flow and no user, ensure we're on login
+    if (!token && !user && authFlow !== "reset") {
+      setAuthFlow("login");
+    }
+
+  }, [navigate, searchParams, activeClinic, authLoading, handleInvite, handlePasswordReset, user, location.pathname, authFlow]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,10 +165,11 @@ const Auth = () => {
       }
 
       if (data.session) {
+        console.log("Auth: Login successful");
         toast.success("Login successful!");
       }
     } catch (error: unknown) {
-      console.error("Login error:", error);
+      console.error("Auth: Login error:", error);
       toast.error((error as Error).message || "An unknown error occurred during login.");
     } finally {
       setLoading(false);
@@ -150,13 +207,44 @@ const Auth = () => {
       }
 
       if (data.session) {
+        console.log("Auth: Signup successful with immediate session");
         toast.success("Account created successfully!");
       } else {
+        console.log("Auth: Signup successful, verification email sent");
         toast.info("Please check your email for verification");
       }
     } catch (error: unknown) {
-      console.error("Signup error:", error);
+      console.error("Auth: Signup error:", error);
       toast.error((error as Error).message || "An unknown error occurred during signup.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast.success("Password reset email sent! Check your inbox.");
+      setAuthFlow("login");
+    } catch (error: unknown) {
+      console.error("Auth: Forgot password error:", error);
+      toast.error((error as Error).message || "An unknown error occurred.");
     } finally {
       setLoading(false);
     }
@@ -166,7 +254,7 @@ const Auth = () => {
     e.preventDefault();
 
     if (!password || !confirmPassword) {
-      toast.error("Please enter and confirm your new password.");
+      toast.error("Please enter and confirm your password.");
       return;
     }
 
@@ -187,37 +275,37 @@ const Auth = () => {
         password: password
       });
 
-      if (error) { throw error; }
+      if (error) { 
+        throw error; 
+      }
 
-      toast.success("Password set successfully! You are now logged in.");
+      console.log("Auth: Password set successfully for user:", data?.user?.id);
+      toast.success("Password set successfully!");
 
-      // After setting password, check if profile is complete
+      // Check if profile is complete
       const currentUser = user || data?.user || null;
       if (currentUser) {
-        // Fetch profile
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("name, phone")
-          .eq("id", currentUser.id)
-          .maybeSingle();
-        if (!profileError && profile && profile.name && profile.phone) {
-          navigate("/dashboard");
-        } else {
-          // Pass invite name/email if available
+        const needsCompletion = await checkProfileCompletion(currentUser.id);
+        
+        if (needsCompletion) {
+          console.log("Auth: Profile incomplete, redirecting to complete profile");
           navigate("/complete-profile", {
             state: {
-              prefillName: name || undefined,
-              prefillEmail: email || undefined,
+              prefillName: name || currentUser.user_metadata?.name,
+              prefillEmail: email || currentUser.email,
             },
             replace: true,
           });
+        } else {
+          console.log("Auth: Profile complete, redirecting to dashboard");
+          navigate("/");
         }
       } else {
         navigate("/complete-profile", { replace: true });
       }
     } catch (error: unknown) {
-      console.error("Set password error:", error);
-      toast.error((error as Error).message || "An unknown error occurred during setting password.");
+      console.error("Auth: Set password error:", error);
+      toast.error((error as Error).message || "An unknown error occurred while setting password.");
     } finally {
       setLoading(false);
     }
@@ -225,12 +313,35 @@ const Auth = () => {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({ provider: "google" });
+    const { error } = await supabase.auth.signInWithOAuth({ 
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth`
+      }
+    });
     if (error) {
       toast.error("Google sign-in failed: " + error.message);
     }
     setGoogleLoading(false);
   };
+
+  const getCardDescription = () => {
+    switch (authFlow) {
+      case "invite":
+        return "Welcome! Set your password to complete your account setup";
+      case "update-password":
+        return "Enter your new password";
+      case "reset":
+        return "Enter your email to reset your password";
+      default:
+        return activeTab === "login" 
+          ? "Enter your credentials to log in" 
+          : "Create an account to get started";
+    }
+  };
+
+  const showGoogleButton = authFlow === "login" || authFlow === "signup";
+  const showTabs = authFlow === "login" || authFlow === "signup";
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
@@ -238,30 +349,32 @@ const Auth = () => {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Doxxy</CardTitle>
           <CardDescription>
-            {isInviteFlow
-              ? "Set your password"
-              : activeTab === "login"
-                ? "Enter your credentials to log in"
-                : "Create an account to get started"}
+            {getCardDescription()}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Google OAuth Button */}
-          <Button
-            onClick={handleGoogleSignIn}
-            className="w-full flex items-center justify-center gap-2"
-            variant="outline"
-            disabled={googleLoading}
-          >
-            <img src="/google.svg" alt="Google" className="h-5 w-5" />
-            {googleLoading ? "Signing in..." : "Sign in with Google"}
-          </Button>
-          <div className="flex items-center my-2">
-            <div className="flex-grow border-t border-muted-foreground/20" />
-            <span className="mx-2 text-muted-foreground text-xs">or</span>
-            <div className="flex-grow border-t border-muted-foreground/20" />
-          </div>
-          {isInviteFlow ? (
+          {showGoogleButton && (
+            <>
+              <Button
+                onClick={handleGoogleSignIn}
+                className="w-full flex items-center justify-center gap-2"
+                variant="outline"
+                disabled={googleLoading}
+              >
+                <img src="/google.svg" alt="Google" className="h-5 w-5" />
+                {googleLoading ? "Signing in..." : "Sign in with Google"}
+              </Button>
+              <div className="flex items-center my-2">
+                <div className="flex-grow border-t border-muted-foreground/20" />
+                <span className="mx-2 text-muted-foreground text-xs">or</span>
+                <div className="flex-grow border-t border-muted-foreground/20" />
+              </div>
+            </>
+          )}
+
+          {/* Password setting form for invites */}
+          {authFlow === "invite" && (
             <form onSubmit={handleSetPassword}>
               <div className="space-y-4">
                 <div className="relative">
@@ -272,6 +385,7 @@ const Auth = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-8"
+                    required
                   />
                   <button
                     type="button"
@@ -293,6 +407,29 @@ const Auth = () => {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="pl-8"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Setting password..." : "Set Password & Continue"}
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Password update form for password reset */}
+          {authFlow === "update-password" && (
+            <form onSubmit={handleSetPassword}>
+              <div className="space-y-4">
+                <div className="relative">
+                  <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="New Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-8"
+                    required
                   />
                   <button
                     type="button"
@@ -306,12 +443,56 @@ const Auth = () => {
                     )}
                   </button>
                 </div>
+                <div className="relative">
+                  <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-8"
+                    required
+                  />
+                </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Setting password..." : "Set Password"}
+                  {loading ? "Updating password..." : "Update Password"}
                 </Button>
               </div>
             </form>
-          ) : (
+          )}
+
+          {/* Forgot password form */}
+          {authFlow === "reset" && (
+            <form onSubmit={handleForgotPassword}>
+              <div className="space-y-4">
+                <div className="relative">
+                  <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-8"
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Sending..." : "Send Reset Email"}
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  className="w-full" 
+                  onClick={() => setAuthFlow("login")}
+                >
+                  Back to Login
+                </Button>
+              </div>
+            </form>
+          )}
+
+          {/* Regular login/signup tabs */}
+          {showTabs && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid grid-cols-2 w-full">
                 <TabsTrigger value="login">Login</TabsTrigger>
@@ -329,6 +510,7 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-8"
+                        required
                       />
                     </div>
 
@@ -340,6 +522,7 @@ const Auth = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-8"
+                        required
                       />
                       <button
                         type="button"
@@ -354,6 +537,17 @@ const Auth = () => {
                       </button>
                     </div>
 
+                    <div className="flex justify-end">
+                      <Button 
+                        type="button" 
+                        variant="link" 
+                        className="text-sm p-0 h-auto"
+                        onClick={() => setAuthFlow("reset")}
+                      >
+                        Forgot password?
+                      </Button>
+                    </div>
+
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? "Logging in..." : "Log In"}
                     </Button>
@@ -364,7 +558,6 @@ const Auth = () => {
               <TabsContent value="signup" className="space-y-4 pt-4">
                 <form onSubmit={handleSignup}>
                   <div className="space-y-2">
-
                     <div className="relative">
                       <Text className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                       <Input
@@ -373,6 +566,7 @@ const Auth = () => {
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         className="pl-8"
+                        required
                       />
                     </div>
                     <div className="relative">
@@ -383,10 +577,9 @@ const Auth = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-8"
+                        required
                       />
                     </div>
-
-
 
                     <div className="relative">
                       <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -396,6 +589,7 @@ const Auth = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-8"
+                        required
                       />
                       <button
                         type="button"
@@ -420,11 +614,13 @@ const Auth = () => {
           )}
         </CardContent>
         <CardFooter className="flex-col">
-          <p className="text-center text-sm text-muted-foreground">
-            {activeTab === "login"
-              ? "Don't have an account? Try signing up."
-              : "Already have an account? Log in instead."}
-          </p>
+          {showTabs && (
+            <p className="text-center text-sm text-muted-foreground">
+              {activeTab === "login"
+                ? "Don't have an account? Try signing up."
+                : "Already have an account? Log in instead."}
+            </p>
+          )}
         </CardFooter>
       </Card>
     </div>

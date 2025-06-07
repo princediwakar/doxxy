@@ -1,0 +1,114 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+<!-- project-structure.mdc -->
+# Doxxy - Clinic Management App - Project Structure
+
+## Root Directory Structure
+```
+clinic-life-orchestrator/
+├── .cursor/                  # Cursor IDE configuration
+├── .git/                     # Git repository
+├── dist/                     # Build output directory
+├── node_modules/             # Node.js dependencies
+├── public/                   # Static assets
+├── src/                      # Source code
+├── supabase/                 # Supabase configuration and migrations
+├── .gitignore               # Git ignore rules
+├── components.json          # Shadcn UI components configuration
+├── development-log.md       # Development progress and changes
+├── eslint.config.js         # ESLint configuration
+├── index.html              # Entry HTML file
+├── package.json            # Project dependencies and scripts
+├── postcss.config.js       # PostCSS configuration
+├── README.md               # Project documentation
+├── tailwind.config.ts      # Tailwind CSS configuration
+├── tsconfig.json           # TypeScript configuration
+├── tsconfig.app.json       # TypeScript app configuration
+├── tsconfig.node.json      # TypeScript Node configuration
+└── vite.config.ts          # Vite configuration
+```
+
+## Source Code Structure (`src/`)
+```
+src/
+├── components/             # Reusable UI components
+├── contexts/              # React context providers
+├── hooks/                 # Custom React hooks
+├── integrations/          # Third-party service integrations
+├── lib/                   # Utility functions and shared code
+├── pages/                 # Page components
+├── types/                 # TypeScript type definitions
+├── App.css               # Main application styles
+├── App.tsx               # Root application component
+├── index.css             # Global styles
+├── main.tsx              # Application entry point
+└── vite-env.d.ts         # Vite environment type definitions
+```
+
+## Key Features and Components
+
+### Authentication & User Management
+- Google OAuth integration
+- Role-based access control (superadmin, staff, doctor)
+- Profile completion flow
+- Member invitation system
+
+### Clinic Management
+- Multi-tenant architecture
+- Department management
+- Member management
+- Clinic settings
+
+### Patient Care
+- Patient profiles
+- Medical records
+- Appointments
+- Consultations
+
+### Billing
+- Bill creation and management
+- Payment tracking
+- Status monitoring
+
+### UI/UX
+- Modern React with TypeScript
+- Tailwind CSS for styling
+- Shadcn UI components
+- Responsive design
+- Toast notifications
+
+### Backend & Infrastructure
+- Supabase for database and authentication
+- Edge Functions for serverless operations
+- Row-Level Security (RLS) policies
+- Environment-based configuration
+
+### Development Tools
+- ESLint for code quality
+- Prettier for code formatting
+- TypeScript for type safety
+- Vite for build tooling
+- React Query for data fetching
+- Zod for form validation
+
+## Database Schema
+The database schema is managed through Supabase migrations in the `supabase/` directory. Key tables include:
+- profiles
+- clinics
+- departments
+- members
+- patients
+- appointments
+- consultations
+- medical_records
+- bills
+
+## Security
+- Row-Level Security (RLS) policies
+- Role-based access control
+- Secure authentication flows
+- Environment variable management
+- API key protection 

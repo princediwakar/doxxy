@@ -1,0 +1,238 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# Clinic Management System - Cursor Agent Rules
+
+## Project Context
+
+**Multi-tenant healthcare web app** for medical clinics (all specialties)  
+**Tech Stack**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, Supabase (RLS + MCP), Google OAuth, React Query, zod, Twilio, Resend  
+**Critical Requirements**: Strict multi-tenancy, role-based access (admin, doctor, staff), HIPAA compliance  
+**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing
+
+---
+
+## 🚨 CRITICAL: Autonomous Operation & Escalation
+
+### Proceed Autonomously For
+- Code edits, migrations, type updates, test runs, builds
+- Edge Function deployments, hook updates, UI changes
+- Performance optimizations, bug fixes, feature additions
+
+### Escalate Only When
+1. **Missing resources** - credentials, APIs, files unavailable
+2. **High-risk operations** - data deletion, schema drops, production deployments
+3. **Conflicting sources** - contradictory documentation after research
+4. **Unresolvable ambiguity** - after using all tools (`read_file`, `codebase_search`, `grep_search`, `web_search`, `supabase_mcp`)
+
+**Decision Rule**: If tools (including Supabase MCP) can resolve it → proceed autonomously. If not → escalate with research summary.
+
+---
+
+## 🎯 CRITICAL: Multi-Tenant Security
+
+### Row Level Security (RLS) - ALWAYS ENFORCE
+```sql
+-- Every table must have clinic isolation
+WHERE clinic_id IN (
+  SELECT clinic_id FROM clinic_members 
+  WHERE user_id = auth.uid()
+)
+```
+
+### Data Access Pattern - ALWAYS FILTER
+```typescript
+// Every query must filter by clinic_id
+const { data } = useQuery({
+  queryKey: ['resource', clinic_id],
+  queryFn: () => getResource(clinic_id),
+  select: (data) => data.filter(item => item.clinic_id === clinic_id)
+})
+```
+
+### Input Validation - ALWAYS VALIDATE
+```typescript
+// Every form/API call must validate clinic_id
+const schema = z.object({
+  clinic_id: z.string().uuid(),
+  // other fields...
+}).refine(data => data.clinic_id, "Clinic ID required");
+```
+
+---
+
+## ⚡ CRITICAL: Automated Workflows
+
+### After Every Database Change
+1. `supabase db push`
+2. `supabase gen types typescript --project-id chftygsapwhahqbqlfdx --schema public > src/integrations/supabase/types.ts`
+3. Update affected hooks/components
+4. `npm run test && npm run build`
+5. Log in `development-log.md`
+
+### After Every Code Change
+1. Auto-fix lint errors: `npm run lint:fix`
+2. Verify build: `npm run build`
+3. Run affected tests
+4. Check for `console.log` statements
+
+### Quality Gates (Must Pass)
+- [ ] Build succeeds
+- [ ] Tests pass
+- [ ] No lint errors
+- [ ] RLS policies prevent cross-clinic access
+- [ ] Types updated if schema changed
+
+---
+
+## 📁 File Conventions
+
+```
+src/
+├── components/
+│   └── [role]/           # AdminDashboard.tsx, DoctorPanel.tsx
+├── hooks/
+│   └── use[Feature].ts   # useAppointments.ts, usePatients.ts
+├── types/
+│   └── [feature].ts      # appointments.ts, billing.ts
+└── integrations/supabase/
+    └── types.ts          # Auto-generated, always update
+
+supabase/
+├── functions/
+│   └── [function-name]/  # send-sms/index.ts
+└── migrations/
+    └── YYYYMMDDHHMMSS_description.sql
+```
+
+---
+
+## 🔧 Technical Standards
+
+### TypeScript
+- Strict mode always on
+- Update `src/integrations/supabase/types.ts` for schema changes
+- No `any` types in production code
+
+### React Query
+- `staleTime: 5 * 60 * 1000` for frequent data
+- Always filter by `clinic_id`
+- Use `select` to reduce payload size
+
+### Security
+- Never expose service role keys
+- All Edge Functions use service role context properly
+- Validate all inputs with zod before Supabase calls
+
+### Performance
+- React.memo for heavy components
+- useCallback for event handlers
+- Index all `clinic_id` columns
+
+---
+
+## 🛠️ Cursor Workflow
+
+### Context Gathering (Always Do First)
+- `read_file` current state
+- `codebase_search` for related patterns
+- `grep_search` for exact matches
+- Check `supabase/migrations` and types
+
+### Implementation Strategy
+- Bundle related changes (hook + component + types)
+- Use `edit_file` for logical groups
+- Run `run_terminal_cmd` for shell operations
+- Auto-retry failed builds (max 3 attempts)
+
+---
+
+## 📋 Condensed Checklists
+
+### Code Changes ✓
+Build passes, tests pass, no lint errors, no console.log
+
+### Database Changes ✓
+Migration applied, types updated, RLS tested, hooks updated
+
+### UI Changes ✓
+Responsive, accessible, role-based rendering, loading states
+
+---
+
+## 🚨 Error Handling
+
+### Common Issues & Solutions
+- **Build fails** → `npm run lint:fix` → retry
+- **Type errors** → regenerate types → update imports
+- **RLS blocks** → check user clinic context
+- **Tests fail** → `npm run test:watch [file]`
+
+### Escalation Format
+```
+❌ Issue: [brief description]
+🔍 Investigated: [tools used, files checked]
+🔄 Attempted: [solutions tried]
+📋 Recommendation: [next steps or user input needed]
+```
+
+---
+
+## 📝 Documentation
+
+### Always Update
+- `development-log.md` for significant changes
+- `README.md` for setup changes
+- Comments for complex RLS policies
+
+### Log Format
+```markdown
+## [YYYY-MM-DD HH:MM] Feature/Fix Name
+- **Files**: [list]
+- **Migration**: [if applicable]
+- **Testing**: [updated/added]
+```
+
+---
+
+## 🏥 Healthcare-Specific Rules
+
+### HIPAA Compliance
+- No PHI in logs or error messages
+- All data access audited through RLS
+- Encryption for sensitive fields
+
+### Role-Based Access
+- `admin`: Full clinic management
+- `doctor`: Patient records, appointments
+- `staff`: Scheduling, basic patient info
+
+### Data Integrity
+- Cascade deletes for clinic relationships
+- Audit trails for sensitive operations
+- Regular cross-clinic leak detection
+
+---
+
+## 🎯 When User Requests Changes
+
+1. **Understand scope** - read related files, check patterns
+2. **Implement completely** - all files (types, hooks, UI, migrations)
+3. **Validate thoroughly** - run quality gates
+4. **Document clearly** - update logs and comments
+5. **Suggest improvements** - performance, security, maintainability
+
+**Remember**: Healthcare data requires extra care. When in doubt about data safety → escalate.
+
+---
+
+## 📊 Performance Targets
+
+- Page load: <1s
+- API response: <500ms
+- Database queries: <1s
+- Bundle size: <500KB initial
+
+---

@@ -33,7 +33,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { getSupabase } from '@/integrations/supabase/client';
 import { Database, Constants } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -84,6 +84,8 @@ interface DoctorModalProps {
   prefillName?: string;
   prefillEmail?: string;
 }
+
+const supabase = getSupabase();
 
 const DoctorModal: React.FC<DoctorModalProps> = ({
   open,
@@ -275,6 +277,7 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
               email: values.email,
               clinic_id: activeClinic.clinic_id,
               role: values.role, // Pass the selected role
+              department_id: values.department_id, // Add missing department_id
               // Pass other relevant doctor details for the Edge Function to use
               name: values.name,
               phone: values.phone,
@@ -390,6 +393,28 @@ const DoctorModal: React.FC<DoctorModalProps> = ({
             />
 
             {/* Role */}
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="doctor">Doctor</SelectItem>
+                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="superadmin">Super Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Department */}
             <FormField

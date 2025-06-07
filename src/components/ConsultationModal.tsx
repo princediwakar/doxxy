@@ -25,12 +25,12 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { ChevronDown, Save, Eye, History, Stethoscope, ClipboardList, Pill } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { ChevronDown, Save, Eye, History, Stethoscope, ClipboardList } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -38,12 +38,15 @@ import { format, parseISO } from "date-fns";
 import {
   neurologyNotesSchema,
   ophthalmologyNotesSchema,
+  generalNotesSchema,
   specialtyNoteFieldConfigs,
   NoteFieldConfig,
   NeurologyNotes,
   OphthalmologyNotes,
+  GeneralNotes,
 } from "@/lib/consultationNotesSchemas";
-import { PrescriptionModal } from "./PrescriptionModal";
+
+const supabase = getSupabase();
 
 // Types
 type Appointment = Database['public']['Tables']['appointments']['Row'] & {
@@ -56,13 +59,14 @@ type ConsultationInsert = Database['public']['Tables']['consultations']['Insert'
 type Consultation = Database['public']['Tables']['consultations']['Row'];
 type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 type ConsultationFormValues = z.infer<typeof consultationFormSchema>;
-type CombinedSpecialtyKeys = keyof NeurologyNotes | keyof OphthalmologyNotes;
+type CombinedSpecialtyKeys = keyof NeurologyNotes | keyof OphthalmologyNotes | keyof GeneralNotes;
 
 // Zod schema
 const consultationFormSchema = z.object({
   specialty_data: z.union([
     neurologyNotesSchema,
     ophthalmologyNotesSchema,
+    generalNotesSchema,
     z.null(),
     z.undefined(),
   ]).optional(),
@@ -109,7 +113,6 @@ const sectionDefinitions = [
       "prognosis",
       "follow_up",
       "referrals",
-      "prescription",
     ],
   },
 ];
@@ -139,10 +142,9 @@ interface ConsultationModalProps {
 
 export function ConsultationModal({ open, onOpenChange, appointment }: ConsultationModalProps) {
   const queryClient = useQueryClient();
-  const { activeClinic } = useAuth();
+  const { activeClinic, user, activeClinicRole } = useAuth();
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
-  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
   const [editedFields, setEditedFields] = useState<string[]>([]);
   const [shouldClose, setShouldClose] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<{ status: 'idle' | 'saving' | 'saved' | 'error'; timestamp?: string }>({ status: 'idle' });
@@ -174,15 +176,25 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
       enabled: open && !!appointment?.doctor_id && !!activeClinic?.clinic_id,
     });
 
+    // Determine department type with fallback for superadmin
     const departmentType = doctorDetails?.[0]?.department_name;
-  const currentSpecialtyFields = departmentType ? specialtyNoteFieldConfigs[departmentType] : undefined;
+    
+    // If no department is found but user is superadmin, provide a default consultation option
+    const isCurrentUserSuperadminConsulting = activeClinicRole === 'superadmin' && user?.id === appointment?.doctor_id;
+    const effectiveDepartmentType = departmentType || (isCurrentUserSuperadminConsulting ? 'General' : undefined);
+    
+    // Get specialty fields, with fallback to general fields for superadmin
+    const currentSpecialtyFields = effectiveDepartmentType ? 
+      (specialtyNoteFieldConfigs[effectiveDepartmentType] || specialtyNoteFieldConfigs['General']) : 
+      undefined;
 
   // Dynamically build sections based on departmentType
   const sections = sectionDefinitions.map((section) => {
     let fields: string[] = [];
     if (section.key === "Examination") {
-      if (departmentType === "Neurology") fields = section.neurologyFields || [];
-      else if (departmentType === "Ophthalmology") fields = section.ophthalmologyFields || [];
+      if (effectiveDepartmentType === "Neurology") fields = section.neurologyFields || [];
+      else if (effectiveDepartmentType === "Ophthalmology") fields = section.ophthalmologyFields || [];
+      else fields = section.fields || []; // Use general fields for General department or others
     } else {
       fields = section.fields || [];
     }
@@ -240,8 +252,8 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
           ? existingConsultation.specialty_data
           : undefined;
       if (!initialSpecialtyData && existingConsultation.clinical_notes && typeof existingConsultation.clinical_notes === 'string') {
-        const department = doctorDetails?.[0]?.department_name;
-        if (department === 'Neurology' || department === 'Ophthalmology') {
+        const department = effectiveDepartmentType;
+        if (department === 'Neurology' || department === 'Ophthalmology' || department === 'General') {
           initialSpecialtyData = { chief_complaint: existingConsultation.clinical_notes };
         }
       }
@@ -329,11 +341,6 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
     saveMutation.mutate({ values, isDraft });
   }, [isConfirming, saveMutation]);
 
-  const handleDetailedPrescription = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsPrescriptionModalOpen(true);
-  }, []);
-
   const getAge = useCallback((dateString?: string | null): string => {
     if (!dateString) return '';
     const dob = new Date(dateString);
@@ -364,7 +371,7 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
 
   // Add mutation for updating appointment status
   const updateAppointmentStatusMutation = useMutation({
-    mutationFn: async ({ appointmentId, status }: { appointmentId: string, status: string }) => {
+    mutationFn: async ({ appointmentId, status }: { appointmentId: string, status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled' }) => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
       const { error } = await supabase
         .from('appointments')
@@ -387,9 +394,10 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
             <div className="flex items-center justify-between">
               <DialogTitle className="text-base sm:text-lg font-semibold text-foreground">
                 {appointment?.patient_name || 'Unknown Patient'} - Consultation
-                {departmentType && (
+                {effectiveDepartmentType && (
                   <Badge variant="outline" className="ml-2 text-xs border-primary text-primary">
-                    {departmentType}
+                    {effectiveDepartmentType}
+                    {isCurrentUserSuperadminConsulting && !departmentType && " (Default)"}
                   </Badge>
                 )}
               </DialogTitle>
@@ -439,9 +447,14 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
               <div className="text-center py-6 text-muted-foreground text-xs sm:text-sm">
                 Loading consultation data...
               </div>
-            ) : !departmentType || !currentSpecialtyFields ? (
+            ) : !effectiveDepartmentType || !currentSpecialtyFields ? (
               <div className="text-center py-6 text-muted-foreground text-xs sm:text-sm">
-                No department-specific fields available. Please ensure the doctor is assigned to a department.
+                No consultation fields available. Please ensure the doctor is assigned to a department.
+                {isCurrentUserSuperadminConsulting && (
+                  <div className="mt-2 text-xs">
+                    As a superadmin, consider creating a doctor profile with a department assignment for specialized consultations.
+                  </div>
+                )}
               </div>
             ) : isPreviewMode ? (
               <ConsultationPreview data={form.getValues().specialty_data} fieldConfigs={currentSpecialtyFields} />
@@ -466,7 +479,6 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
                             <AccordionItem key={fieldConfig.name as string} value={fieldConfig.name as string}>
                               <AccordionTrigger className="text-xs sm:text-sm text-foreground hover:no-underline">
                                 <div className="flex items-center gap-2">
-                                  {fieldConfig.name === 'prescription' && <Pill className="h-4 w-4 text-primary" />}
                                   <span>{fieldConfig.label}</span>
                                   {isRequired && <span className="text-destructive text-xs">*</span>}
                                 </div>
@@ -501,17 +513,6 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
                                     </FormItem>
                                   )}
                                 />
-                                {fieldConfig.name === 'prescription' && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-2 text-xs sm:text-sm relative z-10"
-                                    onClick={handleDetailedPrescription}
-                                  >
-                                    <Pill className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                                    Add Detailed Prescription
-                                  </Button>
-                                )}
                               </AccordionContent>
                             </AccordionItem>
                           );
@@ -600,17 +601,6 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {existingConsultation?.id && (
-        <PrescriptionModal
-          open={isPrescriptionModalOpen}
-          onOpenChange={setIsPrescriptionModalOpen}
-          consultationId={existingConsultation.id}
-          appointment={appointment}
-          doctorId={appointment?.doctor_id || null}
-          patientId={appointment?.patient_id || null}
-          clinicId={activeClinic?.clinic_id || null}
-        />
-      )}
     </>
   );
 }
