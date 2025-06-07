@@ -16,8 +16,8 @@ import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { AppointmentModal } from './AppointmentModal';
-import { EnhancedBillingModal } from './EnhancedBillingModal';
+import { AppointmentModal } from '../appointments/AppointmentModal';
+import { EnhancedBillingModal } from '../billing/BillingModal';
 import { getAge, renderGender } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];

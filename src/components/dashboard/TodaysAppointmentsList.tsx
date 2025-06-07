@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, User } from "lucide-react";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { AppointmentTypeWithClinic } from "./ConsultationModal";
+import { AppointmentTypeWithClinic } from "../consultations/ConsultationModal";
 
 interface TodaysAppointmentsListProps {
   todayAppointments: AppointmentTypeWithClinic[];

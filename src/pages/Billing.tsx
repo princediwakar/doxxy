@@ -12,7 +12,7 @@ import {
 import { Search, Plus, Calendar, User, IndianRupee } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { EnhancedBillingModal } from "@/components/EnhancedBillingModal";
+import { EnhancedBillingModal } from "@/components/billing/BillingModal";
 import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";

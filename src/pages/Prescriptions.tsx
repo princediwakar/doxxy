@@ -41,8 +41,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
-import { PrescriptionViewModal } from '@/components/PrescriptionViewModal';
-import { PrescriptionModal } from '@/components/PrescriptionModal';
+import { PrescriptionViewModal } from '@/components/prescriptions/PrescriptionViewModal';
+import { PrescriptionModal } from '@/components/prescriptions/PrescriptionModal';
 import { toast } from 'sonner';
 
 const supabase = getSupabase();

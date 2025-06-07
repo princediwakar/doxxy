@@ -44,7 +44,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { PatientModal } from "@/components/PatientModal";
+import { PatientModal } from "@/components/patients/PatientModal";
 
 // Define types for convenience
 type Appointment = Database['public']['Tables']['appointments']['Row'];

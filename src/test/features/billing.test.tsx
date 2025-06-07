@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import Billing from '../../pages/Billing'
-import { EnhancedBillingModal } from '../../components/EnhancedBillingModal'
+import { EnhancedBillingModal } from '../../components/billing/BillingModal'
 import { mockBill } from '../test-utils'
 
 describe('Billing Management Features', () => {

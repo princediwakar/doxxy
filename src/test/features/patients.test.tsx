@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import Patients from '../../pages/Patients'
-import {PatientModal} from '../../components/PatientModal'
-import {PatientDetailsModal} from '../../components/PatientDetailsModal'
+import {PatientModal} from '../../components/patients/PatientModal'
+import {PatientDetailsModal} from '../../components/patients/PatientDetailsModal'
 import { mockPatient } from '../test-utils'
 
 describe('Patient Management Features', () => {

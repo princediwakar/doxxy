@@ -1,22 +1,19 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
 import { CalendarCheck, User, Users, Stethoscope, Activity, TrendingUp, Clock, Building2 } from "lucide-react";
-import { UpcomingAppointmentsList } from "@/components/UpcomingAppointmentsList";
+import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData } from "@/types/dashboard";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
-import { WeeklyAppointmentsChart } from "@/components/WeeklyAppointmentsChart";
+import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { DashboardStatsCard } from "@/components/DashboardStatsCard";
+import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { useState } from "react";
 import { Enums } from "@/integrations/supabase/types";
-import { DoctorModal } from '@/components/DoctorModal';
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import SuperAdminDashboard from "@/components/role/SuperAdminDashboard";
 
 const supabase = getSupabase();
 
@@ -49,7 +46,6 @@ const Dashboard = () => {
   const appointmentsPerPage = 5;
 
   // State for onboarding doctor modal
-  const [showDoctorModal, setShowDoctorModal] = useState(false);
 
   // Query: Does the current user have a doctor profile for this clinic?
   const { data: hasDoctorProfile, isLoading: isDoctorProfileLoading } = useQuery({

@@ -20,7 +20,7 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { Pill, Plus, Trash2 } from "lucide-react";
-import { ScrollArea } from "./ui/scroll-area";
+import { ScrollArea } from "../ui/scroll-area";
 
 const supabase = getSupabase();
 

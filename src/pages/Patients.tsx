@@ -18,15 +18,15 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Search, Plus, User } from "lucide-react";
-import { PatientModal } from "@/components/PatientModal";
-import { PatientDetailsModal } from "@/components/PatientDetailsModal";
+import { PatientModal } from "@/components/patients/PatientModal";
+import { PatientDetailsModal } from "@/components/patients/PatientDetailsModal";
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { Database, Tables } from "@/integrations/supabase/types";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { PostgrestError } from "@supabase/supabase-js";
-import { AppointmentModal } from "@/components/AppointmentModal";
+import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 import { getAge } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];

@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '../test-utils'
 import MedicalRecords from '../../pages/MedicalRecords'
-import {ConsultationModal} from '../../components/ConsultationModal'
-import {ConsultationViewModal} from '../../components/ConsultationViewModal'
+import {ConsultationModal} from '../../components/consultations/ConsultationModal'
+import {ConsultationViewModal} from '../../components/consultations/ConsultationViewModal'
 import { mockPatient, mockAppointment as baseMockAppointment } from '../test-utils'
 
 // Type assertion to fix appointment type mismatch

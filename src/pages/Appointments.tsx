@@ -23,7 +23,7 @@ import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 // Assuming AppointmentModal exists and is correctly exported
-import { AppointmentModal } from '@/components/AppointmentModal';
+import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 import { format, parseISO } from 'date-fns';
 import {
   DropdownMenu,
@@ -33,10 +33,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ConsultationModal } from '@/components/ConsultationModal';
-import { ConsultationViewModal } from '@/components/ConsultationViewModal';
-import { EnhancedBillingModal } from '@/components/EnhancedBillingModal';
-import { PrescriptionModal } from '@/components/PrescriptionModal';
+import { ConsultationModal } from '@/components/consultations/ConsultationModal';
+import { ConsultationViewModal } from '@/components/consultations/ConsultationViewModal';
+import { EnhancedBillingModal } from '@/components/billing/BillingModal';
+import { PrescriptionModal } from '@/components/prescriptions/PrescriptionModal';
 import { Enums } from "@/integrations/supabase/types";
 
 // Type for the return of the get_appointments_with_details_by_clinic RPC
