@@ -1,7 +1,7 @@
 // File: src/components/PrivateRoute.tsx
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 
 const PrivateRoute = () => {
   const { user, activeClinic, loading, initialLoading, clinicLoading, needsProfileCompletion } = useAuth();

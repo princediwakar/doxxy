@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";

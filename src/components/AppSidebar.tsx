@@ -5,7 +5,7 @@ import { Users, User, CalendarPlus, CreditCard, Home, LogOut, Settings, FileText
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 
-import ClinicSwitcher from "@/components/clinic-switcher";
+import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

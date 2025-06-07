@@ -1,6 +1,5 @@
 // File: src/App.tsx
 
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,6 +21,8 @@ import Profile from "./pages/Profile";
 import CreateClinicPage from "./pages/CreateClinicPage";
 import SettingsPage from "./pages/SettingsPage";
 import CompleteProfile from "@/pages/CompleteProfile";
+import TermsPage from "./pages/Terms";
+import PrivacyPage from "./pages/Privacy";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,8 @@ const AppRoutes = () => {
     <Routes>
       {/* Public routes */}
       <Route path="/auth" element={<Auth />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       {/* Protected routes handled by PrivateRoute */}
       <Route element={<PrivateRoute />}> 
         <Route path="/create-clinic" element={<CreateClinicPage />} />
@@ -54,9 +57,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
-        <Toaster />
         <Sonner />
-
         <BrowserRouter>
           <AppRoutes />
         </BrowserRouter>

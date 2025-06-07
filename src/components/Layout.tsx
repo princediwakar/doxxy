@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/AppSidebar";
 
 const Layout = () => {
   const { loading } = useAuth();
