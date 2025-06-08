@@ -92,7 +92,7 @@ const schema = z.object({
 ```
 src/
 ├── components/
-│   └── [role]/           # AdminDashboard.tsx, DoctorPanel.tsx
+│   └── [patients]/           # PatientModal.tsx, PatientDetailsModal.tsx
 ├── hooks/
 │   └── use[Feature].ts   # useAppointments.ts, usePatients.ts
 ├── types/
