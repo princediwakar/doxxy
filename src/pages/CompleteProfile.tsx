@@ -82,11 +82,16 @@ const CompleteProfile = () => {
       }
 
       // Mark profile as complete in auth context
-      markProfileComplete();
+      await markProfileComplete();
       
       toast.success("Profile completed!");
       console.log("CompleteProfile: Profile completed successfully, navigating to dashboard");
-      navigate("/");
+      
+      // Add a small delay to ensure state update propagates before navigation
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 100);
+      
     } catch (error) {
       console.error("CompleteProfile: Exception during profile update:", error);
       toast.error("An error occurred while updating your profile.");

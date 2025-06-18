@@ -4,12 +4,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading: initialLoading, activeClinic, clinicLoading } = useAuth();
+  const { user, loading: initialLoading, activeClinic, clinicLoading, needsProfileCompletion } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
   const loading = initialLoading || clinicLoading;
-  const needsProfileCompletion = user && (!user.user_metadata?.name || !user.user_metadata?.phone);
 
   // Wait for initial session check to complete before rendering anything
   if (initialLoading) {

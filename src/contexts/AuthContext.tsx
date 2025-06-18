@@ -26,7 +26,7 @@ interface AuthContextProps {
   profileName: string | null;
   needsProfileCompletion: boolean;
   checkProfileCompletion: (userId: string) => Promise<boolean>;
-  markProfileComplete: () => void;
+  markProfileComplete: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -92,11 +92,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [needsProfileCompletion]);
 
   // Function to mark profile as complete (called after successful profile update)
-  const markProfileComplete = useCallback(() => {
+  const markProfileComplete = useCallback(async () => {
     console.log("AuthContext: Marking profile as complete");
     setNeedsProfileCompletion(false);
     profileCheckRef.current = null; // Reset cache
-  }, []);
+    
+    // Also trigger a fresh profile check to ensure consistency
+    if (user?.id) {
+      await checkProfileCompletion(user.id);
+    }
+  }, [user?.id, checkProfileCompletion]);
 
   const signOut = async () => {
     await supabase.auth.signOut();
