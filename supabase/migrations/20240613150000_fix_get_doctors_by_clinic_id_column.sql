@@ -1,6 +1,4 @@
--- Fix get_doctors_by_clinic function to return proper doctor id for foreign key references
--- The function should return the doctor's actual id (not user_id) for foreign key compatibility
-
+-- Fix get_doctors_by_clinic to return the real doctor id for foreign key compatibility
 DROP FUNCTION IF EXISTS get_doctors_by_clinic(UUID);
 
 CREATE OR REPLACE FUNCTION get_doctors_by_clinic(clinic_id UUID)

@@ -1,10 +1,10 @@
 import { Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
+import AppHeader from './AppHeader';
 
 const Layout = () => {
   const { loading } = useAuth();
-  console.log("Layout: Rendering with loading=", loading);
 
   return (
     <div className="flex min-h-screen bg-gray-100">

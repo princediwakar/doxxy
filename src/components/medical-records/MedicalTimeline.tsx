@@ -13,8 +13,28 @@ import {
   Activity,
   Eye
 } from 'lucide-react';
+import { Tables } from "@/integrations/supabase/types";
 
-// Types
+// Define proper types
+type Consultation = Tables<"consultations"> & {
+  appointment?: {
+    date: string;
+    time: string;
+    doctor_name: string;
+    department_name: string;
+  } | null;
+};
+
+type Prescription = Tables<"prescriptions"> & {
+  doctor_name?: string;
+};
+
+type AppointmentData = Tables<"appointments"> & {
+  patient_name?: string;
+  doctor_name?: string;
+  department_name?: string;
+};
+
 interface TimelineEvent {
   id: string;
   type: 'consultation' | 'prescription' | 'appointment';
@@ -25,15 +45,15 @@ interface TimelineEvent {
   doctor_name?: string;
   department_name?: string;
   status?: string;
-  data?: any; // Original data object for viewing details
+  data?: Consultation | Prescription | AppointmentData; // Properly typed data object
 }
 
 interface MedicalTimelineProps {
-  consultations: any[];
-  prescriptions: any[];
-  appointments?: any[];
-  onViewConsultation?: (consultation: any) => void;
-  onViewPrescription?: (prescription: any) => void;
+  consultations: Consultation[];
+  prescriptions: Prescription[];
+  appointments?: AppointmentData[];
+  onViewConsultation?: (consultation: Consultation) => void;
+  onViewPrescription?: (prescription: Prescription) => void;
   loading?: boolean;
 }
 
@@ -111,20 +131,20 @@ export function MedicalTimeline({
     });
   };
 
-  const getConsultationDescription = (consultation: any): string => {
+  const getConsultationDescription = (consultation: Consultation): string => {
     if (consultation.specialty_data && typeof consultation.specialty_data === 'object') {
-      const data = consultation.specialty_data as any;
-      if (data.chief_complaint) {
+      const data = consultation.specialty_data as Record<string, unknown>;
+      if (data.chief_complaint && typeof data.chief_complaint === 'string') {
         return `Chief Complaint: ${data.chief_complaint.substring(0, 100)}${data.chief_complaint.length > 100 ? '...' : ''}`;
       }
-      if (data.assessment) {
+      if (data.assessment && typeof data.assessment === 'string') {
         return `Assessment: ${data.assessment.substring(0, 100)}${data.assessment.length > 100 ? '...' : ''}`;
       }
     }
     return 'Medical consultation completed';
   };
 
-  const getPrescriptionDescription = (prescription: any): string => {
+  const getPrescriptionDescription = (prescription: Prescription): string => {
     if (prescription.medications) {
       if (typeof prescription.medications === 'string') {
         return `Medications: ${prescription.medications.substring(0, 100)}${prescription.medications.length > 100 ? '...' : ''}`;
@@ -197,7 +217,7 @@ export function MedicalTimeline({
 
   return (
     <ScrollArea className="h-[500px]">
-      <div className="space-y-4 p-1">
+      <div className="space-y-4">
         {timelineEvents.map((event, index) => (
           <Card 
             key={event.id} 
@@ -250,7 +270,7 @@ export function MedicalTimeline({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onViewConsultation(event.data)}
+                      onClick={() => onViewConsultation(event.data as Consultation)}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       View
@@ -260,7 +280,7 @@ export function MedicalTimeline({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onViewPrescription(event.data)}
+                      onClick={() => onViewPrescription(event.data as Prescription)}
                     >
                       <FileText className="h-4 w-4 mr-1" />
                       Details

@@ -3,9 +3,10 @@ import { render, screen, fireEvent, waitFor } from '../test-utils'
 import Appointments from '../../pages/Appointments'
 import {AppointmentModal} from '../../components/appointments/AppointmentModal'
 import { mockAppointment as baseMockAppointment, mockPatient, mockDoctor } from '../test-utils'
+import { Tables } from '@/integrations/supabase/types'
 
-// Type assertion to fix appointment type mismatch  
-const mockAppointment = baseMockAppointment as any
+// Type assertion to fix appointment type mismatch
+const mockAppointment = baseMockAppointment as unknown as Tables<'appointments'>
 
 describe('Appointment Management Features', () => {
   beforeEach(() => {

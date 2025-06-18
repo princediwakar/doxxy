@@ -8,7 +8,7 @@ vi.mock('../../contexts/AuthContext', () => ({
   useAuth: vi.fn(),
 }))
 
-const mockUseAuth = useAuth as any
+const mockUseAuth = useAuth as unknown as jest.Mock
 
 describe('Dashboard Features', () => {
   beforeEach(() => {

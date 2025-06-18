@@ -1,6 +1,7 @@
 // src/components/DashboardStatsCard.tsx
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ReactNode } from "react";
+import React from "react";
 import { cn } from "@/lib/utils";
 
 interface DashboardStatsCardProps {
@@ -24,11 +25,36 @@ export function DashboardStatsCard({
 }: DashboardStatsCardProps) {
   const isClickable = !!onClick;
   
+  // Extract the color from the icon based on text color classes or use defaults
+  const getIconColorAndBg = () => {
+    if (typeof icon === 'object' && icon && 'props' in icon) {
+      const className = (icon.props as { className?: string })?.className || '';
+      if (className.includes('text-medical-blue') || className.includes('text-blue-500')) {
+        return { iconColor: 'text-primary', bgColor: 'bg-primary/10', textColor: 'text-primary' };
+      }
+      if (className.includes('text-success') || className.includes('text-green-500') || className.includes('text-emerald-500')) {
+        return { iconColor: 'text-success', bgColor: 'bg-success/10', textColor: 'text-success' };
+      }
+      if (className.includes('text-warning') || className.includes('text-orange-500')) {
+        return { iconColor: 'text-warning', bgColor: 'bg-warning/10', textColor: 'text-warning' };
+      }
+      if (className.includes('text-accent') || className.includes('text-purple-500')) {
+        return { iconColor: 'text-accent', bgColor: 'bg-accent/10', textColor: 'text-accent' };
+      }
+      if (className.includes('text-medical-teal')) {
+        return { iconColor: 'text-accent', bgColor: 'bg-accent/10', textColor: 'text-accent' };
+      }
+    }
+    return { iconColor: 'text-primary', bgColor: 'bg-primary/10', textColor: 'text-primary' };
+  };
+
+  const { iconColor, bgColor, textColor } = getIconColorAndBg();
+  
   return (
     <Card 
       className={cn(
-        "col-span-1 transition-all duration-200",
-        isClickable && "hover:shadow-md hover:scale-[1.02] cursor-pointer hover:border-primary/50",
+        "medical-card shadow-medical col-span-1 transition-all duration-200",
+        isClickable && "hover:shadow-lg hover:scale-[1.02] cursor-pointer hover:border-primary/50",
         variant === "primary" && "border-primary/20 bg-primary/5",
         variant === "secondary" && "border-secondary/20 bg-secondary/5"
       )}
@@ -43,21 +69,27 @@ export function DashboardStatsCard({
         }
       } : undefined}
     >
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {label}
-        </CardTitle>
-        <div className="transition-transform duration-200 hover:scale-110">
-          {icon}
+      <CardContent className="pt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className={cn("text-2xl font-bold", textColor)}>{value}</p>
+            {description && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {description}
+              </p>
+            )}
+          </div>
+          <div className={cn("p-3 rounded-lg transition-transform duration-200", bgColor, isClickable && "hover:scale-110")}>
+            {/* Clone the icon with the new color class */}
+            {typeof icon === 'object' && icon && 'props' in icon 
+              ? React.cloneElement(icon as React.ReactElement, { 
+                  className: cn("w-6 h-6", iconColor)
+                })
+              : icon
+            }
+          </div>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold tracking-tight">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">
-            {description}
-          </p>
-        )}
       </CardContent>
     </Card>
   );

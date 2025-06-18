@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -9,7 +9,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Plus, Calendar, User, IndianRupee } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Search, Plus, Calendar, User, IndianRupee, CreditCard, Activity, Shield, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EnhancedBillingModal } from "@/components/billing/BillingModal";
@@ -40,6 +48,8 @@ interface BillingStats {
 const Billing = () => {
   const { activeClinic } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [openModal, setOpenModal] = useState(false);
   const [selectedBill, setSelectedBill] = useState(null);
   const [bills, setBills] = useState<BillWithDetails[]>([]);
@@ -51,14 +61,7 @@ const Billing = () => {
     overdueAmount: 0
   });
 
-  useEffect(() => {
-    if (activeClinic?.clinic_id) {
-      fetchBills();
-      fetchStats();
-    }
-  }, [activeClinic?.clinic_id]);
-
-  const fetchBills = async () => {
+  const fetchBills = useCallback(async () => {
     if (!activeClinic?.clinic_id) return;
     
     setLoading(true);
@@ -67,7 +70,12 @@ const Billing = () => {
         .from('bills')
         .select(`
           *,
-          patients(name)
+          patients(name),
+          service_items,
+          discount_percentage,
+          tax_percentage,
+          billing_type,
+          notes
         `)
         .eq('clinic_id', activeClinic.clinic_id)
         .order('created_at', { ascending: false });
@@ -88,16 +96,16 @@ const Billing = () => {
         }));
         setBills(formattedBills);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching bills:", error);
       toast.error("Failed to load bills");
       setBills([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeClinic?.clinic_id]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!activeClinic?.clinic_id) return;
     
     try {
@@ -131,12 +139,19 @@ const Billing = () => {
           overdueAmount
         });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching stats:", error);
     }
-  };
+  }, [activeClinic?.clinic_id]);
 
-  const handleBillClick = (bill: any) => {
+  useEffect(() => {
+    if (activeClinic?.clinic_id) {
+      fetchBills();
+      fetchStats();
+    }
+  }, [activeClinic?.clinic_id, fetchBills, fetchStats]);
+
+  const handleBillClick = (bill: BillWithDetails) => {
     setSelectedBill(bill);
     setOpenModal(true);
   };
@@ -152,11 +167,19 @@ const Billing = () => {
     fetchStats();
   };
 
-  const filteredBills = bills.filter((bill) =>
-    bill.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.status?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { filteredBills, totalPages } = useMemo(() => {
+    const filtered = bills.filter((bill) =>
+      bill.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.status?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const totalPages = Math.ceil(filtered.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedData = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+    return { filteredBills: paginatedData, totalPages };
+  }, [bills, searchTerm, currentPage, itemsPerPage]);
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -168,85 +191,119 @@ const Billing = () => {
   };
 
   if (!activeClinic) {
-    return <div className="text-center py-4">Please select a clinic to view billing.</div>;
+    return (
+      <Card className="medical-card m-6">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-2">
+            <CreditCard className="w-12 h-12 text-muted-foreground mx-auto" />
+            <p className="text-muted-foreground">Please select a clinic to view billing.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row  sm:justify-between space-y-2 sm:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
-          <p className="text-muted-foreground">Manage patient bills and payments</p>
+    <div className="space-y-6 ">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+              <CreditCard className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-primary">Billing</h1>
+              <p className="text-muted-foreground">Manage patient bills and payments</p>
+            </div>
+          </div>
         </div>
-        <Button onClick={handleNewBill}>
+        <Button 
+          onClick={handleNewBill}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+        >
           <Plus size={18} className="mr-2" />
           Create Bill
         </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <IndianRupee className="h-5 w-5 text-green-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.totalRevenue.toFixed(2)}</div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-2xl font-bold text-success">₹{stats.totalRevenue.toFixed(2)}</p>
+              </div>
+              <div className="bg-success/10 p-3 rounded-lg">
+                <IndianRupee className="w-6 h-6 text-success" />
+              </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Amount</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Calendar className="h-5 w-5 text-orange-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.pendingAmount.toFixed(2)}</div>
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Pending Amount</p>
+                <p className="text-2xl font-bold text-warning">₹{stats.pendingAmount.toFixed(2)}</p>
+              </div>
+              <div className="bg-warning/10 p-3 rounded-lg">
+                <Calendar className="w-6 h-6 text-warning" />
+              </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Paid Bills</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <User className="h-5 w-5 text-blue-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.paidBills}</div>
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Paid Bills</p>
+                <p className="text-2xl font-bold text-primary">{stats.paidBills}</p>
+              </div>
+              <div className="bg-primary/10 p-3 rounded-lg">
+                <User className="w-6 h-6 text-primary" />
+              </div>
             </div>
           </CardContent>
         </Card>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Overdue Amount</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <IndianRupee className="h-5 w-5 text-red-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.overdueAmount.toFixed(2)}</div>
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Overdue Amount</p>
+                <p className="text-2xl font-bold text-destructive">₹{stats.overdueAmount.toFixed(2)}</p>
+              </div>
+              <div className="bg-destructive/10 p-3 rounded-lg">
+                <Activity className="w-6 h-6 text-destructive" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="flex items-center space-x-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search bills by patient name, invoice number, or status..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-      </div>
+      {/* Search Section */}
+      <Card className="medical-card">
+        <CardContent className="p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search bills by patient name, invoice number, or status..."
+              className="pl-10 bg-background border-border focus:ring-primary"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {loading ? (
         <div className="space-y-4">
@@ -255,7 +312,7 @@ const Billing = () => {
           ))}
         </div>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
+        <Card className="medical-card shadow-medical">
           <Table>
             <TableHeader>
               <TableRow>
@@ -278,7 +335,7 @@ const Billing = () => {
                 filteredBills.map((bill) => (
                   <TableRow 
                     key={bill.id} 
-                    className="cursor-pointer hover:bg-muted/50"
+                    className="cursor-pointer hover:bg-primary/5"
                     onClick={() => handleBillClick(bill)}
                   >
                     <TableCell className="font-medium">{bill.invoice_number}</TableCell>
@@ -291,7 +348,17 @@ const Billing = () => {
                       {bill.description || "-"}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getStatusColor(bill.status)}>
+                      <Badge variant={
+                        bill.status === 'Paid' ? 'default' :
+                        bill.status === 'Pending' ? 'secondary' :
+                        bill.status === 'Overdue' ? 'destructive' :
+                        'outline'
+                      } className={`status-badge ${
+                        bill.status === 'Paid' ? 'status-active' :
+                        bill.status === 'Pending' ? 'status-pending' :
+                        bill.status === 'Overdue' ? 'status-urgent' :
+                        'status-inactive'
+                      }`}>
                         {bill.status}
                       </Badge>
                     </TableCell>
@@ -300,13 +367,53 @@ const Billing = () => {
               )}
             </TableBody>
           </Table>
-        </div>
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6 px-6 pb-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                    const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                    if (pageNum <= totalPages && pageNum > 0) {
+                      return (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(pageNum)}
+                            isActive={currentPage === pageNum}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+        </Card>
       )}
 
       <EnhancedBillingModal
         open={openModal}
         onOpenChange={handleModalClose}
         bill={selectedBill}
+        mode={selectedBill ? 'view' : 'create'}
       />
     </div>
   );

@@ -138,7 +138,13 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
   const departmentType = doctorDetails?.[0]?.department_name || 'General';
   const fieldConfigs = specialtyNoteFieldConfigs[departmentType] || specialtyNoteFieldConfigs['General'];
 
-  // Get specialty data
+  // Get clinical notes and specialty data
+  const clinicalNotes = consultationData?.clinical_notes && 
+    typeof consultationData.clinical_notes === 'object' && 
+    !Array.isArray(consultationData.clinical_notes) 
+      ? consultationData.clinical_notes as Record<string, unknown>
+      : {};
+
   const specialtyData = consultationData?.specialty_data && 
     typeof consultationData.specialty_data === 'object' && 
     !Array.isArray(consultationData.specialty_data) 
@@ -150,7 +156,12 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     if (fieldName === 'patient_info') {
       return `${appointment?.patient_name || 'Unknown'} | ${appointment?.patient_gender || 'Unknown'} | DOB: ${appointment?.patient_date_of_birth || 'Unknown'}`;
     }
-    return specialtyData?.[fieldName] as string || null;
+    
+    // First check clinical_notes, then specialty_data
+    const clinicalValue = clinicalNotes?.[fieldName] as string;
+    const specialtyValue = specialtyData?.[fieldName] as string;
+    
+    return clinicalValue || specialtyValue || null;
   };
 
   // Helper function to get field label
@@ -205,7 +216,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
         <ScrollArea className="max-h-[75vh]">
           <div className="space-y-6 p-1">
             {/* Header Information */}
-            <Card>
+            <Card className="medical-card shadow-medical">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -220,11 +231,11 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Badge variant="outline">
+                    <Badge variant="secondary" className="status-badge status-pending">
                       <Building2 className="h-3 w-3 mr-1" />
                       {departmentType}
                     </Badge>
-                    <Badge variant="secondary">Completed</Badge>
+                    <Badge variant="default" className="status-badge status-active">Completed</Badge>
                   </div>
                 </div>
               </CardHeader>
@@ -256,10 +267,10 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
 
             {/* Consultation Sections */}
             {!isLoadingConsultation && consultationData && sections.map((section) => (
-              <Card key={section.key}>
+              <Card key={section.key} className="medical-card shadow-medical">
                 <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center space-x-2 text-base">
-                    <section.icon className="h-4 w-4" />
+                  <CardTitle className="flex items-center space-x-2 text-base text-primary">
+                    <section.icon className="h-4 w-4 text-primary" />
                     <span>{section.key}</span>
                   </CardTitle>
                 </CardHeader>

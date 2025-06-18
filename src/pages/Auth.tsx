@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { getSupabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, Mail, Lock, Text } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Text, Stethoscope, Heart, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const supabase = getSupabase();
@@ -22,11 +22,11 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("login");
   const [authFlow, setAuthFlow] = useState<AuthFlow>("login");
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, activeClinic, loading: authLoading, checkProfileCompletion } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleInvite = useCallback(async (inviteToken: string, inviteEmail: string | null) => {
     setLoading(true);
@@ -112,22 +112,32 @@ const Auth = () => {
     if (authLoading) return;
 
     // If user is already logged in and has active clinic, redirect to dashboard
-    if (user && activeClinic && location.pathname === '/auth') {
+    // Skip this redirect if we're processing an invite or recovery token.
+    if (user && activeClinic && location.pathname === '/auth' && !token) {
       console.log("Auth: Logged in user with active clinic, redirecting to dashboard");
       navigate('/', { replace: true });
       return;
     }
 
     // If user is logged in but no active clinic, redirect to main app (clinic selection)
-    if (!authLoading && user && !activeClinic && authFlow === "login") {
+    if (!authLoading && user && !activeClinic && authFlow === "login" && !token) {
       console.log("Auth: Logged in user without active clinic, redirecting to app");
       navigate('/', { replace: true });
       return;
     }
 
-    // Handle invite token
-    if (token && type === 'invite' && !user) {
-      handleInvite(token, emailFromUrl);
+    // Handle invite token – if a user is already logged in (e.g. superadmin)
+    // log them out first so the invited account can be verified and prompted
+    // to set a password.
+    if (token && type === 'invite') {
+      const processInvite = () => handleInvite(token, emailFromUrl);
+
+      if (user) {
+        // Existing session blocks invite verification – clear it first.
+        supabase.auth.signOut().then(processInvite);
+      } else {
+        processInvite();
+      }
       return;
     }
 
@@ -344,21 +354,36 @@ const Auth = () => {
   const showTabs = authFlow === "login" || authFlow === "signup";
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Doxxy</CardTitle>
-          <CardDescription>
-            {getCardDescription()}
-          </CardDescription>
-        </CardHeader>
+    <div className="pt-16 min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+        <Card className="w-full max-w-md medical-card shadow-medical-lg border-primary/10">
+          <CardHeader className="space-y-4 text-center">
+            <div className="flex items-center justify-center">
+              <img src="/logo.svg" alt="Doxxy" className="w-32 " />
+            </div>
+            <div>
+              <CardDescription className="text-base">
+                {getCardDescription()}
+              </CardDescription>
+            </div>
+            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Shield className="w-3 h-3 text-success" />
+                <span>HIPAA Compliant</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Heart className="w-3 h-3 text-accent" />
+                <span>Healthcare Focused</span>
+              </div>
+            </div>
+          </CardHeader>
         <CardContent className="space-y-4">
           {/* Google OAuth Button */}
           {showGoogleButton && (
             <>
               <Button
                 onClick={handleGoogleSignIn}
-                className="w-full flex items-center justify-center gap-2"
+                className="w-full flex items-center justify-center gap-2 border-primary/20 hover:bg-primary/5 hover:border-primary/30"
                 variant="outline"
                 disabled={googleLoading}
               >
@@ -410,7 +435,11 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                  disabled={loading}
+                >
                   {loading ? "Setting password..." : "Set Password & Continue"}
                 </Button>
               </div>
@@ -454,7 +483,11 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                  disabled={loading}
+                >
                   {loading ? "Updating password..." : "Update Password"}
                 </Button>
               </div>
@@ -476,7 +509,11 @@ const Auth = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button 
+                  type="submit" 
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                  disabled={loading}
+                >
                   {loading ? "Sending..." : "Send Reset Email"}
                 </Button>
                 <Button 
@@ -494,9 +531,19 @@ const Auth = () => {
           {/* Regular login/signup tabs */}
           {showTabs && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-2 w-full">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+              <TabsList className="grid grid-cols-2 w-full bg-muted/30">
+                <TabsTrigger 
+                  value="login"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Login
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="signup"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                >
+                  Sign Up
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="space-y-4 pt-4">
@@ -548,7 +595,11 @@ const Auth = () => {
                       </Button>
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                      disabled={loading}
+                    >
                       {loading ? "Logging in..." : "Log In"}
                     </Button>
                   </div>
@@ -604,7 +655,11 @@ const Auth = () => {
                       </button>
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={loading}>
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                      disabled={loading}
+                    >
                       {loading ? "Creating account..." : "Sign Up"}
                     </Button>
                   </div>
@@ -623,6 +678,7 @@ const Auth = () => {
           )}
         </CardFooter>
       </Card>
+      </div>
     </div>
   );
 };

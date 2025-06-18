@@ -74,35 +74,50 @@ export type Database = {
         Row: {
           amount: number
           appointment_id: string | null
+          billing_type: string | null
           clinic_id: string
           created_at: string | null
           description: string | null
+          discount_percentage: number | null
           id: string
           invoice_number: string | null
+          notes: string | null
           patient_id: string
+          service_items: Json | null
           status: Database["public"]["Enums"]["bill_status"]
+          tax_percentage: number | null
         }
         Insert: {
           amount: number
           appointment_id?: string | null
+          billing_type?: string | null
           clinic_id: string
           created_at?: string | null
           description?: string | null
+          discount_percentage?: number | null
           id?: string
           invoice_number?: string | null
+          notes?: string | null
           patient_id: string
+          service_items?: Json | null
           status?: Database["public"]["Enums"]["bill_status"]
+          tax_percentage?: number | null
         }
         Update: {
           amount?: number
           appointment_id?: string | null
+          billing_type?: string | null
           clinic_id?: string
           created_at?: string | null
           description?: string | null
+          discount_percentage?: number | null
           id?: string
           invoice_number?: string | null
+          notes?: string | null
           patient_id?: string
+          service_items?: Json | null
           status?: Database["public"]["Enums"]["bill_status"]
+          tax_percentage?: number | null
         }
         Relationships: [
           {
@@ -600,13 +615,14 @@ export type Database = {
           doctor_id: string
           date: string
           time: string
-          type: string
-          status: string
+          type: Database["public"]["Enums"]["appointment_type"]
+          status: Database["public"]["Enums"]["appointment_status"]
           notes: string
           created_at: string
           patient_name: string
           doctor_name: string
           department_name: string
+          billing_status: string
         }[]
       }
       get_dashboard_data: {

@@ -179,7 +179,7 @@ export default function DoctorDashboard() {
         ) : (
           <div className="h-8 w-64 bg-muted rounded animate-pulse mb-6" />
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {Array.from({ length: 4 }).map((_, index) => (
             <Card key={index} className="animate-pulse">
               <CardHeader>
@@ -233,7 +233,7 @@ export default function DoctorDashboard() {
           </div>
         )}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <DashboardStatsCard
           icon={<Users size={18} className="mr-2 text-blue-500" />}
           label="My Patients"

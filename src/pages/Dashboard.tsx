@@ -1,6 +1,5 @@
-import React from "react";
-import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, User, Users, Stethoscope, Activity, TrendingUp, Clock, Building2 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { CalendarCheck, Users, Stethoscope, Activity, Clock, Building2, Heart, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,6 +13,8 @@ import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { useState } from "react";
 import { Enums } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 
 const supabase = getSupabase();
 
@@ -45,7 +46,8 @@ const Dashboard = () => {
   const [currentUpcomingPage, setCurrentUpcomingPage] = useState(1);
   const appointmentsPerPage = 5;
 
-  // State for onboarding doctor modal
+  // State for appointment modal
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   // Query: Does the current user have a doctor profile for this clinic?
   const { data: hasDoctorProfile, isLoading: isDoctorProfileLoading } = useQuery({
@@ -161,15 +163,18 @@ const Dashboard = () => {
 
   if (isLoading || isDoctorLoading || isDoctorProfileLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 ">
         {user ? (
-          <h2 className="text-2xl font-semibold mb-6">{greeting}</h2>
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-primary mb-2">{greeting}</h1>
+            <div className="h-4 w-96 bg-muted/50 rounded animate-pulse" />
+          </div>
         ) : (
           <div className="h-8 w-64 bg-muted rounded animate-pulse mb-6" />
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index} className="animate-pulse">
+            <Card key={index} className="medical-card animate-pulse">
               <CardHeader>
                 <div className="h-6 bg-muted rounded w-3/4"></div>
                 <div className="h-4 bg-muted rounded w-1/2"></div>
@@ -199,11 +204,14 @@ const Dashboard = () => {
   // Use doctor appointments for chart if superadmin has doctor profile, otherwise use clinic-wide
   const chartAppointments = isEnhancedSuperadmin ? doctorAppointments : allAppointments;
   
+  // Use the same logic for upcoming appointments list
+  const appointmentsForList = isEnhancedSuperadmin ? doctorAppointments : allAppointments;
+  
   console.log('Dashboard appointments for chart:', chartAppointments);
 
-  const todaysAppointments: FormattedAppointment[] = allAppointments
+  const todaysAppointments: FormattedAppointment[] = appointmentsForList
     .filter(apt => apt.date === today)
-    .sort((a, b) => b.time.localeCompare(a.time))
+    .sort((a, b) => a.time.localeCompare(b.time))
     .map(apt => ({
       id: apt.id,
       patient: apt.patient_name,
@@ -214,7 +222,7 @@ const Dashboard = () => {
       type: apt.type as Enums<'appointment_type'>,
     }));
 
-  const upcomingAppointments: FormattedAppointment[] = allAppointments
+  const upcomingAppointments: FormattedAppointment[] = appointmentsForList
     .filter(apt => apt.date >= today)
     .sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
@@ -235,9 +243,9 @@ const Dashboard = () => {
   // Card click handlers
   const handlePatientsCardClick = () => navigate('/patients');
   const handleDoctorsCardClick = () => navigate('/settings');
-  const handleAppointmentsTodayCardClick = () => navigate('/appointments?filter=today');
-  const handlePendingConsultationsCardClick = () => navigate('/appointments?filter=pending');
-  const handleCompletedConsultationsCardClick = () => navigate('/consultations?filter=completed');
+  const handleAppointmentsTodayCardClick = () => navigate('/appointments');
+  const handlePendingConsultationsCardClick = () => navigate('/appointments?tab=upcoming');
+  const handleCompletedConsultationsCardClick = () => navigate('/appointments?tab=past');
 
   // Appointment row click handler
   const handleAppointmentClick = (appointmentId: string) => {
@@ -249,11 +257,16 @@ const Dashboard = () => {
     navigate(`/appointments?filter=date&date=${date}`);
   };
 
+  // Handle new appointment
+  const handleNewAppointment = () => {
+    setIsAppointmentModalOpen(true);
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-end mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">{greeting}</h1>
+    <div className="space-y-6 ">
+      <div className="flex justify-between mb-6">
+        <div className="">
+          <h1 className="text-3xl font-bold text-primary">{greeting}</h1>
           <p className="text-muted-foreground">
             {isEnhancedSuperadmin 
               ? "Complete overview of clinic operations and your personal practice."
@@ -261,11 +274,24 @@ const Dashboard = () => {
             }
           </p>
           {isEnhancedSuperadmin && (
-            <Badge variant="secondary" className="mt-2">
+            <Badge className="bg-accent/10 text-accent border-accent/20 mt-3">
               <Stethoscope size={12} className="mr-1" />
               Enhanced View - Doctor Profile Active
             </Badge>
           )}
+        </div>
+        <div className="flex gap-4">
+          {/* Show New Appointment button for Staff and Superadmins */}
+          {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && (
+            <Button
+              onClick={handleNewAppointment}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+            >
+              <Plus size={18} className="mr-2" />
+              New Appointment
+            </Button>
+          )}
+          
         </div>
       </div>
 
@@ -273,35 +299,37 @@ const Dashboard = () => {
       {isEnhancedSuperadmin ? (
         <>
           {/* Clinic-wide Stats Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Building2 size={20} className="text-primary" />
-              <h2 className="text-lg font-semibold">Clinic Overview</h2>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+                <Building2 size={18} className="text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">Clinic Overview</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <DashboardStatsCard
-                icon={<Users size={18} className="mr-2 text-blue-500" />}
+                icon={<Users size={18} className="mr-2 text-medical-blue" />}
                 label="Total Patients"
                 value={dashboardData?.total_patients ?? 0}
                 onClick={handlePatientsCardClick}
                 ariaLabel="View All Patients"
               />
               <DashboardStatsCard
-                icon={<Stethoscope size={18} className="mr-2 text-indigo-500" />}
+                icon={<Stethoscope size={18} className="mr-2 text-medical-teal" />}
                 label="Total Doctors"
                 value={dashboardData?.total_doctors ?? 0}
                 onClick={handleDoctorsCardClick}
                 ariaLabel="Manage Clinic Members"
               />
               <DashboardStatsCard
-                icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+                icon={<CalendarCheck size={18} className="mr-2 text-success" />}
                 label="Total Appointments"
                 value={dashboardData?.total_appointments ?? 0}
                 onClick={handleAppointmentsTodayCardClick}
                 ariaLabel="View All Appointments"
               />
               <DashboardStatsCard
-                icon={<Clock size={18} className="mr-2 text-orange-500" />}
+                icon={<Clock size={18} className="mr-2 text-warning" />}
                 label="Today's Appointments"
                 value={dashboardData?.appointments_today ?? 0}
                 onClick={handleAppointmentsTodayCardClick}
@@ -311,35 +339,37 @@ const Dashboard = () => {
           </div>
 
           {/* Personal Doctor Stats Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Stethoscope size={20} className="text-primary" />
-              <h2 className="text-lg font-semibold">My Practice</h2>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-accent/10">
+                <Heart size={18} className="text-accent" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">My Practice</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <DashboardStatsCard
-                icon={<Users size={18} className="mr-2 text-blue-500" />}
+                icon={<Users size={18} className="mr-2 text-medical-blue" />}
                 label="My Patients"
                 value={doctorDashboardData?.total_patients ?? 0}
                 onClick={handlePatientsCardClick}
                 ariaLabel="View My Patients"
               />
               <DashboardStatsCard
-                icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+                icon={<CalendarCheck size={18} className="mr-2 text-success" />}
                 label="My Appointments"
                 value={doctorDashboardData?.total_appointments ?? 0}
                 onClick={handleAppointmentsTodayCardClick}
                 ariaLabel="View My Appointments"
               />
               <DashboardStatsCard
-                icon={<Clock size={18} className="mr-2 text-orange-500" />}
+                icon={<Clock size={18} className="mr-2 text-warning" />}
                 label="Pending Consultations"
                 value={doctorDashboardData?.pending_consultations ?? 0}
                 onClick={handlePendingConsultationsCardClick}
                 ariaLabel="View Pending Consultations"
               />
               <DashboardStatsCard
-                icon={<Activity size={18} className="mr-2 text-emerald-500" />}
+                icon={<Activity size={18} className="mr-2 text-accent" />}
                 label="Completed Consultations"
                 value={doctorDashboardData?.completed_consultations ?? 0}
                 onClick={handleCompletedConsultationsCardClick}
@@ -352,28 +382,28 @@ const Dashboard = () => {
         /* Standard Stats Grid for Staff/Admin */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <DashboardStatsCard
-            icon={<Users size={18} className="mr-2 text-blue-500" />}
+            icon={<Users size={18} className="mr-2 text-medical-blue" />}
             label="Total Patients"
             value={dashboardData?.total_patients ?? 0}
             onClick={handlePatientsCardClick}
             ariaLabel="View Patients"
           />
           <DashboardStatsCard
-            icon={<Stethoscope size={18} className="mr-2 text-green-500" />}
+            icon={<Stethoscope size={18} className="mr-2 text-success" />}
             label="Total Appointments"
             value={dashboardData?.total_appointments ?? 0}
             onClick={handleAppointmentsTodayCardClick}
             ariaLabel="View Appointments"
           />
           <DashboardStatsCard
-            icon={<CalendarCheck size={18} className="mr-2 text-orange-500" />}
+            icon={<CalendarCheck size={18} className="mr-2 text-warning" />}
             label="Pending Consultations"
             value={dashboardData?.pending_consultations ?? 0}
             onClick={handlePendingConsultationsCardClick}
             ariaLabel="View Pending Consultations"
           />
           <DashboardStatsCard
-            icon={<CalendarCheck size={18} className="mr-2 text-green-500" />}
+            icon={<Activity size={18} className="mr-2 text-accent" />}
             label="Completed Consultations"
             value={dashboardData?.completed_consultations ?? 0}
             onClick={handleCompletedConsultationsCardClick}
@@ -399,6 +429,14 @@ const Dashboard = () => {
           onBarClick={handleChartBarClick} 
         />
       </div>
+
+      {/* Appointment Modal */}
+      <AppointmentModal
+        open={isAppointmentModalOpen}
+        onOpenChange={setIsAppointmentModalOpen}
+        appointment={null}
+        patient={null}
+      />
     </div>
   );
 }

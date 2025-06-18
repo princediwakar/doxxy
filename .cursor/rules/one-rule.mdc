@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Clinic Management System - Cursor Agent Rules
 
@@ -9,8 +9,10 @@ alwaysApply: false
 
 **Multi-tenant healthcare web app** for medical clinics (all specialties)  
 **Tech Stack**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, Supabase (RLS + MCP), Google OAuth, React Query, zod, Twilio, Resend  
-**Critical Requirements**: Strict multi-tenancy, role-based access (admin, doctor, staff), HIPAA compliance  
-**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing
+**Critical Requirements**: Strict multi-tenancy, role-based access (superadmin, doctor, staff), HIPAA compliance, DPDT compliance (India)
+**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing. Browser MCP to navigate the web, fill out forms, and click on buttons, take screenshots etc..
+
+ MCP for 
 
 ---
 

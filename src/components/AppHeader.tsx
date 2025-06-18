@@ -1,96 +1,89 @@
+// components/Header.tsx
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { memo } from "react";
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { LogOut, Settings, User } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { Stethoscope, Shield, FileText } from "lucide-react";
 
-export function AppHeader() {
-  const { user, activeClinicRole, signOut } = useAuth();
-  const navigate = useNavigate();
+export const AppHeader = memo(() => {
+  const location = useLocation();
   
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success("Signed out successfully");
-      navigate("/auth");
-    } catch (error) {
-      console.error("Error signing out:", error);
-      toast.error("Error signing out");
-    }
-  };
+  // Define public routes where we want to show the navbar
+  const publicRoutes = ['/auth', '/privacy', '/terms'];
+  const isPublicRoute = publicRoutes.includes(location.pathname);
   
-  // Get user initials for avatar
-  const getUserInitials = () => {
-    if (!user?.email) return "U";
-    
-    const email = user.email;
-    const parts = email.split("@")[0].split(".");
-    
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    
-    return email.substring(0, 2).toUpperCase();
-  };
-  
+  // Don't show header on private routes (they have their own layout)
+  if (!isPublicRoute) {
+    return null;
+  }
+
   return (
-    <div className="border-b">
-      <div className="flex h-16 items-center px-4">
-        <div className="ml-auto flex items-center space-x-4">
-          <div className="flex items-center">
-            <span className="text-sm font-medium mr-2 hidden md:inline-block">
-              {user?.email}
-            </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="" alt="User" />
-                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user?.email}</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      {activeClinicRole ? activeClinicRole.charAt(0).toUpperCase() + activeClinicRole.slice(1) : "User"}
-                    </p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+    <div className="h-16 fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border supports-[backdrop-filter]:bg-background/80">
+      <header className="flex justify-between items-center max-w-6xl h-full px-4 mx-auto">
+        <nav className="flex items-center space-x-8">
+          <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <div className="flex items-center gap-2">
+              <img src="/logo.svg" alt="Doxxy" className="w-24 " />
+            </div>
+          </Link>
+          
+          {/* Navigation Links - only show on non-auth routes */}
+          {location.pathname !== '/auth' && (
+            <div className="hidden md:flex items-center space-x-6">
+              <Link 
+                to="/privacy" 
+                className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+              >
+                <Shield className="h-4 w-4" />
+                Privacy
+              </Link>
+              <Link 
+                to="/terms" 
+                className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors text-sm font-medium"
+              >
+                <FileText className="h-4 w-4" />
+                Terms
+              </Link>
+            </div>
+          )}
+        </nav>
+        
+        <div className="flex items-center space-x-4">
+          {/* CTA Button - only show on non-auth routes */}
+          {location.pathname !== '/auth' && (
+            <Link to="/auth">
+              <Button 
+                size="sm" 
+                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+              >
+                Get Started
+              </Button>
+            </Link>
+          )}
+          
+          {/* Mobile navigation for non-auth routes */}
+          {location.pathname !== '/auth' && (
+            <div className="md:hidden flex items-center space-x-3">
+              <Link 
+                to="/privacy" 
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="Privacy Policy"
+              >
+                <Shield className="h-5 w-5" />
+              </Link>
+              <Link 
+                to="/terms" 
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="Terms of Service"
+              >
+                <FileText className="h-5 w-5" />
+              </Link>
+            </div>
+          )}
         </div>
-      </div>
+      </header>
     </div>
   );
-}
+});
+
+AppHeader.displayName = "AppHeader";

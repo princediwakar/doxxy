@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -38,11 +38,29 @@ import { format, parseISO } from "date-fns";
 import {
   neurologyNotesSchema,
   ophthalmologyNotesSchema,
+  cardiologyNotesSchema,
+  dermatologyNotesSchema,
+  orthopedicsNotesSchema,
+  psychiatryNotesSchema,
+  pediatricsNotesSchema,
+  entNotesSchema,
+  gynecologyNotesSchema,
+  pulmonologyNotesSchema,
   generalNotesSchema,
+  specialtyFieldSections,
   specialtyNoteFieldConfigs,
   NoteFieldConfig,
+  FieldSection,
   NeurologyNotes,
   OphthalmologyNotes,
+  CardiologyNotes,
+  DermatologyNotes,
+  OrthopedicsNotes,
+  PsychiatryNotes,
+  PediatricsNotes,
+  ENTNotes,
+  GynecologyNotes,
+  PulmonologyNotes,
   GeneralNotes,
 } from "@/lib/consultationNotesSchemas";
 
@@ -59,63 +77,36 @@ type ConsultationInsert = Database['public']['Tables']['consultations']['Insert'
 type Consultation = Database['public']['Tables']['consultations']['Row'];
 type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 type ConsultationFormValues = z.infer<typeof consultationFormSchema>;
-type CombinedSpecialtyKeys = keyof NeurologyNotes | keyof OphthalmologyNotes | keyof GeneralNotes;
+type CombinedSpecialtyKeys = keyof NeurologyNotes | keyof OphthalmologyNotes | keyof CardiologyNotes | 
+  keyof DermatologyNotes | keyof OrthopedicsNotes | keyof PsychiatryNotes | keyof PediatricsNotes |
+  keyof ENTNotes | keyof GynecologyNotes | keyof PulmonologyNotes | keyof GeneralNotes;
 
 // Zod schema
 const consultationFormSchema = z.object({
   specialty_data: z.union([
     neurologyNotesSchema,
     ophthalmologyNotesSchema,
+    cardiologyNotesSchema,
+    dermatologyNotesSchema,
+    orthopedicsNotesSchema,
+    psychiatryNotesSchema,
+    pediatricsNotesSchema,
+    entNotesSchema,
+    gynecologyNotesSchema,
+    pulmonologyNotesSchema,
     generalNotesSchema,
     z.null(),
     z.undefined(),
   ]).optional(),
 });
 
-// Section definitions for both specialties
-const sectionDefinitions = [
-  {
-    key: "History",
-    icon: History,
-    fields: [
-      "chief_complaint",
-      "history_of_present_illness",
-      "review_of_systems",
-      "past_medical_history",
-      "family_history",
-      "social_history",
-      "medications",
-      "allergies",
-    ],
-  },
-  {
-    key: "Examination",
-    icon: Stethoscope,
-    // Neurology and Ophthalmology have some different exam fields
-    neurologyFields: ["physical_exam", "neurological_exam_findings"],
-    ophthalmologyFields: [
-      "physical_exam",
-      "visual_acuity",
-      "refraction",
-      "slit_lamp_exam",
-      "fundus_exam",
-      "intraocular_pressure",
-      "visual_fields",
-    ],
-  },
-  {
-    key: "Plan",
-    icon: ClipboardList,
-    fields: [
-      "investigations",
-      "assessment",
-      "treatment_plan",
-      "prognosis",
-      "follow_up",
-      "referrals",
-    ],
-  },
-];
+// Section icons mapping
+const sectionIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  "History": History,
+  "Examination": Stethoscope,
+  "Assessment & Plan": ClipboardList,
+  "Investigations": ClipboardList,
+};
 
 // Preview component
 const ConsultationPreview = ({ data, fieldConfigs }: { data: ConsultationFormValues['specialty_data']; fieldConfigs: NoteFieldConfig[] }) => (
@@ -176,34 +167,109 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
       enabled: open && !!appointment?.doctor_id && !!activeClinic?.clinic_id,
     });
 
+    // Map database department names to schema keys
+    const mapDepartmentToSchemaKey = (databaseDepartmentName: string | null | undefined): string => {
+      if (!databaseDepartmentName) return 'General';
+      
+      const mapping: Record<string, string> = {
+        'General Medicine': 'General',
+        'Neurology': 'Neurology',
+        'Ophthalmology': 'Ophthalmology',
+        'Cardiology': 'Cardiology',
+        'Dermatology': 'Dermatology',
+        'Orthopedics': 'Orthopedics',
+        'Psychiatry': 'Psychiatry',
+        'Pediatrics': 'Pediatrics',
+        'ENT': 'ENT',
+        'Gynecology': 'Gynecology',
+        'Pulmonology': 'Pulmonology',
+        // Add fallback mappings
+        'No Department': 'General',
+      };
+      
+      return mapping[databaseDepartmentName] || 'General';
+    };
+
     // Determine department type with fallback for superadmin
-    const departmentType = doctorDetails?.[0]?.department_name;
+    const databaseDepartmentName = doctorDetails?.[0]?.department_name;
+    const departmentType = mapDepartmentToSchemaKey(databaseDepartmentName);
     
     // If no department is found but user is superadmin, provide a default consultation option
     const isCurrentUserSuperadminConsulting = activeClinicRole === 'superadmin' && user?.id === appointment?.doctor_id;
-    const effectiveDepartmentType = departmentType || (isCurrentUserSuperadminConsulting ? 'General' : undefined);
+    const effectiveDepartmentType = departmentType; // Always use mapped department (defaults to General)
     
-    // Get specialty fields, with fallback to general fields for superadmin
-    const currentSpecialtyFields = effectiveDepartmentType ? 
-      (specialtyNoteFieldConfigs[effectiveDepartmentType] || specialtyNoteFieldConfigs['General']) : 
-      undefined;
+    // Debug logging
+    console.log('ConsultationModal Debug:', {
+      doctorDetails: doctorDetails?.[0],
+      databaseDepartmentName,
+      mappedDepartmentType: departmentType,
+      effectiveDepartmentType,
+      isCurrentUserSuperadminConsulting,
+      appointment: appointment?.id,
+      doctorId: appointment?.doctor_id,
+      availableSchemas: Object.keys(specialtyFieldSections)
+    });
 
-  // Dynamically build sections based on departmentType
-  const sections = sectionDefinitions.map((section) => {
-    let fields: string[] = [];
-    if (section.key === "Examination") {
-      if (effectiveDepartmentType === "Neurology") fields = section.neurologyFields || [];
-      else if (effectiveDepartmentType === "Ophthalmology") fields = section.ophthalmologyFields || [];
-      else fields = section.fields || []; // Use general fields for General department or others
-    } else {
-      fields = section.fields || [];
-    }
-    return {
-      title: section.key,
-      icon: section.icon,
-      fields,
-    };
-  });
+    // Get specialty sections and fields, with robust fallback to general sections - MEMOIZED
+    const currentSpecialtySections = useMemo(() => {
+      // Ensure we always have at least General sections available
+      let sections = [];
+      
+      try {
+        sections = effectiveDepartmentType ? 
+          (specialtyFieldSections[effectiveDepartmentType] || specialtyFieldSections['General']) : 
+          specialtyFieldSections['General'];
+        
+        // Double-check that sections exist and have content
+        if (!sections || !Array.isArray(sections) || sections.length === 0) {
+          console.warn('No sections found, falling back to General');
+          sections = specialtyFieldSections['General'];
+        }
+      } catch (error) {
+        console.error('Error getting specialty sections:', error);
+        sections = specialtyFieldSections['General'];
+      }
+      
+      console.log('Current specialty sections:', {
+        effectiveDepartmentType,
+        sectionsCount: sections?.length,
+        sections: sections?.map(s => s.title)
+      });
+      
+      return sections;
+    }, [effectiveDepartmentType]);
+    
+    // Get flat field configs for backward compatibility - MEMOIZED
+    const currentSpecialtyFields = useMemo(() => {
+      let fields = [];
+      
+      try {
+        fields = currentSpecialtySections.flatMap(section => section.fields);
+        
+        // Ensure we have at least some fields
+        if (!fields || fields.length === 0) {
+          console.warn('No fields found, using General fields directly');
+          const generalSections = specialtyFieldSections['General'];
+          fields = generalSections.flatMap(section => section.fields);
+        }
+      } catch (error) {
+        console.error('Error getting specialty fields:', error);
+        // Emergency fallback - directly create basic fields
+        fields = [
+          { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary reason for visit" },
+          { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Detailed history of current symptoms" },
+          { name: "physical_exam", label: "Physical Examination", type: "textarea", rows: 4, placeholder: "General physical examination findings" },
+          { name: "assessment", label: "Assessment & Diagnosis", type: "textarea", rows: 3, placeholder: "Clinical assessment and diagnosis" },
+          { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Management plan and interventions" },
+        ];
+      }
+      
+      console.log('Current specialty fields:', {
+        fieldsCount: fields?.length,
+        fieldNames: fields?.map(f => f.name)
+      });
+      return fields;
+    }, [currentSpecialtySections]);
   
   // Track edited fields
   useEffect(() => {
@@ -253,7 +319,8 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
           : undefined;
       if (!initialSpecialtyData && existingConsultation.clinical_notes && typeof existingConsultation.clinical_notes === 'string') {
         const department = effectiveDepartmentType;
-        if (department === 'Neurology' || department === 'Ophthalmology' || department === 'General') {
+        // For any valid department, initialize with chief complaint from clinical notes
+        if (department && specialtyNoteFieldConfigs[department]) {
           initialSpecialtyData = { chief_complaint: existingConsultation.clinical_notes };
         }
       }
@@ -261,7 +328,7 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
     } else {
       form.reset({ specialty_data: undefined });
     }
-  }, [existingConsultation, form, doctorDetails]);
+  }, [existingConsultation, form, doctorDetails, effectiveDepartmentType]);
 
   // Save mutation
   const saveMutation = useMutation({
@@ -321,15 +388,15 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
     },
   });
 
-  // Auto-save
-  useEffect(() => {
-    if (!form.formState.isDirty || isPreviewMode || isConfirming) return;
-    const timeout = setTimeout(() => {
-      setAutoSaveStatus({ status: 'saving' });
-      saveMutation.mutate({ values: form.getValues(), isDraft: true });
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [form.formState.isDirty, form, isPreviewMode, isConfirming, saveMutation]);
+      // Auto-save
+    useEffect(() => {
+      if (!form.formState.isDirty || isPreviewMode || isConfirming) return;
+      const timeout = setTimeout(() => {
+        setAutoSaveStatus({ status: 'saving' });
+        saveMutation.mutate({ values: form.getValues(), isDraft: true });
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }, [form, isPreviewMode, isConfirming, saveMutation]);
 
   const onSubmit = useCallback((values: ConsultationFormValues, isDraft = false) => {
     if (!isDraft && !isConfirming) {
@@ -357,17 +424,23 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
   // Handle modal closing
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (!newOpen && form.formState.isDirty && !shouldClose) {
-      toast(
-        "Unsaved Changes",
-        { description: "You have unsaved changes. Please save or confirm to close." }
+      // Show confirmation dialog for unsaved changes
+      const confirmDiscard = window.confirm(
+        "You have unsaved changes. Do you want to discard them and close?"
       );
+      if (confirmDiscard) {
+        // Reset form and close
+        form.reset();
+        onOpenChange(false);
+        setShouldClose(false);
+      }
       return;
     }
     if (shouldClose || !newOpen) {
       onOpenChange(newOpen);
       setShouldClose(false);
     }
-  }, [form.formState.isDirty, onOpenChange, shouldClose]);
+  }, [form, onOpenChange, shouldClose]);
 
   // Add mutation for updating appointment status
   const updateAppointmentStatusMutation = useMutation({
@@ -395,7 +468,7 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
               <DialogTitle className="text-base sm:text-lg font-semibold text-foreground">
                 {appointment?.patient_name || 'Unknown Patient'} - Consultation
                 {effectiveDepartmentType && (
-                  <Badge variant="outline" className="ml-2 text-xs border-primary text-primary">
+                  <Badge className="status-badge status-pending ml-2 text-xs">
                     {effectiveDepartmentType}
                     {isCurrentUserSuperadminConsulting && !departmentType && " (Default)"}
                   </Badge>
@@ -447,79 +520,106 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
               <div className="text-center py-6 text-muted-foreground text-xs sm:text-sm">
                 Loading consultation data...
               </div>
-            ) : !effectiveDepartmentType || !currentSpecialtyFields ? (
+            ) : !currentSpecialtyFields || currentSpecialtyFields.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground text-xs sm:text-sm">
-                No consultation fields available. Please ensure the doctor is assigned to a department.
-                {isCurrentUserSuperadminConsulting && (
-                  <div className="mt-2 text-xs">
-                    As a superadmin, consider creating a doctor profile with a department assignment for specialized consultations.
+                <div className="mb-4">
+                  No consultation fields available. 
+                  {!doctorDetails?.[0]?.department_name && (
+                    <div className="mt-2 text-xs">
+                      Doctor department not found. Using General consultation template.
+                    </div>
+                  )}
+                </div>
+                <div className="text-left">
+                  <h3 className="font-semibold mb-2">Debug Information:</h3>
+                  <div className="text-xs space-y-1">
+                    <div>Department: {effectiveDepartmentType}</div>
+                    <div>Sections: {currentSpecialtySections?.length || 0}</div>
+                    <div>Fields: {currentSpecialtyFields?.length || 0}</div>
+                    <div>Doctor ID: {appointment?.doctor_id}</div>
+                    <div>Doctor Details: {doctorDetails?.[0] ? 'Found' : 'Not Found'}</div>
                   </div>
-                )}
+                </div>
+                {/* Force show General consultation fields as fallback */}
+                <div className="mt-4">
+                  <Button 
+                    onClick={() => {
+                      console.log('Force loading General consultation fields');
+                      // Force re-render by using General fields directly
+                      window.location.reload();
+                    }}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Reload Consultation Form
+                  </Button>
+                </div>
               </div>
             ) : isPreviewMode ? (
               <ConsultationPreview data={form.getValues().specialty_data} fieldConfigs={currentSpecialtyFields} />
             ) : (
               <Form {...form}>
                 <form onSubmit={form.handleSubmit((values) => onSubmit(values, false))} className="space-y-4">
-                  {sections.map((section, index) => (
-                    <div
-                      key={section.title}
-                      className={`border-2 rounded-lg p-3 sm:p-4 shadow-sm ${index % 2 === 0 ? 'bg-background' : 'bg-muted'}`}
-                    >
-                      <div className="flex items-center gap-2 mb-3">
-                        <section.icon className="h-4 w-4 text-primary" />
-                        <h2 className="text-sm sm:text-base font-semibold text-primary">{section.title}</h2>
+                  {currentSpecialtySections.map((section, index) => {
+                    const SectionIcon = sectionIcons[section.title] || ClipboardList;
+                    return (
+                      <div
+                        key={section.title}
+                        className={`border-2 rounded-lg p-3 sm:p-4 shadow-sm ${index % 2 === 0 ? 'bg-background' : 'bg-muted'}`}
+                      >
+                        <div className="flex items-center gap-2 mb-3">
+                          <SectionIcon className="h-4 w-4 text-primary" />
+                          <h2 className="text-sm sm:text-base font-semibold text-primary">{section.title}</h2>
+                        </div>
+                        <Accordion type="single" collapsible className="w-full">
+                          {section.fields.map((fieldConfig) => {
+                            const isRequired = ['chief_complaint', 'assessment'].includes(fieldConfig.name as string);
+                            return (
+                              <AccordionItem key={fieldConfig.name as string} value={fieldConfig.name as string}>
+                                <AccordionTrigger className="text-xs sm:text-sm text-foreground hover:no-underline">
+                                  <div className="flex items-center gap-2">
+                                    <span>{fieldConfig.label}</span>
+                                    {isRequired && <span className="text-destructive text-xs">*</span>}
+                                  </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="pt-2">
+                                  <FormField
+                                    control={form.control}
+                                    name={`specialty_data.${fieldConfig.name}` as `specialty_data.${CombinedSpecialtyKeys}`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormControl>
+                                          {fieldConfig.type === 'textarea' ? (
+                                            <Textarea
+                                              {...field}
+                                              value={(field.value as string | null | undefined) || ''}
+                                              rows={fieldConfig.rows}
+                                              placeholder={fieldConfig.placeholder}
+                                              className={`text-xs sm:text-sm ${isRequired ? 'border-2 border-primary bg-primary/5' : 'border-input'}`}
+                                              aria-label={fieldConfig.label}
+                                            />
+                                          ) : (
+                                            <Input
+                                              {...field}
+                                              value={(field.value as string | null | undefined) || ''}
+                                              placeholder={fieldConfig.placeholder}
+                                              className={`text-xs sm:text-sm ${isRequired ? 'border-2 border-primary bg-primary/5' : 'border-input'}`}
+                                              aria-label={fieldConfig.label}
+                                            />
+                                          )}
+                                        </FormControl>
+                                        <FormMessage className="text-xs text-destructive" />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </AccordionContent>
+                              </AccordionItem>
+                            );
+                          })}
+                        </Accordion>
                       </div>
-                      <Accordion type="single" collapsible className="w-full">
-                        {section.fields.map((fieldName) => {
-                          const fieldConfig = currentSpecialtyFields.find((f) => f.name === fieldName);
-                          if (!fieldConfig) return null;
-                          const isRequired = ['chief_complaint', 'assessment'].includes(fieldConfig.name as string);
-                          return (
-                            <AccordionItem key={fieldConfig.name as string} value={fieldConfig.name as string}>
-                              <AccordionTrigger className="text-xs sm:text-sm text-foreground hover:no-underline">
-                                <div className="flex items-center gap-2">
-                                  <span>{fieldConfig.label}</span>
-                                  {isRequired && <span className="text-destructive text-xs">*</span>}
-                                </div>
-                              </AccordionTrigger>
-                              <AccordionContent className="pt-2">
-                                <FormField
-                                  control={form.control}
-                                  name={`specialty_data.${fieldConfig.name}` as `specialty_data.${CombinedSpecialtyKeys}`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormControl>
-                                        {fieldConfig.type === 'textarea' ? (
-                                          <Textarea
-                                            {...field}
-                                            value={(field.value as string | null | undefined) || ''}
-                                            rows={fieldConfig.rows}
-                                            placeholder={fieldConfig.placeholder}
-                                            className={`text-xs sm:text-sm ${isRequired ? 'border-2 border-primary bg-primary/5' : 'border-input'}`}
-                                            aria-label={fieldConfig.label}
-                                          />
-                                        ) : (
-                                          <Input
-                                            {...field}
-                                            value={(field.value as string | null | undefined) || ''}
-                                            placeholder={fieldConfig.placeholder}
-                                            className={`text-xs sm:text-sm ${isRequired ? 'border-2 border-primary bg-primary/5' : 'border-input'}`}
-                                            aria-label={fieldConfig.label}
-                                          />
-                                        )}
-                                      </FormControl>
-                                      <FormMessage className="text-xs text-destructive" />
-                                    </FormItem>
-                                  )}
-                                />
-                              </AccordionContent>
-                            </AccordionItem>
-                          );
-                        })}
-                      </Accordion>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </form>
               </Form>
             )}
@@ -558,10 +658,14 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
                     disabled={saveMutation.isPending}
                     onClick={() => {
                       if (form.formState.isDirty) {
-                        toast(
-                          "Unsaved Changes",
-                          { description: "You have unsaved changes. Please save before closing." }
+                        const confirmDiscard = window.confirm(
+                          "You have unsaved changes. Do you want to discard them and close?"
                         );
+                        if (confirmDiscard) {
+                          form.reset();
+                          setShouldClose(true);
+                          onOpenChange(false);
+                        }
                         return;
                       }
                       setShouldClose(true);

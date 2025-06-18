@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -17,63 +18,77 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { Search, Plus, MoreHorizontal } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Search, Plus, MoreHorizontal, Calendar, AlertCircle, CheckCircle2, Timer, Activity, Stethoscope } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-// Assuming AppointmentModal exists and is correctly exported
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ConsultationModal } from '@/components/consultations/ConsultationModal';
-import { ConsultationViewModal } from '@/components/consultations/ConsultationViewModal';
+import { ConsultationModal } from '@/components/consultation/ConsultationModal';
+import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
 import { EnhancedBillingModal } from '@/components/billing/BillingModal';
 import { PrescriptionModal } from '@/components/prescriptions/PrescriptionModal';
-import { Enums } from "@/integrations/supabase/types";
+import { Enums, Database } from "@/integrations/supabase/types";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 // Type for the return of the get_appointments_with_details_by_clinic RPC
-interface AppointmentWithDetails {
-  id: string;
-  patient_id: string;
-  doctor_id: string;
-  date: string;
-  time: string;
-  type: Enums<'appointment_type'>;
-  status: Enums<'appointment_status'>;
-  notes: string;
-  created_at: string;
-  clinic_id: string;
-  patient_name: string;
-  doctor_name: string;
-  department_name: string; // Although not explicitly in types.ts, it is in the RPC return type signature
-}
+// Uses the properly typed RPC return type from supabase
+type AppointmentWithDetails = Database['public']['Functions']['get_appointments_with_details_by_clinic']['Returns'][0];
+
+type AppointmentFilter = 'today' | 'upcoming' | 'past';
 
 const supabase = getSupabase();
+
+// Enhanced sorting function to prioritize appointments properly
+const sortAppointments = (appointments: AppointmentWithDetails[], filter: AppointmentFilter) => {
+  return appointments.sort((a, b) => {
+    const aDate = parseISO(a.date);
+    const bDate = parseISO(b.date);
+    
+    if (filter === 'today') {
+      // For today's appointments, prioritize by urgency and time
+      const urgencyOrder = { 'Scheduled': 0, 'In Progress': 1, 'Completed': 2, 'Cancelled': 3 };
+      const aUrgency = urgencyOrder[a.status] ?? 999;
+      const bUrgency = urgencyOrder[b.status] ?? 999;
+      
+      if (aUrgency !== bUrgency) {
+        return aUrgency - bUrgency;
+      }
+      
+      // If same urgency, sort by time
+      return a.time.localeCompare(b.time);
+    } else if (filter === 'upcoming') {
+      // For upcoming appointments, sort by date then time
+      if (aDate.getTime() !== bDate.getTime()) {
+        return aDate.getTime() - bDate.getTime();
+      }
+      return a.time.localeCompare(b.time);
+    } else {
+      // For past appointments, show most recent first
+      if (aDate.getTime() !== bDate.getTime()) {
+        return bDate.getTime() - aDate.getTime();
+      }
+      return b.time.localeCompare(a.time);
+    }
+  });
+};
 
 const fetchAppointments = async (clinicId: string, searchTerm: string) => {
   console.log("fetchAppointments: Fetching for clinic", clinicId, "search", searchTerm);
 
   // Using the RPC to get appointments with patient and doctor names
-  const query = supabase
+  const { data, error } = await supabase
     .rpc('get_appointments_with_details_by_clinic', { clinic_id: clinicId });
-
-  // Basic client-side filtering by patient or doctor name (adjust as needed for performance with large datasets)
-  // A server-side function might be more efficient for large datasets
-   if (searchTerm.trim()) {
-     // Note: Filtering on RPC results requires client-side logic or modifying the RPC
-     // For simplicity, this example will filter client-side.
-     // For better performance, consider adding search parameters to the RPC itself.
-   }
-
-  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching appointments:", error);
@@ -82,44 +97,95 @@ const fetchAppointments = async (clinicId: string, searchTerm: string) => {
 
   let filteredData = data || [];
 
-   if (searchTerm.trim()) {
-     const lowerSearchTerm = searchTerm.toLowerCase();
-     filteredData = filteredData.filter(app =>
-       app.patient_name.toLowerCase().includes(lowerSearchTerm) ||
-       app.doctor_name.toLowerCase().includes(lowerSearchTerm) ||
-       app.date.includes(lowerSearchTerm) // Simple date search
-     );
-   }
+  if (searchTerm.trim()) {
+    const lowerSearchTerm = searchTerm.toLowerCase();
+    filteredData = filteredData.filter(app =>
+      app.patient_name.toLowerCase().includes(lowerSearchTerm) ||
+      app.doctor_name.toLowerCase().includes(lowerSearchTerm) ||
+      app.date.includes(lowerSearchTerm) // Simple date search
+    );
+  }
 
+  // Categorize appointments
+  const today = new Date();
+  
+  const todayAppointments = filteredData.filter(app => isToday(parseISO(app.date)));
+  const upcomingAppointments = filteredData.filter(app => isFuture(parseISO(app.date)));
+  const pastAppointments = filteredData.filter(app => isPast(parseISO(app.date)) && !isToday(parseISO(app.date)));
 
-  return filteredData as AppointmentWithDetails[];
+  return {
+    all: filteredData,
+    today: sortAppointments(todayAppointments, 'today'),
+    upcoming: sortAppointments(upcomingAppointments, 'upcoming'),
+    past: sortAppointments(pastAppointments, 'past'),
+    totalCount: filteredData.length
+  };
 };
 
 const Appointments = () => {
-  console.log("Appointments: Rendering component");
   const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [activeTab, setActiveTab] = useState<AppointmentFilter>('today');
+  const [currentPage, setCurrentPage] = useState<Record<AppointmentFilter, number>>({
+    today: 1,
+    upcoming: 1,
+    past: 1
+  });
+  const itemsPerPage = 10;
   // State for the AppointmentModal - assuming it will be used
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // State for PrescriptionModal  
+  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
+  const [selectedAppointmentForPrescription, setSelectedAppointmentForPrescription] = useState<AppointmentWithDetails | null>(null);
 
-  const { data: appointments, isLoading, isError, error } = useQuery({
-    queryKey: ['appointments', activeClinic?.clinic_id, searchTerm],
-    queryFn: () => fetchAppointments(activeClinic!.clinic_id, searchTerm),
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['appointments', activeClinic?.clinics?.id, searchTerm],
+    queryFn: () => fetchAppointments(activeClinic!.clinics?.id, searchTerm),
     enabled: !!activeClinic && !authLoading, // Only fetch if clinic is selected and auth is not loading
     retry: 1,
   });
 
+  const appointments = data || { all: [], today: [], upcoming: [], past: [], totalCount: 0 };
+
   // Filter appointments for doctors if necessary
-  const filteredAppointments = activeClinicRole === 'doctor'
-    ? (appointments || []).filter(app => app.doctor_id === user?.id)
-    : (appointments || []);
+  const getFilteredAppointments = (appointmentList: AppointmentWithDetails[]) => {
+    return activeClinicRole === 'doctor'
+      ? appointmentList.filter(app => app.doctor_id === user?.id)
+      : appointmentList;
+  };
 
+  const filteredAppointments = {
+    today: getFilteredAppointments(appointments.today),
+    upcoming: getFilteredAppointments(appointments.upcoming),
+    past: getFilteredAppointments(appointments.past),
+    all: getFilteredAppointments(appointments.all)
+  };
 
-  console.log("Appointments: authLoading=", authLoading, "activeClinic=", !!activeClinic, "appointments count=", filteredAppointments.length);
+  // Pagination logic
+  const getPaginatedAppointments = (appointmentList: AppointmentWithDetails[], page: number) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    return appointmentList.slice(startIndex, startIndex + itemsPerPage);
+  };
 
+  const getTotalPages = (appointmentList: AppointmentWithDetails[]) => {
+    return Math.ceil(appointmentList.length / itemsPerPage);
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab as AppointmentFilter);
+  };
+
+  const handlePageChange = (tab: AppointmentFilter, page: number) => {
+    setCurrentPage(prev => ({ ...prev, [tab]: page }));
+  };
+
+  // console.log("Appointments: authLoading=", authLoading, "activeClinic=", !!activeClinic, "appointments count=", filteredAppointments.all.length);
 
   // Handle opening the modal for a new appointment
   const handleNewAppointment = () => {
@@ -129,8 +195,10 @@ const Appointments = () => {
 
   // Handle opening the modal for an existing appointment
   const handleAppointmentClick = (appointment: AppointmentWithDetails) => {
+    console.log("handleAppointmentClick called with:", appointment);
     setSelectedAppointment(appointment);
     setIsAppointmentModalOpen(true);
+    console.log("Modal state should be open:", true);
   };
 
   // Handle closing the modal and refreshing data
@@ -186,27 +254,45 @@ const Appointments = () => {
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [selectedAppointmentForBilling, setSelectedAppointmentForBilling] = useState<AppointmentWithDetails | null>(null);
 
-  // Handle opening ConsultationModal
+  // Handle opening ConsultationModal (now redirects to page)
   const handleStartConsultation = async (appointment: AppointmentWithDetails) => {
-    if (appointment.status !== 'In Progress') {
+    console.log("Starting consultation for appointment:", appointment.id);
+    
+    // Update appointment status to "In Progress" if it's currently "Scheduled"
+    if (appointment.status === 'Scheduled') {
       try {
-        await updateAppointmentStatusMutation.mutateAsync({ appointmentId: appointment.id, status: 'In Progress' });
-      } catch (e) {
-        toast.error('Failed to update appointment status.');
-        return;
+        setLoading(true);
+        const { error } = await supabase
+          .from('appointments')
+          .update({ status: 'In Progress' })
+          .eq('id', appointment.id);
+        
+        if (error) {
+          console.error('Error updating appointment status:', error);
+          toast.error('Failed to update appointment status');
+        } else {
+          // Refresh appointments data
+          queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
+          toast.success('Consultation started');
+        }
+      } catch (error) {
+        console.error('Error updating appointment status:', error);
+        toast.error('Failed to start consultation');
+      } finally {
+        setLoading(false);
       }
     }
-    setSelectedAppointmentForConsultation(appointment);
-    setIsConsultationModalOpen(true);
+    
+    navigate(`/consultation/${appointment.id}`);
   };
 
-  // Handle viewing completed consultation
+  // Handle viewing consultation
   const handleViewConsultation = (appointment: AppointmentWithDetails) => {
     setSelectedAppointmentForView(appointment);
     setIsConsultationViewModalOpen(true);
   };
 
-  // Handle creating bill for appointment
+  // Handle creating bill
   const handleCreateBill = (appointment: AppointmentWithDetails) => {
     setSelectedAppointmentForBilling(appointment);
     setIsBillingModalOpen(true);
@@ -217,12 +303,9 @@ const Appointments = () => {
     setIsBillingModalOpen(open);
     if (!open && activeClinic) {
       queryClient.invalidateQueries({ queryKey: ['bills', activeClinic.clinic_id] });
+      setSelectedAppointmentForBilling(null);
     }
   };
-
-  // State for Prescription Modal
-  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
-  const [selectedAppointmentForPrescription, setSelectedAppointmentForPrescription] = useState<AppointmentWithDetails | null>(null);
 
   // Handle creating prescription for appointment
   const handleCreatePrescription = (appointment: AppointmentWithDetails) => {
@@ -257,48 +340,281 @@ const Appointments = () => {
     }
   };
 
-  const updateAppointmentStatusMutation = useMutation({
-    mutationFn: async ({ appointmentId, status }: { appointmentId: string, status: Enums<'appointment_status'> }) => {
-      if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status })
-        .eq('id', appointmentId)
-        .eq('clinic_id', activeClinic.clinic_id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
-    },
-  });
+  // Set initial tab from URL parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['today', 'upcoming', 'past'].includes(tabParam)) {
+      setActiveTab(tabParam as AppointmentFilter);
+    }
+  }, [searchParams]);
+
+  // Render appointment table for a specific filter
+  const renderAppointmentTable = (appointmentList: AppointmentWithDetails[], filter: AppointmentFilter) => {
+    const currentPageForFilter = currentPage[filter];
+    const paginatedAppointments = getPaginatedAppointments(appointmentList, currentPageForFilter);
+    const totalPages = getTotalPages(appointmentList);
+
+    return (
+      <>
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/30">
+              <TableHead className="font-semibold text-foreground">Date</TableHead>
+              <TableHead className="font-semibold text-foreground">Time</TableHead>
+              <TableHead className="font-semibold text-foreground">Patient</TableHead>
+              <TableHead className="font-semibold text-foreground">Doctor</TableHead>
+              <TableHead className="hidden sm:table-cell font-semibold text-foreground">Type</TableHead>
+              <TableHead className="hidden sm:table-cell font-semibold text-foreground">Status</TableHead>
+              <TableHead className="hidden md:table-cell font-semibold text-foreground">Billing</TableHead>
+              {/* Add a new header for Consultation action if user is a doctor */}
+              {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && <TableHead className="font-semibold text-foreground">Consultation</TableHead>}
+              <TableHead className="font-semibold text-foreground">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedAppointments.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') ? 9 : 8} className="text-center py-12">
+                  <div className="flex flex-col items-center space-y-2">
+                    {filter === 'today' ? <AlertCircle className="w-12 h-12 text-warning" /> :
+                     filter === 'upcoming' ? <Calendar className="w-12 h-12 text-primary" /> :
+                     <CheckCircle2 className="w-12 h-12 text-muted-foreground" />}
+                    <h3 className="text-lg font-semibold text-foreground">
+                      {filter === 'today' ? 'No appointments today' :
+                       filter === 'upcoming' ? 'No upcoming appointments' :
+                       'No past appointments'}
+                    </h3>
+                    <p className="text-muted-foreground">
+                      {searchTerm ? `No appointments match "${searchTerm}"` : 
+                       filter === 'today' ? "No appointments scheduled for today" :
+                       filter === 'upcoming' ? "No future appointments scheduled" :
+                       "No past appointments found"}
+                    </p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedAppointments.map((appointment) => {
+                console.log("Appointment ID:", appointment.id, "Status:", appointment.status, "Active Role:", activeClinicRole);
+                return (
+                <TableRow
+                  key={appointment.id}
+                  className="hover:bg-primary/5 transition-colors cursor-pointer"
+                >
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{format(parseISO(appointment.date), 'PPP')}</TableCell>
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{appointment.time}</TableCell>
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer font-medium">{appointment.patient_name}</TableCell>
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{appointment.doctor_name}</TableCell>
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.type}</TableCell>
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">
+                    <Badge variant={
+                      appointment.status === 'Completed' ? "default" :
+                      appointment.status === 'In Progress' ? "secondary" :
+                      appointment.status === 'Scheduled' ? "outline" :
+                      "destructive"
+                    } className={
+                      appointment.status === 'Completed' ? "status-badge status-active" :
+                      appointment.status === 'In Progress' ? "status-badge status-in-progress" :
+                      appointment.status === 'Scheduled' ? "status-badge status-pending" :
+                      "status-badge status-inactive"
+                    }>
+                      {appointment.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden md:table-cell">
+                    <Badge variant={
+                      appointment.billing_status === 'Paid' ? "default" :
+                      appointment.billing_status === 'Partially Paid' ? "secondary" :
+                      appointment.billing_status === 'Overdue' ? "destructive" :
+                      "outline"
+                    } className={
+                      appointment.billing_status === 'Paid' ? "status-badge status-active" :
+                      appointment.billing_status === 'Partially Paid' ? "status-badge status-warning" :
+                      appointment.billing_status === 'Overdue' ? "status-badge status-inactive" :
+                      "status-badge status-pending"
+                    }>
+                      {appointment.billing_status || 'Pending'}
+                    </Badge>
+                  </TableCell>
+
+                  {/* Add a cell for the Start Consultation button if user is a doctor/superadmin and appointment is not completed/cancelled */}
+                  {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status !== 'Completed' && appointment.status !== 'Cancelled' && (
+                     <TableCell>
+                       <Button 
+                         size="sm" 
+                         onClick={() => handleStartConsultation(appointment)}
+                         className="bg-primary text-primary-foreground hover:bg-primary/90"
+                       >
+                         {appointment.status === "Scheduled" ? "Start" : "Continue"}
+                       </Button>
+                     </TableCell>
+                  )}
+
+                  {/* Add View Consultation button for completed appointments */}
+                  {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status === 'Completed' && (
+                     <TableCell>
+                       <Button 
+                         size="sm" 
+                         variant="outline" 
+                         onClick={() => handleViewConsultation(appointment)}
+                         className="border-primary text-primary hover:bg-primary/10"
+                       >
+                         View Notes
+                       </Button>
+                     </TableCell>
+                  )}
+
+                   {/* Add an empty cell if neither button is shown to maintain table structure */}
+                   {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status === 'Cancelled' && (
+                       <TableCell></TableCell>
+                   )}
+
+                  <TableCell className="text-right flex gap-2 items-center">
+                    
+                    {/* Create Bill button (staff/superadmin, not cancelled) */}
+                    {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && appointment.status !== 'Cancelled' && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={e => { e.stopPropagation(); handleCreateBill(appointment); }}
+                        className="border-primary text-primary hover:bg-primary/10"
+                      >
+                        Create Bill
+                      </Button>
+                    )}
+                    {/* Keep dropdown for other actions */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Open menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handleAppointmentClick(appointment)}>
+                          View/Edit Appointment
+                        </DropdownMenuItem>
+                        {/* Option to cancel appointment - visible for staff/superadmin, or potentially doctors depending on policy */}
+                        {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && appointment.status !== 'Cancelled' && appointment.status !== 'Completed' && (
+                          <DropdownMenuItem onClick={() => handleCancelAppointment(appointment.id)} disabled={loading}>
+                            Cancel Appointment
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+
+        {/* Pagination for this specific tab */}
+        {totalPages > 1 && (
+          <div className="mt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(filter, Math.max(currentPageForFilter - 1, 1))}
+                    className={currentPageForFilter === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                  const pageNum = currentPageForFilter <= 3 ? i + 1 : currentPageForFilter - 2 + i;
+                  if (pageNum <= totalPages && pageNum > 0) {
+                    return (
+                      <PaginationItem key={i}>
+                        <PaginationLink
+                          onClick={() => handlePageChange(filter, pageNum)}
+                          isActive={currentPageForFilter === pageNum}
+                          className="cursor-pointer"
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }
+                  return null;
+                })}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(filter, Math.min(currentPageForFilter + 1, totalPages))}
+                    className={currentPageForFilter === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
+      </>
+    );
+  };
 
   if (authLoading) {
-    console.log("Appointments: Rendering null due to authLoading");
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      </div>
+    );
   }
 
   if (!activeClinic) {
-    console.log("Appointments: Rendering no clinic message");
-    return <div className="text-center py-4">Please select a clinic to view appointments.</div>;
+    return (
+      <Card className="medical-card m-6">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-2">
+            <Calendar className="w-12 h-12 text-muted-foreground mx-auto" />
+            <p className="text-muted-foreground">Please select a clinic to view appointments.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (error) {
     console.error("Appointments: Error fetching data", error);
     toast.error("Failed to load appointments");
-    return <div className="text-center py-4 text-red-500">Error loading appointments.</div>;
+    return (
+      <Card className="medical-card m-6">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-2">
+            <Activity className="w-12 h-12 text-destructive mx-auto" />
+            <p className="text-destructive">Error loading appointments.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Appointments</h1>
-          <p className="text-muted-foreground">View and manage clinic appointments</p>
+    <div className="space-y-6 ">
+      {/* Header Section */}
+      <div className="flex justify-between items-start">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+              <Calendar className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-primary">Appointments</h1>
+              <p className="text-muted-foreground">View and manage clinic appointments</p>
+            </div>
+          </div>
+          {activeClinicRole === 'doctor' && (
+            <Badge className="bg-accent/10 text-accent border-accent/20">
+              <Stethoscope size={12} className="mr-1" />
+              Doctor View
+            </Badge>
+          )}
         </div>
         {/* Show New Appointment button for Superadmins and Staff */}
-        {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin' || activeClinicRole === 'staff') && (
+        {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && (
           <Button
-          onClick={handleNewAppointment}
+            onClick={handleNewAppointment}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
           >
             <Plus size={18} className="mr-2" />
             New Appointment
@@ -306,16 +622,97 @@ const Appointments = () => {
         )}
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search by patient or doctor name, or date..."
-          className="pl-8"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Appointments</p>
+                <p className="text-2xl font-bold text-primary">{filteredAppointments.all.length}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {activeClinicRole === 'doctor' ? 'Your appointments' : 'All appointments'}
+                </p>
+              </div>
+              <div className="bg-primary/10 p-3 rounded-lg">
+                <Calendar className="w-6 h-6 text-primary" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Today's Appointments</p>
+                <p className="text-2xl font-bold text-warning">
+                  {filteredAppointments.today.length}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Urgent: {filteredAppointments.today.filter(a => a.status === 'Scheduled' || a.status === 'In Progress').length}
+                </p>
+              </div>
+              <div className="bg-warning/10 p-3 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-warning" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Upcoming</p>
+                <p className="text-2xl font-bold text-info">
+                  {filteredAppointments.upcoming.length}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Future appointments</p>
+              </div>
+              <div className="bg-info/10 p-3 rounded-lg">
+                <Timer className="w-6 h-6 text-info" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Past</p>
+                <p className="text-2xl font-bold text-success">
+                  {filteredAppointments.past.length}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">Historical records</p>
+              </div>
+              <div className="bg-success/10 p-3 rounded-lg">
+                <CheckCircle2 className="w-6 h-6 text-success" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Search Section */}
+      <Card className="medical-card">
+        <CardContent className="p-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by patient or doctor name, or date..."
+              className="pl-10 bg-background border-border focus:ring-primary"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage({ today: 1, upcoming: 1, past: 1 });
+              }}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {isLoading ? (
         <div className="space-y-4">
@@ -325,158 +722,79 @@ const Appointments = () => {
           ))}
         </div>
       ) : (
-        <>
-          <div className="border rounded-lg overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Doctor</TableHead>
-                  <TableHead className="hidden sm:table-cell">Type</TableHead>
-                  <TableHead className="hidden sm:table-cell">Status</TableHead>
-                  {/* Add a new header for Consultation action if user is a doctor */}
-                  {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && <TableHead>Consultation</TableHead>}
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAppointments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') ? 8 : 7} className="text-center py-4"> {/* Adjust colspan */}
-                      {searchTerm ? "No appointments match your search" : "No appointments found"}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredAppointments.map((appointment) => {
-                    console.log("Appointment ID:", appointment.id, "Status:", appointment.status, "Active Role:", activeClinicRole);
-                    return (
-                    <TableRow
-                      key={appointment.id}
-                      className="hover:bg-muted/50"
-                    >
-                      <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{format(parseISO(appointment.date), 'PPP')}</TableCell>
-                      <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{appointment.time}</TableCell>
-                      <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer font-medium">{appointment.patient_name}</TableCell>
-                      <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{appointment.doctor_name}</TableCell>
-                      <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.type}</TableCell>
-                      <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.status}</TableCell>
-
-                      {/* Add a cell for the Start Consultation button if user is a doctor/superadmin and appointment is not completed/cancelled */}
-                      {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status !== 'Completed' && appointment.status !== 'Cancelled' && (
-                         <TableCell>
-                           <Button size="sm" onClick={() => handleStartConsultation(appointment)}>
-                             {appointment.status === "Scheduled" ? "Start" : "Continue"}
-                           </Button>
-                         </TableCell>
-                      )}
-
-                      {/* Add View Consultation button for completed appointments */}
-                      {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status === 'Completed' && (
-                         <TableCell>
-                           <Button size="sm" variant="outline" onClick={() => handleViewConsultation(appointment)}>
-                             View Notes
-                           </Button>
-                         </TableCell>
-                      )}
-
-                       {/* Add an empty cell if neither button is shown to maintain table structure */}
-                       {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && appointment.status === 'Cancelled' && (
-                           <TableCell></TableCell>
-                       )}
-
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            {/* Option to view/edit appointment details */}
-                            <DropdownMenuItem onClick={() => handleAppointmentClick(appointment)}>
-                                View/Edit Appointment
-                            </DropdownMenuItem>
-                            {/* Option to create bill for appointment */}
-                            {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && (
-                               <DropdownMenuItem onClick={() => handleCreateBill(appointment)}>
-                                    Create Bill
-                                </DropdownMenuItem>
-                            )}
-                            {/* Option to create prescription for appointment */}
-                            {(activeClinicRole === 'doctor' || activeClinicRole === 'superadmin') && (
-                               <DropdownMenuItem onClick={() => handleCreatePrescription(appointment)}>
-                                    Add Prescription
-                                </DropdownMenuItem>
-                            )}
-                            <DropdownMenuSeparator />
-                             {/* Option to cancel appointment - visible for staff/superadmin, or potentially doctors depending on policy */}
-                             {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && appointment.status !== 'Cancelled' && appointment.status !== 'Completed' && (
-                                <DropdownMenuItem onClick={() => handleCancelAppointment(appointment.id)} disabled={loading}>
-                                    Cancel Appointment
-                                </DropdownMenuItem>
-                             )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination can be added here if needed, but the current fetchPatients doesn't support it */}
-          {/* For now, we'll omit pagination as the RPC doesn't support limit/offset directly */}
-           {/*
-           <Pagination>
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious href="#" />
-                </PaginationItem>
-                 <PaginationItem>
-                   <PaginationLink href="#">1</PaginationLink>
-                 </PaginationItem>
-                 <PaginationItem>
-                   <PaginationLink href="#" isActive>
-                     2
-                   </PaginationLink>
-                 </PaginationItem>
-                 <PaginationItem>
-                   <PaginationLink href="#">3</PaginationLink>
-                 </PaginationItem>
-                <PaginationItem>
-                  <PaginationNext href="#" />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-           */}
-        </>
+        <Card className="medical-card shadow-medical">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              Appointment Schedule
+            </CardTitle>
+            <CardDescription>
+              {isLoading ? 'Loading appointments...' : `Showing ${filteredAppointments.all.length} appointments`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+              <div className="px-6 pt-6">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="today" className="flex items-center gap-2">
+                    <AlertCircle size={16} />
+                    Today ({filteredAppointments.today.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="upcoming" className="flex items-center gap-2">
+                    <Timer size={16} />
+                    Upcoming ({filteredAppointments.upcoming.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="past" className="flex items-center gap-2">
+                    <CheckCircle2 size={16} />
+                    Past ({filteredAppointments.past.length})
+                  </TabsTrigger>
+                </TabsList>
+              </div>
+              
+              <TabsContent value="today" className="mt-0">
+                {renderAppointmentTable(filteredAppointments.today, 'today')}
+              </TabsContent>
+              
+              <TabsContent value="upcoming" className="mt-0">
+                {renderAppointmentTable(filteredAppointments.upcoming, 'upcoming')}
+              </TabsContent>
+              
+              <TabsContent value="past" className="mt-0">
+                {renderAppointmentTable(filteredAppointments.past, 'past')}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       )}
 
       {/* Appointment Modal component */}
       <AppointmentModal
         open={isAppointmentModalOpen}
         onOpenChange={handleModalClose}
-        appointment={selectedAppointment ? { ...selectedAppointment, status: selectedAppointment.status as Enums<'appointment_status'>, type: selectedAppointment.type as Enums<'appointment_type'> } : null}
+        appointment={selectedAppointment ? { 
+          ...selectedAppointment, 
+          clinic_id: activeClinic?.clinic_id || ''
+        } : null}
       />
 
       {/* Consultation Modal component */}
       <ConsultationModal
         open={isConsultationModalOpen}
         onOpenChange={handleConsultationModalClose}
-        appointment={selectedAppointmentForConsultation ? { ...selectedAppointmentForConsultation, status: selectedAppointmentForConsultation.status as Enums<'appointment_status'>, type: selectedAppointmentForConsultation.type as Enums<'appointment_type'> } : null}
+        appointment={selectedAppointmentForConsultation ? { 
+          ...selectedAppointmentForConsultation, 
+          clinic_id: activeClinic?.clinic_id || ''
+        } : null}
       />
 
       {/* Consultation View Modal component */}
       <ConsultationViewModal
         open={isConsultationViewModalOpen}
         onOpenChange={handleConsultationViewModalClose}
-        appointment={selectedAppointmentForView}
+        appointment={selectedAppointmentForView ? {
+          ...selectedAppointmentForView,
+          clinic_id: activeClinic?.clinic_id || ''
+        } : null}
       />
 
       {/* Enhanced Billing Modal component */}
@@ -484,7 +802,10 @@ const Appointments = () => {
         open={isBillingModalOpen}
         onOpenChange={handleBillingModalClose}
         bill={null}
-        appointment={selectedAppointmentForBilling}
+        appointment={selectedAppointmentForBilling ? {
+          ...selectedAppointmentForBilling,
+          clinic_id: activeClinic?.clinic_id || ''
+        } : null}
       />
 
       {/* Prescription Modal component */}
@@ -492,7 +813,10 @@ const Appointments = () => {
         open={isPrescriptionModalOpen}
         onOpenChange={handlePrescriptionModalClose}
         consultationId={null}
-        appointment={selectedAppointmentForPrescription}
+        appointment={selectedAppointmentForPrescription ? {
+          ...selectedAppointmentForPrescription,
+          clinic_id: activeClinic?.clinic_id || '',
+        } : null}
         doctorId={selectedAppointmentForPrescription?.doctor_id || null}
         patientId={selectedAppointmentForPrescription?.patient_id || null}
         clinicId={activeClinic?.clinic_id || null}

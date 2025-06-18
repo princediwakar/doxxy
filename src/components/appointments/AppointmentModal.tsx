@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
+import { CalendarIcon, Plus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -36,14 +36,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { Database, Enums } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { PatientModal } from "@/components/patients/PatientModal";
 
 // Define types for convenience
@@ -51,18 +50,7 @@ type Appointment = Database['public']['Tables']['appointments']['Row'];
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Doctor = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 
-// Define JS enums for Zod validation
-enum AppointmentTypeEnum {
-  "Walk-in" = "Walk-in",
-  "Digital" = "Digital",
-}
-
-enum AppointmentStatusEnum {
-  "Scheduled" = "Scheduled",
-  "In Progress" = "In Progress",
-  "Completed" = "Completed",
-  "Cancelled" = "Cancelled",
-}
+// Using the Supabase enum types directly in the component
 
 
 const supabase = getSupabase();
@@ -72,10 +60,10 @@ const appointmentFormSchema = z.object({
   time: z.string().nullable().optional().transform(e => e === "" ? null : e),
   patient_id: z.string().nonempty('Patient is required'),
   doctor_id: z.string().nonempty('Doctor is required'),
-  type: z.nativeEnum(AppointmentTypeEnum, {
+  type: z.enum(['Walk-in', 'Digital'], {
     required_error: 'Appointment type is required',
   }),
-  status: z.nativeEnum(AppointmentStatusEnum, {
+  status: z.enum(['Scheduled', 'In Progress', 'Completed', 'Cancelled'], {
     required_error: 'Status is required',
   }),
   notes: z.string().nullable().optional().transform(e => e === "" ? null : e),
@@ -97,7 +85,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   patient,
 }) => {
   const queryClient = useQueryClient();
-  const { activeClinic } = useAuth();
+  const { activeClinic, activeClinicRole } = useAuth();
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [patientSearch, setPatientSearch] = useState("");
   const [newlyCreatedPatient, setNewlyCreatedPatient] = useState<Patient | null>(null);
@@ -110,8 +98,8 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       time: appointment?.time || '',
       patient_id: appointment?.patient_id || patient?.id || '',
       doctor_id: appointment?.doctor_id || '',
-      type: appointment ? (appointment.type as AppointmentTypeEnum) : AppointmentTypeEnum['Walk-in'],
-      status: appointment ? (appointment.status as AppointmentStatusEnum) : AppointmentStatusEnum.Scheduled,
+      type: appointment ? appointment.type : "Walk-in",
+      status: appointment ? appointment.status : "Scheduled",
       notes: appointment?.notes || '',
     },
   });
@@ -119,27 +107,25 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   // Effect to reset form when modal opens or props change
   useEffect(() => {
     if (open) {
-      console.log("AppointmentModal: Modal opened", { activeClinicId: activeClinic?.clinic_id });
       const defaultDate = appointment ? new Date(appointment.date) : new Date();
       const defaultValues = {
         date: isNaN(defaultDate.getTime()) ? new Date() : defaultDate,
         time: appointment?.time || '',
         patient_id: appointment?.patient_id || patient?.id || '',
         doctor_id: appointment?.doctor_id || '',
-        type: appointment ? (appointment.type as AppointmentTypeEnum) : AppointmentTypeEnum['Walk-in'],
-        status: appointment ? (appointment.status as AppointmentStatusEnum) : AppointmentStatusEnum.Scheduled,
+        type: appointment ? appointment.type : "Walk-in",
+        status: appointment ? appointment.status : "Scheduled",
         notes: appointment?.notes || '',
       };
-      console.log("AppointmentModal: Resetting form with defaults", defaultValues);
       form.reset(defaultValues);
     }
   }, [open, appointment, patient, form, activeClinic?.clinic_id]);
 
   // Helper function for badge variant
-  const getTypeBadgeVariant = (type: AppointmentTypeEnum) => {
+  const getTypeBadgeVariant = (type: Enums<'appointment_type'>) => {
     switch (type) {
-      case AppointmentTypeEnum['Walk-in']: return 'default';
-      case AppointmentTypeEnum.Digital: return 'secondary';
+      case 'Walk-in': return 'default';
+      case 'Digital': return 'secondary';
       default: return 'outline';
     }
   };
@@ -166,19 +152,30 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   );
 
   // Fetch doctors using RPC
-  const { data: doctors, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
+  const { data: doctorsRaw, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
     queryKey: ['doctors', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
-      console.log("AppointmentModal: Fetching doctors for clinic:", activeClinic.clinic_id);
       const { data, error } = await supabase
         .rpc('get_doctors_by_clinic', { clinic_id: activeClinic.clinic_id });
       if (error) throw error;
-      console.log("AppointmentModal: Doctors fetched:", data);
       return data || [];
     },
     enabled: open && !!activeClinic?.clinic_id,
   });
+
+  // Always use doctor.id for dropdown and form (no fallback to user_id)
+  const doctors = (doctorsRaw || []).map(d => ({ ...d, id: d.id }));
+
+  // Additional effect to set doctor_id when doctors are loaded and appointment exists
+  useEffect(() => {
+    if (open && appointment?.doctor_id && doctors && doctors.length > 0) {
+      const doctorExists = doctors.some(d => d.id === appointment.doctor_id);
+      if (doctorExists) {
+        form.setValue('doctor_id', appointment.doctor_id);
+      }
+    }
+  }, [open, appointment?.doctor_id, doctors, form]);
 
   // Mutation for creating/updating appointment
   const mutation = useMutation({
@@ -194,7 +191,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         status: values.status,
         notes: values.notes || '',
       };
-      console.log("AppointmentModal: Sending to Supabase:", baseAppointmentData);
       
         let result;
         if (appointment) {
@@ -212,7 +208,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             .single();
         }
         if (result.error) throw result.error;
-        console.log("AppointmentModal: Supabase response:", result.data);
         return result.data;
     },
     onSuccess: () => {
@@ -223,7 +218,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      console.error("AppointmentModal: Mutation error:", error);
       toast.error(appointment ? 'Failed to update appointment.' : 'Failed to create appointment.', {
         description: error.message,
       });
@@ -231,8 +225,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   });
 
   const onSubmit = (values: AppointmentFormValues) => {
-    console.log("AppointmentModal: onSubmit triggered with values:", values);
-    console.log("AppointmentModal: Form state errors:", form.formState.errors);
+    if (doctors) {
+      const doctorIds = doctors.map(d => d.id);
+      if (!doctorIds.includes(values.doctor_id)) {
+        toast.error("Selected doctor is not valid. Please select a doctor from the list.");
+        return;
+      }
+    }
     if (Object.keys(form.formState.errors).length > 0) {
       toast.error("Please fix form errors before submitting.");
       return;
@@ -277,13 +276,14 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 name="patient_id"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
+                    <div className="flex justify-between mb-1">
                     <FormLabel>Patient</FormLabel>
-                    <div className="flex justify-end mb-1">
                       <button
                         type="button"
-                        className="text-xs text-primary underline hover:no-underline"
+                        className="text-xs text-primary hover:underline flex items-center"
                         onClick={() => setIsPatientModalOpen(true)}
                       >
+                        <Plus className="h-3 w-3 mr-1" />
                         Add Patient
                       </button>
                     </div>
@@ -320,16 +320,36 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               />
 
 
-              {/* Time Input */}
+              {/* Time Input - 15-minute intervals */}
               <FormField
                 control={form.control}
                 name="time"
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Time</FormLabel>
-                    <FormControl>
-                      <Input type="time" {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} value={field.value || ''}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select time" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="max-h-60">
+                        {/* Generate 15-minute intervals from 9:00 AM to 6:00 PM */}
+                        {Array.from({ length: 37 }, (_, i) => {
+                          const startTime = 9 * 60; // 9:00 AM in minutes
+                          const minutes = startTime + i * 15;
+                          const hours = Math.floor(minutes / 60);
+                          const mins = minutes % 60;
+                          const time12h = `${hours > 12 ? hours - 12 : hours === 0 ? 12 : hours}:${mins.toString().padStart(2, '0')} ${hours >= 12 ? 'PM' : 'AM'}`;
+                          const time24h = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+                          return (
+                            <SelectItem key={time24h} value={time24h}>
+                              {time12h}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -372,7 +392,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             />
 
 
-            {/* Doctor Select */}
+            {/* Doctor Select with Department */}
             <FormField
               control={form.control}
               name="doctor_id"
@@ -388,7 +408,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                     <SelectContent>
                       {(doctors || []).map((d) => (
                         <SelectItem key={d.id} value={d.id}>
-                          {d.name}
+                          <div className="flex flex-col">
+                            <div className="font-medium">{d.name}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {d.department_name || 'General Medicine'}
+                            </div>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -412,7 +437,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.values(AppointmentTypeEnum).map(typeOption => (
+                      {['Walk-in', 'Digital'].map(typeOption => (
                         <SelectItem key={typeOption} value={typeOption}>
                           {typeOption}
                         </SelectItem>
@@ -438,7 +463,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {Object.values(AppointmentStatusEnum).map(statusOption => (
+                      {['Scheduled', 'In Progress', 'Completed', 'Cancelled'].map(statusOption => (
                         <SelectItem key={statusOption} value={statusOption}>
                           {statusOption}
                         </SelectItem>

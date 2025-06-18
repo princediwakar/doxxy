@@ -33,12 +33,17 @@ const ClinicSwitcher = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0">
+      <PopoverContent className="w-64 p-0 shadow-medical border">
          {userClinics.map((clinic) => (
             <Button
                key={clinic.clinic_id}
                variant="ghost"
-               className="w-full justify-start gap-2"
+               className={cn(
+                 "w-full justify-start gap-2 transition-colors",
+                 activeClinic?.clinic_id === clinic.clinic_id 
+                   ? "bg-primary/10 text-primary hover:bg-primary/15" 
+                   : "hover:bg-muted/50"
+               )}
                onClick={() => setActiveClinicId(clinic.clinic_id)}
             >
                <span className="flex-grow text-left truncate">{clinic.clinics?.name}</span>

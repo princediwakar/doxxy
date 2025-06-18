@@ -27,18 +27,33 @@ export function UpcomingAppointmentsList({
   showViewAllButton = false,
   onViewAll,
 }: UpcomingAppointmentsListProps) {
-  const getStatusColor = (status: string) => {
+  const getStatusBadgeClass = (status: string) => {
     switch (status.toLowerCase()) {
       case 'scheduled':
-        return 'default';
+        return 'status-badge status-pending';
       case 'in progress':
-        return 'secondary';
+        return 'status-badge status-in-progress';
       case 'completed':
-        return 'outline';
+        return 'status-badge status-active';
       case 'cancelled':
-        return 'destructive';
+        return 'status-badge status-inactive';
       default:
-        return 'outline';
+        return 'status-badge status-pending';
+    }
+  };
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return 'outline' as const;
+      case 'in progress':
+        return 'secondary' as const;
+      case 'completed':
+        return 'default' as const;
+      case 'cancelled':
+        return 'destructive' as const;
+      default:
+        return 'outline' as const;
     }
   };
 
@@ -97,7 +112,7 @@ export function UpcomingAppointmentsList({
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground truncate">{appointment.patient}</span>
-                    <Badge variant={getStatusColor(appointment.status)}>{appointment.status}</Badge>
+                                                <Badge variant={getStatusVariant(appointment.status)} className={getStatusBadgeClass(appointment.status)}>{appointment.status}</Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center"><User size={14} className="mr-1" />{appointment.doctor}</span>

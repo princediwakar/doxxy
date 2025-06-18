@@ -11,10 +11,21 @@ interface PatientInfo {
   email?: string;
 }
 
+interface SpecialtyData {
+  chief_complaint?: string;
+  history_of_present_illness?: string;
+  physical_examination?: string;
+  assessment?: string;
+  plan?: string;
+  visual_acuity?: string;
+  neurological_findings?: string;
+  [key: string]: unknown;
+}
+
 interface ConsultationData {
   id: string;
   created_at: string;
-  specialty_data: any;
+  specialty_data: SpecialtyData | null;
   appointment: {
     date: string;
     time?: string;
@@ -24,10 +35,20 @@ interface ConsultationData {
   };
 }
 
+interface MedicationData {
+  name?: string;
+  dosage?: string;
+  frequency?: string;
+  duration?: string;
+  route?: string;
+  eye?: string;
+  instructions?: string;
+}
+
 interface PrescriptionData {
   id: string;
   created_at: string;
-  medications: any;
+  medications: MedicationData[] | string;
   instructions?: string;
   follow_up_date?: string;
   doctor_name?: string;
@@ -158,7 +179,7 @@ export class MedicalRecordPDFExporter {
 
       // Specialty data
       if (consultation.specialty_data && typeof consultation.specialty_data === 'object') {
-        const data = consultation.specialty_data as any;
+        const data = consultation.specialty_data;
         
         if (data.chief_complaint) {
           this.addSection('Chief Complaint:', data.chief_complaint);

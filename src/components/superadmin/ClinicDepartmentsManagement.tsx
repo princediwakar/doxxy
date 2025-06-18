@@ -177,25 +177,29 @@ const ClinicDepartmentsManagement = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="text-sm">
+          <Badge className="status-badge status-active text-sm">
             {activeDepartments.length} Active
           </Badge>
-          <Badge variant="secondary" className="text-sm">
+          <Badge className="status-badge status-primary text-sm">
             {availableDepartments.length} Available
           </Badge>
         </div>
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search departments..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-8"
-        />
-      </div>
+      <Card className="medical-card">
+        <CardContent className="p-6">
+          <div className="relative max-w-sm">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search departments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-background border-border focus:ring-primary"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Loading State */}
       {isLoading && (
@@ -214,21 +218,21 @@ const ClinicDepartmentsManagement = () => {
       {!isLoading && activeDepartments.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Check className="h-5 w-5 text-green-600" />
-            <h3 className="text-lg font-semibold">Active Departments</h3>
+            <Check className="h-5 w-5 text-success" />
+            <h3 className="text-lg font-semibold text-primary">Active Departments</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeDepartments.map((department) => (
-              <Card key={department.id} className="border-green-200 bg-green-50/50">
+              <Card key={department.id} className="medical-card shadow-medical border-success/20 bg-success/5">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-green-100 text-green-700">
+                      <div className="p-2 rounded-lg bg-success/10 text-success">
                         {getDepartmentIcon(department.name)}
                       </div>
                       <div>
-                        <h4 className="font-medium text-green-900">{department.name}</h4>
-                        <p className="text-xs text-green-700">Active</p>
+                        <h4 className="font-medium text-success">{department.name}</h4>
+                        <Badge className="status-badge status-active text-xs">Active</Badge>
                       </div>
                     </div>
                     <Button
@@ -236,7 +240,7 @@ const ClinicDepartmentsManagement = () => {
                       size="sm"
                       onClick={() => handleToggleDepartment(department)}
                       disabled={isLoading}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <X className="h-4 w-4" />
                     </Button>
@@ -252,21 +256,21 @@ const ClinicDepartmentsManagement = () => {
       {!isLoading && availableDepartments.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Plus className="h-5 w-5 text-blue-600" />
-            <h3 className="text-lg font-semibold">Available Departments</h3>
+            <Plus className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-primary">Available Departments</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {availableDepartments.map((department) => (
-              <Card key={department.id} className="border-gray-200 hover:border-blue-300 transition-colors cursor-pointer">
+              <Card key={department.id} className="medical-card hover:border-primary/30 hover:shadow-medical transition-all cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
                         {getDepartmentIcon(department.name)}
                       </div>
                       <div>
                         <h4 className="font-medium">{department.name}</h4>
-                        <p className="text-xs text-muted-foreground">Available</p>
+                        <Badge className="status-badge status-pending text-xs">Available</Badge>
                       </div>
                     </div>
                     <Button
@@ -274,7 +278,7 @@ const ClinicDepartmentsManagement = () => {
                       size="sm"
                       onClick={() => handleToggleDepartment(department)}
                       disabled={isLoading}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      className="text-primary hover:text-primary hover:bg-primary/10"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>

@@ -31,6 +31,7 @@ import { getSupabase } from '@/integrations/supabase/client';
 import { Tables, Enums } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { Plus, MoreHorizontal, User, Mail, Search, Edit, Trash2, UserCheck } from "lucide-react";
+import { SelectGroup, SelectLabel } from '@/components/ui/select';
 
 const supabase = getSupabase();
 
@@ -128,8 +129,8 @@ const ClinicMembersManagement = () => {
     enabled: !!activeClinic?.clinic_id,
   });
 
-  // Fetch available departments
-  const { data: departments = [] } = useQuery({
+  // Fetch active clinic departments
+  const { data: activeDepartments = [] } = useQuery({
     queryKey: ['clinicDepartments', activeClinic?.clinic_id],
     queryFn: async (): Promise<DepartmentWithType[]> => {
       if (!activeClinic?.clinic_id) return [];
@@ -145,16 +146,69 @@ const ClinicMembersManagement = () => {
     enabled: !!activeClinic?.clinic_id,
   });
 
+  // Fetch all department types  
+  const { data: allDepartmentTypes = [] } = useQuery({
+    queryKey: ['departmentTypes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('department_types')
+        .select('*')
+        .order('name');
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Calculate inactive departments
+  const activeDepartmentTypeIds = activeDepartments.map(dept => dept.department_type_id);
+  const inactiveDepartmentTypes = allDepartmentTypes.filter(
+    dt => !activeDepartmentTypeIds.includes(dt.id)
+  );
+
+  // Add department mutation
+  const addDepartmentMutation = useMutation({
+    mutationFn: async (departmentTypeId: string) => {
+      if (!activeClinic?.clinic_id) throw new Error('Active clinic not found.');
+      const { data, error } = await supabase
+        .from('clinic_departments')
+        .insert({
+          clinic_id: activeClinic.clinic_id,
+          department_type_id: departmentTypeId,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clinicDepartments', activeClinic?.clinic_id] });
+      toast.success('Department activated');
+    },
+    onError: (error: Error) => {
+      console.error('Error adding department:', error);
+      toast.error('Failed to activate department: ' + error.message);
+    },
+  });
+
   // Invite member mutation
   const inviteMutation = useMutation({
     mutationFn: async (formData: InviteFormData) => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic');
       
+      let finalDepartmentId = formData.departmentId;
+      
+      // If department starts with 'type-', it's an inactive department we need to activate first
+      if (formData.departmentId.startsWith('type-')) {
+        const departmentTypeId = formData.departmentId.replace('type-', '');
+        const newDepartment = await addDepartmentMutation.mutateAsync(departmentTypeId);
+        finalDepartmentId = newDepartment.id;
+      }
+      
       const requestBody = {
         email: formData.email,
         clinic_id: activeClinic.clinic_id,
         role: formData.role,
-        department_id: formData.departmentId === "no-department" ? null : formData.departmentId,
+        department_id: finalDepartmentId === "no-department" ? null : finalDepartmentId,
       };
       
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-member`, {
@@ -187,15 +241,31 @@ const ClinicMembersManagement = () => {
 
   // Update member mutation
   const updateMutation = useMutation({
-    mutationFn: async ({ member, role, departmentId }: { member: Tables<'clinic_members'>; role: Enums<'user_role'>; departmentId: string }) => {
-      const { error } = await supabase.rpc("update_clinic_member_details", {
-        member_user_id: member.user_id,
-        target_clinic_id: member.clinic_id,
+    mutationFn: async ({ memberId, role, departmentId }: { memberId: string; role: Enums<'user_role'>; departmentId: string }) => {
+      if (!selectedMember) throw new Error('No member selected');
+      
+      const rpcParams: {
+        member_user_id: string;
+        target_clinic_id: string;
+        updated_role: Enums<'user_role'>;
+        updated_department_id?: string | null;
+      } = {
+        member_user_id: selectedMember.member.user_id,
+        target_clinic_id: selectedMember.member.clinic_id,
         updated_role: role,
-        updated_department_id: departmentId === "no-department" ? null : departmentId,
-      });
+      };
+      
+      // Only set department_id if it's being changed
+      if (departmentId !== "no-department") {
+        rpcParams.updated_department_id = departmentId;
+      } else {
+        rpcParams.updated_department_id = null;
+      }
+      
+      const { data, error } = await supabase.rpc("update_clinic_member_details", rpcParams);
       
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       toast.success("Member updated successfully");
@@ -258,12 +328,27 @@ const ClinicMembersManagement = () => {
     }
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!selectedMember) return;
+    
+    let finalDepartmentId = editForm.departmentId;
+    
+    // If department starts with 'type-', it's an inactive department we need to activate first
+    if (editForm.departmentId.startsWith('type-')) {
+      const departmentTypeId = editForm.departmentId.replace('type-', '');
+      try {
+        const newDepartment = await addDepartmentMutation.mutateAsync(departmentTypeId);
+        finalDepartmentId = newDepartment.id;
+      } catch (error) {
+        console.error('Error activating department:', error);
+        return; // Stop if department activation fails
+      }
+    }
+    
     updateMutation.mutate({
-      member: selectedMember.member,
+      memberId: selectedMember.member.id,
       role: editForm.role,
-      departmentId: editForm.departmentId,
+      departmentId: finalDepartmentId,
     });
   };
 
@@ -515,11 +600,28 @@ const ClinicMembersManagement = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="no-department">No Department</SelectItem>
-                  {departments.map(dep => (
-                    <SelectItem key={dep.id} value={dep.id}>
-                      {dep.department_types?.name || dep.id}
-                    </SelectItem>
-                  ))}
+                  
+                  {activeDepartments.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Active Departments</SelectLabel>
+                      {activeDepartments.map(dep => (
+                        <SelectItem key={dep.id} value={dep.id}>
+                          {dep.department_types?.name || dep.id}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
+                  
+                  {inactiveDepartmentTypes.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel>Available Departments</SelectLabel>
+                      {inactiveDepartmentTypes.map(dt => (
+                        <SelectItem key={`type-${dt.id}`} value={`type-${dt.id}`}>
+                          {dt.name} (will be activated)
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -595,11 +697,28 @@ const ClinicMembersManagement = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="no-department">No Department</SelectItem>
-                    {departments.map(dep => (
-                      <SelectItem key={dep.id} value={dep.id}>
-                        {dep.department_types?.name || dep.id}
-                      </SelectItem>
-                    ))}
+                    
+                    {activeDepartments.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Active Departments</SelectLabel>
+                        {activeDepartments.map(dep => (
+                          <SelectItem key={dep.id} value={dep.id}>
+                            {dep.department_types?.name || dep.id}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
+                    
+                    {inactiveDepartmentTypes.length > 0 && (
+                      <SelectGroup>
+                        <SelectLabel>Available Departments</SelectLabel>
+                        {inactiveDepartmentTypes.map(dt => (
+                          <SelectItem key={`type-${dt.id}`} value={`type-${dt.id}`}>
+                            {dt.name} (will be activated)
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

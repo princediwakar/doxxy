@@ -1,19 +1,22 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format, parseISO } from 'date-fns';
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  Download, 
-  Eye, 
-  Edit, 
+import {
+  Search,
+  Plus,
+  Filter,
+  Download,
+  Eye,
+  Edit,
   Calendar,
   User,
   Stethoscope,
   Pill,
   Clock,
-  FileText
+  FileText,
+  Activity,
+  Heart,
+  Shield
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +34,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -40,7 +51,7 @@ import {
 
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { Database, Tables } from '@/integrations/supabase/types';
 import { PrescriptionViewModal } from '@/components/prescriptions/PrescriptionViewModal';
 import { PrescriptionModal } from '@/components/prescriptions/PrescriptionModal';
 import { toast } from 'sonner';
@@ -90,13 +101,19 @@ const medicationTemplates = {
 const Prescriptions = () => {
   const { activeClinic, activeClinicRole } = useAuth();
   const queryClient = useQueryClient();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionWithDetails | null>(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreatePrescriptionModalOpen, setIsCreatePrescriptionModalOpen] = useState(false);
+  const [manualDoctorId, setManualDoctorId] = useState<string | null>(null);
+  const [manualPatientId, setManualPatientId] = useState<string | null>(null);
+  const [selectedAppointmentForPrescription, setSelectedAppointmentForPrescription] = useState<Tables<'appointments'> | null>(null);
 
   // Fetch prescriptions with patient and doctor details
   const { data: prescriptions = [], isLoading, error } = useQuery({
@@ -105,7 +122,7 @@ const Prescriptions = () => {
       if (!activeClinic?.clinic_id) return [];
 
       // Simplified query without the problematic nested join
-      let query = supabase
+      const query = supabase
         .from('prescriptions')
         .select(`
           *,
@@ -119,8 +136,8 @@ const Prescriptions = () => {
       if (error) throw error;
 
       return (data || []).map(prescription => {
-        const patient = prescription.patients as any;
-        const doctor = prescription.doctors as any;
+        const patient = prescription.patients as Partial<Patient>;
+        const doctor = prescription.doctors as Partial<Doctor>;
 
         // Calculate age
         let age: number | undefined;
@@ -150,7 +167,7 @@ const Prescriptions = () => {
   const stats: PrescriptionStats = useMemo(() => {
     const today = new Date();
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     return {
       totalPrescriptions: prescriptions.length,
       activePrescriptions: prescriptions.filter(p => {
@@ -168,16 +185,16 @@ const Prescriptions = () => {
     };
   }, [prescriptions]);
 
-  // Filter prescriptions
-  const filteredPrescriptions = useMemo(() => {
-    return prescriptions.filter(prescription => {
-      const matchesSearch = !searchTerm || 
+  // Filter and paginate prescriptions
+  const { filteredPrescriptions, totalPages, totalCount } = useMemo(() => {
+    const filtered = prescriptions.filter(prescription => {
+      const matchesSearch = !searchTerm ||
         prescription.patient_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         prescription.doctor_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (typeof prescription.medications === 'string' && 
-         prescription.medications.toLowerCase().includes(searchTerm.toLowerCase()));
+        (typeof prescription.medications === 'string' &&
+          prescription.medications.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      const matchesStatus = statusFilter === 'all' || 
+      const matchesStatus = statusFilter === 'all' ||
         (statusFilter === 'active' && (!prescription.follow_up_date || new Date(prescription.follow_up_date) >= new Date())) ||
         (statusFilter === 'followup' && prescription.follow_up_date && new Date(prescription.follow_up_date) <= new Date());
 
@@ -188,14 +205,25 @@ const Prescriptions = () => {
 
       return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [prescriptions, searchTerm, statusFilter, dateFilter]);
+
+    const totalCount = filtered.length;
+    const totalPages = Math.ceil(totalCount / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const paginatedData = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+    return {
+      filteredPrescriptions: paginatedData,
+      totalPages,
+      totalCount
+    };
+  }, [prescriptions, searchTerm, statusFilter, dateFilter, currentPage, itemsPerPage]);
 
   const handleViewPrescription = (prescription: PrescriptionWithDetails) => {
     setSelectedPrescription(prescription);
     setIsViewModalOpen(true);
   };
 
-  const formatMedications = (medications: any): string => {
+  const formatMedications = (medications: unknown): string => {
     if (typeof medications === 'string') return medications;
     if (Array.isArray(medications)) {
       return medications.map(med => {
@@ -210,34 +238,91 @@ const Prescriptions = () => {
     return 'Medication details available';
   };
 
-  const getMedicationCount = (medications: any): number => {
+  const getMedicationCount = (medications: unknown): number => {
     if (Array.isArray(medications)) return medications.length;
     if (typeof medications === 'string') return 1;
     return 0;
   };
 
+  // Fetch doctors for manual selection
+  const { data: doctors = [] } = useQuery({
+    queryKey: ['doctors', activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id) return [];
+      const { data, error } = await getSupabase().rpc('get_doctors_by_clinic', { clinic_id: activeClinic.clinic_id });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeClinic?.clinic_id && isCreatePrescriptionModalOpen,
+  });
+
+  // Fetch patients for manual selection
+  const { data: patients = [] } = useQuery({
+    queryKey: ['patients', activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id) return [];
+      const { data, error } = await getSupabase().from('patients').select('id, name').eq('clinic_id', activeClinic.clinic_id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeClinic?.clinic_id && isCreatePrescriptionModalOpen,
+  });
+
+  // Fetch appointments for selection
+  const { data: appointmentsForSelect = [] } = useQuery({
+    queryKey: ['appointments', activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id) return [];
+      const { data, error } = await getSupabase().from('appointments').select('id, patient_id, doctor_id').eq('clinic_id', activeClinic.clinic_id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!activeClinic?.clinic_id && isCreatePrescriptionModalOpen,
+  });
+
   if (!activeClinic) {
-    return <div className="text-center py-4">Please select a clinic to view prescriptions.</div>;
+    return (
+      <Card className="medical-card m-6">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-2">
+            <Pill className="w-12 h-12 text-muted-foreground mx-auto" />
+            <p className="text-muted-foreground">Please select a clinic to view prescriptions.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (error) {
-    return <div className="text-center py-4 text-red-500">Error loading prescriptions.</div>;
+    return (
+      <Card className="medical-card m-6">
+        <CardContent className="flex items-center justify-center py-12">
+          <div className="text-center space-y-2">
+            <Activity className="w-12 h-12 text-destructive mx-auto" />
+            <p className="text-destructive">Error loading prescriptions.</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Prescriptions</h1>
-          <p className="text-muted-foreground">Manage patient prescriptions and medication records</p>
+    <div className="space-y-6 ">
+      {/* Header Section */}
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+            <Pill className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Prescriptions</h1>
+            <p className="text-muted-foreground">Manage patient prescriptions and medication records</p>
+          </div>
         </div>
         <div className="flex space-x-2">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
-          <Button onClick={() => setIsCreateModalOpen(true)}>
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+          >
             <Plus className="h-4 w-4 mr-2" />
             New Prescription
           </Button>
@@ -245,95 +330,120 @@ const Prescriptions = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Prescriptions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Pill className="h-5 w-5 text-blue-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.totalPrescriptions}</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Prescriptions</p>
+                <p className="text-2xl font-bold text-primary">{stats.totalPrescriptions}</p>
+              </div>
+              <div className="bg-primary/10 p-3 rounded-lg">
+                <Pill className="w-6 h-6 text-primary" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Prescriptions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 text-green-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.activePrescriptions}</div>
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Active Prescriptions</p>
+                <p className="text-2xl font-bold text-success">{stats.activePrescriptions}</p>
+              </div>
+              <div className="bg-success/10 p-3 rounded-lg">
+                <Clock className="w-6 h-6 text-success" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Follow-up Required</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Calendar className="h-5 w-5 text-orange-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.followUpRequired}</div>
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Follow-up Required</p>
+                <p className="text-2xl font-bold text-warning">{stats.followUpRequired}</p>
+              </div>
+              <div className="bg-warning/10 p-3 rounded-lg">
+                <Calendar className="w-6 h-6 text-warning" />
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">This Week</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <FileText className="h-5 w-5 text-purple-500 mr-2" />
-              <div className="text-2xl font-bold">{stats.recentPrescriptions}</div>
+        <Card className="medical-card shadow-medical">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">This Week</p>
+                <p className="text-2xl font-bold text-accent">{stats.recentPrescriptions}</p>
+              </div>
+              <div className="bg-accent/10 p-3 rounded-lg">
+                <FileText className="w-6 h-6 text-accent" />
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search prescriptions..."
-            className="pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Prescriptions</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="followup">Follow-up Required</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={dateFilter} onValueChange={setDateFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by date" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Time</SelectItem>
-            <SelectItem value="today">Today</SelectItem>
-            <SelectItem value="week">This Week</SelectItem>
-            <SelectItem value="month">This Month</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Filters Section */}
+      <Card className="medical-card">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search prescriptions by patient, doctor, or medication..."
+                className="pl-10 bg-background border-border focus:ring-primary"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={(value) => {
+              setStatusFilter(value);
+              setCurrentPage(1);
+            }}>
+              <SelectTrigger className="w-[180px] border-border focus:ring-primary">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Prescriptions</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="followup">Follow-up Required</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={dateFilter} onValueChange={(value) => {
+              setDateFilter(value);
+              setCurrentPage(1);
+            }}>
+              <SelectTrigger className="w-[180px] border-border focus:ring-primary">
+                <SelectValue placeholder="Filter by date" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="week">This Week</SelectItem>
+                <SelectItem value="month">This Month</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Prescriptions Table */}
-      <Card>
+      <Card className="medical-card shadow-medical">
         <CardHeader>
-          <CardTitle>Prescription Records ({filteredPrescriptions.length})</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-primary">
+            <FileText className="w-5 h-5" />
+            Prescription Records
+            <Badge variant="default" className="status-badge status-active">{filteredPrescriptions.length}</Badge>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -365,9 +475,13 @@ const Prescriptions = () => {
                 {filteredPrescriptions.map((prescription) => {
                   const isActive = !prescription.follow_up_date || new Date(prescription.follow_up_date) >= new Date();
                   const needsFollowUp = prescription.follow_up_date && new Date(prescription.follow_up_date) <= new Date();
-                  
+
                   return (
-                    <TableRow key={prescription.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableRow
+                      key={prescription.id}
+                      className="cursor-pointer hover:bg-primary/5"
+                      onClick={() => handleViewPrescription(prescription)}
+                    >
                       <TableCell>
                         <div>
                           <div className="font-medium">{prescription.patient_name}</div>
@@ -406,15 +520,21 @@ const Prescriptions = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={isActive ? 'default' : needsFollowUp ? 'destructive' : 'secondary'}>
+                        <Badge className={`status-badge ${needsFollowUp ? 'status-pending' :
+                          isActive ? 'status-active' :
+                            'status-inactive'
+                          }`}>
                           {needsFollowUp ? 'Follow-up Due' : isActive ? 'Active' : 'Completed'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
-                          variant="ghost"
                           size="sm"
-                          onClick={() => handleViewPrescription(prescription)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewPrescription(prescription);
+                          }}
+                          className="bg-primary text-primary-foreground hover:bg-primary/90"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -424,6 +544,45 @@ const Prescriptions = () => {
                 })}
               </TableBody>
             </Table>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
+                    const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                    if (pageNum <= totalPages && pageNum > 0) {
+                      return (
+                        <PaginationItem key={i}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(pageNum)}
+                            isActive={currentPage === pageNum}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -443,6 +602,20 @@ const Prescriptions = () => {
         appointment={null}
         doctorId={null}
         patientId={null}
+        clinicId={activeClinic?.clinic_id || null}
+      />
+
+      {/* Add Create Prescription button */}
+
+
+      {/* Prescription Modal for manual/selected context */}
+      <PrescriptionModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        consultationId={null}
+        appointment={selectedAppointmentForPrescription}
+        doctorId={manualDoctorId}
+        patientId={manualPatientId}
         clinicId={activeClinic?.clinic_id || null}
       />
     </div>

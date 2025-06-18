@@ -21,7 +21,19 @@ function getWeekDays(start: Date) {
 }
 
 // Custom tooltip component
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: {
+      count: number;
+      completedCount: number;
+      pendingCount: number;
+    };
+  }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -91,7 +103,7 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
   const completionRate = totalAppointments > 0 ? (totalCompleted / totalAppointments * 100).toFixed(1) : '0';
   const busyDay = data.reduce((prev, current) => (prev.count > current.count) ? prev : current);
 
-  const handleBarClick = (data: any) => {
+  const handleBarClick = (data: { date: string }) => {
     if (onBarClick) {
       onBarClick(data.date);
     }

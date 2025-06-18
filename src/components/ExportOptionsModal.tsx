@@ -24,6 +24,14 @@ import {
   Clock,
   FileText
 } from "lucide-react";
+import { Tables } from "@/integrations/supabase/types";
+
+// Add proper types
+type Consultation = Tables<"consultations"> & {
+  appointment?: Tables<"appointments"> | null;
+};
+
+type Prescription = Tables<"prescriptions">;
 
 interface ExportOptionsModalProps {
   open: boolean;
@@ -32,8 +40,8 @@ interface ExportOptionsModalProps {
   patient: {
     name: string;
     medical_id: string;
-    consultations: any[];
-    prescriptions: any[];
+    consultations: Consultation[];
+    prescriptions: Prescription[];
   } | null;
   loading?: boolean;
 }

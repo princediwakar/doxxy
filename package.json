@@ -7,13 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:dev": "vite build --mode development",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "seed": "dotenv -- tsx src/lib/seed.ts",
-    "test": "vitest",
-    "test:run": "vitest run",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "seed": "dotenv -- tsx src/lib/seed.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -104,3 +100,4 @@
     "vitest": "^3.2.2"
   }
 }
+

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -50,19 +50,50 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { Database, Enums } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 
 const supabase = getSupabase();
 
 type Bill = Database['public']['Tables']['bills']['Row'];
+
+// Extended bill type with additional fields
+interface ExtendedBill extends Bill {
+  billing_type?: string;
+  service_items?: ServiceItem[];
+  discount_percentage?: number;
+  tax_percentage?: number;
+  notes?: string;
+}
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
+type Consultation = Database['public']['Tables']['consultations']['Row'];
 
-enum BillStatusEnum {
-  "Paid" = "Paid",
-  "Pending" = "Pending",
-  "Overdue" = "Overdue",
+// Extended consultation type with appointments
+interface ConsultationWithAppointment extends Consultation {
+  appointments?: {
+    date: string;
+    time: string;
+    department_name: string;
+  } | null;
+}
+
+// Use the existing Supabase enum type instead of defining our own
+type BillStatusEnum = Enums<'bill_status'>;
+
+// Service item interface
+interface ServiceItem {
+  description: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+}
+
+// Service template interface
+interface ServiceTemplate {
+  description: string;
+  rate: number;
+  quantity: number;
 }
 
 // Service item schema for itemized billing
@@ -78,7 +109,7 @@ const billingFormSchema = z.object({
   appointment_id: z.string().nullable().optional().transform(e => e === "" || e === "none" ? null : e),
   consultation_id: z.string().nullable().optional().transform(e => e === "" || e === "none" ? null : e),
   invoice_number: z.string().nullable().optional().transform(e => e === "" ? null : e),
-  status: z.nativeEnum(BillStatusEnum, {
+  status: z.enum(['Paid', 'Pending', 'Overdue'], {
     required_error: 'Status is required',
   }),
   billing_type: z.enum(['simple', 'itemized']),
@@ -97,10 +128,11 @@ type BillingFormValues = z.infer<typeof billingFormSchema>;
 interface EnhancedBillingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bill: Bill | null;
+  bill: ExtendedBill | null;
   patient?: Patient | null;
-  appointment?: any | null;
-  consultation?: any | null;
+  appointment?: Appointment | null;
+  consultation?: Consultation | null;
+  mode?: 'create' | 'edit' | 'view';
 }
 
 // Predefined service templates
@@ -135,24 +167,25 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   patient,
   appointment,
   consultation,
+  mode = 'create',
 }) => {
   const queryClient = useQueryClient();
   const { activeClinic } = useAuth();
   const [billingType, setBillingType] = useState<'simple' | 'itemized'>('simple');
-  const [serviceItems, setServiceItems] = useState<any[]>([
+  const [serviceItems, setServiceItems] = useState<ServiceItem[]>([
     { description: '', quantity: 1, rate: 0, amount: 0 }
   ]);
 
   const form = useForm<BillingFormValues>({
     resolver: zodResolver(billingFormSchema),
     defaultValues: {
-      patient_id: bill?.patient_id || patient?.id || '',
+      patient_id: bill?.patient_id || patient?.id || appointment?.patient_id || '',
       appointment_id: bill?.appointment_id || appointment?.id || '',
       consultation_id: consultation?.id || '',
       amount: bill?.amount ? Number(bill.amount) : 0,
       description: bill?.description || '',
       invoice_number: bill?.invoice_number || '',
-      status: bill ? (bill.status as BillStatusEnum) : BillStatusEnum.Pending,
+      status: bill ? bill.status : "Pending",
       billing_type: 'simple',
       service_items: [],
       discount_percentage: 0,
@@ -163,14 +196,17 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
 
   useEffect(() => {
     if (open) {
+      // Auto-fill patient from appointment if available
+      const patientId = bill?.patient_id || patient?.id || appointment?.patient_id || '';
+      
       const defaultValues = {
-        patient_id: bill?.patient_id || patient?.id || '',
+        patient_id: patientId,
         appointment_id: bill?.appointment_id || appointment?.id || '',
         consultation_id: consultation?.id || '',
         amount: bill?.amount ? Number(bill.amount) : 0,
         description: bill?.description || '',
         invoice_number: bill?.invoice_number || '',
-        status: bill ? (bill.status as BillStatusEnum) : BillStatusEnum.Pending,
+        status: bill ? bill.status : "Pending",
         billing_type: 'simple' as const,
         service_items: [],
         discount_percentage: 0,
@@ -190,13 +226,13 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       if (!activeClinic?.clinic_id) return [];
       const { data, error } = await supabase
         .from('patients')
-        .select('id, name, phone, email')
+        .select('id, name, phone, email, medical_id')
         .eq('clinic_id', activeClinic.clinic_id)
         .order('name');
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinic?.clinic_id, // Enable for both create and view modes
   });
 
   // Fetch appointments for selection
@@ -212,8 +248,37 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     enabled: open && !!activeClinic?.clinic_id,
   });
 
-  // Fetch consultations for selected patient
+  // Watch for patient selection to filter appointments
   const selectedPatientId = form.watch('patient_id');
+  const selectedAppointmentId = form.watch('appointment_id');
+
+  // Filter appointments based on selected patient
+  const filteredAppointments = useMemo(() => {
+    if (!selectedPatientId || !appointments) return appointments || [];
+    return appointments.filter(apt => apt.patient_id === selectedPatientId);
+  }, [appointments, selectedPatientId]);
+
+  // Auto-select patient when appointment is selected
+  useEffect(() => {
+    if (selectedAppointmentId && selectedAppointmentId !== 'none' && appointments) {
+      const selectedAppointment = appointments.find(apt => apt.id === selectedAppointmentId);
+      if (selectedAppointment && selectedAppointment.patient_id !== selectedPatientId) {
+        form.setValue('patient_id', selectedAppointment.patient_id);
+      }
+    }
+  }, [selectedAppointmentId, appointments, selectedPatientId, form]);
+
+  // Clear appointment when patient changes (if appointment doesn't belong to new patient)
+  useEffect(() => {
+    if (selectedPatientId && selectedAppointmentId && selectedAppointmentId !== 'none' && appointments) {
+      const selectedAppointment = appointments.find(apt => apt.id === selectedAppointmentId);
+      if (selectedAppointment && selectedAppointment.patient_id !== selectedPatientId) {
+        form.setValue('appointment_id', '');
+      }
+    }
+  }, [selectedPatientId, selectedAppointmentId, appointments, form]);
+
+  // Fetch consultations for selected patient
   const { data: consultations } = useQuery({
     queryKey: ['consultations', selectedPatientId],
     queryFn: async () => {
@@ -244,7 +309,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     }
   };
 
-  const updateServiceItem = (index: number, field: string, value: any) => {
+  const updateServiceItem = (index: number, field: keyof ServiceItem, value: string | number) => {
     const updatedItems = [...serviceItems];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
     
@@ -256,7 +321,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     setServiceItems(updatedItems);
   };
 
-  const addServiceTemplate = (template: any) => {
+  const addServiceTemplate = (template: ServiceTemplate) => {
     setServiceItems([...serviceItems, { ...template, amount: template.quantity * template.rate }]);
   };
 
@@ -351,6 +416,285 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   const isSubmitting = mutation.isPending;
   const totals = billingType === 'itemized' ? calculateTotals() : null;
 
+  if (mode === 'view' && bill) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <FileText className="h-5 w-5" />
+              <span>Bill Details</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <ScrollArea className="flex-1 max-h-[70vh] pr-4">
+            <div className="space-y-6">
+              {/* Header Information */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          Invoice #{bill.invoice_number || 'N/A'}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Created on {format(parseISO(bill.created_at!), 'PPP')}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={
+                      bill.status === 'Paid' ? 'default' :
+                      bill.status === 'Pending' ? 'secondary' :
+                      bill.status === 'Overdue' ? 'destructive' :
+                      'outline'
+                    } className={`status-badge ${
+                      bill.status === 'Paid' ? 'status-active' :
+                      bill.status === 'Pending' ? 'status-pending' :
+                      bill.status === 'Overdue' ? 'status-urgent' :
+                      'status-inactive'
+                    }`}>
+                      {bill.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+              </Card>
+
+              {/* Patient Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <User className="h-4 w-4" />
+                    <span>Patient Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    if (isLoadingPatients) {
+                      return (
+                        <div className="space-y-2">
+                          <div className="h-4 bg-muted rounded animate-pulse" />
+                          <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+                        </div>
+                      );
+                    }
+
+                    // First try to find patient in the fetched patients list
+                    let patientInfo = patients?.find(p => p.id === bill.patient_id);
+                    
+                    // If not found and we have a patient prop, use that
+                    if (!patientInfo && patient && patient.id === bill.patient_id) {
+                      patientInfo = patient;
+                    }
+                    
+                    if (patientInfo) {
+                      return (
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium text-muted-foreground">Name:</span>
+                            <p className="font-medium">{patientInfo.name}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-muted-foreground">Phone:</span>
+                            <p>{patientInfo.phone || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-muted-foreground">Email:</span>
+                            <p>{patientInfo.email || 'N/A'}</p>
+                          </div>
+                          {patientInfo.medical_id && (
+                            <div>
+                              <span className="font-medium text-muted-foreground">Medical ID:</span>
+                              <p>{patientInfo.medical_id}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div className="text-center text-muted-foreground">
+                        <div className="text-sm">Unable to load patient information</div>
+                        <div className="text-xs mt-1">Patient ID: {bill.patient_id}</div>
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Appointment Information */}
+              {bill.appointment_id && appointments && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>Related Appointment</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const appointment = appointments.find(a => a.id === bill.appointment_id);
+                      return appointment ? (
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <span className="font-medium text-muted-foreground">Date:</span>
+                            <p className="font-medium">{appointment.date}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-muted-foreground">Time:</span>
+                            <p>{appointment.time}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-muted-foreground">Doctor:</span>
+                            <p>{appointment.doctor_name}</p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-muted-foreground">Department:</span>
+                            <p>{appointment.department_name || 'N/A'}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">Appointment information not available</p>
+                      );
+                    })()}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Bill Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <IndianRupee className="h-4 w-4" />
+                    <span>Billing Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-muted-foreground">Amount:</span>
+                      <p className="text-lg font-bold text-primary">₹{bill.amount?.toFixed(2)}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Status:</span>
+                      <p className="font-medium">{bill.status}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Billing Type:</span>
+                      <p className="font-medium capitalize">{bill.billing_type || 'Simple'}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Created:</span>
+                      <p>{format(parseISO(bill.created_at!), 'PPP')}</p>
+                    </div>
+                  </div>
+                  {bill.description && (
+                    <div>
+                      <span className="font-medium text-muted-foreground">Description:</span>
+                      <p className="bg-muted/30 p-3 rounded-md whitespace-pre-wrap">{bill.description}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Itemized Services */}
+              {bill.service_items && Array.isArray(bill.service_items) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <Calculator className="h-4 w-4" />
+                      <span>Service Items</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {bill.service_items!.map((item, index) => (
+                        <div key={index} className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
+                          <div className="flex-1">
+                            <p className="font-medium">{item.description}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Qty: {item.quantity} × ₹{item.rate?.toFixed(2)}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-medium">₹{item.amount?.toFixed(2)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Totals */}
+                      <Separator />
+                      <div className="space-y-2">
+                        {(() => {
+                          const serviceItems = bill.service_items!;
+                          const subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+                          const discountPercent = bill.discount_percentage || 0;
+                          const taxPercent = bill.tax_percentage || 0;
+                          const discountAmount = (subtotal * discountPercent) / 100;
+                          const taxableAmount = subtotal - discountAmount;
+                          const taxAmount = (taxableAmount * taxPercent) / 100;
+                          const total = taxableAmount + taxAmount;
+                          
+                          return (
+                            <>
+                              <div className="flex justify-between text-sm">
+                                <span>Subtotal:</span>
+                                <span>₹{subtotal.toFixed(2)}</span>
+                              </div>
+                              {discountPercent > 0 && (
+                                <div className="flex justify-between text-sm text-green-600">
+                                  <span>Discount ({discountPercent}%):</span>
+                                  <span>-₹{discountAmount.toFixed(2)}</span>
+                                </div>
+                              )}
+                              {taxPercent > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span>Tax ({taxPercent}%):</span>
+                                  <span>₹{taxAmount.toFixed(2)}</span>
+                                </div>
+                              )}
+                              <Separator />
+                              <div className="flex justify-between font-bold">
+                                <span>Total:</span>
+                                <span>₹{total.toFixed(2)}</span>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Notes */}
+              {bill.notes && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <FileText className="h-4 w-4" />
+                      <span>Notes</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="bg-muted/30 p-3 rounded-md whitespace-pre-wrap">{bill.notes}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </ScrollArea>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
@@ -403,15 +747,24 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Related Appointment (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingAppointments}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value || ''} 
+                        disabled={isLoadingAppointments || !selectedPatientId}
+                      >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder={isLoadingAppointments ? "Loading appointments..." : "Select an appointment"} />
+                            <SelectValue placeholder={
+                              isLoadingAppointments ? "Loading appointments..." : 
+                              !selectedPatientId ? "Select a patient first" :
+                              filteredAppointments.length === 0 ? "No appointments for this patient" :
+                              "Select an appointment"
+                            } />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">No appointment</SelectItem>
-                          {(appointments || []).map((apt) => (
+                          {(filteredAppointments || []).map((apt) => (
                             <SelectItem key={apt.id} value={apt.id}>
                               <div>
                                 <div className="font-medium">{apt.patient_name} - {apt.date}</div>
@@ -419,9 +772,19 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                               </div>
                             </SelectItem>
                           ))}
+                          {selectedPatientId && filteredAppointments.length === 0 && (
+                            <SelectItem value="no-appointments" disabled>
+                              No appointments found for this patient
+                            </SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                       <FormMessage />
+                      {selectedPatientId && filteredAppointments.length === 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          This patient has no appointments. You can still create a bill without linking it to an appointment.
+                        </p>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -443,7 +806,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">No consultation</SelectItem>
-                          {consultations.map((cons: any) => (
+                          {consultations.map((cons: ConsultationWithAppointment) => (
                             <SelectItem key={cons.id} value={cons.id}>
                               <div>
                                 <div className="font-medium">
