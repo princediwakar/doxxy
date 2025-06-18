@@ -50,7 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database, Enums } from '@/integrations/supabase/types';
+import { Database, Enums, Constants } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 
 const supabase = getSupabase();
@@ -67,16 +67,7 @@ interface ExtendedBill extends Bill {
 }
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
-type Consultation = Database['public']['Tables']['consultations']['Row'];
 
-// Extended consultation type with appointments
-interface ConsultationWithAppointment extends Consultation {
-  appointments?: {
-    date: string;
-    time: string;
-    department_name: string;
-  } | null;
-}
 
 // Use the existing Supabase enum type instead of defining our own
 type BillStatusEnum = Enums<'bill_status'>;
@@ -107,7 +98,6 @@ const serviceItemSchema = z.object({
 const billingFormSchema = z.object({
   patient_id: z.string().nonempty('Patient is required'),
   appointment_id: z.string().nullable().optional().transform(e => e === "" || e === "none" ? null : e),
-  consultation_id: z.string().nullable().optional().transform(e => e === "" || e === "none" ? null : e),
   invoice_number: z.string().nullable().optional().transform(e => e === "" ? null : e),
   status: z.enum(['Paid', 'Pending', 'Overdue'], {
     required_error: 'Status is required',
@@ -131,7 +121,6 @@ interface EnhancedBillingModalProps {
   bill: ExtendedBill | null;
   patient?: Patient | null;
   appointment?: Appointment | null;
-  consultation?: Consultation | null;
   mode?: 'create' | 'edit' | 'view';
 }
 
@@ -166,7 +155,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   bill,
   patient,
   appointment,
-  consultation,
   mode = 'create',
 }) => {
   const queryClient = useQueryClient();
@@ -181,7 +169,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     defaultValues: {
       patient_id: bill?.patient_id || patient?.id || appointment?.patient_id || '',
       appointment_id: bill?.appointment_id || appointment?.id || '',
-      consultation_id: consultation?.id || '',
       amount: bill?.amount ? Number(bill.amount) : 0,
       description: bill?.description || '',
       invoice_number: bill?.invoice_number || '',
@@ -202,7 +189,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       const defaultValues = {
         patient_id: patientId,
         appointment_id: bill?.appointment_id || appointment?.id || '',
-        consultation_id: consultation?.id || '',
         amount: bill?.amount ? Number(bill.amount) : 0,
         description: bill?.description || '',
         invoice_number: bill?.invoice_number || '',
@@ -217,7 +203,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       setBillingType('simple');
       setServiceItems([{ description: '', quantity: 1, rate: 0, amount: 0 }]);
     }
-  }, [open, bill, patient, appointment, consultation, form]);
+  }, [open, bill, patient, appointment, form]);
 
   // Fetch patients for selection
   const { data: patients, isLoading: isLoadingPatients } = useQuery({
@@ -278,26 +264,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     }
   }, [selectedPatientId, selectedAppointmentId, appointments, form]);
 
-  // Fetch consultations for selected patient
-  const { data: consultations } = useQuery({
-    queryKey: ['consultations', selectedPatientId],
-    queryFn: async () => {
-      if (!selectedPatientId) return [];
-      const { data, error } = await supabase
-        .from('consultations')
-        .select(`
-          id,
-          created_at,
-          specialty_data,
-          appointments(date, time, department_name)
-        `)
-        .eq('patient_id', selectedPatientId)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!selectedPatientId,
-  });
+
 
   const addServiceItem = () => {
     setServiceItems([...serviceItems, { description: '', quantity: 1, rate: 0, amount: 0 }]);
@@ -726,14 +693,16 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {(patients || []).map((p) => (
-                            <SelectItem key={p.id} value={p.id}>
-                              <div>
-                                <div className="font-medium">{p.name}</div>
-                                <div className="text-sm text-muted-foreground">{p.phone}</div>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          {(patients || [])
+                            .filter((p, index, self) => self.findIndex(patient => patient.id === p.id) === index)
+                            .map((p) => (
+                              <SelectItem key={p.id} value={p.id}>
+                                <div>
+                                  <div className="font-medium">{p.name}</div>
+                                  <div className="text-sm text-muted-foreground">{p.phone}</div>
+                                </div>
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -764,14 +733,16 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                         </FormControl>
                         <SelectContent>
                           <SelectItem value="none">No appointment</SelectItem>
-                          {(filteredAppointments || []).map((apt) => (
-                            <SelectItem key={apt.id} value={apt.id}>
-                              <div>
-                                <div className="font-medium">{apt.patient_name} - {apt.date}</div>
-                                <div className="text-sm text-muted-foreground">{apt.doctor_name} • {apt.time}</div>
-                              </div>
-                            </SelectItem>
-                          ))}
+                          {(filteredAppointments || [])
+                            .filter((apt, index, self) => self.findIndex(appointment => appointment.id === apt.id) === index)
+                            .map((apt) => (
+                              <SelectItem key={apt.id} value={apt.id}>
+                                <div>
+                                  <div className="font-medium">{apt.patient_name} - {apt.date}</div>
+                                  <div className="text-sm text-muted-foreground">{apt.doctor_name} • {apt.time}</div>
+                                </div>
+                              </SelectItem>
+                            ))}
                           {selectedPatientId && filteredAppointments.length === 0 && (
                             <SelectItem value="no-appointments" disabled>
                               No appointments found for this patient
@@ -790,41 +761,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                 />
               </div>
 
-              {/* Consultation Selection */}
-              {consultations && consultations.length > 0 && (
-                <FormField
-                  control={form.control}
-                  name="consultation_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Related Consultation (Optional)</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a consultation" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No consultation</SelectItem>
-                          {consultations.map((cons: ConsultationWithAppointment) => (
-                            <SelectItem key={cons.id} value={cons.id}>
-                              <div>
-                                <div className="font-medium">
-                                  {format(parseISO(cons.created_at), 'PPP')}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {cons.appointments?.department_name || 'General'}
-                                </div>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+
 
               {/* Billing Type Selection */}
               <div className="space-y-4">
@@ -1112,7 +1049,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {Object.values(BillStatusEnum).map(status => (
+                          {Constants.public.Enums.bill_status.map(status => (
                             <SelectItem key={status} value={status}>
                               <Badge variant={status === 'Paid' ? 'default' : status === 'Pending' ? 'secondary' : 'destructive'}>
                                 {status}

@@ -26,9 +26,9 @@
     --muted: 210 20% 96%;
     --muted-foreground: 210 12% 47%;
 
-    /* Accent - Healing Green */
-    --accent: 160 84% 39%;
-    --accent-foreground: 0 0% 100%;
+    /* Accent - Neutral Gray for better button hover states */
+    --accent: 210 20% 96%;
+    --accent-foreground: 210 24% 16%;
 
     /* Destructive - Medical Alert Red */
     --destructive: 0 93% 73%;
@@ -83,9 +83,9 @@
     --muted: 210 24% 16%;
     --muted-foreground: 210 12% 65%;
 
-    /* Accent - Soft Healing Green for dark mode */
-    --accent: 160 60% 50%;
-    --accent-foreground: 210 24% 8%;
+    /* Accent - Neutral Gray for better dark mode button hover states */
+    --accent: 210 24% 16%;
+    --accent-foreground: 210 20% 95%;
 
     /* Destructive - Softer alert red for dark mode */
     --destructive: 0 75% 60%;

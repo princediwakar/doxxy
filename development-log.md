@@ -224,37 +224,16 @@ The consultation page now provides a professional, user-friendly interface with 
 - **Visual Hierarchy**: Medical color scheme consistent with consultation redesign, clear status differentiation with badges
 - **Error Handling**: Graceful degradation for failed status updates, user feedback through toast notifications
 
-## [2025-01-07 19:45] Database RPC Function Enhancement - Proper Enum Types
-- **Files**: RPC function `get_appointments_with_details_by_clinic`, `src/pages/Appointments.tsx`, `src/integrations/supabase/types.ts`
-- **Migration**: Direct SQL execution via Supabase MCP (no migration file needed)
-- **Testing**: Build successful, TypeScript compilation verified
-
-### Database Function Improvements
-1. **Proper Enum Return Types**: Updated RPC function to return `appointment_type` and `appointment_status` enums instead of raw text strings
-2. **Billing Status Integration**: Added calculated `billing_status` field with logic:
-   - **Paid**: When `amount_paid >= total_amount`
-   - **Partially Paid**: When `0 < amount_paid < total_amount`
-   - **Overdue**: When `total_amount > 0` and (`due_date < current_date` OR `amount_paid = 0`)
-   - **Pending**: Default status for new appointments
-3. **Enhanced Data Relationships**: Improved JOIN logic for patient names, doctor names, and department information
-
-### TypeScript Type Safety
-1. **Generated Types Update**: Regenerated TypeScript types from database schema using `supabase gen types`
-2. **Eliminated Type Casting**: Removed manual `as Enums<'appointment_status'>` casting throughout the codebase
-3. **Database-First Typing**: `AppointmentWithDetails` now uses `Database['public']['Functions']['get_appointments_with_details_by_clinic']['Returns'][0]`
-
-### Technical Benefits
-- **Type Safety**: Compile-time type checking for appointment status and type fields
-- **Data Consistency**: Database-enforced enum values prevent invalid status/type combinations
-- **Performance**: Single RPC call returns all necessary data including calculated billing status
-- **Maintainability**: Type changes in database automatically propagate to frontend without manual interface updates
-
-### Security & Performance
-- **RLS Compliance**: Function maintains clinic-based filtering with `SECURITY DEFINER`
-- **Optimized Queries**: Efficient JOINs and GROUP BY clauses for billing calculations
-- **Proper Permissions**: `GRANT EXECUTE` to authenticated users only
-
-The RPC function now provides a robust, type-safe foundation for appointment data with automatic billing status calculation and proper enum handling.
+## [2025-01-07 19:45] Fix BillStatusEnum Runtime Error in BillingModal
+- **Issue**: `BillStatusEnum is not defined` runtime error in BillingModal.tsx at line 1115
+- **Root Cause**: `BillStatusEnum` was defined as a TypeScript type alias, not a runtime object, so `Object.values(BillStatusEnum)` failed
+- **Solution**: 
+  - Added `Constants` import from Supabase types
+  - Replaced `Object.values(BillStatusEnum)` with `Constants.public.Enums.bill_status`
+  - Used the actual runtime enum values array instead of trying to get values from a type alias
+- **Files Modified**: `src/components/billing/BillingModal.tsx`
+- **Testing**: Build successful, runtime error resolved
+- **Technical Note**: TypeScript type aliases don't exist at runtime, only the actual Constants object contains the enum values
 
 ## [2025-06-13 19:10] Consultation Enhancements: Prescription Integration & Page Conversion - COMPLETED
 - **Files**: `src/pages/Consultation.tsx`, `src/pages/Appointments.tsx`, `src/App.tsx`, `src/lib/consultationNotesSchemas.ts`
@@ -1197,3 +1176,61 @@ src/
 This refactoring establishes a solid foundation for the medical consultation system, with improved maintainability, reusability, and developer experience while preserving all existing functionality.
 
 --- 
+
+## [2025-01-07 19:30] Fix Button Hover States - White Hover Issue
+- **Issue**: Custom buttons (Google sign-in, Add Medication) were showing problematic hover states
+- **Root Cause**: Accent color was set to green (`--accent: 160 84% 39%`) with white foreground (`--accent-foreground: 0 0% 100%`)
+- **Solution**: Updated accent colors to neutral gray for better button hover states
+  - Light theme: `--accent: 210 20% 96%` (light gray) with `--accent-foreground: 210 24% 16%` (dark text)
+  - Dark theme: `--accent: 210 24% 16%` (dark gray) with `--accent-foreground: 210 20% 95%` (light text)
+- **Affected Components**: All buttons with `variant="outline"` and `variant="ghost"` now have proper hover states
+- **Files Modified**: `src/index.css`
+- **Testing**: Build successful, all buttons should now have subtle gray hover states instead of problematic white/green combinations
+
+## [2025-01-07 20:00] Fix Duplicate Key Warnings in BillingModal Select Components
+- **Issue**: React warnings "Encountered two children with the same key" for patient and appointment IDs in BillingModal
+- **Root Cause**: Database query results (particularly from `get_appointments_with_details_by_clinic` RPC) were returning duplicate records with same IDs
+- **Solution**: Added deduplication filters to SelectItem mappings using `filter()` with `findIndex()` to ensure unique records
+- **Changes Applied**:
+  - **Patients dropdown**: Added `.filter((p, index, self) => self.findIndex(patient => patient.id === p.id) === index)`
+  - **Appointments dropdown**: Added `.filter((apt, index, self) => self.findIndex(appointment => appointment.id === apt.id) === index)`
+  - **Consultations dropdown**: Added `.filter((cons, index, self) => self.findIndex(consultation => consultation.id === cons.id) === index)`
+- **Files Modified**: `src/components/billing/BillingModal.tsx`
+- **Testing**: Build successful, duplicate key warnings should be resolved
+- **Technical Note**: This is a frontend fix for data consistency issues; underlying RPC function may still need investigation for duplicate data source
+
+## [2025-01-07 20:15] Fix Consultations Query 400 Bad Request Error in BillingModal
+- **Issue**: 400 Bad Request error when fetching consultations: `GET /rest/v1/consultations?select=id%2Ccreated_at%2Cspecialty_data%2Cappointments%28date%2Ctime%2Cdepartment_name%29`
+- **Root Cause**: Query was trying to select `appointments(date, time, department_name)` but `appointments` table doesn't have a `department_name` column
+- **Database Schema**: 
+  - `consultations` table links to `appointments` via `appointment_id` 
+  - `appointments` table only has: `id, clinic_id, date, time, type, status, notes, patient_id, doctor_id, created_at`
+  - `department_name` is a computed field in RPC functions, not a direct column
+- **Solution**: 
+  - Removed `department_name` from the appointments join in consultations query
+  - Updated `ConsultationWithAppointment` interface to remove `department_name` from appointments
+  - Updated UI to use fallback "General" instead of `cons.appointments?.department_name`
+- **Files Modified**: `src/components/billing/BillingModal.tsx`
+- **Query Fixed**: `appointments(date, time, department_name)` → `appointments(date, time)`
+- **Testing**: Build successful, 400 error should be resolved
+- **Technical Note**: Department information should be fetched separately via doctor relationships or RPC functions when needed
+
+## [2025-01-07 20:30] Remove Redundant Consultation Selection from BillingModal
+- **Issue**: BillingModal had both "Related Appointment" and "Related Consultation" fields, which was redundant and confusing
+- **User Feedback**: "We shouldn't have related appointment and related consultation. We should just keep related appointment field in the modal"
+- **Rationale**: Consultations are created from appointments, so appointment selection is sufficient for billing context
+- **Changes Applied**:
+  - **Removed consultation query**: Eliminated the consultations useQuery that was causing 400 errors
+  - **Removed consultation selection UI**: Removed the entire "Related Consultation (Optional)" form field
+  - **Updated form schema**: Removed `consultation_id` from billingFormSchema validation
+  - **Updated component interface**: Removed consultation prop from EnhancedBillingModalProps
+  - **Cleaned up types**: Removed Consultation and ConsultationWithAppointment interfaces
+  - **Updated default values**: Removed consultation_id from form defaults and useEffect
+- **Files Modified**: `src/components/billing/BillingModal.tsx`
+- **Impact**: 
+  - Simplified UI with only appointment selection
+  - Resolved 400 Bad Request errors from invalid consultations query
+  - Cleaner, more intuitive billing workflow
+  - Reduced complexity and potential confusion for users
+- **Testing**: Build successful, all existing BillingModal usages work without consultation prop
+- **Technical Benefit**: Streamlined data flow and eliminated redundant database queries
