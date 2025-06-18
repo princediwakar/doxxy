@@ -409,9 +409,21 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       {(doctors || []).map((d) => (
                         <SelectItem key={d.id} value={d.id}>
                           <div className="flex flex-col">
-                            <div className="font-medium">{d.name}</div>
+                            <div className="font-medium flex items-center gap-2">
+                              {d.name}
+                              {d.role === 'superadmin' && (
+                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                                  Admin
+                                </span>
+                              )}
+                            </div>
                             <div className="text-sm text-muted-foreground">
-                              {d.department_name || 'General Medicine'}
+                              {d.role === 'superadmin' 
+                                ? (d.department_name === 'Administration' 
+                                   ? 'Clinic Administrator' 
+                                   : d.department_name || 'Administration')
+                                : (d.department_name || 'General Medicine')
+                              }
                             </div>
                           </div>
                         </SelectItem>
