@@ -20,6 +20,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
 import { Database } from "@/integrations/supabase/types";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Stethoscope, UserCheck, Building2 } from "lucide-react";
 
 const supabase = getSupabase();
 
@@ -40,11 +44,20 @@ const departmentsSchema = z.object({
 });
 type DepartmentsForm = z.infer<typeof departmentsSchema>;
 
+// Step 3: Doctor profile schema
+const doctorProfileSchema = z.object({
+  isDoctor: z.enum(['yes', 'no'], { required_error: 'Please specify if you are a practicing doctor.' }),
+  availability: z.string().optional(),
+  bio: z.string().optional(),
+  phone: z.string().optional(),
+});
+type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
+
 const CreateClinicPage = () => {
   const { user, fetchUserAndClinicData, activeClinic } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [step, setStep] = React.useState<1 | 2>(1);
+  const [step, setStep] = React.useState<1 | 2 | 3>(1);
   const [clinicDetails, setClinicDetails] = React.useState<ClinicDetailsForm>({
     name: "",
     address: "",
@@ -53,10 +66,13 @@ const CreateClinicPage = () => {
     website: "",
   });
   const [departments, setDepartments] = React.useState<string[]>([]);
+  const [doctorProfile, setDoctorProfile] = React.useState<DoctorProfileForm>({
+    isDoctor: 'no',
+    availability: '',
+    bio: '',
+    phone: '',
+  });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showDoctorPrompt, setShowDoctorPrompt] = React.useState(false);
-  const [showDoctorModal, setShowDoctorModal] = React.useState(false);
-  const [newClinicId, setNewClinicId] = React.useState<string | null>(null);
 
   // Fetch department types
   const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useQuery({
@@ -82,6 +98,13 @@ const CreateClinicPage = () => {
     mode: "onTouched",
   });
 
+  // Step 3 form
+  const doctorForm = useForm<DoctorProfileForm>({
+    resolver: zodResolver(doctorProfileSchema),
+    defaultValues: doctorProfile,
+    mode: "onTouched",
+  });
+
   // Keep forms in sync with state
   React.useEffect(() => {
     detailsForm.reset(clinicDetails);
@@ -91,6 +114,10 @@ const CreateClinicPage = () => {
     departmentsForm.reset({ departments });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step === 2, departmentTypes]);
+  React.useEffect(() => {
+    doctorForm.reset(doctorProfile);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step === 3]);
 
   // Step 1: Next
   const handleNext: SubmitHandler<ClinicDetailsForm> = (data) => {
@@ -98,13 +125,24 @@ const CreateClinicPage = () => {
     setStep(2);
   };
 
+  // Step 2: Next
+  const handleDepartmentsNext: SubmitHandler<DepartmentsForm> = (data) => {
+    setDepartments(data.departments);
+    setStep(3);
+  };
+
   // Step 2: Back
-  const handleBack = () => {
+  const handleBackFromDepartments = () => {
     setStep(1);
   };
 
-  // Step 2: Submit
-  const handleCreateClinic: SubmitHandler<DepartmentsForm> = async (data) => {
+  // Step 3: Back
+  const handleBackFromDoctor = () => {
+    setStep(2);
+  };
+
+  // Final Submit (Step 3)
+  const handleCreateClinic: SubmitHandler<DoctorProfileForm> = async (data) => {
     if (!user) {
       toast({
         title: "Error",
@@ -116,11 +154,11 @@ const CreateClinicPage = () => {
 
     setIsSubmitting(true);
     try {
-      // Use the new create_clinic_with_admin function which is safer and handles RLS properly
+      // Use the create_clinic_with_admin function
       const { data: clinicResult, error: clinicError } = await supabase
         .rpc('create_clinic_with_admin', {
           clinic_name: clinicDetails.name,
-          user_phone: user.phone || null // Pass phone if available for profile completion
+          user_phone: user.phone || null
         })
         .single();
 
@@ -128,7 +166,6 @@ const CreateClinicPage = () => {
       if (!clinicResult) throw new Error("Clinic creation failed - no result returned.");
       
       const createdClinicId = clinicResult.clinic_id;
-      setNewClinicId(createdClinicId); // Save for DoctorModal
 
       // Update additional clinic details (address, email, phone, website)
       const { error: updateError } = await supabase
@@ -143,31 +180,37 @@ const CreateClinicPage = () => {
 
       if (updateError) throw updateError;
 
-      // Auto-create doctor profile for superadmin (only if doesn't exist for this clinic)
-      const { data: existingDoctor, error: checkDoctorError } = await supabase
-        .from('doctors')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('clinic_id', createdClinicId)
-        .maybeSingle();
-      
-      if (checkDoctorError) throw checkDoctorError;
-      
-      if (!existingDoctor) {
-        const { error: doctorError } = await supabase
+      // Only create doctor profile if the superadmin is a practicing doctor
+      if (data.isDoctor === 'yes') {
+        const { data: existingDoctor, error: checkDoctorError } = await supabase
           .from('doctors')
-          .insert({
-            user_id: user.id,
-            clinic_id: createdClinicId,
-            name: user.user_metadata?.name || user.email || '',
-            email: user.email,
-          });
-        if (doctorError) throw doctorError;
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('clinic_id', createdClinicId)
+          .maybeSingle();
+        
+        if (checkDoctorError) throw checkDoctorError;
+        
+        if (!existingDoctor) {
+          const { error: doctorError } = await supabase
+            .from('doctors')
+            .insert({
+              user_id: user.id,
+              clinic_id: createdClinicId,
+              name: user.user_metadata?.name || user.email || '',
+              email: user.email,
+              phone: data.phone || user.phone || '',
+              availability: data.availability || 'Available',
+              bio: data.bio || 'Clinic Administrator and Practicing Doctor',
+              is_active: true,
+            });
+          if (doctorError) throw doctorError;
+        }
       }
 
       // Insert selected departments into clinic_departments
-      if (data.departments.length > 0) {
-        const departmentRows = data.departments.map((departmentTypeId) => ({
+      if (departments.length > 0) {
+        const departmentRows = departments.map((departmentTypeId) => ({
           clinic_id: createdClinicId,
           department_type_id: departmentTypeId,
         }));
@@ -179,9 +222,13 @@ const CreateClinicPage = () => {
 
       // Update auth context
       await fetchUserAndClinicData(user);
+      
+      const selectedDepartmentNames = departmentTypes?.filter(dt => departments.includes(dt.id)).map(dt => dt.name).join(", ") || "None";
+      const doctorStatus = data.isDoctor === 'yes' ? "You will also appear in doctor lists for appointments." : "You will manage the clinic as an administrator only.";
+      
       toast({
         title: "Success",
-        description: `Clinic "${clinicDetails.name}" created successfully.\nDepartments: ${departmentTypes?.filter(dt => data.departments.includes(dt.id)).map(dt => dt.name).join(", ")}`,
+        description: `Clinic "${clinicDetails.name}" created successfully.\nDepartments: ${selectedDepartmentNames}\n${doctorStatus}`,
       });
       
       // Navigate to dashboard
@@ -201,9 +248,17 @@ const CreateClinicPage = () => {
   // Step indicator
   const StepIndicator = () => (
     <div className="flex justify-center mb-6">
-      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`}>1. Clinic Details</div>
+      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`}>
+        1. Clinic Details
+      </div>
       <div className="mx-2">→</div>
-      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 2 ? 'text-primary' : 'text-muted-foreground'}`}>2. Departments</div>
+      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
+        2. Departments
+      </div>
+      <div className="mx-2">→</div>
+      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 3 ? 'text-primary' : 'text-muted-foreground'}`}>
+        3. Your Role
+      </div>
     </div>
   );
 
@@ -212,6 +267,8 @@ const CreateClinicPage = () => {
       <div className="w-full max-w-md rounded-lg shadow-md bg-white p-6">
         <h1 className="text-2xl font-bold mb-2 text-center">Create New Clinic</h1>
         <StepIndicator />
+        
+        {/* Step 1: Clinic Details */}
         {step === 1 && (
           <Form {...detailsForm}>
             <form onSubmit={detailsForm.handleSubmit(handleNext)} className="space-y-6">
@@ -222,7 +279,7 @@ const CreateClinicPage = () => {
                   <FormItem>
                     <FormLabel>Clinic Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g.,  Clinic" {...field} />
+                      <Input placeholder="e.g., City Medical Center" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -280,13 +337,17 @@ const CreateClinicPage = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={detailsForm.formState.isSubmitting}>Next</Button>
+              <Button type="submit" className="w-full" disabled={detailsForm.formState.isSubmitting}>
+                Next: Select Departments
+              </Button>
             </form>
           </Form>
         )}
+
+        {/* Step 2: Departments */}
         {step === 2 && (
           <Form {...departmentsForm}>
-            <form onSubmit={departmentsForm.handleSubmit(handleCreateClinic)} className="space-y-6">
+            <form onSubmit={departmentsForm.handleSubmit(handleDepartmentsNext)} className="space-y-6">
               <FormField
                 control={departmentsForm.control}
                 name="departments"
@@ -325,9 +386,140 @@ const CreateClinicPage = () => {
                 )}
               />
               <div className="flex justify-between gap-2">
-                <Button type="button" variant="outline" onClick={handleBack} disabled={isSubmitting}>Back</Button>
-                <Button type="submit" className="w-full" disabled={departmentsForm.formState.isSubmitting || isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Clinic"}
+                <Button type="button" variant="outline" onClick={handleBackFromDepartments} disabled={departmentsForm.formState.isSubmitting}>
+                  Back
+                </Button>
+                <Button type="submit" className="w-full" disabled={departmentsForm.formState.isSubmitting}>
+                  Next: Your Role
+                </Button>
+              </div>
+            </form>
+          </Form>
+        )}
+
+        {/* Step 3: Doctor Profile */}
+        {step === 3 && (
+          <Form {...doctorForm}>
+            <form onSubmit={doctorForm.handleSubmit(handleCreateClinic)} className="space-y-6">
+              <div className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold mb-2">Are you a practicing doctor?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    This determines whether you'll appear in appointment doctor lists or manage the clinic as an administrator only.
+                  </p>
+                </div>
+
+                <FormField
+                  control={doctorForm.control}
+                  name="isDoctor"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="grid grid-cols-1 gap-4"
+                        >
+                          <Card className={`cursor-pointer transition-colors ${field.value === 'yes' ? 'ring-2 ring-primary' : ''}`}>
+                            <CardContent className="flex items-center space-x-3 p-4">
+                              <RadioGroupItem value="yes" id="yes" />
+                              <div className="flex items-center space-x-3">
+                                <Stethoscope className="h-5 w-5 text-primary" />
+                                <div>
+                                  <Label htmlFor="yes" className="font-medium cursor-pointer">
+                                    Yes, I'm a practicing doctor
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    I will see patients and appear in appointment lists
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <Card className={`cursor-pointer transition-colors ${field.value === 'no' ? 'ring-2 ring-primary' : ''}`}>
+                            <CardContent className="flex items-center space-x-3 p-4">
+                              <RadioGroupItem value="no" id="no" />
+                              <div className="flex items-center space-x-3">
+                                <Building2 className="h-5 w-5 text-primary" />
+                                <div>
+                                  <Label htmlFor="no" className="font-medium cursor-pointer">
+                                    No, I'm an administrator only
+                                  </Label>
+                                  <p className="text-sm text-muted-foreground">
+                                    I will manage the clinic but not see patients
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Doctor-specific fields */}
+                {doctorForm.watch('isDoctor') === 'yes' && (
+                  <div className="space-y-4 border-t pt-4">
+                    <h4 className="font-medium">Doctor Profile Details</h4>
+                    
+                    <FormField
+                      control={doctorForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Professional Phone (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., +1 123 456 7890" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={doctorForm.control}
+                      name="availability"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Availability (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Mon-Fri 9:00 AM - 5:00 PM" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={doctorForm.control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Professional Bio (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              placeholder="e.g., Specialist in cardiology with 10+ years of experience..."
+                              className="min-h-[80px]"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-between gap-2">
+                <Button type="button" variant="outline" onClick={handleBackFromDoctor} disabled={isSubmitting}>
+                  Back
+                </Button>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Creating Clinic..." : "Create Clinic"}
                 </Button>
               </div>
             </form>

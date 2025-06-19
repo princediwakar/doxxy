@@ -600,7 +600,6 @@ export type Database = {
           id: string
           name: string | null
           phone: string | null
-          profile_completion: number | null
           updated_at: string | null
         }
         Insert: {
@@ -609,7 +608,6 @@ export type Database = {
           id: string
           name?: string | null
           phone?: string | null
-          profile_completion?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -618,7 +616,6 @@ export type Database = {
           id?: string
           name?: string | null
           phone?: string | null
-          profile_completion?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -636,10 +633,6 @@ export type Database = {
           new_department_id?: string
         }
         Returns: undefined
-      }
-      calculate_profile_completion: {
-        Args: { user_uuid: string }
-        Returns: number
       }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }

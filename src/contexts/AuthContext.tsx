@@ -27,6 +27,7 @@ interface AuthContextProps {
   needsProfileCompletion: boolean;
   checkProfileCompletion: (userId: string) => Promise<boolean>;
   markProfileComplete: () => Promise<void>;
+  hasDoctorProfile: boolean | undefined;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [activeClinic, setActiveClinicState] = useState<ClinicMemberWithClinic | null>(null);
   const [profileName, setProfileName] = useState<string | null>(null);
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
+  const [hasDoctorProfile, setHasDoctorProfile] = useState<boolean | undefined>(undefined);
   const isFetchingRef = useRef(false);
   const profileCheckRef = useRef<string | null>(null);
 
@@ -103,6 +105,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user?.id, checkProfileCompletion]);
 
+  // Function to check if user has doctor profile in active clinic
+  const checkDoctorProfile = useCallback(async (userId: string, clinicId: string | null): Promise<boolean> => {
+    if (!clinicId) {
+      setHasDoctorProfile(false);
+      return false;
+    }
+
+    try {
+      console.log("AuthContext: Checking doctor profile for user:", userId, "in clinic:", clinicId);
+      const { data, error } = await supabase
+        .rpc('user_has_doctor_profile', { 
+          user_id: userId, 
+          clinic_id: clinicId 
+        });
+
+      if (error) {
+        console.error("AuthContext: Error checking doctor profile:", error);
+        setHasDoctorProfile(false);
+        return false;
+      }
+
+      const hasProfile = data || false;
+      console.log("AuthContext: Doctor profile check result:", hasProfile);
+      setHasDoctorProfile(hasProfile);
+      return hasProfile;
+    } catch (error) {
+      console.error("AuthContext: Exception in doctor profile check:", error);
+      setHasDoctorProfile(false);
+      return false;
+    }
+  }, []);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -111,6 +145,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setActiveClinicState(null);
     setProfileName(null);
     setNeedsProfileCompletion(false);
+    setHasDoctorProfile(undefined);
     profileCheckRef.current = null;
     localStorage.removeItem('activeClinicId');
     console.log("AuthContext: Signed out, cleared state and local storage.");
@@ -120,6 +155,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (clinicId === null) {
       setActiveClinicState(null);
       setProfileName(null);
+      setHasDoctorProfile(undefined);
       localStorage.removeItem('activeClinicId');
       console.log("AuthContext: Cleared active clinic.");
     } else {
@@ -130,15 +166,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setProfileName(selectedClinic.clinics?.name || null);
           localStorage.setItem('activeClinicId', selectedClinic.clinic_id);
           console.log("AuthContext: Set active clinic:", selectedClinic.clinics?.name);
+          
+          // Check doctor profile for superadmins when clinic changes
+          if (user?.id && selectedClinic.role === 'superadmin') {
+            checkDoctorProfile(user.id, selectedClinic.clinic_id);
+          } else {
+            setHasDoctorProfile(selectedClinic.role === 'doctor');
+          }
         } else {
           setProfileName(null);
+          setHasDoctorProfile(undefined);
           localStorage.removeItem('activeClinicId');
           console.log("AuthContext: Clinic ID not found in userClinics, cleared local storage.");
         }
         return currentUserClinics;
       });
     }
-  }, []);
+  }, [user?.id, checkDoctorProfile]);
 
   const fetchUserAndClinicData = useCallback(async (userFromSession: User | null) => {
     console.log("fetchUserAndClinicData: Starting with user:", userFromSession?.id);
@@ -148,6 +192,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setActiveClinicState(null);
       setProfileName(null);
       setNeedsProfileCompletion(false);
+      setHasDoctorProfile(undefined);
       profileCheckRef.current = null;
       localStorage.removeItem('activeClinicId');
       console.log("AuthContext: No user, cleared clinics and active clinic.");
@@ -181,6 +226,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUserClinics([]);
         setActiveClinicState(null);
         setProfileName(null);
+        setHasDoctorProfile(undefined);
         localStorage.removeItem('activeClinicId');
         return;
       }
@@ -191,6 +237,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUserClinics([]);
         setActiveClinicState(null);
         setProfileName(null);
+        setHasDoctorProfile(undefined);
         localStorage.removeItem('activeClinicId');
         console.log("AuthContext: User is not a member of any clinics.");
         return; // Exit if no clinics found
@@ -243,6 +290,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setActiveClinicState(initialActiveClinic);
       console.log("fetchUserAndClinicData: Final active clinic set to:", initialActiveClinic?.clinics?.name || null);
 
+      // Check doctor profile for the active clinic if user is superadmin
+      if (initialActiveClinic && userFromSession.id) {
+        if (initialActiveClinic.role === 'superadmin') {
+          await checkDoctorProfile(userFromSession.id, initialActiveClinic.clinic_id);
+        } else {
+          setHasDoctorProfile(initialActiveClinic.role === 'doctor');
+        }
+      } else {
+        setHasDoctorProfile(undefined);
+      }
+
       // After setting clinics, fetch profile name
       console.log("fetchUserAndClinicData: Fetching profile name");
       try {
@@ -274,6 +332,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUserClinics([]);
       setActiveClinicState(null);
       setProfileName(null);
+      setHasDoctorProfile(undefined);
       localStorage.removeItem('activeClinicId');
     } finally {
       console.log("fetchUserAndClinicData: Finally block executed, setting clinicLoading to false");
@@ -342,6 +401,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setActiveClinicState(null);
           setProfileName(null);
           setNeedsProfileCompletion(false);
+          setHasDoctorProfile(undefined);
           profileCheckRef.current = null;
           localStorage.removeItem('activeClinicId');
           console.log("AuthContext: No user session, cleared state.");
@@ -369,6 +429,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setActiveClinicState(null);
             setProfileName(null);
             setNeedsProfileCompletion(false);
+            setHasDoctorProfile(undefined);
             profileCheckRef.current = null;
             localStorage.removeItem('activeClinicId');
           }
@@ -497,11 +558,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setActiveClinicId,
     activeClinicRole,
     fetchUserAndClinicData,
-    profileName,
-    needsProfileCompletion,
-    checkProfileCompletion,
-    markProfileComplete,
-  }), [session, user, initialLoading, clinicLoading, userClinics, activeClinic, setActiveClinicId, activeClinicRole, profileName, needsProfileCompletion, checkProfileCompletion, markProfileComplete]);
+          profileName,
+      needsProfileCompletion,
+      checkProfileCompletion,
+      markProfileComplete,
+      hasDoctorProfile,
+    }), [session, user, initialLoading, clinicLoading, userClinics, activeClinic, setActiveClinicId, activeClinicRole, profileName, needsProfileCompletion, checkProfileCompletion, markProfileComplete, hasDoctorProfile]);
 
   return (
     <AuthContext.Provider value={authContextValue}>
