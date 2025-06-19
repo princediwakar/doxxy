@@ -83,6 +83,25 @@ const Consultation = () => {
     return specialtyFieldSections[mappedDepartment] || specialtyFieldSections['General'];
   }, [departmentInfo]);
 
+  // Get department type for validation
+  const departmentType = useMemo(() => {
+    const departmentName = departmentInfo?.clinic_departments?.department_types?.name;
+    const departmentMapping: Record<string, string> = {
+      'Ophthalmology': 'Ophthalmology',
+      'Neurology': 'Neurology',
+      'Cardiology': 'Cardiology',
+      'Dermatology': 'Dermatology',
+      'Orthopedics': 'Orthopedics',
+      'Psychiatry': 'Psychiatry',
+      'Pediatrics': 'Pediatrics',
+      'ENT': 'ENT',
+      'Gynecology': 'Gynecology',
+      'Pulmonology': 'Pulmonology',
+      'General Medicine': 'General'
+    };
+    return departmentMapping[departmentName || ''] || 'General';
+  }, [departmentInfo]);
+
   // Form management
   const {
     form,
@@ -90,24 +109,34 @@ const Consultation = () => {
     autoSaveMutation,
     handleSave,
     handleCompleteConsultation,
-  } = useConsultationForm(appointmentId, appointment, existingConsultation);
+    validateMandatoryFields,
+    getMandatoryFieldsStatus,
+    mandatoryFieldsStatus,
+  } = useConsultationForm(
+    appointmentId, 
+    appointment, 
+    existingConsultation,
+    () => navigate('/appointments'), // Redirect callback
+    departmentType // Pass department type for validation
+  );
 
   // Enhanced print functionality
-  const handlePrint = useCallback(() => {
+  const handlePrint = useCallback(async () => {
     const formData = form.getValues().specialty_data;
     const patient = appointment?.patient;
     
     if (patient) {
-      printConsultation(
+      await printConsultation(
         formData,
         patient,
         appointment,
         clinicDetails,
         doctorDetails,
-        user
+        user,
+        departmentType // Pass department type for consistent formatting
       );
     }
-  }, [form, appointment, clinicDetails, doctorDetails, user]);
+  }, [form, appointment, clinicDetails, doctorDetails, user, departmentType]);
 
   // Section rendering with improved UX
   const renderSection = (section: FieldSection, sectionIndex: number) => {
@@ -171,6 +200,7 @@ const Consultation = () => {
                     )}
                   expandedFields={expandedFields}
                   setExpandedFields={setExpandedFields}
+                  isConsultationCompleted={isConsultationCompleted}
                 />
               ))}
             </CardContent>
@@ -205,12 +235,13 @@ const Consultation = () => {
   const patient = appointment.patient as Patient;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       {/* Header */}
       <ConsultationHeader
         patient={patient}
         isConsultationCompleted={isConsultationCompleted}
         autoSaveMutation={autoSaveMutation}
+        mandatoryFieldsStatus={mandatoryFieldsStatus}
         onBack={() => navigate('/appointments')}
         onSave={handleSave}
         onPrint={handlePrint}
@@ -218,7 +249,7 @@ const Consultation = () => {
         onComplete={handleCompleteConsultation}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto  py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Consultation Form with Sections */}
           <div className="lg:col-span-3">
@@ -294,6 +325,7 @@ const Consultation = () => {
         patient={patient}
         appointment={appointment}
         specialtySections={specialtySections}
+        departmentType={departmentType}
       />
     </div>
   );

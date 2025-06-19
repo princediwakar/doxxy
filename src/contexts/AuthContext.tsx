@@ -209,10 +209,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           name: member.clinic_name,
           created_by: member.clinic_created_by,
           created_at: new Date().toISOString(), // Placeholder
-          address: null, // Not fetched by function
-          email: null, // Not fetched by function  
-          phone: null, // Not fetched by function
-          website: null // Not fetched by function
+          address: member.clinic_address,
+          email: member.clinic_email,
+          phone: member.clinic_phone,
+          website: member.clinic_website
         }
       }));
 

@@ -207,7 +207,7 @@ Responsive, accessible, role-based rendering, loading states
 - Encryption for sensitive fields
 
 ### Role-Based Access
-- `admin`: Full clinic management
+- `superadmin`: Full clinic management
 - `doctor`: Patient records, appointments
 - `staff`: Scheduling, basic patient info
 

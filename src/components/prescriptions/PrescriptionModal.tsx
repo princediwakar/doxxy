@@ -22,9 +22,10 @@ import { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { Pill, Plus, Trash2, Calendar, User, Stethoscope } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { MedicineCombobox } from "@/components/ui/medicine-combobox";
 
 const supabase = getSupabase();
 
@@ -39,15 +40,23 @@ type Appointment = Database['public']['Tables']['appointments']['Row'] & {
 const medicationSchema = z.object({
   name: z.string().min(1, "Medication name is required"),
   dosage: z.string().optional(),
-  route: z.enum(["Oral", "Topical", "IV", "IM", "Eye Drops", "Subcutaneous", "Inhaled"]).optional(),
   frequency: z.enum(["OD", "BD", "TDS", "QID", "PRN", "Q4H", "Q6H", "Q8H", "Q12H"]).optional(),
   duration: z.string().optional(),
   instructions: z.string().optional(),
-  eye: z.enum(["Left", "Right", "Both", "N/A"]).default("N/A"),
+}).refine((data) => data.name.trim().length > 0, {
+  message: "Medication name cannot be empty",
+  path: ["name"]
 });
 
 const prescriptionFormSchema = z.object({
-  medications: z.array(medicationSchema).min(1, "At least one medication is required"),
+  medications: z.array(medicationSchema).min(1, "At least one medication is required")
+    .refine(
+      (medications) => medications.some(med => med.name.trim().length > 0),
+      {
+        message: "At least one medication must have a valid name",
+        path: ["medications"]
+      }
+    ),
   notes: z.string().optional(),
 });
 
@@ -148,7 +157,7 @@ export function PrescriptionModal({
   const form = useForm<PrescriptionFormValues>({
     resolver: zodResolver(prescriptionFormSchema),
     defaultValues: { 
-      medications: [{ name: "", eye: "N/A" }],
+      medications: [{ name: "" }],
       notes: ""
     },
     mode: 'onChange',
@@ -163,7 +172,7 @@ export function PrescriptionModal({
       setManualConsultationId(consultationId || null);
       setShouldClose(false);
       form.reset({ 
-        medications: [{ name: "", eye: "N/A" }],
+        medications: [{ name: "" }],
         notes: ""
       });
     }
@@ -175,14 +184,27 @@ export function PrescriptionModal({
   });
 
   const addMedication = useCallback(() => {
-    append({ name: "", eye: "N/A" });
+    append({ name: "" });
   }, [append]);
 
   const removeMedication = useCallback((index: number) => {
-    if (fields.length > 1) {
-      remove(index);
+    // Always remove the specific medication from the form array.
+    remove(index);
+  }, [remove]);
+
+  // Handle medicine selection with auto-fill
+  const handleMedicineSelect = (index: number, medicine: { name: string }, autoFillData: { dosage: string; route: string; suggestedFrequency?: string }) => {
+    const medicationFieldName = `medications.${index}` as const;
+    
+    form.setValue(`${medicationFieldName}.name`, medicine.name);
+    form.setValue(`${medicationFieldName}.dosage`, autoFillData.dosage || '');
+    
+    if (autoFillData.suggestedFrequency) {
+      form.setValue(`${medicationFieldName}.frequency`, autoFillData.suggestedFrequency as "OD" | "BD" | "TDS" | "QID" | "PRN" | "Q4H" | "Q6H" | "Q8H" | "Q12H");
+    } else {
+      form.setValue(`${medicationFieldName}.frequency`, undefined);
     }
-  }, [remove, fields.length]);
+  };
 
   const saveMutation = useMutation({
     mutationFn: async (values: PrescriptionFormValues) => {
@@ -190,12 +212,19 @@ export function PrescriptionModal({
         throw new Error('Missing required information: doctor, patient, or clinic context is required.');
       }
 
+      // Filter out medications with empty names (more strict filtering)
+      const validMedications = values.medications.filter(med => med.name && med.name.trim().length > 0);
+      
+      if (validMedications.length === 0) {
+        throw new Error('Cannot create prescription without any valid medications');
+      }
+
       const prescriptionData = {
         consultation_id: manualConsultationId || null,
         doctor_id: manualDoctorId,
         patient_id: manualPatientId,
         clinic_id: clinicId,
-        medications: values.medications.filter(med => med.name.trim()), // Only save medications with names
+        medications: validMedications,
         notes: values.notes || null,
         created_at: new Date().toISOString(),
       };
@@ -234,9 +263,20 @@ export function PrescriptionModal({
 
   const onSubmit = useCallback((values: PrescriptionFormValues) => {
     // Validate that at least one medication has a name
-    const validMedications = values.medications.filter(med => med.name.trim());
+    const validMedications = values.medications.filter(med => med.name && med.name.trim().length > 0);
     if (validMedications.length === 0) {
-      toast.error("Please add at least one medication with a name");
+      toast.error("Cannot create prescription", {
+        description: "Please add at least one medication with a valid name"
+      });
+      return;
+    }
+
+    // Check if there are any medications with empty names
+    const emptyMedications = values.medications.filter(med => !med.name || med.name.trim().length === 0);
+    if (emptyMedications.length > 0) {
+      toast.error("Invalid medications", {
+        description: "Please remove or fill in all medications with empty names"
+      });
       return;
     }
 
@@ -452,218 +492,181 @@ export function PrescriptionModal({
                   </div>
 
                   {fields.map((field, index) => (
-                    <Card key={field.id}>
-                      <CardHeader className="pb-3">
-                        <div className="flex justify-between items-center">
-                          <CardTitle className="text-sm font-semibold text-foreground">
-                            Medication {index + 1}
-                          </CardTitle>
-                          {fields.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeMedication(index)}
-                              className="text-destructive hover:text-destructive/80"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+                    <div key={field.id} className="border rounded-lg p-4 space-y-4 bg-white border-gray-200 hover:border-gray-300 transition-colors">
+                      {/* Header */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs font-medium">
+                            {index + 1}
+                          </Badge>
+                          <span className="text-sm font-medium text-gray-700">
+                            {form.watch(`medications.${index}.name`) || 'New Medication'}
+                          </span>
                         </div>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name={`medications.${index}.name`}
-                            render={({ field: formField }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">
-                                  Medication Name <span className="text-destructive">*</span>
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...formField}
-                                    value={formField.value ?? ''}
-                                    placeholder="e.g., Acetaminophen, Ibuprofen"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            removeMedication(index);
+                          }}
+                          className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
 
-                          <FormField
-                            control={form.control}
-                            name={`medications.${index}.dosage`}
-                            render={({ field: formField }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Dosage</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...formField}
-                                    value={formField.value ?? ''}
-                                    placeholder="e.g., 500mg, 2 tablets"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
+                      {/* Medicine Name */}
+                      <FormField
+                        control={form.control}
+                        name={`medications.${index}.name`}
+                        render={({ field: formField }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">
+                              Medicine Name <span className="text-red-500">*</span>
+                            </FormLabel>
+                            <FormControl>
+                              <MedicineCombobox
+                                value={formField.value ?? ''}
+                                onValueChange={formField.onChange}
+                                onMedicineSelect={(medicine, autoFillData) => handleMedicineSelect(index, medicine, autoFillData)}
+                                onClear={() => {
+                                  const currentMedications = form.getValues('medications');
+                                  const updatedMedications = [...currentMedications];
+                                  updatedMedications[index] = {
+                                    ...updatedMedications[index],
+                                    name: '',
+                                    dosage: '',
+                                    frequency: undefined
+                                  };
+                                  form.setValue('medications', updatedMedications);
+                                }}
+                                placeholder="Search for medicine..."
+                                disabled={saveMutation.isPending}
+                              />
+                            </FormControl>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
 
-                          <FormField
-                            control={form.control}
-                            name={`medications.${index}.route`}
-                            render={({ field: formField }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Route</FormLabel>
-                                <Select onValueChange={formField.onChange} value={formField.value || ''}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select route" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Oral">Oral</SelectItem>
-                                    <SelectItem value="Topical">Topical</SelectItem>
-                                    <SelectItem value="IV">IV (Intravenous)</SelectItem>
-                                    <SelectItem value="IM">IM (Intramuscular)</SelectItem>
-                                    <SelectItem value="Subcutaneous">Subcutaneous</SelectItem>
-                                    <SelectItem value="Eye Drops">Eye Drops</SelectItem>
-                                    <SelectItem value="Inhaled">Inhaled</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`medications.${index}.frequency`}
-                            render={({ field: formField }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Frequency</FormLabel>
-                                <Select onValueChange={formField.onChange} value={formField.value || ''}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select frequency" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="OD">OD (Once Daily)</SelectItem>
-                                    <SelectItem value="BD">BD (Twice Daily)</SelectItem>
-                                    <SelectItem value="TDS">TDS (Three Times Daily)</SelectItem>
-                                    <SelectItem value="QID">QID (Four Times Daily)</SelectItem>
-                                    <SelectItem value="Q4H">Q4H (Every 4 Hours)</SelectItem>
-                                    <SelectItem value="Q6H">Q6H (Every 6 Hours)</SelectItem>
-                                    <SelectItem value="Q8H">Q8H (Every 8 Hours)</SelectItem>
-                                    <SelectItem value="Q12H">Q12H (Every 12 Hours)</SelectItem>
-                                    <SelectItem value="PRN">PRN (As Needed)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`medications.${index}.duration`}
-                            render={({ field: formField }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Duration</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    {...formField}
-                                    value={formField.value ?? ''}
-                                    placeholder="e.g., 7 days, 2 weeks, 1 month"
-                                  />
-                                </FormControl>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name={`medications.${index}.eye`}
-                            render={({ field: formField }) => (
-                              <FormItem>
-                                <FormLabel className="text-sm font-medium">Eye (Ophthalmology)</FormLabel>
-                                <Select onValueChange={formField.onChange} value={formField.value || 'N/A'}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select eye" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    <SelectItem value="Left">Left Eye</SelectItem>
-                                    <SelectItem value="Right">Right Eye</SelectItem>
-                                    <SelectItem value="Both">Both Eyes</SelectItem>
-                                    <SelectItem value="N/A">Not Applicable</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage className="text-xs" />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
+                      {/* Basic Fields Grid */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <FormField
                           control={form.control}
-                          name={`medications.${index}.instructions`}
+                          name={`medications.${index}.dosage`}
                           render={({ field: formField }) => (
                             <FormItem>
-                              <FormLabel className="text-sm font-medium">Special Instructions</FormLabel>
+                              <div className="flex items-center gap-2">
+                                <FormLabel className="text-sm font-medium text-gray-700">Dosage</FormLabel>
+                                {formField.value && (
+                                  <Badge variant="secondary" className="text-xs">Auto-filled</Badge>
+                                )}
+                              </div>
                               <FormControl>
-                                <Textarea
+                                <Input
                                   {...formField}
                                   value={formField.value ?? ''}
-                                  placeholder="e.g., Take with food, Avoid alcohol, Take before bedtime"
-                                  rows={2}
+                                  placeholder="e.g., 500mg"
+                                  className="text-sm"
                                 />
                               </FormControl>
                               <FormMessage className="text-xs" />
                             </FormItem>
                           )}
                         />
-                      </CardContent>
-                    </Card>
+
+                        <FormField
+                          control={form.control}
+                          name={`medications.${index}.frequency`}
+                          render={({ field: formField }) => (
+                            <FormItem>
+                              <div className="flex items-center gap-2">
+                                <FormLabel className="text-sm font-medium text-gray-700">Frequency</FormLabel>
+                                {formField.value && (
+                                  <Badge variant="secondary" className="text-xs">Suggested</Badge>
+                                )}
+                              </div>
+                              <Select onValueChange={formField.onChange} value={formField.value || ''}>
+                                <FormControl>
+                                  <SelectTrigger className="text-sm">
+                                    <SelectValue placeholder="Select" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="OD">OD (Once Daily)</SelectItem>
+                                  <SelectItem value="BD">BD (Twice Daily)</SelectItem>
+                                  <SelectItem value="TDS">TDS (Three Times Daily)</SelectItem>
+                                  <SelectItem value="QID">QID (Four Times Daily)</SelectItem>
+                                  <SelectItem value="PRN">PRN (As Needed)</SelectItem>
+                                  <SelectItem value="Q4H">Q4H (Every 4 Hours)</SelectItem>
+                                  <SelectItem value="Q6H">Q6H (Every 6 Hours)</SelectItem>
+                                  <SelectItem value="Q8H">Q8H (Every 8 Hours)</SelectItem>
+                                  <SelectItem value="Q12H">Q12H (Every 12 Hours)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`medications.${index}.duration`}
+                          render={({ field: formField }) => (
+                            <FormItem>
+                              <FormLabel className="text-sm font-medium text-gray-700">Duration</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...formField}
+                                  value={formField.value ?? ''}
+                                  placeholder="e.g., 7 days"
+                                  className="text-sm"
+                                />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+
+
+                      {/* Instructions */}
+                      <FormField
+                        control={form.control}
+                        name={`medications.${index}.instructions`}
+                        render={({ field: formField }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm font-medium text-gray-700">Special Instructions</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                {...formField}
+                                value={formField.value ?? ''}
+                                placeholder="Special instructions for patient..."
+                                rows={2}
+                                className="text-sm resize-none"
+                              />
+                            </FormControl>
+                            <FormMessage className="text-xs" />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   ))}
 
+                  {/* Add Medication Button */}
                   <Button
                     type="button"
                     variant="outline"
                     onClick={addMedication}
-                    className="w-full sm:w-auto"
-                    disabled={saveMutation.isPending}
+                    className="w-full h-10 text-sm font-medium border-dashed border-gray-300 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Another Medication
+                    Add Medication
                   </Button>
-
-                  {/* Additional Notes */}
-                  <div className="mt-6">
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm font-medium">Additional Notes</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              value={field.value ?? ''}
-                              placeholder="Any additional notes or instructions for this prescription..."
-                              rows={3}
-                            />
-                          </FormControl>
-                          <FormMessage className="text-xs" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </form>
               </Form>
             )}
@@ -671,39 +674,11 @@ export function PrescriptionModal({
         </ScrollArea>
 
         <DialogFooter>
-          <div className="flex gap-2 justify-end w-full">
-            <DialogClose asChild>
-              <Button
-                variant="outline"
-                disabled={saveMutation.isPending}
-                onClick={() => {
-                  if (form.formState.isDirty && !saveMutation.isSuccess) {
-                    toast.warning("Unsaved Changes", {
-                      description: "You have unsaved changes. Please save before closing."
-                    });
-                    return;
-                  }
-                  setShouldClose(true);
-                }}
-              >
-                Cancel
-              </Button>
-            </DialogClose>
-            <Button
-              onClick={form.handleSubmit(onSubmit)}
-              disabled={!canCreatePrescription || saveMutation.isPending}
-              className="min-w-[120px]"
-            >
-              {saveMutation.isPending ? (
-                <div className="flex items-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Saving...
-                </div>
-              ) : (
-                'Save Prescription'
-              )}
+          <DialogClose asChild>
+            <Button type="submit" form="prescription-form" disabled={!canCreatePrescription}>
+              {saveMutation.isPending ? "Saving..." : "Save Prescription"}
             </Button>
-          </div>
+          </DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>

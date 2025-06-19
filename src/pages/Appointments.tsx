@@ -84,7 +84,7 @@ const sortAppointments = (appointments: AppointmentWithDetails[], filter: Appoin
 };
 
 const fetchAppointments = async (clinicId: string, searchTerm: string) => {
-  console.log("fetchAppointments: Fetching for clinic", clinicId, "search", searchTerm);
+
 
   // Using the RPC to get appointments with patient and doctor names
   const { data, error } = await supabase
@@ -195,10 +195,8 @@ const Appointments = () => {
 
   // Handle opening the modal for an existing appointment
   const handleAppointmentClick = (appointment: AppointmentWithDetails) => {
-    console.log("handleAppointmentClick called with:", appointment);
     setSelectedAppointment(appointment);
     setIsAppointmentModalOpen(true);
-    console.log("Modal state should be open:", true);
   };
 
   // Handle closing the modal and refreshing data
@@ -256,7 +254,7 @@ const Appointments = () => {
 
   // Handle opening ConsultationModal (now redirects to page)
   const handleStartConsultation = async (appointment: AppointmentWithDetails) => {
-    console.log("Starting consultation for appointment:", appointment.id);
+
     
     // Update appointment status to "In Progress" if it's currently "Scheduled"
     if (appointment.status === 'Scheduled') {
@@ -395,7 +393,7 @@ const Appointments = () => {
               </TableRow>
             ) : (
               paginatedAppointments.map((appointment) => {
-                console.log("Appointment ID:", appointment.id, "Status:", appointment.status, "Active Role:", activeClinicRole);
+      
                 return (
                 <TableRow
                   key={appointment.id}
@@ -630,9 +628,7 @@ const Appointments = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Total Appointments</p>
                 <p className="text-2xl font-bold text-primary">{filteredAppointments.all.length}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {activeClinicRole === 'doctor' ? 'Your appointments' : 'All appointments'}
-                </p>
+                
               </div>
               <div className="bg-primary/10 p-3 rounded-lg">
                 <Calendar className="w-6 h-6 text-primary" />
@@ -649,9 +645,7 @@ const Appointments = () => {
                 <p className="text-2xl font-bold text-warning">
                   {filteredAppointments.today.length}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Urgent: {filteredAppointments.today.filter(a => a.status === 'Scheduled' || a.status === 'In Progress').length}
-                </p>
+                
               </div>
               <div className="bg-warning/10 p-3 rounded-lg">
                 <AlertCircle className="w-6 h-6 text-warning" />
@@ -668,7 +662,6 @@ const Appointments = () => {
                 <p className="text-2xl font-bold text-info">
                   {filteredAppointments.upcoming.length}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Future appointments</p>
               </div>
               <div className="bg-info/10 p-3 rounded-lg">
                 <Timer className="w-6 h-6 text-info" />
@@ -685,7 +678,7 @@ const Appointments = () => {
                 <p className="text-2xl font-bold text-success">
                   {filteredAppointments.past.length}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Historical records</p>
+                
               </div>
               <div className="bg-success/10 p-3 rounded-lg">
                 <CheckCircle2 className="w-6 h-6 text-success" />

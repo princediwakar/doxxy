@@ -1,4 +1,3 @@
-import React from 'react';
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -62,6 +61,8 @@ const Profile = () => {
     }
     setSaving(false);
   };
+
+
 
   if (authLoading) {
     return (
@@ -128,6 +129,8 @@ const Profile = () => {
           )}
         </CardContent>
       </Card>
+
+
     </div>
   );
 };

@@ -1,11 +1,17 @@
 import { ConsultationFormValues, Patient, Clinic } from './types';
 import { Tables } from '@/integrations/supabase/types';
+import { createRoot } from 'react-dom/client';
+import { ConsultationLayout } from './ConsultationLayout';
+import React from 'react';
 
 // Flexible doctor type that works with both profiles and doctors table
 type DoctorInfo = {
   name?: string;
   email?: string;
   phone?: string;
+  qualification?: string;
+  registration_number?: string;
+  specialization?: string;
   // allow any additional fields without using `any`
   [key: string]: unknown;
 };
@@ -23,271 +29,183 @@ export const generatePrintContent = (
   appointment: AppointmentRow | null,
   clinicDetails: Clinic | null,
   doctorDetails: DoctorInfo | null,
-  user: SupabaseUser | null
+  user: SupabaseUser | null,
+  departmentType: string = 'General'
 ) => {
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
+  // Create a temporary container for React rendering
+  const container = document.createElement('div');
+  const root = createRoot(container);
+  
+  // Prepare clinic info for the layout
+  const clinicInfo = clinicDetails ? {
+    name: clinicDetails.name,
+    address: clinicDetails.address,
+    phone: clinicDetails.phone,
+    email: clinicDetails.email,
+    website: clinicDetails.website
+  } : null;
+  
+  // Prepare doctor info for the layout
+  const doctorInfo = {
+    name: doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name',
+    qualification: 'Medical Doctor',
+    registration_number: '',
+    specialization: departmentType
   };
 
-  return `
+  // Render the ConsultationLayout component to HTML
+  root.render(
+    React.createElement(ConsultationLayout, {
+      patient,
+      appointment,
+      clinicInfo,
+      doctorInfo,
+      consultationData: formData,
+      departmentType,
+      showPrintStyles: true,
+      className: 'print-layout'
+    })
+  );
+
+  // Wait for rendering to complete and get the HTML
+  return new Promise<string>((resolve) => {
+    setTimeout(() => {
+      const html = `
     <!DOCTYPE html>
     <html>
     <head>
       <title>Medical Consultation Report</title>
+          <meta charset="utf-8">
+          <script src="https://cdn.tailwindcss.com"></script>
       <style>
-        @page { margin: 15mm; size: A4; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+            @page { 
+              margin: 15mm; 
+              size: A4; 
+            }
+            * { 
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
         body { 
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
           line-height: 1.5; 
-          color: hsl(210, 24%, 16%);
-          background: hsl(0, 0%, 99%);
+              color: #374151;
+              background: white;
           font-size: 12px;
-        }
-        .letterhead {
-          text-align: center;
-          border-bottom: 3px solid hsl(210, 100%, 56%);
-          padding: 24px 0;
-          margin-bottom: 24px;
-          background: linear-gradient(to bottom, hsl(0, 0%, 99%), hsl(210, 20%, 96%));
-        }
-        .clinic-name {
-          font-size: 28px;
-          font-weight: 700;
-          color: hsl(210, 100%, 56%);
-          margin-bottom: 8px;
-          letter-spacing: -0.025em;
-        }
-        .doctor-name {
-          font-size: 18px;
-          font-weight: 600;
-          color: hsl(160, 84%, 39%);
-          margin-bottom: 12px;
-        }
-        .clinic-details {
-          font-size: 11px;
-          color: hsl(210, 12%, 47%);
-          line-height: 1.4;
-        }
-        .patient-info {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 24px;
-          margin-bottom: 24px;
-          padding: 20px;
-          border: 1px solid hsl(210, 20%, 90%);
-          background: hsl(210, 20%, 96%);
-          border-radius: 8px;
-        }
-        .info-section h3 {
-          font-size: 15px;
-          font-weight: 600;
-          color: hsl(210, 100%, 56%);
-          margin-bottom: 10px;
-          border-bottom: 2px solid hsl(210, 100%, 56%);
-          padding-bottom: 4px;
-        }
-        .info-row {
-          margin-bottom: 4px;
-          display: flex;
-        }
-        .info-label {
-          font-weight: bold;
-          min-width: 80px;
-          margin-right: 10px;
-        }
-        .section {
-          margin-bottom: 15px;
-          page-break-inside: avoid;
-        }
-        .section-title {
-          font-size: 14px;
-          font-weight: bold;
-          color: #2563eb;
-          margin-bottom: 8px;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 3px;
-        }
-        .section-content {
-          margin-left: 10px;
-          line-height: 1.5;
-        }
-        .prescription-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-top: 10px;
-        }
-        .prescription-table th,
-        .prescription-table td {
-          border: 1px solid #ddd;
-          padding: 8px;
-          text-align: left;
-          font-size: 11px;
-        }
-        .prescription-table th {
-          background: #f5f5f5;
-          font-weight: bold;
-        }
-        .footer {
-          margin-top: 40px;
-          text-align: right;
-          border-top: 1px solid #ddd;
-          padding-top: 20px;
-        }
-        .doctor-signature {
-          margin-top: 30px;
-        }
-        @media print {
-          body { font-size: 11px; }
-        }
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            
+            /* Force layout consistency for print */
+            @media print {
+              @page { margin: 10mm; size: A4; }
+              body { 
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              .max-w-4xl { 
+                max-width: 100% !important; 
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+              .mx-auto { margin-left: 0 !important; margin-right: 0 !important; }
+              .no-print { display: none !important; }
+              
+              /* Force two-column layouts to work in print */
+              .info-cards { 
+                display: grid !important; 
+                grid-template-columns: 1fr 1fr !important; 
+                gap: 1rem !important; 
+              }
+              
+              /* Force letterhead grid to stay two-column */
+              .letterhead .grid { 
+                display: grid !important; 
+                grid-template-columns: 1fr 1fr !important; 
+                gap: 1rem !important; 
+              }
+              
+              /* Reduce letterhead padding for print */
+              .letterhead { 
+                padding: 1rem !important; 
+                margin-bottom: 1rem !important; 
+              }
+            }
+
       </style>
     </head>
     <body>
-      <div class="letterhead">
-        <div class="clinic-name">${clinicDetails?.name || 'Medical Clinic'}</div>
-        <div class="doctor-name">${doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name'}</div>
-        <div class="clinic-details">
-          ${clinicDetails?.address || 'Clinic Address'}<br>
-          Email: ${clinicDetails?.email || 'clinic@example.com'} | Phone: ${clinicDetails?.phone || '+1-234-567-8900'}<br>
-          ${clinicDetails?.website ? `Website: ${clinicDetails.website}` : ''}
-        </div>
-      </div>
-
-      <div class="patient-info">
-        <div class="info-section">
-          <h3>Patient Information</h3>
-          <div class="info-row">
-            <span class="info-label">Name:</span>
-            <span>${patient?.name || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Age:</span>
-            <span>${patient?.date_of_birth ? calculateAge(patient.date_of_birth) + ' years' : 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Gender:</span>
-            <span>${patient?.gender || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Phone:</span>
-            <span>${patient?.phone || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Email:</span>
-            <span>${patient?.email || 'N/A'}</span>
-          </div>
-        </div>
-        <div class="info-section">
-          <h3>Appointment Details</h3>
-          <div class="info-row">
-            <span class="info-label">Date:</span>
-            <span>${appointment?.date ? new Date(appointment.date).toLocaleDateString() : 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Time:</span>
-            <span>${appointment?.time || 'N/A'}</span>
-          </div>
-          <div class="info-row">
-            <span class="info-label">Type:</span>
-            <span>${appointment?.type || 'Consultation'}</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="consultation-content">
-        ${Object.entries(formData).map(([key, value]) => {
-          if (!value || (Array.isArray(value) && value.length === 0)) return '';
-          
-          const formatFieldName = (field: string) => {
-            return field.replace(/_/g, ' ')
-                       .replace(/^./, str => str.toUpperCase())
-                       .replace(/([a-z])([A-Z])/g, '$1 $2');
-          };
-
-          if (key === 'prescriptions' && Array.isArray(value) && value.length > 0) {
-            return `
-              <div class="section">
-                <div class="section-title">Prescriptions</div>
-                <table class="prescription-table">
-                  <thead>
-                    <tr>
-                      <th>Medication</th>
-                      <th>Dosage</th>
-                      <th>Route</th>
-                      <th>Frequency</th>
-                      <th>Duration</th>
-                      <th>Instructions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${value.map(med => `
-                      <tr>
-                        <td>${med.name || 'N/A'}</td>
-                        <td>${med.dosage || 'N/A'}</td>
-                        <td>${med.route || 'N/A'}</td>
-                        <td>${med.frequency || 'N/A'}</td>
-                        <td>${med.duration || 'N/A'}</td>
-                        <td>${med.instructions || 'N/A'}</td>
-                      </tr>
-                    `).join('')}
-                  </tbody>
-                </table>
-              </div>
-            `;
-          }
-
-          return `
-            <div class="section">
-              <div class="section-title">${formatFieldName(key)}</div>
-              <div class="section-content">${typeof value === 'string' ? value : JSON.stringify(value)}</div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-
-      <div class="footer">
-        <div class="doctor-signature">
-          <div style="margin-bottom: 40px;">_________________________</div>
-          <div><strong>${doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name'}</strong></div>
-          <div>Medical Doctor</div>
-          <div>Date: ${new Date().toLocaleDateString()}</div>
-        </div>
-      </div>
+          ${container.innerHTML}
     </body>
     </html>
   `;
+      
+      // Clean up
+      root.unmount();
+      resolve(html);
+    }, 100);
+  });
 };
 
-export const printConsultation = (
+// Helper function to generate proper filename for consultation documents
+const generateConsultationFilename = (
+  patient: Patient,
+  appointment: AppointmentRow | null,
+  departmentType: string
+): string => {
+  // Clean patient name for filename (remove special characters)
+  const patientName = patient?.name?.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') || 'Patient';
+  
+  // Format date (use appointment date if available, otherwise current date)
+  const appointmentDate = appointment?.date ? new Date(appointment.date) : new Date();
+  const dateStr = appointmentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+  
+  // Create filename: PatientName_YYYY-MM-DD_Department_Consultation
+  return `${patientName}_${dateStr}_${departmentType}_Consultation`;
+};
+
+export const printConsultation = async (
   formData: ConsultationFormValues['specialty_data'],
   patient: Patient,
   appointment: AppointmentRow | null,
   clinicDetails: Clinic | null,
   doctorDetails: DoctorInfo | null,
-  user: SupabaseUser | null
+  user: SupabaseUser | null,
+  departmentType: string = 'General'
 ) => {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) return;
-
-  const printContent = generatePrintContent(
+  try {
+    const printContent = await generatePrintContent(
     formData,
     patient,
     appointment,
     clinicDetails,
     doctorDetails,
-    user
-  );
+      user,
+      departmentType
+    );
 
+    // Generate proper filename for the document
+    const filename = generateConsultationFilename(patient, appointment, departmentType);
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      console.error('Could not open print window');
+      return;
+    }
+
+    // Set the document title to our generated filename
+    printWindow.document.title = filename;
   printWindow.document.write(printContent);
   printWindow.document.close();
   printWindow.focus();
+    
+    // Wait for content to load before printing
+    setTimeout(() => {
   printWindow.print();
   printWindow.close();
+    }, 500);
+  } catch (error) {
+    console.error('Error generating print content:', error);
+  }
 }; 

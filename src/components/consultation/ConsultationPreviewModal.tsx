@@ -1,11 +1,19 @@
-import { Eye } from 'lucide-react';
+import { Eye, Printer } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { format } from 'date-fns';
-import { ConsultationFormValues, Patient, PrescriptionMedication } from './types';
-import { UseFormReturn, FieldPath } from 'react-hook-form';
-import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
+import { Button } from '@/components/ui/button';
+import { ConsultationFormValues, Patient } from './types';
+import { UseFormReturn } from 'react-hook-form';
+import { specialtyFieldSections, FieldSection } from '@/lib/consultationNotesSchemas';
 import { Tables } from '@/integrations/supabase/types';
-import { FieldSection } from '@/lib/consultationNotesSchemas';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { ConsultationLayout } from './ConsultationLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { printConsultation } from './printUtils';
+import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+import { getSupabase } from '@/integrations/supabase/client';
+
+const supabase = getSupabase();
 
 interface ConsultationPreviewModalProps {
   showPreview: boolean;
@@ -14,18 +22,8 @@ interface ConsultationPreviewModalProps {
   patient: Patient;
   appointment: Tables<'appointments'> | null;
   specialtySections: FieldSection[];
+  departmentType?: string;
 }
-
-const calculateAge = (dateOfBirth: string) => {
-  const today = new Date();
-  const birthDate = new Date(dateOfBirth);
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-};
 
 export const ConsultationPreviewModal = ({
   showPreview,
@@ -33,105 +31,100 @@ export const ConsultationPreviewModal = ({
   form,
   patient,
   appointment,
-  specialtySections
+  specialtySections,
+  departmentType = 'General'
 }: ConsultationPreviewModalProps) => {
+  const { activeClinic, user } = useAuth();
+  
+  // Get consultation data from form
+  const consultationData = form.watch('specialty_data');
+  
+  // Get the full clinic object for printing
+  const clinicDetails = activeClinic?.clinics || null;
+  
+  // Prepare clinic info for layout display
+  const clinicInfo = clinicDetails ? {
+    name: clinicDetails.name,
+    address: clinicDetails.address,
+    phone: clinicDetails.phone,
+    email: clinicDetails.email,
+    website: clinicDetails.website
+  } : null;
+  
+  // Fetch doctor details for current user
+  const { data: doctorDetails } = useQuery({
+    queryKey: ['currentDoctorDetails', activeClinic?.clinic_id, user?.id],
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id || !user?.id) return null;
+      const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+        clinic_id: activeClinic.clinic_id,
+      });
+      if (error) throw error;
+      return data?.find(d => d.user_id === user.id) || null;
+    },
+    enabled: !!activeClinic?.clinic_id && !!user?.id,
+  });
+
+    // Prepare doctor info
+  const doctorInfo = {
+    name: doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name',
+    specialization: doctorDetails?.department_name || departmentType,
+    qualification: 'Medical Doctor', // Default qualification
+    registration_number: '', // Not available in current database schema
+    phone: doctorDetails?.phone || user?.phone || '',
+    email: doctorDetails?.email || user?.email || '',
+    bio: doctorDetails?.bio || ''
+  };
+
+  const handlePrint = async () => {
+    try {
+      await printConsultation(
+        consultationData,
+        patient,
+        appointment,
+        clinicDetails,
+        doctorInfo,
+        user,
+        departmentType
+      );
+      toast.success('Consultation printed successfully');
+    } catch (error) {
+      console.error('Error printing consultation:', error);
+      toast.error('Failed to print consultation');
+    }
+  };
+
   return (
     <Dialog open={showPreview} onOpenChange={setShowPreview}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Eye className="h-5 w-5" />
-            Consultation Preview
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6">
-          {/* Patient Info */}
-          <div className="bg-primary/5 p-4 rounded-lg">
-            <h3 className="font-medium text-primary mb-2">Patient Information</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Name:</span> {patient?.name || 'N/A'}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Age:</span> {patient?.date_of_birth ? calculateAge(patient.date_of_birth) : 'N/A'}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Gender:</span> {patient?.gender || 'N/A'}
-              </div>
-              <div>
-                <span className="text-muted-foreground">Appointment:</span> {appointment?.date ? format(new Date(appointment.date), 'MMM d, yyyy h:mm a') : 'N/A'}
-              </div>
-            </div>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Consultation Preview
+            </DialogTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrint}
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
           </div>
-          
-          {/* Consultation Content */}
-          {specialtySections.map((section, sectionIndex) => {
-            const specialtyData = form.watch('specialty_data');
-
-            const sectionHasContent = section.fields.some((field) => {
-              const value = (specialtyData as Record<string, unknown>)[field.name];
-              return value && (typeof value === 'string'
-                ? value.length > 0
-                : Array.isArray(value)
-                ? value.length > 0
-                : !!value);
-            });
-
-            if (!sectionHasContent) return null;
-
-            return (
-              <div key={sectionIndex} className="border rounded-lg p-4">
-                <h3 className="font-medium text-lg mb-4 text-primary">{section.title}</h3>
-                <div className="space-y-4">
-                  {section.fields.map((field, fieldIndex) => {
-                    const value = (specialtyData as Record<string, unknown>)[field.name];
-
-                    if (
-                      !value ||
-                      (typeof value === 'string' && value.length === 0) ||
-                      (Array.isArray(value) && value.length === 0)
-                    )
-                      return null;
-                    
-                    if (field.type === 'prescription') {
-                      const prescriptions = form.watch('specialty_data.prescriptions') || [];
-                      if (prescriptions.length === 0) return null;
-                      
-                      return (
-                        <div key={fieldIndex}>
-                          <h4 className="font-medium mb-2">{field.label}</h4>
-                          <div className="space-y-2">
-                            {prescriptions.map((prescription: PrescriptionMedication, index: number) => (
-                              <div key={index} className="bg-muted/50 p-3 rounded">
-                                <div className="font-medium">{prescription.name || 'Unnamed medication'}</div>
-                                <div className="text-sm text-muted-foreground">
-                                  {prescription.dosage} • {prescription.frequency}
-                                  {prescription.duration && ` • ${prescription.duration}`}
-                                </div>
-                                {prescription.instructions && (
-                                  <div className="text-sm mt-1">{prescription.instructions}</div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <div key={fieldIndex}>
-                        <h4 className="font-medium mb-2">{field.label}</h4>
-                        <div className="text-sm whitespace-pre-wrap bg-muted/50 p-3 rounded">
-                          {typeof value === 'string' ? value : JSON.stringify(value)}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        </DialogHeader>
+        <ScrollArea className="max-h-[80vh]">
+          <ConsultationLayout
+            patient={patient}
+            appointment={appointment}
+            clinicInfo={clinicInfo}
+            doctorInfo={doctorInfo}
+            consultationData={consultationData}
+            specialtySections={specialtySections}
+            departmentType={departmentType}
+            className="p-4"
+          />
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

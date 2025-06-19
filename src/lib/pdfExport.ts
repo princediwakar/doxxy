@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format, parseISO } from 'date-fns';
+import { getAge } from '@/lib/utils';
 
 interface PatientInfo {
   name: string;
@@ -119,7 +120,7 @@ export class MedicalRecordPDFExporter {
       ['Medical ID:', patient.medical_id],
       ['Gender:', patient.gender],
       ['Date of Birth:', patient.date_of_birth ? format(parseISO(patient.date_of_birth), 'PPP') : 'Unknown'],
-      ['Age:', patient.date_of_birth ? this.calculateAge(patient.date_of_birth).toString() : 'Unknown'],
+      ['Age:', patient.date_of_birth ? getAge(patient.date_of_birth, true) : 'Unknown'],
     ];
 
     if (patient.phone) patientData.push(['Phone:', patient.phone]);
@@ -318,18 +319,6 @@ export class MedicalRecordPDFExporter {
         297 - 10
       );
     }
-  }
-
-  private calculateAge(dateOfBirth: string | null): number {
-    if (!dateOfBirth) return 0;
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
   }
 
   public async exportMedicalRecord(

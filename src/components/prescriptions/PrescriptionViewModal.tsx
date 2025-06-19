@@ -1,11 +1,13 @@
+import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,11 +19,17 @@ import {
   FileText,
   Clock,
   Stethoscope,
-  Building2
+  Building2,
+  Printer,
+  Download,
+  Eye,
+  Activity
 } from "lucide-react";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tables } from "@/integrations/supabase/types";
+import { toast } from 'sonner';
+import { getAge } from '@/lib/utils';
 
 const supabase = getSupabase();
 
@@ -95,17 +103,6 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
   });
 
   if (!prescription) return null;
-
-  const calculateAge = (dateOfBirth: string) => {
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age;
-  };
 
   const formatMedications = (medications: unknown) => {
     if (typeof medications === 'string') {
@@ -195,7 +192,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {patient.gender} • {patient.date_of_birth ? `${calculateAge(patient.date_of_birth)} years old` : 'Age unknown'}
+                        {patient.gender} • {patient.date_of_birth ? `${getAge(patient.date_of_birth, true)} old` : 'Age unknown'}
                       </div>
                       {patient.phone && (
                         <div className="text-sm">{patient.phone}</div>

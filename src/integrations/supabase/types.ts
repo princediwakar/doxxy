@@ -432,6 +432,45 @@ export type Database = {
           },
         ]
       }
+      medicines: {
+        Row: {
+          created_at: string | null
+          id: number
+          is_discontinued: boolean | null
+          manufacturer_name: string | null
+          name: string
+          pack_size_label: string | null
+          pack_type: string | null
+          price: number | null
+          short_composition1: string | null
+          short_composition2: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          is_discontinued?: boolean | null
+          manufacturer_name?: string | null
+          name: string
+          pack_size_label?: string | null
+          pack_type?: string | null
+          price?: number | null
+          short_composition1?: string | null
+          short_composition2?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          is_discontinued?: boolean | null
+          manufacturer_name?: string | null
+          name?: string
+          pack_size_label?: string | null
+          pack_type?: string | null
+          price?: number | null
+          short_composition1?: string | null
+          short_composition2?: string | null
+        }
+        Relationships: []
+      }
       patients: {
         Row: {
           address: string | null
@@ -561,13 +600,17 @@ export type Database = {
           id: string
           name: string | null
           phone: string | null
+          profile_completion: number | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           email?: string | null
-          id?: string
+          id: string
           name?: string | null
           phone?: string | null
+          profile_completion?: number | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
@@ -575,6 +618,8 @@ export type Database = {
           id?: string
           name?: string | null
           phone?: string | null
+          profile_completion?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -591,6 +636,10 @@ export type Database = {
           new_department_id?: string
         }
         Returns: undefined
+      }
+      calculate_profile_completion: {
+        Args: { user_uuid: string }
+        Returns: number
       }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
@@ -709,11 +758,29 @@ export type Database = {
           department_id: string
           clinic_name: string
           clinic_created_by: string
+          clinic_address: string
+          clinic_phone: string
+          clinic_email: string
+          clinic_website: string
         }[]
       }
       repair_clinic_relationships: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      search_medicines: {
+        Args: { search_term: string; limit_count?: number }
+        Returns: {
+          id: number
+          name: string
+          price: number
+          is_discontinued: boolean
+          manufacturer_name: string
+          pack_size_label: string
+          pack_type: string
+          short_composition1: string
+          short_composition2: string
+        }[]
       }
       set_auth_uid: {
         Args: { uid: string }

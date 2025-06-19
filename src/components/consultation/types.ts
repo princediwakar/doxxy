@@ -17,16 +17,16 @@ export interface ConsultationFormValues {
 export interface PrescriptionMedication {
   name?: string;
   dosage?: string;
-  route?: string;
   frequency?: string;
   duration?: string;
+  route?: string;
   instructions?: string;
-  eye?: string;
 }
 
 export interface PrescriptionFieldProps {
-  value: PrescriptionMedication[];
-  onChange: (prescriptions: PrescriptionMedication[]) => void;
+  value: readonly PrescriptionMedication[];
+  onChange: (value: PrescriptionMedication[]) => void;
+  isReadOnly?: boolean;
 }
 
 export interface FieldConfig {
@@ -36,4 +36,5 @@ export interface FieldConfig {
   placeholder?: string;
   rows?: number;
   options?: string[];
+  mandatory?: boolean;
 } 

@@ -6,21 +6,25 @@ import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { consultationNotesSchema } from '@/lib/consultationNotesSchemas';
-import { ConsultationFormValues, Prescription } from '@/components/consultation/types';
+import { ConsultationFormValues, PrescriptionMedication } from '@/components/consultation/types';
 import { Tables, Json } from '@/integrations/supabase/types';
+import { consultationNotesSchema, getMandatoryFieldsForDepartment } from '@/lib/consultationNotesSchemas';
 
 export const useConsultationForm = (
   appointmentId: string | undefined,
   appointment: Tables<'appointments'> | null,
-  existingConsultation: Tables<'consultations'> | null
+  existingConsultation: Tables<'consultations'> | null,
+  onConsultationCompleted?: () => void,
+  departmentType?: string
 ) => {
   const { user, activeClinic } = useAuth();
   const queryClient = useQueryClient();
   const supabase = getSupabase();
   
   // Consultation completion state
-  const [isConsultationCompleted, setIsConsultationCompleted] = useState(false);
+  const [isConsultationCompleted, setIsConsultationCompleted] = useState(
+    appointment?.status === 'Completed'
+  );
   
   // Initialize form
   const form = useForm<ConsultationFormValues>({
@@ -77,7 +81,14 @@ export const useConsultationForm = (
 
       // Save prescriptions separately if they exist
       if (data.specialty_data.prescriptions && data.specialty_data.prescriptions.length > 0) {
-        const prescriptionsData = data.specialty_data.prescriptions.map((med: Prescription) => ({
+        // Filter out prescriptions with empty medication names
+        const validPrescriptions = data.specialty_data.prescriptions.filter((med: PrescriptionMedication) => 
+          med.name && med.name.trim().length > 0
+        );
+        
+        // Only save if there are valid prescriptions
+        if (validPrescriptions.length > 0) {
+          const prescriptionsData = validPrescriptions.map((med: PrescriptionMedication) => ({
           consultation_id: result.id,
           patient_id: appointment.patient_id,
           doctor_id: appointment.doctor_id || user?.id,
@@ -97,6 +108,13 @@ export const useConsultationForm = (
           .insert(prescriptionsData);
 
         if (prescError) throw prescError;
+        } else {
+          // If no valid prescriptions, just delete existing ones
+          await supabase
+            .from('prescriptions')
+            .delete()
+            .eq('consultation_id', result.id);
+        }
       }
 
       return result;
@@ -118,8 +136,10 @@ export const useConsultationForm = (
     },
   });
 
-  // Auto-save with debounce
+  // Auto-save with debounce (only if consultation not completed)
   useEffect(() => {
+    if (isConsultationCompleted) return; // Don't auto-save completed consultations
+    
     const timer = setTimeout(() => {
       const formValues = form.getValues();
       if (Object.keys(formValues.specialty_data).length > 0) {
@@ -128,16 +148,99 @@ export const useConsultationForm = (
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [watchedValues]);
+  }, [watchedValues, isConsultationCompleted]);
 
-  // Manual save
+  // Manual save (only if consultation not completed)
   const handleSave = useCallback(() => {
+    if (isConsultationCompleted) {
+      toast({
+        title: 'Cannot Save',
+        description: 'This consultation has been completed and cannot be modified.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     const formValues = form.getValues();
     autoSaveMutation.mutate(formValues);
-  }, [form, autoSaveMutation]);
+  }, [form, autoSaveMutation, isConsultationCompleted]);
 
-  // Complete consultation
+  // Validate mandatory fields before completion
+  const validateMandatoryFields = useCallback(() => {
+    const formValues = form.getValues();
+    const specialtyData = formValues.specialty_data;
+    
+    const errors: string[] = [];
+    
+    // Get mandatory fields for the current department (fallback to General)
+    const currentDepartment = departmentType || 'General';
+    const mandatoryFields = getMandatoryFieldsForDepartment(currentDepartment);
+    
+    // Check each mandatory field
+    mandatoryFields.forEach(fieldName => {
+      const fieldValue = specialtyData?.[fieldName];
+      
+      // For prescription fields, check if they have valid medications
+      if (fieldName === 'prescriptions') {
+        if (!Array.isArray(fieldValue) || fieldValue.length === 0 || 
+            !fieldValue.some((med: PrescriptionMedication) => med.name && med.name.trim().length > 0)) {
+          errors.push('Prescriptions');
+        }
+      } else {
+        // For text fields, check if they have content
+        if (!fieldValue || (typeof fieldValue === 'string' && fieldValue.trim().length === 0)) {
+          // Convert field name to display name
+          const displayName = fieldName
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          errors.push(displayName);
+        }
+      }
+    });
+    
+    return errors;
+  }, [form, departmentType]);
+
+  // Real-time validation state for UX feedback
+  const getMandatoryFieldsStatus = useCallback(() => {
+    const errors = validateMandatoryFields();
+    return {
+      isValid: errors.length === 0,
+      errors,
+      missingFields: errors.length,
+      validationMessage: errors.length > 0 
+        ? `Missing required fields: ${errors.join(', ')}`
+        : 'All required fields completed'
+    };
+  }, [validateMandatoryFields]);
+
+  // Watch for real-time validation updates
+  const mandatoryFieldsStatus = getMandatoryFieldsStatus();
+
+  // Complete consultation with validation
   const handleCompleteConsultation = useCallback(async () => {
+    if (isConsultationCompleted) {
+      toast({
+        title: 'Already Completed',
+        description: 'This consultation has already been completed.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate mandatory fields first
+    const validationErrors = validateMandatoryFields();
+    if (validationErrors.length > 0) {
+      toast({
+        title: 'Mandatory Fields Missing',
+        description: `Please complete the following required fields: ${validationErrors.join(', ')}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
     const formValues = form.getValues();
     await autoSaveMutation.mutateAsync(formValues);
     
@@ -159,9 +262,23 @@ export const useConsultationForm = (
     setIsConsultationCompleted(true);
     toast({
       title: 'Consultation Completed',
-      description: 'The consultation has been successfully completed.',
-    });
-  }, [form, autoSaveMutation, supabase, appointmentId]);
+        description: 'The consultation has been successfully completed. Redirecting to appointments...',
+      });
+
+      // Redirect after a brief delay to show the success message
+      setTimeout(() => {
+        onConsultationCompleted?.();
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error completing consultation:', error);
+      toast({
+        title: 'Error',
+        description: 'Could not complete consultation. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  }, [form, autoSaveMutation, supabase, appointmentId, isConsultationCompleted, validateMandatoryFields, onConsultationCompleted]);
 
   return {
     form,
@@ -169,5 +286,8 @@ export const useConsultationForm = (
     autoSaveMutation,
     handleSave,
     handleCompleteConsultation,
+    validateMandatoryFields,
+    getMandatoryFieldsStatus,
+    mandatoryFieldsStatus,
   };
 }; 

@@ -279,186 +279,50 @@ const MedicalRecords = () => {
     }
   };
 
-  const handlePrintConsultation = (consultation: ConsultationWithAppointment) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
+  const handlePrintConsultation = async (consultation: ConsultationWithAppointment) => {
+    if (!selectedPatient || !activeClinic) return;
 
-    const calculateAge = (dateOfBirth: string) => {
-      const today = new Date();
-      const birthDate = new Date(dateOfBirth);
-      let age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
-      return age;
+    // Prepare clinic info
+    const clinicInfo = {
+      name: activeClinic.clinics?.name,
+      address: activeClinic.clinics?.address,
+      phone: activeClinic.clinics?.phone,
+      email: activeClinic.clinics?.email,
+      website: activeClinic.clinics?.website
     };
 
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Consultation Report</title>
-        <style>
-          @page { margin: 15mm; size: A4; }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            line-height: 1.5; 
-            color: #1f2937;
-            font-size: 12px;
-          }
-          .letterhead {
-            text-align: center;
-            border-bottom: 3px solid #2563eb;
-            padding: 24px 0;
-            margin-bottom: 24px;
-          }
-          .clinic-name {
-            font-size: 28px;
-            font-weight: 700;
-            color: #2563eb;
-            margin-bottom: 8px;
-          }
-          .doctor-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #059669;
-            margin-bottom: 12px;
-          }
-          .patient-info {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 24px;
-            padding: 20px;
-            border: 1px solid #e5e7eb;
-            background: #f9fafb;
-            border-radius: 8px;
-          }
-          .info-section h3 {
-            font-size: 15px;
-            font-weight: 600;
-            color: #2563eb;
-            margin-bottom: 10px;
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 4px;
-          }
-          .info-row {
-            margin-bottom: 4px;
-            display: flex;
-          }
-          .info-label {
-            font-weight: bold;
-            min-width: 80px;
-            margin-right: 10px;
-          }
-          .section {
-            margin-bottom: 15px;
-            page-break-inside: avoid;
-          }
-          .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #2563eb;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 3px;
-          }
-          .section-content {
-            margin-left: 10px;
-            line-height: 1.5;
-          }
-          .footer {
-            margin-top: 40px;
-            text-align: right;
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="letterhead">
-          <div class="clinic-name">${activeClinic?.clinics?.name || 'Medical Clinic'}</div>
-          <div class="doctor-name">${consultation.appointment.doctor_name}</div>
-        </div>
+    // Prepare doctor info
+    const doctorInfo = {
+      name: consultation.appointment.doctor_name,
+      specialization: consultation.appointment.department_name || 'General',
+      qualification: '',
+      registration_number: ''
+    };
 
-        <div class="patient-info">
-          <div class="info-section">
-            <h3>Patient Information</h3>
-            <div class="info-row">
-              <span class="info-label">Name:</span>
-              <span>${selectedPatient?.name || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Age:</span>
-              <span>${selectedPatient?.date_of_birth ? calculateAge(selectedPatient.date_of_birth) + ' years' : 'N/A'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Gender:</span>
-              <span>${selectedPatient?.gender || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Medical ID:</span>
-              <span>${selectedPatient?.medical_id || 'N/A'}</span>
-            </div>
-          </div>
-          <div class="info-section">
-            <h3>Consultation Details</h3>
-            <div class="info-row">
-              <span class="info-label">Date:</span>
-              <span>${format(parseISO(consultation.appointment.date), 'PPP')}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Time:</span>
-              <span>${consultation.appointment.time || 'N/A'}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Department:</span>
-              <span>${consultation.appointment.department_name || 'General'}</span>
-            </div>
-          </div>
-        </div>
+    // Prepare appointment info
+    const appointmentInfo = {
+      id: consultation.appointment.id || '',
+      clinic_id: consultation.appointment.clinic_id || '',
+      patient_id: consultation.appointment.patient_id || '',
+      doctor_id: consultation.appointment.doctor_id || '',
+      date: consultation.appointment.date,
+      time: consultation.appointment.time,
+      type: consultation.appointment.type || 'Consultation',
+      status: consultation.appointment.status || 'Completed',
+      notes: consultation.appointment.notes || '',
+      created_at: consultation.appointment.created_at || ''
+    };
 
-        <div class="consultation-content">
-          ${consultation.specialty_data && typeof consultation.specialty_data === 'object' ?
-        Object.entries(consultation.specialty_data).map(([key, value]) => {
-          if (!value || (Array.isArray(value) && value.length === 0)) return '';
-
-          const formatFieldName = (field: string) => {
-            return field.replace(/_/g, ' ')
-              .replace(/^./, str => str.toUpperCase())
-              .replace(/([a-z])([A-Z])/g, '$1 $2');
-          };
-
-          return `
-                <div class="section">
-                  <div class="section-title">${formatFieldName(key)}</div>
-                  <div class="section-content">${typeof value === 'string' ? value : JSON.stringify(value)}</div>
-                </div>
-              `;
-        }).join('') :
-        '<div class="section"><div class="section-content">No clinical notes recorded for this consultation.</div></div>'
-      }
-        </div>
-
-        <div class="footer">
-          <div>
-            <div style="margin-bottom: 40px;">_________________________</div>
-            <div><strong>${consultation.appointment.doctor_name}</strong></div>
-            <div>${consultation.appointment.department_name || 'Medical Doctor'}</div>
-            <div>Date: ${new Date().toLocaleDateString()}</div>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-    printWindow.close();
+    // Use the unified print function
+    await printConsultation(
+      consultation.specialty_data as Record<string, unknown>,
+      selectedPatient,
+      appointmentInfo,
+      clinicInfo,
+      doctorInfo,
+      user,
+      consultation.appointment.department_name || 'General'
+    );
   };
 
   const handleExport = async (options: ExportOptions) => {
@@ -838,14 +702,6 @@ const MedicalRecords = () => {
                                       >
                                         <Eye className="h-4 w-4 mr-2" />
                                         View
-                                      </Button>
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handlePrintConsultation(consultation)}
-                                      >
-                                        <Printer className="h-4 w-4 mr-2" />
-                                        Print
                                       </Button>
                                     </div>
                                   </div>

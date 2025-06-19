@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React from 'react';
 import { ChevronDown, ChevronRight, Activity } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,7 @@ interface ConsultationFormFieldProps {
   onChange: (value: string | PrescriptionMedication[]) => void;
   expandedFields: Record<string, boolean>;
   setExpandedFields: (fields: Record<string, boolean>) => void;
+  isConsultationCompleted?: boolean;
 }
 
 export const ConsultationFormField = ({
@@ -25,12 +26,14 @@ export const ConsultationFormField = ({
   value,
   onChange,
   expandedFields,
-  setExpandedFields
+  setExpandedFields,
+  isConsultationCompleted = false
 }: ConsultationFormFieldProps) => {
-  const isMandatory = ['chief_complaint', 'assessment', 'treatment_plan'].includes(fieldConfig.name);
+  const isMandatory = fieldConfig.mandatory || false;
   const isExpanded = expandedFields[fieldConfig.name] ?? isMandatory;
   
   const toggleField = () => {
+    if (isConsultationCompleted) return; // Don't allow expansion changes in read-only mode
     setExpandedFields({
       ...expandedFields,
       [fieldConfig.name]: !expandedFields[fieldConfig.name]
@@ -46,13 +49,19 @@ export const ConsultationFormField = ({
   };
 
   // Special handling for prescriptions
-  if (fieldConfig.type === 'prescription') {
+  if (fieldConfig.name === 'prescriptions') {
     return (
       <div key={fieldIndex} className="space-y-3">
         <Collapsible open={isExpanded} onOpenChange={toggleField}>
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-              <Label className="font-medium cursor-pointer text-gray-900 flex items-center gap-2">
+          <CollapsibleTrigger asChild disabled={isConsultationCompleted}>
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+              isConsultationCompleted 
+                ? 'bg-gray-50 cursor-not-allowed opacity-70' 
+                : 'hover:bg-gray-50 cursor-pointer'
+            }`}>
+              <Label className={`font-medium flex items-center gap-2 ${
+                isConsultationCompleted ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+              }`}>
                 <Activity className="h-4 w-4 text-blue-600" />
                 {fieldConfig.label}
                 {isMandatory && <span className="text-destructive">*</span>}
@@ -68,6 +77,7 @@ export const ConsultationFormField = ({
               <PrescriptionField
                 value={Array.isArray(value) ? value : []}
                 onChange={onChange}
+                isReadOnly={isConsultationCompleted}
               />
             </div>
           </CollapsibleContent>
@@ -83,11 +93,17 @@ export const ConsultationFormField = ({
   
   return (
     <div key={fieldIndex} className="space-y-3">
-      <Collapsible open={isExpanded} onOpenChange={!isMandatory ? toggleField : undefined}>
+      <Collapsible open={isExpanded} onOpenChange={toggleField}>
         {!isMandatory && (
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-              <Label className="font-medium cursor-pointer text-gray-900 flex items-center gap-2">
+          <CollapsibleTrigger asChild disabled={isConsultationCompleted}>
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+              isConsultationCompleted 
+                ? 'bg-gray-50 cursor-not-allowed opacity-70' 
+                : 'hover:bg-gray-50 cursor-pointer'
+            }`}>
+              <Label className={`font-medium flex items-center gap-2 ${
+                isConsultationCompleted ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+              }`}>
                 {fieldConfig.label}
                 {isMandatory && <span className="text-destructive">*</span>}
                 {hasValue && (
@@ -102,37 +118,56 @@ export const ConsultationFormField = ({
         <CollapsibleContent>
           <div className="space-y-3">
             {isMandatory && (
-              <Label className="font-medium text-gray-900 flex items-center gap-2">
+              <Label className={`font-medium flex items-center gap-2 ${
+                isConsultationCompleted ? 'text-gray-500' : 'text-gray-900'
+              }`}>
                 {fieldConfig.label}
                 <span className="text-destructive">*</span>
                 <CharacterCounter current={characterCount} max={characterLimit} />
+                {!hasValue && !isConsultationCompleted && (
+                  <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                    Required for completion
+                  </span>
+                )}
               </Label>
             )}
             
             {fieldConfig.type === 'textarea' ? (
               <Textarea
-                placeholder={fieldConfig.placeholder}
+                placeholder={isConsultationCompleted ? "No data entered" : fieldConfig.placeholder}
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => {
+                  if (isConsultationCompleted) return;
                   const newValue = e.target.value;
                   if (newValue.length <= characterLimit) {
                     onChange(newValue);
                   }
                 }}
                 rows={fieldConfig.rows || 4}
-                className="min-h-[100px] resize-none focus:border-blue-500 focus:ring-blue-500/20"
+                className={`min-h-[100px] resize-none transition-colors ${
+                  isConsultationCompleted 
+                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
+                    : 'focus:border-blue-500 focus:ring-blue-500/20'
+                } ${isMandatory && !hasValue && !isConsultationCompleted ? 'border-amber-300 bg-amber-50/30' : ''}`}
                 maxLength={characterLimit}
+                readOnly={isConsultationCompleted}
+                disabled={isConsultationCompleted}
               />
             ) : fieldConfig.type === 'select' ? (
               <Select 
                 value={typeof value === 'string' ? value : ''} 
-                onValueChange={onChange}
+                onValueChange={isConsultationCompleted ? undefined : onChange}
+                disabled={isConsultationCompleted}
               >
-                <SelectTrigger className="focus:border-blue-500 focus:ring-blue-500/20">
-                  <SelectValue placeholder={fieldConfig.placeholder} />
+                <SelectTrigger className={`transition-colors ${
+                  isConsultationCompleted 
+                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
+                    : 'focus:border-blue-500 focus:ring-blue-500/20'
+                } ${isMandatory && !hasValue && !isConsultationCompleted ? 'border-amber-300 bg-amber-50/30' : ''}`}>
+                  <SelectValue placeholder={isConsultationCompleted ? "No selection" : fieldConfig.placeholder} />
                 </SelectTrigger>
                 <SelectContent>
-                  {fieldConfig.options?.map((option: string) => (
+                  {fieldConfig.options?.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
                     </SelectItem>
@@ -141,16 +176,23 @@ export const ConsultationFormField = ({
               </Select>
             ) : (
               <Input
-                placeholder={fieldConfig.placeholder}
+                placeholder={isConsultationCompleted ? "No data entered" : fieldConfig.placeholder}
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => {
+                  if (isConsultationCompleted) return;
                   const newValue = e.target.value;
                   if (newValue.length <= characterLimit) {
                     onChange(newValue);
                   }
                 }}
-                className="focus:border-blue-500 focus:ring-blue-500/20"
+                className={`transition-colors ${
+                  isConsultationCompleted 
+                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
+                    : 'focus:border-blue-500 focus:ring-blue-500/20'
+                } ${isMandatory && !hasValue && !isConsultationCompleted ? 'border-amber-300 bg-amber-50/30' : ''}`}
                 maxLength={characterLimit}
+                readOnly={isConsultationCompleted}
+                disabled={isConsultationCompleted}
               />
             )}
           </div>

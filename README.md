@@ -45,6 +45,30 @@
 - **Twilio & Resend:** WhatsApp and email notifications (planned/partial).
 - **Vitest:** Comprehensive testing for components and API.
 
+### Medicine Auto-complete System
+**Advanced pharmaceutical search and prescription assistance**
+
+- **Smart Search**: Auto-complete across 31+ medicines by name, manufacturer, or composition
+- **Real-time Filtering**: Debounced search with visual highlighting of matching terms
+- **Rich Medicine Information**: 
+  - ₹ Pricing in Indian Rupees (₹15.50 - ₹245.50 range)
+  - Manufacturer details (GlaxoSmithKline, Abbott, Cipla, etc.)
+  - Pack information (strips, bottles, tubes, vials)
+  - Active compositions with combination drug support
+- **Professional UI**: Medical-grade interface with color-coded information
+- **Performance Optimized**: React Query caching with 5-minute stale time
+
+#### Usage Examples:
+```typescript
+// Search "paracetamol" finds:
+// - Panadol 500mg Tablet (₹15.50)
+// - Crocin Advance Tablet (₹18.20) 
+// - Dolo 650 Tablet (₹22.15)
+
+// Search "glaxo" finds all GlaxoSmithKline medicines
+// Search "inhaler" finds Ventolin Inhaler (₹125.80)
+```
+
 ## Security: Row Level Security (RLS)
 
 - RLS is **enabled** on the `doctors` table.

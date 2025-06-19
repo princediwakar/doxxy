@@ -1,9 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '../test-utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CompleteProfile } from '../../pages/CompleteProfile'
+import { CreateClinicPage } from '../../pages/CreateClinicPage'
+import { ColorThemeDemo } from '../../components/demo/ColorThemeDemo'
+import { getAge } from '@/lib/utils'
 
 describe('Clinic EMR System - Core UI Components', () => {
   describe('Button Component', () => {
@@ -121,29 +125,34 @@ describe('Clinic EMR System - Feature Functionality Tests', () => {
   })
 
   describe('Patient Management Features', () => {
-    it('calculates patient age correctly', () => {
-      const calculateAge = (birthDate: string | null): string => {
-        if (!birthDate) return 'Unknown'
-        
-        const today = new Date()
-        const birth = new Date(birthDate)
-        let age = today.getFullYear() - birth.getFullYear()
-        const monthDiff = today.getMonth() - birth.getMonth()
-        
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-          age--
-        }
-        
-        return age.toString()
-      }
+    it('calculates patient age correctly including infants', () => {
+      // Test normal adult age calculation
+      const adultBirthDate = '1990-05-15'
+      const adultAge = getAge(adultBirthDate)
+      expect(typeof adultAge).toBe('number')
+      expect(adultAge).toBeGreaterThan(30) // Should be around 33-34 years
+
+      // Test infant age calculations with string format
+      const today = new Date()
       
-      // Test with known dates
-      const birthDate = '1990-01-01'
-      const age = calculateAge(birthDate)
-      expect(parseInt(age)).toBeGreaterThan(30) // Should be around 34 in 2024
+      // Test 3 month old baby
+      const threeMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate())
+      const babyAge3Months = getAge(threeMonthsAgo.toISOString().split('T')[0], true)
+      expect(babyAge3Months).toContain('month')
       
-      expect(calculateAge(null)).toBe('Unknown')
-      expect(calculateAge('')).toBe('Unknown')
+      // Test 2 week old baby
+      const twoWeeksAgo = new Date(today.getTime() - (14 * 24 * 60 * 60 * 1000))
+      const babyAge2Weeks = getAge(twoWeeksAgo.toISOString().split('T')[0], true)
+      expect(babyAge2Weeks).toContain('week')
+      
+      // Test 3 day old baby
+      const threeDaysAgo = new Date(today.getTime() - (3 * 24 * 60 * 60 * 1000))
+      const babyAge3Days = getAge(threeDaysAgo.toISOString().split('T')[0], true)
+      expect(babyAge3Days).toContain('day')
+
+      // Test edge cases
+      expect(getAge(null, true)).toBe('')
+      expect(getAge('', true)).toBe('')
     })
 
     it('validates medical record number format', () => {

@@ -147,6 +147,7 @@ export type NoteFieldConfig = {
   type: "input" | "textarea" | "prescription";
   rows?: number;
   placeholder?: string;
+  mandatory?: boolean;
 };
 
 // Section-based field organization
@@ -161,7 +162,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary reason for visit" },
+        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary reason for visit", mandatory: true },
         { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Detailed history of current symptoms" },
         { name: "review_of_systems", label: "Review of Systems", type: "textarea", rows: 3, placeholder: "Systematic review of symptoms" },
         { name: "past_medical_history", label: "Past Medical History", type: "textarea", rows: 3, placeholder: "Previous medical conditions and surgeries" },
@@ -181,8 +182,8 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Assessment & Plan",
       fields: [
         { name: "investigations", label: "Investigations", type: "textarea", rows: 3, placeholder: "Laboratory tests, imaging ordered" },
-        { name: "assessment", label: "Assessment & Diagnosis", type: "textarea", rows: 3, placeholder: "Clinical assessment and diagnosis" },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Management plan and interventions" },
+        { name: "assessment", label: "Assessment & Diagnosis", type: "textarea", rows: 3, placeholder: "Clinical assessment and diagnosis", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Management plan and interventions", mandatory: true },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Expected outcome" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Next appointment and monitoring plan" },
@@ -194,7 +195,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary visual complaint" },
+        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary visual complaint", mandatory: true },
         { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Detailed ocular history" },
         { name: "review_of_systems", label: "Review of Systems", type: "textarea", rows: 3, placeholder: "Ocular and systemic review" },
         { name: "past_medical_history", label: "Past Medical History", type: "textarea", rows: 3, placeholder: "Previous eye conditions and surgeries" },
@@ -208,13 +209,13 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Examination",
       fields: [
         { name: "physical_exam", label: "General Physical Exam", type: "textarea", rows: 3, placeholder: "General examination findings" },
-        { name: "visual_acuity", label: "Visual Acuity", type: "textarea", rows: 3, placeholder: "Distance/near VA, with/without correction" },
+        { name: "visual_acuity", label: "Visual Acuity", type: "textarea", rows: 3, placeholder: "Distance/near VA, with/without correction", mandatory: true },
         { name: "refraction", label: "Refraction", type: "textarea", rows: 3, placeholder: "Objective and subjective refraction" },
         { name: "pupil_examination", label: "Pupil Examination", type: "textarea", rows: 3, placeholder: "Pupil size, reactivity, RAPD" },
         { name: "extraocular_movements", label: "Extraocular Movements", type: "textarea", rows: 3, placeholder: "Eye movement assessment" },
         { name: "slit_lamp_exam", label: "Slit Lamp Examination", type: "textarea", rows: 4, placeholder: "Anterior segment examination" },
         { name: "intraocular_pressure", label: "Intraocular Pressure", type: "textarea", rows: 2, placeholder: "IOP measurements (method, time)" },
-        { name: "fundus_exam", label: "Fundus Examination", type: "textarea", rows: 4, placeholder: "Posterior segment examination" },
+        { name: "fundus_exam", label: "Fundus Examination", type: "textarea", rows: 4, placeholder: "Posterior segment examination", mandatory: true },
         { name: "visual_fields", label: "Visual Fields", type: "textarea", rows: 3, placeholder: "Perimetry results" },
       ]
     },
@@ -222,8 +223,8 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Assessment & Plan",
       fields: [
         { name: "investigations", label: "Investigations", type: "textarea", rows: 3, placeholder: "OCT, angiography, ultrasound" },
-        { name: "assessment", label: "Ophthalmic Assessment", type: "textarea", rows: 3, placeholder: "Ocular diagnosis and staging" },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Medical, surgical, optical management" },
+        { name: "assessment", label: "Ophthalmic Assessment", type: "textarea", rows: 3, placeholder: "Ocular diagnosis and staging", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Medical, surgical, optical management", mandatory: true },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Visual prognosis" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Next visit and monitoring" },
@@ -235,7 +236,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary neurological symptoms" },
+        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary neurological symptoms", mandatory: true },
         { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Detailed neurological history" },
         { name: "review_of_systems", label: "Review of Systems", type: "textarea", rows: 3, placeholder: "Neurological review of systems" },
         { name: "past_medical_history", label: "Past Medical History", type: "textarea", rows: 3, placeholder: "Previous neurological conditions" },
@@ -249,7 +250,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Examination",
       fields: [
         { name: "physical_exam", label: "General Physical Exam", type: "textarea", rows: 4, placeholder: "General physical examination" },
-        { name: "neurological_exam_findings", label: "Neurological Examination", type: "textarea", rows: 5, placeholder: "Detailed neurological examination findings" },
+        { name: "neurological_exam_findings", label: "Neurological Examination", type: "textarea", rows: 5, placeholder: "Detailed neurological examination findings", mandatory: true },
         { name: "cranial_nerves", label: "Cranial Nerves", type: "textarea", rows: 4, placeholder: "CN I-XII examination findings" },
         { name: "motor_examination", label: "Motor Examination", type: "textarea", rows: 4, placeholder: "Muscle strength, tone, bulk" },
         { name: "sensory_examination", label: "Sensory Examination", type: "textarea", rows: 3, placeholder: "Touch, pain, vibration, proprioception" },
@@ -261,8 +262,8 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Assessment & Plan",
       fields: [
         { name: "investigations", label: "Investigations", type: "textarea", rows: 3, placeholder: "EEG, MRI, CT, LP, NCS/EMG" },
-        { name: "assessment", label: "Neurological Assessment", type: "textarea", rows: 3, placeholder: "Neurological diagnosis and localization" },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Neurological management plan" },
+        { name: "assessment", label: "Neurological Assessment", type: "textarea", rows: 3, placeholder: "Neurological diagnosis and localization", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Neurological management plan", mandatory: true },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Expected neurological outcome" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Neurology follow-up schedule" },
@@ -274,7 +275,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary cardiac symptoms" },
+        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary cardiac symptoms", mandatory: true },
         { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Detailed cardiac history" },
         { name: "review_of_systems", label: "Review of Systems", type: "textarea", rows: 3, placeholder: "Cardiovascular review of systems" },
         { name: "past_medical_history", label: "Past Medical History", type: "textarea", rows: 3, placeholder: "Previous cardiac conditions" },
@@ -288,7 +289,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Examination",
       fields: [
         { name: "physical_exam", label: "General Physical Exam", type: "textarea", rows: 4, placeholder: "General examination findings" },
-        { name: "cardiac_examination", label: "Cardiac Examination", type: "textarea", rows: 4, placeholder: "Heart sounds, murmurs, peripheral pulses" },
+        { name: "cardiac_examination", label: "Cardiac Examination", type: "textarea", rows: 4, placeholder: "Heart sounds, murmurs, peripheral pulses", mandatory: true },
       ]
     },
     {
@@ -305,8 +306,8 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
     {
       title: "Assessment & Plan",
       fields: [
-        { name: "assessment", label: "Cardiac Assessment", type: "textarea", rows: 3, placeholder: "Cardiovascular diagnosis" },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Cardiac management plan" },
+        { name: "assessment", label: "Cardiac Assessment", type: "textarea", rows: 3, placeholder: "Cardiovascular diagnosis", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Cardiac management plan", mandatory: true },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Cardiac prognosis" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Cardiology follow-up" },
@@ -378,3 +379,19 @@ export const consultationNotesSchema = z.object({
 });
 
 export type ConsultationNotes = z.infer<typeof consultationNotesSchema>;
+
+// Helper function to get mandatory fields for a specific department
+export const getMandatoryFieldsForDepartment = (departmentType: string): string[] => {
+  const sections = specialtyFieldSections[departmentType] || specialtyFieldSections['General'];
+  const mandatoryFields: string[] = [];
+  
+  sections.forEach(section => {
+    section.fields.forEach(field => {
+      if (field.mandatory) {
+        mandatoryFields.push(field.name);
+      }
+    });
+  });
+  
+  return mandatoryFields;
+};

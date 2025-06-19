@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -5,29 +6,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { getSupabase } from "@/integrations/supabase/client";
 import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { format, parseISO } from "date-fns";
-import { 
-  History, 
-  Stethoscope, 
-  ClipboardList, 
-  User, 
-  Calendar,
-  FileText,
-  Building2,
-  Pill
-} from "lucide-react";
-import {
-  specialtyNoteFieldConfigs,
-  NoteFieldConfig,
-} from "@/lib/consultationNotesSchemas";
+import { Eye, Printer } from "lucide-react";
+import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
+import { ConsultationLayout } from './ConsultationLayout';
+import { printConsultation } from './printUtils';
 
 const supabase = getSupabase();
 
@@ -39,6 +27,7 @@ type Appointment = Database['public']['Tables']['appointments']['Row'] & {
   patient_gender?: string | null;
 };
 type Consultation = Database['public']['Tables']['consultations']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
 type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 
 interface ConsultationViewModalProps {
@@ -47,58 +36,28 @@ interface ConsultationViewModalProps {
   appointment: Appointment | null;
 }
 
-// Section definitions for organizing the view
-const viewSectionDefinitions = [
-  {
-    key: "Patient Information",
-    icon: User,
-    fields: ["patient_info"],
-  },
-  {
-    key: "History",
-    icon: History,
-    fields: [
-      "chief_complaint",
-      "history_of_present_illness",
-      "review_of_systems",
-      "past_medical_history",
-      "family_history",
-      "social_history",
-      "medications",
-      "allergies",
-    ],
-  },
-  {
-    key: "Examination",
-    icon: Stethoscope,
-    neurologyFields: ["physical_exam", "neurological_exam_findings"],
-    ophthalmologyFields: [
-      "physical_exam",
-      "visual_acuity",
-      "refraction",
-      "slit_lamp_exam",
-      "fundus_exam",
-      "intraocular_pressure",
-      "visual_fields",
-    ],
-    generalFields: ["physical_exam"],
-  },
-  {
-    key: "Assessment & Plan",
-    icon: ClipboardList,
-    fields: [
-      "investigations",
-      "assessment",
-      "treatment_plan",
-      "prognosis",
-      "follow_up",
-      "referrals",
-    ],
-  },
-];
-
 export function ConsultationViewModal({ open, onOpenChange, appointment }: ConsultationViewModalProps) {
-  const { activeClinic } = useAuth();
+  const { activeClinic, user } = useAuth();
+
+  // Fetch patient data if not available in appointment object
+  const { data: patientData } = useQuery<Patient | null>({
+    queryKey: ['patient', appointment?.patient_id],
+    queryFn: async () => {
+      if (!appointment?.patient_id || !activeClinic?.clinic_id) return null;
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', appointment.patient_id)
+        .eq('clinic_id', activeClinic.clinic_id)
+        .single();
+      if (error) {
+        console.error('Failed to fetch patient data:', error);
+        return null;
+      }
+      return data;
+    },
+    enabled: open && !!appointment?.patient_id && !!activeClinic?.clinic_id && (!appointment.patient_gender || !appointment.patient_date_of_birth),
+  });
 
   // Fetch consultation data
   const { data: consultationData, isLoading: isLoadingConsultation } = useQuery<Consultation | null>({
@@ -136,177 +95,131 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
 
   // Determine department and get field configs
   const departmentType = doctorDetails?.[0]?.department_name || 'General';
-  const fieldConfigs = specialtyNoteFieldConfigs[departmentType] || specialtyNoteFieldConfigs['General'];
-
-  // Get clinical notes and specialty data
-  const clinicalNotes = consultationData?.clinical_notes && 
-    typeof consultationData.clinical_notes === 'object' && 
-    !Array.isArray(consultationData.clinical_notes) 
-      ? consultationData.clinical_notes as Record<string, unknown>
-      : {};
-
+  
+  // Get consultation specialty data
   const specialtyData = consultationData?.specialty_data && 
     typeof consultationData.specialty_data === 'object' && 
     !Array.isArray(consultationData.specialty_data) 
       ? consultationData.specialty_data as Record<string, unknown>
       : {};
 
-  // Helper function to get field value
-  const getFieldValue = (fieldName: string) => {
-    if (fieldName === 'patient_info') {
-      return `${appointment?.patient_name || 'Unknown'} | ${appointment?.patient_gender || 'Unknown'} | DOB: ${appointment?.patient_date_of_birth || 'Unknown'}`;
-    }
-    
-    // First check clinical_notes, then specialty_data
-    const clinicalValue = clinicalNotes?.[fieldName] as string;
-    const specialtyValue = specialtyData?.[fieldName] as string;
-    
-    return clinicalValue || specialtyValue || null;
+  // Get patient info with fallback to fetched patient data
+  const patient = patientData || {
+    name: appointment?.patient_name || 'Unknown',
+    gender: appointment?.patient_gender || 'Unknown',
+    date_of_birth: appointment?.patient_date_of_birth || null,
+    phone: '',
+    email: '',
+    address: '',
+    clinic_id: activeClinic?.clinic_id || '',
+    created_at: '',
+    id: '',
+    medical_id: ''
   };
 
-  // Helper function to get field label
-  const getFieldLabel = (fieldName: string) => {
-    if (fieldName === 'patient_info') return 'Patient Information';
-    const config = fieldConfigs.find(c => c.name === fieldName);
-    return config?.label || fieldName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  // Get the full clinic object for printing
+  const clinicDetails = activeClinic?.clinics || null;
+  
+  // Prepare clinic info for layout display
+  const clinicInfo = clinicDetails ? {
+    name: clinicDetails.name,
+    address: clinicDetails.address,
+    phone: clinicDetails.phone,
+    email: clinicDetails.email,
+    website: clinicDetails.website
+  } : null;
+  
+  // Prepare doctor info
+  const doctorInfo = {
+    name: doctorDetails?.[0]?.name || appointment?.doctor_name || user?.user_metadata?.full_name || 'Doctor Name',
+    specialization: doctorDetails?.[0]?.department_name || departmentType,
+    qualification: 'Medical Doctor', // Default qualification
+    registration_number: '', // Not available in current database schema
+    phone: doctorDetails?.[0]?.phone || '',
+    email: doctorDetails?.[0]?.email || user?.email || '',
+    bio: doctorDetails?.[0]?.bio || ''
   };
 
-  // Build sections dynamically
-  const sections = viewSectionDefinitions.map((section) => {
-    let fields: string[] = [];
-    
-    if (section.key === "Patient Information") {
-      fields = section.fields || [];
-    } else if (section.key === "Examination") {
-      if (departmentType === "Neurology") {
-        fields = section.neurologyFields || [];
-      } else if (departmentType === "Ophthalmology") {
-        fields = section.ophthalmologyFields || [];
-      } else {
-        fields = section.generalFields || [];
-      }
-    } else {
-      fields = section.fields || [];
+  // Get field sections for the department
+  const sections = specialtyFieldSections[departmentType] || specialtyFieldSections.General;
+
+  const handlePrint = async () => {
+    if (!consultationData) {
+      toast.error('No consultation data to print');
+      return;
     }
-
-    // Filter fields that have values
-    const fieldsWithValues = fields.filter(field => {
-      const value = getFieldValue(field);
-      return value && value.trim().length > 0;
-    });
-
-    return {
-      ...section,
-      fields: fieldsWithValues,
-    };
-  }).filter(section => section.fields.length > 0);
+    
+         try {
+       await printConsultation(
+         specialtyData,
+         patient,
+         appointment,
+         clinicDetails,
+         doctorInfo,
+         user,
+         departmentType
+       );
+      toast.success('Consultation printed successfully');
+    } catch (error) {
+      console.error('Error printing consultation:', error);
+      toast.error('Failed to print consultation');
+    }
+  };
 
   if (!appointment) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh]">
+      <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
+          <div className="flex items-center justify-between">
           <DialogTitle className="flex items-center space-x-2">
-            <FileText className="h-5 w-5" />
-            <span>Consultation Notes</span>
+              <Eye className="h-5 w-5" />
+              <span>Consultation Notes - {patient.name}</span>
           </DialogTitle>
+            {consultationData && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+              >
+                <Printer className="h-4 w-4 mr-2" />
+                Print
+              </Button>
+            )}
+          </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[75vh]">
-          <div className="space-y-6 p-1">
-            {/* Header Information */}
-            <Card className="medical-card shadow-medical">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        {format(parseISO(appointment.date), 'PPP')} at {appointment.time}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {appointment.doctor_name} | {departmentType} Department
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="status-badge status-pending">
-                      <Building2 className="h-3 w-3 mr-1" />
-                      {departmentType}
-                    </Badge>
-                    <Badge variant="default" className="status-badge status-active">Completed</Badge>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-
+        <ScrollArea className="max-h-[80vh]">
             {/* Loading State */}
             {isLoadingConsultation && (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-center">
+            <div className="flex items-center justify-center p-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     <span className="ml-2">Loading consultation details...</span>
                   </div>
-                </CardContent>
-              </Card>
             )}
 
             {/* No Data State */}
             {!isLoadingConsultation && !consultationData && (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <div className="text-center text-muted-foreground p-8">
+              <Eye className="h-12 w-12 mx-auto mb-3 opacity-50" />
                     <p>No consultation notes found for this appointment.</p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+          )}
 
-            {/* Consultation Sections */}
-            {!isLoadingConsultation && consultationData && sections.map((section) => (
-              <Card key={section.key} className="medical-card shadow-medical">
-                <CardHeader className="pb-3">
-                  <CardTitle className="flex items-center space-x-2 text-base text-primary">
-                    <section.icon className="h-4 w-4 text-primary" />
-                    <span>{section.key}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {section.fields.map((field, index) => {
-                    const value = getFieldValue(field);
-                    if (!value) return null;
-                    
-                    return (
-                      <div key={field}>
-                        <h4 className="font-medium text-sm text-foreground mb-1">
-                          {getFieldLabel(field)}
-                        </h4>
-                        <div className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/30 p-3 rounded-md">
-                          {value}
-                        </div>
-                        {index < section.fields.length - 1 && <Separator className="mt-4" />}
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            ))}
-
-            {/* Empty State for No Clinical Notes */}
-            {!isLoadingConsultation && consultationData && sections.length === 0 && (
-              <Card>
-                <CardContent className="p-6">
-                  <div className="text-center text-muted-foreground">
-                    <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No clinical notes were recorded for this consultation.</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Consultation Layout */}
+          {!isLoadingConsultation && consultationData && (
+            <ConsultationLayout
+              patient={patient}
+              appointment={appointment}
+              clinicInfo={clinicInfo}
+              doctorInfo={doctorInfo}
+              consultationData={specialtyData}
+              specialtySections={sections}
+              departmentType={departmentType}
+              className="p-4"
+            />
+          )}
         </ScrollArea>
       </DialogContent>
     </Dialog>

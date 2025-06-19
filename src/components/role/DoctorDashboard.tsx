@@ -260,7 +260,7 @@ export default function DoctorDashboard() {
         />
         <DashboardStatsCard
           icon={<Activity size={18} className="mr-2 text-emerald-500" />}
-          label="Completed Consultations"
+          label="Completed"
           value={doctorDashboardData?.completed_consultations ?? 0}
           ariaLabel="View Completed Consultations"
           onClick={handleCompletedConsultationsCardClick}
