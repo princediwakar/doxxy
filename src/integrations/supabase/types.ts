@@ -338,38 +338,101 @@ export type Database = {
         Row: {
           availability: string | null
           bio: string | null
+          board_certifications: string[] | null
           clinic_id: string | null
+          clinic_timings: Json | null
+          consultation_fee: number | null
+          consultation_fee_max: number | null
+          consultation_fee_min: number | null
           created_at: string | null
           email: string | null
+          fellowship_details: string | null
+          graduation_year: number | null
           id: string
           is_active: boolean | null
+          languages_spoken: string[] | null
+          medical_college: string | null
+          medical_council: string | null
+          medical_license_expiry: string | null
+          medical_license_state: string | null
+          medical_qualifications: string[] | null
+          medical_registration_number: string | null
+          medical_specializations: string[] | null
           name: string
           phone: string | null
+          practice_timings: Json | null
+          primary_specialization: string | null
+          professional_summary: string | null
+          profile_completion_percentage: number | null
+          subspecialty: string[] | null
           user_id: string | null
+          years_of_experience: number | null
         }
         Insert: {
           availability?: string | null
           bio?: string | null
+          board_certifications?: string[] | null
           clinic_id?: string | null
+          clinic_timings?: Json | null
+          consultation_fee?: number | null
+          consultation_fee_max?: number | null
+          consultation_fee_min?: number | null
           created_at?: string | null
           email?: string | null
+          fellowship_details?: string | null
+          graduation_year?: number | null
           id?: string
           is_active?: boolean | null
+          languages_spoken?: string[] | null
+          medical_college?: string | null
+          medical_council?: string | null
+          medical_license_expiry?: string | null
+          medical_license_state?: string | null
+          medical_qualifications?: string[] | null
+          medical_registration_number?: string | null
+          medical_specializations?: string[] | null
           name: string
           phone?: string | null
+          practice_timings?: Json | null
+          primary_specialization?: string | null
+          professional_summary?: string | null
+          profile_completion_percentage?: number | null
+          subspecialty?: string[] | null
           user_id?: string | null
+          years_of_experience?: number | null
         }
         Update: {
           availability?: string | null
           bio?: string | null
+          board_certifications?: string[] | null
           clinic_id?: string | null
+          clinic_timings?: Json | null
+          consultation_fee?: number | null
+          consultation_fee_max?: number | null
+          consultation_fee_min?: number | null
           created_at?: string | null
           email?: string | null
+          fellowship_details?: string | null
+          graduation_year?: number | null
           id?: string
           is_active?: boolean | null
+          languages_spoken?: string[] | null
+          medical_college?: string | null
+          medical_council?: string | null
+          medical_license_expiry?: string | null
+          medical_license_state?: string | null
+          medical_qualifications?: string[] | null
+          medical_registration_number?: string | null
+          medical_specializations?: string[] | null
           name?: string
           phone?: string | null
+          practice_timings?: Json | null
+          primary_specialization?: string | null
+          professional_summary?: string | null
+          profile_completion_percentage?: number | null
+          subspecialty?: string[] | null
           user_id?: string | null
+          years_of_experience?: number | null
         }
         Relationships: [
           {
@@ -634,6 +697,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_doctor_profile_completion: {
+        Args: { doctor_uuid: string }
+        Returns: number
+      }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
         Returns: {
@@ -707,6 +774,41 @@ export type Database = {
           is_active: boolean
         }[]
       }
+      get_doctors_by_clinic_enhanced: {
+        Args: { clinic_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          name: string
+          email: string
+          phone: string
+          bio: string
+          created_at: string
+          role: string
+          department_name: string
+          department_id: string
+          is_active: boolean
+          primary_specialization: string
+          medical_specializations: string[]
+          years_of_experience: number
+          consultation_fee_min: number
+          consultation_fee_max: number
+          languages_spoken: string[]
+          practice_timings: Json
+          professional_summary: string
+          medical_registration_number: string
+          medical_qualifications: string[]
+          medical_council: string
+          medical_license_state: string
+          medical_license_expiry: string
+          subspecialty: string[]
+          board_certifications: string[]
+          fellowship_details: string
+          medical_college: string
+          graduation_year: number
+          clinic_timings: Json
+        }[]
+      }
       get_patients_by_clinic: {
         Args: { _clinic_id: string; _limit?: number; _offset?: number }
         Returns: {
@@ -761,6 +863,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      repair_missing_doctor_profiles: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       search_medicines: {
         Args: { search_term: string; limit_count?: number }
         Returns: {
@@ -787,6 +893,10 @@ export type Database = {
           updated_department_id?: string
         }
         Returns: undefined
+      }
+      user_has_doctor_profile: {
+        Args: { user_id: string; clinic_id: string }
+        Returns: boolean
       }
     }
     Enums: {

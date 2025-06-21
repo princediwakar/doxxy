@@ -75,7 +75,7 @@ type Appointment = Database['public']['Tables']['appointments']['Row'] & {
 };
 type ConsultationInsert = Database['public']['Tables']['consultations']['Insert'];
 type Consultation = Database['public']['Tables']['consultations']['Row'];
-type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic_enhanced']['Returns'][0];
 type ConsultationFormValues = z.infer<typeof consultationFormSchema>;
 type CombinedSpecialtyKeys = keyof NeurologyNotes | keyof OphthalmologyNotes | keyof CardiologyNotes | 
   keyof DermatologyNotes | keyof OrthopedicsNotes | keyof PsychiatryNotes | keyof PediatricsNotes |
@@ -151,7 +151,7 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
       queryKey: ['doctorDetails', appointment?.doctor_id, activeClinic?.clinic_id],
       queryFn: async () => {
         if (!appointment?.doctor_id || !activeClinic?.clinic_id) return null;
-        const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+        const { data, error } = await supabase.rpc('get_doctors_by_clinic_enhanced', {
           clinic_id: activeClinic.clinic_id,
         });
         if (error) {

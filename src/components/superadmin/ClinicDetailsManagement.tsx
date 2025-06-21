@@ -350,20 +350,7 @@ const ClinicDetailsManagement = () => {
                 )}
               </div>
 
-              {/* Help Text */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-start space-x-2">
-                  <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium mb-1">Important Information</p>
-                    <ul className="list-disc list-inside space-y-1 text-blue-700">
-                      <li>This information will be displayed on patient communications</li>
-                      <li>Ensure all contact details are accurate and up-to-date</li>
-                      <li>Changes take effect immediately across the system</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+{/* Place for Clinic Timings Editor */}
 
               {/* Submit Button */}
               <div className="flex justify-end">

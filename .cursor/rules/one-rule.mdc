@@ -10,9 +10,9 @@ alwaysApply: true
 **Multi-tenant healthcare web app** for medical clinics (all specialties)  
 **Tech Stack**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, Supabase (RLS + MCP), Google OAuth, React Query, zod, Twilio, Resend  
 **Critical Requirements**: Strict multi-tenancy, role-based access (superadmin, doctor, staff), HIPAA compliance, DPDT compliance (India)
-**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing. Browser MCP to navigate the web, fill out forms, and click on buttons, take screenshots etc..
+**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing. Playright MCP to access browser console, take page screenshots, navigate the web, fill out forms, and click on buttons etc..
 
- MCP for 
+
 
 ---
 
@@ -137,6 +137,21 @@ supabase/
 
 ## 🛠️ Cursor Workflow
 
+### Terminal Management (CRITICAL)
+**Always use this pattern for terminal commands:**
+
+1. **Check for existing terminal**: Use `list_terminals` first
+2. **Reuse if appropriate**: Use existing terminal for related commands
+3. **Close and restart when needed**: Close existing terminal if switching contexts or if commands conflict
+4. **Single terminal per task group**: Keep related commands (build, test, lint) in same terminal
+
+```bash
+# Example workflow:
+1. list_terminals                    # Check current terminals
+2. close_terminal [id]              # If switching contexts
+3. run_terminal_cmd "npm run build" # Execute in clean terminal
+```
+
 ### Context Gathering (Always Do First)
 - `read_file` current state
 - `codebase_search` for related patterns
@@ -146,7 +161,7 @@ supabase/
 ### Implementation Strategy
 - Bundle related changes (hook + component + types)
 - Use `edit_file` for logical groups
-- Run `run_terminal_cmd` for shell operations
+- Use terminal management pattern for all shell operations
 - Auto-retry failed builds (max 3 attempts)
 
 ---
@@ -222,7 +237,7 @@ Responsive, accessible, role-based rendering, loading states
 
 1. **Understand scope** - read related files, check patterns
 2. **Implement completely** - all files (types, hooks, UI, migrations)
-3. **Validate thoroughly** - run quality gates
+3. **Validate thoroughly** - run quality gates with proper terminal management
 4. **Document clearly** - update logs and comments
 5. **Suggest improvements** - performance, security, maintainability
 

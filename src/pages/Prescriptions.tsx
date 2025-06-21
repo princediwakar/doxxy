@@ -249,7 +249,7 @@ const Prescriptions = () => {
     queryKey: ['doctors', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
-      const { data, error } = await getSupabase().rpc('get_doctors_by_clinic', { clinic_id: activeClinic.clinic_id });
+      const { data, error } = await getSupabase().rpc('get_doctors_by_clinic_enhanced', { clinic_id: activeClinic.clinic_id });
       if (error) throw error;
       return data || [];
     },

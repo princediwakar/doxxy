@@ -28,7 +28,7 @@ type Appointment = Database['public']['Tables']['appointments']['Row'] & {
 };
 type Consultation = Database['public']['Tables']['consultations']['Row'];
 type Patient = Database['public']['Tables']['patients']['Row'];
-type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic_enhanced']['Returns'][0];
 
 interface ConsultationViewModalProps {
   open: boolean;
@@ -83,7 +83,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     queryKey: ['doctorDetails', appointment?.doctor_id, activeClinic?.clinic_id],
     queryFn: async () => {
       if (!appointment?.doctor_id || !activeClinic?.clinic_id) return null;
-      const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+      const { data, error } = await supabase.rpc('get_doctors_by_clinic_enhanced', {
         clinic_id: activeClinic.clinic_id,
       });
       if (error) throw error;

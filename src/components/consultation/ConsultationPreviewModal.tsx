@@ -12,6 +12,7 @@ import { printConsultation } from './printUtils';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
+import { Database } from '@/integrations/supabase/types';
 
 const supabase = getSupabase();
 
@@ -24,6 +25,8 @@ interface ConsultationPreviewModalProps {
   specialtySections: FieldSection[];
   departmentType?: string;
 }
+
+type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic_enhanced']['Returns'][0];
 
 export const ConsultationPreviewModal = ({
   showPreview,
@@ -56,7 +59,7 @@ export const ConsultationPreviewModal = ({
     queryKey: ['currentDoctorDetails', activeClinic?.clinic_id, user?.id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id || !user?.id) return null;
-      const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+      const { data, error } = await supabase.rpc('get_doctors_by_clinic_enhanced', {
         clinic_id: activeClinic.clinic_id,
       });
       if (error) throw error;

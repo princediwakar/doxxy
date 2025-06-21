@@ -166,8 +166,8 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
             };
           }
 
-          // Use the existing get_doctors_by_clinic RPC to get doctor details
-          const { data: doctors } = await supabase.rpc('get_doctors_by_clinic', {
+          // Use the enhanced get_doctors_by_clinic RPC to get doctor details
+          const { data: doctors } = await supabase.rpc('get_doctors_by_clinic_enhanced', {
             clinic_id: clinicId,
           });
 

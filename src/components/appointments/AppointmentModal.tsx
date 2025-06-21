@@ -48,7 +48,7 @@ import { PatientModal } from "@/components/patients/PatientModal";
 // Define types for convenience
 type Appointment = Database['public']['Tables']['appointments']['Row'];
 type Patient = Database['public']['Tables']['patients']['Row'];
-type Doctor = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+type Doctor = Database['public']['Functions']['get_doctors_by_clinic_enhanced']['Returns'][0];
 
 // Using the Supabase enum types directly in the component
 
@@ -151,13 +151,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     p.name.toLowerCase().includes(patientSearch.toLowerCase())
   );
 
-  // Fetch doctors using RPC
+  // Fetch doctors using enhanced RPC to get primary_specialization
   const { data: doctorsRaw, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
     queryKey: ['doctors', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
       const { data, error } = await supabase
-        .rpc('get_doctors_by_clinic', { clinic_id: activeClinic.clinic_id });
+        .rpc('get_doctors_by_clinic_enhanced', { clinic_id: activeClinic.clinic_id });
       if (error) throw error;
       return data || [];
     },
@@ -409,19 +409,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                       {(doctors || []).map((d) => (
                         <SelectItem key={d.id} value={d.id}>
                           <div className="flex flex-col">
-                            <div className="font-medium flex items-center gap-2">
+                            <div className="font-medium">
                               {d.name}
-                              {d.role === 'superadmin' && (
-                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                                  Admin
-                                </span>
-                              )}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {d.role === 'superadmin' 
-                                ? (d.department_name === 'Administration' 
-                                   ? 'Clinic Administrator' 
-                                   : d.department_name || 'Administration')
+                              {/* Show medical specialization if available, otherwise department */}
+                              {d.primary_specialization 
+                                ? `${d.department_name || 'General Medicine'} • ${d.primary_specialization}`
                                 : (d.department_name || 'General Medicine')
                               }
                             </div>

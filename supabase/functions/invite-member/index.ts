@@ -180,9 +180,11 @@ serve(async (req) => {
      }
 
     // If we reach here, the user exists in auth.users (or was just invited) and is NOT a member of the target clinic.
-    console.log(`User ID ${invitedUserId} is not a member of clinic ${clinic_id}. Proceeding to add doctor and profile entries and clinic member.`);
+    console.log(`User ID ${invitedUserId} is not a member of clinic ${clinic_id}. Proceeding to add entries and clinic member.`);
 
-    // 3. Create or update doctor entry using the user ID
+    // 3. Create or update doctor entry ONLY if the role is 'doctor'
+    let doctorDataResponse = null;
+    if (role === 'doctor') {
     // Only set name if provided; otherwise, let it be null (users will complete profile later)
     const doctorData = {
       id: invitedUserId,
@@ -196,23 +198,32 @@ serve(async (req) => {
     };
 
     console.log("InviteDoctor: Preparing to insert into doctors:", doctorData);
-    const { data: doctorDataResponse, error: doctorError } = await supabaseAdmin
+      const { data: doctorResponse, error: doctorError } = await supabaseAdmin
       .from('doctors')
       .insert([doctorData])
       .select()
       .single();
 
-    console.log("InviteDoctor: Result of doctors insert - data:", doctorDataResponse, "error:", doctorError);
+      console.log("InviteDoctor: Result of doctors insert - data:", doctorResponse, "error:", doctorError);
 
     if (doctorError) {
       console.error("InviteDoctor: Error inserting into doctors table:", doctorError);
-      // Depending on severity, you might want to throw an error here or handle gracefully
-      // For now, let's proceed to see if clinic_members insertion works
-      // throw new Error('Failed to create doctor entry: ' + doctorError.message);
-    } else if (!doctorDataResponse) {
+        return new Response(JSON.stringify({
+          success: false,
+          userId: invitedUserId,
+          error: `Failed to create doctor entry: ${doctorError.message}`
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      } else if (!doctorResponse) {
         console.warn("InviteDoctor: Doctors insert succeeded but no data returned.");
+      } else {
+          console.log("InviteDoctor: Successfully inserted doctor with ID:", doctorResponse.id);
+          doctorDataResponse = doctorResponse;
+      }
     } else {
-        console.log("InviteDoctor: Successfully inserted doctor with ID:", doctorDataResponse.id);
+      console.log(`Role is '${role}', skipping doctor table entry creation.`);
     }
 
     // 4. Create or update profile entry using the user ID
@@ -288,8 +299,20 @@ serve(async (req) => {
         console.log('Clinic member added successfully.');
         console.log('invite-member: add_clinic_member RPC successful.');
 
-        // 6. Return final success response
-        return new Response(JSON.stringify({ success: true, userId: invitedUserId, doctor: doctorDataResponse, profile: profileData, userJustInvited }), {
+        // 6. Return final success response (doctor will be null for non-doctor roles)
+        const responseData: any = { 
+          success: true, 
+          userId: invitedUserId, 
+          profile: profileData, 
+          userJustInvited 
+        };
+        
+        // Only include doctor data if the user was assigned the doctor role
+        if (role === 'doctor' && doctorDataResponse) {
+          responseData.doctor = doctorDataResponse;
+        }
+        
+        return new Response(JSON.stringify(responseData), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });

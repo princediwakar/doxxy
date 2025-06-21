@@ -101,6 +101,15 @@ const ClinicMembersManagement = () => {
         
       if (profilesError) throw profilesError;
 
+      // Fetch doctor information for members who are doctors
+      const { data: doctorsData, error: doctorsError } = await supabase
+        .from("doctors")
+        .select("user_id, name, email")
+        .eq("clinic_id", activeClinic.clinic_id)
+        .in("user_id", userIds);
+        
+      if (doctorsError) throw doctorsError;
+
       // Fetch departments with types
       const departmentIds = membersData
         .map(m => m.department_id)
@@ -118,13 +127,25 @@ const ClinicMembersManagement = () => {
       }
 
       // Combine data
-      return membersData.map(member => ({
+      return membersData.map(member => {
+        const profile = profilesData?.find(p => p.id === member.user_id) || null;
+        const doctor = doctorsData?.find(d => d.user_id === member.user_id) || null;
+        
+        return {
         member,
-        profile: profilesData?.find(p => p.id === member.user_id) || null,
+          profile: profile || {
+            id: member.user_id,
+            name: doctor?.name || null, // Fallback to doctor name if profile name not available
+            email: doctor?.email || null,
+            phone: null,
+            created_at: null,
+            updated_at: null
+          },
         department: member.department_id 
           ? departmentsData.find(d => d.id === member.department_id) || null
           : null,
-      }));
+        };
+      });
     },
     enabled: !!activeClinic?.clinic_id,
   });
@@ -232,7 +253,9 @@ const ClinicMembersManagement = () => {
       toast.success("Invitation sent successfully!");
       setInviteForm({ email: "", role: "staff", departmentId: "no-department" });
       setInviteDialogOpen(false);
+      // Invalidate both clinic members and doctor queries since department_id affects both
       queryClient.invalidateQueries({ queryKey: ['clinicMembers', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });
     },
     onError: (error: Error) => {
       toast.error("Failed to invite member: " + error.message);
@@ -270,7 +293,9 @@ const ClinicMembersManagement = () => {
     onSuccess: () => {
       toast.success("Member updated successfully");
       handleEditDialogClose(false);
+      // Invalidate both clinic members and doctor queries since department_id affects both
       queryClient.invalidateQueries({ queryKey: ['clinicMembers', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });
     },
     onError: (error: Error) => {
       toast.error("Failed to update member: " + error.message);
@@ -493,7 +518,7 @@ const ClinicMembersManagement = () => {
                             </p>
                             {!profile?.name && (
                               <p className="text-xs text-muted-foreground">
-                                Invitation pending
+                                Profile incomplete
                               </p>
                             )}
                           </div>

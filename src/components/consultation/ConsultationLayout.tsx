@@ -11,7 +11,8 @@ import {
   FileText,
   Building2,
   Award,
-  Clock
+  Clock,
+  DollarSign
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -37,6 +38,13 @@ interface DoctorInfo {
   registration_number?: string;
   phone?: string;
   email?: string;
+  // Enhanced medical credentials
+  medical_registration_number?: string;
+  medical_qualifications?: string;
+  medical_specializations?: string;
+  years_of_experience?: number;
+  medical_council?: string;
+  consultation_fee?: number;
 }
 
 interface ConsultationLayoutProps {
@@ -77,42 +85,52 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
       if (validPrescriptions.length === 0) return null;
 
       return (
-        <div className="space-y-3">
-          {validPrescriptions.map((prescription: PrescriptionMedication, index: number) => (
-            <div key={index} className="prescription-item border border-gray-200 rounded-lg p-4 bg-gray-50">
-              <div className="prescription-name font-semibold text-gray-900 mb-2">
-                {prescription.name}
-              </div>
-              <div className="prescription-details grid grid-cols-2 gap-2 text-sm text-gray-600">
-                {prescription.dosage && (
-                  <div><span className="font-medium">Dosage:</span> {prescription.dosage}</div>
-                )}
-                {prescription.frequency && (
-                  <div><span className="font-medium">Frequency:</span> {prescription.frequency}</div>
-                )}
-                {prescription.duration && (
-                  <div><span className="font-medium">Duration:</span> {prescription.duration}</div>
-                )}
-                {prescription.route && (
-                  <div><span className="font-medium">Route:</span> {prescription.route}</div>
-                )}
-              </div>
-              {prescription.instructions && (
-                <div className="prescription-instructions mt-2 text-sm text-gray-700">
-                  <span className="font-medium">Instructions:</span> {prescription.instructions}
-                </div>
-              )}
+        <div className="prescription-list mt-2">
+          <div className="font-semibold text-gray-700 mb-2 text-sm">Prescribed Medications:</div>
+          <div className="prescription-table">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-gray-300">
+                  <th className="text-left py-1 px-2 bg-gray-50">Medicine</th>
+                  <th className="text-left py-1 px-2 bg-gray-50">Dosage</th>
+                  <th className="text-left py-1 px-2 bg-gray-50">Frequency</th>
+                  <th className="text-left py-1 px-2 bg-gray-50">Duration</th>
+                  <th className="text-left py-1 px-2 bg-gray-50">Instructions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {validPrescriptions.map((medication: PrescriptionMedication, index: number) => (
+                  <tr key={index} className="border-b border-gray-100">
+                    <td className="py-1 px-2 font-medium">{medication.name}</td>
+                    <td className="py-1 px-2">{medication.dosage || '-'}</td>
+                    <td className="py-1 px-2">{medication.frequency || '-'}</td>
+                    <td className="py-1 px-2">{medication.duration || '-'}</td>
+                    <td className="py-1 px-2">{medication.instructions || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             </div>
-          ))}
         </div>
       );
     }
 
     if (typeof value === 'string') {
-      return <div className="field-value whitespace-pre-wrap text-gray-700 leading-relaxed">{value}</div>;
+      // Handle multi-line text
+      const lines = value.split('\n').filter(line => line.trim());
+      if (lines.length <= 1) {
+        return <span className="text-gray-700">{value}</span>;
+      }
+      return (
+        <div className="text-gray-700">
+          {lines.map((line, index) => (
+            <div key={index} className="mb-1">{line}</div>
+          ))}
+        </div>
+      );
     }
 
-    return <div className="field-value text-gray-700">{JSON.stringify(value)}</div>;
+    return <span className="text-gray-700">{String(value)}</span>;
   };
 
   const printStyles = showPrintStyles ? `
@@ -255,26 +273,50 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
                 {doctorInfo?.name || 'Doctor Name'}
               </div>
               
-              {doctorInfo?.qualification && (
+              {(doctorInfo?.medical_qualifications || doctorInfo?.qualification) && (
                 <div className="doctor-qualification text-sm text-gray-600 font-medium">
-                  {doctorInfo.qualification}
+                  {doctorInfo.medical_qualifications || doctorInfo.qualification}
                 </div>
               )}
               
-              {doctorInfo?.specialization && (
+              {(doctorInfo?.medical_specializations || doctorInfo?.specialization) && (
                 <div className="text-sm font-medium text-gray-700 flex items-center justify-end gap-2">
-                  <span>{doctorInfo.specialization} Specialist</span>
+                  <span>{doctorInfo.medical_specializations || doctorInfo.specialization} Specialist</span>
                   <Award className="h-4 w-4 text-blue-500" />
                 </div>
               )}
             </div>
             
-            {/* Doctor Registration */}
-            {doctorInfo?.registration_number && (
-              <div className="registration-number text-xs text-gray-500 font-medium">
-                Medical Registration No: {doctorInfo.registration_number}
+            {/* Enhanced Doctor Credentials */}
+            <div className="medical-credentials space-y-1 text-xs text-gray-600">
+              {(doctorInfo?.medical_registration_number || doctorInfo?.registration_number) && (
+                <div className="flex items-center justify-end gap-2">
+                  <FileText className="h-3 w-3" />
+                  <span>Reg. No: {doctorInfo.medical_registration_number || doctorInfo.registration_number}</span>
+                </div>
+              )}
+              
+              {doctorInfo?.medical_council && (
+                <div className="flex items-center justify-end gap-2">
+                  <Building2 className="h-3 w-3" />
+                  <span>{doctorInfo.medical_council}</span>
+                </div>
+              )}
+              
+              {doctorInfo?.years_of_experience && (
+                <div className="flex items-center justify-end gap-2">
+                  <Clock className="h-3 w-3" />
+                  <span>{doctorInfo.years_of_experience} years experience</span>
+                </div>
+              )}
+              
+              {doctorInfo?.consultation_fee && (
+                <div className="flex items-center justify-end gap-2">
+                  <DollarSign className="h-3 w-3" />
+                  <span>Consultation: ₹{doctorInfo.consultation_fee}</span>
               </div>
             )}
+            </div>
             
             {/* Doctor Contact (if available) */}
             <div className="doctor-contact space-y-1 text-xs text-gray-600">
@@ -419,16 +461,16 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
                   {doctorInfo?.name || 'Doctor Name'}
                 </div>
                 <div className="text-xs text-gray-600">
-                  {doctorInfo?.qualification}
+                  {doctorInfo?.medical_qualifications || doctorInfo?.qualification}
                 </div>
-                {doctorInfo?.specialization && (
+                {(doctorInfo?.medical_specializations || doctorInfo?.specialization) && (
                   <div className="text-xs text-gray-600">
-                    {doctorInfo.specialization} Specialist
+                    {doctorInfo.medical_specializations || doctorInfo.specialization} Specialist
                   </div>
                 )}
-                {doctorInfo?.registration_number && (
+                {(doctorInfo?.medical_registration_number || doctorInfo?.registration_number) && (
                   <div className="text-xs text-gray-500">
-                    Reg. No: {doctorInfo.registration_number}
+                    Reg. No: {doctorInfo.medical_registration_number || doctorInfo.registration_number}
                   </div>
                 )}
                 <div className="text-xs text-gray-600 mt-2">

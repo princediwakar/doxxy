@@ -23,6 +23,7 @@ import { Database } from "@/integrations/supabase/types";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stethoscope, UserCheck, Building2 } from "lucide-react";
 
 const supabase = getSupabase();
@@ -50,6 +51,17 @@ const doctorProfileSchema = z.object({
   availability: z.string().optional(),
   bio: z.string().optional(),
   phone: z.string().optional(),
+  selectedDepartment: z.string().optional(),
+  primarySpecialization: z.string().optional(),
+  consultationFee: z.coerce.number().min(0).default(500).optional(),
+}).refine((data) => {
+  if (data.isDoctor === 'yes' && !data.primarySpecialization?.trim()) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Medical specialization is required for practicing doctors",
+  path: ["primarySpecialization"]
 });
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
@@ -71,6 +83,9 @@ const CreateClinicPage = () => {
     availability: '',
     bio: '',
     phone: '',
+    selectedDepartment: '',
+    primarySpecialization: '',
+    consultationFee: 500,
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -180,6 +195,18 @@ const CreateClinicPage = () => {
 
       if (updateError) throw updateError;
 
+      // Insert selected departments into clinic_departments first
+      if (departments.length > 0) {
+        const departmentRows = departments.map((departmentTypeId) => ({
+          clinic_id: createdClinicId,
+          department_type_id: departmentTypeId,
+        }));
+        const { error: deptError } = await supabase
+          .from('clinic_departments')
+          .insert(departmentRows);
+        if (deptError) throw deptError;
+      }
+
       // Only create doctor profile if the superadmin is a practicing doctor
       if (data.isDoctor === 'yes') {
         const { data: existingDoctor, error: checkDoctorError } = await supabase
@@ -192,6 +219,21 @@ const CreateClinicPage = () => {
         if (checkDoctorError) throw checkDoctorError;
         
         if (!existingDoctor) {
+          // Find the clinic_department ID for the selected department
+          let departmentId = null;
+          if (data.selectedDepartment) {
+            const { data: clinicDept, error: deptError } = await supabase
+              .from('clinic_departments')
+              .select('id')
+              .eq('clinic_id', createdClinicId)
+              .eq('department_type_id', data.selectedDepartment)
+              .single();
+            
+            if (!deptError && clinicDept) {
+              departmentId = clinicDept.id;
+            }
+          }
+
           const { error: doctorError } = await supabase
             .from('doctors')
             .insert({
@@ -200,24 +242,16 @@ const CreateClinicPage = () => {
               name: user.user_metadata?.name || user.email || '',
               email: user.email,
               phone: data.phone || user.phone || '',
+              department_id: departmentId,
+              primary_specialization: data.primarySpecialization || null,
+              consultation_fee_min: data.consultationFee || 500,
+              consultation_fee_max: (data.consultationFee || 500) + 200,
               availability: data.availability || 'Available',
-              bio: data.bio || 'Clinic Administrator and Practicing Doctor',
+              bio: data.bio || `Medical professional specializing in ${data.primarySpecialization || 'healthcare'}`,
               is_active: true,
             });
           if (doctorError) throw doctorError;
         }
-      }
-
-      // Insert selected departments into clinic_departments
-      if (departments.length > 0) {
-        const departmentRows = departments.map((departmentTypeId) => ({
-          clinic_id: createdClinicId,
-          department_type_id: departmentTypeId,
-        }));
-        const { error: deptError } = await supabase
-          .from('clinic_departments')
-          .insert(departmentRows);
-        if (deptError) throw deptError;
       }
 
       // Update auth context
@@ -463,8 +497,85 @@ const CreateClinicPage = () => {
                 {/* Doctor-specific fields */}
                 {doctorForm.watch('isDoctor') === 'yes' && (
                   <div className="space-y-4 border-t pt-4">
-                    <h4 className="font-medium">Doctor Profile Details</h4>
+                    <h4 className="font-medium">Essential Medical Details</h4>
                     
+                    {/* Department Selection - NEW FIELD */}
+                    <FormField
+                      control={doctorForm.control}
+                      name="selectedDepartment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Primary Department</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your primary department" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {departmentTypes
+                                ?.filter(dt => departments.includes(dt.id))
+                                .map((dept) => (
+                                  <SelectItem key={dept.id} value={dept.id}>
+                                    {dept.name}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Medical Specialization - NEW FIELD */}
+                    <FormField
+                      control={doctorForm.control}
+                      name="primarySpecialization"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Medical Specialization *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="e.g., Clinical Cardiology, General Medicine, Neurology"
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                // Smart auto-suggestions based on department
+                                const selectedDept = doctorForm.getValues('selectedDepartment');
+                                const selectedDeptName = departmentTypes?.find(d => d.id === selectedDept)?.name;
+                                if (selectedDeptName && !e.target.value && selectedDeptName !== 'General Medicine') {
+                                  field.onChange(`Clinical ${selectedDeptName}`);
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Consultation Fee - NEW FIELD */}
+                    <FormField
+                      control={doctorForm.control}
+                      name="consultationFee"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Consultation Fee (₹)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number"
+                              placeholder="500"
+                              min="0"
+                              step="50"
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 500)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={doctorForm.control}
                       name="phone"
@@ -472,7 +583,7 @@ const CreateClinicPage = () => {
                         <FormItem>
                           <FormLabel>Professional Phone (Optional)</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., +1 123 456 7890" {...field} />
+                            <Input placeholder="e.g., +91 98765 43210" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
