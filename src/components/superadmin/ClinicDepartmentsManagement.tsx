@@ -305,19 +305,7 @@ const ClinicDepartmentsManagement = () => {
         </Card>
       )}
 
-      {!isLoading && filteredDepartments.length > 0 && activeDepartments.length === 0 && availableDepartments.length > 0 && (
-        <Card className="border-blue-200 bg-blue-50/30">
-          <CardContent className="p-6">
-            <div className="text-center text-blue-900">
-              <Plus className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-              <h3 className="font-medium mb-1">No Active Departments</h3>
-              <p className="text-sm text-blue-700">
-                Click the + button on any department above to add it to your clinic
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      
     </div>
   );
 };

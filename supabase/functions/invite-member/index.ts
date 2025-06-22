@@ -6,6 +6,17 @@ import { corsHeaders } from "../_shared/cors.ts";
 
 console.log("invite-member function invoked");
 
+interface InviteMemberRequestBody {
+  email: string;
+  name?: string;
+  clinic_id: string;
+  role: 'doctor' | 'staff' | 'superadmin';
+  department_id?: string;
+  phone?: string;
+  availability?: string;
+  bio?: string;
+}
+
 serve(async (req) => {
   // Define CORS headers - IMPORTANT: In production, restrict origin to your actual frontend domain
   const corsHeaders = {
@@ -49,7 +60,7 @@ serve(async (req) => {
 
   try {
     // Expect email, name, clinic_id, role, and department_id in the request body
-    let body;
+    let body: InviteMemberRequestBody;
     try {
       body = await req.json();
       console.log('Parsed request body:', body);
@@ -185,13 +196,13 @@ serve(async (req) => {
     // 3. Create or update doctor entry ONLY if the role is 'doctor'
     let doctorDataResponse = null;
     if (role === 'doctor') {
-    // Only set name if provided; otherwise, let it be null (users will complete profile later)
+    // Use email as temporary name if no name provided (to satisfy NOT NULL constraint)
     const doctorData = {
       id: invitedUserId,
       user_id: invitedUserId,
       clinic_id: clinic_id,
-      name: name || null, // Only set if provided
-      email: body.email || null,
+      name: name || email, // Use email as fallback to satisfy NOT NULL constraint
+      email: body.email,
       phone: body.phone || null,
       availability: body.availability || null,
       bio: body.bio || null,

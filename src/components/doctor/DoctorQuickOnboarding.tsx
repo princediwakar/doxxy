@@ -37,7 +37,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     selectedDepartment: '',
     primarySpecialization: '',
     phone: '',
-    consultationFee: '500',
+    consultation_fee: '500',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -69,8 +69,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         email: user.email || '',
         phone: formData.phone || user.phone || '',
         primary_specialization: formData.primarySpecialization,
-        consultation_fee_min: parseInt(formData.consultationFee),
-        consultation_fee_max: parseInt(formData.consultationFee) + 200,
+        consultation_fee: parseInt(formData.consultation_fee),
         is_active: true,
         bio: `Medical professional specializing in ${formData.primarySpecialization}`,
       });
@@ -78,15 +77,13 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
       if (doctorError) throw doctorError;
 
       // Update department assignment in clinic_members table (proper multi-tenant approach)
-      if (formData.selectedDepartment) {
         const { error: deptError } = await supabase
           .from('clinic_members')
           .update({ department_id: formData.selectedDepartment })
           .eq('user_id', user.id)
           .eq('clinic_id', activeClinic.clinic_id);
         
-        if (deptError) console.warn('Department linking failed:', deptError);
-      }
+      if (deptError) throw deptError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userHasDoctorProfile'] });
@@ -110,10 +107,10 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.primarySpecialization.trim()) {
+    if (!formData.selectedDepartment) {
       toast({
         title: "Validation Error",
-        description: "Please enter your medical specialization.",
+        description: "Please select a department.",
         variant: "destructive",
       });
       return;
@@ -157,7 +154,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
           {/* Department Selection */}
                 <div className="space-y-2">
             <Label htmlFor="department" className="text-sm font-medium">
-              Department <span className="text-muted-foreground">(Optional)</span>
+              Department <span className="text-red-500">*</span>
                   </Label>
             <Select value={formData.selectedDepartment} onValueChange={(value) => setFormData(prev => ({ ...prev, selectedDepartment: value }))}>
               <SelectTrigger>
@@ -177,14 +174,13 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
           {/* Specialization */}
                 <div className="space-y-2">
             <Label htmlFor="specialization" className="text-sm font-medium">
-              Medical Specialization <span className="text-red-500">*</span>
+              Medical Specialization <span className="text-muted-foreground">(Optional)</span>
                   </Label>
                   <Input
               id="specialization"
                     value={formData.primarySpecialization}
                     onChange={(e) => setFormData(prev => ({ ...prev, primarySpecialization: e.target.value }))}
               placeholder="e.g., Cardiology, Neurology, General Medicine"
-              required
                   />
             <p className="text-xs text-muted-foreground">Your area of medical expertise</p>
                 </div>
@@ -212,8 +208,8 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
                   <Input
               id="fee"
               type="number"
-              value={formData.consultationFee}
-              onChange={(e) => setFormData(prev => ({ ...prev, consultationFee: e.target.value }))}
+              value={formData.consultation_fee}
+              onChange={(e) => setFormData(prev => ({ ...prev, consultation_fee: e.target.value }))}
               placeholder="500"
               min="0"
             />

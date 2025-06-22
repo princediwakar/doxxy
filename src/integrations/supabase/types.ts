@@ -336,14 +336,13 @@ export type Database = {
       }
       doctors: {
         Row: {
+          additional_qualifications: string | null
           availability: string | null
           bio: string | null
           board_certifications: string[] | null
           clinic_id: string | null
           clinic_timings: Json | null
           consultation_fee: number | null
-          consultation_fee_max: number | null
-          consultation_fee_min: number | null
           created_at: string | null
           email: string | null
           fellowship_details: string | null
@@ -353,30 +352,36 @@ export type Database = {
           languages_spoken: string[] | null
           medical_college: string | null
           medical_council: string | null
+          medical_degree: string | null
           medical_license_expiry: string | null
           medical_license_state: string | null
           medical_qualifications: string[] | null
           medical_registration_number: string | null
           medical_specializations: string[] | null
+          medical_university: string | null
           name: string
+          pg_completion_year: number | null
+          pg_institution: string | null
+          pg_specialization: string | null
           phone: string | null
+          postgraduate_degree: string | null
           practice_timings: Json | null
           primary_specialization: string | null
           professional_summary: string | null
           profile_completion_percentage: number | null
+          research_experience: string | null
           subspecialty: string[] | null
           user_id: string | null
           years_of_experience: number | null
         }
         Insert: {
+          additional_qualifications?: string | null
           availability?: string | null
           bio?: string | null
           board_certifications?: string[] | null
           clinic_id?: string | null
           clinic_timings?: Json | null
           consultation_fee?: number | null
-          consultation_fee_max?: number | null
-          consultation_fee_min?: number | null
           created_at?: string | null
           email?: string | null
           fellowship_details?: string | null
@@ -386,30 +391,36 @@ export type Database = {
           languages_spoken?: string[] | null
           medical_college?: string | null
           medical_council?: string | null
+          medical_degree?: string | null
           medical_license_expiry?: string | null
           medical_license_state?: string | null
           medical_qualifications?: string[] | null
           medical_registration_number?: string | null
           medical_specializations?: string[] | null
+          medical_university?: string | null
           name: string
+          pg_completion_year?: number | null
+          pg_institution?: string | null
+          pg_specialization?: string | null
           phone?: string | null
+          postgraduate_degree?: string | null
           practice_timings?: Json | null
           primary_specialization?: string | null
           professional_summary?: string | null
           profile_completion_percentage?: number | null
+          research_experience?: string | null
           subspecialty?: string[] | null
           user_id?: string | null
           years_of_experience?: number | null
         }
         Update: {
+          additional_qualifications?: string | null
           availability?: string | null
           bio?: string | null
           board_certifications?: string[] | null
           clinic_id?: string | null
           clinic_timings?: Json | null
           consultation_fee?: number | null
-          consultation_fee_max?: number | null
-          consultation_fee_min?: number | null
           created_at?: string | null
           email?: string | null
           fellowship_details?: string | null
@@ -419,17 +430,24 @@ export type Database = {
           languages_spoken?: string[] | null
           medical_college?: string | null
           medical_council?: string | null
+          medical_degree?: string | null
           medical_license_expiry?: string | null
           medical_license_state?: string | null
           medical_qualifications?: string[] | null
           medical_registration_number?: string | null
           medical_specializations?: string[] | null
+          medical_university?: string | null
           name?: string
+          pg_completion_year?: number | null
+          pg_institution?: string | null
+          pg_specialization?: string | null
           phone?: string | null
+          postgraduate_degree?: string | null
           practice_timings?: Json | null
           primary_specialization?: string | null
           professional_summary?: string | null
           profile_completion_percentage?: number | null
+          research_experience?: string | null
           subspecialty?: string[] | null
           user_id?: string | null
           years_of_experience?: number | null
@@ -697,23 +715,11 @@ export type Database = {
         }
         Returns: undefined
       }
-      calculate_doctor_profile_completion: {
-        Args: { doctor_uuid: string }
-        Returns: number
-      }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
         Returns: {
           clinic_id: string
           membership_id: string
-        }[]
-      }
-      debug_clinic_creation: {
-        Args: { user_uuid: string }
-        Returns: {
-          can_create_clinic: boolean
-          auth_uid_value: string
-          user_exists: boolean
         }[]
       }
       get_appointments_with_details_by_clinic: {
@@ -765,23 +771,6 @@ export type Database = {
           name: string
           email: string
           phone: string
-          availability: string
-          bio: string
-          created_at: string
-          role: string
-          department_name: string
-          department_id: string
-          is_active: boolean
-        }[]
-      }
-      get_doctors_by_clinic_enhanced: {
-        Args: { clinic_id: string }
-        Returns: {
-          id: string
-          user_id: string
-          name: string
-          email: string
-          phone: string
           bio: string
           created_at: string
           role: string
@@ -791,8 +780,7 @@ export type Database = {
           primary_specialization: string
           medical_specializations: string[]
           years_of_experience: number
-          consultation_fee_min: number
-          consultation_fee_max: number
+          consultation_fee: number
           languages_spoken: string[]
           practice_timings: Json
           professional_summary: string
@@ -824,26 +812,6 @@ export type Database = {
           address: string
         }[]
       }
-      get_patients_by_doctor: {
-        Args: {
-          _clinic_id: string
-          _doctor_user_id: string
-          _limit?: number
-          _offset?: number
-        }
-        Returns: {
-          id: string
-          clinic_id: string
-          created_at: string
-          date_of_birth: string
-          email: string
-          gender: string
-          medical_id: string
-          name: string
-          phone: string
-          address: string
-        }[]
-      }
       get_user_clinic_memberships: {
         Args: { user_id: string }
         Returns: {
@@ -859,14 +827,6 @@ export type Database = {
           clinic_website: string
         }[]
       }
-      repair_clinic_relationships: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      repair_missing_doctor_profiles: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
       search_medicines: {
         Args: { search_term: string; limit_count?: number }
         Returns: {
@@ -880,10 +840,6 @@ export type Database = {
           short_composition1: string
           short_composition2: string
         }[]
-      }
-      set_auth_uid: {
-        Args: { uid: string }
-        Returns: undefined
       }
       update_clinic_member_details: {
         Args: {

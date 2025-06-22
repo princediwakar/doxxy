@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,18 +24,23 @@ import { EnhancedBillingModal } from "@/components/billing/BillingModal";
 import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
+import { Database } from "@/integrations/supabase/types";
 
 const supabase = getSupabase();
 
-interface BillWithDetails {
-  id: string;
+type BillRow = Database["public"]["Tables"]["bills"]["Row"];
+
+interface ServiceItem {
+  description: string;
+  quantity: number;
+  rate: number;
   amount: number;
-  status: string;
-  invoice_number?: string;
-  description?: string;
-  created_at: string;
+}
+
+interface BillWithDetails extends Omit<BillRow, 'service_items'> {
   patient_name?: string;
+  service_items?: ServiceItem[];
 }
 
 interface BillingStats {
@@ -50,121 +55,67 @@ const Billing = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedBill, setSelectedBill] = useState(null);
-  const [bills, setBills] = useState<BillWithDetails[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<BillingStats>({
-    totalRevenue: 0,
-    pendingAmount: 0,
-    paidBills: 0,
-    overdueAmount: 0
-  });
-
-  const fetchBills = useCallback(async () => {
-    if (!activeClinic?.clinic_id) return;
-    
-    setLoading(true);
-    try {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(null);
+  
+  const { data: bills = [], isLoading: isLoadingBills, refetch: refetchBills } = useQuery({
+    queryKey: ['bills', activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id) return [];
       const { data, error } = await supabase
         .from('bills')
-        .select(`
-          *,
-          patients(name),
-          service_items,
-          discount_percentage,
-          tax_percentage,
-          billing_type,
-          notes
-        `)
+        .select(`*, patients(name)`)
         .eq('clinic_id', activeClinic.clinic_id)
         .order('created_at', { ascending: false });
+      if (error) throw new Error(error.message);
+      
+      return (data || []).map(b => {
+        const { patients, ...billData } = b;
+        return {
+          ...billData, 
+          patient_name: patients?.name,
+          service_items: (billData.service_items as unknown as ServiceItem[]) || [],
+        };
+      }) as BillWithDetails[];
+    },
+    enabled: !!activeClinic?.clinic_id
+  });
 
-      if (error) {
-        console.error("Error fetching bills:", error);
-        toast.error("Failed to load bills");
-        setBills([]);
-      } else {
-        const formattedBills: BillWithDetails[] = (data || []).map(bill => ({
-          id: bill.id,
-          amount: Number(bill.amount),
-          status: bill.status,
-          invoice_number: bill.invoice_number,
-          description: bill.description,
-          created_at: bill.created_at,
-          patient_name: bill.patients?.name
-        }));
-        setBills(formattedBills);
-      }
-    } catch (error) {
-      console.error("Error fetching bills:", error);
-      toast.error("Failed to load bills");
-      setBills([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [activeClinic?.clinic_id]);
-
-  const fetchStats = useCallback(async () => {
-    if (!activeClinic?.clinic_id) return;
-    
-    try {
+  const { data: stats, refetch: refetchStats } = useQuery<BillingStats, Error>({
+    queryKey: ['billingStats', activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!activeClinic?.clinic_id) return { totalRevenue: 0, pendingAmount: 0, paidBills: 0, overdueAmount: 0 };
       const { data, error } = await supabase
         .from('bills')
         .select('amount, status')
         .eq('clinic_id', activeClinic.clinic_id);
 
-      if (error) {
-        console.error("Error fetching billing stats:", error);
-        setStats({
-          totalRevenue: 0,
-          pendingAmount: 0,
-          paidBills: 0,
-          overdueAmount: 0
-        });
-      } else if (data) {
-        const totalRevenue = data.reduce((sum, bill) => sum + Number(bill.amount), 0);
-        const pendingAmount = data
-          .filter(bill => bill.status === 'Pending')
-          .reduce((sum, bill) => sum + Number(bill.amount), 0);
+      if (error) throw new Error(error.message);
+
+      const totalRevenue = data.filter(b => b.status === 'Paid').reduce((sum, bill) => sum + Number(bill.amount), 0);
+      const pendingAmount = data.filter(bill => bill.status === 'Pending').reduce((sum, bill) => sum + Number(bill.amount), 0);
         const paidBills = data.filter(bill => bill.status === 'Paid').length;
-        const overdueAmount = data
-          .filter(bill => bill.status === 'Overdue')
-          .reduce((sum, bill) => sum + Number(bill.amount), 0);
+      const overdueAmount = data.filter(bill => bill.status === 'Overdue').reduce((sum, bill) => sum + Number(bill.amount), 0);
 
-        setStats({
-          totalRevenue,
-          pendingAmount,
-          paidBills,
-          overdueAmount
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    }
-  }, [activeClinic?.clinic_id]);
-
-  useEffect(() => {
-    if (activeClinic?.clinic_id) {
-      fetchBills();
-      fetchStats();
-    }
-  }, [activeClinic?.clinic_id, fetchBills, fetchStats]);
+      return { totalRevenue, pendingAmount, paidBills, overdueAmount };
+    },
+    enabled: !!activeClinic?.clinic_id
+  });
 
   const handleBillClick = (bill: BillWithDetails) => {
     setSelectedBill(bill);
-    setOpenModal(true);
+    setIsModalOpen(true);
   };
 
   const handleNewBill = () => {
     setSelectedBill(null);
-    setOpenModal(true);
+    setIsModalOpen(true);
   };
 
   const handleModalClose = () => {
-    setOpenModal(false);
-    fetchBills();
-    fetchStats();
+    setIsModalOpen(false);
+    refetchBills();
+    refetchStats();
   };
 
   const { filteredBills, totalPages } = useMemo(() => {
@@ -184,7 +135,7 @@ const Billing = () => {
   const getStatusColor = (status: string) => {
     switch(status) {
       case "Paid": return "default";
-      case "Pending": return "outline";
+      case "Pending": return "secondary";
       case "Overdue": return "destructive";
       default: return "outline";
     }
@@ -192,20 +143,17 @@ const Billing = () => {
 
   if (!activeClinic) {
     return (
-      <Card className="medical-card m-6">
-        <CardContent className="flex items-center justify-center py-12">
+      <Card className="m-6"><CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <CreditCard className="w-12 h-12 text-muted-foreground mx-auto" />
             <p className="text-muted-foreground">Please select a clinic to view billing.</p>
           </div>
-        </CardContent>
-      </Card>
+      </CardContent></Card>
     );
   }
 
   return (
-    <div className="space-y-6 ">
-      {/* Header Section */}
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
@@ -218,203 +166,93 @@ const Billing = () => {
             </div>
           </div>
         </div>
-        <Button 
-          onClick={handleNewBill}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
-        >
+        <Button onClick={handleNewBill} className="bg-primary text-primary-foreground hover:bg-primary/90">
           <Plus size={18} className="mr-2" />
           Create Bill
         </Button>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="medical-card shadow-medical">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold text-success">₹{stats.totalRevenue.toFixed(2)}</p>
-              </div>
-              <div className="bg-success/10 p-3 rounded-lg">
-                <IndianRupee className="w-6 h-6 text-success" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="medical-card shadow-medical">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Pending Amount</p>
-                <p className="text-2xl font-bold text-warning">₹{stats.pendingAmount.toFixed(2)}</p>
-              </div>
-              <div className="bg-warning/10 p-3 rounded-lg">
-                <Calendar className="w-6 h-6 text-warning" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="medical-card shadow-medical">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Paid Bills</p>
-                <p className="text-2xl font-bold text-primary">{stats.paidBills}</p>
-              </div>
-              <div className="bg-primary/10 p-3 rounded-lg">
-                <User className="w-6 h-6 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="medical-card shadow-medical">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Overdue Amount</p>
-                <p className="text-2xl font-bold text-destructive">₹{stats.overdueAmount.toFixed(2)}</p>
-              </div>
-              <div className="bg-destructive/10 p-3 rounded-lg">
-                <Activity className="w-6 h-6 text-destructive" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Total Revenue</p><p className="text-2xl font-bold text-green-600">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</p></div><div className="bg-green-100 p-3 rounded-lg"><IndianRupee className="w-6 h-6 text-green-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Pending Amount</p><p className="text-2xl font-bold text-yellow-600">₹{stats?.pendingAmount.toFixed(2) || '0.00'}</p></div><div className="bg-yellow-100 p-3 rounded-lg"><Activity className="w-6 h-6 text-yellow-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Paid Bills</p><p className="text-2xl font-bold text-blue-600">{stats?.paidBills || 0}</p></div><div className="bg-blue-100 p-3 rounded-lg"><CreditCard className="w-6 h-6 text-blue-600" /></div></div></CardContent></Card>
+        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Overdue Amount</p><p className="text-2xl font-bold text-red-600">₹{stats?.overdueAmount.toFixed(2) || '0.00'}</p></div><div className="bg-red-100 p-3 rounded-lg"><IndianRupee className="w-6 h-6 text-red-600" /></div></div></CardContent></Card>
       </div>
 
-      {/* Search Section */}
-      <Card className="medical-card">
+{/* Search */}
+<Card className="medical-card">
         <CardContent className="p-6">
-          <div className="relative">
+          <div className="relative max-w-sm">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              type="search"
-              placeholder="Search bills by patient name, invoice number, or status..."
-              className="pl-10 bg-background border-border focus:ring-primary"
+              placeholder="Search departments..."
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 bg-background border-border focus:ring-primary"
             />
           </div>
         </CardContent>
       </Card>
 
-      {loading ? (
-        <div className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-12 bg-muted/50 rounded-md animate-pulse"></div>
-          ))}
-        </div>
-      ) : (
-        <Card className="medical-card shadow-medical">
+      <div className="border rounded-lg overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Invoice</TableHead>
+              <TableHead>Invoice #</TableHead>
                 <TableHead>Patient</TableHead>
-                <TableHead className="hidden sm:table-cell">Date</TableHead>
+              <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
-                <TableHead className="hidden md:table-cell">Description</TableHead>
+              <TableHead className="w-[40%]">Description</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredBills.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-4">
-                    {searchTerm ? "No bills match your search" : "No bills found"}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredBills.map((bill) => (
-                  <TableRow 
-                    key={bill.id} 
-                    className="cursor-pointer hover:bg-primary/5"
-                    onClick={() => handleBillClick(bill)}
-                  >
-                    <TableCell className="font-medium">{bill.invoice_number}</TableCell>
-                    <TableCell>{bill.patient_name || "-"}</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {new Date(bill.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="font-medium">₹{bill.amount?.toFixed(2)}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {bill.description || "-"}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        bill.status === 'Paid' ? 'default' :
-                        bill.status === 'Pending' ? 'secondary' :
-                        bill.status === 'Overdue' ? 'destructive' :
-                        'outline'
-                      } className={`status-badge ${
-                        bill.status === 'Paid' ? 'status-active' :
-                        bill.status === 'Pending' ? 'status-pending' :
-                        bill.status === 'Overdue' ? 'status-urgent' :
-                        'status-inactive'
-                      }`}>
-                        {bill.status}
-                      </Badge>
+            {isLoadingBills ? (
+              <TableRow><TableCell colSpan={6} className="text-center">Loading bills...</TableCell></TableRow>
+            ) : filteredBills.length === 0 ? (
+              <TableRow><TableCell colSpan={6} className="text-center">No bills found.</TableCell></TableRow>
+            ) : (
+              filteredBills.map((bill) => (
+                <TableRow key={bill.id} onClick={() => handleBillClick(bill)} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800">
+                  <TableCell className="font-medium">{bill.invoice_number}</TableCell>
+                  <TableCell>{bill.patient_name || 'N/A'}</TableCell>
+                  <TableCell>{new Date(bill.created_at).toLocaleDateString()}</TableCell>
+                  <TableCell>₹{Number(bill.amount).toFixed(2)}</TableCell>
+                  <TableCell className="truncate max-w-xs">{bill.description}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusColor(bill.status)}>{bill.status}</Badge>
                     </TableCell>
                   </TableRow>
                 ))
               )}
             </TableBody>
           </Table>
-          
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 px-6 pb-6">
+      </div>
+
+      {isModalOpen && (
+        <EnhancedBillingModal
+          open={isModalOpen}
+          onOpenChange={handleModalClose}
+          bill={selectedBill}
+          mode={selectedBill ? 'view' : 'create'}
+        />
+      )}
+
+      <div className="flex items-center justify-center pt-4">
               <Pagination>
                 <PaginationContent>
-                  <PaginationItem>
-                    <PaginationPrevious
-                      onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
-                  {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
-                    const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
-                    if (pageNum <= totalPages && pageNum > 0) {
-                      return (
+            <PaginationItem><PaginationPrevious href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(p - 1, 1)); }} /></PaginationItem>
+            {[...Array(totalPages)].map((_, i) => (
                         <PaginationItem key={i}>
-                          <PaginationLink
-                            onClick={() => setCurrentPage(pageNum)}
-                            isActive={currentPage === pageNum}
-                            className="cursor-pointer"
-                          >
-                            {pageNum}
+                <PaginationLink href="#" isActive={currentPage === i + 1} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
+                  {i + 1}
                           </PaginationLink>
                         </PaginationItem>
-                      );
-                    }
-                    return null;
-                  })}
-                  <PaginationItem>
-                    <PaginationNext
-                      onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
-                  </PaginationItem>
+            ))}
+            <PaginationItem><PaginationNext href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(p + 1, totalPages)); }} /></PaginationItem>
                 </PaginationContent>
               </Pagination>
             </div>
-          )}
-        </Card>
-      )}
-
-      <EnhancedBillingModal
-        open={openModal}
-        onOpenChange={handleModalClose}
-        bill={selectedBill}
-        mode={selectedBill ? 'view' : 'create'}
-      />
     </div>
   );
 };

@@ -12,30 +12,30 @@ import { getSupabase } from '@/integrations/supabase/client';
 import { Tables } from '@/integrations/supabase/types';
 import {
   GraduationCap,
-  Building2,
-  FileText,
-  Calendar,
-  MapPin,
-  Save,
+  Briefcase,
   Stethoscope,
   Shield,
-  AlertCircle,
-  Loader2,
-  Users,
   Heart,
-  Clock
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 
 const supabase = getSupabase();
 
 type DoctorProfile = Tables<'doctors'>;
 
+type Department = {
+  id: string;
+  department_types: {
+    name: string;
+  } | null;
+};
+
 interface MedicalCredentialsModalProps {
   open: boolean;
   onClose: () => void;
   doctorProfile?: DoctorProfile;
+  onSuccess?: () => void;
 }
 
 const MEDICAL_COUNCILS = [
@@ -70,13 +70,12 @@ const INDIAN_STATES = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
 ];
 
-export function MedicalCredentialsModal({ open, onClose, doctorProfile }: MedicalCredentialsModalProps) {
+export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSuccess }: MedicalCredentialsModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeClinic } = useAuth();
   const [activeTab, setActiveTab] = useState("registration");
 
-  // Fetch departments
   const { data: departments = [] } = useQuery({
     queryKey: ['clinicDepartments', activeClinic?.clinics?.id],
     queryFn: async () => {
@@ -91,12 +90,11 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
         return [];
       }
       
-      return data.map((d: any) => ({ id: d.id, name: d.department_types?.name || 'Unnamed Department' }));
+      return data.map((d: Department) => ({ id: d.id, name: d.department_types?.name || 'Unnamed Department' }));
     },
     enabled: !!activeClinic?.clinics?.id,
   });
 
-  // Fetch current department assignment from clinic_members table
   const { data: currentDepartment } = useQuery({
     queryKey: ['doctorDepartment', doctorProfile?.user_id, activeClinic?.clinics?.id],
     queryFn: async () => {
@@ -119,15 +117,11 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
     enabled: !!doctorProfile?.user_id && !!activeClinic?.clinics?.id,
   });
 
-  // Simple form state
   const [formData, setFormData] = useState({
     medical_registration_number: '',
     medical_council: '',
     medical_license_state: '',
     medical_license_expiry: '',
-    medical_qualifications: '',
-    medical_college: '',
-    graduation_year: '',
     department_id: '',
     primary_specialization: '',
     medical_specializations: '',
@@ -136,15 +130,21 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
     fellowship_details: '',
     professional_summary: '',
     years_of_experience: '',
-    consultation_fee_min: '',
-    consultation_fee_max: '',
-    clinic_timings: '',
+    consultation_fee: '',
+    medical_degree: '',
+    medical_college: '',
+    graduation_year: '',
+    medical_university: '',
+    postgraduate_degree: '',
+    pg_specialization: '',
+    pg_institution: '',
+    pg_completion_year: '',
+    additional_qualifications: '',
+    research_experience: '',
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form with existing data
   useEffect(() => {
     if (doctorProfile && open) {
       setFormData({
@@ -152,10 +152,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
         medical_council: doctorProfile.medical_council || '',
         medical_license_state: doctorProfile.medical_license_state || '',
         medical_license_expiry: doctorProfile.medical_license_expiry || '',
-        medical_qualifications: Array.isArray(doctorProfile.medical_qualifications) ? doctorProfile.medical_qualifications.join(', ') : '',
-        medical_college: doctorProfile.medical_college || '',
-        graduation_year: doctorProfile.graduation_year?.toString() || '',
-        department_id: currentDepartment?.department_id || '', // Get from clinic_members table
+        department_id: currentDepartment?.department_id || '',
         primary_specialization: doctorProfile.primary_specialization || '',
         medical_specializations: Array.isArray(doctorProfile.medical_specializations) ? doctorProfile.medical_specializations.join(', ') : '',
         subspecialty: Array.isArray(doctorProfile.subspecialty) ? doctorProfile.subspecialty.join(', ') : '',
@@ -163,56 +160,41 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
         fellowship_details: doctorProfile.fellowship_details || '',
         professional_summary: doctorProfile.professional_summary || '',
         years_of_experience: doctorProfile.years_of_experience?.toString() || '',
-        consultation_fee_min: doctorProfile.consultation_fee_min?.toString() || '',
-        consultation_fee_max: doctorProfile.consultation_fee_max?.toString() || '',
-        clinic_timings: typeof doctorProfile.clinic_timings === 'string' ? doctorProfile.clinic_timings : '',
+        consultation_fee: doctorProfile.consultation_fee?.toString() || '',
+        medical_degree: doctorProfile.medical_degree || '',
+        medical_college: doctorProfile.medical_college || '',
+        graduation_year: doctorProfile.graduation_year?.toString() || '',
+        medical_university: doctorProfile.medical_university || '',
+        postgraduate_degree: doctorProfile.postgraduate_degree || '',
+        pg_specialization: doctorProfile.pg_specialization || '',
+        pg_institution: doctorProfile.pg_institution || '',
+        pg_completion_year: doctorProfile.pg_completion_year?.toString() || '',
+        additional_qualifications: doctorProfile.additional_qualifications || '',
+        research_experience: doctorProfile.research_experience || '',
       });
-      
-      // Clear any previous validation errors
       setValidationErrors({});
     }
   }, [doctorProfile, currentDepartment, open]);
 
-  // Debug departments loading
-  useEffect(() => {
-    if (departments.length > 0) {
-      console.log('MedicalCredentialsModal: Departments loaded:', departments);
-    }
-  }, [departments]);
-
-  // Simple form validation
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    
-    if (!formData.medical_registration_number.trim()) {
-      errors.medical_registration_number = 'Medical registration number is required';
-    }
-    
-    if (!formData.medical_council) {
-      errors.medical_council = 'Medical council is required';
-    }
-    
-    if (!formData.department_id) {
-      errors.department_id = 'Department is required';
-    }
-    
-    if (!formData.primary_specialization.trim()) {
-      errors.primary_specialization = 'Primary specialization is required';
-    }
-    
+    if (!formData.medical_registration_number.trim()) errors.medical_registration_number = 'Medical registration number is required';
+    if (!formData.medical_council) errors.medical_council = 'Medical council is required';
+    if (!formData.department_id) errors.department_id = 'Department is required';
+    if (!formData.medical_degree) errors.medical_degree = 'Medical degree is required';
+    if (!formData.medical_college.trim()) errors.medical_college = 'Medical college is required';
+    if (!formData.graduation_year.trim()) errors.graduation_year = 'Graduation year is required';
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // Update mutation
   const updateCredentialsMutation = useMutation({
     mutationFn: async () => {
       if (!validateForm()) {
         throw new Error('Please fix the validation errors');
       }
-
-      if (!doctorProfile?.user_id) {
-        throw new Error('Doctor profile not found');
+      if (!doctorProfile?.user_id || !activeClinic?.clinic_id) {
+        throw new Error('Doctor profile or active clinic not found');
       }
 
       const updateData = {
@@ -220,54 +202,52 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
         medical_council: formData.medical_council || null,
         medical_license_state: formData.medical_license_state || null,
         medical_license_expiry: formData.medical_license_expiry || null,
-        medical_qualifications: formData.medical_qualifications ? [formData.medical_qualifications] : null,
-        medical_college: formData.medical_college || null,
-        graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
         primary_specialization: formData.primary_specialization || null,
-        medical_specializations: formData.medical_specializations ? [formData.medical_specializations] : null,
-        subspecialty: formData.subspecialty ? [formData.subspecialty] : null,
-        board_certifications: formData.board_certifications ? [formData.board_certifications] : null,
+        medical_specializations: formData.medical_specializations ? formData.medical_specializations.split(',').map(s => s.trim()) : null,
+        subspecialty: formData.subspecialty ? formData.subspecialty.split(',').map(s => s.trim()) : null,
+        board_certifications: formData.board_certifications ? formData.board_certifications.split(',').map(s => s.trim()) : null,
         fellowship_details: formData.fellowship_details || null,
         professional_summary: formData.professional_summary || null,
         years_of_experience: formData.years_of_experience ? parseInt(formData.years_of_experience) : null,
-        consultation_fee_min: formData.consultation_fee_min ? parseFloat(formData.consultation_fee_min) : null,
-        consultation_fee_max: formData.consultation_fee_max ? parseFloat(formData.consultation_fee_max) : null,
-        clinic_timings: formData.clinic_timings || null,
+        consultation_fee: formData.consultation_fee ? parseFloat(formData.consultation_fee) : null,
+        medical_degree: formData.medical_degree || null,
+        medical_college: formData.medical_college || null,
+        graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
+        medical_university: formData.medical_university || null,
+        postgraduate_degree: formData.postgraduate_degree || null,
+        pg_specialization: formData.pg_specialization || null,
+        pg_institution: formData.pg_institution || null,
+        pg_completion_year: formData.pg_completion_year ? parseInt(formData.pg_completion_year) : null,
+        additional_qualifications: formData.additional_qualifications || null,
+        research_experience: formData.research_experience || null,
       };
 
-      // Update the doctors table (without department_id - proper multi-tenant architecture)
       const { error: doctorError } = await supabase
         .from('doctors')
         .update(updateData)
-        .eq('user_id', doctorProfile.user_id)
-        .eq('clinic_id', activeClinic?.clinic_id);
+        .eq('user_id', doctorProfile.user_id);
 
       if (doctorError) throw doctorError;
+      
+      const { error: clinicMemberError } = await supabase
+        .from('clinic_members')
+        .update({ department_id: formData.department_id || null })
+        .eq('user_id', doctorProfile.user_id)
+        .eq('clinic_id', activeClinic.clinic_id);
 
-      // CRITICAL FIX: Update department_id ONLY in clinic_members table (proper multi-tenant approach)
-      if (activeClinic?.clinic_id) {
-        const { error: clinicMemberError } = await supabase
-          .from('clinic_members')
-          .update({ department_id: formData.department_id || null })
-          .eq('user_id', doctorProfile.user_id)
-          .eq('clinic_id', activeClinic.clinic_id);
-
-        if (clinicMemberError) {
-          console.warn('Failed to update department in clinic_members:', clinicMemberError);
-          // Don't fail the entire update for this, just warn
-        }
+      if (clinicMemberError) {
+        console.warn('Failed to update department in clinic_members:', clinicMemberError);
       }
-
-      // Invalidate relevant queries
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });
       queryClient.invalidateQueries({ queryKey: ['clinicMembers'] });
-
       toast({
         title: "Success",
         description: "Medical credentials updated successfully.",
       });
-
-      onClose();
+      if (onSuccess) onSuccess();
+      else onClose();
     },
     onError: (error: Error) => {
       toast({
@@ -285,8 +265,6 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
 
   const handleFieldChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear field error when user starts typing
     if (validationErrors[field]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -298,327 +276,227 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile }: Medica
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
-        {/* Header */}
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4">
           <DialogTitle className="flex items-center gap-3">
             <Stethoscope className="w-6 h-6 text-blue-600" />
             Medical Credentials
-                </DialogTitle>
+          </DialogTitle>
         </DialogHeader>
 
-        {/* Tabs - Fixed at top */}
-        <div className="flex-shrink-0 border-b">
+        <div className="border-b px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="registration">Registration</TabsTrigger>
               <TabsTrigger value="education">Education</TabsTrigger>
               <TabsTrigger value="specialization">Specialization</TabsTrigger>
               <TabsTrigger value="practice">Practice</TabsTrigger>
-          </TabsList>
+            </TabsList>
           </Tabs>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto pr-2">
-          <form onSubmit={handleSubmit} className="pt-6 space-y-6">
-              {/* Registration Tab */}
-            {activeTab === "registration" && (
-              <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="h-full flex flex-col">
+            <div className="flex-grow p-6 space-y-6">
+              {activeTab === "registration" && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Shield className="w-5 h-5" />
-                      Medical Registration
-                    </CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5" />Medical Registration</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="medical_registration_number">Registration Number *</Label>
-                        <Input
-                          id="medical_registration_number"
-                          value={formData.medical_registration_number}
-                          onChange={(e) => handleFieldChange('medical_registration_number', e.target.value)}
-                          placeholder="e.g., MCI-12345"
-                        />
-                        {validationErrors.medical_registration_number && (
-                          <p className="text-red-500 text-sm mt-1">{validationErrors.medical_registration_number}</p>
-                        )}
+                        <Input id="medical_registration_number" value={formData.medical_registration_number} onChange={(e) => handleFieldChange('medical_registration_number', e.target.value)} placeholder="e.g., MCI-12345" />
+                        {validationErrors.medical_registration_number && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_registration_number}</p>}
                       </div>
-                      
                       <div>
                         <Label htmlFor="medical_council">Medical Council *</Label>
                         <Select value={formData.medical_council} onValueChange={(value) => handleFieldChange('medical_council', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select medical council" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {MEDICAL_COUNCILS.map((council) => (
-                              <SelectItem key={council} value={council}>{council}</SelectItem>
-                            ))}
-                          </SelectContent>
+                          <SelectTrigger><SelectValue placeholder="Select medical council" /></SelectTrigger>
+                          <SelectContent>{MEDICAL_COUNCILS.map((council) => (<SelectItem key={council} value={council}>{council}</SelectItem>))}</SelectContent>
                         </Select>
-                        {validationErrors.medical_council && (
-                          <p className="text-red-500 text-sm mt-1">{validationErrors.medical_council}</p>
-                        )}
+                        {validationErrors.medical_council && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_council}</p>}
                       </div>
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="medical_license_state">License State</Label>
                         <Select value={formData.medical_license_state} onValueChange={(value) => handleFieldChange('medical_license_state', value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select state" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {INDIAN_STATES.map((state) => (
-                              <SelectItem key={state} value={state}>{state}</SelectItem>
-                            ))}
-                          </SelectContent>
+                          <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                          <SelectContent>{INDIAN_STATES.map((state) => (<SelectItem key={state} value={state}>{state}</SelectItem>))}</SelectContent>
                         </Select>
                       </div>
-                      
                       <div>
                         <Label htmlFor="medical_license_expiry">License Expiry</Label>
-                        <Input
-                          id="medical_license_expiry"
-                          type="date"
-                          value={formData.medical_license_expiry}
-                          onChange={(e) => handleFieldChange('medical_license_expiry', e.target.value)}
-                        />
+                        <Input id="medical_license_expiry" type="date" value={formData.medical_license_expiry} onChange={(e) => handleFieldChange('medical_license_expiry', e.target.value)} />
                       </div>
                     </div>
-
                     <div>
                       <Label htmlFor="department">Department *</Label>
                       <Select value={formData.department_id} onValueChange={(value) => handleFieldChange('department_id', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {departments.map((dept) => (
-                            <SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>
-                          ))}
-                        </SelectContent>
+                        <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+                        <SelectContent>{departments.map((dept) => (<SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>))}</SelectContent>
                       </Select>
-                      {validationErrors.department_id && (
-                        <p className="text-red-500 text-sm mt-1">{validationErrors.department_id}</p>
-                      )}
+                      {validationErrors.department_id && <p className="text-red-500 text-sm mt-1">{validationErrors.department_id}</p>}
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            )}
+              )}
 
-              {/* Education Tab */}
-            {activeTab === "education" && (
-              <div className="space-y-6">
+              {activeTab === "education" && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5" />
-                      Education & Qualifications
-                    </CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><GraduationCap className="w-5 h-5" />Education & Qualifications</CardTitle></CardHeader>
+                  <CardContent className="space-y-6">
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Undergraduate Medical Education</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="medical_degree">Medical Degree *</Label>
+                          <Select value={formData.medical_degree} onValueChange={(value) => handleFieldChange('medical_degree', value)}>
+                            <SelectTrigger><SelectValue placeholder="Select medical degree" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MBBS">MBBS</SelectItem>
+                              <SelectItem value="BDS">BDS</SelectItem>
+                              <SelectItem value="BAMS">BAMS</SelectItem>
+                              <SelectItem value="BHMS">BHMS</SelectItem>
+                              <SelectItem value="BUMS">BUMS</SelectItem>
+                              <SelectItem value="BNYS">BNYS</SelectItem>
+                              <SelectItem value="B.V.Sc">B.V.Sc</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {validationErrors.medical_degree && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_degree}</p>}
+                        </div>
+                        <div>
+                          <Label htmlFor="medical_college">Medical College *</Label>
+                          <Input id="medical_college" value={formData.medical_college} onChange={(e) => handleFieldChange('medical_college', e.target.value)} placeholder="Name of medical college" />
+                          {validationErrors.medical_college && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_college}</p>}
+                        </div>
+                        <div>
+                          <Label htmlFor="medical_university">University/Board</Label>
+                          <Input id="medical_university" value={formData.medical_university} onChange={(e) => handleFieldChange('medical_university', e.target.value)} placeholder="e.g., Delhi University, RGUHS" />
+                        </div>
+                        <div>
+                          <Label htmlFor="graduation_year">Graduation Year *</Label>
+                          <Input id="graduation_year" type="number" value={formData.graduation_year} onChange={(e) => handleFieldChange('graduation_year', e.target.value)} placeholder="e.g., 2015" min="1950" max={new Date().getFullYear()} />
+                          {validationErrors.graduation_year && <p className="text-red-500 text-sm mt-1">{validationErrors.graduation_year}</p>}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Postgraduate Training (Optional)</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="postgraduate_degree">Postgraduate Degree</Label>
+                          <Select value={formData.postgraduate_degree} onValueChange={(value) => handleFieldChange('postgraduate_degree', value)}>
+                            <SelectTrigger><SelectValue placeholder="Select PG degree" /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="MD">MD</SelectItem>
+                              <SelectItem value="MS">MS</SelectItem>
+                              <SelectItem value="MDS">MDS</SelectItem>
+                              <SelectItem value="Diploma">Diploma</SelectItem>
+                              <SelectItem value="DNB">DNB</SelectItem>
+                              <SelectItem value="MCh">MCh</SelectItem>
+                              <SelectItem value="DM">DM</SelectItem>
+                              <SelectItem value="Fellowship">Fellowship</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label htmlFor="pg_specialization">Specialization</Label>
+                          <Input id="pg_specialization" value={formData.pg_specialization} onChange={(e) => handleFieldChange('pg_specialization', e.target.value)} placeholder="e.g., General Medicine, Orthopedics" />
+                        </div>
+                        <div>
+                          <Label htmlFor="pg_institution">PG Institution</Label>
+                          <Input id="pg_institution" value={formData.pg_institution} onChange={(e) => handleFieldChange('pg_institution', e.target.value)} placeholder="PG college/hospital name" />
+                        </div>
+                        <div>
+                          <Label htmlFor="pg_completion_year">PG Completion Year</Label>
+                          <Input id="pg_completion_year" type="number" value={formData.pg_completion_year} onChange={(e) => handleFieldChange('pg_completion_year', e.target.value)} placeholder="e.g., 2018" min="1950" max={new Date().getFullYear() + 10} />
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm text-muted-foreground mb-3">📜 Additional Qualifications (Optional)</h4>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="additional_qualifications">Additional Qualifications</Label>
+                          <Textarea id="additional_qualifications" value={formData.additional_qualifications} onChange={(e) => handleFieldChange('additional_qualifications', e.target.value)} placeholder="e.g., DNB, Fellowship details, Certifications" rows={2} />
+                        </div>
+                        <div>
+                          <Label htmlFor="research_experience">Research Experience</Label>
+                          <Textarea id="research_experience" value={formData.research_experience} onChange={(e) => handleFieldChange('research_experience', e.target.value)} placeholder="Research background, publications, projects" rows={2} />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {activeTab === "specialization" && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Heart className="w-5 h-5" />Specialization</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="medical_qualifications">Medical Qualifications</Label>
-                      <Input
-                        id="medical_qualifications"
-                        value={formData.medical_qualifications}
-                        onChange={(e) => handleFieldChange('medical_qualifications', e.target.value)}
-                          placeholder="e.g., MBBS, MD"
-                      />
-                    </div>
-
+                        <Label htmlFor="primary_specialization">Primary Specialization</Label>
+                        <Input id="primary_specialization" value={formData.primary_specialization} onChange={(e) => handleFieldChange('primary_specialization', e.target.value)} placeholder="e.g., Cardiology" />
+                      </div>
                       <div>
-                        <Label htmlFor="medical_college">Medical College</Label>
-                        <Input
-                          id="medical_college"
-                          value={formData.medical_college}
-                          onChange={(e) => handleFieldChange('medical_college', e.target.value)}
-                          placeholder="Name of medical college"
-                        />
+                        <Label htmlFor="medical_specializations">Additional Specializations</Label>
+                        <Input id="medical_specializations" value={formData.medical_specializations} onChange={(e) => handleFieldChange('medical_specializations', e.target.value)} placeholder="Comma-separated list" />
                       </div>
+                      <div>
+                        <Label htmlFor="subspecialty">Subspecialty</Label>
+                        <Input id="subspecialty" value={formData.subspecialty} onChange={(e) => handleFieldChange('subspecialty', e.target.value)} placeholder="e.g., Interventional Cardiology" />
                       </div>
-                      
-                    <div>
-                      <Label htmlFor="graduation_year">Graduation Year</Label>
-                        <Input
-                          id="graduation_year"
-                          type="number"
-                          value={formData.graduation_year}
-                          onChange={(e) => handleFieldChange('graduation_year', e.target.value)}
-                          placeholder="e.g., 2015"
-                        />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-              {/* Specialization Tab */}
-            {activeTab === "specialization" && (
-              <div className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Heart className="w-5 h-5" />
-                      Specialization
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label htmlFor="primary_specialization">Primary Specialization *</Label>
-                      <Input
-                        id="primary_specialization"
-                          value={formData.primary_specialization} 
-                        onChange={(e) => handleFieldChange('primary_specialization', e.target.value)}
-                        placeholder="e.g., Cardiology"
-                      />
-                      {validationErrors.primary_specialization && (
-                        <p className="text-red-500 text-sm mt-1">{validationErrors.primary_specialization}</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="medical_specializations">Additional Specializations</Label>
-                      <Input
-                        id="medical_specializations"
-                        value={formData.medical_specializations}
-                        onChange={(e) => handleFieldChange('medical_specializations', e.target.value)}
-                        placeholder="Comma-separated list"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="subspecialty">Subspecialty</Label>
-                        <Input
-                          id="subspecialty"
-                          value={formData.subspecialty}
-                          onChange={(e) => handleFieldChange('subspecialty', e.target.value)}
-                          placeholder="e.g., Interventional Cardiology"
-                        />
+                      <div>
+                        <Label htmlFor="board_certifications">Board Certifications</Label>
+                        <Input id="board_certifications" value={formData.board_certifications} onChange={(e) => handleFieldChange('board_certifications', e.target.value)} placeholder="Professional certifications" />
                       </div>
-                      
-                    <div>
-                      <Label htmlFor="board_certifications">Board Certifications</Label>
-                        <Input
-                          id="board_certifications"
-                          value={formData.board_certifications}
-                          onChange={(e) => handleFieldChange('board_certifications', e.target.value)}
-                          placeholder="Professional certifications"
-                        />
                     </div>
-
                     <div>
                       <Label htmlFor="fellowship_details">Fellowship Details</Label>
-                      <Textarea
-                        id="fellowship_details"
-                        value={formData.fellowship_details}
-                        onChange={(e) => handleFieldChange('fellowship_details', e.target.value)}
-                        placeholder="Details of fellowship programs"
-                        rows={3}
-                      />
+                      <Textarea id="fellowship_details" value={formData.fellowship_details} onChange={(e) => handleFieldChange('fellowship_details', e.target.value)} placeholder="Details of fellowship programs" rows={3} />
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            )}
+              )}
 
-              {/* Practice Tab */}
-            {activeTab === "practice" && (
-              <div className="space-y-6">
+              {activeTab === "practice" && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5" />
-                      Practice Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Briefcase className="w-5 h-5" />Practice Information</CardTitle></CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
                       <Label htmlFor="professional_summary">Professional Summary</Label>
-                      <Textarea
-                        id="professional_summary"
-                        value={formData.professional_summary}
-                        onChange={(e) => handleFieldChange('professional_summary', e.target.value)}
-                        placeholder="Brief professional summary"
-                        rows={4}
-                      />
+                      <Textarea id="professional_summary" value={formData.professional_summary} onChange={(e) => handleFieldChange('professional_summary', e.target.value)} placeholder="Briefly describe your professional background and philosophy of care." rows={3} />
                     </div>
-
-                    <div>
-                      <Label htmlFor="years_of_experience">Years of Experience</Label>
-                      <Input
-                        id="years_of_experience"
-                        type="number"
-                        value={formData.years_of_experience}
-                        onChange={(e) => handleFieldChange('years_of_experience', e.target.value)}
-                        placeholder="e.g., 10"
-                      />
-                    </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="consultation_fee_min">Min Consultation Fee (₹)</Label>
-                        <Input
-                          id="consultation_fee_min"
-                          type="number"
-                          value={formData.consultation_fee_min}
-                          onChange={(e) => handleFieldChange('consultation_fee_min', e.target.value)}
-                          placeholder="e.g., 500"
-                        />
+                        <Label htmlFor="years_of_experience">Years of Experience</Label>
+                        <Input id="years_of_experience" type="number" value={formData.years_of_experience} onChange={(e) => handleFieldChange('years_of_experience', e.target.value)} placeholder="e.g., 10" min="0" />
                       </div>
-                      
                       <div>
-                        <Label htmlFor="consultation_fee_max">Max Consultation Fee (₹)</Label>
-                        <Input
-                          id="consultation_fee_max"
-                          type="number"
-                          value={formData.consultation_fee_max}
-                          onChange={(e) => handleFieldChange('consultation_fee_max', e.target.value)}
-                          placeholder="e.g., 1000"
-                        />
+                        <Label htmlFor="consultation_fee">Consultation Fee (₹)</Label>
+                        <Input id="consultation_fee" type="number" value={formData.consultation_fee} onChange={(e) => handleFieldChange('consultation_fee', e.target.value)} placeholder="e.g., 500" min="0" />
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="clinic_timings">Doctor Availability Hours</Label>
-                      <Input
-                        id="clinic_timings"
-                        value={formData.clinic_timings}
-                        onChange={(e) => handleFieldChange('clinic_timings', e.target.value)}
-                        placeholder="e.g., Mon-Fri 9:00 AM - 5:00 PM, Sat 9:00 AM - 1:00 PM"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Your personal availability hours for consultations
-                      </p>
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            )}
+              )}
+            </div>
+            
+            <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t bg-background sticky bottom-0">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateCredentialsMutation.isPending}>
+                {updateCredentialsMutation.isPending ? 'Saving...' : 'Save Credentials'}
+              </Button>
+            </div>
           </form>
-          </div>
-
-        {/* Footer */}
-        <div className="flex-shrink-0 flex justify-end gap-3 pt-4 border-t">
-          <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button 
-            type="submit" 
-              onClick={handleSubmit}
-              disabled={updateCredentialsMutation.isPending}
-          >
-            {updateCredentialsMutation.isPending ? 'Saving...' : 'Save Credentials'}
-            </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
-} 
+}

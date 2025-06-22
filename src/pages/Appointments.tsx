@@ -106,8 +106,7 @@ const fetchAppointments = async (clinicId: string, searchTerm: string) => {
     );
   }
 
-  // Categorize appointments
-  const today = new Date();
+  
   
   const todayAppointments = filteredData.filter(app => isToday(parseISO(app.date)));
   const upcomingAppointments = filteredData.filter(app => isFuture(parseISO(app.date)));

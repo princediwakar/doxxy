@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +63,7 @@ interface DoctorProfile {
   bio?: string;
   consultation_fee_min?: number;
   consultation_fee_max?: number;
+  consultation_fee?: number;
   medical_qualifications?: string;
   medical_license_state?: string;
   board_certifications?: string;
@@ -76,9 +77,15 @@ const Profile = () => {
   const [isBasicModalOpen, setIsBasicModalOpen] = useState(false);
   const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
+  const [showPostOnboarding, setShowPostOnboarding] = useState(false);
+  const [localHasDoctorProfile, setLocalHasDoctorProfile] = useState(hasDoctorProfile);
+
+  useEffect(() => {
+    setLocalHasDoctorProfile(hasDoctorProfile);
+  }, [hasDoctorProfile]);
 
   // Fetch doctor profile if user has one
-  const { data: doctorProfile, isLoading: isDoctorLoading } = useQuery({
+  const { data: doctorProfile, isLoading: isDoctorLoading, refetch: refetchDoctorProfile } = useQuery({
     queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id],
     queryFn: async () => {
       if (!user?.id || !activeClinic?.clinics?.id) return null;
@@ -138,64 +145,8 @@ const Profile = () => {
     enabled: !!user?.id,
   });
 
-  // Centralized and user-friendly profile completion calculation
-  const calculateProfileStats = (): ProfileStats => {
-    // Basic profile fields (4 total) - check avatar properly
-    const hasAvatar = !!(user?.user_metadata?.avatar_url);
-    const basicFields = [
-      user?.user_metadata?.name,
-      userProfile?.phone,
-      user?.email,
-      hasAvatar ? 'avatar' : null // Convert boolean to string for filter logic
-    ];
-    
-    // Check if user is a doctor (either has doctor profile OR has doctor role)
-    const isDoctorRole = activeClinicRole === 'doctor' || doctorProfile;
-    
-    // CORE required medical fields for 100% completion (5 fields - truly essential for practice)
-    const coreRequiredMedicalFields = isDoctorRole ? [
-      doctorProfile?.medical_registration_number,    // Essential for legal practice
-      doctorProfile?.medical_council,                // Essential for verification
-      doctorProfile?.primary_specialization,         // Essential for patient matching
-      doctorProfile?.years_of_experience,           // Essential for credibility
-      doctorProfile?.consultation_fee_min           // Essential for booking
-    ] : [];
-
-    // Optional enhancement fields (not counted toward 100%, but improve profile quality)
-    const optionalEnhancementFields = isDoctorRole ? [
-      doctorProfile?.medical_qualifications,
-      doctorProfile?.medical_college,
-      doctorProfile?.professional_summary,
-      doctorProfile?.medical_license_state,
-      doctorProfile?.board_certifications
-    ] : [];
-
-    const totalRequiredFields = basicFields.length + (isDoctorRole ? coreRequiredMedicalFields.length : 0);
-    const completedRequiredFields = basicFields.filter(Boolean).length + coreRequiredMedicalFields.filter(Boolean).length;
-    
-    // Calculate completion percentage based on ONLY required fields (can reach 100%)
-    const completionPercentage = Math.round((completedRequiredFields / totalRequiredFields) * 100);
-    
-    // Calculate enhancement score (additional quality beyond 100%)
-    const totalEnhancementFields = optionalEnhancementFields.length;
-    const completedEnhancementFields = optionalEnhancementFields.filter(Boolean).length;
-    const enhancementScore = totalEnhancementFields > 0 ? 
-      Math.round((completedEnhancementFields / totalEnhancementFields) * 100) : 0;
-    
-    return {
-      profileCompletion: completionPercentage,
-      enhancementScore: enhancementScore, // New field for optional enhancements
-      totalPatients: 0, // TODO: Fetch from API
-      totalConsultations: 0, // TODO: Fetch from API
-      yearsExperience: doctorProfile?.years_of_experience,
-      completedToday: 0, // TODO: Fetch from API
-      registrationNumber: doctorProfile?.medical_registration_number || 'Not Set',
-      clinicRole: activeClinicRole === 'superadmin' ? 'Administrator' : 
-                 activeClinicRole === 'doctor' ? 'Medical Professional' : 'Staff Member'
-    };
-  };
-
-  const stats = calculateProfileStats();
+  // Show "Become a Doctor" button only if user is NOT a doctor
+  const showBecomeDoctorButton = (activeClinicRole === 'superadmin' && !localHasDoctorProfile);
 
   const handleBecomeDoctorClick = () => {
     setIsOnboardingModalOpen(true);
@@ -263,6 +214,24 @@ const Profile = () => {
 
   return (
     <div className="space-y-6">
+      {showPostOnboarding && (
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <div>
+                <h3 className="font-semibold">Basic profile created!</h3>
+                <p className="text-sm text-muted-foreground">Continue to add your full credentials for verification.</p>
+              </div>
+            </div>
+            <Button onClick={() => {
+              setIsMedicalModalOpen(true);
+            }}>
+              Complete Full Profile
+            </Button>
+          </CardContent>
+        </Card>
+      )}
       {/* Consistent Page Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
@@ -329,39 +298,6 @@ const Profile = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-                        {/* Profile Completion Progress */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Profile Completion</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{stats.profileCompletion}%</span>
-                  {stats.profileCompletion === 100 && (
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  )}
-                </div>
-              </div>
-              <Progress value={stats.profileCompletion} className="h-2" />
-              {stats.profileCompletion === 100 ? (
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-green-600 font-medium">
-                    ✨ Profile Complete!
-                  </p>
-                  {/* Show enhancement score for doctors */}
-                  {(activeClinicRole === 'doctor' || doctorProfile) && stats.enhancementScore > 0 && (
-                    <span className="text-xs text-blue-600 font-medium">
-                      +{stats.enhancementScore}% Enhanced
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <p className="text-xs text-muted-foreground">
-                  Fill required fields to complete your profile
-                </p>
-              )}
-            </div>
-
-            <Separator />
-
             {/* Contact Information */}
             <div className="space-y-3">
               <h4 className="font-medium text-sm">Contact Information</h4>
@@ -456,7 +392,7 @@ const Profile = () => {
         )}
 
         {/* For non-doctors, show role-specific information */}
-        {!hasDoctorProfile && (
+        {!localHasDoctorProfile && (
           <Card className="medical-card">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -523,6 +459,11 @@ const Profile = () => {
           open={isMedicalModalOpen}
           onClose={() => setIsMedicalModalOpen(false)}
           doctorProfile={doctorProfile || undefined}
+          onSuccess={() => {
+            setIsMedicalModalOpen(false);
+            setShowPostOnboarding(false);
+            refetchDoctorProfile();
+          }}
         />
       )}
       
@@ -532,7 +473,9 @@ const Profile = () => {
           onClose={() => setIsOnboardingModalOpen(false)}
           onSuccess={() => {
             setIsOnboardingModalOpen(false);
-            window.location.reload();
+            refetchDoctorProfile();
+            setShowPostOnboarding(true);
+            setLocalHasDoctorProfile(true);
           }}
         />
       )}

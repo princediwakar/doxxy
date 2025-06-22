@@ -148,7 +148,7 @@ export const useConsultationForm = (
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [watchedValues, isConsultationCompleted]);
+  }, [watchedValues, isConsultationCompleted, form, autoSaveMutation]);
 
   // Manual save (only if consultation not completed)
   const handleSave = useCallback(() => {
@@ -248,37 +248,37 @@ export const useConsultationForm = (
     const { error } = await supabase
       .from('appointments')
       .update({ status: 'Completed' })
-      .eq('id', appointmentId);
-    
-    if (error) {
-      toast({
-        title: 'Error',
-        description: 'Could not complete consultation',
-        variant: 'destructive',
-      });
-      return;
-    }
+      .eq('id', appointmentId as string);
+
+    if (error) throw error;
     
     setIsConsultationCompleted(true);
+    queryClient.invalidateQueries({ queryKey: ['appointments'] });
     toast({
       title: 'Consultation Completed',
-        description: 'The consultation has been successfully completed. Redirecting to appointments...',
-      });
-
-      // Redirect after a brief delay to show the success message
-      setTimeout(() => {
-        onConsultationCompleted?.();
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error completing consultation:', error);
-      toast({
-        title: 'Error',
-        description: 'Could not complete consultation. Please try again.',
-        variant: 'destructive',
-      });
+      description: 'The consultation has been marked as complete.',
+    });
+    if (onConsultationCompleted) {
+      onConsultationCompleted();
     }
-  }, [form, autoSaveMutation, supabase, appointmentId, isConsultationCompleted, validateMandatoryFields, onConsultationCompleted]);
+    } catch (error) {
+       console.error('Error completing consultation:', error);
+       toast({
+        title: 'Completion Failed',
+        description: 'Could not complete the consultation. Please try again.',
+        variant: 'destructive',
+       });
+    }
+  }, [
+    isConsultationCompleted, 
+    validateMandatoryFields, 
+    form, 
+    autoSaveMutation, 
+    appointmentId, 
+    supabase, 
+    queryClient, 
+    onConsultationCompleted
+  ]);
 
   return {
     form,

@@ -1,5 +1,16 @@
 # Clinic Life Orchestrator - Development Log
 
+## [2025-06-21] Refactor: Unified Consultation Fee
+
+- **Files**:
+  - `src/components/doctor/MedicalCredentialsModal.tsx`
+  - `src/components/doctor/DoctorQuickOnboarding.tsx`
+  - `supabase/migrations/20250608000000_update_consultation_fee.sql`
+- **Migration**: `20250608000000_update_consultation_fee.sql` was created to replace `consultation_fee_min` and `consultation_fee_max` with a single `consultation_fee` in the `doctors` table.
+- **Testing**: Build was successful. `test` script not found in `package.json`.
+
+---
+
 ## Project Overview
 **Multi-tenant healthcare web application** for medical clinics with comprehensive patient management, appointments, consultations, prescriptions, and billing.
 
@@ -701,5 +712,131 @@ The enhanced onboarding now provides a **smooth, intuitive experience** that cap
 - Single source of truth for doctor data retrieval
 - Better documentation of member removal process
 - Enhanced doctor data with additional profile fields
+
+---
+
+## [2025-01-08 00:00] Doctor Functions Cleanup
+- **Files**: `supabase/migrations/20250608010000_cleanup_doctor_functions.sql`, `src/integrations/supabase/types.ts`
+- **Migration**: Removed redundant `get_doctors_by_clinic` function, simplified `get_doctors_by_clinic_enhanced`
+- **Rationale**: Since superadmins now create explicit doctor profiles, no complex role-based logic needed
+- **Changes**:
+  - ✅ Dropped `get_doctors_by_clinic` function (unused in codebase)
+  - ✅ Simplified `get_doctors_by_clinic_enhanced` to only fetch from doctors table
+  - ✅ Removed complex superadmin/role filtering logic
+  - ✅ Updated TypeScript types
+- **Testing**: All components use `get_doctors_by_clinic_enhanced` which now has cleaner, more predictable logic
+
+---
+
+## [2025-01-08 00:15] Rename Doctor Function
+- **Files**: `supabase/migrations/20250608010100_rename_doctor_function.sql`, multiple component files
+- **Migration**: Renamed `get_doctors_by_clinic_enhanced` to `get_doctors_by_clinic`
+- **Rationale**: Since we only have one function now, the "enhanced" suffix is unnecessary
+- **Changes**:
+  - ✅ Renamed function in database from `get_doctors_by_clinic_enhanced` to `get_doctors_by_clinic`
+  - ✅ Updated all component imports and type references
+  - ✅ Updated function calls across all files
+  - ✅ Regenerated TypeScript types
+- **Files Updated**: 
+  - `src/components/appointments/AppointmentModal.tsx`
+  - `src/components/consultation/ConsultationModal.tsx`
+  - `src/components/consultation/ConsultationViewModal.tsx`
+  - `src/components/consultation/ConsultationPreviewModal.tsx`
+  - `src/components/prescriptions/PrescriptionModal.tsx`
+  - `src/pages/Patients.tsx`
+  - `src/pages/PatientsPage.tsx`
+
+---
+
+## [2025-01-08 00:30] Remove Unused Functions
+- **Files**: `supabase/migrations/20250608010200_remove_unused_functions.sql`, `src/integrations/supabase/types.ts`
+- **Migration**: Removed unused and one-time repair functions from database
+- **Rationale**: Clean up database by removing functions that are not used in the codebase
+- **Removed Functions**:
+  - ✅ `repair_clinic_relationships` - One-time data repair function (should have been removed earlier)
+  - ✅ `repair_missing_doctor_profiles` - One-time data repair function (should have been removed earlier)
+  - ✅ `set_auth_uid` - Testing/debugging function (should have been removed earlier)
+  - ✅ `get_patients_by_doctor` - Not used anywhere in codebase
+  - ✅ `calculate_doctor_profile_completion` - Not used anywhere in codebase
+- **Kept Functions**:
+  - ✅ `search_medicines` - Kept for potential future medicine search feature
+- **Result**: Database now has 23 functions (down from 28), all actively used or needed
+
+---
+
+## [2025-01-08 00:45] Dashboard Appointment Details Modal
+- **Files**: `src/pages/Dashboard.tsx`
+- **Feature**: Replaced placeholder toast with functional appointment details modal
+- **Changes**:
+  - ✅ Added `ConsultationViewModal` import and state management
+  - ✅ Updated `handleAppointmentClick` to find appointment in original database data
+  - ✅ Fixed data mapping from `DatabaseAppointment` to modal format
+  - ✅ Added modal to JSX for viewing appointment/consultation details
+- **User Experience**: Clicking appointments on dashboard now opens detailed consultation view
+- **Testing**: ✅ Build passes, no type errors
+
+---
+
+## [2025-01-08 01:00] Fix Member Invitation Doctor Creation Error
+- **Files**: `supabase/functions/invite-member/index.ts`
+- **Bug Fix**: Resolved "null value in column 'name' of relation 'doctors' violates not-null constraint"
+- **Root Cause**: Edge Function was setting `name: name || null` but `doctors.name` has NOT NULL constraint
+- **Solution**: Use email as temporary name when no name is provided
+- **Changes**:
+  - ✅ Updated doctor data creation to use `name: name || email` instead of `name: name || null`
+  - ✅ Added comment explaining the fallback to satisfy NOT NULL constraint
+  - ✅ Deployed updated Edge Function to production
+- **Impact**: Member invitations for doctor role now work correctly
+- **User Experience**: Doctors invited via email will have their email as temporary name until they complete their profile
+
+---
+
+## [2025-01-08 01:15] Fix Root Route 404 Error
+- **Files**: `src/App.tsx`, `src/components/PrivateRoute.tsx`
+- **Bug Fix**: Resolved 404 error when accessing root route `/`
+- **Root Cause**: No route defined for `/` but PrivateRoute was redirecting to it
+- **Solution**: Added proper root route handling with authentication
+- **Changes**:
+  - ✅ Added root route `/` that redirects authenticated users to `/dashboard`
+  - ✅ Updated PrivateRoute to redirect to `/dashboard` instead of `/`
+  - ✅ Maintained proper authentication flow and access control
+- **User Experience**: 
+  - ✅ Root URL now properly redirects to dashboard for authenticated users
+  - ✅ No more 404 errors on initial app load
+  - ✅ Maintains security with PrivateRoute protection
+- **Testing**: ✅ Build passes successfully
+
+---
+
+## [2025-06-22 03:08] Routing and Authentication Flow Fixes
+- **Files**: `src/App.tsx`, `src/components/PrivateRoute.tsx`
+- **Issues Fixed**:
+  1. **Blank Screen Issue**: Fixed nested PrivateRoute components in root route causing rendering issues
+  2. **Doctor Clinic Creation Page Issue**: Fixed race condition where doctors with active clinics were being redirected to create-clinic page
+- **Root Cause**: 
+  - Root route had nested `<PrivateRoute><Navigate /></PrivateRoute>` structure causing conflicts
+  - Race condition between AuthContext setting `activeClinic` and PrivateRoute making routing decisions
+- **Solution**:
+  - Simplified routing structure with consistent use of children vs Outlet
+  - Added proper children prop handling in PrivateRoute for both nested and outlet patterns
+  - Maintained proper loading states to prevent premature routing decisions
+- **Testing**: Verified complete authentication flow from sign-in to dashboard for superadmin with doctor profile
+- **Result**: Both blank screen and incorrect clinic creation redirects are resolved
+
+## [2025-06-22 02:45] Member Invitation Doctor Creation Error Fix
+
+## [2025-06-22 03:20] Original UI Restoration
+- **Files**: `src/App.tsx`, `src/pages/Appointments.tsx`, `src/pages/Prescriptions.tsx`, `src/pages/Patients.tsx`, `src/components/medical-records/MedicalTimeline.tsx`
+- **Issue**: User requested restoration of original UI for prescriptions, appointments, and patients pages
+- **Root Cause**: Recent refactoring had moved functionality from single-page components to component-based architecture
+- **Solution**:
+  - Restored original `Appointments.tsx`, `Prescriptions.tsx`, and `Patients.tsx` from git
+  - Restored original `MedicalTimeline.tsx` location in `medical-records` folder
+  - Updated `App.tsx` routing to use original files instead of new component-based pages
+  - Removed new component-based files to avoid conflicts:
+    - `src/pages/AppointmentsPage.tsx`, `PatientsPage.tsx`, `PrescriptionsPage.tsx`
+    - `src/components/patients/`, `src/components/appointments/`, `src/components/prescriptions/` component directories
+- **Testing**: ✅ Build passes successfully
+- **Result**: Original single-page UI structure restored for all three modules
 
 ---

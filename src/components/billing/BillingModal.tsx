@@ -46,28 +46,18 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Label } from '@/components/ui/label';
 
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { Database, Enums, Constants } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
+import { Patient, Appointment } from '@/types/patients';
 
 const supabase = getSupabase();
 
 type Bill = Database['public']['Tables']['bills']['Row'];
-
-// Extended bill type with additional fields
-interface ExtendedBill extends Bill {
-  billing_type?: string;
-  service_items?: ServiceItem[];
-  discount_percentage?: number;
-  tax_percentage?: number;
-  notes?: string;
-}
-type Patient = Database['public']['Tables']['patients']['Row'];
-type Appointment = Database['public']['Tables']['appointments']['Row'];
-
 
 // Use the existing Supabase enum type instead of defining our own
 type BillStatusEnum = Enums<'bill_status'>;
@@ -118,7 +108,7 @@ type BillingFormValues = z.infer<typeof billingFormSchema>;
 interface EnhancedBillingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bill: ExtendedBill | null;
+  bill: Bill | null;
   patient?: Patient | null;
   appointment?: Appointment | null;
   mode?: 'create' | 'edit' | 'view';
@@ -193,15 +183,15 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
         description: bill?.description || '',
         invoice_number: bill?.invoice_number || '',
         status: bill ? bill.status : "Pending",
-        billing_type: 'simple' as const,
-        service_items: [],
-        discount_percentage: 0,
-        tax_percentage: 0,
-        notes: '',
+        billing_type: (bill?.billing_type as 'simple' | 'itemized') || 'simple',
+        service_items: (bill?.service_items as unknown as ServiceItem[]) || [],
+        discount_percentage: bill?.discount_percentage || 0,
+        tax_percentage: bill?.tax_percentage || 0,
+        notes: bill?.notes || '',
       };
       form.reset(defaultValues);
-      setBillingType('simple');
-      setServiceItems([{ description: '', quantity: 1, rate: 0, amount: 0 }]);
+      setBillingType((bill?.billing_type as 'simple' | 'itemized') || 'simple');
+      setServiceItems((bill?.service_items as unknown as ServiceItem[]) || [{ description: '', quantity: 1, rate: 0, amount: 0 }]);
     }
   }, [open, bill, patient, appointment, form]);
 
@@ -248,11 +238,30 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   useEffect(() => {
     if (selectedAppointmentId && selectedAppointmentId !== 'none' && appointments) {
       const selectedAppointment = appointments.find(apt => apt.id === selectedAppointmentId);
-      if (selectedAppointment && selectedAppointment.patient_id !== selectedPatientId) {
+      if (selectedAppointment) {
         form.setValue('patient_id', selectedAppointment.patient_id);
       }
     }
-  }, [selectedAppointmentId, appointments, selectedPatientId, form]);
+  }, [selectedAppointmentId, appointments, form]);
+
+  // Fetch patient details for view mode
+  const { data: viewedPatient, isLoading: isLoadingViewedPatient } = useQuery({
+    queryKey: ['patient', bill?.patient_id],
+    queryFn: async () => {
+      if (!bill?.patient_id) return null;
+      const { data, error } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', bill.patient_id)
+        .single();
+      if (error) {
+        console.error("Error fetching patient for billing view:", error);
+        throw new Error('Failed to fetch patient details');
+      }
+      return data;
+    },
+    enabled: mode === 'view' && !!bill?.patient_id,
+  });
 
   // Clear appointment when patient changes (if appointment doesn't belong to new patient)
   useEffect(() => {
@@ -263,8 +272,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       }
     }
   }, [selectedPatientId, selectedAppointmentId, appointments, form]);
-
-
 
   const addServiceItem = () => {
     setServiceItems([...serviceItems, { description: '', quantity: 1, rate: 0, amount: 0 }]);
@@ -383,6 +390,16 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   const isSubmitting = mutation.isPending;
   const totals = billingType === 'itemized' ? calculateTotals() : null;
 
+  const getStatusBadgeVariant = (status: BillStatusEnum | undefined) => {
+    if (!status) return 'outline';
+    switch (status) {
+      case 'Paid': return 'default';
+      case 'Pending': return 'secondary';
+      case 'Overdue': return 'destructive';
+      default: return 'outline';
+    }
+  };
+
   if (mode === 'view' && bill) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -411,17 +428,10 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                         </p>
                       </div>
                     </div>
-                    <Badge variant={
-                      bill.status === 'Paid' ? 'default' :
-                      bill.status === 'Pending' ? 'secondary' :
-                      bill.status === 'Overdue' ? 'destructive' :
-                      'outline'
-                    } className={`status-badge ${
-                      bill.status === 'Paid' ? 'status-active' :
-                      bill.status === 'Pending' ? 'status-pending' :
-                      bill.status === 'Overdue' ? 'status-urgent' :
-                      'status-inactive'
-                    }`}>
+                    <Badge 
+                      variant={getStatusBadgeVariant(bill.status)}
+                      className={bill.status === 'Paid' ? 'bg-green-500/80' : ''}
+                    >
                       {bill.status}
                     </Badge>
                   </div>
@@ -431,62 +441,21 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
               {/* Patient Information */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <User className="h-4 w-4" />
-                    <span>Patient Information</span>
-                  </CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-lg"><User />Patient Information</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    if (isLoadingPatients) {
-                      return (
-                        <div className="space-y-2">
-                          <div className="h-4 bg-muted rounded animate-pulse" />
-                          <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
-                        </div>
-                      );
-                    }
-
-                    // First try to find patient in the fetched patients list
-                    let patientInfo = patients?.find(p => p.id === bill.patient_id);
-                    
-                    // If not found and we have a patient prop, use that
-                    if (!patientInfo && patient && patient.id === bill.patient_id) {
-                      patientInfo = patient;
-                    }
-                    
-                    if (patientInfo) {
-                      return (
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-muted-foreground">Name:</span>
-                            <p className="font-medium">{patientInfo.name}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">Phone:</span>
-                            <p>{patientInfo.phone || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">Email:</span>
-                            <p>{patientInfo.email || 'N/A'}</p>
-                          </div>
-                          {patientInfo.medical_id && (
-                            <div>
-                              <span className="font-medium text-muted-foreground">Medical ID:</span>
-                              <p>{patientInfo.medical_id}</p>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    
-                    return (
-                      <div className="text-center text-muted-foreground">
-                        <div className="text-sm">Unable to load patient information</div>
-                        <div className="text-xs mt-1">Patient ID: {bill.patient_id}</div>
-                      </div>
-                    );
-                  })()}
+                  {isLoadingViewedPatient ? (
+                    <p>Loading patient information...</p>
+                  ) : viewedPatient ? (
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><span className="font-medium">Name:</span> {viewedPatient.name}</div>
+                      <div><span className="font-medium">Patient ID:</span> {viewedPatient.medical_id || 'N/A'}</div>
+                      <div><span className="font-medium">Phone:</span> {viewedPatient.phone || 'N/A'}</div>
+                      <div><span className="font-medium">Email:</span> {viewedPatient.email || 'N/A'}</div>
+                    </div>
+                  ) : (
+                    <p className="text-red-500">Unable to load patient information.</p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -541,11 +510,18 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium text-muted-foreground">Amount:</span>
-                      <p className="text-lg font-bold text-primary">₹{bill.amount?.toFixed(2)}</p>
+                      <div className="text-lg font-bold">
+                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(bill.amount || 0)}
+                      </div>
                     </div>
                     <div>
                       <span className="font-medium text-muted-foreground">Status:</span>
-                      <p className="font-medium">{bill.status}</p>
+                      <div className="flex flex-col gap-2">
+                        <Label>Status</Label>
+                        <Badge variant={getStatusBadgeVariant(bill.status)}>
+                          {bill.status}
+                        </Badge>
+                      </div>
                     </div>
                     <div>
                       <span className="font-medium text-muted-foreground">Billing Type:</span>
@@ -761,8 +737,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                 />
               </div>
 
-
-
               {/* Billing Type Selection */}
               <div className="space-y-4">
                 <FormField
@@ -772,7 +746,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                     <FormItem>
                       <FormLabel>Billing Type</FormLabel>
                       <Select onValueChange={(value) => {
-                        field.onChange(value);
+                        field.onChange(value as 'simple' | 'itemized');
                         setBillingType(value as 'simple' | 'itemized');
                       }} value={field.value}>
                         <FormControl>
@@ -866,62 +840,37 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                     </div>
 
                     <div className="space-y-3">
-                      {serviceItems.map((item, index) => (
-                        <Card key={index}>
-                          <CardContent className="p-4">
-                            <div className="grid grid-cols-1 md:grid-cols-5 gap-3 items-end">
-                              <div className="md:col-span-2">
-                                <label className="text-sm font-medium">Description</label>
-                                <Input
-                                  placeholder="Service description"
-                                  value={item.description}
-                                  onChange={(e) => updateServiceItem(index, 'description', e.target.value)}
-                                />
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Quantity</label>
-                                <Input
-                                  type="number"
-                                  min="1"
-                                  value={item.quantity}
-                                  onChange={(e) => updateServiceItem(index, 'quantity', parseInt(e.target.value) || 1)}
-                                />
-                              </div>
-                              <div>
-                                <label className="text-sm font-medium">Rate (₹)</label>
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={item.rate}
-                                  onChange={(e) => updateServiceItem(index, 'rate', parseFloat(e.target.value) || 0)}
-                                />
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <div className="flex-1">
-                                  <label className="text-sm font-medium">Amount (₹)</label>
-                                  <Input
-                                    type="number"
-                                    value={item.amount}
-                                    readOnly
-                                    className="bg-muted"
-                                  />
-                                </div>
-                                {serviceItems.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeServiceItem(index)}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                      <div className="grid grid-cols-[1fr,80px,80px,80px,40px] gap-2 items-center">
+                        {(form.watch('service_items') as ServiceItem[] || []).map((item, index) => (
+                          <div key={index} className="contents">
+                            <Input
+                              placeholder="Service Description"
+                              {...form.register(`service_items.${index}.description`)}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Qty"
+                              {...form.register(`service_items.${index}.quantity`, { valueAsNumber: true })}
+                            />
+                            <Input
+                              type="number"
+                              placeholder="Rate"
+                              {...form.register(`service_items.${index}.rate`, { valueAsNumber: true })}
+                            />
+                            <Input readOnly value={(form.watch(`service_items.${index}.quantity`) * form.watch(`service_items.${index}.rate`)).toFixed(2)} className="bg-muted" />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const currentItems = form.getValues('service_items') || [];
+                                form.setValue('service_items', currentItems.filter((_, i) => i !== index));
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Discount and Tax */}
@@ -1042,23 +991,26 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {Constants.public.Enums.bill_status.map(status => (
-                            <SelectItem key={status} value={status}>
-                              <Badge variant={status === 'Paid' ? 'default' : status === 'Pending' ? 'secondary' : 'destructive'}>
-                                {status}
-                              </Badge>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
+                      <div className="flex flex-col gap-2">
+                        <Label>Status</Label>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {Constants.public.Enums.bill_status.map(status => (
+                              <SelectItem key={status} value={status}>
+                                <Badge variant={getStatusBadgeVariant(status)}>
+                                  {status}
+                                </Badge>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </div>
                     </FormItem>
                   )}
                 />

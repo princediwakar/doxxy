@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { z } from "zod";
 import { toast } from "sonner";
-import { zodResolver } from '@hookform/resolvers/zod';
 
 const supabase = getSupabase();
 

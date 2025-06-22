@@ -22,7 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Database } from "@/integrations/supabase/types";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stethoscope, UserCheck, Building2 } from "lucide-react";
 

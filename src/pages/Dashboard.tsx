@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData } from "@/types/dashboard";
+import { AppointmentData } from "@/types/patients";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +16,7 @@ import { Enums } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
+import { ConsultationViewModal } from "@/components/consultation/ConsultationViewModal";
 
 const supabase = getSupabase();
 
@@ -48,6 +50,10 @@ const Dashboard = () => {
 
   // State for appointment modal
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  
+  // State for consultation view modal
+  const [isConsultationViewModalOpen, setIsConsultationViewModalOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
 
   // Query: Does the current user have a doctor profile for this clinic?
   const { data: hasDoctorProfile, isLoading: isDoctorProfileLoading } = useQuery({
@@ -209,18 +215,6 @@ const Dashboard = () => {
   
   console.log('Dashboard appointments for chart:', chartAppointments);
 
-  const todaysAppointments: FormattedAppointment[] = appointmentsForList
-    .filter(apt => apt.date === today)
-    .sort((a, b) => a.time.localeCompare(b.time))
-    .map(apt => ({
-      id: apt.id,
-      patient: apt.patient_name,
-      doctor: apt.doctor_name,
-      time: apt.time,
-      date: apt.date,
-      status: apt.status as Enums<'appointment_status'>,
-      type: apt.type as Enums<'appointment_type'>,
-    }));
 
   const upcomingAppointments: FormattedAppointment[] = appointmentsForList
     .filter(apt => apt.date >= today)
@@ -240,16 +234,33 @@ const Dashboard = () => {
 
   const totalUpcomingPages = Math.max(1, Math.ceil(upcomingAppointments.length / appointmentsPerPage));
 
-  // Card click handlers
-  const handlePatientsCardClick = () => navigate('/patients');
-  const handleDoctorsCardClick = () => navigate('/settings');
-  const handleAppointmentsTodayCardClick = () => navigate('/appointments');
-  const handlePendingConsultationsCardClick = () => navigate('/appointments?tab=upcoming');
-  const handleCompletedConsultationsCardClick = () => navigate('/appointments?tab=past');
 
   // Appointment row click handler
   const handleAppointmentClick = (appointmentId: string) => {
-    toast.info("Appointment details modal coming soon!");
+    // Find the appointment in the original database appointments data
+    const appointment = appointmentsForList.find(apt => apt.id === appointmentId);
+    if (appointment) {
+      // Convert DatabaseAppointment to the structure expected by ConsultationViewModal
+      const appointmentForModal: AppointmentData = {
+        id: appointment.id,
+        patient_id: appointment.patient_id,
+        doctor_id: appointment.doctor_id,
+        clinic_id: appointment.clinic_id,
+        date: appointment.date,
+        time: appointment.time,
+        type: appointment.type,
+        status: appointment.status,
+        patient_name: appointment.patient_name,
+        doctor_name: appointment.doctor_name,
+        department_name: '', // Not available here, but required for the modal
+        created_at: new Date().toISOString(), // Not available, provide a placeholder
+        notes: null
+      };
+      setSelectedAppointment(appointmentForModal);
+      setIsConsultationViewModalOpen(true);
+    } else {
+      toast.error("Appointment not found");
+    }
   };
 
   // Weekly chart bar click handler
@@ -311,28 +322,24 @@ const Dashboard = () => {
                 icon={<Users size={18} className="mr-2 text-medical-blue" />}
                 label="Total Patients"
                 value={dashboardData?.total_patients ?? 0}
-                onClick={handlePatientsCardClick}
                 ariaLabel="View All Patients"
               />
               <DashboardStatsCard
                 icon={<Stethoscope size={18} className="mr-2 text-medical-teal" />}
                 label="Total Doctors"
                 value={dashboardData?.total_doctors ?? 0}
-                onClick={handleDoctorsCardClick}
                 ariaLabel="Manage Clinic Members"
               />
               <DashboardStatsCard
                 icon={<CalendarCheck size={18} className="mr-2 text-success" />}
                 label="Total Appointments"
                 value={dashboardData?.total_appointments ?? 0}
-                onClick={handleAppointmentsTodayCardClick}
                 ariaLabel="View All Appointments"
               />
               <DashboardStatsCard
                 icon={<Clock size={18} className="mr-2 text-warning" />}
                 label="Today's Appointments"
                 value={dashboardData?.appointments_today ?? 0}
-                onClick={handleAppointmentsTodayCardClick}
                 ariaLabel="View Today's Appointments"
               />
             </div>
@@ -351,28 +358,24 @@ const Dashboard = () => {
                 icon={<Users size={18} className="mr-2 text-medical-blue" />}
                 label="My Patients"
                 value={doctorDashboardData?.total_patients ?? 0}
-                onClick={handlePatientsCardClick}
                 ariaLabel="View My Patients"
               />
               <DashboardStatsCard
                 icon={<CalendarCheck size={18} className="mr-2 text-success" />}
                 label="My Appointments"
                 value={doctorDashboardData?.total_appointments ?? 0}
-                onClick={handleAppointmentsTodayCardClick}
                 ariaLabel="View My Appointments"
               />
               <DashboardStatsCard
                 icon={<Clock size={18} className="mr-2 text-warning" />}
                 label="Pending Consultations"
                 value={doctorDashboardData?.pending_consultations ?? 0}
-                onClick={handlePendingConsultationsCardClick}
                 ariaLabel="View Pending Consultations"
               />
               <DashboardStatsCard
                 icon={<Activity size={18} className="mr-2 text-accent" />}
                 label="Completed Consultations"
                 value={doctorDashboardData?.completed_consultations ?? 0}
-                onClick={handleCompletedConsultationsCardClick}
                 ariaLabel="View Completed Consultations"
               />
             </div>
@@ -385,28 +388,24 @@ const Dashboard = () => {
             icon={<Users size={18} className="mr-2 text-medical-blue" />}
             label="Total Patients"
             value={dashboardData?.total_patients ?? 0}
-            onClick={handlePatientsCardClick}
             ariaLabel="View Patients"
           />
           <DashboardStatsCard
             icon={<Stethoscope size={18} className="mr-2 text-success" />}
             label="Total Appointments"
             value={dashboardData?.total_appointments ?? 0}
-            onClick={handleAppointmentsTodayCardClick}
             ariaLabel="View Appointments"
           />
           <DashboardStatsCard
             icon={<CalendarCheck size={18} className="mr-2 text-warning" />}
             label="Pending Consultations"
             value={dashboardData?.pending_consultations ?? 0}
-            onClick={handlePendingConsultationsCardClick}
             ariaLabel="View Pending Consultations"
           />
           <DashboardStatsCard
             icon={<Activity size={18} className="mr-2 text-accent" />}
             label="Completed Consultations"
             value={dashboardData?.completed_consultations ?? 0}
-            onClick={handleCompletedConsultationsCardClick}
             ariaLabel="View Completed Consultations"
           />
         </div>
@@ -436,6 +435,13 @@ const Dashboard = () => {
         onOpenChange={setIsAppointmentModalOpen}
         appointment={null}
         patient={null}
+      />
+
+      {/* Consultation View Modal */}
+      <ConsultationViewModal
+        open={isConsultationViewModalOpen}
+        onOpenChange={setIsConsultationViewModalOpen}
+        appointment={selectedAppointment}
       />
     </div>
   );

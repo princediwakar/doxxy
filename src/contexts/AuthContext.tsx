@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, ReactNode, useCallback,
 import { getSupabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { Database } from "@/integrations/supabase/types";
-import { useNavigate } from 'react-router-dom';
 
 const supabase = getSupabase();
 
@@ -355,62 +354,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     }, 10000); // 10 second timeout
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      
-      console.log("AuthContext: Auth state changed:", event);
-      
-      // Don't handle any auth state changes until initial load is complete
-      if (!initialLoadComplete) {
-        console.log("AuthContext: Skipping auth state change until initial load complete:", event);
-        return;
-      }
-
-      const newUserId = session?.user?.id ?? null;
-      
-      // Only trigger full data refetch for specific events that indicate real user changes
-      const isRealUserChange = currentUserId !== newUserId;
-      const isInitialSignIn = event === 'SIGNED_IN' && currentUserId === null;
-      const isSignOut = event === 'SIGNED_OUT';
-      const shouldRefetchData = isRealUserChange || isInitialSignIn || isSignOut;
-      
-      console.log("AuthContext: User change detection:", {
-        event,
-        currentUserId,
-        newUserId,
-        isRealUserChange,
-        isInitialSignIn,
-        isSignOut,
-        shouldRefetchData
-      });
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      currentUserId = newUserId;
-
-              if (shouldRefetchData) {
-          if (session?.user) {
-            // Only refetch if we don't have clinic data or user actually changed
-            if ((userClinics.length === 0 || isRealUserChange) && !isFetchingRef.current) {
-              await fetchUserAndClinicData(session.user);
-            } else {
-              console.log("AuthContext: User clinic data already loaded or fetch in progress, skipping refetch");
-            }
-          } else {
-          setUserClinics([]);
-          setActiveClinicState(null);
-          setProfileName(null);
-          setNeedsProfileCompletion(false);
-          setHasDoctorProfile(undefined);
-          profileCheckRef.current = null;
-          localStorage.removeItem('activeClinicId');
-          console.log("AuthContext: No user session, cleared state.");
-        }
-      } else {
-        console.log("AuthContext: Token refresh detected, skipping data refetch");
-      }
-    });
-
     const getInitialSession = async () => {
       if (!mounted) return;
       
@@ -507,46 +450,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     getInitialSession();
 
-    // Handle page visibility changes to prevent unnecessary auth checks
-    let visibilityTimeout: NodeJS.Timeout | null = null;
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && mounted && initialLoadComplete) {
-        // Debounce rapid visibility changes
-        if (visibilityTimeout) {
-          clearTimeout(visibilityTimeout);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (_event, newSession) => {
+        console.log(`Auth state changed: ${_event}`, newSession);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
+        
+        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'INITIAL_SESSION') {
+          if (newSession?.user) {
+            await fetchUserAndClinicData(newSession.user);
+          }
         }
         
-        visibilityTimeout = setTimeout(() => {
-          console.log("AuthContext: Tab became visible, checking session validity");
-          // Only refresh if we don't have a current session
-          if (!session) {
-            supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
-              if (currentSession && currentSession.user?.id !== currentUserId) {
-                console.log("AuthContext: Found new session after tab focus");
-                // Let the auth state change handler deal with it
-              }
-            });
-          } else {
-            console.log("AuthContext: Tab visible but session exists, no action needed");
-          }
-        }, 100); // Debounce for 100ms
+        if (_event === 'SIGNED_OUT') {
+          await signOut();
+        }
       }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    );
 
     return () => {
-      mounted = false;
-      clearTimeout(safetyTimeout);
-      if (visibilityTimeout) {
-        clearTimeout(visibilityTimeout);
-      }
-      subscription.unsubscribe();
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      authListener?.subscription.unsubscribe();
     };
-  }, []);
+  }, [fetchUserAndClinicData, signOut]);
 
-  const authContextValue = useMemo(() => ({
+  // Effect to re-fetch clinic data on window focus (for data consistency)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && session?.user) {
+        console.log("AuthContext: Window became visible, re-fetching user clinic data.");
+        fetchUserAndClinicData(session.user);
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [session, fetchUserAndClinicData]);
+
+
+  const value = useMemo(() => ({
     session,
     user,
     loading: initialLoading || clinicLoading,
@@ -558,18 +501,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setActiveClinicId,
     activeClinicRole,
     fetchUserAndClinicData,
-          profileName,
-      needsProfileCompletion,
-      checkProfileCompletion,
-      markProfileComplete,
-      hasDoctorProfile,
-    }), [session, user, initialLoading, clinicLoading, userClinics, activeClinic, setActiveClinicId, activeClinicRole, profileName, needsProfileCompletion, checkProfileCompletion, markProfileComplete, hasDoctorProfile]);
+    profileName,
+    needsProfileCompletion,
+    checkProfileCompletion,
+    markProfileComplete,
+    hasDoctorProfile
+  }), [
+    session, user, initialLoading, clinicLoading, signOut,
+    userClinics, activeClinic, setActiveClinicId, activeClinicRole,
+    profileName, needsProfileCompletion, checkProfileCompletion,
+    markProfileComplete, hasDoctorProfile, fetchUserAndClinicData
+  ]);
 
-  return (
-    <AuthContext.Provider value={authContextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => {

@@ -183,7 +183,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       fields: [
         { name: "investigations", label: "Investigations", type: "textarea", rows: 3, placeholder: "Laboratory tests, imaging ordered" },
         { name: "assessment", label: "Assessment & Diagnosis", type: "textarea", rows: 3, placeholder: "Clinical assessment and diagnosis", mandatory: true },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Management plan and interventions", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Management plan and interventions" },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Expected outcome" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Next appointment and monitoring plan" },
@@ -215,7 +215,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
         { name: "extraocular_movements", label: "Extraocular Movements", type: "textarea", rows: 3, placeholder: "Eye movement assessment" },
         { name: "slit_lamp_exam", label: "Slit Lamp Examination", type: "textarea", rows: 4, placeholder: "Anterior segment examination" },
         { name: "intraocular_pressure", label: "Intraocular Pressure", type: "textarea", rows: 2, placeholder: "IOP measurements (method, time)" },
-        { name: "fundus_exam", label: "Fundus Examination", type: "textarea", rows: 4, placeholder: "Posterior segment examination", mandatory: true },
+        { name: "fundus_exam", label: "Fundus Examination", type: "textarea", rows: 4, placeholder: "Posterior segment examination" },
         { name: "visual_fields", label: "Visual Fields", type: "textarea", rows: 3, placeholder: "Perimetry results" },
       ]
     },
@@ -224,7 +224,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       fields: [
         { name: "investigations", label: "Investigations", type: "textarea", rows: 3, placeholder: "OCT, angiography, ultrasound" },
         { name: "assessment", label: "Ophthalmic Assessment", type: "textarea", rows: 3, placeholder: "Ocular diagnosis and staging", mandatory: true },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Medical, surgical, optical management", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Medical, surgical, optical management" },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Visual prognosis" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Next visit and monitoring" },
@@ -250,7 +250,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Examination",
       fields: [
         { name: "physical_exam", label: "General Physical Exam", type: "textarea", rows: 4, placeholder: "General physical examination" },
-        { name: "neurological_exam_findings", label: "Neurological Examination", type: "textarea", rows: 5, placeholder: "Detailed neurological examination findings", mandatory: true },
+        { name: "neurological_exam_findings", label: "Neurological Examination", type: "textarea", rows: 5, placeholder: "Detailed neurological examination findings" },
         { name: "cranial_nerves", label: "Cranial Nerves", type: "textarea", rows: 4, placeholder: "CN I-XII examination findings" },
         { name: "motor_examination", label: "Motor Examination", type: "textarea", rows: 4, placeholder: "Muscle strength, tone, bulk" },
         { name: "sensory_examination", label: "Sensory Examination", type: "textarea", rows: 3, placeholder: "Touch, pain, vibration, proprioception" },
@@ -263,7 +263,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       fields: [
         { name: "investigations", label: "Investigations", type: "textarea", rows: 3, placeholder: "EEG, MRI, CT, LP, NCS/EMG" },
         { name: "assessment", label: "Neurological Assessment", type: "textarea", rows: 3, placeholder: "Neurological diagnosis and localization", mandatory: true },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Neurological management plan", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Neurological management plan" },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Expected neurological outcome" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Neurology follow-up schedule" },
@@ -307,7 +307,7 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
       title: "Assessment & Plan",
       fields: [
         { name: "assessment", label: "Cardiac Assessment", type: "textarea", rows: 3, placeholder: "Cardiovascular diagnosis", mandatory: true },
-        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Cardiac management plan", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Cardiac management plan" },
         { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications and dosage instructions" },
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Cardiac prognosis" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Cardiology follow-up" },

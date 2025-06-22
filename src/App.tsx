@@ -22,6 +22,7 @@ import PrivacyPage from "./pages/Privacy";
 import Consultation from "./pages/Consultation";
 import PrivateRoute from "./components/PrivateRoute";
 import { AppHeader } from "./components/AppHeader";
+
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -31,21 +32,26 @@ const AppRoutes = () => {
       <Route path="/auth" element={<Auth />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/terms" element={<TermsPage />} />
+      <Route path="/complete-profile" element={<CompleteProfile />} />
+      
+      {/* Root route - redirect to dashboard with authentication check */}
+      <Route path="/" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
+      
       {/* Protected routes handled by PrivateRoute */}
       <Route element={<PrivateRoute />}> 
         <Route path="/create-clinic" element={<CreateClinicPage />} />
         <Route element={<Layout />}> {/* Layout renders for main app paths */}
-          <Route index element={<Dashboard />} />
-          <Route path="appointments" element={<Appointments />} />
-          <Route path="patients" element={<Patients />} />
-          <Route path="consultation/:appointmentId" element={<Consultation />} />
-          <Route path="prescriptions" element={<Prescriptions />} />
-          <Route path="billing" element={<Billing />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="settings" element={<SettingsPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/patients/*" element={<Patients />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/prescriptions" element={<Prescriptions />} />
+          <Route path="/billing" element={<Billing />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/consultation/:appointmentId" element={<Consultation />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
       </Route>
-      <Route path="/complete-profile" element={<CompleteProfile />} />
+      
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

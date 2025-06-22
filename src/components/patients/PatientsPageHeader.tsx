@@ -1,0 +1,42 @@
+import { Button } from '@/components/ui/button';
+import { Download, Plus, User } from 'lucide-react';
+
+interface PatientsPageHeaderProps {
+  onNewPatient: () => void;
+  onExport: () => void;
+  isPatientSelected: boolean;
+}
+
+export const PatientsPageHeader = ({ onNewPatient, onExport, isPatientSelected }: PatientsPageHeaderProps) => {
+  return (
+    <div className="flex justify-between items-start">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+          <User className="w-5 h-5 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold text-primary">Patient Records</h1>
+          <p className="text-muted-foreground">Comprehensive patient medical history and records</p>
+        </div>
+      </div>
+      <div className="flex space-x-2">
+        <Button
+          onClick={onExport}
+          disabled={!isPatientSelected}
+          variant="outline"
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export PDF
+        </Button>
+        <Button
+          onClick={onNewPatient}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Patient
+        </Button>
+      </div>
+    </div>
+  );
+};
+

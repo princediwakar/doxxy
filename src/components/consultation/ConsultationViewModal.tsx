@@ -16,24 +16,18 @@ import { Eye, Printer } from "lucide-react";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import { ConsultationLayout } from './ConsultationLayout';
 import { printConsultation } from './printUtils';
+import { AppointmentData, Patient } from '@/types/patients';
 
 const supabase = getSupabase();
 
 // Types
-type Appointment = Database['public']['Tables']['appointments']['Row'] & {
-  patient_name?: string;
-  doctor_name?: string;
-  patient_date_of_birth?: string | null;
-  patient_gender?: string | null;
-};
 type Consultation = Database['public']['Tables']['consultations']['Row'];
-type Patient = Database['public']['Tables']['patients']['Row'];
-type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic_enhanced']['Returns'][0];
+type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 
 interface ConsultationViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment: Appointment | null;
+  appointment: AppointmentData | null;
 }
 
 export function ConsultationViewModal({ open, onOpenChange, appointment }: ConsultationViewModalProps) {
@@ -83,9 +77,9 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     queryKey: ['doctorDetails', appointment?.doctor_id, activeClinic?.clinic_id],
     queryFn: async () => {
       if (!appointment?.doctor_id || !activeClinic?.clinic_id) return null;
-      const { data, error } = await supabase.rpc('get_doctors_by_clinic_enhanced', {
-        clinic_id: activeClinic.clinic_id,
-      });
+          const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+      clinic_id: activeClinic.clinic_id,
+    });
       if (error) throw error;
       const doctor = data?.find(d => d.id === appointment.doctor_id);
       return doctor ? [doctor] : null;

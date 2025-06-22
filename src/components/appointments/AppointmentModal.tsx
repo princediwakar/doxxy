@@ -48,7 +48,7 @@ import { PatientModal } from "@/components/patients/PatientModal";
 // Define types for convenience
 type Appointment = Database['public']['Tables']['appointments']['Row'];
 type Patient = Database['public']['Tables']['patients']['Row'];
-type Doctor = Database['public']['Functions']['get_doctors_by_clinic_enhanced']['Returns'][0];
+type Doctor = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 
 // Using the Supabase enum types directly in the component
 
@@ -151,21 +151,24 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     p.name.toLowerCase().includes(patientSearch.toLowerCase())
   );
 
-  // Fetch doctors using enhanced RPC to get primary_specialization
-  const { data: doctorsRaw, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
-    queryKey: ['doctors', activeClinic?.clinic_id],
+  const { data: doctors, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
+    queryKey: ['doctorsForAppointment', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
-      const { data, error } = await supabase
-        .rpc('get_doctors_by_clinic_enhanced', { clinic_id: activeClinic.clinic_id });
-      if (error) throw error;
+
+      const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+        clinic_id: activeClinic.clinic_id,
+      });
+
+      if (error) {
+        console.error('Error fetching doctors:', error);
+        throw new Error('Failed to fetch doctors');
+      }
+
       return data || [];
     },
     enabled: open && !!activeClinic?.clinic_id,
   });
-
-  // Always use doctor.id for dropdown and form (no fallback to user_id)
-  const doctors = (doctorsRaw || []).map(d => ({ ...d, id: d.id }));
 
   // Additional effect to set doctor_id when doctors are loaded and appointment exists
   useEffect(() => {

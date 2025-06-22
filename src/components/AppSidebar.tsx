@@ -12,7 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 
 const navItems = [
-  { icon: Home, label: "Dashboard", path: "/", roles: ['superadmin', 'staff', 'doctor'] },
+  { icon: Home, label: "Dashboard", path: "/dashboard", roles: ['superadmin', 'staff', 'doctor'] },
   { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ['staff', 'doctor', 'superadmin'] },
   { icon: Users, label: "Patients", path: "/patients", roles: ['staff', 'doctor', 'superadmin'] },
   // { icon: FileText, label: "Medical Records", path: "/medical-records", roles: ['doctor', 'superadmin'] },
@@ -25,10 +25,12 @@ export function AppSidebar() {
   const { user, activeClinic, activeClinicRole, signOut, loading, profileName } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  // Helper to determine if a link is active, handling root path specifically
+  // Helper to determine if a link is active
   const isActiveLink = (path: string) => {
-    // For the root path '/', it should only be active if the current location is exactly '/'
-    if (path === '/') return location.pathname === '/';
+    // For dashboard, check both /dashboard and root /
+    if (path === '/dashboard') {
+      return location.pathname === '/dashboard' || location.pathname === '/';
+    }
     // For other paths, check if the current path starts with the item's path
     return location.pathname.startsWith(path);
   };
