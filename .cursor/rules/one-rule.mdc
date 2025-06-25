@@ -10,7 +10,7 @@ alwaysApply: true
 **Multi-tenant healthcare web app** for medical clinics (all specialties)  
 **Tech Stack**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, Supabase (RLS + MCP), Google OAuth, React Query, zod, Twilio, Resend  
 **Critical Requirements**: Strict multi-tenancy, role-based access (superadmin, doctor, staff), HIPAA compliance, DPDT compliance (India)
-**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing. Playright MCP to access browser console, take page screenshots, navigate the web, fill out forms, and click on buttons etc..
+**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing. Playwright MCP to access browser console, take page screenshots, navigate the web, fill out forms, and click on buttons etc..
 
 
 

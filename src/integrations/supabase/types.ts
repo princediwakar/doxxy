@@ -817,6 +817,21 @@ export type Database = {
         Returns: {
           membership_id: string
           clinic_id: string
+          role: string
+          department_id: string
+          clinic_name: string
+          clinic_created_by: string
+          clinic_address: string
+          clinic_phone: string
+          clinic_email: string
+          clinic_website: string
+        }[]
+      }
+      get_user_clinic_memberships_optimized: {
+        Args: { user_id_param: string }
+        Returns: {
+          membership_id: string
+          clinic_id: string
           role: Database["public"]["Enums"]["user_role"]
           department_id: string
           clinic_name: string

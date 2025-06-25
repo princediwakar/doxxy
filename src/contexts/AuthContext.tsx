@@ -39,6 +39,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [clinicLoading, setClinicLoading] = useState(false);
   const [userClinics, setUserClinics] = useState<ClinicMemberWithClinic[]>([]);
   const [activeClinic, setActiveClinicState] = useState<ClinicMemberWithClinic | null>(null);
@@ -59,14 +60,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       console.log("AuthContext: Checking profile completion for user:", userId);
-      const { data: profile, error: profileError } = await supabase
+      
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('name, phone')
         .eq('id', userId)
         .maybeSingle();
 
-      if (profileError) {
-        console.error("AuthContext: Error checking profile completion:", profileError);
+      if (error) {
+        console.error("AuthContext: Error checking profile completion:", error);
         setNeedsProfileCompletion(true);
         profileCheckRef.current = userId;
         return true;
@@ -113,11 +115,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       console.log("AuthContext: Checking doctor profile for user:", userId, "in clinic:", clinicId);
-      const { data, error } = await supabase
-        .rpc('user_has_doctor_profile', { 
-          user_id: userId, 
-          clinic_id: clinicId 
-        });
+      
+      const { data: doctorProfile, error } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('clinic_id', clinicId)
+        .maybeSingle();
 
       if (error) {
         console.error("AuthContext: Error checking doctor profile:", error);
@@ -125,10 +129,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return false;
       }
 
-      const hasProfile = data || false;
-      console.log("AuthContext: Doctor profile check result:", hasProfile);
-      setHasDoctorProfile(hasProfile);
-      return hasProfile;
+      const hasDoctorProfile = !!doctorProfile;
+      console.log("AuthContext: Doctor profile check result:", hasDoctorProfile);
+      setHasDoctorProfile(hasDoctorProfile);
+      return hasDoctorProfile;
     } catch (error) {
       console.error("AuthContext: Exception in doctor profile check:", error);
       setHasDoctorProfile(false);
@@ -214,10 +218,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     let fetchedClinics: ClinicMemberWithClinic[] = [];
     let initialActiveClinic: ClinicMemberWithClinic | null = null;
     try {
-      console.log("fetchUserAndClinicData: Starting clinic membership query");
-      // Use the safe RPC function to avoid RLS recursion between clinic_members and clinics
-      const { data: memberData, error: memberError } = await supabase
-        .rpc('get_user_clinic_memberships', { user_id: userFromSession.id });
+      console.log("fetchUserAndClinicData: Fetching user clinic memberships using RPC");
+      
+      const { data: memberData, error: memberError } = await supabase.rpc('get_user_clinic_memberships', {
+        user_id: userFromSession.id
+      });
+      
+      console.log("fetchUserAndClinicData: RPC result", { memberData, memberError });
 
       if (memberError) {
         console.error("fetchUserAndClinicData: Error fetching clinic members:", memberError);
@@ -267,7 +274,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       const savedActiveClinicId = localStorage.getItem('activeClinicId');
       console.log("fetchUserAndClinicData: Saved active clinic ID:", savedActiveClinicId);
-
 
       if (savedActiveClinicId) {
         const foundSavedClinic = fetchedClinics.find(clinic => clinic.clinic_id === savedActiveClinicId);
@@ -335,14 +341,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.removeItem('activeClinicId');
     } finally {
       console.log("fetchUserAndClinicData: Finally block executed, setting clinicLoading to false");
+      console.log("fetchUserAndClinicData: Current state before setting clinicLoading to false:", {
+        initialLoading,
+        clinicLoading,
+        userClinicsLength: userClinics.length,
+        activeClinic: !!activeClinic
+      });
       setClinicLoading(false);
       isFetchingRef.current = false;
+      
+      // Force debug log after state update
+      setTimeout(() => {
+        console.log("fetchUserAndClinicData: State after clinicLoading set to false:", {
+          initialLoading,
+          clinicLoading: false, // should be false now
+          totalLoading: initialLoading || false
+        });
+      }, 100);
     }
   }, [checkProfileCompletion]);
 
   useEffect(() => {
     let mounted = true;
-    let initialLoadComplete = false;
     let currentUserId: string | null = null;
 
     // Safety timeout to ensure initialLoading doesn't stay true forever
@@ -350,7 +370,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (mounted && !initialLoadComplete) {
         console.warn("AuthContext: Safety timeout triggered, forcing initial load complete");
         setInitialLoading(false);
-        initialLoadComplete = true;
+        setInitialLoadComplete(true);
       }
     }, 10000); // 10 second timeout
 
@@ -387,41 +407,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         currentUserId = session?.user?.id ?? null;
 
         if (session?.user) {
-          // Sync profiles table with Auth metadata (only fill empty fields, don't overwrite user data)
-          try {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('id, name, email')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            const authName = session.user.user_metadata?.name || '';
-            const authEmail = session.user.email || '';
-            
-            if (!profile) {
-              // Create missing profile row
-              console.log("AuthContext: Creating new profile with auth metadata");
-              await supabase.from('profiles').insert({ id: session.user.id, name: authName, email: authEmail });
-            } else {
-              // Only update profile fields that are currently empty (don't overwrite user data)
-              const updates: { name?: string; email?: string } = {};
-              if (!profile.name && authName) {
-                updates.name = authName;
-              }
-              if (!profile.email && authEmail) {
-                updates.email = authEmail;
-              }
-              
-              if (Object.keys(updates).length > 0) {
-                console.log("AuthContext: Updating empty profile fields:", updates);
-                await supabase.from('profiles').update(updates).eq('id', session.user.id);
-              } else {
-                console.log("AuthContext: Profile already has data, skipping sync to preserve user input");
-              }
-            }
-          } catch (profileError) {
-            console.error("AuthContext: Error syncing profile:", profileError);
-          }
+          console.log("AuthContext: Processing user session");
           
           if (mounted) {
             await fetchUserAndClinicData(session.user);
@@ -442,7 +428,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (mounted) {
           console.log("AuthContext: Initial loading complete");
           setInitialLoading(false);
-          initialLoadComplete = true; // Allow auth state changes to be handled now
+          setInitialLoadComplete(true); // Allow auth state changes to be handled now
           clearTimeout(safetyTimeout); // Clear the safety timeout
         }
       }
@@ -452,26 +438,46 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
-        console.log(`Auth state changed: ${_event}`, newSession);
+        console.log(`AuthContext: Auth state changed: ${_event}`, { 
+          hasSession: !!newSession, 
+          initialLoadHandled: initialLoadComplete, 
+          currentInitialLoading: initialLoading,
+          currentClinicLoading: clinicLoading
+        });
+        
+        if (!mounted) return;
+        
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED' || _event === 'INITIAL_SESSION') {
-          if (newSession?.user) {
+        // Only handle auth state changes after initial load is complete to prevent loops
+        if (!initialLoadComplete) {
+          console.log("AuthContext: Skipping auth state change handling until initial load complete");
+          return;
+        }
+        
+        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
+          // Only refetch data if the user changed or we don't have clinic data
+          if (newSession?.user && (newSession.user.id !== currentUserId || userClinics.length === 0)) {
+            console.log("AuthContext: User changed or no clinic data, fetching data");
+            currentUserId = newSession.user.id;
             await fetchUserAndClinicData(newSession.user);
           }
         }
         
         if (_event === 'SIGNED_OUT') {
+          currentUserId = null;
           await signOut();
         }
       }
     );
 
     return () => {
+      mounted = false;
+      clearTimeout(safetyTimeout);
       authListener?.subscription.unsubscribe();
     };
-  }, [fetchUserAndClinicData, signOut]);
+  }, []); // Remove dependencies that cause infinite loops - fetchUserAndClinicData, signOut, userClinics, initialLoadComplete
 
   // Effect to re-fetch clinic data on window focus (for data consistency)
   useEffect(() => {
@@ -489,24 +495,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [session, fetchUserAndClinicData]);
 
 
-  const value = useMemo(() => ({
-    session,
-    user,
-    loading: initialLoading || clinicLoading,
-    initialLoading,
-    clinicLoading,
-    signOut,
-    userClinics,
-    activeClinic,
-    setActiveClinicId,
-    activeClinicRole,
-    fetchUserAndClinicData,
-    profileName,
-    needsProfileCompletion,
-    checkProfileCompletion,
-    markProfileComplete,
-    hasDoctorProfile
-  }), [
+  const value = useMemo(() => {
+    const loading = initialLoading || clinicLoading;
+    console.log("AuthContext: Creating context value with loading states:", {
+      initialLoading,
+      clinicLoading,
+      loading,
+      userClinicsLength: userClinics.length,
+      hasActiveClinic: !!activeClinic,
+      hasUser: !!user
+    });
+    
+    return {
+      session,
+      user,
+      loading,
+      initialLoading,
+      clinicLoading,
+      signOut,
+      userClinics,
+      activeClinic,
+      setActiveClinicId,
+      activeClinicRole,
+      fetchUserAndClinicData,
+      profileName,
+      needsProfileCompletion,
+      checkProfileCompletion,
+      markProfileComplete,
+      hasDoctorProfile
+    };
+  }, [
     session, user, initialLoading, clinicLoading, signOut,
     userClinics, activeClinic, setActiveClinicId, activeClinicRole,
     profileName, needsProfileCompletion, checkProfileCompletion,

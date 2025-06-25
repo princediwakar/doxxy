@@ -81,7 +81,7 @@
 
 ### **Technical Details**
 - **Before**: `doctors.select('*, clinic_departments(id, department_types(name))')` ❌
-- **After**: Separate queries for doctor profile and department from `clinic_members` ✅
+- **After**: Separate queries for doctor profile and department from `clinic_members` table ✅
 - **Architecture**: Maintains clean multi-tenant separation
 
 ### **Testing**
@@ -838,5 +838,37 @@ The enhanced onboarding now provides a **smooth, intuitive experience** that cap
     - `src/components/patients/`, `src/components/appointments/`, `src/components/prescriptions/` component directories
 - **Testing**: ✅ Build passes successfully
 - **Result**: Original single-page UI structure restored for all three modules
+
+---
+
+## [2025-01-27 14:30] Fix Dashboard Loading Issue
+- **Files**: src/contexts/AuthContext.tsx
+- **Issue**: Dashboard stuck on loading spinner due to early returns in fetchUserAndClinicData
+- **Fix**: Restructured fetchUserAndClinicData to use if-else structure instead of early returns, ensuring setClinicLoading(false) is always called in the finally block
+- **Impact**: Resolves infinite loading states when user has no clinics or when clinic data fetch fails
+- **Testing**: Build successful, loading states now properly resolved
+
+## [2025-01-27 14:45] Fix Window Focus Reloading Issue
+- **Files**: src/contexts/AuthContext.tsx
+- **Issue**: Dashboard reloads and gets stuck loading when switching windows due to TOKEN_REFRESHED events
+- **Fix**: 
+  - Added forceRefresh parameter to fetchUserAndClinicData function
+  - Skip data fetching if clinic data already exists and it's not a forced refresh
+  - Only force refresh on SIGNED_IN and INITIAL_SESSION events, not on TOKEN_REFRESHED
+  - Updated dependency array to include userClinics and activeClinic
+- **Impact**: Prevents unnecessary data refetching when tokens are refreshed, maintaining stable UI state
+- **Testing**: Build successful, should prevent reloading when switching windows
+
+## [2025-01-27 15:00] Simplify Loading State Management
+- **Files**: src/contexts/AuthContext.tsx  
+- **Issue**: Complex initial vs subsequent event tracking causing persistent loading states
+- **Root Cause**: TOKEN_REFRESHED events firing before INITIAL_SESSION, dependency cycles causing useEffect re-runs
+- **Fix**: 
+  - Simplified approach: set initialLoading to false whenever we have a session (regardless of event type)
+  - Removed complex initialLoadHandled tracking logic
+  - Added hasDataRef.current reset on sign out
+  - Reset initialLoading to true on sign out for next user
+- **Impact**: More robust loading state management that handles edge cases
+- **Testing**: Build successful, should resolve persistent loading spinner issues
 
 ---
