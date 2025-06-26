@@ -29,7 +29,15 @@ const clinicDetailsSchema = z.object({
   address: z.string().min(1, "Address is required").max(200, "Address too long"),
   email: z.string().email("Invalid email address"),
   phone: z.string().min(1, "Phone number is required").regex(/^[+\-\s\d()]+$/, "Invalid phone format"),
-  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  website: z.string().optional().or(z.literal("")).refine((val) => {
+    if (!val || val === "") return true; // Empty is allowed
+    
+    // Allow common website patterns without being too strict
+    const websitePattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+    const domainPattern = /^[\da-z\.-]+\.([a-z\.]{2,6})$/i;
+    
+    return websitePattern.test(val) || domainPattern.test(val);
+  }, { message: "Please enter a valid website (e.g., example.com or https://example.com)" }),
 });
 
 type ClinicDetailsForm = z.infer<typeof clinicDetailsSchema>;
@@ -312,11 +320,11 @@ const ClinicDetailsManagement = () => {
                   </label>
                   <Input
                     name="website"
-                    type="url"
+                    type="text"
                     value={form.website}
                     onChange={handleChange}
                     disabled={updateClinicMutation.isPending}
-                    placeholder="https://www.clinic.com"
+                    placeholder="www.clinic.com"
                     className={hasFieldError('website') ? 'border-red-500' : ''}
                   />
                   {hasFieldError('website') && (

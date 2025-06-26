@@ -114,7 +114,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       if (!editedName.trim()) {
         errors.name = 'Name is required';
       }
-      if (editedPhone && !/^\+?[\d\s\-()]+$/.test(editedPhone)) {
+      if (editedPhone && !/^\+?[0-9]{10,15}$/.test(editedPhone)) {
         errors.phone = 'Please enter a valid phone number';
       }
       
@@ -153,16 +153,13 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
 
       if (authError) throw authError;
 
-      // Update or create profile in profiles table
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user!.id,
-          name: editedName.trim(),
-          email: user!.email,
-          phone: editedPhone.trim() || null,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'id' });
+      // Use the standardized profile update function
+      const { data: profileData, error: profileError } = await supabase
+        .rpc('update_profile', {
+          p_user_id: user!.id,
+          p_name: editedName.trim(),
+          p_phone: editedPhone.trim() || null
+        });
 
       if (profileError) throw profileError;
     },

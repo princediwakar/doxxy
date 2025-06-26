@@ -34,7 +34,15 @@ const clinicDetailsSchema = z.object({
   address: z.string().optional(),
   email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal("")),
   phone: z.string().optional(),
-  website: z.string().url({ message: "Invalid URL." }).optional().or(z.literal("")),
+  website: z.string().optional().or(z.literal("")).refine((val) => {
+    if (!val || val === "") return true; // Empty is allowed
+    
+    // Allow common website patterns without being too strict
+    const websitePattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
+    const domainPattern = /^[\da-z\.-]+\.([a-z\.]{2,6})$/i;
+    
+    return websitePattern.test(val) || domainPattern.test(val);
+  }, { message: "Please enter a valid website (e.g., example.com or https://example.com)" }),
 });
 
 type ClinicDetailsForm = z.infer<typeof clinicDetailsSchema>;
@@ -313,7 +321,7 @@ const CreateClinicPage = () => {
                   <FormItem>
                     <FormLabel>Clinic Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., City Medical Center" {...field} />
+                      <Input placeholder="e.g., Neurovision" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -324,9 +332,9 @@ const CreateClinicPage = () => {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address (Optional)</FormLabel>
+                    <FormLabel>Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 123 Main St" {...field} />
+                      <Input placeholder="e.g., 123, Connaught Place, New Delhi" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -337,9 +345,9 @@ const CreateClinicPage = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email (Optional)</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="e.g., info@clinic.com" {...field} />
+                      <Input type="email" placeholder="e.g., email@clinic.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -350,9 +358,9 @@ const CreateClinicPage = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone (Optional)</FormLabel>
+                    <FormLabel>Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="e.g., +1 123 456 7890" {...field} />
+                      <Input type="tel" placeholder="e.g., 98765 43210" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -363,11 +371,11 @@ const CreateClinicPage = () => {
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type="url" placeholder="e.g., https://www.clinic.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
+                                          <FormLabel>Website</FormLabel>
+                      <FormControl>
+                       <Input type="text" placeholder="e.g., www.clinic.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
                   </FormItem>
                 )}
               />

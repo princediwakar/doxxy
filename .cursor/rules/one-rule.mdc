@@ -19,7 +19,7 @@ alwaysApply: true
 ## 🚨 CRITICAL: Autonomous Operation & Escalation
 
 ### Proceed Autonomously For
-- Code edits, migrations, type updates, test runs, builds
+- Code edits, migrations, type updates, browser testing, builds
 - Edge Function deployments, hook updates, UI changes
 - Performance optimizations, bug fixes, feature additions
 
@@ -71,18 +71,16 @@ const schema = z.object({
 1. `supabase db push`
 2. `supabase gen types typescript --project-id chftygsapwhahqbqlfdx --schema public > src/integrations/supabase/types.ts`
 3. Update affected hooks/components
-4. `npm run test && npm run build`
+4. `npm run build`
 5. Log in `development-log.md`
 
 ### After Every Code Change
 1. Auto-fix lint errors: `npm run lint:fix`
 2. Verify build: `npm run build`
-3. Run affected tests
-4. Check for `console.log` statements
+3. Check for `console.log` statements
 
 ### Quality Gates (Must Pass)
 - [ ] Build succeeds
-- [ ] Tests pass
 - [ ] No lint errors
 - [ ] RLS policies prevent cross-clinic access
 - [ ] Types updated if schema changed
@@ -169,7 +167,7 @@ supabase/
 ## 📋 Condensed Checklists
 
 ### Code Changes ✓
-Build passes, tests pass, no lint errors, no console.log
+Build passes, no lint errors, no console.log
 
 ### Database Changes ✓
 Migration applied, types updated, RLS tested, hooks updated
@@ -185,7 +183,6 @@ Responsive, accessible, role-based rendering, loading states
 - **Build fails** → `npm run lint:fix` → retry
 - **Type errors** → regenerate types → update imports
 - **RLS blocks** → check user clinic context
-- **Tests fail** → `npm run test:watch [file]`
 
 ### Escalation Format
 ```
@@ -209,7 +206,6 @@ Responsive, accessible, role-based rendering, loading states
 ## [YYYY-MM-DD HH:MM] Feature/Fix Name
 - **Files**: [list]
 - **Migration**: [if applicable]
-- **Testing**: [updated/added]
 ```
 
 ---

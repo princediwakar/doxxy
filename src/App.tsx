@@ -38,33 +38,33 @@ const PageLoader = () => (
 const AppRoutes = () => {
   return (
     <Suspense fallback={<PageLoader />}>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/complete-profile" element={<CompleteProfile />} />
-        
-        {/* Root route - redirect to dashboard with authentication check */}
-        <Route path="/" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
-        
-        {/* Protected routes handled by PrivateRoute */}
-        <Route element={<PrivateRoute />}> 
-          <Route path="/create-clinic" element={<CreateClinicPage />} />
-          <Route element={<Layout />}> {/* Layout renders for main app paths */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/patients/*" element={<Patients />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/prescriptions" element={<Prescriptions />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/consultation/:appointmentId" element={<Consultation />} />
-            <Route path="/profile" element={<Profile />} />
-          </Route>
+    <Routes>
+      {/* Public routes */}
+      <Route path="/auth" element={<Auth />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/complete-profile" element={<CompleteProfile />} />
+      
+      {/* Root route - redirect to dashboard with authentication check */}
+      <Route path="/" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
+      
+      {/* Protected routes handled by PrivateRoute */}
+      <Route element={<PrivateRoute />}> 
+        <Route path="/create-clinic" element={<CreateClinicPage />} />
+        <Route element={<Layout />}> {/* Layout renders for main app paths */}
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/patients/*" element={<Patients />} />
+          <Route path="/appointments" element={<Appointments />} />
+          <Route path="/prescriptions" element={<Prescriptions />} />
+          <Route path="/billing" element={<Billing />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/consultation/:appointmentId" element={<Consultation />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      </Route>
+      
+      <Route path="*" element={<NotFound />} />
+    </Routes>
     </Suspense>
   );
 };

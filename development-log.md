@@ -904,3 +904,92 @@ The enhanced onboarding now provides a **smooth, intuitive experience** that cap
   - Uses correct data types matching actual table schema
 
 ---
+
+## [2025-01-08 14:45] Add RLS Policies to Medicines Table
+
+### Security Enhancement Applied
+- **Issue**: Medicines table lacked Row Level Security (RLS) policies
+- **Solution**: Added comprehensive RLS policies for global medicine reference database
+
+### Policies Implemented
+- **Migration**: `20250108144500_add_medicines_table_rls_policies.sql`
+- **RLS Enabled**: ✅ `ALTER TABLE medicines ENABLE ROW LEVEL SECURITY`
+
+### Access Control Rules
+1. **READ Access**: ✅ All authenticated users can search/view medicines
+   - Policy: `"Enable read access for all authenticated users"`
+   - Reason: All clinics need to search medicines for prescriptions
+
+2. **WRITE Access**: 🔒 Restricted to service role only
+   - **INSERT**: Only service role (for data imports/admin operations)
+   - **UPDATE**: Only service role (for data corrections/updates)  
+   - **DELETE**: Only service role (for data cleanup)
+
+### Performance Optimizations Added
+- ✅ **Search Indexes**: Full-text search on medicine names and compositions
+- ✅ **Active Filter Index**: Fast filtering of non-discontinued medicines
+- ✅ **Comment Documentation**: Clear table purpose explanation
+
+### Testing Results
+- ✅ Read access works for authenticated users
+- ✅ Medicine search functionality preserved
+- ✅ MedicineCombobox component unaffected
+- ✅ Prescription creation flow maintained
+
+### Security Benefits
+- 🔒 **Data Integrity**: Prevents unauthorized medicine data modification
+- 🛡️ **Multi-tenant Safe**: Global access pattern with controlled writes
+- 📚 **Reference Data**: Maintains medicines as authoritative reference source
+- 🚀 **Performance**: Optimized indexes for medicine search operations
+
+---
+
+## [2025-01-06 22:45] Fixed Authentication Infinite Redirect Loop
+- **Issue**: Users completing their profile were stuck in infinite redirect loop between complete-profile and dashboard
+- **Root Cause**: Profile completion check cache logic was preventing proper state updates after profile completion
+- **Files Modified**: 
+  - `src/contexts/AuthContext.tsx` - Fixed checkProfileCompletion and markProfileComplete functions
+- **Solution**: 
+  - Simplified caching logic in checkProfileCompletion to only cache when profile is complete
+  - Updated markProfileComplete to properly set completion state without re-checking database
+  - Fixed race condition between profile update and state synchronization
+- **Result**: Profile completion flow now works correctly without infinite redirects
+
+## [2025-01-06 23:00] Fixed Profile Creation Issues and Database Triggers
+- **Issue**: Users completing profile were still redirected to complete-profile page on refresh due to missing profile records in database
+- **Root Cause**: 
+  - CompleteProfile component was using UPDATE instead of UPSERT, failing when no profile record existed
+  - Auth trigger `handle_new_user()` had structural mismatches with profiles table
+- **Files Modified**: 
+  - `src/pages/CompleteProfile.tsx` - Changed UPDATE to UPSERT operation
+  - Database migration `fix_profile_creation_trigger` - Fixed trigger function and created missing profile
+- **Solutions**: 
+  - **Frontend**: Changed `.update()` to `.upsert()` to handle both INSERT and UPDATE cases
+  - **Database**: Recreated `handle_new_user()` trigger function with proper SECURITY DEFINER and correct column mapping
+  - **Data**: Created missing profile record for existing user with Google OAuth metadata
+- **Trigger Logic**: 
+  - Automatically creates profile on user signup using `raw_user_meta_data` from Google OAuth
+  - Uses UPSERT to handle conflicts gracefully
+  - Maps 'name' or 'full_name' from OAuth metadata to profile.name
+- **Result**: Profile completion flow now works correctly, with automatic profile creation for new users and persistent state on page refresh
+
+## [2025-01-06 23:15] Made Website URL Validation More Flexible
+- **Issue**: Website URL validation was too rigid, requiring HTTPS protocol and strict URL format
+- **User Request**: Make website validation less rigid about HTTPS requirement
+- **Files Modified**: 
+  - `src/pages/CreateClinicPage.tsx` - Updated website validation in clinic details schema
+  - `src/components/superadmin/ClinicDetailsManagement.tsx` - Updated website validation schema
+- **Solution**: 
+  - Replaced strict `z.string().url()` with flexible regex patterns
+  - Now accepts websites with or without protocol (http/https)
+  - Supports common formats: `example.com`, `www.example.com`, `https://example.com`
+  - Better user-friendly error message with examples
+- **Pattern Support**:
+  - `example.com` ✓
+  - `www.example.com` ✓  
+  - `https://example.com` ✓
+  - `http://example.com` ✓
+  - `example.com/path` ✓
+- **Result**: Users can now enter website URLs in natural formats without being forced to include protocol
+
+---

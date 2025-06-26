@@ -2,7 +2,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+
 
 console.log("invite-member function invoked");
 
@@ -238,28 +238,17 @@ serve(async (req) => {
     }
 
     // 4. Create or update profile entry using the user ID
-    // Only set name if provided; otherwise, let it be null (users will complete profile later)
+    // Use the standardized profile update function
     const { data: profileData, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .upsert([{ 
-        id: invitedUserId, 
-        name: name || null, 
-        email, 
-        phone: body.phone || null 
-      }], { onConflict: 'id' })
-      .select()
-      .single();
+      .rpc('update_profile', { 
+        p_user_id: invitedUserId,
+        p_name: name || null,
+        p_phone: body.phone || null
+      });
 
-    console.log('invite-member: Profile entry upsert result:', profileData, 'Error:', profileError);
     if (profileError) {
-      console.error('invite-member: Error upserting profile entry:', profileError);
-      console.error('Error creating or updating profile entry:', profileError.message);
-      return new Response(JSON.stringify({
-        success: false,
-        userId: invitedUserId,
-        doctor: doctorDataResponse, // Include doctor data even if profile fails, for debugging
-        error: `Failed to create or update profile entry: ${profileError.message}`
-      }), {
+      console.error('Error updating profile:', profileError);
+      return new Response(JSON.stringify({ error: `Failed to update profile: ${profileError.message}` }), {
         status: 500,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       });

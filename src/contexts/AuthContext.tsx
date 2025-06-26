@@ -53,9 +53,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Centralized profile completion check function
   const checkProfileCompletion = useCallback(async (userId: string): Promise<boolean> => {
-    // Prevent duplicate checks for the same user
-    if (profileCheckRef.current === userId) {
-      return needsProfileCompletion;
+    // Skip check if we already know profile is complete for this user
+    if (profileCheckRef.current === userId && needsProfileCompletion === false) {
+      console.log("AuthContext: Profile already marked complete for user:", userId);
+      return false;
     }
 
     try {
@@ -70,7 +71,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (error) {
         console.error("AuthContext: Error checking profile completion:", error);
         setNeedsProfileCompletion(true);
-        profileCheckRef.current = userId;
+        profileCheckRef.current = null;
         return true;
       }
 
@@ -84,27 +85,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       setNeedsProfileCompletion(incomplete);
-      profileCheckRef.current = userId;
+      profileCheckRef.current = incomplete ? null : userId;
       return incomplete;
     } catch (error) {
       console.error("AuthContext: Exception in profile completion check:", error);
       setNeedsProfileCompletion(true);
-      profileCheckRef.current = userId;
+      profileCheckRef.current = null;
       return true;
     }
   }, [needsProfileCompletion]);
 
   // Function to mark profile as complete (called after successful profile update)
   const markProfileComplete = useCallback(async () => {
-    console.log("AuthContext: Marking profile as complete");
-    setNeedsProfileCompletion(false);
-    profileCheckRef.current = null; // Reset cache
-    
-    // Also trigger a fresh profile check to ensure consistency
-    if (user?.id) {
-      await checkProfileCompletion(user.id);
+    if (!user?.id) {
+      console.warn("AuthContext: Cannot mark profile complete - no user ID");
+      return;
     }
-  }, [user?.id, checkProfileCompletion]);
+    
+    console.log("AuthContext: Marking profile as complete for user:", user.id);
+    setNeedsProfileCompletion(false);
+    profileCheckRef.current = user.id; // Cache that this user's profile is complete
+    console.log("AuthContext: Profile completion state updated, profile is now complete");
+  }, [user?.id]);
 
   // Function to check if user has doctor profile in active clinic
   const checkDoctorProfile = useCallback(async (userId: string, clinicId: string | null): Promise<boolean> => {

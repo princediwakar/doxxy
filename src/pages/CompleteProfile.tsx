@@ -12,7 +12,12 @@ const supabase = getSupabase();
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
-  phone: z.string().min(6, "Phone is required"),
+  phone: z.string()
+    .min(10, "Phone number must be at least 10 digits")
+    .max(15, "Phone number must be at most 15 digits")
+    .regex(/^[0-9]+$/, "Phone number must contain only digits")
+    .optional()
+    .nullable(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -24,6 +29,8 @@ const CompleteProfile = () => {
   const [form, setForm] = useState<ProfileForm>({ name: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
 
   useEffect(() => {
     if (!user) return;
@@ -31,6 +38,7 @@ const CompleteProfile = () => {
     const prefillName = location.state?.prefillName || user.user_metadata?.name || "";
     const prefillEmail = location.state?.prefillEmail || user.email || "";
     setEmail(prefillEmail);
+    
     // Fetch profile from Supabase
     supabase
       .from("profiles")
@@ -55,7 +63,12 @@ const CompleteProfile = () => {
   if (!user) return null;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    // For phone, strip all non-digit characters
+    const sanitizedValue = name === 'phone' 
+      ? value.replace(/[^\d]/g, '')
+      : value;
+    setForm({ ...form, [name]: sanitizedValue });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,15 +81,29 @@ const CompleteProfile = () => {
     setLoading(true);
     
     try {
-      // Update profile
-      const { error } = await supabase
-        .from("profiles")
-        .update({ name: form.name, phone: form.phone })
-        .eq("id", user.id);
+      // Call the standardized profile update function
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          name: form.name,
+          phone: form.phone || null
+        })
+        .eq('id', user.id);
       
       if (error) {
         console.error("CompleteProfile: Error updating profile:", error);
-        toast.error("Failed to update profile: " + error.message);
+        
+        // Handle potential race conditions with retries
+        if (retryCount < MAX_RETRIES && error.message.includes('profile not found')) {
+          setRetryCount(prev => prev + 1);
+          // Wait briefly before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          handleSubmit(e);
+          return;
+        }
+        
+        toast.error("Failed to save profile: " + error.message);
         return;
       }
 
@@ -109,11 +136,25 @@ const CompleteProfile = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block mb-1 font-medium">Full Name</label>
-              <Input name="name" value={form.name} onChange={handleChange} disabled={loading} required />
+              <Input 
+                name="name" 
+                value={form.name} 
+                onChange={handleChange} 
+                disabled={loading} 
+                required 
+                placeholder="Enter your full name"
+              />
             </div>
             <div>
               <label className="block mb-1 font-medium">Phone</label>
-              <Input name="phone" value={form.phone} onChange={handleChange} disabled={loading} required />
+              <Input 
+                name="phone" 
+                value={form.phone || ''} 
+                onChange={handleChange} 
+                disabled={loading} 
+                placeholder="9876543210"
+              />
+              
             </div>
             {email && (
               <div>
