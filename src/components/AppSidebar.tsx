@@ -1,6 +1,6 @@
 // File: src/components/app-sidebar.tsx
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Users, User, CalendarPlus, CreditCard, Home, LogOut, Settings, FileText, Pill, Stethoscope } from "lucide-react";
+import { Users, CalendarPlus, CreditCard, Home, LogOut, Settings, Pill, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +15,6 @@ const navItems = [
   { icon: Home, label: "Dashboard", path: "/dashboard", roles: ['superadmin', 'staff', 'doctor'] },
   { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ['staff', 'doctor', 'superadmin'] },
   { icon: Users, label: "Patients", path: "/patients", roles: ['staff', 'doctor', 'superadmin'] },
-  // { icon: FileText, label: "Medical Records", path: "/medical-records", roles: ['doctor', 'superadmin'] },
   { icon: Pill, label: "Prescriptions", path: "/prescriptions", roles: ['doctor', 'superadmin'] },
   { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'superadmin'] },
   { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
@@ -131,7 +130,7 @@ export function AppSidebar() {
               <Separator />
               <div className="p-2">
                   <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => { navigate('/profile'); }}>
-                    <User size={16} className="h-4 w-4 mr-3" />
+                    <User2 size={16} className="h-4 w-4 mr-3" />
                     View Profile
                  </Button>
                  <Button variant="ghost" className="w-full justify-start mt-1 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={signOut}>

@@ -81,6 +81,7 @@ export type Database = {
           discount_percentage: number | null
           id: string
           invoice_number: string | null
+          items: Json | null
           notes: string | null
           patient_id: string
           service_items: Json | null
@@ -97,6 +98,7 @@ export type Database = {
           discount_percentage?: number | null
           id?: string
           invoice_number?: string | null
+          items?: Json | null
           notes?: string | null
           patient_id: string
           service_items?: Json | null
@@ -113,6 +115,7 @@ export type Database = {
           discount_percentage?: number | null
           id?: string
           invoice_number?: string | null
+          items?: Json | null
           notes?: string | null
           patient_id?: string
           service_items?: Json | null

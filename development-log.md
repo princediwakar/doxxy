@@ -872,3 +872,35 @@ The enhanced onboarding now provides a **smooth, intuitive experience** that cap
 - **Testing**: Build successful, should resolve persistent loading spinner issues
 
 ---
+
+## [2025-01-08 14:25] Fix get_doctors_by_clinic Function Issue
+
+### Problem Fixed
+- **Issue**: Superadmin with medical profile not appearing in doctors dropdown in AppointmentModal
+- **Root Cause**: `get_doctors_by_clinic` function was failing due to:
+  1. Incorrect table reference (`departments` instead of `department_types`)
+  2. Data type mismatch (`medical_license_expiry` column is `date` but function expected `timestamp with time zone`)
+
+### Solution Applied
+- **Migration**: `20250108142500_fix_get_doctors_by_clinic_table_reference.sql`
+  - Fixed table joins to use correct table structure:
+    - `clinic_departments` → `department_types` (via `department_type_id`)
+    - Updated data type for `medical_license_expiry` from `timestamp with time zone` to `date`
+- **Files Updated**:
+  - `supabase/migrations/20250108142500_fix_get_doctors_by_clinic_table_reference.sql`
+  - `supabase/migrations/20250108142600_fix_get_doctors_by_clinic_data_types.sql`
+  - `src/integrations/supabase/types.ts` (regenerated types)
+
+### Testing
+- ✅ Function now returns superadmin doctors correctly
+- ✅ Verified Prince Diwakar (superadmin with medical profile) appears in results
+- ✅ Build passes with updated types
+- ✅ AppointmentModal should now show superadmin doctors in dropdown
+
+### Technical Details
+- Function `get_doctors_by_clinic` now properly:
+  - Joins `doctors` → `clinic_members` → `clinic_departments` → `department_types`
+  - Returns all active doctors including superadmins with medical profiles
+  - Uses correct data types matching actual table schema
+
+---

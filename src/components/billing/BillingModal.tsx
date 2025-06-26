@@ -4,25 +4,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format, parseISO } from 'date-fns';
 import { 
-  Calculator, 
   Plus, 
   Trash2, 
-  FileText, 
-  User, 
-  Calendar,
-  Stethoscope,
-  Pill,
-  IndianRupee
+
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -40,20 +30,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { Database, Enums, Constants } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { Patient, Appointment } from '@/types/patients';
+import { Textarea } from '../ui/textarea';
 
 const supabase = getSupabase();
 
@@ -149,10 +134,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const { activeClinic } = useAuth();
-  const [billingType, setBillingType] = useState<'simple' | 'itemized'>('simple');
-  const [serviceItems, setServiceItems] = useState<ServiceItem[]>([
-    { description: '', quantity: 1, rate: 0, amount: 0 }
-  ]);
+  const [billingType, setBillingType] = useState<'simple' | 'itemized'>('itemized');
 
   const form = useForm<BillingFormValues>({
     resolver: zodResolver(billingFormSchema),
@@ -163,8 +145,8 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       description: bill?.description || '',
       invoice_number: bill?.invoice_number || '',
       status: bill ? bill.status : "Pending",
-      billing_type: 'simple',
-      service_items: [],
+      billing_type: 'itemized',
+      service_items: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
       discount_percentage: 0,
       tax_percentage: 0,
       notes: '',
@@ -176,6 +158,8 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       // Auto-fill patient from appointment if available
       const patientId = bill?.patient_id || patient?.id || appointment?.patient_id || '';
       
+      const serviceItemsData = (bill?.service_items as unknown as ServiceItem[]) || [{ description: '', quantity: 1, rate: 0, amount: 0 }];
+      
       const defaultValues = {
         patient_id: patientId,
         appointment_id: bill?.appointment_id || appointment?.id || '',
@@ -183,15 +167,14 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
         description: bill?.description || '',
         invoice_number: bill?.invoice_number || '',
         status: bill ? bill.status : "Pending",
-        billing_type: (bill?.billing_type as 'simple' | 'itemized') || 'simple',
-        service_items: (bill?.service_items as unknown as ServiceItem[]) || [],
+        billing_type: 'itemized' as const,
+        service_items: serviceItemsData,
         discount_percentage: bill?.discount_percentage || 0,
         tax_percentage: bill?.tax_percentage || 0,
         notes: bill?.notes || '',
       };
       form.reset(defaultValues);
-      setBillingType((bill?.billing_type as 'simple' | 'itemized') || 'simple');
-      setServiceItems((bill?.service_items as unknown as ServiceItem[]) || [{ description: '', quantity: 1, rate: 0, amount: 0 }]);
+      setBillingType('itemized');
     }
   }, [open, bill, patient, appointment, form]);
 
@@ -274,17 +257,22 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   }, [selectedPatientId, selectedAppointmentId, appointments, form]);
 
   const addServiceItem = () => {
-    setServiceItems([...serviceItems, { description: '', quantity: 1, rate: 0, amount: 0 }]);
+    const currentItems = form.getValues('service_items') || [];
+    const newItems = [...currentItems, { description: '', quantity: 1, rate: 0, amount: 0 }];
+    form.setValue('service_items', newItems);
   };
 
   const removeServiceItem = (index: number) => {
-    if (serviceItems.length > 1) {
-      setServiceItems(serviceItems.filter((_, i) => i !== index));
+    const currentItems = form.getValues('service_items') || [];
+    if (currentItems.length > 1) {
+      const newItems = currentItems.filter((_, i) => i !== index);
+      form.setValue('service_items', newItems);
     }
   };
 
   const updateServiceItem = (index: number, field: keyof ServiceItem, value: string | number) => {
-    const updatedItems = [...serviceItems];
+    const currentItems = form.getValues('service_items') || [];
+    const updatedItems = [...currentItems];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
     
     // Calculate amount when quantity or rate changes
@@ -292,14 +280,17 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       updatedItems[index].amount = updatedItems[index].quantity * updatedItems[index].rate;
     }
     
-    setServiceItems(updatedItems);
+    form.setValue('service_items', updatedItems);
   };
 
   const addServiceTemplate = (template: ServiceTemplate) => {
-    setServiceItems([...serviceItems, { ...template, amount: template.quantity * template.rate }]);
+    const currentItems = form.getValues('service_items') || [];
+    const newItems = [...currentItems, { ...template, amount: template.quantity * template.rate }];
+    form.setValue('service_items', newItems);
   };
 
   const calculateTotals = () => {
+    const serviceItems = form.watch('service_items') || [];
     const subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
     const discountAmount = subtotal * ((form.watch('discount_percentage') || 0) / 100);
     const taxableAmount = subtotal - discountAmount;
@@ -318,17 +309,10 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     mutationFn: async (values: BillingFormValues) => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
       
-      let finalAmount = 0;
-      let finalDescription = '';
-
-      if (values.billing_type === 'simple') {
-        finalAmount = values.amount || 0;
-        finalDescription = values.description || '';
-      } else {
-        const totals = calculateTotals();
-        finalAmount = totals.total;
-        finalDescription = `Itemized bill with ${serviceItems.length} service(s)`;
-      }
+      const totals = calculateTotals();
+      const serviceItems = form.getValues('service_items') || [];
+      const finalAmount = totals.total;
+      const finalDescription = `Itemized bill with ${serviceItems.length} service(s)`;
 
       const billData = {
         clinic_id: activeClinic.clinic_id,
@@ -338,16 +322,11 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
         description: finalDescription,
         invoice_number: values.invoice_number,
         status: values.status,
-        // Store itemized data in a JSON field if needed
-        ...(values.billing_type === 'itemized' && {
-          metadata: {
-            billing_type: 'itemized',
-            service_items: serviceItems,
-            discount_percentage: values.discount_percentage,
-            tax_percentage: values.tax_percentage,
-            notes: values.notes,
-          }
-        })
+        // Store itemized data
+        service_items: serviceItems,
+        discount_percentage: values.discount_percentage,
+        tax_percentage: values.tax_percentage,
+        notes: values.notes,
       };
 
       let result;
@@ -404,173 +383,79 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center space-x-2">
-              <FileText className="h-5 w-5" />
-              <span>Bill Details</span>
-            </DialogTitle>
-          </DialogHeader>
-
-          <ScrollArea className="flex-1 max-h-[70vh] pr-4">
-            <div className="space-y-6">
-              {/* Header Information */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            {/* Invoice Header */}
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
                       <div>
-                        <h3 className="text-lg font-semibold">
-                          Invoice #{bill.invoice_number || 'N/A'}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Created on {format(parseISO(bill.created_at!), 'PPP')}
-                        </p>
+                <h1 className="text-2xl font-bold tracking-wide">INVOICE</h1>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Invoice #: <span className="font-medium">{bill.invoice_number || 'N/A'}</span>
                       </div>
+                <div className="text-sm text-muted-foreground">
+                  Date: <span className="font-medium">{format(parseISO(bill.created_at!), 'PPP')}</span>
                     </div>
-                    <Badge 
-                      variant={getStatusBadgeVariant(bill.status)}
-                      className={bill.status === 'Paid' ? 'bg-green-500/80' : ''}
-                    >
+              </div>
+              <Badge variant={getStatusBadgeVariant(bill.status)} className="text-lg px-4 py-2">
                       {bill.status}
                     </Badge>
                   </div>
-                </CardHeader>
-              </Card>
 
-              {/* Patient Information */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg"><User />Patient Information</CardTitle>
-                </CardHeader>
-                <CardContent>
+            {/* Patient & Clinic Info */}
+            <div className="flex justify-between mb-8">
+              <div>
+                <div className="font-semibold mb-1">Billed To:</div>
                   {isLoadingViewedPatient ? (
                     <p>Loading patient information...</p>
                   ) : viewedPatient ? (
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div><span className="font-medium">Name:</span> {viewedPatient.name}</div>
-                      <div><span className="font-medium">Patient ID:</span> {viewedPatient.medical_id || 'N/A'}</div>
-                      <div><span className="font-medium">Phone:</span> {viewedPatient.phone || 'N/A'}</div>
-                      <div><span className="font-medium">Email:</span> {viewedPatient.email || 'N/A'}</div>
+                  <div className="text-sm">
+                    <div>{viewedPatient.name}</div>
+                    <div>ID: {viewedPatient.medical_id || 'N/A'}</div>
+                    <div>{viewedPatient.phone || ''}</div>
+                    <div>{viewedPatient.email || ''}</div>
                     </div>
                   ) : (
                     <p className="text-red-500">Unable to load patient information.</p>
                   )}
-                </CardContent>
-              </Card>
+                          </div>
+              <div className="text-right">
+                <div className="font-semibold mb-1">Clinic:</div>
+                <div className="text-sm">
+                  {activeClinic?.clinics?.name || 'Clinic'}
+                  <div>{activeClinic?.clinics?.address || ''}</div>
+                  <div>{activeClinic?.clinics?.email || ''}</div>
+                  <div>{activeClinic?.clinics?.phone || ''}</div>
+                          </div>
+                          </div>
+                          </div>
 
-              {/* Appointment Information */}
-              {bill.appointment_id && appointments && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>Related Appointment</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {(() => {
-                      const appointment = appointments.find(a => a.id === bill.appointment_id);
-                      return appointment ? (
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium text-muted-foreground">Date:</span>
-                            <p className="font-medium">{appointment.date}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">Time:</span>
-                            <p>{appointment.time}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">Doctor:</span>
-                            <p>{appointment.doctor_name}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium text-muted-foreground">Department:</span>
-                            <p>{appointment.department_name || 'N/A'}</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">Appointment information not available</p>
-                      );
-                    })()}
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Bill Details */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <IndianRupee className="h-4 w-4" />
-                    <span>Billing Details</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium text-muted-foreground">Amount:</span>
-                      <div className="text-lg font-bold">
-                        {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(bill.amount || 0)}
+            {/* Service Items Table */}
+            <div className="mb-8">
+              <table className="min-w-full border rounded-lg overflow-hidden">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 text-left w-2/5">Description</th>
+                    <th className="px-2 py-2 text-right w-16">Qty</th>
+                    <th className="px-2 py-2 text-right w-20">Rate</th>
+                    <th className="px-2 py-2 text-right w-20">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {((bill.service_items as unknown) as ServiceItem[]).map((item, index) => (
+                    <tr key={index} className="border-b last:border-b-0">
+                      <td className="px-4 py-2 w-2/5">{item.description}</td>
+                      <td className="px-2 py-2 text-right w-16">{item.quantity}</td>
+                      <td className="px-2 py-2 text-right w-20">₹{item.rate?.toFixed(2)}</td>
+                      <td className="px-2 py-2 text-right font-medium w-20">₹{item.amount?.toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
                       </div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-muted-foreground">Status:</span>
-                      <div className="flex flex-col gap-2">
-                        <Label>Status</Label>
-                        <Badge variant={getStatusBadgeVariant(bill.status)}>
-                          {bill.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-muted-foreground">Billing Type:</span>
-                      <p className="font-medium capitalize">{bill.billing_type || 'Simple'}</p>
-                    </div>
-                    <div>
-                      <span className="font-medium text-muted-foreground">Created:</span>
-                      <p>{format(parseISO(bill.created_at!), 'PPP')}</p>
-                    </div>
-                  </div>
-                  {bill.description && (
-                    <div>
-                      <span className="font-medium text-muted-foreground">Description:</span>
-                      <p className="bg-muted/30 p-3 rounded-md whitespace-pre-wrap">{bill.description}</p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
 
-              {/* Itemized Services */}
-              {bill.service_items && Array.isArray(bill.service_items) && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Calculator className="h-4 w-4" />
-                      <span>Service Items</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {bill.service_items!.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center p-3 bg-muted/30 rounded-md">
-                          <div className="flex-1">
-                            <p className="font-medium">{item.description}</p>
-                            <p className="text-sm text-muted-foreground">
-                              Qty: {item.quantity} × ₹{item.rate?.toFixed(2)}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-medium">₹{item.amount?.toFixed(2)}</p>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Totals */}
-                      <Separator />
-                      <div className="space-y-2">
+            {/* Summary Section */}
+            <div className="flex flex-col items-end mb-8">
                         {(() => {
-                          const serviceItems = bill.service_items!;
+                const serviceItems = ((bill.service_items as unknown) as ServiceItem[]);
                           const subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
                           const discountPercent = bill.discount_percentage || 0;
                           const taxPercent = bill.tax_percentage || 0;
@@ -578,61 +463,48 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                           const taxableAmount = subtotal - discountAmount;
                           const taxAmount = (taxableAmount * taxPercent) / 100;
                           const total = taxableAmount + taxAmount;
-                          
                           return (
-                            <>
-                              <div className="flex justify-between text-sm">
+                  <div className="w-full max-w-xs">
+                    <div className="flex justify-between py-1">
                                 <span>Subtotal:</span>
                                 <span>₹{subtotal.toFixed(2)}</span>
                               </div>
                               {discountPercent > 0 && (
-                                <div className="flex justify-between text-sm text-green-600">
+                      <div className="flex justify-between py-1 text-green-600">
                                   <span>Discount ({discountPercent}%):</span>
                                   <span>-₹{discountAmount.toFixed(2)}</span>
                                 </div>
                               )}
                               {taxPercent > 0 && (
-                                <div className="flex justify-between text-sm">
+                      <div className="flex justify-between py-1">
                                   <span>Tax ({taxPercent}%):</span>
                                   <span>₹{taxAmount.toFixed(2)}</span>
                                 </div>
                               )}
-                              <Separator />
-                              <div className="flex justify-between font-bold">
+                    <div className="border-t my-2"></div>
+                    <div className="flex justify-between font-bold text-lg">
                                 <span>Total:</span>
                                 <span>₹{total.toFixed(2)}</span>
                               </div>
-                            </>
+                  </div>
                           );
                         })()}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* Notes */}
               {bill.notes && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <FileText className="h-4 w-4" />
-                      <span>Notes</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="bg-muted/30 p-3 rounded-md whitespace-pre-wrap">{bill.notes}</p>
-                  </CardContent>
-                </Card>
-              )}
+              <div className="mt-4">
+                <div className="font-semibold mb-1">Notes:</div>
+                <div className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">{bill.notes}</div>
             </div>
-          </ScrollArea>
+            )}
 
-          <DialogFooter>
+            <div className="flex justify-end mt-8">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Close
             </Button>
-          </DialogFooter>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     );
@@ -641,402 +513,309 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <IndianRupee className="h-5 w-5" />
-            <span>{bill ? 'Edit Bill' : 'Create New Bill'}</span>
-          </DialogTitle>
-          <DialogDescription>
-            {bill ? 'Update the bill details below.' : 'Create a comprehensive bill for patient services.'}
-          </DialogDescription>
-        </DialogHeader>
-
-        <ScrollArea className="max-h-[70vh] pr-4">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Patient and Appointment Selection */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="patient_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Patient *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingPatients || !!patient}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={isLoadingPatients ? "Loading patients..." : "Select a patient"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {(patients || [])
-                            .filter((p, index, self) => self.findIndex(patient => patient.id === p.id) === index)
-                            .map((p) => (
-                              <SelectItem key={p.id} value={p.id}>
-                                <div>
-                                  <div className="font-medium">{p.name}</div>
-                                  <div className="text-sm text-muted-foreground">{p.phone}</div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="appointment_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Related Appointment (Optional)</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        value={field.value || ''} 
-                        disabled={isLoadingAppointments || !selectedPatientId}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={
-                              isLoadingAppointments ? "Loading appointments..." : 
-                              !selectedPatientId ? "Select a patient first" :
-                              filteredAppointments.length === 0 ? "No appointments for this patient" :
-                              "Select an appointment"
-                            } />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">No appointment</SelectItem>
-                          {(filteredAppointments || [])
-                            .filter((apt, index, self) => self.findIndex(appointment => appointment.id === apt.id) === index)
-                            .map((apt) => (
-                              <SelectItem key={apt.id} value={apt.id}>
-                                <div>
-                                  <div className="font-medium">{apt.patient_name} - {apt.date}</div>
-                                  <div className="text-sm text-muted-foreground">{apt.doctor_name} • {apt.time}</div>
-                                </div>
-                              </SelectItem>
-                            ))}
-                          {selectedPatientId && filteredAppointments.length === 0 && (
-                            <SelectItem value="no-appointments" disabled>
-                              No appointments found for this patient
-                            </SelectItem>
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                      {selectedPatientId && filteredAppointments.length === 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          This patient has no appointments. You can still create a bill without linking it to an appointment.
-                        </p>
-                      )}
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Billing Type Selection */}
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="billing_type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Billing Type</FormLabel>
-                      <Select onValueChange={(value) => {
-                        field.onChange(value as 'simple' | 'itemized');
-                        setBillingType(value as 'simple' | 'itemized');
-                      }} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select billing type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="simple">Simple Billing</SelectItem>
-                          <SelectItem value="itemized">Itemized Billing</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Simple Billing */}
-                {billingType === 'simple' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Amount *</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="0.00"
-                              {...field}
-                              onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Service description" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+        <ScrollArea className="max-h-[85vh]">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Invoice Header */}
+                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                  <div>
+                    <h1 className="text-2xl font-bold tracking-wide">INVOICE</h1>
+                    <div className="text-sm text-muted-foreground mt-1">
+                      Invoice #: <span className="font-medium">{form.watch('invoice_number') || 'N/A'}</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Date: <span className="font-medium">{bill?.created_at ? format(parseISO(bill.created_at), 'PPP') : format(new Date(), 'PPP')}</span>
+                    </div>
                   </div>
-                )}
-
-                {/* Itemized Billing */}
-                {billingType === 'itemized' && (
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <h3 className="text-lg font-semibold">Service Items</h3>
-                      <div className="flex space-x-2">
-                        <Select onValueChange={(template) => {
-                          const [category, index] = template.split('-');
-                          const templateItem = serviceTemplates[category as keyof typeof serviceTemplates][parseInt(index)];
-                          addServiceTemplate(templateItem);
-                        }}>
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="Add template" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(serviceTemplates).map(([category, templates]) => (
-                              <div key={category}>
-                                <div className="px-2 py-1 text-sm font-semibold text-muted-foreground capitalize">
-                                  {category}
-                                </div>
-                                {templates.map((template, index) => (
-                                  <SelectItem key={`${category}-${index}`} value={`${category}-${index}`}>
-                                    {template.description} - ₹{template.rate}
-                                  </SelectItem>
-                                ))}
-                              </div>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button type="button" variant="outline" onClick={addServiceItem}>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Item
-                        </Button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-[1fr,80px,80px,80px,40px] gap-2 items-center">
-                        {(form.watch('service_items') as ServiceItem[] || []).map((item, index) => (
-                          <div key={index} className="contents">
-                            <Input
-                              placeholder="Service Description"
-                              {...form.register(`service_items.${index}.description`)}
-                            />
-                            <Input
-                              type="number"
-                              placeholder="Qty"
-                              {...form.register(`service_items.${index}.quantity`, { valueAsNumber: true })}
-                            />
-                            <Input
-                              type="number"
-                              placeholder="Rate"
-                              {...form.register(`service_items.${index}.rate`, { valueAsNumber: true })}
-                            />
-                            <Input readOnly value={(form.watch(`service_items.${index}.quantity`) * form.watch(`service_items.${index}.rate`)).toFixed(2)} className="bg-muted" />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const currentItems = form.getValues('service_items') || [];
-                                form.setValue('service_items', currentItems.filter((_, i) => i !== index));
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Discount and Tax */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="discount_percentage"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Discount (%)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="tax_percentage"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tax (%)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                min="0"
-                                max="100"
-                                step="0.01"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    {/* Totals Summary */}
-                    {totals && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="text-lg">Bill Summary</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            <div className="flex justify-between">
-                              <span>Subtotal:</span>
-                              <span>₹{totals.subtotal.toFixed(2)}</span>
-                            </div>
-                            {totals.discountAmount > 0 && (
-                              <div className="flex justify-between text-green-600">
-                                <span>Discount:</span>
-                                <span>-₹{totals.discountAmount.toFixed(2)}</span>
-                              </div>
-                            )}
-                            {totals.taxAmount > 0 && (
-                              <div className="flex justify-between">
-                                <span>Tax:</span>
-                                <span>₹{totals.taxAmount.toFixed(2)}</span>
-                              </div>
-                            )}
-                            <Separator />
-                            <div className="flex justify-between font-bold text-lg">
-                              <span>Total:</span>
-                              <span>₹{totals.total.toFixed(2)}</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    <FormField
-                      control={form.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Notes</FormLabel>
-                          <FormControl>
-                            <Textarea placeholder="Additional notes..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Invoice Number and Status */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="invoice_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Invoice Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="INV-001" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status *</FormLabel>
-                      <div className="flex flex-col gap-2">
-                        <Label>Status</Label>
+                  <FormField
+                    control={form.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue placeholder="Status" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
                             {Constants.public.Enums.bill_status.map(status => (
                               <SelectItem key={status} value={status}>
-                                <Badge variant={getStatusBadgeVariant(status)}>
-                                  {status}
-                                </Badge>
+                                <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </form>
-          </Form>
-        </ScrollArea>
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-        <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting} onClick={form.handleSubmit(onSubmit)}>
-            {isSubmitting ? (
-              <span className="flex items-center">
-                <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z" />
-                </svg>
-                {bill ? 'Updating...' : 'Creating...'}
-              </span>
-            ) : (
-              bill ? 'Update Bill' : 'Create Bill'
-            )}
-          </Button>
-        </DialogFooter>
+                {/* Patient & Clinic Info */}
+                <div className="flex justify-between mb-8">
+                  <div className="w-1/2 pr-4">
+                    <div className="font-semibold mb-1">Billed To:</div>
+                    <FormField
+                      control={form.control}
+                      name="patient_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingPatients || !!patient}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder={isLoadingPatients ? 'Loading patients...' : 'Select a patient'} />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {(patients || [])
+                                .filter((p, index, self) => self.findIndex(patient => patient.id === p.id) === index)
+                                .map((p) => (
+                                  <SelectItem key={p.id} value={p.id}>
+                                    <div>
+                                      <div className="font-medium">{p.name}</div>
+                                      <div className="text-sm text-muted-foreground">{p.phone}</div>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="w-1/2 pl-4 text-right">
+                    <div className="font-semibold mb-1">Clinic:</div>
+                    <div className="text-sm">
+                      {activeClinic?.clinics?.name || 'Clinic'}
+                      <div>{activeClinic?.clinics?.address || ''}</div>
+                      <div>{activeClinic?.clinics?.email || ''}</div>
+                      <div>{activeClinic?.clinics?.phone || ''}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Appointment Selection */}
+                <div className="mb-8">
+                  <FormField
+                    control={form.control}
+                    name="appointment_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Related Appointment (Optional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingAppointments || !form.watch('patient_id')}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={isLoadingAppointments ? 'Loading appointments...' : !form.watch('patient_id') ? 'Select a patient first' : filteredAppointments.length === 0 ? 'No appointments for this patient' : 'Select an appointment'} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">No appointment</SelectItem>
+                            {(filteredAppointments || [])
+                              .filter((apt, index, self) => self.findIndex(appointment => appointment.id === apt.id) === index)
+                              .map((apt) => (
+                                <SelectItem key={apt.id} value={apt.id}>
+                                  <div>
+                                    <div className="font-medium">{apt.patient_name} - {apt.date}</div>
+                                    <div className="text-sm text-muted-foreground">{apt.doctor_name} • {apt.time}</div>
+                                  </div>
+                                </SelectItem>
+                              ))}
+                            {form.watch('patient_id') && filteredAppointments.length === 0 && (
+                              <SelectItem value="no-appointments" disabled>
+                                No appointments found for this patient
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Invoice Number */}
+                <div className="mb-8">
+                  <FormField
+                    control={form.control}
+                    name="invoice_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Invoice Number</FormLabel>
+                        <FormControl>
+                          <Input placeholder="INV-001" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Service Items Table (Editable) */}
+                <div className="mb-8">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-lg font-semibold">Service Items</h3>
+                    <div className="flex space-x-2">
+                      <Select onValueChange={(template) => {
+                        const [category, index] = template.split('-');
+                        const templateItem = serviceTemplates[category as keyof typeof serviceTemplates][parseInt(index)];
+                        addServiceTemplate(templateItem);
+                      }}>
+                        <SelectTrigger className="w-[200px]">
+                          <SelectValue placeholder="Add template" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(serviceTemplates).map(([category, templates]) => (
+                            <div key={category}>
+                              <div className="px-2 py-1 text-sm font-semibold text-muted-foreground capitalize">
+                                {category}
+                              </div>
+                              {templates.map((template, index) => (
+                                <SelectItem key={`${category}-${index}`} value={`${category}-${index}`}>
+                                  {template.description} - ₹{template.rate}
+                                </SelectItem>
+                              ))}
+                            </div>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button type="button" variant="outline" onClick={addServiceItem}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Item
+                      </Button>
+                    </div>
+                  </div>
+                  <table className="min-w-full border rounded-lg overflow-hidden">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-2 text-left w-2/5">Description</th>
+                        <th className="px-2 py-2 text-right w-16">Qty</th>
+                        <th className="px-2 py-2 text-right w-20">Rate</th>
+                        <th className="px-2 py-2 text-right w-20">Amount</th>
+                        <th className="px-1 py-2 w-10"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(form.watch('service_items') || []).map((item, index) => (
+                        <tr key={index} className="border-b last:border-b-0">
+                          <td className="px-4 py-2 w-2/5">
+                            <Input 
+                              placeholder="Service Description" 
+                              value={item.description}
+                              onChange={(e) => updateServiceItem(index, 'description', e.target.value)}
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-right w-16">
+                            <Input 
+                              type="number" 
+                              placeholder="Qty" 
+                              value={item.quantity}
+                              onChange={(e) => updateServiceItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                              className="text-center"
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-right w-20">
+                            <Input 
+                              type="number" 
+                              placeholder="Rate" 
+                              value={item.rate}
+                              onChange={(e) => updateServiceItem(index, 'rate', parseFloat(e.target.value) || 0)}
+                              className="text-right"
+                            />
+                          </td>
+                          <td className="px-2 py-2 text-right font-medium w-20">
+                            <Input readOnly value={item.amount?.toFixed(2)} className="bg-muted text-right" />
+                          </td>
+                          <td className="px-1 py-2 text-center w-10">
+                            <Button variant="ghost" size="sm" onClick={() => removeServiceItem(index)} className="h-8 w-8 p-0">
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Discount, Tax, and Summary Section */}
+                <div className="flex flex-col items-end mb-8">
+                  <div className="w-full max-w-xs">
+                    <div className="flex justify-between py-1">
+                      <span>Subtotal:</span>
+                      <span>₹{totals?.subtotal.toFixed(2) || '0.00'}</span>
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="discount_percentage"
+                      render={({ field }) => (
+                        <div className="flex justify-between py-1 text-green-600 items-center">
+                          <span>Discount (%):</span>
+                          <Input type="number" min="0" max="100" step="0.01" className="w-20" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
+                          <span>-₹{totals && totals.discountAmount > 0 ? totals.discountAmount.toFixed(2) : '0.00'}</span>
+                        </div>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="tax_percentage"
+                      render={({ field }) => (
+                        <div className="flex justify-between py-1 items-center">
+                          <span>Tax (%):</span>
+                          <Input type="number" min="0" max="100" step="0.01" className="w-20" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
+                          <span>₹{totals && totals.taxAmount > 0 ? totals.taxAmount.toFixed(2) : '0.00'}</span>
+                        </div>
+                      )}
+                    />
+                    <div className="border-t my-2"></div>
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total:</span>
+                      <span>₹{totals?.total.toFixed(2) || '0.00'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div className="mt-4">
+                  <FormField
+                    control={form.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="Additional notes..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end mt-8 space-x-2">
+                  <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <span className="flex items-center">
+                        <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z" />
+                        </svg>
+                        {bill ? 'Updating...' : 'Creating...'}
+                      </span>
+                    ) : (
+                      bill ? 'Update Bill' : 'Create Bill'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

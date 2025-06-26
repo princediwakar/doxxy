@@ -323,6 +323,44 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               />
 
 
+
+            {/* Doctor Select with Department */}
+            <FormField
+              control={form.control}
+              name="doctor_id"
+              render={({ field }) => (
+                <FormItem className="md:col-span-2">
+                  <FormLabel>Doctor</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingDoctors}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={isLoadingDoctors ? "Loading doctors..." : "Select a doctor"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {(doctors || []).map((d) => (
+                        <SelectItem key={d.id} value={d.id}>
+                          <div className="flex flex-col items-start">
+                            <div className="font-medium">
+                              {d.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {/* Show medical specialization if available, otherwise department */}
+                              {d.primary_specialization 
+                                ? `${d.department_name || 'General Medicine'} • ${d.primary_specialization}`
+                                : (d.department_name || 'General Medicine')
+                              }
+                            </div>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
               {/* Time Input - 15-minute intervals */}
               <FormField
                 control={form.control}
@@ -395,42 +433,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             />
 
 
-            {/* Doctor Select with Department */}
-            <FormField
-              control={form.control}
-              name="doctor_id"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Doctor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingDoctors}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={isLoadingDoctors ? "Loading doctors..." : "Select a doctor"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(doctors || []).map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
-                          <div className="flex flex-col">
-                            <div className="font-medium">
-                              {d.name}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {/* Show medical specialization if available, otherwise department */}
-                              {d.primary_specialization 
-                                ? `${d.department_name || 'General Medicine'} • ${d.primary_specialization}`
-                                : (d.department_name || 'General Medicine')
-                              }
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* Type Selection */}
             <FormField
