@@ -6,54 +6,66 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
-import Appointments from "./pages/Appointments";
-import Patients from "./pages/Patients";
-import Prescriptions from "./pages/Prescriptions";
-import Billing from "./pages/Billing";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
-import Profile from "./pages/Profile";
-import CreateClinicPage from "./pages/CreateClinicPage";
-import SettingsPage from "./pages/SettingsPage";
-import CompleteProfile from "@/pages/CompleteProfile";
-import TermsPage from "./pages/Terms";
-import PrivacyPage from "./pages/Privacy";
-import Consultation from "./pages/Consultation";
 import PrivateRoute from "./components/PrivateRoute";
 import { AppHeader } from "./components/AppHeader";
+import { Suspense, lazy } from "react";
+
+// Lazy load page components for better code splitting
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Appointments = lazy(() => import("./pages/Appointments"));
+const Patients = lazy(() => import("./pages/Patients"));
+const Prescriptions = lazy(() => import("./pages/Prescriptions"));
+const Billing = lazy(() => import("./pages/Billing"));
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Profile = lazy(() => import("./pages/Profile"));
+const CreateClinicPage = lazy(() => import("./pages/CreateClinicPage"));
+const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const CompleteProfile = lazy(() => import("@/pages/CompleteProfile"));
+const TermsPage = lazy(() => import("./pages/Terms"));
+const PrivacyPage = lazy(() => import("./pages/Privacy"));
+const Consultation = lazy(() => import("./pages/Consultation"));
 
 const queryClient = new QueryClient();
 
+// Loading component for Suspense fallback
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
+
 const AppRoutes = () => {
   return (
-    <Routes>
-      {/* Public routes */}
-      <Route path="/auth" element={<Auth />} />
-      <Route path="/privacy" element={<PrivacyPage />} />
-      <Route path="/terms" element={<TermsPage />} />
-      <Route path="/complete-profile" element={<CompleteProfile />} />
-      
-      {/* Root route - redirect to dashboard with authentication check */}
-      <Route path="/" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
-      
-      {/* Protected routes handled by PrivateRoute */}
-      <Route element={<PrivateRoute />}> 
-        <Route path="/create-clinic" element={<CreateClinicPage />} />
-        <Route element={<Layout />}> {/* Layout renders for main app paths */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/patients/*" element={<Patients />} />
-          <Route path="/appointments" element={<Appointments />} />
-          <Route path="/prescriptions" element={<Prescriptions />} />
-          <Route path="/billing" element={<Billing />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/consultation/:appointmentId" element={<Consultation />} />
-          <Route path="/profile" element={<Profile />} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/complete-profile" element={<CompleteProfile />} />
+        
+        {/* Root route - redirect to dashboard with authentication check */}
+        <Route path="/" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
+        
+        {/* Protected routes handled by PrivateRoute */}
+        <Route element={<PrivateRoute />}> 
+          <Route path="/create-clinic" element={<CreateClinicPage />} />
+          <Route element={<Layout />}> {/* Layout renders for main app paths */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/patients/*" element={<Patients />} />
+            <Route path="/appointments" element={<Appointments />} />
+            <Route path="/prescriptions" element={<Prescriptions />} />
+            <Route path="/billing" element={<Billing />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/consultation/:appointmentId" element={<Consultation />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
         </Route>
-      </Route>
-      
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 
