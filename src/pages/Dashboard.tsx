@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { CalendarCheck, Users, Stethoscope, Activity, Clock, Building2, Heart, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
+import { formatTimeIST } from '@/lib/utils';
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
@@ -247,7 +248,7 @@ const Dashboard = () => {
         doctor_id: appointment.doctor_id,
         clinic_id: appointment.clinic_id,
         date: appointment.date,
-        time: appointment.time,
+        time: formatTimeIST(appointment.time),
         type: appointment.type,
         status: appointment.status,
         patient_name: appointment.patient_name,

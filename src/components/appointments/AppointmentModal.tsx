@@ -78,6 +78,45 @@ interface AppointmentModalProps {
   patient?: Patient | null;
 }
 
+// Helper function to get the next 15-minute time slot from current time in IST
+const getNextTimeSlot = (): string => {
+  const now = new Date();
+  // Convert to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now.getTime() + istOffset);
+  
+  const minutes = istTime.getUTCMinutes();
+  const hours = istTime.getUTCHours();
+  
+  // Round up to the next 15-minute interval
+  const roundedMinutes = Math.ceil(minutes / 15) * 15;
+  
+  if (roundedMinutes === 60) {
+    // If rounded to 60 minutes, go to next hour
+    const nextHour = (hours + 1) % 24;
+    return `${nextHour.toString().padStart(2, '0')}:00`;
+  } else {
+    return `${hours.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0')}`;
+  }
+};
+
+// Helper function to generate 24-hour time slots with 15-minute intervals
+const generateTimeSlots = () => {
+  const slots = [];
+  // Generate time slots for 24 hours (0:00 to 23:45)
+  for (let hour = 0; hour < 24; hour++) {
+    for (let minute = 0; minute < 60; minute += 15) {
+      const time24h = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const time12h = `${displayHour}:${minute.toString().padStart(2, '0')} ${period}`;
+      
+      slots.push({ value: time24h, display: time12h });
+    }
+  }
+  return slots;
+};
+
 const AppointmentModal: React.FC<AppointmentModalProps> = ({
   open,
   onOpenChange,
@@ -95,7 +134,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
       date: appointment ? new Date(appointment.date) : new Date(),
-      time: appointment?.time || '',
+      time: appointment?.time || getNextTimeSlot(),
       patient_id: appointment?.patient_id || patient?.id || '',
       doctor_id: appointment?.doctor_id || '',
       type: appointment ? appointment.type : "Walk-in",
@@ -110,7 +149,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       const defaultDate = appointment ? new Date(appointment.date) : new Date();
       const defaultValues = {
         date: isNaN(defaultDate.getTime()) ? new Date() : defaultDate,
-        time: appointment?.time || '',
+        time: appointment?.time || getNextTimeSlot(),
         patient_id: appointment?.patient_id || patient?.id || '',
         doctor_id: appointment?.doctor_id || '',
         type: appointment ? appointment.type : "Walk-in",
@@ -424,7 +463,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               )}
             />
 
-              {/* Time Input - 15-minute intervals */}
+              {/* Time Input - 15-minute intervals (24 hour) */}
               <FormField
                 control={form.control}
                 name="time"
@@ -438,20 +477,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent className="max-h-60">
-                        {/* Generate 15-minute intervals from 9:00 AM to 6:00 PM */}
-                        {Array.from({ length: 37 }, (_, i) => {
-                          const startTime = 9 * 60; // 9:00 AM in minutes
-                          const minutes = startTime + i * 15;
-                          const hours = Math.floor(minutes / 60);
-                          const mins = minutes % 60;
-                          const time12h = `${hours > 12 ? hours - 12 : hours === 0 ? 12 : hours}:${mins.toString().padStart(2, '0')} ${hours >= 12 ? 'PM' : 'AM'}`;
-                          const time24h = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
-                          return (
-                            <SelectItem key={time24h} value={time24h}>
-                              {time12h}
-                            </SelectItem>
-                          );
-                        })}
+                        {/* Generate 15-minute intervals for 24 hours */}
+                        {generateTimeSlots().map((slot) => (
+                          <SelectItem key={slot.value} value={slot.value}>
+                            {slot.display}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />

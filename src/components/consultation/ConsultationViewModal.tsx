@@ -144,20 +144,21 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
       return;
     }
     
-         try {
-       await printConsultation(
-         specialtyData,
-         patient,
-         { ...appointment, notes: appointment.notes || '' },
-         clinicDetails,
-         doctorInfo,
-         user,
-         departmentType
-       );
-      toast.success('Consultation printed successfully');
+    try {
+      
+      await printConsultation(
+        specialtyData,
+        patient,
+        { ...appointment, notes: appointment.notes || '' },
+        clinicDetails,
+        doctorInfo,
+        user,
+        departmentType
+      );
+      toast.success('Print dialog opened successfully');
     } catch (error) {
       console.error('Error printing consultation:', error);
-      toast.error('Failed to print consultation');
+      toast.error('Failed to open print dialog');
     }
   };
 

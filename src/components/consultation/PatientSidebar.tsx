@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { User, Calendar, Phone, Mail, History, Heart, AlertCircle, Eye, Pill, Clock, FileText, ChevronRight } from 'lucide-react';
+import { formatTimeIST } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -190,7 +191,7 @@ export const PatientSidebar = ({
         <CardContent className="space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Time</span>
-            <span className="text-sm font-medium">{appointment?.time || 'N/A'}</span>
+                            <span className="text-sm font-medium">{appointment?.time ? formatTimeIST(appointment.time) : 'N/A'}</span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-600">Type</span>

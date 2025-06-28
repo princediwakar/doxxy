@@ -18,7 +18,7 @@ import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentModal } from '../appointments/AppointmentModal';
 import { BillingModal } from '../billing/BillingModal';
-import { getAge, renderGender } from "@/lib/utils";
+import { getAge, renderGender, formatTimeIST } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
@@ -215,7 +215,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                                 {appointment.time && (
                                   <>
                                     <span>at</span>
-                                    <span>{appointment.time}</span>
+                                    <span>{formatTimeIST(appointment.time)}</span>
                                   </>
                                 )}
                               </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
+import { formatTimeIST } from '@/lib/utils';
 import { 
   User, 
   Calendar, 
@@ -361,7 +362,8 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
               <div className="grid grid-cols-[120px,1fr] gap-2">
                 <span className="text-gray-600">Date/Time:</span>
                 <span className="font-medium text-gray-900">
-                  {appointment?.date && format(new Date(appointment.date), 'MMM d, yyyy • HH:mm')}
+                  {appointment?.date && format(new Date(appointment.date), 'MMM d, yyyy')}
+                  {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
                 </span>
               </div>
               <div className="grid grid-cols-[120px,1fr] gap-2">

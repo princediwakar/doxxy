@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
+import { formatTimeIST } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -384,7 +385,7 @@ const Appointments = () => {
                   className="hover:bg-primary/5 transition-colors cursor-pointer"
                 >
                   <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{format(parseISO(appointment.date), 'PPP')}</TableCell>
-                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{appointment.time}</TableCell>
+                  <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{formatTimeIST(appointment.time)}</TableCell>
                   <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer font-medium">{appointment.patient_name}</TableCell>
                   <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer">{appointment.doctor_name}</TableCell>
                   <TableCell onClick={() => handleAppointmentClick(appointment)} className="cursor-pointer hidden sm:table-cell">{appointment.type}</TableCell>

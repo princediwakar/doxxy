@@ -1,4 +1,5 @@
 import { format, parseISO } from 'date-fns';
+import { formatTimeIST } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -250,7 +251,7 @@ export function MedicalTimeline({
                       {event.time && (
                         <div className="flex items-center space-x-1">
                           <Clock className="h-3 w-3" />
-                          <span>{event.time}</span>
+                          <span>{formatTimeIST(event.time)}</span>
                         </div>
                       )}
                       {event.doctor_name && (

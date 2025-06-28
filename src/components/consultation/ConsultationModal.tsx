@@ -35,6 +35,7 @@ import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
+import { formatTimeIST } from '@/lib/utils';
 import {
   neurologyNotesSchema,
   ophthalmologyNotesSchema,
@@ -488,7 +489,7 @@ export function ConsultationModal({ open, onOpenChange, appointment }: Consultat
                   <span className="font-medium">Doctor:</span> {appointment.doctor_name || 'Unknown Doctor'}
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4">
-                  <span>{format(parseISO(appointment.date), 'PPP')} at {appointment.time}</span>
+                  <span>{format(parseISO(appointment.date), 'PPP')} at {formatTimeIST(appointment.time)}</span>
                   {appointment.patient_date_of_birth && (
                     <span>{getAge(appointment.patient_date_of_birth)} yrs</span>
                   )}

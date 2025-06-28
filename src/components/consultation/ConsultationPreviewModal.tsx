@@ -90,10 +90,10 @@ export const ConsultationPreviewModal = ({
         user,
         departmentType
       );
-      toast.success('Consultation printed successfully');
+      toast.success('Print dialog opened successfully');
     } catch (error) {
       console.error('Error printing consultation:', error);
-      toast.error('Failed to print consultation');
+      toast.error('Failed to open print dialog');
     }
   };
 

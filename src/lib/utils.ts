@@ -7,6 +7,69 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Formats a time string to 12-hour format in IST
+ * 
+ * @param timeString - Time string in 24-hour format (HH:MM) or ISO datetime string
+ * @param isStoredInUTC - Whether the time is stored in UTC (default: false)
+ * 
+ * @example
+ * formatTimeIST('14:30') // returns: "2:30 PM"
+ * formatTimeIST('09:00') // returns: "9:00 AM"
+ * formatTimeIST('2025-06-29T04:30:00Z', true) // returns: "10:00 AM" (UTC+5:30)
+ */
+export function formatTimeIST(timeString?: string | null, isStoredInUTC: boolean = false): string {
+  if (!timeString) return '';
+  
+  try {
+    let date: Date;
+    
+    if (isStoredInUTC) {
+      // If it's a full datetime string stored in UTC, parse and convert to IST
+      date = new Date(timeString);
+      if (isNaN(date.getTime())) return timeString;
+      
+      // Convert to IST (UTC+5:30)
+      const istOffset = 5.5 * 60 * 60 * 1000; // 5.5 hours in milliseconds
+      date = new Date(date.getTime() + istOffset);
+    } else {
+      // If it's just a time string (HH:MM), treat it as IST already
+      const timeMatch = timeString.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+      if (!timeMatch) return timeString;
+      
+      const [, hours, minutes] = timeMatch;
+      date = new Date();
+      date.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    }
+    
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+  } catch (error) {
+    console.error('Error formatting time:', error);
+    return timeString || '';
+  }
+}
+
+/**
+ * Gets the current time in IST formatted as HH:MM (24-hour format)
+ * Used for storing consistent timezone-aware times
+ */
+export function getCurrentTimeIST(): string {
+  const now = new Date();
+  // Convert to IST (UTC+5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now.getTime() + istOffset);
+  
+  const hours = istTime.getUTCHours();
+  const minutes = istTime.getUTCMinutes();
+  
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+}
+
+/**
  * Returns age from a date string, with appropriate units for infants
  * 
  * @param dateOfBirth - Date string (YYYY-MM-DD or ISO format)

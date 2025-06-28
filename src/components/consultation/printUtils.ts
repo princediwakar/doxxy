@@ -97,6 +97,8 @@ export const generatePrintContent = (
     <head>
       <title>${filename}</title>
           <meta charset="utf-8">
+          <meta name="format-detection" content="telephone=no">
+          <meta name="print-option" content="no-header-footer">
           <script src="https://cdn.tailwindcss.com"></script>
       <style>
             @page { 
@@ -121,16 +123,31 @@ export const generatePrintContent = (
             /* Force layout consistency for print */
             @media print {
               @page { 
-                margin: 0mm; 
+                margin: 10mm 15mm 10mm 15mm; 
                 size: A4; 
-                /* Hide default headers and footers */
-                @top-left { content: none; }
-                @top-center { content: none; }
-                @top-right { content: none; }
-                @bottom-left { content: none; }
-                @bottom-center { content: none; }
-                @bottom-right { content: none; }
               }
+              
+              /* Additional @page rule without @media wrapper for better compatibility */
+            }
+            
+            /* Standalone @page rule for broader browser support */
+            @page { 
+              margin: 10mm 15mm 10mm 15mm !important; 
+              size: A4 !important;
+              /* Completely disable all browser headers and footers */
+              @top-left { content: "" !important; }
+              @top-center { content: "" !important; }
+              @top-right { content: "" !important; }
+              @bottom-left { content: "" !important; }
+              @bottom-center { content: "" !important; }
+              @bottom-right { content: "" !important; }
+              @top-left-corner { content: "" !important; }
+              @top-right-corner { content: "" !important; }
+              @bottom-left-corner { content: "" !important; }
+              @bottom-right-corner { content: "" !important; }
+            }
+            
+            @media print {
               body { 
                 margin: 10mm !important;
                 padding: 0 !important;
@@ -180,6 +197,15 @@ export const generatePrintContent = (
   });
 };
 
+/**
+ * Print consultation function
+ * 
+ * IMPORTANT: Browser Print Dialog Behavior
+ * - The browser's print dialog may show "Headers and footers" as checked by default
+ * - This is controlled by browser settings and cannot be programmatically changed
+ * - For cleanest results, users should uncheck "Headers and footers" in the print dialog
+ * - Our CSS attempts to suppress headers/footers but browser behavior varies
+ */
 export const printConsultation = async (
   formData: ConsultationFormValues['specialty_data'],
   patient: Patient,
@@ -220,6 +246,66 @@ export const printConsultation = async (
     printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
+    
+    // Add additional CSS to aggressively suppress headers and footers
+    const additionalCSS = printWindow.document.createElement('style');
+    additionalCSS.textContent = `
+      @page {
+        margin: 10mm 15mm 10mm 15mm !important;
+        size: A4 !important;
+        @top-left { content: "" !important; }
+        @top-center { content: "" !important; }
+        @top-right { content: "" !important; }
+        @bottom-left { content: "" !important; }
+        @bottom-center { content: "" !important; }
+        @bottom-right { content: "" !important; }
+      }
+      @media print {
+        @page {
+          margin: 10mm 15mm 10mm 15mm !important;
+          size: A4 !important;
+          @top-left { content: "" !important; }
+          @top-center { content: "" !important; }
+          @top-right { content: "" !important; }
+          @bottom-left { content: "" !important; }
+          @bottom-center { content: "" !important; }
+          @bottom-right { content: "" !important; }
+        }
+        /* Hide any default browser headers/footers */
+        html::before, html::after,
+        body::before, body::after {
+          display: none !important;
+          content: "" !important;
+        }
+      }
+    `;
+    printWindow.document.head.appendChild(additionalCSS);
+    
+    // Add a script to handle print events
+    const script = printWindow.document.createElement('script');
+    script.textContent = `
+      // Ensure no headers/footers even if browser setting is enabled
+      window.addEventListener('beforeprint', function() {
+        document.title = '${filename}';
+        
+        // Add extra CSS right before printing
+        const extraStyle = document.createElement('style');
+        extraStyle.textContent = \`
+          @page {
+            margin: 10mm 15mm 10mm 15mm !important;
+            size: A4 !important;
+            @top-left { content: "" !important; }
+            @top-center { content: "" !important; }
+            @top-right { content: "" !important; }
+            @bottom-left { content: "" !important; }
+            @bottom-center { content: "" !important; }
+            @bottom-right { content: "" !important; }
+          }
+        \`;
+        document.head.appendChild(extraStyle);
+      });
+    `;
+    printWindow.document.head.appendChild(script);
     
     // Wait for content to load before printing
     setTimeout(() => {

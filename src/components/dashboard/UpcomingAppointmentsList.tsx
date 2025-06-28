@@ -3,6 +3,7 @@ import { CalendarCheck, User, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FormattedAppointment } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
+import { formatTimeIST } from '@/lib/utils';
 
 interface UpcomingAppointmentsListProps {
   upcomingAppointments: FormattedAppointment[];
@@ -117,7 +118,7 @@ export function UpcomingAppointmentsList({
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center"><User size={14} className="mr-1" />{appointment.doctor}</span>
                     <span className="flex items-center"><CalendarCheck size={14} className="mr-1" />{appointment.date}</span>
-                    <span className="flex items-center"><Clock size={14} className="mr-1" />{appointment.time}</span>
+                    <span className="flex items-center"><Clock size={14} className="mr-1" />{formatTimeIST(appointment.time)}</span>
                   </div>
                 </div>
               ))}

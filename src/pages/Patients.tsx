@@ -29,6 +29,7 @@ import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
 import { PatientSearch } from "@/components/patients/PatientSearch";
 import { PatientList } from "@/components/patients/PatientList";
 import { PatientDetailView } from "@/components/patients/PatientDetailView";
+import { formatTimeIST } from '@/lib/utils';
 
 const supabase = getSupabase();
 
@@ -162,7 +163,7 @@ const PatientRecords = () => {
       patient_id: consultation.appointment.patient_id || '',
       doctor_id: consultation.appointment.doctor_id || '',
       date: consultation.appointment.date,
-      time: consultation.appointment.time,
+      time: formatTimeIST(consultation.appointment.time),
       type: (consultation.appointment.type as 'Walk-in' | 'Digital') || 'Walk-in',
       status: (consultation.appointment.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled') || 'Completed',
       notes: consultation.appointment.notes || '',
@@ -209,45 +210,52 @@ const PatientRecords = () => {
   const handlePrintConsultation = async (consultation: ConsultationWithAppointment) => {
     if (!selectedPatient || !activeClinic?.clinics) return;
 
-    // Prepare clinic info
-    const clinicInfo = activeClinic.clinics;
+    try {
 
-    // Prepare doctor info
-    const doctorInfo = {
-      name: consultation.appointment.doctor_name,
-      specialization: consultation.appointment.department_name || 'General',
-      qualification: '',
-      registration_number: ''
-    };
+      // Prepare clinic info
+      const clinicInfo = activeClinic.clinics;
 
-    // Prepare appointment info
-    const appointmentInfo = {
-      id: consultation.appointment.id || '',
-      clinic_id: consultation.appointment.clinic_id || '',
-      patient_id: consultation.appointment.patient_id || '',
-      doctor_id: consultation.appointment.doctor_id || '',
-      date: consultation.appointment.date,
-      time: consultation.appointment.time,
-      type: consultation.appointment.type || 'Consultation',
-      status: consultation.appointment.status || 'Completed',
-      notes: consultation.appointment.notes || '',
-      created_at: consultation.appointment.created_at || ''
-    };
+      // Prepare doctor info
+      const doctorInfo = {
+        name: consultation.appointment.doctor_name,
+        specialization: consultation.appointment.department_name || 'General',
+        qualification: '',
+        registration_number: ''
+      };
 
-    // Use the unified print function
-    await printConsultation(
-      consultation.specialty_data as Record<string, unknown>,
-      selectedPatient,
-      {
-        ...appointmentInfo,
-        type: (appointmentInfo.type as 'Walk-in' | 'Digital') || 'Walk-in',
-        status: (appointmentInfo.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled') || 'Completed',
-      },
-      clinicInfo,
-      doctorInfo,
-      user,
-      consultation.appointment.department_name || 'General'
-    );
+      // Prepare appointment info
+      const appointmentInfo = {
+        id: consultation.appointment.id || '',
+        clinic_id: consultation.appointment.clinic_id || '',
+        patient_id: consultation.appointment.patient_id || '',
+        doctor_id: consultation.appointment.doctor_id || '',
+        date: consultation.appointment.date,
+        time: formatTimeIST(consultation.appointment.time),
+        type: consultation.appointment.type || 'Consultation',
+        status: consultation.appointment.status || 'Completed',
+        notes: consultation.appointment.notes || '',
+        created_at: consultation.appointment.created_at || ''
+      };
+
+      // Use the unified print function
+      await printConsultation(
+        consultation.specialty_data as Record<string, unknown>,
+        selectedPatient,
+        {
+          ...appointmentInfo,
+          type: (appointmentInfo.type as 'Walk-in' | 'Digital') || 'Walk-in',
+          status: (appointmentInfo.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled') || 'Completed',
+        },
+        clinicInfo,
+        doctorInfo,
+        user,
+        consultation.appointment.department_name || 'General'
+      );
+      toast.success('Print dialog opened successfully');
+    } catch (error) {
+      console.error('Error printing consultation:', error);
+      toast.error('Failed to open print dialog');
+    }
   };
 
   const handleExport = async (options: { dateRange?: { from: Date; to: Date; }; includeConsultations?: boolean; includePrescriptions?: boolean; }) => {
@@ -266,7 +274,7 @@ const PatientRecords = () => {
         specialty_data: consultation.specialty_data as SpecialtyData | null,
         appointment: {
           date: consultation.appointment.date,
-          time: consultation.appointment.time,
+          time: formatTimeIST(consultation.appointment.time),
           doctor_name: consultation.appointment.doctor_name,
           department_name: consultation.appointment.department_name,
         }

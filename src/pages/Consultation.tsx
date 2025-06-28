@@ -7,6 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { FieldPath } from 'react-hook-form';
+import { toast } from 'sonner';
 
 // Import all the extracted components and hooks
 import {
@@ -126,15 +127,23 @@ const Consultation = () => {
     const patient = appointment?.patient;
     
     if (patient) {
-      await printConsultation(
-        formData,
-        patient,
-        appointment,
-        clinicDetails,
-        doctorDetails,
-        user,
-        departmentType // Pass department type for consistent formatting
-      );
+      try {
+        
+        
+        await printConsultation(
+          formData,
+          patient,
+          appointment,
+          clinicDetails,
+          doctorDetails,
+          user,
+          departmentType // Pass department type for consistent formatting
+        );
+        toast.success('Print dialog opened successfully');
+      } catch (error) {
+        console.error('Error printing consultation:', error);
+        toast.error('Failed to open print dialog');
+      }
     }
   }, [form, appointment, clinicDetails, doctorDetails, user, departmentType]);
 
