@@ -136,7 +136,11 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
   const printStyles = showPrintStyles ? `
     <style>
       @media print {
-        @page { margin: 10mm; size: A4; }
+        @page { 
+          margin: 10mm; 
+          size: A4; 
+        }
+        
         body { 
           font-size: 12px !important; 
           -webkit-print-color-adjust: exact !important;
@@ -144,56 +148,87 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           margin: 0 !important;
           padding: 0 !important;
         }
+        
+        /* Core print styles */
         .no-print { display: none !important; }
         .page-break { page-break-before: always; }
         .avoid-break { page-break-inside: avoid; }
         
-        /* Preserve all Tailwind styles for print - no overrides */
+        /* Preserve all Tailwind styles for print */
         * {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
         
-        /* Force layout consistency for print */
+        /* Container styles */
         .max-w-4xl { 
           max-width: 100% !important; 
           margin: 0 !important;
           padding: 0 !important;
-          min-height: 100vh !important;
-          display: flex !important;
-          flex-direction: column !important;
-        }
-        .mx-auto { margin-left: 0 !important; margin-right: 0 !important; }
-        
-        /* Ensure footer positioning */
-        .footer { 
-          margin-top: auto !important;
-          position: relative !important;
         }
         
-        /* Force two-column layouts to work in print */
-        .info-cards { 
-          display: grid !important; 
-          grid-template-columns: 1fr 1fr !important; 
-          gap: 1rem !important; 
-        }
-        
-        /* Force letterhead grid to stay two-column */
-        .letterhead .grid { 
-          display: grid !important; 
-          grid-template-columns: 1fr 1fr !important; 
-          gap: 1rem !important; 
-        }
-        
-        /* Reduce letterhead padding for print */
+        /* Letterhead styles */
         .letterhead { 
           padding: 1rem !important; 
-          margin-bottom: 1rem !important; 
+          margin-bottom: 1rem !important;
+          page-break-inside: avoid !important;
         }
         
-        /* Ensure main content takes available space */
-        .flex-1 { 
-          flex: 1 !important; 
+        .letterhead .grid { 
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 1rem !important;
+          width: 100% !important;
+        }
+        
+        /* Info cards styles */
+        .info-cards {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          gap: 1rem !important;
+          margin-bottom: 1rem !important;
+          page-break-inside: avoid !important;
+        }
+        
+        /* Card content alignment */
+        .grid-cols-\\[120px\\,1fr\\] {
+          display: grid !important;
+          grid-template-columns: 120px 1fr !important;
+          gap: 0.5rem !important;
+        }
+        
+        /* Main content styles */
+        .consultation-content {
+          page-break-before: auto !important;
+        }
+        
+        .section-notes {
+          page-break-inside: avoid !important;
+          margin-bottom: 1rem !important;
+        }
+        
+        /* Field group styles */
+        .field-group {
+          page-break-inside: avoid !important;
+          margin-bottom: 0.5rem !important;
+        }
+        
+        /* Table styles for prescriptions */
+        table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          page-break-inside: avoid !important;
+        }
+        
+        th, td {
+          padding: 4px 8px !important;
+          text-align: left !important;
+          border-bottom: 1px solid #e5e7eb !important;
+        }
+        
+        th {
+          background-color: #f9fafb !important;
+          font-weight: 600 !important;
         }
       }
     </style>
@@ -208,8 +243,8 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
         {/* Decorative top border */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-600 via-green-500 to-blue-600"></div>
         
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        {/* Two Column Layout - Fixed width columns */}
+        <div className="grid grid-cols-2 gap-4 items-start">
           {/* Left Column - Clinic Information */}
           <div className="clinic-info space-y-4">
             <div className="space-y-2">
@@ -248,238 +283,136 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
                   <span className="font-medium">{clinicInfo.website}</span>
                 </div>
               )}
-              
-              {/* Additional clinic info if available */}
-              {(clinicInfo as Record<string, unknown>)?.fax && typeof (clinicInfo as Record<string, unknown>).fax === 'string' && (
-                <div className="contact-row flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-orange-500 shrink-0" />
-                  <span className="font-medium">Fax: {(clinicInfo as Record<string, unknown>).fax as string}</span>
-                </div>
-              )}
-              
-              {(clinicInfo as Record<string, unknown>)?.registration && typeof (clinicInfo as Record<string, unknown>).registration === 'string' && (
-                <div className="contact-row flex items-center gap-3">
-                  <Building2 className="h-4 w-4 text-gray-500 shrink-0" />
-                  <span className="font-medium">Registration: {(clinicInfo as Record<string, unknown>).registration as string}</span>
-                </div>
-              )}
             </div>
           </div>
-          
+
           {/* Right Column - Doctor Information */}
-          <div className="doctor-info space-y-4 text-right lg:text-right">
+          <div className="doctor-info text-right space-y-4">
             <div className="space-y-2">
-              <div className="doctor-name text-lg font-bold text-green-600 leading-tight">
+              <h2 className="text-xl font-bold text-gray-900">
                 {doctorInfo?.name || 'Doctor Name'}
+              </h2>
+              <div className="text-sm text-gray-600 font-medium">
+                {doctorInfo?.specialization && (
+                  <div>{doctorInfo.specialization}</div>
+                )}
+                {doctorInfo?.qualification && (
+                  <div>{doctorInfo.qualification}</div>
+                )}
+                {doctorInfo?.registration_number && (
+                  <div>Reg. No: {doctorInfo.registration_number}</div>
+                )}
               </div>
-              
-              {(doctorInfo?.medical_qualifications || doctorInfo?.qualification) && (
-                <div className="doctor-qualification text-sm text-gray-600 font-medium">
-                  {doctorInfo.medical_qualifications || doctorInfo.qualification}
-                </div>
-              )}
-              
-              {(doctorInfo?.medical_specializations || doctorInfo?.specialization) && (
-                <div className="text-sm font-medium text-gray-700 flex items-center justify-end gap-2">
-                  <span>{doctorInfo.medical_specializations || doctorInfo.specialization} Specialist</span>
-                  <Award className="h-4 w-4 text-blue-500" />
-                </div>
-              )}
             </div>
-            
-            {/* Enhanced Doctor Credentials */}
-            <div className="medical-credentials space-y-1 text-xs text-gray-600">
-              {(doctorInfo?.medical_registration_number || doctorInfo?.registration_number) && (
-                <div className="flex items-center justify-end gap-2">
-                  <FileText className="h-3 w-3" />
-                  <span>Reg. No: {doctorInfo.medical_registration_number || doctorInfo.registration_number}</span>
-                </div>
-              )}
-              
-              {doctorInfo?.medical_council && (
-                <div className="flex items-center justify-end gap-2">
-                  <Building2 className="h-3 w-3" />
-                  <span>{doctorInfo.medical_council}</span>
-                </div>
-              )}
-              
-              {doctorInfo?.years_of_experience && (
-                <div className="flex items-center justify-end gap-2">
-                  <Clock className="h-3 w-3" />
-                  <span>{doctorInfo.years_of_experience} years experience</span>
-                </div>
-              )}
-              
-              {doctorInfo?.consultation_fee && (
-                <div className="flex items-center justify-end gap-2">
-                  <DollarSign className="h-3 w-3" />
-                  <span>Consultation: ₹{doctorInfo.consultation_fee}</span>
-              </div>
-            )}
-            </div>
-            
-            {/* Doctor Contact (if available) */}
-            <div className="doctor-contact space-y-1 text-xs text-gray-600">
+
+            <div className="doctor-details space-y-2 text-xs text-gray-700">
               {doctorInfo?.phone && (
-                <div className="flex items-center justify-end gap-2">
+                <div className="contact-row flex items-center justify-end gap-3">
                   <span className="font-medium">{doctorInfo.phone}</span>
-                  <Phone className="h-4 w-4 text-green-500" />
+                  <Phone className="h-4 w-4 text-green-500 shrink-0" />
                 </div>
               )}
               
               {doctorInfo?.email && (
-                <div className="flex items-center justify-end gap-2">
+                <div className="contact-row flex items-center justify-end gap-3">
                   <span className="font-medium">{doctorInfo.email}</span>
-                  <Mail className="h-4 w-4 text-blue-500" />
+                  <Mail className="h-4 w-4 text-blue-500 shrink-0" />
                 </div>
               )}
             </div>
           </div>
         </div>
-        
-        
       </div>
 
-      {/* Patient & Appointment Information - Concise Layout */}
-      <div className="info-cards grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4">
-        {/* Patient Information Card */}
-        <Card className="info-card border border-gray-200 shadow-sm">
-          <CardContent className="p-3">
-            <div className="info-card-header flex items-center gap-2 mb-2 pb-1 border-b border-gray-200">
-              <User className="h-3 w-3 text-blue-600" />
-              <h3 className="info-card-title text-sm font-semibold text-gray-900">Patient</h3>
+      {/* Patient and Appointment Information */}
+      <div className="info-cards grid grid-cols-2 gap-4 mb-4">
+        {/* Patient Information */}
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <User className="h-5 w-5 text-blue-600" />
+              <h3 className="font-semibold text-gray-900">Patient Information</h3>
             </div>
-            <div className="space-y-1 text-xs">
-              <div className="info-row flex justify-between">
-                <span className="info-label text-gray-600 font-medium">Name:</span>
-                <span className="info-value text-gray-900 font-semibold">{patient?.name || 'N/A'}</span>
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-[120px,1fr] gap-2">
+                <span className="text-gray-600">Name:</span>
+                <span className="font-medium text-gray-900">{patient?.name}</span>
               </div>
-              <div className="info-row flex justify-between">
-                <span className="info-label text-gray-600 font-medium">Age/Gender:</span>
-                <span className="info-value text-gray-900">
-                  {patient?.date_of_birth ? getAge(patient.date_of_birth, true) : 'N/A'} / {patient?.gender || 'N/A'}
+              <div className="grid grid-cols-[120px,1fr] gap-2">
+                <span className="text-gray-600">Age/Gender:</span>
+                <span className="font-medium text-gray-900">
+                  {patient?.date_of_birth && `${getAge(patient.date_of_birth)} • `}
+                  {patient?.gender}
                 </span>
               </div>
               {patient?.phone && (
-                <div className="info-row flex justify-between">
-                  <span className="info-label text-gray-600 font-medium">Phone:</span>
-                  <span className="info-value text-gray-900">{patient.phone}</span>
+                <div className="grid grid-cols-[120px,1fr] gap-2">
+                  <span className="text-gray-600">Phone:</span>
+                  <span className="font-medium text-gray-900">{patient.phone}</span>
                 </div>
               )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Appointment Information Card */}
-        <Card className="info-card border border-gray-200 shadow-sm">
-          <CardContent className="p-3">
-            <div className="info-card-header flex items-center gap-2 mb-2 pb-1 border-b border-gray-200">
-              <Calendar className="h-3 w-3 text-green-600" />
-              <h3 className="info-card-title text-sm font-semibold text-gray-900">Appointment</h3>
+        {/* Appointment Information */}
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-3">
+              <Calendar className="h-5 w-5 text-green-600" />
+              <h3 className="font-semibold text-gray-900">Appointment Details</h3>
             </div>
-            <div className="space-y-1 text-xs">
-              <div className="info-row flex justify-between">
-                <span className="info-label text-gray-600 font-medium">Date/Time:</span>
-                <span className="info-value text-gray-900">
-                  {appointment?.date ? format(new Date(appointment.date), 'MMM d, yyyy') : 'N/A'}
-                  {appointment?.time && ` • ${appointment.time}`}
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-[120px,1fr] gap-2">
+                <span className="text-gray-600">Date/Time:</span>
+                <span className="font-medium text-gray-900">
+                  {appointment?.date && format(new Date(appointment.date), 'MMM d, yyyy • HH:mm')}
                 </span>
               </div>
-
-              <div className="info-row flex justify-between">
-                <span className="info-label text-gray-600 font-medium">Department:</span>
-                <span className="info-value text-gray-900">{departmentType}</span>
+              <div className="grid grid-cols-[120px,1fr] gap-2">
+                <span className="text-gray-600">Department:</span>
+                <span className="font-medium text-gray-900">{departmentType}</span>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-              {/* Main Content Area - Consultation Notes */}
-        <div className="flex-1">
-          {/* Consultation Notes - Natural Doctor's Format */}
-          <div className="consultation-notes">
-            
-            
-            <div className="notes-content space-y-2 text-sm leading-relaxed text-gray-900">
-              {sections.map((section, sectionIndex) => {
-                // Get all fields with content for this section
-                const fieldsWithContent = section.fields.filter((field: { name: string }) => {
-                  const value = consultationData[field.name];
-                  return value && (
-                    typeof value === 'string' ? value.trim().length > 0 :
-                    Array.isArray(value) ? value.length > 0 : !!value
-                  );
-                });
+      {/* Main Content */}
+      <div className="flex-1 consultation-content">
+        {/* Consultation Notes */}
+        <div className="space-y-6">
+          {sections.map((section, sectionIndex) => {
+            // Filter out empty fields
+            const fieldsWithContent = section.fields.filter(field => {
+              const value = consultationData[field.name];
+              if (!value) return false;
+              if (typeof value === 'string' && !value.trim()) return false;
+              if (Array.isArray(value) && value.length === 0) return false;
+              return true;
+            });
 
-                if (fieldsWithContent.length === 0) return null;
+            if (fieldsWithContent.length === 0) return null;
 
-                return (
-                  <div key={sectionIndex} className="section-notes">
-                    {fieldsWithContent.map((field: { name: string; label: string }, fieldIndex: number) => {
-                      const value = consultationData[field.name];
-                      
-                      return (
-                        <div key={fieldIndex} className="note-line mb-1">
-                          <span className="field-label font-medium text-gray-700">{field.label}: </span>
-                          <span className="field-content text-gray-900">
-                            {field.name === 'prescriptions' && Array.isArray(value) ? (
-                              <div className="prescriptions-inline">
-                                {value.filter((med: PrescriptionMedication) => med.name && med.name.trim().length > 0)
-                                  .map((prescription: PrescriptionMedication, index: number) => (
-                                    <span key={index} className="prescription-item">
-                                      {index > 0 && ', '}
-                                      {prescription.name}
-                                      {prescription.dosage && ` ${prescription.dosage}`}
-                                      {prescription.frequency && ` ${prescription.frequency}`}
-                                      {prescription.duration && ` for ${prescription.duration}`}
-                                      {prescription.instructions && ` (${prescription.instructions})`}
-                                    </span>
-                                  ))}
-                              </div>
-                            ) : (
-                              typeof value === 'string' ? value : JSON.stringify(value)
-                            )}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Professional Footer with Doctor Signature - Fixed at Bottom */}
-        <div className="footer mt-auto pt-4 border-t border-gray-200">
-          <div className="flex justify-end">
-            <div className="text-right space-y-2 max-w-sm">
-              <div className="signature-line "></div>
-              <div className="signature-details space-y-1">
-                <div className="doctor-signature text-sm font-bold text-gray-900">
-                  {doctorInfo?.name || 'Doctor Name'}
-                </div>
-                <div className="text-xs text-gray-600">
-                  {doctorInfo?.medical_qualifications || doctorInfo?.qualification}
-                </div>
-                {(doctorInfo?.medical_specializations || doctorInfo?.specialization) && (
-                  <div className="text-xs text-gray-600">
-                    {doctorInfo.medical_specializations || doctorInfo.specialization} Specialist
-                  </div>
-                )}
-                {(doctorInfo?.medical_registration_number || doctorInfo?.registration_number) && (
-                  <div className="text-xs text-gray-500">
-                    Reg. No: {doctorInfo.medical_registration_number || doctorInfo.registration_number}
-                  </div>
-                )}
-                <div className="text-xs text-gray-600 mt-2">
-                  Date: {format(new Date(), 'MMM d, yyyy')}
+            return (
+              <div key={sectionIndex} className="section-notes">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">{section.title}</h3>
+                <div className="space-y-4">
+                  {fieldsWithContent.map((field, fieldIndex) => {
+                    const value = consultationData[field.name];
+                    return (
+                      <div key={fieldIndex} className="field-group">
+                        <div className="text-sm font-medium text-gray-700 mb-1">{field.label}</div>
+                        <div className="text-sm text-gray-900">{renderFieldValue(field.name, value)}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
+      </div>
     </div>
   );
 }; 

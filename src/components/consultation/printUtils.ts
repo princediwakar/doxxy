@@ -50,7 +50,8 @@ export const generatePrintContent = (
     name: doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name',
     qualification: '',
     registration_number: '',
-    specialization: departmentType
+    specialization: departmentType,
+    email: doctorDetails?.email || user?.email || ''
   };
 
   // Render the ConsultationLayout component to HTML

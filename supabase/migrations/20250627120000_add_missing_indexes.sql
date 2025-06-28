@@ -1,19 +1,31 @@
--- Add missing indexes for foreign keys
-CREATE INDEX IF NOT EXISTS idx_bills_appointment_id ON bills(appointment_id);
-CREATE INDEX IF NOT EXISTS idx_bills_patient_id ON bills(patient_id);
-CREATE INDEX IF NOT EXISTS idx_clinic_departments_clinic_id ON clinic_departments(clinic_id);
-CREATE INDEX IF NOT EXISTS idx_clinic_departments_department_type_id ON clinic_departments(department_type_id);
-CREATE INDEX IF NOT EXISTS idx_clinic_members_department_id ON clinic_members(department_id);
-CREATE INDEX IF NOT EXISTS idx_clinics_created_by ON clinics(created_by);
-CREATE INDEX IF NOT EXISTS idx_consultations_clinic_id ON consultations(clinic_id);
-CREATE INDEX IF NOT EXISTS idx_consultations_doctor_id ON consultations(doctor_id);
-CREATE INDEX IF NOT EXISTS idx_consultations_patient_id ON consultations(patient_id);
+-- Add missing indexes for better performance
+-- Migration: 20250627120000_add_missing_indexes.sql
+
+-- Add indexes for frequently queried columns
+CREATE INDEX IF NOT EXISTS idx_appointments_clinic_id ON appointments(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_patient_id ON appointments(patient_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor_id ON appointments(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(date);
+CREATE INDEX IF NOT EXISTS idx_appointments_status ON appointments(status);
+
+CREATE INDEX IF NOT EXISTS idx_patients_clinic_id ON patients(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_patients_medical_id ON patients(medical_id);
+
+CREATE INDEX IF NOT EXISTS idx_doctors_clinic_id ON doctors(clinic_id);
 CREATE INDEX IF NOT EXISTS idx_doctors_user_id ON doctors(user_id);
-CREATE INDEX IF NOT EXISTS idx_prescriptions_appointment_id ON prescriptions(appointment_id);
-CREATE INDEX IF NOT EXISTS idx_prescriptions_clinic_id ON prescriptions(clinic_id);
-CREATE INDEX IF NOT EXISTS idx_prescriptions_consultation_id ON prescriptions(consultation_id);
-CREATE INDEX IF NOT EXISTS idx_prescriptions_doctor_id ON prescriptions(doctor_id);
-CREATE INDEX IF NOT EXISTS idx_prescriptions_patient_id ON prescriptions(patient_id);
+
+CREATE INDEX IF NOT EXISTS idx_clinic_members_user_id ON clinic_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_clinic_members_clinic_id ON clinic_members(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_clinic_members_role ON clinic_members(role);
+
+CREATE INDEX IF NOT EXISTS idx_consultations_clinic_id ON consultations(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_consultations_patient_id ON consultations(patient_id);
+CREATE INDEX IF NOT EXISTS idx_consultations_appointment_id ON consultations(appointment_id);
+
+CREATE INDEX IF NOT EXISTS idx_bills_clinic_id ON bills(clinic_id);
+CREATE INDEX IF NOT EXISTS idx_bills_patient_id ON bills(patient_id);
+CREATE INDEX IF NOT EXISTS idx_bills_appointment_id ON bills(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_bills_status ON bills(status);
 
 -- Optimize RLS policies to use subqueries for better performance
 CREATE OR REPLACE FUNCTION get_user_clinics()

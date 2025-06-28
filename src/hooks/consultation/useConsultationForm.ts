@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { ConsultationFormValues, PrescriptionMedication } from '@/components/consultation/types';
 import { Tables, Json } from '@/integrations/supabase/types';
 import { consultationNotesSchema, getMandatoryFieldsForDepartment } from '@/lib/consultationNotesSchemas';
+import isEqual from 'lodash/isEqual';
 
 export const useConsultationForm = (
   appointmentId: string | undefined,
@@ -20,24 +21,36 @@ export const useConsultationForm = (
   const { user, activeClinic } = useAuth();
   const queryClient = useQueryClient();
   const supabase = getSupabase();
+  const previousValuesRef = useRef<ConsultationFormValues>();
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
   
   // Consultation completion state
   const [isConsultationCompleted, setIsConsultationCompleted] = useState(
     appointment?.status === 'Completed'
   );
   
+  // Initialize form with existing data
+  const defaultValues: ConsultationFormValues = {
+    specialty_data: (existingConsultation?.specialty_data as z.infer<typeof consultationNotesSchema>) || {},
+  };
+  
   // Initialize form
   const form = useForm<ConsultationFormValues>({
     resolver: zodResolver(z.object({
       specialty_data: consultationNotesSchema,
     })),
-    defaultValues: {
-      specialty_data: (existingConsultation?.specialty_data as z.infer<typeof consultationNotesSchema>) || {},
-    },
+    defaultValues,
   });
 
-  // Watch form values for auto-save
-  const watchedValues = useWatch({ control: form.control });
+  // Store initial values
+  useEffect(() => {
+    previousValuesRef.current = defaultValues;
+  }, []);
+
+  // Watch all form values
+  const formValues = useWatch({
+    control: form.control,
+  });
 
   // Fixed auto-save mutation
   const autoSaveMutation = useMutation({
@@ -136,19 +149,41 @@ export const useConsultationForm = (
     },
   });
 
-  // Auto-save with debounce (only if consultation not completed)
+  // Auto-save with debounce and deep comparison
   useEffect(() => {
     if (isConsultationCompleted) return; // Don't auto-save completed consultations
     
-    const timer = setTimeout(() => {
-      const formValues = form.getValues();
-      if (Object.keys(formValues.specialty_data).length > 0) {
-        autoSaveMutation.mutate(formValues);
+    // Clear any existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Skip if values haven't changed
+    if (isEqual(previousValuesRef.current, formValues)) {
+      return;
+    }
+
+    // Set new timeout for auto-save
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      const currentValues = form.getValues();
+      
+      // Only save if we have actual data and it's different from previous save
+      if (
+        Object.keys(currentValues.specialty_data).length > 0 && 
+        !isEqual(previousValuesRef.current, currentValues)
+      ) {
+        previousValuesRef.current = currentValues;
+        autoSaveMutation.mutate(currentValues);
       }
     }, 2000);
 
-    return () => clearTimeout(timer);
-  }, [watchedValues, isConsultationCompleted, form, autoSaveMutation]);
+    // Cleanup timeout on unmount or next effect
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [formValues, isConsultationCompleted]);
 
   // Manual save (only if consultation not completed)
   const handleSave = useCallback(() => {

@@ -188,13 +188,77 @@ $$;
 ALTER FUNCTION "public"."create_doctor_profile"("p_user_id" "uuid", "p_clinic_id" "uuid", "p_name" "text", "p_email" "text", "p_primary_specialization" "text", "p_consultation_fee" numeric, "p_availability" "text", "p_bio" "text") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."create_profile_for_new_user"() RETURNS "trigger"
+CREATE OR REPLACE FUNCTION "public"."create_doctor_profile"("p_user_id" "uuid", "p_clinic_id" "uuid", "p_name" "text", "p_email" "text" DEFAULT NULL::"text", "p_primary_specialization" "text" DEFAULT 'General Medicine'::"text", "p_consultation_fee" numeric DEFAULT 500, "p_availability" "text" DEFAULT 'Mon-Fri 9:00 AM - 5:00 PM'::"text", "p_bio" "text" DEFAULT NULL::"text", "p_department_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
+DECLARE
+    new_doctor_id uuid;
+    user_profile profiles%ROWTYPE;
 BEGIN
-  INSERT INTO public.profiles (id, email)
-  VALUES (new.id, new.email)
-  ON CONFLICT (id) DO NOTHING;
+    -- Get user profile information
+    SELECT * INTO user_profile FROM profiles WHERE id = p_user_id;
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'User profile not found for user_id: %', p_user_id;
+    END IF;
+    
+    -- Ensure user is a member of the clinic first
+    INSERT INTO clinic_members (user_id, clinic_id, role, department_id)
+    VALUES (p_user_id, p_clinic_id, 'doctor', p_department_id)
+    ON CONFLICT (user_id, clinic_id) 
+    DO UPDATE SET role = EXCLUDED.role, department_id = EXCLUDED.department_id;
+    
+    -- Create doctor profile
+    INSERT INTO doctors (
+        user_id,
+        clinic_id,
+        name,
+        email,
+        primary_specialization,
+        consultation_fee,
+        availability,
+        bio,
+        is_active
+    ) VALUES (
+        p_user_id,
+        p_clinic_id,
+        COALESCE(p_name, user_profile.name),
+        COALESCE(p_email, user_profile.email),
+        p_primary_specialization,
+        p_consultation_fee,
+        p_availability,
+        p_bio,
+        true
+    ) RETURNING id INTO new_doctor_id;
+    
+    RETURN new_doctor_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_doctor_profile"("p_user_id" "uuid", "p_clinic_id" "uuid", "p_name" "text", "p_email" "text", "p_primary_specialization" "text", "p_consultation_fee" numeric, "p_availability" "text", "p_bio" "text", "p_department_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."create_profile_for_new_user"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, name)
+  VALUES (
+    new.id, 
+    new.email,
+    COALESCE(
+      (new.raw_user_meta_data->>'name')::text,
+      (new.raw_user_meta_data->>'full_name')::text,
+      new.email
+    )
+  )
+  ON CONFLICT (id) DO UPDATE 
+  SET 
+    email = EXCLUDED.email,
+    name = EXCLUDED.name
+  WHERE profiles.name IS NULL;
   RETURN new;
 END;
 $$;
@@ -455,7 +519,7 @@ BEGIN
     d.created_at,
     cm.role::text,
     COALESCE(dt.name, 'General Medicine') as department_name,
-    cd.id as department_id,
+    cm.department_id,
     d.is_active,
     d.primary_specialization,
     d.medical_specializations,
@@ -478,11 +542,10 @@ BEGIN
   FROM doctors d
   JOIN profiles p ON d.user_id = p.id
   JOIN clinic_members cm ON d.user_id = cm.user_id AND d.clinic_id = cm.clinic_id
-  LEFT JOIN clinic_departments cd ON cm.department_id = cd.id
+  LEFT JOIN clinic_departments cd ON cm.department_id = cd.id AND cd.clinic_id = d.clinic_id
   LEFT JOIN department_types dt ON cd.department_type_id = dt.id
   WHERE d.clinic_id = get_doctors_by_clinic.clinic_id
     AND d.is_active = true
-    AND cm.role IN ('doctor', 'superadmin')
   ORDER BY d.name;
 END;
 $$;
@@ -536,6 +599,17 @@ $_$;
 
 
 ALTER FUNCTION "public"."get_user_clinic_memberships"("user_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_user_clinics"() RETURNS TABLE("clinic_id" "uuid")
+    LANGUAGE "sql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+  SELECT clinic_id FROM clinic_members WHERE user_id = auth.uid();
+$$;
+
+
+ALTER FUNCTION "public"."get_user_clinics"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."search_medicines"("search_term" "text" DEFAULT ''::"text", "limit_count" integer DEFAULT 50) RETURNS TABLE("id" bigint, "name" "text", "price" numeric, "is_discontinued" boolean, "manufacturer_name" "text", "pack_size_label" "text", "pack_type" "text", "short_composition1" "text", "short_composition2" "text", "created_at" timestamp with time zone)
@@ -940,7 +1014,23 @@ CREATE INDEX "idx_appointments_patient_id" ON "public"."appointments" USING "btr
 
 
 
+CREATE INDEX "idx_bills_appointment_id" ON "public"."bills" USING "btree" ("appointment_id");
+
+
+
 CREATE INDEX "idx_bills_clinic_id" ON "public"."bills" USING "btree" ("clinic_id");
+
+
+
+CREATE INDEX "idx_bills_patient_id" ON "public"."bills" USING "btree" ("patient_id");
+
+
+
+CREATE INDEX "idx_clinic_departments_clinic_id" ON "public"."clinic_departments" USING "btree" ("clinic_id");
+
+
+
+CREATE INDEX "idx_clinic_departments_department_type_id" ON "public"."clinic_departments" USING "btree" ("department_type_id");
 
 
 
@@ -948,7 +1038,15 @@ CREATE INDEX "idx_clinic_members_clinic_id" ON "public"."clinic_members" USING "
 
 
 
+CREATE INDEX "idx_clinic_members_department_id" ON "public"."clinic_members" USING "btree" ("department_id");
+
+
+
 CREATE INDEX "idx_clinic_members_user_id" ON "public"."clinic_members" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_clinics_created_by" ON "public"."clinics" USING "btree" ("created_by");
 
 
 
@@ -956,11 +1054,47 @@ CREATE INDEX "idx_consultations_appointment_id" ON "public"."consultations" USIN
 
 
 
+CREATE INDEX "idx_consultations_clinic_id" ON "public"."consultations" USING "btree" ("clinic_id");
+
+
+
+CREATE INDEX "idx_consultations_doctor_id" ON "public"."consultations" USING "btree" ("doctor_id");
+
+
+
+CREATE INDEX "idx_consultations_patient_id" ON "public"."consultations" USING "btree" ("patient_id");
+
+
+
 CREATE INDEX "idx_doctors_clinic_id" ON "public"."doctors" USING "btree" ("clinic_id");
 
 
 
+CREATE INDEX "idx_doctors_user_id" ON "public"."doctors" USING "btree" ("user_id");
+
+
+
 CREATE INDEX "idx_patients_clinic_id" ON "public"."patients" USING "btree" ("clinic_id");
+
+
+
+CREATE INDEX "idx_prescriptions_appointment_id" ON "public"."prescriptions" USING "btree" ("appointment_id");
+
+
+
+CREATE INDEX "idx_prescriptions_clinic_id" ON "public"."prescriptions" USING "btree" ("clinic_id");
+
+
+
+CREATE INDEX "idx_prescriptions_consultation_id" ON "public"."prescriptions" USING "btree" ("consultation_id");
+
+
+
+CREATE INDEX "idx_prescriptions_doctor_id" ON "public"."prescriptions" USING "btree" ("doctor_id");
+
+
+
+CREATE INDEX "idx_prescriptions_patient_id" ON "public"."prescriptions" USING "btree" ("patient_id");
 
 
 
@@ -1092,9 +1226,8 @@ ALTER TABLE ONLY "public"."prescriptions"
 
 
 
-CREATE POLICY "Users can insert appointments for their clinic" ON "public"."appointments" FOR INSERT WITH CHECK (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
-   FROM "public"."clinic_members"
-  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+CREATE POLICY "Users can insert appointments for their clinic" ON "public"."appointments" FOR INSERT WITH CHECK (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
 
 
 
@@ -1104,23 +1237,14 @@ CREATE POLICY "Users can insert bills for their clinic" ON "public"."bills" FOR 
 
 
 
-CREATE POLICY "Users can insert consultations for their clinic" ON "public"."consultations" FOR INSERT WITH CHECK (("appointment_id" IN ( SELECT "appointments"."id"
-   FROM "public"."appointments"
-  WHERE ("appointments"."clinic_id" IN ( SELECT "clinic_members"."clinic_id"
-           FROM "public"."clinic_members"
-          WHERE ("clinic_members"."user_id" = "auth"."uid"()))))));
-
-
-
 CREATE POLICY "Users can insert patients in their clinic" ON "public"."patients" FOR INSERT WITH CHECK (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
    FROM "public"."clinic_members"
   WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
 
 
 
-CREATE POLICY "Users can update appointments for their clinic" ON "public"."appointments" FOR UPDATE USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
-   FROM "public"."clinic_members"
-  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+CREATE POLICY "Users can update appointments for their clinic" ON "public"."appointments" FOR UPDATE USING (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
 
 
 
@@ -1130,23 +1254,14 @@ CREATE POLICY "Users can update bills for their clinic" ON "public"."bills" FOR 
 
 
 
-CREATE POLICY "Users can update consultations for their clinic" ON "public"."consultations" FOR UPDATE USING (("appointment_id" IN ( SELECT "appointments"."id"
-   FROM "public"."appointments"
-  WHERE ("appointments"."clinic_id" IN ( SELECT "clinic_members"."clinic_id"
-           FROM "public"."clinic_members"
-          WHERE ("clinic_members"."user_id" = "auth"."uid"()))))));
-
-
-
 CREATE POLICY "Users can update patients in their clinic" ON "public"."patients" FOR UPDATE USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
    FROM "public"."clinic_members"
   WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
 
 
 
-CREATE POLICY "Users can view appointments for their clinic" ON "public"."appointments" FOR SELECT USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
-   FROM "public"."clinic_members"
-  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+CREATE POLICY "Users can view appointments for their clinic" ON "public"."appointments" FOR SELECT USING (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
 
 
 
@@ -1156,23 +1271,9 @@ CREATE POLICY "Users can view bills for their clinic" ON "public"."bills" FOR SE
 
 
 
-CREATE POLICY "Users can view consultations for their clinic" ON "public"."consultations" FOR SELECT USING (("appointment_id" IN ( SELECT "appointments"."id"
-   FROM "public"."appointments"
-  WHERE ("appointments"."clinic_id" IN ( SELECT "clinic_members"."clinic_id"
-           FROM "public"."clinic_members"
-          WHERE ("clinic_members"."user_id" = "auth"."uid"()))))));
-
-
-
 CREATE POLICY "Users can view patients in their clinic" ON "public"."patients" FOR SELECT USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
    FROM "public"."clinic_members"
   WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
-
-
-
-CREATE POLICY "allow_create_clinic_departments" ON "public"."clinic_departments" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."clinics"
-  WHERE (("clinics"."id" = "clinic_departments"."clinic_id") AND ("clinics"."created_by" = "auth"."uid"())))));
 
 
 
@@ -1182,9 +1283,8 @@ CREATE POLICY "allow_delete_clinic_departments_safe" ON "public"."clinic_departm
 
 
 
-CREATE POLICY "allow_insert_clinic_departments" ON "public"."clinic_departments" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."clinic_members"
-  WHERE (("clinic_members"."clinic_id" = "clinic_departments"."clinic_id") AND ("clinic_members"."user_id" = "auth"."uid"()) AND ("clinic_members"."role" = 'superadmin'::"public"."user_role")))));
+CREATE POLICY "allow_insert_clinic_departments" ON "public"."clinic_departments" FOR INSERT WITH CHECK (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
 
 
 
@@ -1193,6 +1293,15 @@ CREATE POLICY "allow_read_clinic_departments_safe" ON "public"."clinic_departmen
   WHERE (("c"."id" = "clinic_departments"."clinic_id") AND ("c"."created_by" = "auth"."uid"())))) OR ("clinic_id" IN ( SELECT "c"."id"
    FROM "public"."clinics" "c"
   WHERE ("c"."created_by" = "auth"."uid"()))))));
+
+
+
+CREATE POLICY "allow_select_clinic_departments" ON "public"."clinic_departments" FOR SELECT USING (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
+
+
+
+CREATE POLICY "allow_select_department_types" ON "public"."department_types" FOR SELECT USING (true);
 
 
 
@@ -1256,21 +1365,18 @@ CREATE POLICY "consultations_delete_clinic_members" ON "public"."consultations" 
 
 
 
-CREATE POLICY "consultations_insert_clinic_members" ON "public"."consultations" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."clinic_members" "cm"
-  WHERE (("cm"."clinic_id" = "consultations"."clinic_id") AND ("cm"."user_id" = "auth"."uid"())))));
+CREATE POLICY "consultations_insert_policy" ON "public"."consultations" FOR INSERT WITH CHECK (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
 
 
 
-CREATE POLICY "consultations_select_clinic_members" ON "public"."consultations" FOR SELECT USING ((EXISTS ( SELECT 1
-   FROM "public"."clinic_members" "cm"
-  WHERE (("cm"."clinic_id" = "consultations"."clinic_id") AND ("cm"."user_id" = "auth"."uid"())))));
+CREATE POLICY "consultations_select_policy" ON "public"."consultations" FOR SELECT USING (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
 
 
 
-CREATE POLICY "consultations_update_clinic_members" ON "public"."consultations" FOR UPDATE USING ((EXISTS ( SELECT 1
-   FROM "public"."clinic_members" "cm"
-  WHERE (("cm"."clinic_id" = "consultations"."clinic_id") AND ("cm"."user_id" = "auth"."uid"())))));
+CREATE POLICY "consultations_update_policy" ON "public"."consultations" FOR UPDATE USING (("clinic_id" IN ( SELECT "get_user_clinics"."clinic_id"
+   FROM "public"."get_user_clinics"() "get_user_clinics"("clinic_id"))));
 
 
 
@@ -1300,6 +1406,12 @@ CREATE POLICY "doctors_insert_simple" ON "public"."doctors" FOR INSERT WITH CHEC
 
 
 
+CREATE POLICY "doctors_read_policy" ON "public"."doctors" FOR SELECT TO "authenticated" USING (("clinic_id" IN ( SELECT "cm"."clinic_id"
+   FROM "public"."clinic_members" "cm"
+  WHERE ("cm"."user_id" = "auth"."uid"()))));
+
+
+
 CREATE POLICY "doctors_select_simple" ON "public"."doctors" FOR SELECT USING ((("user_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
    FROM "public"."clinic_members" "cm"
   WHERE (("cm"."clinic_id" = "doctors"."clinic_id") AND ("cm"."user_id" = "auth"."uid"()))))));
@@ -1315,6 +1427,18 @@ CREATE POLICY "doctors_update_simple" ON "public"."doctors" FOR UPDATE USING (((
 ALTER TABLE "public"."medicines" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "medicines_delete_policy" ON "public"."medicines" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM "public"."clinic_members"
+  WHERE (("clinic_members"."user_id" = "auth"."uid"()) AND ("clinic_members"."role" = 'superadmin'::"public"."user_role")))));
+
+
+
+CREATE POLICY "medicines_insert_policy" ON "public"."medicines" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."clinic_members"
+  WHERE (("clinic_members"."user_id" = "auth"."uid"()) AND ("clinic_members"."role" = ANY (ARRAY['doctor'::"public"."user_role", 'superadmin'::"public"."user_role"]))))));
+
+
+
 CREATE POLICY "medicines_read_all" ON "public"."medicines" FOR SELECT TO "authenticated" USING (true);
 
 
@@ -1323,7 +1447,13 @@ CREATE POLICY "medicines_read_public" ON "public"."medicines" FOR SELECT TO "ano
 
 
 
-CREATE POLICY "medicines_select_policy" ON "public"."medicines" FOR SELECT TO "authenticated", "anon" USING (true);
+CREATE POLICY "medicines_select_policy" ON "public"."medicines" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "medicines_update_policy" ON "public"."medicines" FOR UPDATE USING ((EXISTS ( SELECT 1
+   FROM "public"."clinic_members"
+  WHERE (("clinic_members"."user_id" = "auth"."uid"()) AND ("clinic_members"."role" = ANY (ARRAY['doctor'::"public"."user_role", 'superadmin'::"public"."user_role"]))))));
 
 
 
@@ -1540,6 +1670,12 @@ GRANT ALL ON FUNCTION "public"."create_doctor_profile"("p_user_id" "uuid", "p_cl
 
 
 
+GRANT ALL ON FUNCTION "public"."create_doctor_profile"("p_user_id" "uuid", "p_clinic_id" "uuid", "p_name" "text", "p_email" "text", "p_primary_specialization" "text", "p_consultation_fee" numeric, "p_availability" "text", "p_bio" "text", "p_department_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."create_doctor_profile"("p_user_id" "uuid", "p_clinic_id" "uuid", "p_name" "text", "p_email" "text", "p_primary_specialization" "text", "p_consultation_fee" numeric, "p_availability" "text", "p_bio" "text", "p_department_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_doctor_profile"("p_user_id" "uuid", "p_clinic_id" "uuid", "p_name" "text", "p_email" "text", "p_primary_specialization" "text", "p_consultation_fee" numeric, "p_availability" "text", "p_bio" "text", "p_department_id" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."create_profile_for_new_user"() TO "anon";
 GRANT ALL ON FUNCTION "public"."create_profile_for_new_user"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."create_profile_for_new_user"() TO "service_role";
@@ -1597,6 +1733,12 @@ GRANT ALL ON FUNCTION "public"."get_patients_by_clinic"("_clinic_id" "uuid", "_l
 GRANT ALL ON FUNCTION "public"."get_user_clinic_memberships"("user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."get_user_clinic_memberships"("user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_user_clinic_memberships"("user_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_user_clinics"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_user_clinics"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_user_clinics"() TO "service_role";
 
 
 

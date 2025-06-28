@@ -287,10 +287,10 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
         <div className="border-b px-6">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="practice">Practice</TabsTrigger>
+              <TabsTrigger value="specialization">Specialization</TabsTrigger>
               <TabsTrigger value="registration">Registration</TabsTrigger>
               <TabsTrigger value="education">Education</TabsTrigger>
-              <TabsTrigger value="specialization">Specialization</TabsTrigger>
-              <TabsTrigger value="practice">Practice</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
@@ -298,6 +298,59 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
         <div className="flex-1 overflow-y-auto">
           <form onSubmit={handleSubmit} className="h-full flex flex-col">
             <div className="flex-grow p-6 space-y-6">
+
+            {activeTab === "practice" && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Briefcase className="w-5 h-5" />Practice Information</CardTitle></CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="professional_summary">Professional Summary</Label>
+                      <Textarea id="professional_summary" value={formData.professional_summary} onChange={(e) => handleFieldChange('professional_summary', e.target.value)} placeholder="Briefly describe your professional background and philosophy of care." rows={3} />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="years_of_experience">Years of Experience</Label>
+                        <Input id="years_of_experience" type="number" value={formData.years_of_experience} onChange={(e) => handleFieldChange('years_of_experience', e.target.value)} placeholder="e.g., 10" min="0" />
+                      </div>
+                      <div>
+                        <Label htmlFor="consultation_fee">Consultation Fee (₹)</Label>
+                        <Input id="consultation_fee" type="number" value={formData.consultation_fee} onChange={(e) => handleFieldChange('consultation_fee', e.target.value)} placeholder="e.g., 500" min="0" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+
+{activeTab === "specialization" && (
+                <Card>
+                  <CardHeader><CardTitle className="flex items-center gap-2"><Heart className="w-5 h-5" />Specialization</CardTitle></CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="primary_specialization">Primary Specialization</Label>
+                        <Input id="primary_specialization" value={formData.primary_specialization} onChange={(e) => handleFieldChange('primary_specialization', e.target.value)} placeholder="e.g., Cardiology" />
+                      </div>
+                      <div>
+                        <Label htmlFor="medical_specializations">Additional Specializations</Label>
+                        <Input id="medical_specializations" value={formData.medical_specializations} onChange={(e) => handleFieldChange('medical_specializations', e.target.value)} placeholder="Comma-separated list" />
+                      </div>
+                      <div>
+                        <Label htmlFor="subspecialty">Subspecialty</Label>
+                        <Input id="subspecialty" value={formData.subspecialty} onChange={(e) => handleFieldChange('subspecialty', e.target.value)} placeholder="e.g., Interventional Cardiology" />
+                      </div>
+                      <div>
+                        <Label htmlFor="board_certifications">Board Certifications</Label>
+                        <Input id="board_certifications" value={formData.board_certifications} onChange={(e) => handleFieldChange('board_certifications', e.target.value)} placeholder="Professional certifications" />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="fellowship_details">Fellowship Details</Label>
+                      <Textarea id="fellowship_details" value={formData.fellowship_details} onChange={(e) => handleFieldChange('fellowship_details', e.target.value)} placeholder="Details of fellowship programs" rows={3} />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
               {activeTab === "registration" && (
                 <Card>
                   <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5" />Medical Registration</CardTitle></CardHeader>
@@ -433,57 +486,8 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                 </Card>
               )}
 
-              {activeTab === "specialization" && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Heart className="w-5 h-5" />Specialization</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="primary_specialization">Primary Specialization</Label>
-                        <Input id="primary_specialization" value={formData.primary_specialization} onChange={(e) => handleFieldChange('primary_specialization', e.target.value)} placeholder="e.g., Cardiology" />
-                      </div>
-                      <div>
-                        <Label htmlFor="medical_specializations">Additional Specializations</Label>
-                        <Input id="medical_specializations" value={formData.medical_specializations} onChange={(e) => handleFieldChange('medical_specializations', e.target.value)} placeholder="Comma-separated list" />
-                      </div>
-                      <div>
-                        <Label htmlFor="subspecialty">Subspecialty</Label>
-                        <Input id="subspecialty" value={formData.subspecialty} onChange={(e) => handleFieldChange('subspecialty', e.target.value)} placeholder="e.g., Interventional Cardiology" />
-                      </div>
-                      <div>
-                        <Label htmlFor="board_certifications">Board Certifications</Label>
-                        <Input id="board_certifications" value={formData.board_certifications} onChange={(e) => handleFieldChange('board_certifications', e.target.value)} placeholder="Professional certifications" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="fellowship_details">Fellowship Details</Label>
-                      <Textarea id="fellowship_details" value={formData.fellowship_details} onChange={(e) => handleFieldChange('fellowship_details', e.target.value)} placeholder="Details of fellowship programs" rows={3} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
-              {activeTab === "practice" && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Briefcase className="w-5 h-5" />Practice Information</CardTitle></CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="professional_summary">Professional Summary</Label>
-                      <Textarea id="professional_summary" value={formData.professional_summary} onChange={(e) => handleFieldChange('professional_summary', e.target.value)} placeholder="Briefly describe your professional background and philosophy of care." rows={3} />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="years_of_experience">Years of Experience</Label>
-                        <Input id="years_of_experience" type="number" value={formData.years_of_experience} onChange={(e) => handleFieldChange('years_of_experience', e.target.value)} placeholder="e.g., 10" min="0" />
-                      </div>
-                      <div>
-                        <Label htmlFor="consultation_fee">Consultation Fee (₹)</Label>
-                        <Input id="consultation_fee" type="number" value={formData.consultation_fee} onChange={(e) => handleFieldChange('consultation_fee', e.target.value)} placeholder="e.g., 500" min="0" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              
             </div>
             
             <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t bg-background sticky bottom-0">

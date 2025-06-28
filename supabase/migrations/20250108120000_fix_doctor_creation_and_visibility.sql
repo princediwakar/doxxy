@@ -60,7 +60,6 @@ CREATE POLICY "doctors_create_policy" ON doctors
 CREATE POLICY "doctors_read_policy" ON doctors
     FOR SELECT TO authenticated
     USING (
-        user_id = auth.uid() OR
         clinic_id IN (
             SELECT cm.clinic_id FROM clinic_members cm
             WHERE cm.user_id = auth.uid()

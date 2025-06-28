@@ -181,7 +181,7 @@ export const PatientModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] z-[60]">
+      <DialogContent className="sm:max-w-[425px] z-[50]">
         <DialogHeader>
           <DialogTitle><div className="flex items-center gap-2">
             <UserIcon className="h-4 w-4" />
