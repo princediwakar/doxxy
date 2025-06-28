@@ -24,6 +24,7 @@ const CompleteProfile = lazy(() => import("@/pages/CompleteProfile"));
 const TermsPage = lazy(() => import("./pages/Terms"));
 const PrivacyPage = lazy(() => import("./pages/Privacy"));
 const Consultation = lazy(() => import("./pages/Consultation"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 
 // Configure QueryClient with better caching
 const queryClient = new QueryClient({
@@ -31,9 +32,8 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false, // Disable automatic refetch on window focus
       staleTime: 1000 * 60 * 5, // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      gcTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       retry: 1, // Only retry failed requests once
-      suspense: true, // Enable React Suspense mode
     },
   },
 });
@@ -50,13 +50,11 @@ const AppRoutes = () => {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* Public routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
-        
-        {/* Root route - redirect to dashboard with authentication check */}
-        <Route path="/" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
         
         {/* Protected routes handled by PrivateRoute */}
         <Route element={<PrivateRoute />}> 

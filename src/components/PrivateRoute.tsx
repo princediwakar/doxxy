@@ -3,7 +3,7 @@ import { Navigate, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   const { user, loading: initialLoading, activeClinic, clinicLoading, needsProfileCompletion } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();

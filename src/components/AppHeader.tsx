@@ -9,7 +9,7 @@ export const AppHeader = memo(() => {
   const location = useLocation();
   
   // Define public routes where we want to show the navbar
-  const publicRoutes = ['/auth', '/privacy', '/terms'];
+  const publicRoutes = ['/', '/auth', '/privacy', '/terms'];
   const isPublicRoute = publicRoutes.includes(location.pathname);
   
   // Don't show header on private routes (they have their own layout)
