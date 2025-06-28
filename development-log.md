@@ -993,3 +993,44 @@ The enhanced onboarding now provides a **smooth, intuitive experience** that cap
 - **Result**: Users can now enter website URLs in natural formats without being forced to include protocol
 
 ---
+
+## [2024-12-08 22:35] Remove billing_type and status fields from bills
+
+**Objective**: Safely remove `billing_type` and `status` columns completely from the UI, database, and logic without affecting the rest of the UI.
+
+**Database Changes**:
+- ✅ Verified `billing_type` and `status` columns were already removed from `bills` table 
+- ✅ Applied migration `20240608_fix_appointments_function` to remove `billing_status` references from `get_appointments_with_details_by_clinic` function
+- ✅ Consolidated RLS policies to single comprehensive policy `bills_comprehensive_access`
+- ✅ Fixed `validate_bill_items` function to handle jsonb data correctly
+
+**Frontend Changes**:
+- ✅ **BillingModal.tsx**: Removed all `status` and `billing_type` references from form schema, UI components, and submission logic
+- ✅ **Billing.tsx**: Removed status-based filtering, status badges, and status-dependent statistics (pendingAmount, paidBills, overdueAmount)
+- ✅ **Types**: Updated interfaces to remove status fields, simplified BillWithDetails type
+- ✅ **Stats**: Simplified billing stats to show only Total Revenue and Total Bills count
+
+**Key Changes Made**:
+1. Removed `status` enum field and dropdown from billing modal
+2. Removed `billing_type` field (was defaulting to 'itemized' anyway)
+3. Simplified billing statistics to only track total revenue and bill count
+4. Removed status-based filtering and badges from bills table
+5. Updated database function to remove billing_status column reference
+6. Simplified bill creation flow - removed status selection requirement
+
+**Files Modified**:
+- `src/components/billing/BillingModal.tsx`
+- `src/pages/Billing.tsx` 
+- `src/integrations/supabase/types.ts` (auto-regenerated)
+- Database: 2 migrations applied
+
+**Testing**: 
+- ✅ Build completed successfully
+- ✅ TypeScript compilation passed
+- ✅ No linting errors related to our changes
+
+**Result**: Bills system now operates without status tracking - all bills are treated as simple itemized bills without status management. The UI is cleaner and the workflow is simplified while maintaining all core billing functionality.
+
+## [2024-12-08 22:30] Fix bills table jsonb column type
+
+// ... existing code ...

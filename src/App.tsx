@@ -14,7 +14,6 @@ import { Suspense, lazy } from "react";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Appointments = lazy(() => import("./pages/Appointments"));
 const Patients = lazy(() => import("./pages/Patients"));
-const Prescriptions = lazy(() => import("./pages/Prescriptions"));
 const Billing = lazy(() => import("./pages/Billing"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -55,7 +54,6 @@ const AppRoutes = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/patients/*" element={<Patients />} />
           <Route path="/appointments" element={<Appointments />} />
-          <Route path="/prescriptions" element={<Prescriptions />} />
           <Route path="/billing" element={<Billing />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/consultation/:appointmentId" element={<Consultation />} />

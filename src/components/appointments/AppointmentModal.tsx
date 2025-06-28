@@ -143,7 +143,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinic?.clinics?.id,
   });
 
   // Filter patients by search
@@ -152,22 +152,81 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   );
 
   const { data: doctors, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
-    queryKey: ['doctorsForAppointment', activeClinic?.clinic_id],
+    queryKey: ['doctorsForAppointment', activeClinic?.clinics?.id],
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinic?.clinics?.id) return [];
 
-      const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
-        clinic_id: activeClinic.clinic_id,
+      // Try RPC function first
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_doctors_by_clinic', {
+        clinic_id: activeClinic.clinics.id,
       });
 
-      if (error) {
-        console.error('Error fetching doctors:', error);
+      if (!rpcError && rpcData) {
+        return rpcData;
+      }
+
+      console.warn('RPC function failed, using fallback query:', rpcError?.message);
+      
+      // Fallback to direct query if RPC fails
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('doctors')
+        .select(`
+          id,
+          user_id,
+          name,
+          email,
+          phone,
+          bio,
+          created_at,
+          is_active,
+          primary_specialization,
+          consultation_fee,
+          profiles!doctors_user_id_fkey(name, email, phone)
+        `)
+        .eq('clinic_id', activeClinic.clinics.id)
+        .eq('is_active', true);
+
+      if (fallbackError) {
+        console.error('Fallback query failed:', fallbackError);
         throw new Error('Failed to fetch doctors');
       }
 
-      return data || [];
+      // Transform the data to match expected format
+      const transformedData = fallbackData?.map(doctor => ({
+        id: doctor.id,
+        user_id: doctor.user_id,
+        name: doctor.name || doctor.profiles?.name || 'Unknown Doctor',
+        email: doctor.email || doctor.profiles?.email || '',
+        phone: doctor.phone || doctor.profiles?.phone || '',
+        bio: doctor.bio,
+        created_at: doctor.created_at,
+        role: 'doctor',
+        department_name: 'General Medicine',
+        department_id: null,
+        is_active: doctor.is_active,
+        primary_specialization: doctor.primary_specialization,
+        medical_specializations: [],
+        years_of_experience: null,
+        consultation_fee: doctor.consultation_fee,
+        languages_spoken: [],
+        practice_timings: null,
+        professional_summary: null,
+        medical_registration_number: null,
+        medical_qualifications: [],
+        medical_council: null,
+        medical_license_state: null,
+        medical_license_expiry: null,
+        subspecialty: [],
+        board_certifications: [],
+        fellowship_details: null,
+        medical_college: null,
+        graduation_year: null,
+        clinic_timings: null
+      })) || [];
+
+      return transformedData;
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinic?.clinics?.id,
   });
 
   // Additional effect to set doctor_id when doctors are loaded and appointment exists
@@ -183,9 +242,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   // Mutation for creating/updating appointment
   const mutation = useMutation({
     mutationFn: async (values: AppointmentFormValues) => {
-      if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
+      if (!activeClinic?.clinics?.id) throw new Error('No active clinic selected.');
       const baseAppointmentData = {
-        clinic_id: activeClinic.clinic_id,
+        clinic_id: activeClinic.clinics.id,
         date: format(values.date, 'yyyy-MM-dd'),
         time: values.time || '',
         patient_id: values.patient_id,
@@ -201,22 +260,24 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             .from('appointments')
             .update(baseAppointmentData)
             .eq('id', appointment.id)
-            .select()
+            .select('id, clinic_id, patient_id, doctor_id, date, time, type, status, notes, created_at')
             .single();
         } else {
           result = await supabase
             .from('appointments')
             .insert(baseAppointmentData)
-            .select()
+            .select('id, clinic_id, patient_id, doctor_id, date, time, type, status, notes, created_at')
             .single();
         }
-        if (result.error) throw result.error;
+        if (result.error) {
+          throw result.error;
+        }
         return result.data;
     },
     onSuccess: () => {
       toast.success(appointment ? 'Appointment updated!' : 'Appointment created!');
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinics?.id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinics?.id] });
       queryClient.invalidateQueries({ queryKey: ['patientAppointments'] });
       onOpenChange(false);
     },
@@ -506,7 +567,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               <Button
                 type="submit"
                 disabled={isSubmitting || Object.keys(form.formState.errors).length > 0}
-                onClick={() => console.log("AppointmentModal: Submit button clicked")}
               >
                 {isSubmitting ? (
                   <span className="flex items-center">

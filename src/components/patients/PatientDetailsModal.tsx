@@ -17,7 +17,7 @@ import { getSupabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentModal } from '../appointments/AppointmentModal';
-import { EnhancedBillingModal } from '../billing/BillingModal';
+import { BillingModal } from '../billing/BillingModal';
 import { getAge, renderGender } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
@@ -111,14 +111,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
     }
   };
 
-  const getBillStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'Paid': return 'default';
-      case 'Pending': return 'secondary';
-      case 'Overdue': return 'destructive';
-      default: return 'outline';
-    }
-  };
+
 
   if (!patient) return null;
 
@@ -322,7 +315,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
         patient={patient}
       />
 
-      <EnhancedBillingModal
+      <BillingModal
         open={isBillingModalOpen}
         onOpenChange={setIsBillingModalOpen}
         bill={null}

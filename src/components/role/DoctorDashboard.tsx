@@ -1,19 +1,18 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, Users, Stethoscope, Activity, Clock, User } from "lucide-react";
+import { CalendarCheck, Users, Stethoscope, Activity, Clock, User, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { getSupabase } from '@/integrations/supabase/client';
 import { FormattedAppointment, DatabaseAppointment, DoctorDashboardData, EnhancedPatientForDoctorList } from "@/types/dashboard";
-import { DoctorPatientsList } from "@/components/role/DoctorPatientsList";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { useNavigate } from "react-router-dom";
 import { Enums } from "@/integrations/supabase/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
+import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 
 const supabase = getSupabase();
 
@@ -39,14 +38,13 @@ export default function DoctorDashboard() {
   const { activeClinic, user, activeClinicRole, profileName } = useAuth();
   const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
+  const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
 
   // Pagination state for upcoming appointments
   const [currentUpcomingPage, setCurrentUpcomingPage] = useState(1);
   const appointmentsPerPage = 5;
 
-  // Pagination state for doctor patients
-  const [currentPatientPage, setCurrentPatientPage] = useState(1);
-  const patientsPerPage = 5;
+
 
   // Doctor-specific dashboard query
   const { data: doctorDashboardData, isLoading, error } = useQuery<DoctorDashboardData | null>({
@@ -64,21 +62,6 @@ export default function DoctorDashboard() {
         result.upcoming_appointments = Array.isArray(result.upcoming_appointments)
           ? result.upcoming_appointments.filter(isValidDatabaseAppointment)
           : [];
-        result.my_patients = Array.isArray(result.my_patients)
-          ? result.my_patients.map((p) => ({
-              id: p.id ?? '',
-              name: p.name ?? '',
-              last_visit: p.last_visit ?? undefined,
-              address: p.address ?? undefined,
-              clinic_id: p.clinic_id ?? undefined,
-              created_at: p.created_at ?? null,
-              date_of_birth: p.date_of_birth ?? null,
-              email: p.email ?? '',
-              gender: p.gender ?? '',
-              medical_id: p.medical_id ?? '',
-              phone: p.phone ?? '',
-            }))
-          : [];
       }
       return result;
     },
@@ -88,36 +71,7 @@ export default function DoctorDashboard() {
 
   // Prepare appointments and patients data
   const allAppointments: DatabaseAppointment[] = doctorDashboardData?.upcoming_appointments ?? [];
-  const doctorPatients: EnhancedPatientForDoctorList[] = Array.isArray(doctorDashboardData?.my_patients)
-    ? doctorDashboardData.my_patients.map((p) => ({
-        id: p.id ?? '',
-        name: p.name ?? '',
-        last_visit: p.last_visit ?? undefined,
-        address: p.address ?? undefined,
-        clinic_id: p.clinic_id ?? undefined,
-        created_at: p.created_at ?? null,
-        date_of_birth: p.date_of_birth ?? null,
-        email: p.email ?? '',
-        gender: p.gender ?? '',
-        medical_id: p.medical_id ?? '',
-        phone: p.phone ?? '',
-      }))
-    : [];
 
-  const totalPatientPages = Math.max(1, Math.ceil(doctorPatients.length / patientsPerPage));
-
-  const todaysAppointments: FormattedAppointment[] = allAppointments
-    .filter(apt => apt.date === today)
-    .sort((a, b) => b.time.localeCompare(a.time))
-    .map(apt => ({
-      id: apt.id,
-      patient: apt.patient_name,
-      doctor: apt.doctor_name,
-      time: apt.time,
-      date: apt.date,
-      status: apt.status as Enums<'appointment_status'>,
-      type: apt.type as Enums<'appointment_type'>,
-    }));
 
   console.log("DoctorDashboard: All upcoming appointments raw:", allAppointments, "Today:", today);
 
@@ -139,10 +93,6 @@ export default function DoctorDashboard() {
 
   const totalUpcomingPages = Math.max(1, Math.ceil(upcomingAppointments.length / appointmentsPerPage));
 
-  const handlePatientClick = (patient: EnhancedPatientForDoctorList) => {
-    console.log('Patient clicked:', patient);
-    // TODO: Navigate to patient details page or open modal
-  };
 
   // Greeting logic
   const getGreeting = () => {
@@ -166,10 +116,14 @@ export default function DoctorDashboard() {
   };
 
   // Calculate some additional stats
-  const todayAppointmentCount = todaysAppointments.length;
   const completionRate = doctorDashboardData?.total_appointments 
     ? ((doctorDashboardData.completed_consultations / doctorDashboardData.total_appointments) * 100).toFixed(1)
     : '0';
+
+  // Handle new appointment
+  const handleNewAppointment = () => {
+    setIsAppointmentModalOpen(true);
+  };
 
   if (isLoading) {
     return (
@@ -214,24 +168,20 @@ export default function DoctorDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-end mb-6">
+      <div className="flex justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold">{greeting}</h1>
+          <h1 className="text-3xl font-bold text-primary">{greeting}</h1>
           <p className="text-muted-foreground">Review your appointments and patient updates for today.</p>
-          {activeClinicRole === 'superadmin' && (
-            <Badge variant="outline" className="mt-2">
-              <User size={12} className="mr-1" />
-              Doctor View - {activeClinic?.clinic_name}
-            </Badge>
-          )}
         </div>
-        {todayAppointmentCount > 0 && (
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Today</p>
-            <p className="text-2xl font-bold text-primary">{todayAppointmentCount}</p>
-            <p className="text-xs text-muted-foreground">appointments</p>
-          </div>
-        )}
+        <div className="flex gap-4">
+          <Button
+            onClick={handleNewAppointment}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+          >
+            <Plus size={18} className="mr-2" />
+            New Appointment
+          </Button>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <DashboardStatsCard
@@ -260,11 +210,10 @@ export default function DoctorDashboard() {
         />
         <DashboardStatsCard
           icon={<Activity size={18} className="mr-2 text-emerald-500" />}
-          label="Completed"
+          label="Completed Consultations"
           value={doctorDashboardData?.completed_consultations ?? 0}
           ariaLabel="View Completed Consultations"
           onClick={handleCompletedConsultationsCardClick}
-          variant="primary"
         />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -278,19 +227,14 @@ export default function DoctorDashboard() {
           showViewAllButton={true}
           onViewAll={() => navigate('/appointments?filter=upcoming')}
         />
-        <DoctorPatientsList
-          patients={doctorPatients.slice((currentPatientPage - 1) * patientsPerPage, currentPatientPage * patientsPerPage)}
-          loading={isLoading}
-          patientsPerPage={patientsPerPage}
-          currentPage={currentPatientPage}
-          setCurrentPage={setCurrentPatientPage}
-          totalPages={totalPatientPages}
-          onPatientClick={handlePatientClick}
-        />
-      </div>
-      <div className="grid grid-cols-1 gap-6">
         <WeeklyAppointmentsChart appointments={allAppointments} onBarClick={handleChartBarClick} />
       </div>
+      <AppointmentModal
+        open={isAppointmentModalOpen}
+        onOpenChange={setIsAppointmentModalOpen}
+        appointment={null}
+        patient={null}
+      />
     </div>
   );
 }

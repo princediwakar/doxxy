@@ -7,7 +7,7 @@ import { getAge } from "@/lib/utils";
 import { Calendar, CreditCard, Edit, Eye, FileText, History, Mail, MapPin, Phone, Pill, Stethoscope, User } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ConsultationWithAppointment, PatientWithConsultations, Prescription } from "@/types/patients";
-import { MedicalTimeline } from "../medical-records/MedicalTimeline";
+import { MedicalTimeline } from "./MedicalTimeline";
 
 interface PatientDetailViewProps {
     patient: PatientWithConsultations;

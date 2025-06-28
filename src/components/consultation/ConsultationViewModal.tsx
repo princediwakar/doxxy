@@ -23,6 +23,7 @@ const supabase = getSupabase();
 // Types
 type Consultation = Database['public']['Tables']['consultations']['Row'];
 type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+type AppointmentType = Database['public']['Tables']['appointments']['Row'];
 
 interface ConsultationViewModalProps {
   open: boolean;
@@ -127,7 +128,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
   const doctorInfo = {
     name: doctorDetails?.[0]?.name || appointment?.doctor_name || user?.user_metadata?.full_name || 'Doctor Name',
     specialization: doctorDetails?.[0]?.department_name || departmentType,
-    qualification: 'Medical Doctor', // Default qualification
+    qualification: '', // Default qualification
     registration_number: '', // Not available in current database schema
     phone: doctorDetails?.[0]?.phone || '',
     email: doctorDetails?.[0]?.email || user?.email || '',
@@ -147,7 +148,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
        await printConsultation(
          specialtyData,
          patient,
-         appointment,
+         { ...appointment, notes: appointment.notes || '' },
          clinicDetails,
          doctorInfo,
          user,
@@ -205,7 +206,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
           {!isLoadingConsultation && consultationData && (
             <ConsultationLayout
               patient={patient}
-              appointment={appointment}
+              appointment={{ ...appointment, notes: appointment.notes || '' }}
               clinicInfo={clinicInfo}
               doctorInfo={doctorInfo}
               consultationData={specialtyData}

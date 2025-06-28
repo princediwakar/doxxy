@@ -6,13 +6,13 @@ import { format, parseISO } from 'date-fns';
 import { 
   Plus, 
   Trash2, 
-
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
   Form,
@@ -35,17 +35,22 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database, Enums, Constants } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
-import { Patient, Appointment } from '@/types/patients';
-import { Textarea } from '../ui/textarea';
+import { Database } from '@/integrations/supabase/types';
+import { Textarea } from '@/components/ui/textarea';
 
 const supabase = getSupabase();
 
-type Bill = Database['public']['Tables']['bills']['Row'];
-
-// Use the existing Supabase enum type instead of defining our own
-type BillStatusEnum = Enums<'bill_status'>;
+type BillRow = Database['public']['Tables']['bills']['Row'];
+type Patient = Database['public']['Tables']['patients']['Row'];
+type Appointment = {
+  id: string;
+  patient_id: string;
+  patient_name?: string;
+  doctor_name?: string;
+  date: string;
+  time: string;
+};
 
 // Service item interface
 interface ServiceItem {
@@ -74,40 +79,50 @@ const billingFormSchema = z.object({
   patient_id: z.string().nonempty('Patient is required'),
   appointment_id: z.string().nullable().optional().transform(e => e === "" || e === "none" ? null : e),
   invoice_number: z.string().nullable().optional().transform(e => e === "" ? null : e),
-  status: z.enum(['Paid', 'Pending', 'Overdue'], {
-    required_error: 'Status is required',
-  }),
-  billing_type: z.enum(['simple', 'itemized']),
   // Simple billing
   amount: z.number().min(0, 'Amount must be positive').optional(),
   description: z.string().nullable().optional().transform(e => e === "" ? null : e),
   // Itemized billing
   service_items: z.array(serviceItemSchema).optional(),
-  discount_percentage: z.number().min(0).max(100).optional(),
-  tax_percentage: z.number().min(0).max(100).optional(),
+  // Financial details
+  discount_percentage: z.number().min(0).max(100).default(0),
+  tax_percentage: z.number().min(0).max(100).default(0),
   notes: z.string().optional(),
 });
 
 type BillingFormValues = z.infer<typeof billingFormSchema>;
 
-interface EnhancedBillingModalProps {
+interface BillingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bill: Bill | null;
+  bill?: BillRow | null;
   patient?: Patient | null;
   appointment?: Appointment | null;
-  mode?: 'create' | 'edit' | 'view';
+  mode?: 'create' | 'view' | 'edit';
 }
 
-// Predefined service templates
-const serviceTemplates = {
-  consultation: [
-    { description: 'Initial Consultation', rate: 500, quantity: 1 },
+// Service templates categorized by specialty
+const serviceTemplates: Record<string, ServiceTemplate[]> = {
+  general: [
+    { description: 'General Consultation', rate: 500, quantity: 1 },
     { description: 'Follow-up Consultation', rate: 300, quantity: 1 },
-    { description: 'Emergency Consultation', rate: 800, quantity: 1 },
+    { description: 'Health Check-up', rate: 800, quantity: 1 },
+    { description: 'Vaccination', rate: 250, quantity: 1 },
+  ],
+  diagnostics: [
+    { description: 'Blood Test - Complete Blood Count', rate: 400, quantity: 1 },
+    { description: 'X-Ray', rate: 600, quantity: 1 },
+    { description: 'ECG', rate: 300, quantity: 1 },
+    { description: 'Ultrasound', rate: 1000, quantity: 1 },
+  ],
+  cardiology: [
+    { description: 'Cardiac Consultation', rate: 800, quantity: 1 },
+    { description: 'Echocardiogram', rate: 1500, quantity: 1 },
+    { description: 'Stress Test', rate: 2000, quantity: 1 },
+    { description: 'Holter Monitor', rate: 1200, quantity: 1 },
   ],
   neurology: [
-    { description: 'Neurological Examination', rate: 600, quantity: 1 },
+    { description: 'Neurological Consultation', rate: 900, quantity: 1 },
     { description: 'EEG Test', rate: 1200, quantity: 1 },
     { description: 'Nerve Conduction Study', rate: 1500, quantity: 1 },
   ],
@@ -124,7 +139,7 @@ const serviceTemplates = {
   ]
 };
 
-export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
+export const BillingModal: React.FC<BillingModalProps> = ({
   open,
   onOpenChange,
   bill,
@@ -134,7 +149,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
 }) => {
   const queryClient = useQueryClient();
   const { activeClinic } = useAuth();
-  const [billingType, setBillingType] = useState<'simple' | 'itemized'>('itemized');
 
   const form = useForm<BillingFormValues>({
     resolver: zodResolver(billingFormSchema),
@@ -144,8 +158,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       amount: bill?.amount ? Number(bill.amount) : 0,
       description: bill?.description || '',
       invoice_number: bill?.invoice_number || '',
-      status: bill ? bill.status : "Pending",
-      billing_type: 'itemized',
       service_items: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
       discount_percentage: 0,
       tax_percentage: 0,
@@ -157,24 +169,19 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
     if (open) {
       // Auto-fill patient from appointment if available
       const patientId = bill?.patient_id || patient?.id || appointment?.patient_id || '';
+      const appointmentId = bill?.appointment_id || appointment?.id || '';
       
-      const serviceItemsData = (bill?.service_items as unknown as ServiceItem[]) || [{ description: '', quantity: 1, rate: 0, amount: 0 }];
-      
-      const defaultValues = {
+      form.reset({
         patient_id: patientId,
-        appointment_id: bill?.appointment_id || appointment?.id || '',
+        appointment_id: appointmentId,
         amount: bill?.amount ? Number(bill.amount) : 0,
         description: bill?.description || '',
         invoice_number: bill?.invoice_number || '',
-        status: bill ? bill.status : "Pending",
-        billing_type: 'itemized' as const,
-        service_items: serviceItemsData,
-        discount_percentage: bill?.discount_percentage || 0,
-        tax_percentage: bill?.tax_percentage || 0,
+        service_items: bill?.service_items ? (bill.service_items as unknown as ServiceItem[]) : [{ description: '', quantity: 1, rate: 0, amount: 0 }],
+        discount_percentage: bill?.discount_percentage ? Number(bill.discount_percentage) : 0,
+        tax_percentage: bill?.tax_percentage ? Number(bill.tax_percentage) : 0,
         notes: bill?.notes || '',
-      };
-      form.reset(defaultValues);
-      setBillingType('itemized');
+      });
     }
   }, [open, bill, patient, appointment, form]);
 
@@ -321,13 +328,19 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
         amount: finalAmount,
         description: finalDescription,
         invoice_number: values.invoice_number,
-        status: values.status,
-        // Store itemized data
         service_items: serviceItems,
         discount_percentage: values.discount_percentage,
         tax_percentage: values.tax_percentage,
         notes: values.notes,
+        items: serviceItems.map(item => ({
+          description: item.description,
+          amount: item.amount,
+          quantity: item.quantity,
+        })),
       };
+
+      // Debug log to confirm type
+      console.log('Bill payload:', billData, 'Type of items:', typeof billData.items, 'IsArray:', Array.isArray(billData.items));
 
       let result;
       if (bill) {
@@ -355,7 +368,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      console.error("EnhancedBillingModal: Mutation error:", error);
+      console.error("BillingModal: Mutation error:", error);
       toast.error(bill ? 'Failed to update bill.' : 'Failed to create bill.', {
         description: error.message,
       });
@@ -367,22 +380,13 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   };
 
   const isSubmitting = mutation.isPending;
-  const totals = billingType === 'itemized' ? calculateTotals() : null;
-
-  const getStatusBadgeVariant = (status: BillStatusEnum | undefined) => {
-    if (!status) return 'outline';
-    switch (status) {
-      case 'Paid': return 'default';
-      case 'Pending': return 'secondary';
-      case 'Overdue': return 'destructive';
-      default: return 'outline';
-    }
-  };
+  const totals = form.watch('service_items') ? calculateTotals() : null;
 
   if (mode === 'view' && bill) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
+          <DialogTitle>Bill Details</DialogTitle>
           <div className="bg-white rounded-lg shadow-lg p-8">
             {/* Invoice Header */}
             <div className="flex justify-between items-center mb-6 border-b pb-4">
@@ -395,9 +399,9 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                   Date: <span className="font-medium">{format(parseISO(bill.created_at!), 'PPP')}</span>
                     </div>
               </div>
-              <Badge variant={getStatusBadgeVariant(bill.status)} className="text-lg px-4 py-2">
-                      {bill.status}
-                    </Badge>
+              <div className="text-sm text-muted-foreground">
+                Bill Details
+              </div>
                   </div>
 
             {/* Patient & Clinic Info */}
@@ -513,6 +517,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogTitle>Create/Edit Bill</DialogTitle>
         <ScrollArea className="max-h-[85vh]">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <Form {...form}>
@@ -528,29 +533,6 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                       Date: <span className="font-medium">{bill?.created_at ? format(parseISO(bill.created_at), 'PPP') : format(new Date(), 'PPP')}</span>
                     </div>
                   </div>
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {Constants.public.Enums.bill_status.map(status => (
-                              <SelectItem key={status} value={status}>
-                                <Badge variant={getStatusBadgeVariant(status)}>{status}</Badge>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
 
                 {/* Patient & Clinic Info */}
@@ -562,9 +544,10 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                       name="patient_id"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel className="sr-only">Billed To Patient</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value} disabled={isLoadingPatients || !!patient}>
                             <FormControl>
-                              <SelectTrigger>
+                              <SelectTrigger role="combobox" aria-label="Billed To">
                                 <SelectValue placeholder={isLoadingPatients ? 'Loading patients...' : 'Select a patient'} />
                               </SelectTrigger>
                             </FormControl>
@@ -607,7 +590,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                         <FormLabel>Related Appointment (Optional)</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingAppointments || !form.watch('patient_id')}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger role="combobox" aria-label="Related Appointment">
                               <SelectValue placeholder={isLoadingAppointments ? 'Loading appointments...' : !form.watch('patient_id') ? 'Select a patient first' : filteredAppointments.length === 0 ? 'No appointments for this patient' : 'Select an appointment'} />
                             </SelectTrigger>
                           </FormControl>
@@ -645,7 +628,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                       <FormItem>
                         <FormLabel>Invoice Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="INV-001" {...field} />
+                          <Input placeholder="INV-001" {...field} aria-label="Invoice Number" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -705,6 +688,7 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                               placeholder="Service Description" 
                               value={item.description}
                               onChange={(e) => updateServiceItem(index, 'description', e.target.value)}
+                              aria-label="Service Description"
                             />
                           </td>
                           <td className="px-2 py-2 text-right w-16">
@@ -723,13 +707,14 @@ export const EnhancedBillingModal: React.FC<EnhancedBillingModalProps> = ({
                               value={item.rate}
                               onChange={(e) => updateServiceItem(index, 'rate', parseFloat(e.target.value) || 0)}
                               className="text-right"
+                              aria-label="Rate"
                             />
                           </td>
                           <td className="px-2 py-2 text-right font-medium w-20">
                             <Input readOnly value={item.amount?.toFixed(2)} className="bg-muted text-right" />
                           </td>
                           <td className="px-1 py-2 text-center w-10">
-                            <Button variant="ghost" size="sm" onClick={() => removeServiceItem(index)} className="h-8 w-8 p-0">
+                            <Button type="button" variant="ghost" size="sm" onClick={() => removeServiceItem(index)} className="h-8 w-8 p-0">
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </td>

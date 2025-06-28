@@ -33,8 +33,8 @@ const clinicDetailsSchema = z.object({
     if (!val || val === "") return true; // Empty is allowed
     
     // Allow common website patterns without being too strict
-    const websitePattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
-    const domainPattern = /^[\da-z\.-]+\.([a-z\.]{2,6})$/i;
+    const websitePattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
+    const domainPattern = /^[\da-z.-]+\.([a-z.]{2,6})$/i;
     
     return websitePattern.test(val) || domainPattern.test(val);
   }, { message: "Please enter a valid website (e.g., example.com or https://example.com)" }),

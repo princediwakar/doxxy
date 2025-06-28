@@ -70,9 +70,9 @@ export const ConsultationPreviewModal = ({
 
     // Prepare doctor info
   const doctorInfo = {
-    name: doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name',
+    name: doctorDetails?.name || user?.user_metadata?.full_name || '',
     specialization: doctorDetails?.department_name || departmentType,
-    qualification: 'Medical Doctor', // Default qualification
+    qualification: '', // Default qualification
     registration_number: '', // Not available in current database schema
     phone: doctorDetails?.phone || user?.phone || '',
     email: doctorDetails?.email || user?.email || '',

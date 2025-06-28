@@ -48,7 +48,7 @@ export const generatePrintContent = (
   // Prepare doctor info for the layout
   const doctorInfo = {
     name: doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name',
-    qualification: 'Medical Doctor',
+    qualification: '',
     registration_number: '',
     specialization: departmentType
   };

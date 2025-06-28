@@ -22,7 +22,7 @@ import { ExportOptionsModal } from '@/components/ExportOptionsModal';
 import { MedicalRecordPDFExporter } from '@/lib/pdfExport';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 import { PatientModal } from '@/components/patients/PatientModal';
-import { EnhancedBillingModal } from '@/components/billing/BillingModal';
+import { BillingModal } from '@/components/billing/BillingModal';
 import { toast } from 'sonner';
 import { printConsultation } from '@/components/consultation/printUtils';
 import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
@@ -275,7 +275,7 @@ const PatientRecords = () => {
       // Transform prescription data for PDF export
       const prescriptionData = selectedPatient.prescriptions.map(prescription => ({
         ...prescription,
-        medications: (prescription.medications as unknown as any[]),
+        medications: (prescription.medications as unknown as object[]),
         doctor_name: 'Unknown Doctor', // Simplified since we don't fetch doctor details
       }));
 
@@ -393,7 +393,7 @@ const PatientRecords = () => {
       <ConsultationViewModal
         open={isConsultationViewOpen}
         onOpenChange={setIsConsultationViewOpen}
-        appointment={selectedConsultation as any}
+        appointment={selectedConsultation || null}
       />
 
       <PrescriptionViewModal
@@ -405,8 +405,8 @@ const PatientRecords = () => {
       <ExportOptionsModal
         open={isExportModalOpen}
         onOpenChange={setIsExportModalOpen}
-        onExport={handleExport as any}
-        patient={selectedPatient as any}
+        onExport={handleExport}
+        patient={selectedPatient || null}
         loading={isExporting}
       />
 
@@ -427,12 +427,12 @@ const PatientRecords = () => {
         patient={selectedPatient}
       />
 
-      <EnhancedBillingModal
+      <BillingModal
         open={isBillingModalOpen}
         onOpenChange={setIsBillingModalOpen}
         bill={null}
         patient={selectedPatient}
-        appointment={selectedConsultation as any}
+        appointment={selectedConsultation || null}
       />
     </div>
   );

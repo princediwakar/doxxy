@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { useQuery } from "@tanstack/react-query"
 import { getSupabase } from "@/integrations/supabase/client"
 import { useDebounce } from "use-debounce"
+import { useAuth } from "@/contexts/AuthContext"
 
 interface Medicine {
   id: number
@@ -221,90 +222,66 @@ export function MedicineCombobox({
   const [searchQuery, setSearchQuery] = React.useState("")
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const [selectedMedicine, setSelectedMedicine] = React.useState<Medicine | null>(null)
+  const { session, initialLoading } = useAuth()
 
   // Fetch medicines with name-only search for better relevance
   const { data: medicines = [], isLoading } = useQuery({
-    queryKey: ['medicines', debouncedSearchQuery],
+    queryKey: ['medicines', debouncedSearchQuery, session?.access_token],
     queryFn: async () => {
+      if (!session?.access_token) {
+        return []
+      }
+
       const supabase = getSupabase()
       
       if (!debouncedSearchQuery.trim()) {
         // If no search term, return popular medicines first
         const { data, error } = await supabase
-          .from('medicines')
-          .select('*')
-          .eq('is_discontinued', false)
-          .order('name')
-          .limit(50)
+          .rpc('search_medicines', { search_term: '', limit_count: 50 })
         
-        if (error) throw error
+        if (error) {
+          console.error('Error fetching medicines:', error)
+          return []
+        }
         return data || []
       }
 
-      // Search only by medicine name for focused, relevant results
-      const searchTerm = debouncedSearchQuery.toLowerCase().trim()
-      
+      // Search using the search_medicines function
       const { data, error } = await supabase
-        .from('medicines')
-        .select('*')
-        .eq('is_discontinued', false)
-        .ilike('name', `%${searchTerm}%`)
-        .limit(50)
+        .rpc('search_medicines', {
+          search_term: debouncedSearchQuery.toLowerCase(),
+          limit_count: 50
+        })
 
-      if (error) throw error
-      if (!data) return []
+      if (error) {
+        console.error('Error searching medicines:', error)
+        return []
+      }
 
-      // Client-side relevance sorting for medical-grade accuracy
-      const sortedData = data.sort((a, b) => {
-        const aName = a.name.toLowerCase()
-        const bName = b.name.toLowerCase()
-
-        // Priority 1: Exact matches (highest priority)
-        if (aName === searchTerm && bName !== searchTerm) return -1
-        if (bName === searchTerm && aName !== searchTerm) return 1
-
-        // Priority 2: Name starts with search term (most important for medicines)
-        const aStartsWithName = aName.startsWith(searchTerm)
-        const bStartsWithName = bName.startsWith(searchTerm)
-        if (aStartsWithName && !bStartsWithName) return -1
-        if (bStartsWithName && !aStartsWithName) return 1
-
-        // Priority 3: Name contains search term (position matters - earlier = better)
-        const aNameIndex = aName.indexOf(searchTerm)
-        const bNameIndex = bName.indexOf(searchTerm)
-        if (aNameIndex !== -1 && bNameIndex !== -1) {
-          // Earlier position in name = higher priority
-          if (aNameIndex !== bNameIndex) return aNameIndex - bNameIndex
-        }
-
-        // Priority 4: Alphabetical fallback for identical relevance
-        return aName.localeCompare(bName)
-      })
-
-      return sortedData
+      return data || []
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!session?.access_token && !initialLoading,
   })
 
   // Separate query to get the selected medicine details if we have a value but no selectedMedicine
   const { data: selectedMedicineData } = useQuery({
-    queryKey: ['selected-medicine', value],
+    queryKey: ['selected-medicine', value, session?.access_token],
     queryFn: async () => {
-      if (!value || selectedMedicine?.name === value) return null
+      if (!session?.access_token || !value || selectedMedicine?.name === value) {
+        return null
+      }
       
       const supabase = getSupabase()
       const { data, error } = await supabase
-        .from('medicines')
-        .select('*')
-        .eq('name', value)
-        .eq('is_discontinued', false)
-        .single()
+        .rpc('search_medicines', { search_term: value, limit_count: 1 })
 
-      if (error) throw error
-      return data
+      if (error) {
+        console.error('Error fetching selected medicine:', error)
+        return null
+      }
+      return data?.[0] || null
     },
-    enabled: !!value && selectedMedicine?.name !== value,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!value && !!session?.access_token && !initialLoading && selectedMedicine?.name !== value,
   })
 
   // Update selectedMedicine when we get the data
@@ -381,138 +358,86 @@ export function MedicineCombobox({
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
-          disabled={disabled}
+          disabled={disabled || initialLoading}
         >
           <div className="flex items-center gap-2 flex-1 text-left">
             <Pill className="h-4 w-4 text-muted-foreground" />
             {selectedMedicine ? (
               <div className="flex flex-col gap-1 flex-1">
                 <span className="font-medium">{selectedMedicine.name}</span>
-                {/* <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>{selectedMedicine.pack_size_label || 'Pack size N/A'}</span>
-                </div> */}
               </div>
             ) : value ? (
               <div className="flex flex-col gap-1 flex-1">
                 <span className="font-medium">{value}</span>
                 <span className="text-xs text-muted-foreground">Loading details...</span>
               </div>
+            ) : initialLoading ? (
+              <span className="text-muted-foreground">Loading medicines...</span>
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
           </div>
-          <div className="flex items-center gap-1">
-            {showClearButton && (selectedMedicine || value) && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleClear()
-                }}
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-            <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
-          </div>
+          {showClearButton && (value || selectedMedicine) && (
+            <div
+              className="h-6 w-6 p-0 hover:bg-muted rounded flex items-center justify-center cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleClear()
+              }}
+            >
+              <X className="h-3 w-3" />
+              <span className="sr-only">Clear medicine</span>
+            </div>
+          )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[450px] p-0" align="start">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Search medicines by name..."
+            placeholder="Search medicines..."
             value={searchQuery}
             onValueChange={setSearchQuery}
-            className="border-0 focus:ring-0"
+            disabled={disabled || initialLoading}
+            className="h-9"
           />
           <CommandList>
             <CommandEmpty>
-              {isLoading ? (
+              {isLoading || initialLoading ? (
                 <div className="flex items-center justify-center py-6">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
                   <span className="ml-2">Loading medicines...</span>
                 </div>
-              ) : (
+              ) : medicines.length === 0 && debouncedSearchQuery ? (
                 <div className="py-6 text-center">
                   <Pill className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p>No medicines found.</p>
+                  <p>No medicines found for "{debouncedSearchQuery}"</p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Try searching by medicine brand name
+                    Try searching by medicine brand name or composition
                   </p>
+                </div>
+              ) : (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Start typing to search medicines...
                 </div>
               )}
             </CommandEmpty>
-            <CommandGroup>
-              {medicines.map((medicine) => {
-                const autoFillData = {
-                  dosage: extractDosageFromName(medicine.name, medicine.short_composition1),
-                  route: determineRouteFromName(medicine.name, medicine.pack_type, medicine.pack_size_label),
-                  suggestedFrequency: suggestFrequencyFromComposition(medicine.short_composition1)
-                };
-
-                return (
+            {medicines.map((medicine) => (
                   <CommandItem
                     key={medicine.id}
                     value={medicine.name}
                     onSelect={() => handleSelect(medicine)}
-                    className="flex flex-col items-start gap-2 p-4 cursor-pointer hover:bg-blue-50"
                   >
-                    <div className="flex items-center gap-2 w-full">
-                      <Check
-                        className={cn(
-                          "h-4 w-4",
-                          selectedMedicine?.id === medicine.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      <div className="flex flex-col gap-1 flex-1">
-                        <div className="flex items-center justify-between w-full">
-                          <span className="font-medium text-base">
-                            {highlightSearchTerm(medicine.name, debouncedSearchQuery)}
-                          </span>
-                          <Badge variant="secondary" className="text-xs font-bold bg-green-100 text-green-800">
-                            {formatPrice(medicine.price)}
-                          </Badge>
-                        </div>
-                        <div className="text-xs text-muted-foreground space-y-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-blue-600 font-medium">
-                              {medicine.manufacturer_name || 'Unknown Manufacturer'}
-                            </span>
-                            <span className="text-gray-500">
-                              {medicine.pack_size_label || 'Pack size N/A'}
-                            </span>
-                          </div>
+                <Pill className="mr-2 h-4 w-4 shrink-0" />
+                <div className="flex flex-col">
+                  <span>{medicine.name}</span>
                           {medicine.short_composition1 && (
-                            <div className="text-purple-600 font-medium">
+                    <span className="text-xs text-muted-foreground">
                               {formatComposition(medicine.short_composition1, medicine.short_composition2)}
-                            </div>
-                          )}
-                          {/* Show auto-fill preview */}
-                          <div className="flex items-center gap-3 pt-1">
-                            {autoFillData.dosage && (
-                              <span className="bg-amber-100 text-amber-800 px-2 py-1 rounded text-xs font-medium">
-                                📋 {autoFillData.dosage}
                               </span>
                             )}
-                            <span className="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-xs font-medium">
-                              🚀 {autoFillData.route}
-                            </span>
-                            {autoFillData.suggestedFrequency && (
-                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                                ⏰ {autoFillData.suggestedFrequency}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </CommandItem>
-                );
-              })}
-            </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>

@@ -43,14 +43,14 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
   };
 
   // Handle medicine selection with auto-fill
-  const handleMedicineSelect = (index: number, medicine: { name: string }, autoFillData: { dosage: string; route: string; suggestedFrequency?: string }) => {
+  const handleMedicineSelect = (index: number, medicine: { name: string }, autoFillData?: { dosage: string; route: string; suggestedFrequency?: string }) => {
     if (isReadOnly) return;
     const updated = [...value];
     updated[index] = {
       ...updated[index],
       name: medicine.name,
-      dosage: autoFillData.dosage || updated[index].dosage,
-      frequency: autoFillData.suggestedFrequency || updated[index].frequency
+      dosage: autoFillData?.dosage || updated[index].dosage,
+      frequency: autoFillData?.suggestedFrequency || updated[index].frequency
     };
     onChange(updated);
   };

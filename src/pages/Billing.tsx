@@ -17,12 +17,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Plus, Calendar, User, IndianRupee, CreditCard, Activity, Shield, Heart } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { EnhancedBillingModal } from "@/components/billing/BillingModal";
+import { Search, Plus, CreditCard, IndianRupee } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { BillingModal } from "@/components/billing/BillingModal";
 import { getSupabase } from '@/integrations/supabase/client';
-import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { Database } from "@/integrations/supabase/types";
@@ -31,23 +29,13 @@ const supabase = getSupabase();
 
 type BillRow = Database["public"]["Tables"]["bills"]["Row"];
 
-interface ServiceItem {
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
-
-interface BillWithDetails extends Omit<BillRow, 'service_items'> {
+interface BillWithDetails extends BillRow {
   patient_name?: string;
-  service_items?: ServiceItem[];
 }
 
 interface BillingStats {
   totalRevenue: number;
-  pendingAmount: number;
-  paidBills: number;
-  overdueAmount: number;
+  totalBills: number;
 }
 
 const Billing = () => {
@@ -74,7 +62,6 @@ const Billing = () => {
         return {
           ...billData, 
           patient_name: patients?.name,
-          service_items: (billData.service_items as unknown as ServiceItem[]) || [],
         };
       }) as BillWithDetails[];
     },
@@ -84,20 +71,18 @@ const Billing = () => {
   const { data: stats, refetch: refetchStats } = useQuery<BillingStats, Error>({
     queryKey: ['billingStats', activeClinic?.clinic_id],
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return { totalRevenue: 0, pendingAmount: 0, paidBills: 0, overdueAmount: 0 };
+      if (!activeClinic?.clinic_id) return { totalRevenue: 0, totalBills: 0 };
       const { data, error } = await supabase
         .from('bills')
-        .select('amount, status')
+        .select('amount')
         .eq('clinic_id', activeClinic.clinic_id);
 
       if (error) throw new Error(error.message);
 
-      const totalRevenue = data.filter(b => b.status === 'Paid').reduce((sum, bill) => sum + Number(bill.amount), 0);
-      const pendingAmount = data.filter(bill => bill.status === 'Pending').reduce((sum, bill) => sum + Number(bill.amount), 0);
-        const paidBills = data.filter(bill => bill.status === 'Paid').length;
-      const overdueAmount = data.filter(bill => bill.status === 'Overdue').reduce((sum, bill) => sum + Number(bill.amount), 0);
+      const totalRevenue = data.reduce((sum, bill) => sum + Number(bill.amount), 0);
+      const totalBills = data.length;
 
-      return { totalRevenue, pendingAmount, paidBills, overdueAmount };
+      return { totalRevenue, totalBills };
     },
     enabled: !!activeClinic?.clinic_id
   });
@@ -122,7 +107,7 @@ const Billing = () => {
     const filtered = bills.filter((bill) =>
       bill.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       bill.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bill.status?.toLowerCase().includes(searchTerm.toLowerCase())
+      bill.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -132,23 +117,16 @@ const Billing = () => {
     return { filteredBills: paginatedData, totalPages };
   }, [bills, searchTerm, currentPage, itemsPerPage]);
 
-  const getStatusColor = (status: string) => {
-    switch(status) {
-      case "Paid": return "default";
-      case "Pending": return "secondary";
-      case "Overdue": return "destructive";
-      default: return "outline";
-    }
-  };
-
   if (!activeClinic) {
     return (
-      <Card className="m-6"><CardContent className="flex items-center justify-center py-12">
+      <Card className="m-6">
+        <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <CreditCard className="w-12 h-12 text-muted-foreground mx-auto" />
             <p className="text-muted-foreground">Please select a clinic to view billing.</p>
           </div>
-      </CardContent></Card>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -172,11 +150,33 @@ const Billing = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Total Revenue</p><p className="text-2xl font-bold text-green-600">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</p></div><div className="bg-green-100 p-3 rounded-lg"><IndianRupee className="w-6 h-6 text-green-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Pending Amount</p><p className="text-2xl font-bold text-yellow-600">₹{stats?.pendingAmount.toFixed(2) || '0.00'}</p></div><div className="bg-yellow-100 p-3 rounded-lg"><Activity className="w-6 h-6 text-yellow-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Paid Bills</p><p className="text-2xl font-bold text-blue-600">{stats?.paidBills || 0}</p></div><div className="bg-blue-100 p-3 rounded-lg"><CreditCard className="w-6 h-6 text-blue-600" /></div></div></CardContent></Card>
-        <Card><CardContent className="pt-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">Overdue Amount</p><p className="text-2xl font-bold text-red-600">₹{stats?.overdueAmount.toFixed(2) || '0.00'}</p></div><div className="bg-red-100 p-3 rounded-lg"><IndianRupee className="w-6 h-6 text-red-600" /></div></div></CardContent></Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-2xl font-bold text-green-600">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</p>
+              </div>
+              <div className="bg-green-100 p-3 rounded-lg">
+                <IndianRupee className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Bills</p>
+                <p className="text-2xl font-bold text-blue-600">{stats?.totalBills || 0}</p>
+              </div>
+              <div className="bg-blue-100 p-3 rounded-lg">
+                <CreditCard className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
 {/* Search */}
@@ -185,7 +185,7 @@ const Billing = () => {
           <div className="relative max-w-sm">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search departments..."
+              placeholder="Search bills..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-background border-border focus:ring-primary"
@@ -203,14 +203,17 @@ const Billing = () => {
               <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
               <TableHead className="w-[40%]">Description</TableHead>
-                <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
             {isLoadingBills ? (
-              <TableRow><TableCell colSpan={6} className="text-center">Loading bills...</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="text-center">Loading bills...</TableCell>
+              </TableRow>
             ) : filteredBills.length === 0 ? (
-              <TableRow><TableCell colSpan={6} className="text-center">No bills found.</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="text-center">No bills found.</TableCell>
+              </TableRow>
             ) : (
               filteredBills.map((bill) => (
                 <TableRow key={bill.id} onClick={() => handleBillClick(bill)} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800">
@@ -219,9 +222,6 @@ const Billing = () => {
                   <TableCell>{new Date(bill.created_at).toLocaleDateString()}</TableCell>
                   <TableCell>₹{Number(bill.amount).toFixed(2)}</TableCell>
                   <TableCell className="truncate max-w-xs">{bill.description}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusColor(bill.status)}>{bill.status}</Badge>
-                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -230,7 +230,7 @@ const Billing = () => {
       </div>
 
       {isModalOpen && (
-        <EnhancedBillingModal
+        <BillingModal
           open={isModalOpen}
           onOpenChange={handleModalClose}
           bill={selectedBill}
@@ -241,15 +241,38 @@ const Billing = () => {
       <div className="flex items-center justify-center pt-4">
               <Pagination>
                 <PaginationContent>
-            <PaginationItem><PaginationPrevious href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.max(p - 1, 1)); }} /></PaginationItem>
+            <PaginationItem>
+              <PaginationPrevious 
+                href="#" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  setCurrentPage(p => Math.max(p - 1, 1)); 
+                }} 
+              />
+            </PaginationItem>
             {[...Array(totalPages)].map((_, i) => (
                         <PaginationItem key={i}>
-                <PaginationLink href="#" isActive={currentPage === i + 1} onClick={(e) => { e.preventDefault(); setCurrentPage(i + 1); }}>
+                <PaginationLink 
+                  href="#" 
+                  isActive={currentPage === i + 1} 
+                  onClick={(e) => { 
+                    e.preventDefault(); 
+                    setCurrentPage(i + 1); 
+                  }}
+                >
                   {i + 1}
                           </PaginationLink>
                         </PaginationItem>
             ))}
-            <PaginationItem><PaginationNext href="#" onClick={(e) => { e.preventDefault(); setCurrentPage(p => Math.min(p + 1, totalPages)); }} /></PaginationItem>
+            <PaginationItem>
+              <PaginationNext 
+                href="#" 
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  setCurrentPage(p => Math.min(p + 1, totalPages)); 
+                }} 
+              />
+            </PaginationItem>
                 </PaginationContent>
               </Pagination>
             </div>

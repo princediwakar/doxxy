@@ -17,7 +17,13 @@ export const getSupabase = () => {
     throw new Error('Supabase URL and Anon Key must be provided in environment variables.');
   }
   
-  supabaseInstance = createClient<Database>(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY);
+  supabaseInstance = createClient<Database>(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  });
   return supabaseInstance;
 };
 

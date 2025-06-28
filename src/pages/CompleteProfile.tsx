@@ -81,7 +81,21 @@ const CompleteProfile = () => {
     setLoading(true);
     
     try {
-      // Call the standardized profile update function
+      // First update auth.users if phone is provided
+      if (form.phone) {
+        const { error: authUpdateError } = await supabase.auth.updateUser({
+          data: {
+            phone: form.phone
+          }
+        });
+        
+        if (authUpdateError) {
+          console.warn("CompleteProfile: Could not update auth.users phone:", authUpdateError.message);
+          // Don't fail the whole operation for this
+        }
+      }
+
+      // Then update the profiles table
       const { data, error } = await supabase
         .from('profiles')
         .upsert({

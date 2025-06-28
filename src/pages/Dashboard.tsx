@@ -292,8 +292,8 @@ const Dashboard = () => {
           )}
         </div>
         <div className="flex gap-4">
-          {/* Show New Appointment button for Staff and Superadmins */}
-          {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && (
+          {/* Show New Appointment button for Doctors, Staff and Superadmins */}
+          {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin' || activeClinicRole === 'doctor') && (
             <Button
               onClick={handleNewAppointment}
               className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"

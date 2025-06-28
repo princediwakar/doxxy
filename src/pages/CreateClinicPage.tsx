@@ -25,6 +25,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stethoscope, UserCheck, Building2 } from "lucide-react";
+import { createDoctorProfile } from "@/lib/doctor-utils";
 
 const supabase = getSupabase();
 
@@ -38,8 +39,8 @@ const clinicDetailsSchema = z.object({
     if (!val || val === "") return true; // Empty is allowed
     
     // Allow common website patterns without being too strict
-    const websitePattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
-    const domainPattern = /^[\da-z\.-]+\.([a-z\.]{2,6})$/i;
+    const websitePattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
+    const domainPattern = /^[\da-z.-]+\.([a-z.]{2,6})$/i;
     
     return websitePattern.test(val) || domainPattern.test(val);
   }, { message: "Please enter a valid website (e.g., example.com or https://example.com)" }),
@@ -56,20 +57,17 @@ type DepartmentsForm = z.infer<typeof departmentsSchema>;
 // Step 3: Doctor profile schema
 const doctorProfileSchema = z.object({
   isDoctor: z.enum(['yes', 'no'], { required_error: 'Please specify if you are a practicing doctor.' }),
-  availability: z.string().optional(),
   bio: z.string().optional(),
   phone: z.string().optional(),
-  selectedDepartment: z.string().optional(),
-  primarySpecialization: z.string().optional(),
+  selectedDepartment: z.string().superRefine((val, ctx) => {
+    if (ctx.parent?.isDoctor === 'yes' && (!val || val.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Select at least one department when registering as a doctor."
+      });
+    }
+  }),
   consultationFee: z.coerce.number().min(0).default(500).optional(),
-}).refine((data) => {
-  if (data.isDoctor === 'yes' && !data.primarySpecialization?.trim()) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Medical specialization is required for practicing doctors",
-  path: ["primarySpecialization"]
 });
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
@@ -88,11 +86,9 @@ const CreateClinicPage = () => {
   const [departments, setDepartments] = React.useState<string[]>([]);
   const [doctorProfile, setDoctorProfile] = React.useState<DoctorProfileForm>({
     isDoctor: 'no',
-    availability: '',
     bio: '',
     phone: '',
     selectedDepartment: '',
-    primarySpecialization: '',
     consultationFee: 500,
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -101,8 +97,13 @@ const CreateClinicPage = () => {
   const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useQuery({
     queryKey: ["departmentTypes"],
     queryFn: async () => {
+      console.log('🔍 Fetching department types...');
       const { data, error } = await supabase.from("department_types").select("*");
-      if (error) throw error;
+      console.log('Department types response:', { data, error });
+      if (error) {
+        console.error('Department types error:', error);
+        throw error;
+      }
       return data || [];
     },
   });
@@ -165,16 +166,8 @@ const CreateClinicPage = () => {
   };
 
   // Final Submit (Step 3)
-  const handleCreateClinic: SubmitHandler<DoctorProfileForm> = async (data) => {
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "User not authenticated.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleSubmit = async (data: DoctorProfileForm) => {
+    if (!user) return;
     setIsSubmitting(true);
     try {
       // Use the create_clinic_with_admin function
@@ -188,7 +181,7 @@ const CreateClinicPage = () => {
       if (clinicError) throw clinicError;
       if (!clinicResult) throw new Error("Clinic creation failed - no result returned.");
       
-      const createdClinicId = clinicResult.clinic_id;
+      const createdClinicId = (clinicResult as { clinic_id: string }).clinic_id;
 
       // Update additional clinic details (address, email, phone, website)
       const { error: updateError } = await supabase
@@ -198,6 +191,7 @@ const CreateClinicPage = () => {
           email: clinicDetails.email || null,
           phone: clinicDetails.phone || null,
           website: clinicDetails.website || null,
+          created_by: user.id
         })
         .eq('id', createdClinicId);
 
@@ -216,50 +210,43 @@ const CreateClinicPage = () => {
       }
 
       // Only create doctor profile if the superadmin is a practicing doctor
-      if (data.isDoctor === 'yes') {
-        const { data: existingDoctor, error: checkDoctorError } = await supabase
-          .from('doctors')
-          .select('id')
+      if (data.isDoctor === 'yes' && data.selectedDepartment) {
+        // First update the clinic_members record with the selected department
+        const { error: memberUpdateError } = await supabase
+          .from('clinic_members')
+          .update({ 
+            department_id: data.selectedDepartment,
+            role: 'doctor'
+          })
           .eq('user_id', user.id)
-          .eq('clinic_id', createdClinicId)
-          .maybeSingle();
-        
-        if (checkDoctorError) throw checkDoctorError;
-        
-        if (!existingDoctor) {
-          // Find the clinic_department ID for the selected department
-          let departmentId = null;
-          if (data.selectedDepartment) {
-            const { data: clinicDept, error: deptError } = await supabase
-              .from('clinic_departments')
-              .select('id')
-              .eq('clinic_id', createdClinicId)
-              .eq('department_type_id', data.selectedDepartment)
-              .single();
-            
-            if (!deptError && clinicDept) {
-              departmentId = clinicDept.id;
-            }
-          }
+          .eq('clinic_id', createdClinicId);
 
-          const { error: doctorError } = await supabase
-            .from('doctors')
-            .insert({
-              user_id: user.id,
-              clinic_id: createdClinicId,
-              name: user.user_metadata?.name || user.email || '',
-              email: user.email,
-              phone: data.phone || user.phone || '',
-              department_id: departmentId,
-              primary_specialization: data.primarySpecialization || null,
-              consultation_fee_min: data.consultationFee || 500,
-              consultation_fee_max: (data.consultationFee || 500) + 200,
-              availability: data.availability || 'Available',
-              bio: data.bio || `Medical professional specializing in ${data.primarySpecialization || 'healthcare'}`,
-              is_active: true,
-            });
-          if (doctorError) throw doctorError;
-        }
+        if (memberUpdateError) throw memberUpdateError;
+
+        // Then create the doctor profile
+        const { error: doctorError } = await createDoctorProfile({
+          userId: user.id,
+          clinicId: createdClinicId,
+          name: user.user_metadata?.name || user.email || '',
+          email: user.email,
+          consultationFee: data.consultationFee || 500,
+          bio: data.bio || 'Medical professional'
+        });
+        if (doctorError) throw doctorError;
+      } else {
+        // For admin-only users, ensure they have a clinic_members record without department_id
+        const { error: adminMemberError } = await supabase
+          .from('clinic_members')
+          .upsert({
+            user_id: user.id,
+            clinic_id: createdClinicId,
+            role: 'superadmin',
+            department_id: null // Explicitly set to null for admin-only users
+          }, {
+            onConflict: 'user_id,clinic_id'
+          });
+
+        if (adminMemberError) throw adminMemberError;
       }
 
       // Update auth context
@@ -442,7 +429,7 @@ const CreateClinicPage = () => {
         {/* Step 3: Doctor Profile */}
         {step === 3 && (
           <Form {...doctorForm}>
-            <form onSubmit={doctorForm.handleSubmit(handleCreateClinic)} className="space-y-6">
+            <form onSubmit={doctorForm.handleSubmit(handleSubmit)} className="space-y-6">
               <div className="space-y-4">
                 <div className="text-center">
                   <h3 className="text-lg font-semibold mb-2">Are you a practicing doctor?</h3>
@@ -513,7 +500,7 @@ const CreateClinicPage = () => {
                       name="selectedDepartment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Primary Department</FormLabel>
+                          <FormLabel>Primary Department <span className="text-red-500">*</span></FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -535,32 +522,6 @@ const CreateClinicPage = () => {
                       )}
                     />
 
-                    {/* Medical Specialization - NEW FIELD */}
-                    <FormField
-                      control={doctorForm.control}
-                      name="primarySpecialization"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Medical Specialization *</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="e.g., Clinical Cardiology, General Medicine, Neurology"
-                              {...field}
-                              onChange={(e) => {
-                                field.onChange(e);
-                                // Smart auto-suggestions based on department
-                                const selectedDept = doctorForm.getValues('selectedDepartment');
-                                const selectedDeptName = departmentTypes?.find(d => d.id === selectedDept)?.name;
-                                if (selectedDeptName && !e.target.value && selectedDeptName !== 'General Medicine') {
-                                  field.onChange(`Clinical ${selectedDeptName}`);
-                                }
-                              }}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
                     {/* Consultation Fee - NEW FIELD */}
                     <FormField
@@ -598,19 +559,6 @@ const CreateClinicPage = () => {
                       )}
                     />
 
-                    <FormField
-                      control={doctorForm.control}
-                      name="availability"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Availability (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g., Mon-Fri 9:00 AM - 5:00 PM" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
 
                     <FormField
                       control={doctorForm.control}

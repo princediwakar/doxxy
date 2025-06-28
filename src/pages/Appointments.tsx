@@ -35,8 +35,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ConsultationModal } from '@/components/consultation/ConsultationModal';
 import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
-import { EnhancedBillingModal } from '@/components/billing/BillingModal';
-import { PrescriptionModal } from '@/components/prescriptions/PrescriptionModal';
+import { BillingModal } from '@/components/billing/BillingModal';
 import { Enums, Database } from "@/integrations/supabase/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -139,10 +138,6 @@ const Appointments = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
   const [loading, setLoading] = useState(false);
   
-  // State for PrescriptionModal  
-  const [isPrescriptionModalOpen, setIsPrescriptionModalOpen] = useState(false);
-  const [selectedAppointmentForPrescription, setSelectedAppointmentForPrescription] = useState<AppointmentWithDetails | null>(null);
-
   const { data, isLoading, error } = useQuery({
     queryKey: ['appointments', activeClinic?.clinics?.id, searchTerm],
     queryFn: () => fetchAppointments(activeClinic!.clinics?.id, searchTerm),
@@ -202,13 +197,13 @@ const Appointments = () => {
   const handleModalClose = (open: boolean) => {
     setIsAppointmentModalOpen(open);
     if (!open && activeClinic) {
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinics?.id] });
     }
   };
 
   // Handle canceling an appointment
   const handleCancelAppointment = async (appointmentId: string) => {
-    if (!activeClinic?.clinic_id) {
+    if (!activeClinic?.clinics?.id) {
       toast.error("No active clinic selected.");
       return;
     }
@@ -223,14 +218,14 @@ const Appointments = () => {
         .from('appointments')
         .update({ status: "Cancelled" as Enums<'appointment_status'> })
         .eq('id', appointmentId)
-        .eq('clinic_id', activeClinic.clinic_id); // Ensure multi-tenancy
+        .eq('clinic_id', activeClinic.clinics.id); // Ensure multi-tenancy
 
       if (error) {
         throw error;
       }
 
       toast.success("Appointment canceled successfully.");
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinics.id] });
     } catch (e) {
       console.error("Error canceling appointment:", e);
       toast.error(`Failed to cancel appointment: ${e instanceof Error ? e.message : 'An unknown error occurred'}`);
@@ -269,7 +264,7 @@ const Appointments = () => {
           toast.error('Failed to update appointment status');
         } else {
           // Refresh appointments data
-          queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
+          queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinics?.id] });
           toast.success('Consultation started');
         }
       } catch (error) {
@@ -299,33 +294,23 @@ const Appointments = () => {
   const handleBillingModalClose = (open: boolean) => {
     setIsBillingModalOpen(open);
     if (!open && activeClinic) {
-      queryClient.invalidateQueries({ queryKey: ['bills', activeClinic.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['bills', activeClinic.clinics?.id] });
       setSelectedAppointmentForBilling(null);
     }
   };
 
-  // Handle creating prescription for appointment
-  const handleCreatePrescription = (appointment: AppointmentWithDetails) => {
-    setSelectedAppointmentForPrescription(appointment);
-    setIsPrescriptionModalOpen(true);
-  };
 
-  // Handle prescription modal close
-  const handlePrescriptionModalClose = (open: boolean) => {
-    setIsPrescriptionModalOpen(open);
-    if (!open && activeClinic) {
-      queryClient.invalidateQueries({ queryKey: ['prescriptions', activeClinic.clinic_id] });
-    }
-  };
+
+
 
   // Handle closing ConsultationModal and refreshing data (if needed)
   const handleConsultationModalClose = (open: boolean) => {
     setIsConsultationModalOpen(open);
     if (!open && activeClinic) {
       // Optionally invalidate appointments query if consultation saves change appointment status
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic.clinics?.id] });
        // Consider also invalidating dashboard data if it shows appointment status
-        queryClient.invalidateQueries({ queryKey: ['dashboard-data', activeClinic.clinic_id] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard-data', activeClinic.clinics?.id] });
     }
   };
 
@@ -466,7 +451,7 @@ const Appointments = () => {
                        <TableCell></TableCell>
                    )}
 
-                  <TableCell className="text-right flex gap-2 items-center">
+                <TableCell className="text-right flex gap-2 ">
                     
                     {/* Create Bill button (staff/superadmin, not cancelled) */}
                     {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && appointment.status !== 'Cancelled' && (
@@ -600,15 +585,10 @@ const Appointments = () => {
               <p className="text-muted-foreground">View and manage clinic appointments</p>
             </div>
           </div>
-          {activeClinicRole === 'doctor' && (
-            <Badge className="bg-accent/10 text-accent border-accent/20">
-              <Stethoscope size={12} className="mr-1" />
-              Doctor View
-            </Badge>
-          )}
+          
         </div>
-        {/* Show New Appointment button for Superadmins and Staff */}
-        {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin') && (
+        {/* Show New Appointment button for Doctors, Superadmins and Staff */}
+        {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin' || activeClinicRole === 'doctor') && (
           <Button
             onClick={handleNewAppointment}
             className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
@@ -720,9 +700,6 @@ const Appointments = () => {
               <Calendar className="w-5 h-5 text-primary" />
               Appointment Schedule
             </CardTitle>
-            <CardDescription>
-              {isLoading ? 'Loading appointments...' : `Showing ${filteredAppointments.all.length} appointments`}
-            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -765,7 +742,7 @@ const Appointments = () => {
         onOpenChange={handleModalClose}
         appointment={selectedAppointment ? { 
           ...selectedAppointment, 
-          clinic_id: activeClinic?.clinic_id || ''
+          clinic_id: activeClinic?.clinics?.id || ''
         } : null}
       />
 
@@ -789,30 +766,18 @@ const Appointments = () => {
         } : null}
       />
 
-      {/* Enhanced Billing Modal component */}
-      <EnhancedBillingModal
+      {/* illing Modal component */}
+      <BillingModal
         open={isBillingModalOpen}
         onOpenChange={handleBillingModalClose}
         bill={null}
         appointment={selectedAppointmentForBilling ? {
           ...selectedAppointmentForBilling,
-          clinic_id: activeClinic?.clinic_id || ''
+          // clinic_id: activeClinic?.clinic_id || ''    // TODO: Check whether to add clinic_id to the appointment object
         } : null}
       />
 
-      {/* Prescription Modal component */}
-      <PrescriptionModal
-        open={isPrescriptionModalOpen}
-        onOpenChange={handlePrescriptionModalClose}
-        consultationId={null}
-        appointment={selectedAppointmentForPrescription ? {
-          ...selectedAppointmentForPrescription,
-          clinic_id: activeClinic?.clinic_id || '',
-        } : null}
-        doctorId={selectedAppointmentForPrescription?.doctor_id || null}
-        patientId={selectedAppointmentForPrescription?.patient_id || null}
-        clinicId={activeClinic?.clinic_id || null}
-      />
+      
     </div>
   );
 };
