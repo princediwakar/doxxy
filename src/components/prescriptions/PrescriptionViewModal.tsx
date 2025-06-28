@@ -46,6 +46,11 @@ interface Medication {
   instructions?: string;
 }
 
+interface FormattedMedication {
+  medication: string;
+  instructions: string | null;
+}
+
 interface PrescriptionViewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -104,12 +109,12 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
 
   if (!prescription) return null;
 
-  const formatMedications = (medications: unknown) => {
+  const formatMedications = (medications: unknown): FormattedMedication[] | string => {
     if (typeof medications === 'string') {
       return medications;
     } else if (Array.isArray(medications)) {
       return medications.map((med, index) => {
-        if (typeof med === 'string') return med;
+        if (typeof med === 'string') return { medication: med, instructions: null };
         
         const parts = [];
         if (med.name) parts.push(med.name);
@@ -200,7 +205,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                     </>
                   ) : (
                     <div>
-                      <span className="font-semibold">{prescriptionData.patient_name || 'Unknown Patient'}</span>
+                      <span className="font-semibold">{'Unknown Patient'}</span>
                     </div>
                   )}
                 </CardContent>
@@ -223,7 +228,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                   ) : (
                     <>
                       <div className="font-semibold">
-                        {doctorProfile?.name || doctor?.name || prescriptionData.doctor_name || 'Unknown Doctor'}
+                       Dr. {doctorProfile?.name || doctor?.name || ''}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {enhancedPrescription?.doctor_department || 'General Medicine'}
@@ -255,9 +260,9 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                         Medication {index + 1}
                       </div>
                       <div className="text-sm font-mono bg-background p-3 rounded border">
-                        {med.medication}
+                        {typeof med === 'string' ? med : med.medication}
                       </div>
-                      {med.instructions && (
+                      {typeof med === 'object' && med.instructions && (
                         <div className="mt-2 text-sm">
                           <span className="font-medium text-muted-foreground">Instructions:</span>
                           <p className="mt-1 text-muted-foreground">{med.instructions}</p>
@@ -276,7 +281,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
             {/* Additional Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Instructions */}
-              {prescriptionData.instructions && (
+              {'instructions' in prescriptionData && prescriptionData.instructions && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
@@ -285,13 +290,13 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm whitespace-pre-wrap">{prescriptionData.instructions}</p>
+                    <p className="text-sm whitespace-pre-wrap">{String(prescriptionData.instructions)}</p>
                   </CardContent>
                 </Card>
               )}
 
               {/* Follow-up */}
-              {prescriptionData.follow_up_date && (
+              {'follow_up_date' in prescriptionData && prescriptionData.follow_up_date && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
@@ -302,7 +307,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                   <CardContent>
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{format(parseISO(prescriptionData.follow_up_date), 'PPP')}</span>
+                      <span className="font-medium">{format(parseISO(String(prescriptionData.follow_up_date)), 'PPP')}</span>
                     </div>
                   </CardContent>
                 </Card>

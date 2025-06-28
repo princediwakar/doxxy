@@ -128,7 +128,7 @@ export async function getDoctorsForClinic(clinicId: string) {
       phone: doctor.phone || doctor.profiles?.phone || '',
       bio: doctor.bio,
       created_at: doctor.created_at,
-      role: doctor.clinic_members?.role || 'doctor',
+      role: 'doctor',
       department_name: 'General Medicine',
       department_id: null,
       is_active: doctor.is_active,

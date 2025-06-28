@@ -23,6 +23,23 @@ type SupabaseUser = {
   user_metadata?: { full_name?: string };
 };
 
+// Helper function to generate proper filename for consultation documents
+function generateConsultationFilename (
+  patient: Patient,
+  appointment: AppointmentRow | null,
+  departmentType: string
+): string {
+  // Clean patient name for filename (remove special characters)
+  const patientName = patient?.name?.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') || 'Patient';
+
+  // Format date (use appointment date if available, otherwise current date)
+  const appointmentDate = appointment?.date ? new Date(appointment.date) : new Date();
+  const dateStr = appointmentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+  // Create filename: PatientName_YYYY-MM-DD_Department_Consultation
+  return `${patientName}_${dateStr}_${departmentType}_Consultation`;
+};
+
 export const generatePrintContent = (
   formData: ConsultationFormValues['specialty_data'],
   patient: Patient,
@@ -32,6 +49,9 @@ export const generatePrintContent = (
   user: SupabaseUser | null,
   departmentType: string = 'General'
 ) => {
+  // Generate filename first
+  const filename = generateConsultationFilename(patient, appointment, departmentType);
+
   // Create a temporary container for React rendering
   const container = document.createElement('div');
   const root = createRoot(container);
@@ -75,7 +95,7 @@ export const generatePrintContent = (
     <!DOCTYPE html>
     <html>
     <head>
-      <title>Medical Consultation Report</title>
+      <title>${filename}</title>
           <meta charset="utf-8">
           <script src="https://cdn.tailwindcss.com"></script>
       <style>
@@ -100,9 +120,19 @@ export const generatePrintContent = (
             
             /* Force layout consistency for print */
             @media print {
-              @page { margin: 10mm; size: A4; }
+              @page { 
+                margin: 0mm; 
+                size: A4; 
+                /* Hide default headers and footers */
+                @top-left { content: none; }
+                @top-center { content: none; }
+                @top-right { content: none; }
+                @bottom-left { content: none; }
+                @bottom-center { content: none; }
+                @bottom-right { content: none; }
+              }
               body { 
-                margin: 0 !important;
+                margin: 10mm !important;
                 padding: 0 !important;
               }
               .max-w-4xl { 
@@ -129,6 +159,7 @@ export const generatePrintContent = (
               
               /* Reduce letterhead padding for print */
               .letterhead { 
+                margin: 0 !important;
                 padding: 1rem !important; 
                 margin-bottom: 1rem !important; 
               }
@@ -147,23 +178,6 @@ export const generatePrintContent = (
       resolve(html);
     }, 100);
   });
-};
-
-// Helper function to generate proper filename for consultation documents
-const generateConsultationFilename = (
-  patient: Patient,
-  appointment: AppointmentRow | null,
-  departmentType: string
-): string => {
-  // Clean patient name for filename (remove special characters)
-  const patientName = patient?.name?.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') || 'Patient';
-  
-  // Format date (use appointment date if available, otherwise current date)
-  const appointmentDate = appointment?.date ? new Date(appointment.date) : new Date();
-  const dateStr = appointmentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-  
-  // Create filename: PatientName_YYYY-MM-DD_Department_Consultation
-  return `${patientName}_${dateStr}_${departmentType}_Consultation`;
 };
 
 export const printConsultation = async (
@@ -197,9 +211,15 @@ export const printConsultation = async (
 
     // Set the document title to our generated filename
     printWindow.document.title = filename;
-  printWindow.document.write(printContent);
-  printWindow.document.close();
-  printWindow.focus();
+    // Replace the URL so that browsers don't print about:blank in the footer
+    try {
+      printWindow.history.replaceState({}, '', '');
+    } catch (err) {
+      // Some browsers might restrict this; ignore safely
+    }
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
     
     // Wait for content to load before printing
     setTimeout(() => {

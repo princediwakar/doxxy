@@ -7,15 +7,8 @@ import {
   Mail, 
   MapPin, 
   Globe,
-  Stethoscope,
-  FileText,
-  Building2,
-  Award,
-  Clock,
-  DollarSign
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { getAge } from '@/lib/utils';
 import { ConsultationFormValues, Patient, PrescriptionMedication } from './types';
 import { Tables } from '@/integrations/supabase/types';
@@ -86,7 +79,6 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
 
       return (
         <div className="prescription-list mt-2">
-          <div className="font-semibold text-gray-700 mb-2 text-sm">Prescribed Medications:</div>
           <div className="prescription-table">
             <table className="w-full text-xs border-collapse">
               <thead>
@@ -230,6 +222,9 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           background-color: #f9fafb !important;
           font-weight: 600 !important;
         }
+
+        /* Remove shadows from card components */
+        .shadow-sm, .shadow, .shadow-md, .shadow-lg { box-shadow: none !important; }
       }
     </style>
   ` : '';
@@ -290,7 +285,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           <div className="doctor-info text-right space-y-4">
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-gray-900">
-                {doctorInfo?.name || 'Doctor Name'}
+                Dr. {doctorInfo?.name || ''}
               </h2>
               <div className="text-sm text-gray-600 font-medium">
                 {doctorInfo?.specialization && (

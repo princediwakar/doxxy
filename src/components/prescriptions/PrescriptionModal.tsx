@@ -390,7 +390,7 @@ export function PrescriptionModal({
                         <SelectItem key={doctor.id} value={doctor.id}>
                           <div className="flex items-center gap-2">
                             <Stethoscope className="h-4 w-4" />
-                            <span>{doctor.name}</span>
+                            <span>Dr. {doctor.name}</span>
                           </div>
                         </SelectItem>
                       ))}
@@ -443,7 +443,7 @@ export function PrescriptionModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                       <div>
                         <span className="font-medium text-muted-foreground">Doctor:</span>
-                        <p className="font-medium">{selectedDoctor?.name || selectedAppointment?.doctor_name}</p>
+                        <p className="font-medium">Dr. {selectedDoctor?.name || selectedAppointment?.doctor_name}</p>
                       </div>
                       <div>
                         <span className="font-medium text-muted-foreground">Patient:</span>
