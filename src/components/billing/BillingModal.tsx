@@ -591,7 +591,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                     name="appointment_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Related Appointment (Optional)</FormLabel>
+                        <FormLabel>Related Appointment</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''} disabled={isLoadingAppointments || !form.watch('patient_id')}>
                           <FormControl>
                             <SelectTrigger role="combobox" aria-label="Related Appointment">

@@ -343,7 +343,7 @@ export function PrescriptionModal({
               {/* Related Appointment Selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">
-                  Related Appointment <span className="text-muted-foreground">(optional)</span>
+                  Related Appointment
                 </label>
                 <Select
                   onValueChange={handleAppointmentChange}
