@@ -222,6 +222,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       console.log("fetchUserAndClinicData: Fetching user clinic memberships using RPC");
       
+      // First, get clinic memberships
       const { data: memberData, error: memberError } = await supabase.rpc('get_user_clinic_memberships', {
         user_id: userFromSession.id
       });
@@ -230,16 +231,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (memberError) {
         console.error("fetchUserAndClinicData: Error fetching clinic members:", memberError);
-        // Instead of throwing, handle gracefully by setting empty state
-        setUserClinics([]);
-        setActiveClinicState(null);
-        setProfileName(null);
-        setHasDoctorProfile(undefined);
-        localStorage.removeItem('activeClinicId');
-        return;
+        throw memberError;
       }
-
-      console.log("fetchUserAndClinicData: Fetched user clinic data:", memberData);
 
       if (!memberData || memberData.length === 0) {
         setUserClinics([]);
@@ -248,94 +241,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setHasDoctorProfile(undefined);
         localStorage.removeItem('activeClinicId');
         console.log("AuthContext: User is not a member of any clinics.");
-        return; // Exit if no clinics found
+        return;
       }
 
-      // Convert the function result to the expected format
-      fetchedClinics = memberData.map(member => ({
-        id: member.membership_id,
-        created_at: new Date().toISOString(), // We don't have this from the function, use placeholder
-        user_id: userFromSession.id,
-        clinic_id: member.clinic_id,
-        role: member.role,
-        department_id: member.department_id,
-        clinics: {
-          id: member.clinic_id,
-          name: member.clinic_name,
-          created_by: member.clinic_created_by,
-          created_at: new Date().toISOString(), // Placeholder
-          address: member.clinic_address,
-          email: member.clinic_email,
-          phone: member.clinic_phone,
-          website: member.clinic_website
-        }
-      }));
+      // Then, fetch full clinic details for each membership
+      const clinicPromises = memberData.map(async (member) => {
+        const { data: clinicData, error: clinicError } = await supabase
+          .from('clinics')
+          .select('*')
+          .eq('id', member.clinic_id)
+          .single();
 
+        if (clinicError) {
+          console.error("Error fetching clinic details:", clinicError);
+          return null;
+        }
+
+        return {
+          ...member,
+          clinics: clinicData
+        } as ClinicMemberWithClinic;
+      });
+
+      const resolvedClinics = await Promise.all(clinicPromises);
+      fetchedClinics = resolvedClinics.filter((clinic): clinic is ClinicMemberWithClinic => clinic !== null);
+
+      // Set user clinics
       setUserClinics(fetchedClinics);
-      console.log("fetchUserAndClinicData: Set user clinics data:", fetchedClinics);
 
-      const savedActiveClinicId = localStorage.getItem('activeClinicId');
-      console.log("fetchUserAndClinicData: Saved active clinic ID:", savedActiveClinicId);
-
-      if (savedActiveClinicId) {
-        const foundSavedClinic = fetchedClinics.find(clinic => clinic.clinic_id === savedActiveClinicId);
-        if (foundSavedClinic) {
-          initialActiveClinic = foundSavedClinic;
-          console.log("fetchUserAndClinicData: Restored active clinic:", foundSavedClinic.clinics?.name);
-        } else {
-          localStorage.removeItem('activeClinicId');
-          console.log("fetchUserAndClinicData: Saved clinic not found in fetched clinics, cleared local storage.");
-        }
+      // Handle active clinic selection
+      const storedClinicId = localStorage.getItem('activeClinicId');
+      if (storedClinicId) {
+        initialActiveClinic = fetchedClinics.find(clinic => clinic.clinic_id === storedClinicId) || null;
       }
 
+      // If no stored clinic or stored clinic not found, use first clinic
       if (!initialActiveClinic && fetchedClinics.length > 0) {
         initialActiveClinic = fetchedClinics[0];
-        localStorage.setItem('activeClinicId', initialActiveClinic.clinic_id);
-        console.log("fetchUserAndClinicData: Set first fetched clinic as active:", initialActiveClinic.clinics?.name);
+        localStorage.setItem('activeClinicId', fetchedClinics[0].clinic_id);
       }
 
-      setActiveClinicState(initialActiveClinic);
-      console.log("fetchUserAndClinicData: Final active clinic set to:", initialActiveClinic?.clinics?.name || null);
-
-      // Check doctor profile for the active clinic if user is superadmin
-      if (initialActiveClinic && userFromSession.id) {
-        if (initialActiveClinic.role === 'superadmin') {
+      if (initialActiveClinic) {
+        setActiveClinicState(initialActiveClinic);
+        setProfileName(initialActiveClinic.clinics?.name || null);
+        
+        // Check doctor profile for superadmins
+        if (userFromSession.id && initialActiveClinic.role === 'superadmin') {
           await checkDoctorProfile(userFromSession.id, initialActiveClinic.clinic_id);
         } else {
           setHasDoctorProfile(initialActiveClinic.role === 'doctor');
         }
-      } else {
-        setHasDoctorProfile(undefined);
       }
-
-      // After setting clinics, fetch profile name
-      console.log("fetchUserAndClinicData: Fetching profile name");
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', userFromSession.id)
-          .maybeSingle();
-        if (profileError) {
-          console.error('AuthContext: Error fetching profile name:', profileError);
-          setProfileName(null);
-        } else {
-          setProfileName(profile?.name || null);
-          console.log("fetchUserAndClinicData: Set profile name:", profile?.name || null);
-        }
-      } catch (profileFetchError) {
-        console.error('AuthContext: Exception fetching profile name:', profileFetchError);
-        setProfileName(null);
-      }
-
-      console.log("fetchUserAndClinicData completed successfully.", {
-        user: userFromSession?.id,
-        fetchedClinicsCount: fetchedClinics?.length || 0,
-        finalActiveClinicName: initialActiveClinic?.clinics?.name || 'none',
-      });
 
     } catch (error) {
       console.error("fetchUserAndClinicData: Error:", error);
+      // Handle error gracefully
       setUserClinics([]);
       setActiveClinicState(null);
       setProfileName(null);
@@ -351,17 +311,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       setClinicLoading(false);
       isFetchingRef.current = false;
-      
-      // Force debug log after state update
-      setTimeout(() => {
-        console.log("fetchUserAndClinicData: State after clinicLoading set to false:", {
-          initialLoading,
-          clinicLoading: false, // should be false now
-          totalLoading: initialLoading || false
-        });
-      }, 100);
     }
-  }, [checkProfileCompletion]);
+  }, [checkProfileCompletion, checkDoctorProfile]);
 
   useEffect(() => {
     let mounted = true;
@@ -483,16 +434,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Effect to re-fetch clinic data on window focus (for data consistency)
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && session?.user) {
-        console.log("AuthContext: Window became visible, re-fetching user clinic data.");
-        fetchUserAndClinicData(session.user);
+        // Clear any existing timeout
+        if (timeoutId) clearTimeout(timeoutId);
+        
+        // Only refresh if the page has been hidden for more than 5 minutes
+        timeoutId = setTimeout(() => {
+          const lastFetchTime = localStorage.getItem('lastFetchTime');
+          const now = Date.now();
+          if (!lastFetchTime || now - parseInt(lastFetchTime) > 5 * 60 * 1000) {
+            console.log("AuthContext: Window became visible after 5+ minutes, re-fetching user clinic data.");
+            localStorage.setItem('lastFetchTime', now.toString());
+            fetchUserAndClinicData(session.user);
+          }
+        }, 1000); // 1 second debounce
       }
     };
 
     window.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [session, fetchUserAndClinicData]);
 

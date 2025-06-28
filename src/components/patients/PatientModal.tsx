@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { format } from "date-fns";
 import { getSupabase } from "@/integrations/supabase/client";
+import { UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,9 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -182,9 +181,12 @@ export const PatientModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] z-[60]">
         <DialogHeader>
-          <DialogTitle>{patient ? "Edit Patient" : "New Patient"}</DialogTitle>
+          <DialogTitle><div className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4" />
+            {patient ? "Edit Patient" : "New Patient"}
+          </div></DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
@@ -296,18 +298,16 @@ export const PatientModal = ({
                 </FormItem>
               )}
             />
-            <DialogFooter className="md:col-span-2">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-              >
-            {isSubmitting
-              ? (patient ? "Saving..." : "Creating...")
-              : (patient ? "Save Changes" : "Create Patient")}
-          </Button>
-        </DialogFooter>
           </form>
         </Form>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type="submit" onClick={form.handleSubmit(onSubmit)} disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : patient ? "Update Patient" : "Create Patient"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

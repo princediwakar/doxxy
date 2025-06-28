@@ -322,11 +322,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   }, [pendingPatientId, patients, form]);
 
   return (
-    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] z-[50]">
         <DialogHeader>
-          <DialogTitle>{appointment ? 'Edit Appointment' : 'New Appointment'}</DialogTitle>
+          <DialogTitle><div className="flex items-center gap-2">
+            <CalendarIcon className="h-4 w-4" />
+            {appointment ? "Edit Appointment" : "New Appointment"}
+          </div></DialogTitle>
           <DialogDescription>
             Fill in the details to {appointment ? 'edit' : 'create'} an appointment.
           </DialogDescription>
@@ -565,6 +567,14 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             {/* Dialog Footer */}
             <DialogFooter className="md:col-span-2">
               <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
                 type="submit"
                 disabled={isSubmitting || Object.keys(form.formState.errors).length > 0}
               >
@@ -584,21 +594,20 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           </form>
         </Form>
       </DialogContent>
+      {isPatientModalOpen && (
+        <PatientModal
+          open={isPatientModalOpen}
+          onOpenChange={setIsPatientModalOpen}
+          patient={null}
+          onPatientCreated={(newPatient) => {
+            setNewlyCreatedPatient(newPatient);
+            setPendingPatientId(newPatient.id);
+            form.setValue('patient_id', newPatient.id);
+            setIsPatientModalOpen(false);
+          }}
+        />
+      )}
     </Dialog>
-
-      {/* PatientModal for quick add */}
-      <PatientModal
-        open={isPatientModalOpen}
-        onOpenChange={setIsPatientModalOpen}
-        patient={null}
-        onPatientCreated={(newPatient) => {
-          setIsPatientModalOpen(false);
-          queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
-          setPendingPatientId(newPatient.id);
-          setPatientSearch("");
-        }}
-      />
-    </>
   );
 };
 

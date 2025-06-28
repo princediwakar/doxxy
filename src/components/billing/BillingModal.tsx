@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format, parseISO } from 'date-fns';
 import { 
+  FileText,
   Plus, 
   Trash2, 
 } from 'lucide-react';
@@ -517,7 +518,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogTitle>Create/Edit Bill</DialogTitle>
+        <DialogTitle><div className="flex items-center gap-2">
+          <FileText className="h-4 w-4" />
+          Create/Edit Bill
+        </div></DialogTitle>
         <ScrollArea className="max-h-[85vh]">
           <div className="bg-white rounded-lg shadow-lg p-8">
             <Form {...form}>

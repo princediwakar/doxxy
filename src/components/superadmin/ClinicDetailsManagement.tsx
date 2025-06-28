@@ -61,39 +61,44 @@ const ClinicDetailsManagement = () => {
   });
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
+// Fetch clinic details with React Query
+const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
+  queryKey: ['clinic', clinic?.id],
+  queryFn: async () => {
+    if (!clinic?.id) return null;
+    const { data, error } = await supabase
+      .from('clinics')
+      .select('*')
+      .eq('id', clinic.id)
+      .single();
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!clinic?.id,
+  // Add these options to ensure data is always fresh
+  staleTime: 0, // Data is considered stale immediately
+  gcTime: 0, // Don't cache the data
+  refetchOnMount: true, // Always refetch on mount
+  refetchOnWindowFocus: true, // Refetch when window regains focus
+});
   // Initialize form with clinic data
   useEffect(() => {
-    if (clinic) {
+    if (clinicData) {
       const initialForm = {
-        name: clinic.name || "",
-        address: clinic.address || "",
-        email: clinic.email || "",
-        phone: clinic.phone || "",
-        website: clinic.website || "",
+        name: clinicData.name || "",
+        address: clinicData.address || "",
+        email: clinicData.email || "",
+        phone: clinicData.phone || "",
+        website: clinicData.website || "",
       };
       setForm(initialForm);
       setHasUnsavedChanges(false);
     }
-  }, [clinic]);
+  }, [clinicData]);
 
   const isSuperadmin = activeClinicRole === 'superadmin';
 
-  // Fetch clinic details with React Query
-  const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
-    queryKey: ['clinic', clinic?.id],
-    queryFn: async () => {
-      if (!clinic?.id) return null;
-      const { data, error } = await supabase
-        .from('clinics')
-        .select('*')
-        .eq('id', clinic.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!clinic?.id,
-  });
+  
 
   // Update clinic mutation
   const updateClinicMutation = useMutation({
