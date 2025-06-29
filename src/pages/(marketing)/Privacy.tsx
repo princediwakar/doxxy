@@ -77,7 +77,7 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-semibold mb-2">11. Compliance</h2>
           <ul className="list-disc list-inside space-y-2">
             <li>India: Digital Personal Data Protection Act, 2023 (DPDP)</li>
-            <li>USA: Health Insurance Portability and Accountability Act (HIPAA)</li>
+            
             <li>EU: General Data Protection Regulation (GDPR)</li>
           </ul>
         </section>

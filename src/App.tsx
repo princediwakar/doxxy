@@ -4,7 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import PrivateRoute from "./components/PrivateRoute";
 import { AppHeader } from "./components/AppHeader";
@@ -21,9 +21,24 @@ const Profile = lazy(() => import("./pages/Profile"));
 const CreateClinicPage = lazy(() => import("./pages/CreateClinicPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const CompleteProfile = lazy(() => import("@/pages/CompleteProfile"));
-const TermsPage = lazy(() => import("./pages/Terms"));
-const PrivacyPage = lazy(() => import("./pages/Privacy"));
+const TermsPage = lazy(() => import("./pages/(marketing)/Terms"));
+const PrivacyPage = lazy(() => import("./pages/(marketing)/Privacy"));
 const Consultation = lazy(() => import("./pages/Consultation"));
+const LandingPage = lazy(() => import("./pages/(marketing)/LandingPage"));
+const Features = lazy(() => import("./pages/(marketing)/Features"));
+const Pricing = lazy(() => import("./pages/(marketing)/Pricing"));
+const About = lazy(() => import("./pages/(marketing)/About"));
+const Contact = lazy(() => import("./pages/(marketing)/Contact"));
+const ComparisonIndex = lazy(() => import("./pages/(marketing)/comparisons/index"));
+const DoxxyVsEkaCare = lazy(() => import("./pages/(marketing)/comparisons/DoxxyVsEkaCare"));
+const EkaCareAlternative = lazy(() => import("./pages/(marketing)/comparisons/EkaCareAlternative"));
+const DoxxyVsPracto = lazy(() => import("./pages/(marketing)/comparisons/DoxxyVsPracto"));
+const DoxxyVsMFine = lazy(() => import("./pages/(marketing)/comparisons/DoxxyVsMFine"));
+const DoxxyVsLybrate = lazy(() => import("./pages/(marketing)/comparisons/DoxxyVsLybrate"));
+const DoxxyVsClinicPlus = lazy(() => import("./pages/(marketing)/comparisons/DoxxyVsClinicPlus"));
+const FAQ = lazy(() => import("./pages/(marketing)/FAQ"));
+const Security = lazy(() => import("./pages/(marketing)/Security"));
+
 
 // Configure QueryClient with better caching
 const queryClient = new QueryClient({
@@ -31,9 +46,8 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false, // Disable automatic refetch on window focus
       staleTime: 1000 * 60 * 5, // Data stays fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache persists for 30 minutes
+      gcTime: 1000 * 60 * 30, // Cache persists for 30 minutes
       retry: 1, // Only retry failed requests once
-      suspense: true, // Enable React Suspense mode
     },
   },
 });
@@ -45,36 +59,64 @@ const PageLoader = () => (
   </div>
 );
 
-const AppRoutes = () => {
+import { useLocation } from "react-router-dom";
+
+const AppContent = () => {
+  const location = useLocation();
+  const { user, activeClinic, needsProfileCompletion } = useAuth();
+  // Redirect authenticated users away from landing page and public routes
+  if (user && needsProfileCompletion && location.pathname !== '/complete-profile') {
+    return <Navigate to="/complete-profile" replace />;
+  }
+  if (user && !needsProfileCompletion && !activeClinic && location.pathname !== '/create-clinic') {
+    return <Navigate to="/create-clinic" replace />;
+  }
+  if (user && activeClinic && location.pathname === '/') {
+    return <Navigate to="/dashboard" replace />;
+  }
   return (
-    <Suspense fallback={<PageLoader />}>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/terms" element={<TermsPage />} />
-        <Route path="/complete-profile" element={<CompleteProfile />} />
-        
-        {/* Root route - redirect to dashboard with authentication check */}
-        <Route path="/" element={<PrivateRoute><Navigate to="/dashboard" replace /></PrivateRoute>} />
-        
-        {/* Protected routes handled by PrivateRoute */}
-        <Route element={<PrivateRoute />}> 
-          <Route path="/create-clinic" element={<CreateClinicPage />} />
-          <Route element={<Layout />}> {/* Layout renders for main app paths */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/patients/*" element={<Patients />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/billing" element={<Billing />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/consultation/:appointmentId" element={<Consultation />} />
-            <Route path="/profile" element={<Profile />} />
+    <>
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public routes with AppHeader */}
+          <Route element={<AppHeader />}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/features" element={<Features />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/comparisons" element={<ComparisonIndex />} />
+            <Route path="/comparisons/doxxy-vs-eka-care" element={<DoxxyVsEkaCare />} />
+            <Route path="/comparisons/eka-care-alternative" element={<EkaCareAlternative />} />
+            <Route path="/comparisons/doxxy-vs-practo" element={<DoxxyVsPracto />} />
+            <Route path="/comparisons/doxxy-vs-mfine" element={<DoxxyVsMFine />} />
+            <Route path="/comparisons/doxxy-vs-lybrate" element={<DoxxyVsLybrate />} />
+            <Route path="/comparisons/doxxy-vs-clinicplus" element={<DoxxyVsClinicPlus />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/security" element={<Security />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/auth" element={<Auth />} />
+
           </Route>
-        </Route>
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Suspense>
+          {/* Protected routes handled by PrivateRoute */}
+          <Route element={<PrivateRoute />}>
+            <Route path="/create-clinic" element={<CreateClinicPage />} />
+            <Route element={<Layout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/patients/*" element={<Patients />} />
+              <Route path="/appointments" element={<Appointments />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/consultation/:appointmentId" element={<Consultation />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+            <Route path="/complete-profile" element={<CompleteProfile />} />
+          </Route>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
   );
 };
 
@@ -84,8 +126,7 @@ const App = () => (
       <TooltipProvider>
         <Sonner />
         <BrowserRouter>
-          <AppHeader />
-          <AppRoutes />
+          <AppContent />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
