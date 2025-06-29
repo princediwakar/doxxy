@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
+import { getSupabase } from "@/integrations/supabase/client";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -26,9 +27,7 @@ const Contact = () => {
     phone: '',
     company: '',
     city: '',
-    subject: '',
     message: '',
-    meetingType: ''
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -41,29 +40,63 @@ const Contact = () => {
     setError(null);
     
     try {
-      const { data, error } = await fetch('/api/submit-contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          company: formData.company || null,
-          city: formData.city || null,
-          subject: formData.subject || null,
-          message: formData.message,
-          meeting_type: formData.meetingType || null
-        }),
-      }).then(res => res.json());
+      const supabase = getSupabase();
+      
+      // Call the RPC function to submit the contact form
+      const { data, error } = await supabase.rpc('submit_contact_form', {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || null,
+        company: formData.company || null,
+        city: formData.city || null,
+        message: formData.message
+      });
       
       if (error) {
         throw new Error(error.message || 'Failed to submit form');
       }
       
+      console.log('Contact form submitted successfully with ID:', data);
+      
+      // Send email notification via Edge Function
+      try {
+        const emailResponse = await supabase.functions.invoke('send-contact-email', {
+          body: {
+            record: {
+              id: data,
+              name: formData.name,
+              email: formData.email,
+              phone: formData.phone,
+              company: formData.company,
+              city: formData.city,
+              message: formData.message,
+              created_at: new Date().toISOString()
+            }
+          }
+        });
+        
+        if (emailResponse.error) {
+          console.error('Failed to send email notification:', emailResponse.error);
+          // Don't throw error here - form submission was successful, email is just a bonus
+        } else {
+          console.log('Email notification sent successfully:', emailResponse.data);
+        }
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Don't throw error here - form submission was successful, email is just a bonus
+      }
+      
       setIsSubmitted(true);
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        city: '',
+        message: '',
+      });
     } catch (err) {
+      console.error('Contact form error:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
@@ -112,7 +145,7 @@ const Contact = () => {
   const faqs = [
     {
       question: "How quickly can I get started with Doxxy?",
-      answer: "Most practices are up and running within 24-48 hours. Our onboarding team will guide you through the entire setup process."
+      answer: "Most practices are up and running within 15 minutes. Our onboarding team will guide you through the entire setup process."
     },
     {
       question: "Do you offer data migration services?",
@@ -203,9 +236,7 @@ const Contact = () => {
                           phone: '',
                           company: '',
                           city: '',
-                          subject: '',
                           message: '',
-                          meetingType: ''
                         });
                         setIsSubmitted(false);
                       }}>

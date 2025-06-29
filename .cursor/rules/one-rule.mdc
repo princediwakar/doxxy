@@ -13,7 +13,6 @@ alwaysApply: false
 **Development Tools**: Supabase MCP for database operations, schema management, and RLS testing. Playwright MCP to access browser console, take page screenshots, navigate the web, fill out forms, and click on buttons etc..
 
 
-
 ---
 
 ## 🚨 CRITICAL: Autonomous Operation & Escalation

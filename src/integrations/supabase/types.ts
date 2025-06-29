@@ -337,6 +337,39 @@ export type Database = {
           },
         ]
       }
+      contact_messages: {
+        Row: {
+          city: string | null
+          company: string | null
+          created_at: string | null
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          city?: string | null
+          company?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          city?: string | null
+          company?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
       department_types: {
         Row: {
           created_at: string | null
@@ -856,6 +889,17 @@ export type Database = {
           short_composition2: string
           created_at: string
         }[]
+      }
+      submit_contact_form: {
+        Args: {
+          name: string
+          email: string
+          message: string
+          phone?: string
+          company?: string
+          city?: string
+        }
+        Returns: string
       }
     }
     Enums: {
