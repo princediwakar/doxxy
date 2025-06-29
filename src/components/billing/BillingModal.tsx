@@ -419,7 +419,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                     <div>{viewedPatient.email || ''}</div>
                     </div>
                   ) : (
-                    <p className="text-red-500">Unable to load patient information.</p>
+                    <p className="text-destructive">Unable to load patient information.</p>
                   )}
                           </div>
               <div className="text-right">
@@ -475,7 +475,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                                 <span>₹{subtotal.toFixed(2)}</span>
                               </div>
                               {discountPercent > 0 && (
-                      <div className="flex justify-between py-1 text-green-600">
+                      <div className="flex justify-between py-1 text-success">
                                   <span>Discount ({discountPercent}%):</span>
                                   <span>-₹{discountAmount.toFixed(2)}</span>
                                 </div>
@@ -739,7 +739,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                       control={form.control}
                       name="discount_percentage"
                       render={({ field }) => (
-                        <div className="flex justify-between py-1 text-green-600 items-center">
+                        <div className="flex justify-between py-1 text-success items-center">
                           <span>Discount (%):</span>
                           <Input type="number" min="0" max="100" step="0.01" className="w-20" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                           <span>-₹{totals && totals.discountAmount > 0 ? totals.discountAmount.toFixed(2) : '0.00'}</span>
@@ -750,7 +750,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                       control={form.control}
                       name="tax_percentage"
                       render={({ field }) => (
-                        <div className="flex justify-between py-1 items-center">
+                        <div className="flex justify-between py-1 text-success items-center">
                           <span>Tax (%):</span>
                           <Input type="number" min="0" max="100" step="0.01" className="w-20" {...field} onChange={e => field.onChange(parseFloat(e.target.value) || 0)} />
                           <span>₹{totals && totals.taxAmount > 0 ? totals.taxAmount.toFixed(2) : '0.00'}</span>

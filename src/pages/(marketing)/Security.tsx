@@ -25,21 +25,21 @@ import SiteFooter from "@/components/SiteFooter";
 const Security = () => {
   const certifications = [
     {
-      icon: <Award className="h-8 w-8 text-blue-600" />,
+      icon: <Award className="h-8 w-8 text-primary" />,
       
     },
     {
-      icon: <Shield className="h-8 w-8 text-green-600" />,
+      icon: <Shield className="h-8 w-8 text-success" />,
       
     },
     {
-      icon: <Globe className="h-8 w-8 text-purple-600" />,
+      icon: <Globe className="h-8 w-8 text-primary" />,
       title: "GDPR Compliant",
       description: "European data protection regulation compliance",
       status: "Certified"
     },
     {
-      icon: <Lock className="h-8 w-8 text-orange-600" />,
+      icon: <Lock className="h-8 w-8 text-accent" />,
       title: "ISO 27001",
       description: "International security management standard",
       status: "In Progress"
@@ -174,11 +174,11 @@ const Security = () => {
           <Badge variant="outline" className="mb-4 px-4 py-2">
             Security & Compliance
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Your Data is
-            <span className="text-blue-600"> Secure</span>
+            <span className="text-primary"> Secure</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Doxxy implements enterprise-grade security measures to protect your practice and patient data with the highest level of security.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -229,13 +229,13 @@ const Security = () => {
       </section> */}
 
       {/* Security Features */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Security Features
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-muted-foreground">
               Comprehensive security controls protecting your data at every level.
             </p>
           </div>
@@ -244,12 +244,12 @@ const Security = () => {
             {securityFeatures.map((feature, index) => (
               <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
                     {feature.icon}
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 mb-2">{feature.title}</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">
+                    <h3 className="font-semibold text-foreground mb-2">{feature.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -264,13 +264,13 @@ const Security = () => {
       
 
       {/* Data Handling Lifecycle */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Secure Data Lifecycle
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-muted-foreground">
               Every stage of data handling is secured with multiple layers of protection.
             </p>
           </div>
@@ -279,7 +279,7 @@ const Security = () => {
             {dataHandling.map((phase, index) => (
               <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
                 <CardHeader>
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg mx-auto mb-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-lg mx-auto mb-4">
                     {index + 1}
                   </div>
                   <CardTitle className="text-xl text-center">{phase.phase}</CardTitle>
@@ -289,8 +289,8 @@ const Security = () => {
                   <ul className="space-y-2">
                     {phase.controls.map((control, idx) => (
                       <li key={idx} className="flex items-start space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-xs text-gray-600">{control}</span>
+                        <CheckCircle className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                        <span className="text-xs text-muted-foreground">{control}</span>
                       </li>
                     ))}
                   </ul>
@@ -302,50 +302,50 @@ const Security = () => {
       </section>
 
       {/* Security Monitoring */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
                 24/7 Security Monitoring
               </h2>
-              <p className="text-lg text-gray-600 mb-8">
+              <p className="text-lg text-muted-foreground mb-8">
                 Our Security Operations Center (SOC) provides round-the-clock monitoring 
                 and threat detection to protect your practice from evolving cyber threats.
               </p>
               
               <div className="space-y-6">
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Zap className="h-6 w-6 text-blue-600" />
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Zap className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Real-time Threat Detection</h3>
-                    <p className="text-gray-600 text-sm">
+                    <h3 className="font-semibold text-foreground mb-2">Real-time Threat Detection</h3>
+                    <p className="text-muted-foreground text-sm">
                       Advanced AI-powered monitoring identifies and responds to threats in real-time.
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Users className="h-6 w-6 text-green-600" />
+                  <div className="p-2 bg-success/10 rounded-lg">
+                    <Users className="h-6 w-6 text-success" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Expert Security Team</h3>
-                    <p className="text-gray-600 text-sm">
+                    <h3 className="font-semibold text-foreground mb-2">Expert Security Team</h3>
+                    <p className="text-muted-foreground text-sm">
                       Certified security professionals monitor and respond to incidents 24/7.
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <FileText className="h-6 w-6 text-purple-600" />
+                  <div className="p-2 bg-secondary/10 rounded-lg">
+                    <FileText className="h-6 w-6 text-secondary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Incident Response</h3>
-                    <p className="text-gray-600 text-sm">
+                    <h3 className="font-semibold text-foreground mb-2">Incident Response</h3>
+                    <p className="text-muted-foreground text-sm">
                       Rapid incident response with detailed forensics and remediation plans.
                     </p>
                   </div>
@@ -359,10 +359,10 @@ const Security = () => {
                 alt="Security monitoring dashboard" 
                 className="rounded-lg shadow-xl"
               />
-              <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-lg shadow-lg">
+              <div className="absolute -bottom-6 -right-6 bg-background p-6 rounded-lg shadow-lg">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">99.9%</div>
-                  <div className="text-sm text-gray-600">Threat Detection Rate</div>
+                  <div className="text-2xl font-bold text-success">99.9%</div>
+                  <div className="text-sm text-muted-foreground">Threat Detection Rate</div>
                 </div>
               </div>
             </div>

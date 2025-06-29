@@ -130,15 +130,15 @@ const Contact = () => {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-success/5 flex items-center justify-center px-4">
         <Card className="max-w-md mx-auto text-center p-8">
-          <div className="mx-auto mb-6 p-3 bg-green-100 rounded-full w-fit">
-            <CheckCircle className="h-12 w-12 text-green-600" />
+          <div className="mx-auto mb-6 p-3 bg-success/10 rounded-full w-fit">
+            <CheckCircle className="h-12 w-12 text-success" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900 mb-4">
+          <CardTitle className="text-2xl font-bold text-foreground mb-4">
             Thank You!
           </CardTitle>
-          <CardDescription className="text-gray-600 mb-6">
+          <CardDescription className="text-muted-foreground mb-6">
             We've received your message and will get back to you within 24 hours. 
             A member of our team will contact you soon.
           </CardDescription>
@@ -151,7 +151,7 @@ const Contact = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-success/5">
       
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
@@ -159,11 +159,11 @@ const Contact = () => {
           <Badge variant="outline" className="mb-4 px-4 py-2">
             Get in Touch
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             We're Here to
-            <span className="text-blue-600"> Help</span>
+            <span className="text-primary"> Help</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Have questions about Doxxy? Want to schedule a demo? Our team of healthcare 
             technology experts is ready to help you transform your practice.
           </p>
@@ -187,13 +187,13 @@ const Contact = () => {
                 <CardContent>
                   {isSubmitted ? (
                     <div className="text-center py-8">
-                      <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                        <CheckCircle className="h-6 w-6 text-green-600" />
+                      <div className="mx-auto w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mb-4">
+                        <CheckCircle className="h-6 w-6 text-success" />
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      <h3 className="text-xl font-semibold text-foreground mb-2">
                         Message Sent Successfully!
                       </h3>
-                      <p className="text-gray-600 mb-6">
+                      <p className="text-muted-foreground mb-6">
                         Thank you for reaching out. We'll get back to you within 24 hours at {formData.email}.
                       </p>
                       <Button onClick={() => {
@@ -215,7 +215,7 @@ const Contact = () => {
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Message *
                       </label>
                       <Textarea
@@ -231,7 +231,7 @@ const Contact = () => {
                     
 
                       <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-foreground mb-2">
                         Practice/Organization Name
                       </label>
                       <Input
@@ -242,7 +242,7 @@ const Contact = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           City
                         </label>
                         <Input
@@ -253,7 +253,7 @@ const Contact = () => {
                       </div>
                       <div>
                     
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Full Name *
                         </label>
                         <Input
@@ -264,7 +264,7 @@ const Contact = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Email Address *
                         </label>
                         <Input
@@ -279,7 +279,7 @@ const Contact = () => {
 
                     <div className="grid md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Phone Number
                         </label>
                         <Input
@@ -298,7 +298,7 @@ const Contact = () => {
 
 
                     {error && (
-                      <div className="text-red-500 mb-4 text-sm">
+                      <div className="text-destructive mb-4 text-sm">
                         {error}
                       </div>
                     )}
@@ -321,22 +321,22 @@ const Contact = () => {
               {contactInfo.map((info, index) => (
                 <Card key={index} className="p-6">
                   <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
                       {info.icon}
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">{info.title}</h3>
+                      <h3 className="font-semibold text-foreground mb-2">{info.title}</h3>
                       {info.details.map((detail, idx) => (
-                        <p key={idx} className="text-blue-600 font-medium">{detail}</p>
+                        <p key={idx} className="text-primary font-medium">{detail}</p>
                       ))}
-                      <p className="text-sm text-gray-600 mt-2">{info.description}</p>
+                      <p className="text-sm text-muted-foreground mt-2">{info.description}</p>
                     </div>
                   </div>
                 </Card>
               ))}
 
               {/* Quick Demo CTA */}
-              <Card className="p-6 bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+              <Card className="p-6 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
                 <div className="text-center">
                   <Calendar className="h-8 w-8 mx-auto mb-4" />
                   <h3 className="font-semibold mb-2">Book a Demo</h3>
@@ -399,13 +399,13 @@ const Contact = () => {
       </section> */}
 
       {/* FAQ Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Frequently Asked Questions
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-muted-foreground">
               Quick answers to common questions about Doxxy.
             </p>
           </div>
@@ -413,8 +413,8 @@ const Contact = () => {
           <div className="space-y-6">
             {faqs.map((faq, index) => (
               <Card key={index} className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">{faq.question}</h3>
-                <p className="text-gray-600">{faq.answer}</p>
+                <h3 className="font-semibold text-foreground mb-3">{faq.question}</h3>
+                <p className="text-muted-foreground">{faq.answer}</p>
               </Card>
             ))}
           </div>

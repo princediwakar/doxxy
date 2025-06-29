@@ -31,56 +31,56 @@ const DoxxyVsPracto = () => {
       doxxy: "Pay-per-appointment (₹10/appointment)",
       practo: "Monthly subscription + per-doctor fees",
       advantage: "More cost-effective for small to medium practices",
-      icon: <DollarSign className="h-6 w-6 text-blue-600" />
+      icon: <DollarSign className="h-6 w-6 text-primary" />
     },
     {
       feature: "Free Plan",
       doxxy: "First 100 appointments completely free",
       practo: "Limited free tier with restricted features",
       advantage: "Start with zero risk and full feature access",
-      icon: <Calendar className="h-6 w-6 text-blue-600" />
+      icon: <Calendar className="h-6 w-6 text-primary" />
     },
     {
       feature: "Doctor Limits",
       doxxy: "Unlimited doctors on all plans",
       practo: "Tiered pricing based on number of doctors",
       advantage: "Add as many doctors as needed without extra cost",
-      icon: <Users className="h-6 w-6 text-blue-600" />
+      icon: <Users className="h-6 w-6 text-primary" />
     },
     {
       feature: "Contract Length",
       doxxy: "No commitment, cancel anytime",
       practo: "Annual contracts preferred, monthly at premium",
       advantage: "Flexibility to adjust as your practice needs change",
-      icon: <Clock className="h-6 w-6 text-blue-600" />
+      icon: <Clock className="h-6 w-6 text-primary" />
     },
     {
       feature: "Patient Records",
       doxxy: "Comprehensive EMR with unlimited storage",
       practo: "Storage limits on basic plans",
       advantage: "Never worry about hitting storage limits",
-      icon: <FileText className="h-6 w-6 text-blue-600" />
+      icon: <FileText className="h-6 w-6 text-primary" />
     },
     {
       feature: "Focus",
       doxxy: "Dedicated to clinic management",
       practo: "Split focus between marketplace and software",
       advantage: "Software built specifically for clinic operations",
-      icon: <Layers className="h-6 w-6 text-blue-600" />
+      icon: <Layers className="h-6 w-6 text-primary" />
     },
     {
       feature: "Implementation",
       doxxy: "Quick setup, minimal training required",
       practo: "Complex setup, extensive training needed",
       advantage: "Get up and running in days, not weeks",
-      icon: <Zap className="h-6 w-6 text-blue-600" />
+      icon: <Zap className="h-6 w-6 text-primary" />
     },
     {
       feature: "User Interface",
       doxxy: "Modern, intuitive design",
       practo: "Complex interface with steeper learning curve",
       advantage: "Less training time, higher staff adoption",
-      icon: <Smartphone className="h-6 w-6 text-blue-600" />
+      icon: <Smartphone className="h-6 w-6 text-primary" />
     }
   ];
 
@@ -138,7 +138,7 @@ const DoxxyVsPracto = () => {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Doxxy vs
-            <span className="text-blue-600"> Practo</span>
+            <span className="text-primary"> Practo</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             See how Doxxy's dedicated clinic management platform offers better value
@@ -175,7 +175,7 @@ const DoxxyVsPracto = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-left text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-left text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Practo</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Doxxy Advantage</th>
                 </tr>
@@ -189,7 +189,7 @@ const DoxxyVsPracto = () => {
                     </td>
                     <td className="py-4 px-6 border-t text-gray-800">
                       <div className="flex items-start">
-                        <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                        <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                         {point.doxxy}
                       </div>
                     </td>
@@ -223,11 +223,11 @@ const DoxxyVsPracto = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start">
-                    <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">Practo:</span> {point.practo}</p>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">Doxxy:</span> {point.doxxy}</p>
                   </div>
                 </CardContent>
@@ -253,27 +253,27 @@ const DoxxyVsPracto = () => {
             <Card className="border-blue-200">
               <CardHeader className="border-b border-blue-100 bg-blue-50">
                 <div className="flex items-center mb-2">
-                  <Shield className="h-6 w-6 text-blue-600 mr-2" />
+                  <Shield className="h-6 w-6 text-primary mr-2" />
                   <CardTitle>Doxxy's Approach</CardTitle>
                 </div>
                 <CardDescription>Clinic-First Software</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600">Built exclusively for clinic management with all resources focused on improving the clinic experience</p>
+                  <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
+                  <p className="text-muted-foreground">Built exclusively for clinic management with all resources focused on improving the clinic experience</p>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600">Transparent, usage-based pricing aligned with clinic growth</p>
+                  <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
+                  <p className="text-muted-foreground">Transparent, usage-based pricing aligned with clinic growth</p>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600">Designed for ease of use with minimal training requirements</p>
+                  <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
+                  <p className="text-muted-foreground">Designed for ease of use with minimal training requirements</p>
                 </div>
                 <div className="flex items-start">
-                  <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
-                  <p className="text-gray-600">Flexible workflows that adapt to your existing processes</p>
+                  <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
+                  <p className="text-muted-foreground">Flexible workflows that adapt to your existing processes</p>
                 </div>
               </CardContent>
             </Card>
@@ -288,19 +288,19 @@ const DoxxyVsPracto = () => {
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-start">
-                  <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                   <p className="text-gray-600">Primary focus on patient marketplace with clinic software as secondary offering</p>
                 </div>
                 <div className="flex items-start">
-                  <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                   <p className="text-gray-600">Complex pricing structure with multiple variables and tiers</p>
                 </div>
                 <div className="flex items-start">
-                  <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                   <p className="text-gray-600">Steep learning curve requiring extensive training</p>
                 </div>
                 <div className="flex items-start">
-                  <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                  <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                   <p className="text-gray-600">Rigid workflows requiring clinics to adapt their processes</p>
                 </div>
               </CardContent>
@@ -323,7 +323,7 @@ const DoxxyVsPracto = () => {
               <ul className="space-y-4">
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Data Export Assistance</p>
@@ -332,7 +332,7 @@ const DoxxyVsPracto = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Data Mapping & Import</p>
@@ -341,7 +341,7 @@ const DoxxyVsPracto = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Streamlined Training</p>
@@ -350,7 +350,7 @@ const DoxxyVsPracto = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Parallel Operation Support</p>
@@ -427,57 +427,57 @@ const DoxxyVsPracto = () => {
               <thead>
                 <tr className="bg-blue-50">
                   <th className="py-4 px-6 text-left text-gray-900 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-center text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-center text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-center text-gray-600 font-medium">Practo</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td className="py-4 px-6 border-t font-medium">Appointment Scheduling</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted/30">
                   <td className="py-4 px-6 border-t font-medium">Electronic Medical Records</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
                 </tr>
                 <tr>
                   <td className="py-4 px-6 border-t font-medium">Unlimited Doctors</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted/30">
                   <td className="py-4 px-6 border-t font-medium">Multi-Clinic Management</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center text-gray-600">Premium Plans Only</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center text-muted-foreground">Premium Plans Only</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-6 border-t font-medium">Patient Communication</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center text-gray-600">Basic Only</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center text-muted-foreground">Basic Only</td>
                 </tr>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted/30">
                   <td className="py-4 px-6 border-t font-medium">Advanced Analytics</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
                   <td className="py-4 px-6 border-t text-center text-gray-600">Premium Plans Only</td>
                 </tr>
                 <tr>
                   <td className="py-4 px-6 border-t font-medium">Free Plan Available</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted/30">
                   <td className="py-4 px-6 border-t font-medium">No Long-Term Contracts</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
                 <tr>
                   <td className="py-4 px-6 border-t font-medium">Customizable Templates</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
                   <td className="py-4 px-6 border-t text-center text-gray-600">Limited</td>
                 </tr>
-                <tr className="bg-gray-50">
+                <tr className="bg-muted/30">
                   <td className="py-4 px-6 border-t font-medium">Implementation Time</td>
                   <td className="py-4 px-6 border-t text-center">1-3 Days</td>
                   <td className="py-4 px-6 border-t text-center">2-4 Weeks</td>

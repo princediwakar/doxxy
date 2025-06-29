@@ -29,49 +29,49 @@ const DoxxyVsClinicPlus = () => {
       doxxy: "Pay-per-appointment (₹10/appointment)",
       clinicPlus: "One-time purchase + annual maintenance fees",
       advantage: "Lower upfront cost, pay only for what you use",
-      icon: <DollarSign className="h-6 w-6 text-blue-600" />
+      icon: <DollarSign className="h-6 w-6 text-primary" />
     },
     {
       feature: "Deployment",
       doxxy: "Cloud-based (SaaS)",
       clinicPlus: "On-premise software",
       advantage: "Access from anywhere, no IT maintenance required",
-      icon: <Zap className="h-6 w-6 text-blue-600" />
+      icon: <Zap className="h-6 w-6 text-primary" />
     },
     {
       feature: "Updates & Upgrades",
       doxxy: "Automatic, continuous updates",
       clinicPlus: "Manual updates, often paid upgrades",
       advantage: "Always on the latest version with new features",
-      icon: <Calendar className="h-6 w-6 text-blue-600" />
+      icon: <Calendar className="h-6 w-6 text-primary" />
     },
     {
       feature: "Accessibility",
       doxxy: "Web and native mobile apps (iOS/Android)",
       clinicPlus: "Desktop application only",
       advantage: "Work from any device, anywhere",
-      icon: <Smartphone className="h-6 w-6 text-blue-600" />
+      icon: <Smartphone className="h-6 w-6 text-primary" />
     },
     {
       feature: "Data Security & Backup",
       doxxy: "Automated cloud backups, enterprise-grade security",
       clinicPlus: "Manual backups, security depends on local setup",
       advantage: "Your data is always safe and accessible",
-      icon: <Shield className="h-6 w-6 text-blue-600" />
+      icon: <Shield className="h-6 w-6 text-primary" />
     },
     {
       feature: "Multi-Clinic Support",
       doxxy: "Built-in multi-location management",
       clinicPlus: "Complex setup or separate licenses required",
       advantage: "Easily manage multiple branches from one dashboard",
-      icon: <Stethoscope className="h-6 w-6 text-blue-600" />
+      icon: <Stethoscope className="h-6 w-6 text-primary" />
     },
     {
       feature: "Support",
       doxxy: "24/7 online and phone support",
       clinicPlus: "Limited hours, often email-based support",
       advantage: "Get help whenever you need it",
-      icon: <MessageSquare className="h-6 w-6 text-blue-600" />
+      icon: <MessageSquare className="h-6 w-6 text-primary" />
     }
   ];
 
@@ -124,7 +124,7 @@ const DoxxyVsClinicPlus = () => {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Doxxy vs
-            <span className="text-blue-600"> ClinicPlus</span>
+            <span className="text-primary"> ClinicPlus</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Compare Doxxy's modern, cloud-based approach with ClinicPlus's traditional software model.
@@ -160,26 +160,26 @@ const DoxxyVsClinicPlus = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-left text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-left text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">ClinicPlus</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Doxxy Advantage</th>
                 </tr>
               </thead>
               <tbody>
                 {comparisonPoints.map((point, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted/30'}>
                     <td className="py-4 px-6 border-t flex items-center">
                       <div className="mr-3">{point.icon}</div>
-                      <span className="font-medium">{point.feature}</span>
+                      <span className="font-medium text-foreground">{point.feature}</span>
                     </td>
-                    <td className="py-4 px-6 border-t text-gray-800">
+                    <td className="py-4 px-6 border-t text-foreground">
                       <div className="flex items-start">
-                        <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                        <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                         {point.doxxy}
                       </div>
                     </td>
-                    <td className="py-4 px-6 border-t text-gray-600">{point.clinicPlus}</td>
-                    <td className="py-4 px-6 border-t text-gray-600">{point.advantage}</td>
+                    <td className="py-4 px-6 border-t text-muted-foreground">{point.clinicPlus}</td>
+                    <td className="py-4 px-6 border-t text-muted-foreground">{point.advantage}</td>
                   </tr>
                 ))}
               </tbody>
@@ -208,11 +208,11 @@ const DoxxyVsClinicPlus = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start">
-                    <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">ClinicPlus:</span> {point.clinicPlus}</p>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">Doxxy:</span> {point.doxxy}</p>
                   </div>
                 </CardContent>
@@ -236,7 +236,7 @@ const DoxxyVsClinicPlus = () => {
               <ul className="space-y-4">
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Data Export & Import</p>
@@ -245,7 +245,7 @@ const DoxxyVsClinicPlus = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Staff Training</p>
@@ -254,7 +254,7 @@ const DoxxyVsClinicPlus = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Parallel Operation</p>
@@ -263,7 +263,7 @@ const DoxxyVsClinicPlus = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Dedicated Support</p>
@@ -340,40 +340,40 @@ const DoxxyVsClinicPlus = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-center text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-center text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-center text-gray-600 font-medium">ClinicPlus</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="py-4 px-6 border-t font-medium">Pricing Model</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Pricing Model</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Cloud-Based</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 border-t font-medium">Automatic Updates</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Mobile Apps</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Cloud-Based</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-6 border-t font-medium">Multi-Clinic Management</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Automatic Updates</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">24/7 Support</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Mobile Apps</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Multi-Clinic Management</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
+                </tr>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">24/7 Support</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
               </tbody>
             </table>

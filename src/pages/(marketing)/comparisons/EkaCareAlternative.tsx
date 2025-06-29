@@ -26,12 +26,12 @@ import SignupCTA from '@/components/SignupCTA';
 const EkaCareAlternative = () => {
   const keyFeatures = [
     {
-      icon: <Coins className="h-12 w-12 text-blue-600" />,
+      icon: <Coins className="h-12 w-12 text-primary" />,
       title: "Pay-Per-Appointment Pricing",
       description: "Unlike Eka Care's fixed monthly fees, Doxxy charges only for the appointments you actually complete. Start with 100 free appointments and then pay just ₹10 per appointment."
     },
     {
-      icon: <Users className="h-12 w-12 text-green-600" />,
+      icon: <Users className="h-12 w-12 text-success" />,
       title: "Unlimited Doctors & Staff",
       description: "Eka Care charges per doctor, limiting your practice's growth. Doxxy allows unlimited doctors and staff members on all plans, including our free tier."
     },
@@ -51,12 +51,12 @@ const EkaCareAlternative = () => {
     {
       title: "Cost Savings",
       description: "Practices that switch from Eka Care to Doxxy report average savings of 30-40% on their healthcare management software costs.",
-      icon: <Coins className="h-6 w-6 text-blue-600" />
+      icon: <Coins className="h-6 w-6 text-primary" />
     },
     {
       title: "No Growth Penalties",
       description: "Eka Care charges more as you add doctors. Doxxy's pricing is based solely on appointments, so your practice can grow without software cost penalties.",
-      icon: <Users className="h-6 w-6 text-green-600" />
+      icon: <Users className="h-6 w-6 text-success" />
     },
     {
       title: "All Features Included",
@@ -71,7 +71,7 @@ const EkaCareAlternative = () => {
     {
       title: "Better Patient Experience",
       description: "Doxxy's patient portal and communication tools are more intuitive and feature-rich than Eka Care's basic offering.",
-      icon: <MessageSquare className="h-6 w-6 text-red-600" />
+      icon: <MessageSquare className="h-6 w-6 text-destructive" />
     },
     {
       title: "Dedicated Migration Support",
@@ -143,7 +143,7 @@ const EkaCareAlternative = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-medical">
       
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
@@ -151,11 +151,11 @@ const EkaCareAlternative = () => {
           <Badge variant="outline" className="mb-4 px-4 py-2">
             Better Alternative
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Looking for an
-            <span className="text-blue-600"> Eka Care Alternative?</span>
+            <span className="text-primary"> Eka Care Alternative?</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Discover why healthcare practices are switching from Eka Care to Doxxy for more flexible pricing,
             unlimited doctors, and a more comprehensive feature set.
           </p>
@@ -218,7 +218,7 @@ const EkaCareAlternative = () => {
               <thead>
                 <tr className="bg-blue-50">
                   <th className="py-4 px-6 text-left text-gray-900 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-center text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-center text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-center text-gray-600 font-medium">Eka Care</th>
                 </tr>
               </thead>
@@ -317,7 +317,7 @@ const EkaCareAlternative = () => {
               {steps.map((step, index) => (
                 <div key={index} className="relative">
                   <div className="flex flex-col md:flex-row items-center">
-                    <div className={`flex items-center justify-center w-12 h-12 rounded-full text-white font-bold ${index % 2 === 0 ? 'bg-blue-600' : 'bg-green-600'} relative z-10 mb-4 md:mb-0`}>
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-full text-secondary  font-bold ${index % 2 === 0 ? 'bg-primary' : 'bg-success'} relative z-10 mb-4 md:mb-0`}>
                       {step.number}
                     </div>
                     <div className="md:ml-8 text-center md:text-left">

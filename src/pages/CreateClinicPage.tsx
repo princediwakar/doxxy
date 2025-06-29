@@ -60,7 +60,8 @@ const doctorProfileSchema = z.object({
   bio: z.string().optional(),
   phone: z.string().optional(),
   selectedDepartment: z.string().superRefine((val, ctx) => {
-    if (ctx.parent?.isDoctor === 'yes' && (!val || val.length === 0)) {
+    const parent = ctx.path[0] as unknown as { isDoctor: string };
+    if (parent?.isDoctor === 'yes' && (!val || val.length === 0)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "Select at least one department when registering as a doctor."
@@ -292,9 +293,9 @@ const CreateClinicPage = () => {
   );
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
-      <div className="w-full max-w-md rounded-lg shadow-md bg-white p-6">
-        <h1 className="text-2xl font-bold mb-2 text-center">Create New Clinic</h1>
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <div className="w-full max-w-md rounded-lg shadow-md bg-background p-6">
+        <h1 className="text-2xl font-bold mb-2 text-center text-foreground">Create New Clinic</h1>
         <StepIndicator />
         
         {/* Step 1: Clinic Details */}
@@ -358,11 +359,11 @@ const CreateClinicPage = () => {
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                                          <FormLabel>Website</FormLabel>
-                      <FormControl>
-                       <Input type="text" placeholder="e.g., www.clinic.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
+                    <FormLabel>Website</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="e.g., www.clinic.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -387,7 +388,7 @@ const CreateClinicPage = () => {
                       {isLoadingDepartmentTypes ? (
                         <div>Loading departments...</div>
                       ) : departmentTypesError ? (
-                        <div className="text-red-500">Error loading departments.</div>
+                        <div className="text-destructive">Error loading departments.</div>
                       ) : departmentTypes && departmentTypes.length > 0 ? (
                         departmentTypes.map((dept: Database['public']['Tables']['department_types']['Row']) => (
                           <div key={dept.id} className="flex items-center space-x-2">
@@ -403,11 +404,11 @@ const CreateClinicPage = () => {
                                 setDepartments(field.value || []);
                               }}
                             />
-                            <Label htmlFor={`department-${dept.id}`}>{dept.name}</Label>
+                            <Label htmlFor={`department-${dept.id}`} className="text-foreground">{dept.name}</Label>
                           </div>
                         ))
                       ) : (
-                        <div>No departments found.</div>
+                        <div className="text-muted-foreground">No departments found.</div>
                       )}
                     </div>
                     <FormMessage />
@@ -432,7 +433,7 @@ const CreateClinicPage = () => {
             <form onSubmit={doctorForm.handleSubmit(handleSubmit)} className="space-y-6">
               <div className="space-y-4">
                 <div className="text-center">
-                  <h3 className="text-lg font-semibold mb-2">Are you a practicing doctor?</h3>
+                  <h3 className="text-lg font-semibold mb-2 text-foreground">Are you a practicing doctor?</h3>
                   <p className="text-sm text-muted-foreground">
                     This determines whether you'll appear in appointment doctor lists or manage the clinic as an administrator only.
                   </p>
@@ -455,7 +456,7 @@ const CreateClinicPage = () => {
                               <div className="flex items-center space-x-3">
                                 <Stethoscope className="h-5 w-5 text-primary" />
                                 <div>
-                                  <Label htmlFor="yes" className="font-medium cursor-pointer">
+                                  <Label htmlFor="yes" className="font-medium cursor-pointer text-foreground">
                                     Yes, I'm a practicing doctor
                                   </Label>
                                   <p className="text-sm text-muted-foreground">
@@ -472,7 +473,7 @@ const CreateClinicPage = () => {
                               <div className="flex items-center space-x-3">
                                 <Building2 className="h-5 w-5 text-primary" />
                                 <div>
-                                  <Label htmlFor="no" className="font-medium cursor-pointer">
+                                  <Label htmlFor="no" className="font-medium cursor-pointer text-foreground">
                                     No, I'm an administrator only
                                   </Label>
                                   <p className="text-sm text-muted-foreground">
@@ -492,7 +493,7 @@ const CreateClinicPage = () => {
                 {/* Doctor-specific fields */}
                 {doctorForm.watch('isDoctor') === 'yes' && (
                   <div className="space-y-4 border-t pt-4">
-                    <h4 className="font-medium">Essential Medical Details</h4>
+                    <h4 className="font-medium text-foreground">Essential Medical Details</h4>
                     
                     {/* Department Selection - NEW FIELD */}
                     <FormField
@@ -500,7 +501,7 @@ const CreateClinicPage = () => {
                       name="selectedDepartment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Primary Department <span className="text-red-500">*</span></FormLabel>
+                          <FormLabel>Primary Department <span className="text-destructive">*</span></FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -521,7 +522,6 @@ const CreateClinicPage = () => {
                         </FormItem>
                       )}
                     />
-
 
                     {/* Consultation Fee - NEW FIELD */}
                     <FormField
@@ -558,7 +558,6 @@ const CreateClinicPage = () => {
                         </FormItem>
                       )}
                     />
-
 
                     <FormField
                       control={doctorForm.control}

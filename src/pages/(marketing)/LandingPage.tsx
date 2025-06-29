@@ -123,15 +123,15 @@ const LandingPage = () => {
           
           <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-success" />
               No setup fees
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-success" />
               Start for free
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CheckCircle className="h-4 w-4 text-success" />
               Cancel anytime
             </div>
           </div>
@@ -139,13 +139,13 @@ const LandingPage = () => {
       </section>
 
       {/* Simple Healthcare Management Section */}
-      <section className="py-20 px-4 bg-white">
+              <section className="py-20 px-4 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Simple, Not Complicated
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Unlike enterprise software that overwhelms with complexity, Doxxy focuses on what matters: efficient patient care, transparent costs, and growth without barriers.
             </p>
           </div>
@@ -157,30 +157,30 @@ const LandingPage = () => {
                 alt="Clean, intuitive medical software interface on tablet" 
                 className="rounded-lg shadow-xl w-full"
               />
-              <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-lg shadow-lg">
+              <div className="absolute -bottom-4 -right-4 bg-background p-4 rounded-lg shadow-lg">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-900">Easy To Use</span>
+                  <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium text-foreground">Easy To Use</span>
                 </div>
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Healthcare Software That Actually Works</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Healthcare Software That Actually Works</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
                 No overwhelming menus, hidden features, or complex training required. Doxxy's intuitive design lets you focus on patients, not software. Smart specialty workflows adapt to your practice style - from cardiology to pediatrics - without the enterprise complexity.
               </p>
               <div className="space-y-3">
                 <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Intuitive design that requires minimal training</span>
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Intuitive design that requires minimal training</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">11+ medical specialties with smart workflows</span>
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">11+ medical specialties with smart workflows</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">No complicated setup or lengthy onboarding</span>
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">No complicated setup or lengthy onboarding</span>
                 </div>
               </div>
             </div>
@@ -188,22 +188,22 @@ const LandingPage = () => {
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-2 lg:order-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Pricing That Actually Makes Sense</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+                        <h3 className="text-2xl font-bold text-foreground mb-4">Pricing That Actually Makes Sense</h3>
+          <p className="text-muted-foreground mb-6 leading-relaxed">
                 Stop paying monthly fees for software you barely use. With Doxxy's per-appointment pricing, you only pay when you actually see patients. Start with 100 free appointments, add unlimited doctors without extra costs, and scale naturally as your practice grows.
               </p>
               <div className="space-y-3">
                 <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Only ₹10 per completed appointment - no monthly subscriptions</span>
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Only ₹10 per completed appointment - no monthly subscriptions</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">First 100 appointments completely free forever</span>
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">First 100 appointments completely free forever</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Unlimited doctors and staff - no per-user fees</span>
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Unlimited doctors and staff - no per-user fees</span>
                 </div>
               </div>
             </div>
@@ -213,31 +213,31 @@ const LandingPage = () => {
                 alt="Simple, transparent pricing calculator showing cost savings" 
                 className="rounded-lg shadow-xl w-full"
               />
-              <div className="absolute -top-4 -left-4 bg-white p-4 rounded-lg shadow-lg">
+              <div className="absolute -top-4 -left-4 bg-background p-4 rounded-lg shadow-lg">
                 <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-gray-900">Transparent Costs</span>
+                          <div className="w-3 h-3 bg-primary rounded-full"></div>
+        <span className="text-sm font-medium text-foreground">Transparent Costs</span>
                 </div>
               </div>
             </div>
           </div>
           
-          <div className="mt-16 bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-8">
+          <div className="mt-16 bg-gradient-to-r from-primary/5 to-success/5 rounded-2xl p-8">
             <div className="grid md:grid-cols-3 gap-8 text-center">
               <div>
-                <div className="text-3xl font-bold text-blue-600 mb-2">₹10</div>
-                <div className="text-gray-600">Per appointment</div>
-                <div className="text-sm text-gray-500 mt-1">Only when you actually see patients</div>
+                        <div className="text-3xl font-bold text-primary mb-2">₹10</div>
+        <div className="text-muted-foreground">Per appointment</div>
+        <div className="text-sm text-muted-foreground/70 mt-1">Only when you actually see patients</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-green-600 mb-2">100</div>
-                <div className="text-gray-600">Free appointments</div>
-                <div className="text-sm text-gray-500 mt-1">Complete access to start your practice</div>
+                        <div className="text-3xl font-bold text-success mb-2">100</div>
+        <div className="text-muted-foreground">Free appointments</div>
+        <div className="text-sm text-muted-foreground/70 mt-1">Complete access to start your practice</div>
               </div>
               <div>
-                <div className="text-3xl font-bold text-purple-600 mb-2">∞</div>
-                <div className="text-gray-600">Unlimited doctors</div>
-                <div className="text-sm text-gray-500 mt-1">No per-user fees as you grow</div>
+                <div className="text-3xl font-bold  mb-2">∞</div>
+                <div className="text-muted-foreground">Unlimited doctors</div>
+                                  <div className="text-sm text-muted-foreground mt-1">No per-user fees as you grow</div>
               </div>
             </div>
           </div>
@@ -245,13 +245,13 @@ const LandingPage = () => {
       </section>
 
       {/* Healthcare Specialties Showcase */}
-      <section className="py-20 px-4 bg-gray-50">
+      <section className="py-20 px-4 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Serving Every Specialty, Every Size
-            </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Serving Every Specialty, Every Size
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Specialized consultation workflows for every medical discipline. From solo practitioners to multi-specialty hospitals, Doxxy's intelligent forms adapt to your clinical requirements.
             </p>
           </div>
@@ -265,12 +265,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
-                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Cardiology</h3>
-              <p className="text-sm text-gray-600">Heart & vascular specialists</p>
+              <h3 className="font-semibold text-lg">Cardiology</h3>
+                                  <p className="text-sm text-muted-foreground">Heart & vascular specialists</p>
             </div>
             
             <div className="text-center group">
@@ -281,12 +281,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Neurology</h3>
-              <p className="text-sm text-gray-600">Brain & nervous system</p>
+              <h3 className="font-semibold text-lg">Neurology</h3>
+                                  <p className="text-sm text-muted-foreground">Brain & nervous system</p>
             </div>
             
             <div className="text-center group">
@@ -297,12 +297,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Ophthalmology</h3>
-              <p className="text-sm text-gray-600">Comprehensive eye care</p>
+              <h3 className="font-semibold text-lg">Ophthalmology</h3>
+              <p className="text-sm text-muted-foreground">Comprehensive eye care</p>
             </div>
             
             <div className="text-center group">
@@ -313,12 +313,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Pediatrics</h3>
-              <p className="text-sm text-gray-600">Specialized child healthcare</p>
+              <h3 className="font-semibold text-lg">Pediatrics</h3>
+              <p className="text-sm text-muted-foreground">Specialized child healthcare</p>
             </div>
             
             <div className="text-center group">
@@ -329,12 +329,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
+                <div className="absolute bottom-2 left-2 text-secondary ">
                   <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Dermatology</h3>
-              <p className="text-sm text-gray-600">Skin & aesthetic care</p>
+              <h3 className="font-semibold text-lg">Dermatology</h3>
+              <p className="text-sm text-muted-foreground">Skin & aesthetic care</p>
             </div>
             
             <div className="text-center group">
@@ -345,12 +345,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
+                <div className="absolute bottom-2 left-2 text-secondary ">
                   <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Orthopedics</h3>
-              <p className="text-sm text-gray-600">Bone & musculoskeletal</p>
+              <h3 className="font-semibold text-lg">Orthopedics</h3>
+              <p className="text-sm text-muted-foreground">Bone & musculoskeletal</p>
             </div>
             
             <div className="text-center group">
@@ -361,12 +361,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
+                <div className="absolute bottom-2 left-2 text-secondary ">
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Psychiatry</h3>
-              <p className="text-sm text-gray-600">Mental health & wellness</p>
+              <h3 className="font-semibold text-lg">Psychiatry</h3>
+              <p className="text-sm text-muted-foreground">Mental health & wellness</p>
             </div>
             
             <div className="text-center group">
@@ -377,12 +377,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
+                <div className="absolute bottom-2 left-2 text-secondary ">
                   <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">General Medicine</h3>
-              <p className="text-sm text-gray-600">Primary healthcare</p>
+              <h3 className="font-semibold text-lg">General Medicine</h3>
+              <p className="text-sm text-muted-foreground">Primary healthcare</p>
             </div>
           </div>
           
@@ -395,12 +395,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
+                <div className="absolute bottom-2 left-2 text-secondary ">
                   <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">ENT</h3>
-              <p className="text-sm text-gray-600">Ear, nose & throat specialists</p>
+              <h3 className="font-semibold text-lg">ENT</h3>
+              <p className="text-sm text-muted-foreground">Ear, nose & throat specialists</p>
             </div>
             
             <div className="text-center group">
@@ -411,12 +411,12 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
+                <div className="absolute bottom-2 left-2 text-secondary ">
                   <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Gynecology</h3>
-              <p className="text-sm text-gray-600">Women's health & wellness</p>
+              <h3 className="font-semibold text-lg">Gynecology</h3>
+              <p className="text-sm text-muted-foreground">Women's health & wellness</p>
             </div>
             
             <div className="text-center group">
@@ -427,17 +427,17 @@ const LandingPage = () => {
                   className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                <div className="absolute bottom-2 left-2 text-white">
+                <div className="absolute bottom-2 left-2 text-secondary ">
                   <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
                 </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Pulmonology</h3>
-              <p className="text-sm text-gray-600">Respiratory & lung care</p>
+              <h3 className="font-semibold text-lg">Pulmonology</h3>  
+              <p className="text-sm text-muted-foreground">Respiratory & lung care</p>
             </div>
           </div>
           
           <div className="text-center mt-12">
-            <p className="text-sm text-gray-500 mb-4">Each specialty comes with intelligent forms, mandatory field validation, and specialty-specific workflows</p>
+            <p className="text-sm text-muted-foreground/70 mb-4">Each specialty comes with intelligent forms, mandatory field validation, and specialty-specific workflows</p>
             <Link to="/auth">
               <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4">
                 Explore Your Specialty
@@ -489,13 +489,13 @@ const LandingPage = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+      <section className="py-20 px-4 bg-gradient-to-b from-muted/30 to-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Why Healthcare Professionals Choose Doxxy
             </h2>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Join thousands of medical professionals who have transformed their practice operations with intelligent, cost-effective healthcare management software.
             </p>
           </div>
@@ -503,43 +503,33 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16">
             <div>
               <div className="space-y-6">
-                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                    <CheckCircle className="h-7 w-7 text-white" />
+                <div className="flex items-start gap-4 p-6 bg-background rounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
+                  <div className="flex-shrink-0 w-14 h-14 bg-accent rounded-xl flex items-center justify-center">
+                    <BarChart3 className="h-7 w-7 text-accent-foreground" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Pay Only When You See Patients</h4>
-                    <p className="text-gray-600 leading-relaxed">Revolutionary per-appointment pricing at just ₹10 per completed visit. No monthly subscriptions, setup fees, or hidden costs. Save 40-60% compared to traditional practice management software.</p>
+                    <h4 className="font-bold text-foreground mb-2 text-lg">Start Free, Grow Confidently</h4>
+                    <p className="text-muted-foreground leading-relaxed">Your first 100 appointments are completely free forever. No credit card required, no time limits, no feature restrictions. Experience the full platform before committing to anything.</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                    <Shield className="h-7 w-7 text-white" />
+                <div className="flex items-start gap-4 p-6 bg-background rounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
+                  <div className="flex-shrink-0 w-14 h-14 bg-primary rounded-xl flex items-center justify-center">
+                    <Shield className="h-7 w-7 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Bank-Level Security & Compliance</h4>
-                    <p className="text-gray-600 leading-relaxed">Advanced encryption, multi-factor authentication, and complete data isolation between clinics. HIPAA-compliant infrastructure with 99.9% uptime guarantee and automated backups.</p>
+                    <h4 className="font-bold text-foreground mb-2 text-lg">Bank-Level Security & Compliance</h4>
+                    <p className="text-muted-foreground leading-relaxed">Advanced encryption, multi-factor authentication, and complete data isolation between clinics. HIPAA-compliant infrastructure with 99.9% uptime guarantee and automated backups.</p>
                   </div>
                 </div>
                 
                 <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                   <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Users className="h-7 w-7 text-white" />
+                    <Users className="h-7 w-7 text-secondary " />
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900 mb-2 text-lg">Scale Without Limits or Extra Fees</h4>
                     <p className="text-gray-600 leading-relaxed">Add unlimited doctors, nurses, and administrative staff without per-user charges. Manage multiple clinics from one dashboard. Pricing scales with your patient volume, not your team size.</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                    <BarChart3 className="h-7 w-7 text-white" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Start Free, Grow Confidently</h4>
-                    <p className="text-gray-600 leading-relaxed">Your first 100 appointments are completely free forever. No credit card required, no time limits, no feature restrictions. Experience the full platform before committing to anything.</p>
                   </div>
                 </div>
               </div>
@@ -548,44 +538,44 @@ const LandingPage = () => {
             <div className="relative">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-6">
-                  <Card className="p-8 text-center bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Clock className="h-10 w-10 text-white" />
+                  <Card className="p-8 text-center bg-primary/10 border-primary/20 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Clock className="h-10 w-10 text-primary-foreground" />
                     </div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">3+ Hours Saved</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">Daily administrative time savings through automated workflows and intelligent scheduling</p>
+                    <h4 className="font-bold text-foreground mb-2 text-lg">3+ Hours Saved</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">Daily administrative time savings through automated workflows and intelligent scheduling</p>
                   </Card>
                   
-                  <Card className="p-8 text-center bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Lock className="h-10 w-10 text-white" />
+                  <Card className="p-8 text-center bg-success/10 border-success/20 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-success rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Lock className="h-10 w-10 text-success-foreground" />
                     </div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">100% Data Security</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">Zero data breaches with enterprise-grade security and complete clinic data isolation</p>
+                    <h4 className="font-bold text-foreground mb-2 text-lg">100% Data Security</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">Zero data breaches with enterprise-grade security and complete clinic data isolation</p>
                   </Card>
                 </div>
                 
                 <div className="space-y-6 mt-8">
-                  <Card className="p-8 text-center bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <FileText className="h-10 w-10 text-white" />
+                  <Card className="p-8 text-center bg-secondary/10 border-secondary/20 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-secondary rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <FileText className="h-10 w-10 text-secondary-foreground" />
                     </div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">11+ Specialties</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">Custom workflows for cardiology, neurology, pediatrics, and more medical specialties</p>
+                    <h4 className="font-bold text-foreground mb-2 text-lg">11+ Specialties</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">Custom workflows for cardiology, neurology, pediatrics, and more medical specialties</p>
                   </Card>
                   
-                  <Card className="p-8 text-center bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Globe className="h-10 w-10 text-white" />
+                  <Card className="p-8 text-center bg-accent/10 border-accent/20 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-accent rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Globe className="h-10 w-10 text-accent-foreground" />
                     </div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Multi-Clinic Ready</h4>
-                    <p className="text-sm text-gray-700 leading-relaxed">Seamlessly manage multiple locations with unified reporting and centralized billing</p>
+                    <h4 className="font-bold text-foreground mb-2 text-lg">Multi-Clinic Ready</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">Seamlessly manage multiple locations with unified reporting and centralized billing</p>
                   </Card>
                 </div>
               </div>
               
-              <div className="absolute -top-6 -right-6 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-10 animate-pulse"></div>
-              <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full opacity-10 animate-pulse delay-1000"></div>
+              <div className="absolute -top-6 -right-6 w-32 h-32 bg-primary/10 rounded-full opacity-10 animate-pulse"></div>
+              <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-success/10 rounded-full opacity-10 animate-pulse delay-1000"></div>
             </div>
           </div>
           

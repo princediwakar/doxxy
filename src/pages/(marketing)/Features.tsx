@@ -29,7 +29,7 @@ import SignupCTA from "@/components/SignupCTA";
 const Features = () => {
   const coreFeatures = [
     {
-      icon: <Calendar className="h-8 w-8 text-blue-600" />,
+      icon: <Calendar className="h-8 w-8 text-primary" />,
       title: "Smart Appointment Management",
       description: "Intelligent scheduling with automated reminders, conflict resolution, and multi-location support.",
       features: [
@@ -43,7 +43,7 @@ const Features = () => {
       badge: ""
     },
     {
-      icon: <Users className="h-8 w-8 text-green-600" />,
+      icon: <Users className="h-8 w-8 text-success" />,
       title: "Comprehensive Patient Records",
       description: "Complete digital health records with advanced search, analytics, and secure sharing capabilities.",
       features: [
@@ -56,7 +56,7 @@ const Features = () => {
       ]
     },
     {
-      icon: <CreditCard className="h-8 w-8 text-purple-600" />,
+      icon: <CreditCard className="h-8 w-8 text-secondary" />,
       title: "Integrated Billing System",
       description: "Streamlined billing with insurance integration, automated invoicing, and payment processing.",
       features: [
@@ -69,7 +69,7 @@ const Features = () => {
       ]
     },
     {
-      icon: <Video className="h-8 w-8 text-orange-600" />,
+      icon: <Video className="h-8 w-8 text-accent" />,
       title: "Telemedicine Platform",
       description: "Video consultations with integrated prescription and note-taking.",
       features: [
@@ -83,7 +83,7 @@ const Features = () => {
       badge: "Soon"
     },
     {
-      icon: <Building2 className="h-8 w-8 text-indigo-600" />,
+      icon: <Building2 className="h-8 w-8 text-primary" />,
       title: "Multi-Clinic Management",
       description: "Centralized management for multi-location practices with role-based access control.",
       features: [
@@ -96,7 +96,7 @@ const Features = () => {
       ]
     },
     {
-      icon: <BarChart3 className="h-8 w-8 text-red-600" />,
+      icon: <BarChart3 className="h-8 w-8 text-destructive" />,
       title: "Advanced Analytics",
       description: "Powerful insights and reporting to optimize practice operations and patient outcomes.",
       features: [
@@ -114,7 +114,7 @@ const Features = () => {
   const additionalFeatures = [
     
     {
-      icon: <Clock className="h-6 w-6 text-green-600" />,
+      icon: <Clock className="h-6 w-6 text-success" />,
       title: "24/7 Support",
       description: "Round-the-clock customer support and system monitoring"
     },
@@ -124,49 +124,49 @@ const Features = () => {
     //   description: "Native iOS and Android apps for doctors and patients"
     // },
     {
-      icon: <Globe className="h-6 w-6 text-orange-600" />,
+      icon: <Globe className="h-6 w-6 text-accent" />,
       title: "Multi-Language",
       description: "Support for 15+ languages including Hindi, Tamil, and Bengali"
     },
     {
-      icon: <Zap className="h-6 w-6 text-indigo-600" />,
+      icon: <Zap className="h-6 w-6 text-primary" />,
       title: "Fast Performance",
       description: "Lightning-fast load times with 99.9% uptime guarantee"
     },
     {
-      icon: <Lock className="h-6 w-6 text-red-600" />,
+      icon: <Lock className="h-6 w-6 text-destructive" />,
       title: "Data Security",
       description: "Bank-level encryption with regular security audits"
     },
     {
-      icon: <HeartHandshake className="h-6 w-6 text-pink-600" />,
+      icon: <HeartHandshake className="h-6 w-6 text-secondary" />,
       title: "Patient Portal",
       description: "Self-service portal for patients to manage appointments and records"
     },
     {
-      icon: <Stethoscope className="h-6 w-6 text-cyan-600" />,
+      icon: <Stethoscope className="h-6 w-6 text-primary" />,
       title: "Clinical Tools",
       description: "Built-in clinical calculators, drug interactions, and guidelines"
     },
     {
-      icon: <Database className="h-6 w-6 text-yellow-600" />,
+      icon: <Database className="h-6 w-6 text-accent" />,
       title: "Data Migration",
       description: "Seamless migration from existing systems with zero downtime"
     },
     {
-      icon: <Settings className="h-6 w-6 text-gray-600" />,
+      icon: <Settings className="h-6 w-6 text-muted-foreground" />,
       title: "Custom Workflows",
       description: "Configurable workflows to match your practice style"
     },
     {
-      icon: <Bell className="h-6 w-6 text-amber-600" />,
+      icon: <Bell className="h-6 w-6 text-accent" />,
       title: "Smart Notifications",
       description: "Intelligent alerts for critical patient events and tasks"
     }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-success/5">
       
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
@@ -174,11 +174,11 @@ const Features = () => {
           <Badge variant="outline" className="mb-4 px-4 py-2">
             Complete Healthcare Solution
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Powerful Features for
-            <span className="text-blue-600"> Modern Healthcare</span>
+            <span className="text-primary"> Modern Healthcare</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Discover how Doxxy's comprehensive feature set is perfectly tailored for small to medium clinics,
             streamlining operations and improving patient outcomes without enterprise complexity or cost.
           </p>
@@ -194,13 +194,13 @@ const Features = () => {
       </section>
 
       {/* Core Features */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Core Features
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Six powerful yet easy-to-use modules designed specifically for small to medium clinics,
               providing the perfect balance of functionality and simplicity.
             </p>
@@ -217,15 +217,15 @@ const Features = () => {
                 <CardHeader>
                   <div className="mb-4">{feature.icon}</div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
-                  <CardDescription className="text-gray-600">
+                  <CardDescription className="text-muted-foreground">
                     {feature.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-2">
                     {feature.features.map((item, idx) => (
-                      <li key={idx} className="flex items-center text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 bg-blue-600 rounded-full mr-2 flex-shrink-0" />
+                      <li key={idx} className="flex items-center text-sm text-foreground">
+                        <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 flex-shrink-0" />
                         {item}
                       </li>
                     ))}
@@ -238,13 +238,13 @@ const Features = () => {
       </section>
 
       {/* Additional Features */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Everything Else You Need
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Additional features and capabilities that make Doxxy the complete 
               solution for healthcare professionals.
             </p>
@@ -256,10 +256,10 @@ const Features = () => {
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0">{feature.icon}</div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">
+                    <h3 className="font-semibold text-xl mb-1">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       {feature.description}
                     </p>
                   </div>

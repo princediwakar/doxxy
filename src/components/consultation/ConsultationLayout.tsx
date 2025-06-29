@@ -244,7 +244,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           {/* Left Column - Clinic Information */}
           <div className="clinic-info space-y-4">
             <div className="space-y-2">
-              <h1 className="clinic-name text-xl font-bold text-blue-600 tracking-tight leading-tight">
+              <h1 className="clinic-name text-xl font-bold text-primary tracking-tight leading-tight">
                 {clinicInfo?.name || 'MEDICAL CLINIC'}
               </h1>
               <div className="w-16 h-1 bg-gradient-to-r from-blue-600 to-green-500 rounded-full"></div>
@@ -326,7 +326,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
         <Card className="bg-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-3">
-              <User className="h-5 w-5 text-blue-600" />
+              <User className="h-5 w-5 text-primary" />
               <h3 className="font-semibold text-gray-900">Patient Information</h3>
             </div>
             <div className="space-y-2 text-sm">
@@ -355,7 +355,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
         <Card className="bg-white">
           <CardContent className="p-4">
             <div className="flex items-center gap-3 mb-3">
-              <Calendar className="h-5 w-5 text-green-600" />
+              <Calendar className="h-5 w-5 text-success" />
               <h3 className="font-semibold text-gray-900">Appointment Details</h3>
             </div>
             <div className="space-y-2 text-sm">

@@ -3,7 +3,7 @@
 export default function PrivacyPage() {
   return (
     <div className="pt-16">
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-sm leading-relaxed text-gray-800">
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-sm leading-relaxed text-foreground">
         <h1 className="text-3xl font-semibold mb-6">Privacy Policy for Doxxy</h1>
         <p className="mb-6">Effective Date: 08-06-2025</p>
 
@@ -77,7 +77,6 @@ export default function PrivacyPage() {
           <h2 className="text-xl font-semibold mb-2">11. Compliance</h2>
           <ul className="list-disc list-inside space-y-2">
             <li>India: Digital Personal Data Protection Act, 2023 (DPDP)</li>
-            
             <li>EU: General Data Protection Regulation (GDPR)</li>
           </ul>
         </section>

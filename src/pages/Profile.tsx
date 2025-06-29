@@ -165,8 +165,8 @@ const Profile = () => {
         title: displayName,
         subtitle: doctorProfile?.primary_specialization || 'Medical Professional',
         icon: Stethoscope,
-        iconClass: "text-blue-600",
-        bgClass: "bg-blue-50",
+        iconClass: "text-primary",
+        bgClass: "bg-primary/10",
         badge: isHybridSuperadmin ? { text: 'Administrator', icon: Shield } : null
       };
     }
@@ -186,8 +186,8 @@ const Profile = () => {
       title: user?.user_metadata?.name || 'Staff Member',
       subtitle: 'Healthcare Team',
       icon: User,
-      iconClass: "text-green-600",
-      bgClass: "bg-green-50",
+      iconClass: "text-success",
+      bgClass: "bg-success/10",
       badge: null
     };
   };
@@ -215,12 +215,12 @@ const Profile = () => {
   return (
     <div className="space-y-6">
       {showPostOnboarding && (
-        <Card className="bg-green-50 border-green-200">
+        <Card className="bg-success/10 border-success/20">
           <CardContent className="p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-6 h-6 text-green-600" />
+              <CheckCircle2 className="w-6 h-6 text-success" />
               <div>
-                <h3 className="font-semibold">Basic profile created!</h3>
+                <h3 className="font-semibold text-foreground">Basic profile created!</h3>
                 <p className="text-sm text-muted-foreground">Continue to add your full credentials for verification.</p>
               </div>
             </div>
@@ -237,19 +237,19 @@ const Profile = () => {
         <div className="flex items-center gap-3">
           <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${roleConfig.bgClass}`}>
             <IconComponent className={`w-5 h-5 ${roleConfig.iconClass}`} />
-                      </div>
+          </div>
           <div>
             <h1 className="text-3xl font-bold text-primary">Profile</h1>
             <p className="text-muted-foreground">Manage your profile information and settings</p>
-                      </div>
-                    </div>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           {roleConfig.badge && (
             <Badge className="bg-primary/10 text-primary border-primary/20">
               <roleConfig.badge.icon className="w-3 h-3 mr-1" />
               {roleConfig.badge.text}
-                       </Badge>
-                     )}
+            </Badge>
+          )}
           <Button
             onClick={() => setIsBasicModalOpen(true)}
             variant="outline"
@@ -257,8 +257,8 @@ const Profile = () => {
             <Edit className="h-4 w-4 mr-2" />
             Edit Profile
           </Button>
-             </div>
-          </div>
+        </div>
+      </div>
                   
       {/* Profile Information Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -288,13 +288,13 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-                  <Button
+              <Button
                 onClick={() => setIsBasicModalOpen(true)}
                 size="sm"
                 variant="ghost"
               >
                 <Edit className="w-4 h-4" />
-                  </Button>
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -306,9 +306,9 @@ const Profile = () => {
                   <div className="flex items-center gap-2 text-sm">
                     <Mail className="w-4 h-4 text-muted-foreground" />
                     <span>{user.email}</span>
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                      </div>
-                    )}
+                    <CheckCircle className="w-4 h-4 text-success" />
+                  </div>
+                )}
                 {userProfile?.phone ? (
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="w-4 h-4 text-muted-foreground" />
@@ -319,11 +319,11 @@ const Profile = () => {
                     <Phone className="w-4 h-4" />
                     <span>Phone not provided</span>
                   </div>
-            )}
-          </div>
-                </div>
-              </CardContent>
-            </Card>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Medical Profile Card - Only for doctors */}
         {(activeClinicRole === 'doctor' || doctorProfile) && (
@@ -331,17 +331,17 @@ const Profile = () => {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Stethoscope className="w-5 h-5 text-blue-600" />
+                  <Stethoscope className="w-5 h-5 text-primary" />
                   Medical Profile
                 </CardTitle>
-                  <Button 
+                <Button 
                   onClick={() => setIsMedicalModalOpen(true)}
                   size="sm"
                   variant="ghost"
                 >
                   <Edit className="w-4 h-4" />
-                  </Button>
-          </div>
+                </Button>
+              </div>
               <CardDescription>Professional medical credentials and information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -359,7 +359,7 @@ const Profile = () => {
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">Registration</label>
                       <p className="text-sm">{doctorProfile.medical_registration_number || 'Not provided'}</p>
-        </div>
+                    </div>
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">Experience</label>
                       <p className="text-sm">{doctorProfile.years_of_experience ? `${doctorProfile.years_of_experience} years` : 'Not specified'}</p>
@@ -367,10 +367,10 @@ const Profile = () => {
                   </div>
                   
                   {doctorProfile.medical_college && (
-                  <div>
+                    <div>
                       <label className="text-xs font-medium text-muted-foreground">Medical College</label>
                       <p className="text-sm">{doctorProfile.medical_college}</p>
-                  </div>
+                    </div>
                   )}
                 </>
               ) : (
@@ -380,15 +380,14 @@ const Profile = () => {
                   <p className="text-xs text-muted-foreground mb-4">Set up your professional credentials to start practicing</p>
                   <Button 
                     onClick={() => setIsMedicalModalOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Complete Medical Profile
                   </Button>
                 </div>
               )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
         )}
 
         {/* For non-doctors, show role-specific information */}
@@ -398,7 +397,7 @@ const Profile = () => {
               <CardTitle className="text-lg flex items-center gap-2">
                 <roleConfig.icon className={`w-5 h-5 ${roleConfig.iconClass}`} />
                 Role Information
-            </CardTitle>
+              </CardTitle>
               <CardDescription>Your role and responsibilities in the clinic</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -428,7 +427,7 @@ const Profile = () => {
                     </p>
                     <Button
                       onClick={handleBecomeDoctorClick}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                      className="w-full"
                       size="sm"
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
@@ -440,7 +439,7 @@ const Profile = () => {
             </CardContent>
           </Card>
         )}
-                  </div>
+      </div>
                   
       {/* Modal Components with corrected props */}
       {isBasicModalOpen && (

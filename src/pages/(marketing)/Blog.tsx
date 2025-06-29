@@ -165,11 +165,11 @@ const Blog = () => {
           <Badge variant="outline" className="mb-4 px-4 py-2">
             Resources & Insights
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Healthcare
-            <span className="text-blue-600"> Knowledge Hub</span>
+            <span className="text-primary"> Knowledge Hub</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Stay updated with the latest trends, best practices, and insights in healthcare technology. 
             Expert content to help you optimize your practice and improve patient care.
           </p>
@@ -178,7 +178,7 @@ const Blog = () => {
           <div className="max-w-4xl mx-auto mb-12">
             <div className="flex flex-col md:flex-row gap-4 mb-6">
               <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
                 <Input
                   placeholder="Search articles and resources..."
                   value={searchTerm}
@@ -209,7 +209,7 @@ const Blog = () => {
       ).length > 0 && (
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Featured Articles</h2>
+                          <h2 className="text-3xl font-bold text-foreground mb-12 text-center">Featured Articles</h2>
             
             <div className="grid lg:grid-cols-2 gap-8">
               {featuredPosts
@@ -228,7 +228,7 @@ const Blog = () => {
                       <Badge variant="secondary">
                         {categories.find(c => c.id === post.category)?.name}
                       </Badge>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                         <span className="flex items-center">
                           <Clock className="h-4 w-4 mr-1" />
                           {post.readTime}
@@ -237,17 +237,17 @@ const Blog = () => {
                       </div>
                     </div>
                     
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">
+                    <h3 className="text-xl font-bold text-foreground mb-3">
                       {post.title}
                     </h3>
-                    <p className="text-gray-600 mb-4 leading-relaxed">
+                    <p className="text-muted-foreground mb-4 leading-relaxed">
                       {post.excerpt}
                     </p>
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">{post.author}</span>
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">{post.author}</span>
                       </div>
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/blog/${slugMap[post.id]}`}>Read More <ArrowRight className="h-4 w-4 ml-2" /></Link>
@@ -264,7 +264,7 @@ const Blog = () => {
       {/* Regular Blog Posts */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-12 text-center">Latest Articles</h2>
+                        <h2 className="text-3xl font-bold text-foreground mb-12 text-center">Latest Articles</h2>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {blogPosts
@@ -288,22 +288,22 @@ const Blog = () => {
                     <Badge variant="secondary" className="text-xs">
                       {categories.find(c => c.id === post.category)?.name}
                     </Badge>
-                    <span className="text-xs text-gray-500">{formatDate(post.publishDate)}</span>
+                                          <span className="text-xs text-muted-foreground">{formatDate(post.publishDate)}</span>
                   </div>
                   
-                  <h3 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
-                    {post.title}
-                  </h3>
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                                      <h3 className="text-lg font-bold text-foreground mb-3 line-clamp-2">
+                      {post.title}
+                    </h3>
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-3">
                     {post.excerpt}
                   </p>
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
-                      <User className="h-3 w-3 text-gray-400" />
-                      <span className="text-xs text-gray-600">{post.author}</span>
-                      <Clock className="h-3 w-3 text-gray-400 ml-2" />
-                      <span className="text-xs text-gray-600">{post.readTime}</span>
+                      <User className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">{post.author}</span>
+                      <Clock className="h-3 w-3 text-muted-foreground ml-2" />
+                      <span className="text-xs text-muted-foreground">{post.readTime}</span>
                     </div>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/blog/${slugMap[post.id]}`}>Read More <ArrowRight className="h-4 w-4" /></Link>
@@ -317,13 +317,13 @@ const Blog = () => {
       </section>
 
       {/* Resources Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+              <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-foreground mb-4">
               Free Resources
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Download our comprehensive guides, templates, and tools to help you optimize your healthcare practice.
             </p>
           </div>
@@ -331,11 +331,11 @@ const Blog = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {resources.map((resource, index) => (
               <Card key={index} className="p-6 text-center hover:shadow-lg transition-shadow">
-                <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit text-blue-600">
+                <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit text-primary">
                   {resource.icon}
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">{resource.title}</h3>
-                <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
+                                  <h3 className="font-semibold text-foreground mb-2">{resource.title}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{resource.description}</p>
                 <Badge variant="outline" className="mb-4">{resource.type}</Badge>
                 <Button variant="outline" size="sm" className="w-full">
                   <Download className="h-4 w-4 mr-2" />
@@ -349,7 +349,7 @@ const Blog = () => {
 
       {/* Newsletter Signup */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-blue-700">
-        <div className="max-w-4xl mx-auto text-center text-white">
+        <div className="max-w-4xl mx-auto text-center text-secondary ">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             Stay Updated
           </h2>
@@ -360,7 +360,7 @@ const Blog = () => {
           <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
             <Input 
               placeholder="Enter your email" 
-              className="bg-white text-gray-900"
+              className="bg-background text-foreground"
             />
             <Button variant="secondary" size="lg">
               Subscribe

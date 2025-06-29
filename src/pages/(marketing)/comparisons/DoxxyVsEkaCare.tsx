@@ -29,56 +29,56 @@ const DoxxyVsEkaCare = () => {
       doxxy: "Pay-per-appointment (₹10/appointment)",
       ekacare: "Monthly subscription + per-doctor fees",
       advantage: "More cost-effective for small to medium practices",
-      icon: <DollarSign className="h-6 w-6 text-blue-600" />
+      icon: <DollarSign className="h-6 w-6 text-primary" />
     },
     {
       feature: "Free Plan",
       doxxy: "First 100 appointments completely free",
       ekacare: "Limited-time trial with restricted features",
       advantage: "Start with zero risk and no time pressure",
-      icon: <Calendar className="h-6 w-6 text-blue-600" />
+      icon: <Calendar className="h-6 w-6 text-primary" />
     },
     {
       feature: "Doctor Limits",
       doxxy: "Unlimited doctors on all plans",
       ekacare: "Tiered pricing based on number of doctors",
       advantage: "Add as many doctors as needed without extra cost",
-      icon: <Users className="h-6 w-6 text-blue-600" />
+      icon: <Users className="h-6 w-6 text-primary" />
     },
     {
       feature: "Contract Length",
       doxxy: "No commitment, cancel anytime",
       ekacare: "Annual contracts with early termination fees",
       advantage: "Flexibility to adjust as your practice needs change",
-      icon: <Clock className="h-6 w-6 text-blue-600" />
+      icon: <Clock className="h-6 w-6 text-primary" />
     },
     {
       feature: "Multi-Clinic Support",
       doxxy: "Built-in multi-location management",
       ekacare: "Available only on higher-tier plans",
       advantage: "Manage multiple locations without premium pricing",
-      icon: <Stethoscope className="h-6 w-6 text-blue-600" />
+      icon: <Stethoscope className="h-6 w-6 text-primary" />
     },
     {
       feature: "Patient Records",
       doxxy: "Comprehensive EMR with unlimited storage",
       ekacare: "Storage limits on basic plans",
       advantage: "Never worry about hitting storage limits",
-      icon: <FileText className="h-6 w-6 text-blue-600" />
+      icon: <FileText className="h-6 w-6 text-primary" />
     },
     {
       feature: "Patient Communication",
       doxxy: "SMS, WhatsApp, and email notifications included",
       ekacare: "Basic notifications, premium features cost extra",
       advantage: "All communication channels included at no extra cost",
-      icon: <MessageSquare className="h-6 w-6 text-blue-600" />
+      icon: <MessageSquare className="h-6 w-6 text-primary" />
     },
     {
       feature: "Mobile App",
       doxxy: "Native iOS and Android apps included",
       ekacare: "Limited functionality in free mobile app",
       advantage: "Full-featured mobile experience for doctors and staff",
-      icon: <Smartphone className="h-6 w-6 text-blue-600" />
+      icon: <Smartphone className="h-6 w-6 text-primary" />
     }
   ];
 
@@ -136,7 +136,7 @@ const DoxxyVsEkaCare = () => {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Doxxy vs
-            <span className="text-blue-600"> Eka Care</span>
+            <span className="text-primary"> Eka Care</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             See how Doxxy's innovative pricing model and comprehensive feature set
@@ -173,7 +173,7 @@ const DoxxyVsEkaCare = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-left text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-left text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Eka Care</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Doxxy Advantage</th>
                 </tr>
@@ -187,7 +187,7 @@ const DoxxyVsEkaCare = () => {
                     </td>
                     <td className="py-4 px-6 border-t text-gray-800">
                       <div className="flex items-start">
-                        <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                        <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                         {point.doxxy}
                       </div>
                     </td>
@@ -221,11 +221,11 @@ const DoxxyVsEkaCare = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start">
-                    <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">Eka Care:</span> {point.ekaCare}</p>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">Doxxy:</span> {point.doxxy}</p>
                   </div>
                 </CardContent>
@@ -249,7 +249,7 @@ const DoxxyVsEkaCare = () => {
               <ul className="space-y-4">
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Data Export & Import</p>
@@ -258,7 +258,7 @@ const DoxxyVsEkaCare = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Staff Training</p>
@@ -267,7 +267,7 @@ const DoxxyVsEkaCare = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Parallel Operation</p>
@@ -276,7 +276,7 @@ const DoxxyVsEkaCare = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Dedicated Support</p>
@@ -353,50 +353,50 @@ const DoxxyVsEkaCare = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-center text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-center text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-center text-gray-600 font-medium">Eka Care</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="py-4 px-6 border-t font-medium">Appointment Scheduling</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Appointment Scheduling</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Electronic Medical Records</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 border-t font-medium">Unlimited Doctors</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Multi-Clinic Management</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center text-gray-600">Premium Plans Only</td>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Electronic Medical Records</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-6 border-t font-medium">Patient Communication</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center text-gray-600">Basic Only</td>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Unlimited Doctors</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Advanced Analytics</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center text-gray-600">Premium Plans Only</td>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Multi-Clinic Management</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center text-muted-foreground">Premium Plans Only</td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-6 border-t font-medium">Free Plan Available</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Patient Communication</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center text-muted-foreground">Basic Only</td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">No Long-Term Contracts</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Advanced Analytics</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center text-muted-foreground">Premium Plans Only</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Free Plan Available</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
+                </tr>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">No Long-Term Contracts</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
               </tbody>
             </table>

@@ -141,7 +141,7 @@ const FAQ = () => {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Frequently Asked
-            <span className="text-blue-600"> Questions</span>
+            <span className="text-primary"> Questions</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8">
             Find quick answers to common questions about Doxxy. 
@@ -167,7 +167,7 @@ const FAQ = () => {
           {groupedFaqs.map(category => (
             <div key={category.id} className="mb-12">
               <div className="flex items-center space-x-3 mb-6">
-                <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
+                <div className="p-2 bg-primary/10 rounded-lg text-primary">
                   {category.icon}
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">{category.name}</h2>
@@ -229,7 +229,7 @@ const FAQ = () => {
       </section>
 
       {/* Contact Support Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-6">
             Still have questions?
@@ -241,8 +241,8 @@ const FAQ = () => {
           <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-6">
               <div className="text-center">
-                <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
-                  <MessageSquare className="h-6 w-6 text-blue-600" />
+                          <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+            <MessageSquare className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Live Chat</h3>
                 <p className="text-sm text-gray-600 mb-4">
@@ -256,8 +256,8 @@ const FAQ = () => {
 
             <Card className="p-6">
               <div className="text-center">
-                <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
-                  <Phone className="h-6 w-6 text-green-600" />
+                          <div className="mx-auto mb-4 p-3 bg-success/10 rounded-full w-fit">
+            <Phone className="h-6 w-6 text-success" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Call Us</h3>
                 <p className="text-sm text-gray-600 mb-4">
@@ -271,8 +271,8 @@ const FAQ = () => {
 
             <Card className="p-6">
               <div className="text-center">
-                <div className="mx-auto mb-4 p-3 bg-purple-100 rounded-full w-fit">
-                  <BookOpen className="h-6 w-6 text-purple-600" />
+                          <div className="mx-auto mb-4 p-3 bg-secondary/10 rounded-full w-fit">
+            <BookOpen className="h-6 w-6 text-secondary" />
                 </div>
                 <h3 className="font-semibold text-gray-900 mb-2">Documentation</h3>
                 <p className="text-sm text-gray-600 mb-4">

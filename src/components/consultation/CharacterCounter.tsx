@@ -16,7 +16,7 @@ export const CharacterCounter = ({
   return (
     <span 
       className={`text-xs font-mono ${
-        isAtLimit ? 'text-red-600' : isNearLimit ? 'text-orange-600' : 'text-gray-500'
+        isAtLimit ? 'text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
       } ${className}`}
     >
       {current}/{max}

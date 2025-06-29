@@ -31,22 +31,22 @@ const About = () => {
 
   const values = [
     {
-      icon: <Heart className="h-8 w-8 text-red-500" />,
+      icon: <Heart className="h-8 w-8 text-destructive" />,
       title: "Patient-Centric Care",
       description: "Every feature we build is designed with patient outcomes and experience at the forefront of our decision-making process."
     },
     {
-      icon: <Shield className="h-8 w-8 text-blue-500" />,
+      icon: <Shield className="h-8 w-8 text-primary" />,
       title: "Security & Privacy",
       description: "We maintain the highest standards of data security to protect sensitive health information."
     },
     {
-      icon: <Lightbulb className="h-8 w-8 text-yellow-500" />,
+      icon: <Lightbulb className="h-8 w-8 text-accent" />,
       title: "Innovation",
       description: "We continuously innovate to bring cutting-edge technology solutions to healthcare professionals worldwide."
     },
     {
-      icon: <Users className="h-8 w-8 text-green-500" />,
+      icon: <Users className="h-8 w-8 text-success" />,
       title: "Accessibility",
       description: "Making quality healthcare management tools accessible to practices of all sizes, from solo practitioners to large hospitals."
     }
@@ -110,10 +110,10 @@ const About = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            About <span className="text-blue-600">Doxxy</span>
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
+            About <span className="text-primary">Doxxy</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Transforming healthcare delivery through innovative technology solutions.
           </p>
         </div>
@@ -127,11 +127,11 @@ const About = () => {
               <Badge variant="outline" className="mb-4 px-4 py-2">
                 Our Story
               </Badge>
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+              <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
                 Transforming Healthcare
-                <span className="text-blue-600"> Together</span>
+                <span className="text-primary"> Together</span>
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="text-xl text-muted-foreground mb-8">
                 Founded by healthcare professionals for healthcare professionals, Doxxy bridges the gap 
                 between clinical excellence and technological innovation. Our mission is to make quality 
                 healthcare accessible and efficient for everyone, everywhere.
@@ -147,18 +147,18 @@ const About = () => {
             </div>
             <div className="relative">
               <img 
-                src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=600&h=500&fit=crop" 
+                src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=600&h=500&fit=crop" 
                 alt="Healthcare team collaborating" 
                 className="rounded-lg shadow-xl"
               />
               <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-lg shadow-lg">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Stethoscope className="h-6 w-6 text-blue-600" />
+                  <div className="p-2 bg-primary/10 rounded-full">
+                    <Stethoscope className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Trusted by</p>
-                    <p className="text-2xl font-bold text-blue-600">50,000+ Doctors</p>
+                    <p className="font-semibold text-foreground">Trusted by</p>
+                    <p className="text-2xl font-bold text-primary">50,000+ Doctors</p>
                   </div>
                 </div>
               </div>
@@ -173,13 +173,13 @@ const About = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
-                <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit text-blue-600">
+                <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit text-primary">
                   {stat.icon}
                 </div>
-                <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-foreground mb-2">
                   {stat.number}
                 </div>
-                <p className="text-gray-600 font-medium">{stat.label}</p>
+                <p className="text-muted-foreground font-medium">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -187,18 +187,18 @@ const About = () => {
       </section>
 
       {/* Mission & Vision */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12">
             <Card className="p-8">
               <CardHeader className="text-center pb-6">
-                <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
-                  <Target className="h-8 w-8 text-blue-600" />
+                <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
+                  <Target className="h-8 w-8 text-primary" />
                 </div>
                 <CardTitle className="text-2xl font-bold">Our Mission</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 text-center leading-relaxed">
+                <p className="text-muted-foreground text-center leading-relaxed">
                   To democratize access to world-class healthcare management technology, 
                   empowering healthcare professionals to deliver exceptional patient care 
                   while optimizing their practice operations, regardless of their size or location.
@@ -208,13 +208,13 @@ const About = () => {
 
             <Card className="p-8">
               <CardHeader className="text-center pb-6">
-                <div className="mx-auto mb-4 p-3 bg-green-100 rounded-full w-fit">
-                  <Award className="h-8 w-8 text-green-600" />
+                <div className="mx-auto mb-4 p-3 bg-success/10 rounded-full w-fit">
+                  <Award className="h-8 w-8 text-success" />
                 </div>
                 <CardTitle className="text-2xl font-bold">Our Vision</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 text-center leading-relaxed">
+                <p className="text-muted-foreground text-center leading-relaxed">
                   A world where technology seamlessly integrates with healthcare delivery, 
                   enabling every healthcare provider to focus on what matters most - 
                   healing and improving lives, while we handle the complexity of practice management.
@@ -229,10 +229,10 @@ const About = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Our Core Values
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               These principles guide every decision we make and every feature we build.
             </p>
           </div>
@@ -245,7 +245,7 @@ const About = () => {
                   <CardTitle className="text-xl">{value.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-muted-foreground text-sm leading-relaxed">
                     {value.description}
                   </p>
                 </CardContent>
@@ -270,7 +270,7 @@ const About = () => {
           <div className="space-y-8">
             {milestones.map((milestone, index) => (
               <div key={index} className="flex items-start space-x-4">
-                <div className="flex-shrink-0 w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                <div className="flex-shrink-0 w-16 h-16 bg-blue-600 text-secondary  rounded-full flex items-center justify-center font-bold">
                   {milestone.year}
                 </div>
                 <div className="flex-1">
@@ -311,7 +311,7 @@ const About = () => {
                   <h3 className="text-xl font-semibold text-gray-900 mb-1">
                     {member.name}
                   </h3>
-                  <p className="text-blue-600 font-medium mb-3">{member.role}</p>
+                  <p className="text-primary font-medium mb-3">{member.role}</p>
                   <p className="text-gray-600 text-sm leading-relaxed mb-4">
                     {member.bio}
                   </p>

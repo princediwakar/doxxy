@@ -108,7 +108,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
                 variant="ghost"
                 size="sm"
                 onClick={() => removeMedication(index)}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                className="h-6 w-6 p-0 text-gray-400 hover:text-destructive hover:bg-destructive/10"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -118,7 +118,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
           {/* Medicine Name */}
           <div className="space-y-1.5">
             <Label className={`text-sm font-medium ${isReadOnly ? 'text-gray-500' : 'text-gray-700'}`}>
-              Medicine Name {!isReadOnly && <span className="text-red-500">*</span>}
+              Medicine Name {!isReadOnly && <span className="text-destructive">*</span>}
             </Label>
             {isReadOnly ? (
               <div className="text-sm text-gray-600 p-2 bg-gray-100 rounded border">
@@ -241,7 +241,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
           type="button"
           variant="outline"
           onClick={addMedication}
-          className="w-full h-10 text-sm font-medium border-dashed border-gray-300 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50"
+          className="w-full h-10 text-sm font-medium border-dashed border-gray-300 text-gray-600 hover:border-primary/30 hover:text-primary hover:bg-primary/10"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Medication

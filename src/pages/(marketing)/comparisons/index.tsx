@@ -21,32 +21,32 @@ const ComparisonIndex = () => {
     {
       title: "Doxxy vs Eka Care",
       description: "See how Doxxy's innovative pricing model and comprehensive feature set provides better value for healthcare practices compared to Eka Care.",
-      icon: <DollarSign className="h-8 w-8 text-blue-600" />,
+      icon: <DollarSign className="h-8 w-8 text-primary" />,
       link: "/comparisons/doxxy-vs-eka-care",
       badge: "Most Popular"
     },
     {
       title: "Doxxy vs Practo",
       description: "See how Doxxy's dedicated clinic management platform offers better value and a more streamlined experience compared to Practo.",
-      icon: <Shield className="h-8 w-8 text-purple-600" />,
+      icon: <Shield className="h-8 w-8 text-primary" />,
       link: "/comparisons/doxxy-vs-practo"
     },
     {
       title: "Doxxy vs ClinicPlus",
       description: "Compare Doxxy's modern, cloud-based approach with ClinicPlus's traditional software model & discover why Doxxy is better.",
-      icon: <Smartphone className="h-8 w-8 text-orange-600" />,
+      icon: <Smartphone className="h-8 w-8 text-primary" />,
       link: "/comparisons/doxxy-vs-clinicplus"
     },
     {
       title: "Doxxy vs Lybrate",
       description: "Learn why Doxxy provides a more comprehensive clinic management solution compared to Lybrate's consultation-focused platform.",
-      icon: <MessageSquare className="h-8 w-8 text-red-600" />,
+      icon: <MessageSquare className="h-8 w-8 text-destructive" />,
       link: "/comparisons/doxxy-vs-lybrate"
     },
     {
       title: "Doxxy vs MFine",
       description: "Discover how Doxxy's hybrid approach to in-clinic and telemedicine appointments offers more flexibility than MFine's telemedicine-centric model.",
-      icon: <FileText className="h-8 w-8 text-indigo-600" />,
+      icon: <FileText className="h-8 w-8 text-primary" />,
       link: "/comparisons/doxxy-vs-mfine"
     }
   ];
@@ -61,7 +61,7 @@ const ComparisonIndex = () => {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             How Doxxy
-            <span className="text-blue-600"> Compares</span>
+            <span className="text-primary"> Compares</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             See how Doxxy stacks up against other healthcare management platforms.
@@ -101,14 +101,14 @@ const ComparisonIndex = () => {
                     <div className="flex items-center justify-between mb-4">
                       {comparison.icon}
                       {comparison.badge && (
-                        <Badge className="bg-blue-600">{comparison.badge}</Badge>
+                        <Badge className="bg-primary">{comparison.badge}</Badge>
                       )}
                     </div>
                     <CardTitle className="text-xl">{comparison.title}</CardTitle>
                     <CardDescription className="text-gray-600">{comparison.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex items-center text-blue-600 font-medium">
+                    <div className="flex items-center text-primary font-medium">
                       Read Comparison
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </div>
@@ -134,7 +134,7 @@ const ComparisonIndex = () => {
               <ul className="space-y-4">
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <BarChart3 className="h-5 w-5 text-blue-600" />
+                    <BarChart3 className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Understand Pricing Models</p>
@@ -143,7 +143,7 @@ const ComparisonIndex = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Shield className="h-5 w-5 text-blue-600" />
+                    <Shield className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Evaluate Feature Sets</p>
@@ -152,7 +152,7 @@ const ComparisonIndex = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Zap className="h-5 w-5 text-blue-600" />
+                    <Zap className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Assess Implementation Ease</p>
@@ -161,7 +161,7 @@ const ComparisonIndex = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <MessageSquare className="h-5 w-5 text-blue-600" />
+                    <MessageSquare className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Read User Experiences</p>

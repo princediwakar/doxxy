@@ -106,16 +106,16 @@ const ConsultationPreviewModal = ({
 
             {/* Additional sections if available */}
             {consultationData.physical_exam && (
-              <div className="p-3 bg-orange-50 rounded-lg">
-                <h4 className="font-medium text-orange-900 mb-2">Physical Examination</h4>
-                <p className="text-sm text-orange-800">{consultationData.physical_exam}</p>
+              <div className="p-3 bg-success/10 rounded-lg">
+                <h4 className="font-medium text-success mb-2">Physical Examination</h4>
+                <p className="text-sm text-success/80">{consultationData.physical_exam}</p>
               </div>
             )}
 
             {consultationData.follow_up && (
-              <div className="p-3 bg-indigo-50 rounded-lg">
-                <h4 className="font-medium text-indigo-900 mb-2">Follow-up</h4>
-                <p className="text-sm text-indigo-800">{consultationData.follow_up}</p>
+              <div className="p-3 bg-secondary/10 rounded-lg">
+                <h4 className="font-medium text-secondary mb-2">Follow-up</h4>
+                <p className="text-sm text-secondary/80">{consultationData.follow_up}</p>
               </div>
             )}
           </div>
@@ -146,13 +146,13 @@ export const PatientSidebar = ({
       <Card className="bg-white">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3 text-base">
-            <User className="h-5 w-5 text-blue-600" />
+            <User className="h-5 w-5 text-primary" />
             Patient Information
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold">
+            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold">
               {patient?.name?.charAt(0)?.toUpperCase() || 'P'}
             </div>
             <div>
@@ -184,7 +184,7 @@ export const PatientSidebar = ({
       <Card className="bg-white">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-3 text-base">
-            <Calendar className="h-5 w-5 text-green-600" />
+            <Calendar className="h-5 w-5 text-success" />
             Today's Appointment
           </CardTitle>
         </CardHeader>
@@ -308,7 +308,7 @@ export const PatientSidebar = ({
         <Card >
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-3 text-base">
-              <Heart className="h-5 w-5 text-red-600" />
+              <Heart className="h-5 w-5 text-destructive" />
               Recent Medications
             </CardTitle>
           </CardHeader>
@@ -322,10 +322,10 @@ export const PatientSidebar = ({
               return (
                 <div key={prescription.id} className="p-3 bg-red-50 rounded-lg border-l-4 border-red-200">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs text-red-600 font-medium uppercase tracking-wide">
+                    <p className="text-xs text-destructive font-medium uppercase tracking-wide">
                       {prescription.created_at ? format(new Date(prescription.created_at), 'MMM d, yyyy') : 'Unknown date'}
                     </p>
-                    <Pill className="h-3 w-3 text-red-500" />
+                    <Pill className="h-3 w-3 text-destructive" />
                   </div>
                   
                   <div className="space-y-2">
@@ -352,7 +352,7 @@ export const PatientSidebar = ({
                           )}
                         </div>
                         {med.instructions && (
-                          <p className="text-xs text-red-600 italic">
+                          <p className="text-xs text-destructive italic">
                             {med.instructions}
                           </p>
                         )}
@@ -360,7 +360,7 @@ export const PatientSidebar = ({
                     ))}
                     
                     {medications.length > 2 && (
-                      <p className="text-xs text-red-600 italic">
+                      <p className="text-xs text-destructive italic">
                         +{medications.length - 2} more medications
                       </p>
                     )}

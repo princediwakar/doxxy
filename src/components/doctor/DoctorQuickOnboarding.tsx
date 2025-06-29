@@ -132,7 +132,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div className="flex items-center space-x-2">
             <div className="bg-blue-100 p-2 rounded-full">
-              <Stethoscope className="w-5 h-5 text-blue-600" />
+              <Stethoscope className="w-5 h-5 text-primary" />
             </div>
             <div>
               <DialogTitle className="text-xl font-semibold">Setup Medical Profile</DialogTitle>
@@ -154,7 +154,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
           {/* Department Selection */}
                 <div className="space-y-2">
             <Label htmlFor="department" className="text-sm font-medium">
-              Department <span className="text-red-500">*</span>
+              Department <span className="text-destructive">*</span>
                   </Label>
             <Select value={formData.selectedDepartment} onValueChange={(value) => setFormData(prev => ({ ...prev, selectedDepartment: value }))}>
               <SelectTrigger>

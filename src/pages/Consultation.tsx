@@ -159,11 +159,11 @@ const Consultation = () => {
     };
 
     const getSectionIcon = (title: string) => {
-      if (title.toLowerCase().includes('history')) return <User className="h-5 w-5 text-blue-600" />;
-      if (title.toLowerCase().includes('examination')) return <Stethoscope className="h-5 w-5 text-green-600" />;
-      if (title.toLowerCase().includes('plan') || title.toLowerCase().includes('assessment')) return <ClipboardList className="h-5 w-5 text-purple-600" />;
-      if (title.toLowerCase().includes('investigation')) return <FileText className="h-5 w-5 text-orange-600" />;
-      return <Activity className="h-5 w-5 text-gray-600" />;
+      if (title.toLowerCase().includes('history')) return <User className="h-5 w-5 text-primary" />;
+      if (title.toLowerCase().includes('examination')) return <Stethoscope className="h-5 w-5 text-success" />;
+      if (title.toLowerCase().includes('plan') || title.toLowerCase().includes('assessment')) return <ClipboardList className="h-5 w-5 text-secondary" />;
+      if (title.toLowerCase().includes('investigation')) return <FileText className="h-5 w-5 text-accent" />;
+      return <Activity className="h-5 w-5 text-muted-foreground" />;
     };
 
     const completedFields = section.fields.filter(field => {
@@ -235,7 +235,7 @@ const Consultation = () => {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-red-600">Appointment not found</p>
+          <p className="text-destructive">Appointment not found</p>
         </div>
       </div>
     );
@@ -299,7 +299,7 @@ const Consultation = () => {
                 <Card className="border-green-200 bg-green-50 mt-8">
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
+                      <CheckCircle className="h-6 w-6 text-success" />
                       <div>
                         <h3 className="font-semibold text-green-800">Consultation Completed</h3>
                         <p className="text-sm text-green-700">

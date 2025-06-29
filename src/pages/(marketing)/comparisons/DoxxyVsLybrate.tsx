@@ -31,49 +31,49 @@ const DoxxyVsLybrate = () => {
       doxxy: "Comprehensive Clinic Management",
       lybrate: "Online Doctor Consultations",
       advantage: "Manage all aspects of your practice, not just consultations",
-      icon: <Stethoscope className="h-6 w-6 text-blue-600" />
+      icon: <Stethoscope className="h-6 w-6 text-primary" />
     },
     {
       feature: "Pricing Model",
       doxxy: "Pay-per-appointment (₹10/appointment)",
       lybrate: "Commission-based on consultations",
       advantage: "Predictable costs, no hidden commissions",
-      icon: <DollarSign className="h-6 w-6 text-blue-600" />
+      icon: <DollarSign className="h-6 w-6 text-primary" />
     },
     {
       feature: "Patient Records",
       doxxy: "Comprehensive EMR with medical history, prescriptions, lab results",
       lybrate: "Limited to consultation notes and basic patient info",
       advantage: "Full patient history at your fingertips",
-      icon: <FileText className="h-6 w-6 text-blue-600" />
+      icon: <FileText className="h-6 w-6 text-primary" />
     },
     {
       feature: "Appointment Management",
       doxxy: "Smart scheduling for in-clinic and online appointments",
       lybrate: "Primarily online appointment booking",
       advantage: "Manage all your appointments from a single platform",
-      icon: <Calendar className="h-6 w-6 text-blue-600" />
+      icon: <Calendar className="h-6 w-6 text-primary" />
     },
     {
       feature: "Billing System",
       doxxy: "Integrated billing, invoicing, and payment tracking",
       lybrate: "Basic payment processing for online consultations",
       advantage: "Streamline your entire revenue cycle",
-      icon: <CreditCard className="h-6 w-6 text-blue-600" />
+      icon: <CreditCard className="h-6 w-6 text-primary" />
     },
     {
       feature: "Multi-Clinic Support",
       doxxy: "Built-in multi-location management",
       lybrate: "Not designed for multi-clinic operations",
       advantage: "Easily manage multiple branches from one dashboard",
-      icon: <Building2 className="h-6 w-6 text-blue-600" />
+      icon: <Building2 className="h-6 w-6 text-primary" />
     },
     {
       feature: "Analytics & Reporting",
       doxxy: "Advanced practice analytics and performance reports",
       lybrate: "Basic consultation metrics",
       advantage: "Gain insights to optimize your practice growth",
-      icon: <BarChart3 className="h-6 w-6 text-blue-600" />
+      icon: <BarChart3 className="h-6 w-6 text-primary" />
     }
   ];
 
@@ -126,7 +126,7 @@ const DoxxyVsLybrate = () => {
           </Badge>
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Doxxy vs
-            <span className="text-blue-600"> Lybrate</span>
+            <span className="text-primary"> Lybrate</span>
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             Learn why Doxxy provides a more comprehensive clinic management solution
@@ -163,7 +163,7 @@ const DoxxyVsLybrate = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-left text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-left text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Lybrate</th>
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Doxxy Advantage</th>
                 </tr>
@@ -177,7 +177,7 @@ const DoxxyVsLybrate = () => {
                     </td>
                     <td className="py-4 px-6 border-t text-gray-800">
                       <div className="flex items-start">
-                        <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                        <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                         {point.doxxy}
                       </div>
                     </td>
@@ -211,11 +211,11 @@ const DoxxyVsLybrate = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-start">
-                    <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">Lybrate:</span> {point.lybrate}</p>
                   </div>
                   <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-600 mr-2 flex-shrink-0 mt-0.5" />
+                    <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-gray-600"><span className="font-medium">Doxxy:</span> {point.doxxy}</p>
                   </div>
                 </CardContent>
@@ -239,7 +239,7 @@ const DoxxyVsLybrate = () => {
               <ul className="space-y-4">
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Data Export & Import</p>
@@ -248,7 +248,7 @@ const DoxxyVsLybrate = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Staff Training</p>
@@ -257,7 +257,7 @@ const DoxxyVsLybrate = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Parallel Operation</p>
@@ -266,7 +266,7 @@ const DoxxyVsLybrate = () => {
                 </li>
                 <li className="flex items-start">
                   <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Check className="h-5 w-5 text-blue-600" />
+                    <Check className="h-5 w-5 text-primary" />
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">Dedicated Support</p>
@@ -343,40 +343,40 @@ const DoxxyVsLybrate = () => {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
-                  <th className="py-4 px-6 text-center text-blue-600 font-medium">Doxxy</th>
+                  <th className="py-4 px-6 text-center text-primary font-medium">Doxxy</th>
                   <th className="py-4 px-6 text-center text-gray-600 font-medium">Lybrate</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td className="py-4 px-6 border-t font-medium">Comprehensive Clinic Management</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Comprehensive Clinic Management</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Pay-per-appointment Pricing</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
-                </tr>
-                <tr>
-                  <td className="py-4 px-6 border-t font-medium">Integrated Billing System</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Multi-Clinic Management</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Pay-per-appointment Pricing</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
                 <tr>
-                  <td className="py-4 px-6 border-t font-medium">Advanced Analytics</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Integrated Billing System</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
-                <tr className="bg-gray-50">
-                  <td className="py-4 px-6 border-t font-medium">Dedicated Support</td>
-                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-green-600 mx-auto" /></td>
-                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-red-500 mx-auto" /></td>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Multi-Clinic Management</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Advanced Analytics</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
+                </tr>
+                <tr className="bg-muted/30">
+                  <td className="py-4 px-6 border-t font-medium text-foreground">Dedicated Support</td>
+                  <td className="py-4 px-6 border-t text-center"><Check className="h-5 w-5 text-success mx-auto" /></td>
+                  <td className="py-4 px-6 border-t text-center"><X className="h-5 w-5 text-destructive mx-auto" /></td>
                 </tr>
               </tbody>
             </table>

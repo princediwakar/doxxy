@@ -118,37 +118,37 @@ const Pricing = () => {
 
   const advantages = [
     {
-      icon: <DollarSign className="h-8 w-8 text-green-600" />,
+      icon: <DollarSign className="h-8 w-8 text-success" />,
       title: "Pay Only For What You Use",
       description: "Unlike other platforms that charge monthly subscription fees regardless of usage, our per-appointment pricing means you only pay for actual appointments. No wasted resources during slow months.",
       competitors: "Monthly subscription fees regardless of usage"
     },
     {
-      icon: <Calendar className="h-8 w-8 text-blue-600" />,
+      icon: <Calendar className="h-8 w-8 text-primary" />,
       title: "Free For First 100 Appointments",
       description: "Start with zero risk - our Practice Essentials plan gives you full access to essential features for your first 100 appointments, completely free. No hidden fees or surprise charges.",
       competitors: "Limited-time trials that expire regardless of usage"
     },
     {
-      icon: <Percent className="h-8 w-8 text-purple-600" />,
+      icon: <Percent className="h-8 w-8 text-secondary" />,
       title: "No Doctor-Based Pricing",
       description: "Other platforms charge per doctor, forcing you to pay more as your practice grows. Our pricing is based solely on appointments, allowing unlimited doctors and staff on all plans.",
       competitors: "Per-doctor fees that multiply costs as your team grows"
     },
     {
-      icon: <Wallet className="h-8 w-8 text-orange-600" />,
+      icon: <Wallet className="h-8 w-8 text-accent" />,
       title: "No Annual Commitments",
       description: "We don't believe in locking you into long-term contracts. Scale up or down as needed, with the flexibility to adjust to your practice's changing needs.",
       competitors: "Annual contracts with hefty early termination fees"
     },
     {
-      icon: <CreditCard className="h-8 w-8 text-indigo-600" />,
+      icon: <CreditCard className="h-8 w-8 text-primary" />,
       title: "Transparent Pricing",
       description: "Our pricing is simple and transparent - ₹10 per appointment with all features included. No surprise fees, hidden costs, or expensive add-ons required for essential functionality.",
       competitors: "Base fees plus expensive add-ons for essential features"
     },
     {
-      icon: <Zap className="h-8 w-8 text-red-600" />,
+      icon: <Zap className="h-8 w-8 text-destructive" />,
       title: "Grow At Your Own Pace",
       description: "Our pricing model grows smoothly with your practice. No sudden pricing tier jumps when you hit arbitrary user or appointment thresholds.",
       competitors: "Steep price increases when crossing arbitrary thresholds"
@@ -195,7 +195,7 @@ const Pricing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-medical">
       
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
@@ -203,11 +203,11 @@ const Pricing = () => {
           <Badge variant="outline" className="mb-4 px-4 py-2">
             Fair & Transparent Pricing
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Pricing That
-            <span className="text-blue-600"> Makes Sense</span>
+            <span className="text-primary"> Makes Sense</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             Premium plans designed specifically for doctors and small clinics. 
             No hidden fees, no per-doctor charges, no complex tiers - just fair pricing that scales with your practice.
           </p>
@@ -233,7 +233,7 @@ const Pricing = () => {
               >
                 {plan.originalPrice && (
                   <div className="absolute -top-3 left-0 right-0 flex justify-center">
-                    <Badge className="bg-green-600 px-3 py-1 text-sm font-medium">
+                    <Badge className="bg-success px-3 py-1 text-sm font-medium">
                       <Clock className="h-4 w-4 mr-2" />
                       Limited Time Offer
                     </Badge>
@@ -241,7 +241,7 @@ const Pricing = () => {
                 )}
                 
                 <CardHeader className="text-center pb-8">
-                  <div className="mx-auto mb-4 p-3 bg-blue-100 rounded-full w-fit">
+                  <div className="mx-auto mb-4 p-3 bg-primary/10 rounded-full w-fit">
                     {plan.icon}
                   </div>
                   <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
@@ -270,7 +270,7 @@ const Pricing = () => {
                               )}
                             </div>
                             {plan.originalPrice && (
-                              <div className="mt-1 text-sm font-medium text-green-600">
+                              <div className="mt-1 text-sm font-medium text-success">
                                 Save ₹{plan.originalPrice - plan.monthlyPrice} per appointment
                               </div>
                             )}
@@ -287,7 +287,7 @@ const Pricing = () => {
                     <ul className="space-y-2">
                       {plan.features.map((feature, idx) => (
                         <li key={idx} className="flex items-center text-sm">
-                          <Check className="h-4 w-4 text-green-600 mr-3 flex-shrink-0" />
+                          <Check className="h-4 w-4 text-success mr-3 flex-shrink-0" />
                           {feature}
                         </li>
                       ))}
@@ -300,7 +300,7 @@ const Pricing = () => {
                       <ul className="space-y-2">
                         {plan.limitations.map((limitation, idx) => (
                           <li key={idx} className="flex items-center text-sm text-gray-500">
-                            <X className="h-4 w-4 text-red-500 mr-3 flex-shrink-0" />
+                            <X className="h-4 w-4 text-destructive mr-3 flex-shrink-0" />
                             {limitation}
                           </li>
                         ))}
@@ -344,7 +344,7 @@ const Pricing = () => {
                 <CardContent className="space-y-4">
                   <p className="text-gray-600">{advantage.description}</p>
                   <div className="flex items-start">
-                    <X className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-gray-500 italic">
                       <span className="font-medium">Other platforms:</span> {advantage.competitors}
                     </p>
@@ -367,7 +367,7 @@ const Pricing = () => {
               See how our pricing philosophy stacks up against traditional healthcare software pricing models.
             </p>
             <div className="mt-4">
-              <Link to="/comparisons" className="text-blue-600 hover:text-blue-800 underline font-medium">
+              <Link to="/comparisons" className="text-primary hover:text-primary/80 underline font-medium">
                 View detailed comparisons with Eka Care, Practo, and more →
               </Link>
             </div>
@@ -380,7 +380,7 @@ const Pricing = () => {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-4 px-2 font-semibold text-gray-900 w-1/3">Feature</th>
-                      <th className="text-left py-4 px-2 font-semibold text-blue-600 w-1/3">Doxxy</th>
+                      <th className="text-left py-4 px-2 font-semibold text-primary w-1/3">Doxxy</th>
                       <th className="text-left py-4 px-2 font-semibold text-gray-500 w-1/3">Other Platforms</th>
                     </tr>
                   </thead>
@@ -389,7 +389,7 @@ const Pricing = () => {
                       <tr key={index} className={index < comparisons.length - 1 ? "border-b" : ""}>
                         <td className="py-4 px-2 font-medium text-gray-900">{item.feature}</td>
                         <td className="py-4 px-2 text-gray-800 flex items-center">
-                          {item.better && <Check className="h-4 w-4 text-green-600 mr-2 flex-shrink-0" />}
+                          {item.better && <Check className="h-4 w-4 text-success mr-2 flex-shrink-0" />}
                           {item.us}
                         </td>
                         <td className="py-4 px-2 text-gray-500">{item.competitors}</td>
@@ -404,9 +404,9 @@ const Pricing = () => {
       </section>
 
       {/* Testimonial Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-4xl mx-auto">
-          <Card className="border-none shadow-xl bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <Card className="border-none shadow-xl bg-gradient-to-r from-primary to-primary/80 text-secondary ">
             <CardContent className="p-8">
               <div className="mb-6">
                 <BarChart3 className="h-12 w-12" />
@@ -415,8 +415,8 @@ const Pricing = () => {
                 "After switching from a subscription-based platform that charged per doctor, we're saving over 40% with Doxxy's per-appointment model. The best part is we only pay for what we actually use."
               </blockquote>
               <div>
-                <p className="font-semibold">Dr. Meera Sharma</p>
-                <p className="text-blue-200">Family Medicine Practice, Bengaluru</p>
+                <p className="text-secondary font-semibold">Dr. Meera Sharma</p>
+                <p className="text-primary-foreground/70">Family Medicine Practice, Bengaluru</p>
               </div>
             </CardContent>
           </Card>
@@ -435,17 +435,17 @@ const Pricing = () => {
           <div className="grid md:grid-cols-4 gap-8 text-center">
             
             <div className="flex flex-col items-center">
-              <Phone className="h-12 w-12 text-green-600 mb-4" />
+              <Phone className="h-12 w-12 text-success mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">24/7 Support</h3>
               <p className="text-sm text-gray-600">Round-the-clock assistance when you need it</p>
             </div>
             <div className="flex flex-col items-center">
-              <Clock className="h-12 w-12 text-purple-600 mb-4" />
+              <Clock className="h-12 w-12 text-secondary mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">99.9% Uptime</h3>
               <p className="text-sm text-gray-600">Reliable service you can count on</p>
             </div>
             <div className="flex flex-col items-center">
-              <Award className="h-12 w-12 text-orange-600 mb-4" />
+              <Award className="h-12 w-12 text-accent mb-4" />
               <h3 className="font-semibold text-gray-900 mb-2">Award Winning</h3>
               <p className="text-sm text-gray-600">Recognized by healthcare industry leaders</p>
             </div>

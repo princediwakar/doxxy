@@ -136,7 +136,7 @@ export const ConsultationHeader = ({
                     size="sm"
                     className={`flex items-center gap-1 transition-all ${
                       canComplete 
-                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        ? 'bg-green-600 hover:bg-green-700 text-secondary ' 
                         : 'opacity-60'
                     }`}
                     variant={canComplete ? "default" : "secondary"}

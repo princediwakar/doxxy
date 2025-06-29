@@ -279,7 +279,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
       <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-4">
           <DialogTitle className="flex items-center gap-3">
-            <Stethoscope className="w-6 h-6 text-blue-600" />
+            <Stethoscope className="w-6 h-6 text-primary" />
             Medical Credentials
           </DialogTitle>
         </DialogHeader>
@@ -359,7 +359,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                       <div>
                         <Label htmlFor="medical_registration_number">Registration Number *</Label>
                         <Input id="medical_registration_number" value={formData.medical_registration_number} onChange={(e) => handleFieldChange('medical_registration_number', e.target.value)} placeholder="e.g., MCI-12345" />
-                        {validationErrors.medical_registration_number && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_registration_number}</p>}
+                        {validationErrors.medical_registration_number && <p className="text-destructive text-sm mt-1">{validationErrors.medical_registration_number}</p>}
                       </div>
                       <div>
                         <Label htmlFor="medical_council">Medical Council *</Label>
@@ -367,7 +367,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                           <SelectTrigger><SelectValue placeholder="Select medical council" /></SelectTrigger>
                           <SelectContent>{MEDICAL_COUNCILS.map((council) => (<SelectItem key={council} value={council}>{council}</SelectItem>))}</SelectContent>
                         </Select>
-                        {validationErrors.medical_council && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_council}</p>}
+                        {validationErrors.medical_council && <p className="text-destructive text-sm mt-1">{validationErrors.medical_council}</p>}
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -389,7 +389,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                         <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
                         <SelectContent>{departments.map((dept) => (<SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>))}</SelectContent>
                       </Select>
-                      {validationErrors.department_id && <p className="text-red-500 text-sm mt-1">{validationErrors.department_id}</p>}
+                      {validationErrors.department_id && <p className="text-destructive text-sm mt-1">{validationErrors.department_id}</p>}
                     </div>
                   </CardContent>
                 </Card>
@@ -417,12 +417,12 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                               <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
-                          {validationErrors.medical_degree && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_degree}</p>}
+                          {validationErrors.medical_degree && <p className="text-destructive text-sm mt-1">{validationErrors.medical_degree}</p>}
                         </div>
                         <div>
                           <Label htmlFor="medical_college">Medical College *</Label>
                           <Input id="medical_college" value={formData.medical_college} onChange={(e) => handleFieldChange('medical_college', e.target.value)} placeholder="Name of medical college" />
-                          {validationErrors.medical_college && <p className="text-red-500 text-sm mt-1">{validationErrors.medical_college}</p>}
+                          {validationErrors.medical_college && <p className="text-destructive text-sm mt-1">{validationErrors.medical_college}</p>}
                         </div>
                         <div>
                           <Label htmlFor="medical_university">University/Board</Label>
@@ -431,7 +431,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                         <div>
                           <Label htmlFor="graduation_year">Graduation Year *</Label>
                           <Input id="graduation_year" type="number" value={formData.graduation_year} onChange={(e) => handleFieldChange('graduation_year', e.target.value)} placeholder="e.g., 2015" min="1950" max={new Date().getFullYear()} />
-                          {validationErrors.graduation_year && <p className="text-red-500 text-sm mt-1">{validationErrors.graduation_year}</p>}
+                          {validationErrors.graduation_year && <p className="text-destructive text-sm mt-1">{validationErrors.graduation_year}</p>}
                         </div>
                       </div>
                     </div>

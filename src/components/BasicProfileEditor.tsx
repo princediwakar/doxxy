@@ -250,7 +250,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
               {/* Name Field */}
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium">
-                  Full Name <span className="text-red-500">*</span>
+                  Full Name <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="name"
@@ -270,7 +270,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   className="h-11"
                 />
                 {formErrors.name && (
-                  <p className="text-red-500 text-sm">{formErrors.name}</p>
+                  <p className="text-destructive text-sm">{formErrors.name}</p>
                 )}
               </div>
 
@@ -297,7 +297,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   className="h-11"
                 />
                 {formErrors.phone && (
-                  <p className="text-red-500 text-sm">{formErrors.phone}</p>
+                  <p className="text-destructive text-sm">{formErrors.phone}</p>
                 )}
               </div>
 
@@ -325,7 +325,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   <span className="text-xs text-muted-foreground">Max 5MB, PNG/JPG/JPEG</span>
                 </div>
                 {formErrors.photo && (
-                  <p className="text-red-500 text-sm">{formErrors.photo}</p>
+                  <p className="text-destructive text-sm">{formErrors.photo}</p>
                 )}
               </div>
 
@@ -334,7 +334,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                 <Label className="text-sm font-medium">Email Address</Label>
                 <div className="p-3 bg-muted/30 rounded-lg border flex items-center justify-between">
                   <span className="text-sm">{user?.email}</span>
-                  <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50">
+                  <Badge variant="outline" className="text-xs text-success border-success/20 bg-success/10">
                     Verified
                   </Badge>
                 </div>

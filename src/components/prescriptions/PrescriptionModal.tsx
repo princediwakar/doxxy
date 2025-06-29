@@ -513,7 +513,7 @@ export function PrescriptionModal({
                             e.stopPropagation();
                             removeMedication(index);
                           }}
-                          className="h-6 w-6 p-0 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                          className="h-6 w-6 p-0 text-gray-400 hover:text-destructive hover:bg-destructive/10"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -526,7 +526,7 @@ export function PrescriptionModal({
                         render={({ field: formField }) => (
                           <FormItem>
                             <FormLabel className="text-sm font-medium text-gray-700">
-                              Medicine Name <span className="text-red-500">*</span>
+                              Medicine Name <span className="text-destructive">*</span>
                             </FormLabel>
                             <FormControl>
                               <MedicineCombobox
@@ -633,8 +633,6 @@ export function PrescriptionModal({
                         />
                       </div>
 
-
-
                       {/* Instructions */}
                       <FormField
                         control={form.control}
@@ -663,7 +661,7 @@ export function PrescriptionModal({
                     type="button"
                     variant="outline"
                     onClick={addMedication}
-                    className="w-full h-10 text-sm font-medium border-dashed border-gray-300 text-gray-600 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50"
+                    className="w-full h-10 text-sm font-medium border-dashed border-gray-300 text-gray-600 hover:border-primary/30 hover:text-primary hover:bg-primary/10"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Medication

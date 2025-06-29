@@ -156,10 +156,10 @@ const Billing = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold text-green-600">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</p>
+                <p className="text-2xl font-bold text-success">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <IndianRupee className="w-6 h-6 text-green-600" />
+              <div className="bg-success/10 p-3 rounded-lg">
+                <IndianRupee className="w-6 h-6 text-success" />
               </div>
             </div>
           </CardContent>
@@ -169,10 +169,10 @@ const Billing = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Bills</p>
-                <p className="text-2xl font-bold text-blue-600">{stats?.totalBills || 0}</p>
+                <p className="text-2xl font-bold text-primary">{stats?.totalBills || 0}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <CreditCard className="w-6 h-6 text-blue-600" />
+              <div className="bg-primary/10 p-3 rounded-lg">
+                <CreditCard className="w-6 h-6 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -216,7 +216,7 @@ const Billing = () => {
               </TableRow>
             ) : (
               filteredBills.map((bill) => (
-                <TableRow key={bill.id} onClick={() => handleBillClick(bill)} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800">
+                <TableRow key={bill.id} onClick={() => handleBillClick(bill)} className="cursor-pointer hover:bg-muted/50">
                   <TableCell className="font-medium">{bill.invoice_number}</TableCell>
                   <TableCell>{bill.patient_name || 'N/A'}</TableCell>
                   <TableCell>{new Date(bill.created_at).toLocaleDateString()}</TableCell>

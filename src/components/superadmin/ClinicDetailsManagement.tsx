@@ -214,13 +214,13 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
         </div>
         <div className="flex items-center space-x-2">
           {hasUnsavedChanges && (
-            <Badge variant="outline" className="text-amber-600 border-amber-200">
+            <Badge variant="outline" className="text-success border-success/20">
               <AlertCircle className="h-3 w-3 mr-1" />
               Unsaved Changes
             </Badge>
           )}
           {!hasUnsavedChanges && !updateClinicMutation.isPending && (
-            <Badge variant="outline" className="text-green-600 border-green-200">
+            <Badge variant="outline" className="text-success border-success/20">
               <CheckCircle className="h-3 w-3 mr-1" />
               Saved
             </Badge>
@@ -261,10 +261,10 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     onChange={handleChange}
                     disabled={updateClinicMutation.isPending}
                     placeholder="Enter clinic name"
-                    className={hasFieldError('name') ? 'border-red-500' : ''}
+                    className={hasFieldError('name') ? 'border-destructive flex items-center' : ''}
                   />
                   {hasFieldError('name') && (
-                    <p className="text-sm text-red-500 flex items-center">
+                    <p className="text-sm text-destructive flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {getFieldError('name')}
                     </p>
@@ -284,10 +284,10 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     onChange={handleChange}
                     disabled={updateClinicMutation.isPending}
                     placeholder="contact@clinic.com"
-                    className={hasFieldError('email') ? 'border-red-500' : ''}
+                    className={hasFieldError('email') ? 'border-destructive flex items-center' : ''}
                   />
                   {hasFieldError('email') && (
-                    <p className="text-sm text-red-500 flex items-center">
+                    <p className="text-sm text-destructive flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {getFieldError('email')}
                     </p>
@@ -307,10 +307,10 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     onChange={handleChange}
                     disabled={updateClinicMutation.isPending}
                     placeholder="+1 (555) 123-4567"
-                    className={hasFieldError('phone') ? 'border-red-500' : ''}
+                    className={hasFieldError('phone') ? 'border-destructive flex items-center' : ''}
                   />
                   {hasFieldError('phone') && (
-                    <p className="text-sm text-red-500 flex items-center">
+                    <p className="text-sm text-destructive flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {getFieldError('phone')}
                     </p>
@@ -330,10 +330,10 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     onChange={handleChange}
                     disabled={updateClinicMutation.isPending}
                     placeholder="www.clinic.com"
-                    className={hasFieldError('website') ? 'border-red-500' : ''}
+                    className={hasFieldError('website') ? 'border-destructive flex items-center' : ''}
                   />
                   {hasFieldError('website') && (
-                    <p className="text-sm text-red-500 flex items-center">
+                    <p className="text-sm text-destructive flex items-center">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       {getFieldError('website')}
                     </p>
@@ -353,10 +353,10 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                   onChange={handleChange}
                   disabled={updateClinicMutation.isPending}
                   placeholder="123 Medical Center Drive, City, State 12345"
-                  className={hasFieldError('address') ? 'border-red-500' : ''}
+                  className={hasFieldError('address') ? 'border-destructive flex items-center' : ''}
                 />
                 {hasFieldError('address') && (
-                  <p className="text-sm text-red-500 flex items-center">
+                  <p className="text-sm text-destructive flex items-center">
                     <AlertCircle className="h-3 w-3 mr-1" />
                     {getFieldError('address')}
                   </p>

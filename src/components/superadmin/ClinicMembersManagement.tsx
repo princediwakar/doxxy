@@ -434,7 +434,7 @@ const ClinicMembersManagement = () => {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center text-red-500">
+          <div className="text-center text-destructive">
             <p>Failed to load members</p>
             <Button 
               variant="outline" 
