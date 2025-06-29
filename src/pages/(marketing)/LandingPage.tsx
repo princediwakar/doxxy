@@ -18,6 +18,7 @@ import {
   BarChart3
 } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
+import SignupCTA from "@/components/SignupCTA";
 
 const LandingPage = () => {
   const features = [
@@ -127,7 +128,7 @@ const LandingPage = () => {
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              30-day free trial
+              Start for free
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-600" />
@@ -137,49 +138,49 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Healthcare Hero Images Section */}
+      {/* Simple Healthcare Management Section */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Trusted by Healthcare Professionals Worldwide
+              Simple, Not Complicated
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              From busy urban hospitals in Mumbai to rural clinics in Iowa, Doxxy serves healthcare providers across the globe.
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Unlike enterprise software that overwhelms with complexity, Doxxy focuses on what matters: efficient patient care, transparent costs, and growth without barriers.
             </p>
           </div>
           
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
             <div className="relative">
               <img 
-                src="https://images.unsplash.com/photo-1631217872822-1c2546d6b864?w=600&h=400&fit=crop" 
-                alt="International healthcare team collaborating with Doxxy" 
+                src="https://images.unsplash.com/photo-1551601651-2a8555f1a136?w=600&h=400&fit=crop" 
+                alt="Clean, intuitive medical software interface on tablet" 
                 className="rounded-lg shadow-xl w-full"
               />
               <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-lg shadow-lg">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-900">Live Dashboard</span>
+                  <span className="text-sm font-medium text-gray-900">Easy To Use</span>
                 </div>
               </div>
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Global Healthcare Excellence</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Healthcare Software That Actually Works</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Doxxy is built for the global healthcare landscape, offering a flexible and adaptable platform that meets the diverse needs of clinics worldwide. Our commitment to simplicity, friendliness, and value ensures that every healthcare professional can deliver exceptional care.
+                No overwhelming menus, hidden features, or complex training required. Doxxy's intuitive design lets you focus on patients, not software. Smart specialty workflows adapt to your practice style - from cardiology to pediatrics - without the enterprise complexity.
               </p>
               <div className="space-y-3">
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Multi-language support (15+ languages)</span>
+                  <span className="text-gray-700">Intuitive design that requires minimal training</span>
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">24/7 global support across time zones</span>
+                  <span className="text-gray-700">11+ medical specialties with smart workflows</span>
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Designed for simplicity and ease of use</span>
+                  <span className="text-gray-700">No complicated setup or lengthy onboarding</span>
                 </div>
               </div>
             </div>
@@ -187,33 +188,57 @@ const LandingPage = () => {
 
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-2 lg:order-1">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Empowering Indian Healthcare</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Pricing That Actually Makes Sense</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                Born in Bengaluru and designed for the Indian healthcare ecosystem, Doxxy understands 
-                the unique challenges of Indian medical practices - from Ayush integration to insurance complexity.
+                Stop paying monthly fees for software you barely use. With Doxxy's per-appointment pricing, you only pay when you actually see patients. Start with 100 free appointments, add unlimited doctors without extra costs, and scale naturally as your practice grows.
               </p>
               <div className="space-y-3">
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Ayushman Bharat integration ready</span>
+                  <span className="text-gray-700">Only ₹10 per completed appointment - no monthly subscriptions</span>
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Support for Ayurveda, Homeopathy, Unani</span>
+                  <span className="text-gray-700">First 100 appointments completely free forever</span>
                 </div>
                 <div className="flex items-center">
                   <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-                  <span className="text-gray-700">Regional language interfaces (Hindi, Tamil, Bengali+)</span>
+                  <span className="text-gray-700">Unlimited doctors and staff - no per-user fees</span>
                 </div>
               </div>
             </div>
             <div className="order-1 lg:order-2 relative">
               <img 
-                src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=600&h=400&fit=crop" 
-                alt="Indian healthcare professional using Doxxy platform" 
+                src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&h=400&fit=crop" 
+                alt="Simple, transparent pricing calculator showing cost savings" 
                 className="rounded-lg shadow-xl w-full"
               />
-              
+              <div className="absolute -top-4 -left-4 bg-white p-4 rounded-lg shadow-lg">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm font-medium text-gray-900">Transparent Costs</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-16 bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-8">
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-blue-600 mb-2">₹10</div>
+                <div className="text-gray-600">Per appointment</div>
+                <div className="text-sm text-gray-500 mt-1">Only when you actually see patients</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-green-600 mb-2">100</div>
+                <div className="text-gray-600">Free appointments</div>
+                <div className="text-sm text-gray-500 mt-1">Complete access to start your practice</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-purple-600 mb-2">∞</div>
+                <div className="text-gray-600">Unlimited doctors</div>
+                <div className="text-sm text-gray-500 mt-1">No per-user fees as you grow</div>
+              </div>
             </div>
           </div>
         </div>
@@ -226,114 +251,199 @@ const LandingPage = () => {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Serving Every Specialty, Every Size
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              From solo practitioners to multi-specialty hospitals, Doxxy adapts to your unique needs.
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Specialized consultation workflows for every medical discipline. From solo practitioners to multi-specialty hospitals, Doxxy's intelligent forms adapt to your clinical requirements.
             </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
             <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
                 <img 
-                  src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=250&fit=crop" 
-                  alt="Cardiology practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                  src="https://images.unsplash.com/photo-1618939304347-e91b1f33d2ab?w=300&h=250&fit=crop" 
+                  alt="Cardiologist examining patient with stethoscope" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                </div>
               </div>
               <h3 className="font-semibold text-gray-900">Cardiology</h3>
-              <p className="text-sm text-gray-600">Heart specialists</p>
+              <p className="text-sm text-gray-600">Heart & vascular specialists</p>
             </div>
             
             <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
                 <img 
-                  src="https://images.unsplash.com/photo-1559757148-5c350d0d3c56?w=300&h=250&fit=crop" 
-                  alt="Pediatrics practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                  src="https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=300&h=250&fit=crop" 
+                  alt="Neurologist examining brain scan" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Pediatrics</h3>
-              <p className="text-sm text-gray-600">Child healthcare</p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1551190822-a9333d879b1f?w=300&h=250&fit=crop" 
-                  alt="Orthopedics practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Orthopedics</h3>
-              <p className="text-sm text-gray-600">Bone & joint care</p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1594824204175-b70147e9cbc5?w=300&h=250&fit=crop" 
-                  alt="General practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
-              <h3 className="font-semibold text-gray-900">General Practice</h3>
-              <p className="text-sm text-gray-600">Family medicine</p>
-            </div>
-            <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1579165466949-cb523388b771?w=300&h=250&fit=crop" 
-                  alt="Dermatology practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Dermatology</h3>
-              <p className="text-sm text-gray-600">Skin & hair care</p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1584515933487-779824d29309?w=300&h=250&fit=crop" 
-                  alt="Ophthalmology practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
-              <h3 className="font-semibold text-gray-900">Ophthalmology</h3>
-              <p className="text-sm text-gray-600">Eye care</p>
-            </div>
-            
-            <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
-                <img 
-                  src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1f?w=300&h=250&fit=crop" 
-                  alt="Neurology practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                </div>
               </div>
               <h3 className="font-semibold text-gray-900">Neurology</h3>
               <p className="text-sm text-gray-600">Brain & nervous system</p>
             </div>
             
             <div className="text-center group">
-              <div className="relative overflow-hidden rounded-lg mb-4">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
                 <img 
                   src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=250&fit=crop" 
-                  alt="Dentistry practice" 
-                  className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                  alt="Ophthalmologist performing eye examination" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                </div>
               </div>
-              <h3 className="font-semibold text-gray-900">Dentistry</h3>
-              <p className="text-sm text-gray-600">Oral health</p>
+              <h3 className="font-semibold text-gray-900">Ophthalmology</h3>
+              <p className="text-sm text-gray-600">Comprehensive eye care</p>
             </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=300&h=250&fit=crop" 
+                  alt="Pediatrician examining child patient" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">Pediatrics</h3>
+              <p className="text-sm text-gray-600">Specialized child healthcare</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1576671081837-49000212a370?w=300&h=250&fit=crop" 
+                  alt="Dermatologist examining patient skin condition" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-pink-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">Dermatology</h3>
+              <p className="text-sm text-gray-600">Skin & aesthetic care</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=300&h=250&fit=crop" 
+                  alt="Orthopedic surgeon examining x-ray" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">Orthopedics</h3>
+              <p className="text-sm text-gray-600">Bone & musculoskeletal</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=250&fit=crop" 
+                  alt="Psychiatrist in therapy session consultation" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">Psychiatry</h3>
+              <p className="text-sm text-gray-600">Mental health & wellness</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1594824204175-b70147e9cbc5?w=300&h=250&fit=crop" 
+                  alt="General practitioner consulting with patient" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">General Medicine</h3>
+              <p className="text-sm text-gray-600">Primary healthcare</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&h=250&fit=crop" 
+                  alt="ENT specialist examining patient's throat" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">ENT</h3>
+              <p className="text-sm text-gray-600">Ear, nose & throat specialists</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1691934338603-af553029aaa3??w=300&h=250&fit=crop" 
+                  alt="Gynecologist consulting with female patient" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">Gynecology</h3>
+              <p className="text-sm text-gray-600">Women's health & wellness</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1584515933487-779824d29309?w=300&h=250&fit=crop" 
+                  alt="Pulmonologist examining chest x-ray" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-white">
+                  <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-gray-900">Pulmonology</h3>
+              <p className="text-sm text-gray-600">Respiratory & lung care</p>
+            </div>
+          </div>
+          
+          <div className="text-center mt-12">
+            <p className="text-sm text-gray-500 mb-4">Each specialty comes with intelligent forms, mandatory field validation, and specialty-specific workflows</p>
+            <Link to="/auth">
+              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4">
+                Explore Your Specialty
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -379,64 +489,134 @@ const LandingPage = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+      <section className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Why Healthcare Professionals Choose Doxxy
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Join thousands of medical professionals who have transformed their practice operations with intelligent, cost-effective healthcare management software.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
-                Why Healthcare Professionals Choose Doxxy
-              </h2>
-              <p className="text-lg text-muted-foreground mb-8">
-                Built specifically for modern healthcare practices, Doxxy combines 
-                security, efficiency, and ease of use in one powerful platform.
-              </p>
-              
-              <div className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
-                    <span className="text-foreground">{benefit}</span>
+              <div className="space-y-6">
+                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="h-7 w-7 text-white" />
                   </div>
-                ))}
-              </div>
-              
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Link to="/auth">
-                  <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
-                    Get Started Today
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/pricing">
-                  <Button size="lg" variant="outline">
-                    View Pricing
-                  </Button>
-                </Link>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Pay Only When You See Patients</h4>
+                    <p className="text-gray-600 leading-relaxed">Revolutionary per-appointment pricing at just ₹10 per completed visit. No monthly subscriptions, setup fees, or hidden costs. Save 40-60% compared to traditional practice management software.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Shield className="h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Bank-Level Security & Compliance</h4>
+                    <p className="text-gray-600 leading-relaxed">Advanced encryption, multi-factor authentication, and complete data isolation between clinics. HIPAA-compliant infrastructure with 99.9% uptime guarantee and automated backups.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
+                    <Users className="h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Scale Without Limits or Extra Fees</h4>
+                    <p className="text-gray-600 leading-relaxed">Add unlimited doctors, nurses, and administrative staff without per-user charges. Manage multiple clinics from one dashboard. Pricing scales with your patient volume, not your team size.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                    <BarChart3 className="h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Start Free, Grow Confidently</h4>
+                    <p className="text-gray-600 leading-relaxed">Your first 100 appointments are completely free forever. No credit card required, no time limits, no feature restrictions. Experience the full platform before committing to anything.</p>
+                  </div>
+                </div>
               </div>
             </div>
             
             <div className="relative">
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="p-6 text-center">
-                  <Shield className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <h4 className="font-semibold text-foreground mb-1">Security First</h4>
-                  <p className="text-sm text-muted-foreground">Enterprise-grade encryption</p>
-                </Card>
-                <Card className="p-6 text-center mt-8">
-                  <Clock className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <h4 className="font-semibold text-foreground mb-1">Time Saving</h4>
-                  <p className="text-sm text-muted-foreground">Reduce admin time by up to 60%</p>
-                </Card>
-                <Card className="p-6 text-center">
-                  <Lock className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <h4 className="font-semibold text-foreground mb-1">Data Privacy</h4>
-                  <p className="text-sm text-muted-foreground">Complete data isolation between clinics</p>
-                </Card>
-                <Card className="p-6 text-center mt-8">
-                  <BarChart3 className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <h4 className="font-semibold text-foreground mb-1">Growth Insights</h4>
-                  <p className="text-sm text-muted-foreground">Analytics to grow your practice</p>
-                </Card>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-6">
+                  <Card className="p-8 text-center bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Clock className="h-10 w-10 text-white" />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">3+ Hours Saved</h4>
+                    <p className="text-sm text-gray-700 leading-relaxed">Daily administrative time savings through automated workflows and intelligent scheduling</p>
+                  </Card>
+                  
+                  <Card className="p-8 text-center bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-gradient-to-br from-green-600 to-green-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Lock className="h-10 w-10 text-white" />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">100% Data Security</h4>
+                    <p className="text-sm text-gray-700 leading-relaxed">Zero data breaches with enterprise-grade security and complete clinic data isolation</p>
+                  </Card>
+                </div>
+                
+                <div className="space-y-6 mt-8">
+                  <Card className="p-8 text-center bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <FileText className="h-10 w-10 text-white" />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">11+ Specialties</h4>
+                    <p className="text-sm text-gray-700 leading-relaxed">Custom workflows for cardiology, neurology, pediatrics, and more medical specialties</p>
+                  </Card>
+                  
+                  <Card className="p-8 text-center bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:scale-105 transition-transform">
+                    <div className="w-20 h-20 bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Globe className="h-10 w-10 text-white" />
+                    </div>
+                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Multi-Clinic Ready</h4>
+                    <p className="text-sm text-gray-700 leading-relaxed">Seamlessly manage multiple locations with unified reporting and centralized billing</p>
+                  </Card>
+                </div>
+              </div>
+              
+              <div className="absolute -top-6 -right-6 w-32 h-32 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full opacity-10 animate-pulse"></div>
+              <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-gradient-to-br from-green-400 to-blue-500 rounded-full opacity-10 animate-pulse delay-1000"></div>
+            </div>
+          </div>
+          
+          <div className="text-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+              <Link to="/auth">
+                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 shadow-lg">
+                  Start Your Free Trial
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link to="/contact">
+                <Button size="lg" variant="outline" className="px-8 py-4 border-primary/30 hover:bg-primary/5">
+                  <Calendar className="mr-2 h-5 w-5" />
+                  Schedule Demo
+                </Button>
+              </Link>
+            </div>
+            
+            <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                No setup fees
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                No long-term contracts
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                Cancel anytime
               </div>
             </div>
           </div>
@@ -479,37 +659,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-primary/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-            Ready to Transform Your Practice?
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8">
-            Join hundreds of healthcare professionals who trust Doxxy to manage their clinics efficiently and securely.
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
-            <Link to="/auth">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg px-8 py-6 text-lg">
-                Start Your Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link to="/pricing">
-              <Button size="lg" variant="outline" className="px-8 py-6 text-lg">
-                View Pricing Plans
-              </Button>
-            </Link>
-          </div>
-          
-          <p className="text-sm text-muted-foreground mb-4">
-            No credit card required • 30-day free trial • Setup support included
-          </p>
-          
-          
-        </div>
-      </section>
+      <SignupCTA />
 
       <SiteFooter />
     </div>

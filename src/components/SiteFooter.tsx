@@ -8,7 +8,7 @@ const SiteFooter = () => {
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center mb-4">
               <img src="/logo.svg" alt="Doxxy" className="w-24" />
             </div>
             <p className="text-muted-foreground mb-4 max-w-md">
@@ -25,14 +25,7 @@ const SiteFooter = () => {
                 <span>doxxyapp@gmail.com</span>
               </div>
             </div>
-            <div className="flex space-x-6 mt-6">
-              <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
-                Contact Us
-              </Link>
-              <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
-                About Us
-              </Link>
-            </div>
+            
           </div>
 
           <div>
@@ -44,29 +37,25 @@ const SiteFooter = () => {
               <Link to="/pricing" className="block text-muted-foreground hover:text-primary transition-colors">
                 Pricing
               </Link>
-              <Link to="/security" className="block text-muted-foreground hover:text-primary transition-colors">
-                Security
+              <Link to="/comparisons" className="block text-muted-foreground hover:text-primary transition-colors">
+                Doxxy vs Others
               </Link>
-              <Link to="/auth" className="block text-muted-foreground hover:text-primary transition-colors">
-                Demo
-              </Link>
+              
             </div>
           </div>
 
           <div>
             <h4 className="font-semibold text-foreground mb-4">Resources</h4>
             <div className="space-y-2">
-              {/* <Link to="/blog" className="block text-muted-foreground hover:text-primary transition-colors">
-                Blog & Resources
-              </Link> */}
-              <Link to="/faq" className="block text-muted-foreground hover:text-primary transition-colors">
-                Help Center
+              
+              <Link to="/about" className="block text-muted-foreground hover:text-primary transition-colors">
+                About Us
               </Link>
               <Link to="/contact" className="block text-muted-foreground hover:text-primary transition-colors">
-                Support
+                Contact Us
               </Link>
-              <Link to="/auth" className="block text-muted-foreground hover:text-primary transition-colors">
-                Documentation
+              <Link to="/faq" className="block text-muted-foreground hover:text-primary transition-colors">
+                FAQ
               </Link>
             </div>
           </div>
@@ -81,10 +70,7 @@ const SiteFooter = () => {
                 Terms of Service
               </Link>
               <Link to="/security" className="block text-muted-foreground hover:text-primary transition-colors">
-                Compliance
-              </Link>
-              <Link to="/contact" className="block text-muted-foreground hover:text-primary transition-colors">
-                Data Processing
+                Security
               </Link>
             </div>
           </div>

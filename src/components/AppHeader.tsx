@@ -54,13 +54,6 @@ export const AppHeader = memo(() => {
     { href: "/contact", label: "Contact", icon: Phone },
   ];
 
-  const resourceItems = [
-    { href: "/blog", label: "Blog & Resources", icon: BookOpen },
-    { href: "/faq", label: "Help Center", icon: HelpCircle },
-    { href: "/security", label: "Security", icon: Shield },
-    { href: "/privacy", label: "Privacy Policy", icon: Shield },
-    { href: "/terms", label: "Terms of Service", icon: FileText },
-  ];
 
   return (
     <>
