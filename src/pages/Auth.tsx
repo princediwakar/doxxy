@@ -23,7 +23,7 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState("login");
   const [authFlow, setAuthFlow] = useState<AuthFlow>("login");
   const [searchParams] = useSearchParams();
-  const { user, activeClinic, loading: authLoading, checkProfileCompletion } = useAuth();
+  const { user, activeClinic, loading: authLoading, checkProfileCompletion, needsProfileCompletion } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -111,18 +111,23 @@ const Auth = () => {
 
     if (authLoading) return;
 
-    // If user is already logged in and has active clinic, redirect to dashboard
-    // Skip this redirect if we're processing an invite or recovery token.
-    if (user && activeClinic && location.pathname === '/auth' && !token) {
-      console.log("Auth: Logged in user with active clinic, redirecting to dashboard");
-      navigate('/', { replace: true });
+    // If user is already logged in and needs profile completion, redirect to complete-profile
+    if (user && needsProfileCompletion && location.pathname === '/auth' && !token) {
+      navigate('/complete-profile', { replace: true });
       return;
     }
 
-    // If user is logged in but no active clinic, redirect to main app (clinic selection)
-    if (!authLoading && user && !activeClinic && authFlow === "login" && !token) {
-      console.log("Auth: Logged in user without active clinic, redirecting to app");
-      navigate('/', { replace: true });
+    // If user is already logged in and has active clinic, redirect to dashboard
+    if (user && activeClinic && location.pathname === '/auth' && !token) {
+      console.log("Auth: Logged in user with active clinic, redirecting to dashboard");
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+
+    // If user is logged in but no active clinic, redirect to create-clinic
+    if (!authLoading && user && !activeClinic && authFlow === "login" && !token && !needsProfileCompletion) {
+      console.log("Auth: Logged in user without active clinic, redirecting to create-clinic");
+      navigate('/create-clinic', { replace: true });
       return;
     }
 
@@ -308,7 +313,7 @@ const Auth = () => {
           });
         } else {
           console.log("Auth: Profile complete, redirecting to dashboard");
-          navigate("/");
+          navigate("/home");
         }
       } else {
         navigate("/complete-profile", { replace: true });
@@ -367,10 +372,7 @@ const Auth = () => {
               </CardDescription>
             </div>
             <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Shield className="w-3 h-3 text-success" />
-                <span>HIPAA Compliant</span>
-              </div>
+              
               <div className="flex items-center gap-1">
                 <Heart className="w-3 h-3 text-accent" />
                 <span>Healthcare Focused</span>

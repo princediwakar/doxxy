@@ -682,16 +682,28 @@ export type Database = {
         Returns: Json
       }
       create_doctor_profile: {
-        Args: {
-          p_user_id: string
-          p_clinic_id: string
-          p_name: string
-          p_email?: string
-          p_primary_specialization?: string
-          p_consultation_fee?: number
-          p_availability?: string
-          p_bio?: string
-        }
+        Args:
+          | {
+              p_user_id: string
+              p_clinic_id: string
+              p_name: string
+              p_email?: string
+              p_primary_specialization?: string
+              p_consultation_fee?: number
+              p_availability?: string
+              p_bio?: string
+            }
+          | {
+              p_user_id: string
+              p_clinic_id: string
+              p_name: string
+              p_email?: string
+              p_primary_specialization?: string
+              p_consultation_fee?: number
+              p_availability?: string
+              p_bio?: string
+              p_department_id?: string
+            }
         Returns: string
       }
       get_appointments_with_details_by_clinic: {
@@ -822,6 +834,12 @@ export type Database = {
           clinic_name: string
           role: Database["public"]["Enums"]["user_role"]
           joined_at: string
+        }[]
+      }
+      get_user_clinics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          clinic_id: string
         }[]
       }
       search_medicines: {

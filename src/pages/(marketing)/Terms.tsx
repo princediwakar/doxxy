@@ -66,7 +66,7 @@ export default function TermsPage() {
     
           <section className="mb-8">
             <h2 className="text-xl font-semibold mb-2">10. Confidentiality and Data Protection</h2>
-            <p>All medical and patient information is considered strictly confidential. We implement encryption, access controls, and audit logging. Our handling of data complies with our Privacy Policy and relevant laws including HIPAA (USA), GDPR (EU), and DPDP (India).</p>
+            <p>All medical and patient information is considered strictly confidential. We implement encryption, access controls, and audit logging. Our handling of data complies with our Privacy Policy and relevant laws including GDPR (EU), and DPDP (India).</p>
           </section>
     
           <section className="mb-8">

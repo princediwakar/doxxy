@@ -537,7 +537,7 @@ const CreateClinicPage = () => {
                               min="0"
                               step="50"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 500)}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
                             />
                           </FormControl>
                           <FormMessage />
@@ -550,7 +550,7 @@ const CreateClinicPage = () => {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Professional Phone (Optional)</FormLabel>
+                          <FormLabel>Professional Phone</FormLabel>
                           <FormControl>
                             <Input placeholder="e.g., +91 98765 43210" {...field} />
                           </FormControl>
