@@ -76,6 +76,7 @@ const Consultation = () => {
       'ENT': 'ENT',
       'Gynecology': 'Gynecology',
       'Pulmonology': 'Pulmonology',
+      'Dental': 'Dental',
       'General Medicine': 'General'
     };
     
@@ -98,6 +99,7 @@ const Consultation = () => {
       'ENT': 'ENT',
       'Gynecology': 'Gynecology',
       'Pulmonology': 'Pulmonology',
+      'Dental': 'Dental',
       'General Medicine': 'General'
     };
     return departmentMapping[departmentName || ''] || 'General';

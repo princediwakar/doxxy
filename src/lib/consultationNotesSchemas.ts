@@ -124,6 +124,15 @@ export const pulmonologyNotesSchema = baseNotesSchema.extend({
   dyspnea_assessment: z.string().optional(),
 });
 
+export const dentalNotesSchema = baseNotesSchema.extend({
+  dental_history: z.string().optional(),
+  oral_hygiene_status: z.string().optional(),
+  intraoral_examination: z.string().optional(),
+  extraoral_examination: z.string().optional(),
+  tooth_charting: z.string().optional(),
+  radiographic_findings: z.string().optional(),
+});
+
 // General consultation schema (fallback for unspecialized consultations)
 export const generalNotesSchema = baseNotesSchema;
 
@@ -138,6 +147,7 @@ export type PediatricsNotes = z.infer<typeof pediatricsNotesSchema>;
 export type ENTNotes = z.infer<typeof entNotesSchema>;
 export type GynecologyNotes = z.infer<typeof gynecologyNotesSchema>;
 export type PulmonologyNotes = z.infer<typeof pulmonologyNotesSchema>;
+export type DentalNotes = z.infer<typeof dentalNotesSchema>;
 export type GeneralNotes = z.infer<typeof generalNotesSchema>;
 export type ConsultationMedication = z.infer<typeof consultationMedicationSchema>;
 
@@ -312,6 +322,39 @@ export const specialtyFieldSections: Record<string, FieldSection[]> = {
         { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Cardiac prognosis" },
         { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Cardiology follow-up" },
         { name: "referrals", label: "Referrals", type: "textarea", rows: 2, placeholder: "Cardiac surgery or other referrals" },
+      ]
+    }
+  ],
+  Dental: [
+    {
+      title: "History",
+      fields: [
+        { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Primary dental issue", mandatory: true },
+        { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 4, placeholder: "Detailed history of the dental problem" },
+        { name: "dental_history", label: "Past Dental History", type: "textarea", rows: 3, placeholder: "Previous treatments, surgeries, orthodontics" },
+        { name: "past_medical_history", label: "Past Medical History", type: "textarea", rows: 3, placeholder: "Relevant systemic conditions" },
+        { name: "medications", label: "Current Medications", type: "textarea", rows: 3, placeholder: "All current medications" },
+        { name: "allergies", label: "Allergies", type: "textarea", rows: 2, placeholder: "Known drug allergies" },
+      ]
+    },
+    {
+      title: "Examination",
+      fields: [
+        { name: "oral_hygiene_status", label: "Oral Hygiene Status", type: "textarea", rows: 2, placeholder: "e.g., Good, Fair, Poor; plaque/calculus levels" },
+        { name: "extraoral_examination", label: "Extraoral Examination", type: "textarea", rows: 3, placeholder: "TMJ, lymph nodes, facial symmetry" },
+        { name: "intraoral_examination", label: "Intraoral Examination", type: "textarea", rows: 4, placeholder: "Soft tissues, gums, palate, tongue, floor of mouth" },
+        { name: "tooth_charting", label: "Tooth Charting", type: "textarea", rows: 6, placeholder: "Note findings for each tooth (e.g., caries, restorations, mobility)" },
+        { name: "radiographic_findings", label: "Radiographic Findings", type: "textarea", rows: 4, placeholder: "Findings from X-rays, OPG, CBCT" },
+      ]
+    },
+    {
+      title: "Assessment & Plan",
+      fields: [
+        { name: "assessment", label: "Diagnosis", type: "textarea", rows: 3, placeholder: "Dental diagnosis", mandatory: true },
+        { name: "treatment_plan", label: "Treatment Plan", type: "textarea", rows: 4, placeholder: "Proposed procedures, materials, and follow-up" },
+        { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Add medications (e.g., antibiotics, analgesics)" },
+        { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Expected outcome of the treatment" },
+        { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Next appointment and home care instructions" },
       ]
     }
   ]

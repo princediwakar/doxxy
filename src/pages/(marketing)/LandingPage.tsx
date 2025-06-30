@@ -81,6 +81,12 @@ const LandingPage = () => {
       rating: 5
     },
     {
+      name: "Dr. Anil Sharma",
+      role: "Dentist, SmileWell Dental Care",
+      content: "The dental-specific templates are fantastic. Charting and treatment planning is so much faster now.",
+      rating: 5
+    },
+    {
       name: "Lisa Rodriguez",
       role: "Practice Manager, Family Health Group",
       content: "The billing system alone has saved us hours each week. Everything is automated and error-free.",
@@ -210,7 +216,7 @@ const LandingPage = () => {
             <div>
               <h3 className="text-2xl font-bold text-foreground mb-4">Digital Consultation Interface</h3>
               <p className="text-muted-foreground mb-6 leading-relaxed">
-                Our consultation interface adapts to your specialty with smart templates for over 11 medical fields. From chief complaints to prescriptions, every detail is captured efficiently with auto-save and print-ready formatting.
+                Our consultation interface adapts to your specialty with smart templates for over a dozen medical fields. From chief complaints to prescriptions, every detail is captured efficiently with auto-save and print-ready formatting.
               </p>
               <div className="space-y-3">
                 <div className="flex items-center">

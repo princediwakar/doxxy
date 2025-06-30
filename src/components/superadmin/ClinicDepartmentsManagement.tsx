@@ -19,7 +19,8 @@ import {
   Brain,
   Eye,
   Heart,
-  Stethoscope
+  Stethoscope,
+  Smile
 } from 'lucide-react';
 
 type DepartmentType = Database['public']['Tables']['department_types']['Row'];
@@ -144,6 +145,7 @@ const ClinicDepartmentsManagement = () => {
     if (nameLower.includes('neuro')) return <Brain className="h-5 w-5" />;
     if (nameLower.includes('ophthal') || nameLower.includes('eye')) return <Eye className="h-5 w-5" />;
     if (nameLower.includes('cardio') || nameLower.includes('heart')) return <Heart className="h-5 w-5" />;
+    if (nameLower.includes('dental')) return <Smile className="h-5 w-5" />;
     if (nameLower.includes('general') || nameLower.includes('internal')) return <Stethoscope className="h-5 w-5" />;
     return <Activity className="h-5 w-5" />;
   };
