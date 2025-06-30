@@ -242,7 +242,7 @@ export const PatientSidebar = ({
               const chiefComplaint = consultationData.chief_complaint || getClinicalNotes();
 
               return (
-                <div key={consultation.id} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div key={consultation.id} className="p-3 bg-gray-50 rounded-lg hover:bg-background transition-colors">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">

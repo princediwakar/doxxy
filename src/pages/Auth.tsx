@@ -360,7 +360,7 @@ const Auth = () => {
 
   return (
     <div className="pt-16 min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)] p-4">
+      <div className="flex items-center justify-center">
         <Card className="w-full max-w-md medical-card shadow-medical-lg border-primary/10">
           <CardHeader className="space-y-4 text-center">
             <div className="flex items-center justify-center">

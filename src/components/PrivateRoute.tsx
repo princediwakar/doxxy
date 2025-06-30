@@ -25,7 +25,7 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   if (initialLoading) {
     console.log('PrivateRoute: Showing initial loading state');
     return (
-      <div className="flex min-h-screen bg-gray-100">
+      <div className="flex min-h-screen bg-background">
         <AppSidebar />
         <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto bg-white min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -38,7 +38,7 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   if (loading && location.pathname !== '/complete-profile') {
     console.log('PrivateRoute: Showing clinic loading state');
     return (
-      <div className="flex min-h-screen bg-gray-100">
+      <div className="flex min-h-screen bg-background">
         <AppSidebar />
         <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto bg-white min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -72,7 +72,7 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     if (clinicLoading) {
       console.log('PrivateRoute: Clinic data still loading, showing loading state');
       return (
-        <div className="flex min-h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-background">
           <AppSidebar />
           <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto bg-white min-h-screen flex items-center justify-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
@@ -90,7 +90,7 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     // Allow access to the create clinic page (without sidebar since no clinics yet)
     console.log('PrivateRoute: On create-clinic page without active clinic');
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-background">
         <main className="p-4 md:p-8 max-w-4xl mx-auto bg-white min-h-screen">
           {children ? <>{children}</> : <Outlet />}
         </main>
@@ -114,7 +114,7 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   // If we get here, something unexpected happened - show loading
   console.log('PrivateRoute: Unexpected state, showing loading');
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-background">
       <AppSidebar />
       <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto bg-white min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />

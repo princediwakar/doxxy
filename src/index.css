@@ -1,17 +1,16 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* ========== ENHANCED MEDICAL PROFESSIONAL THEME ========== */
-
     /* Core Background & Foreground */
-    --background: 210 20% 99%;
+    --background: 210 20% 98%; /* Clean, near-white background for main content */
     --foreground: 215 25% 15%;
 
     /* Card & Popover Surfaces */
-    --card: 0 0% 100%;
+    --card: 0 0% 100%; /* Pure white for cards in light mode */
     --card-foreground: 215 25% 15%;
     --popover: 0 0% 100%;
     --popover-foreground: 215 25% 15%;
@@ -32,7 +31,7 @@
     --primary-950: 212 100% 15%;
 
     /* Secondary Healthcare Teal - Calming & Healing */
-    --secondary: 174 44% 96%;
+    --secondary: 174 44% 96%; /* Light teal for secondary elements */
     --secondary-foreground: 174 100% 15%;
     --secondary-50: 174 44% 98%;
     --secondary-100: 174 44% 96%;
@@ -60,7 +59,7 @@
     --muted-900: 215 20% 18%;
 
     /* Accent - Subtle Interaction */
-    --accent: 215 20% 95%;
+    --accent: 215 20% 95%; /* Subtle gray for accents */
     --accent-foreground: 215 25% 15%;
     --accent-50: 215 20% 98%;
     --accent-100: 215 20% 95%;
@@ -94,7 +93,7 @@
     --radius: 0.75rem;
 
     /* Sidebar - Professional Medical Environment */
-    --sidebar-background: 215 25% 98%;
+    --sidebar-background: 210 20% 98%; /* Slightly darker than main background */
     --sidebar-foreground: 215 25% 15%;
     --sidebar-primary: 212 100% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -205,19 +204,24 @@
     --neutral-800: 210 10% 23%;
     --neutral-900: 210 11% 15%;
     --neutral-950: 210 13% 9%;
+
+    /* Custom Shadows for Medical UI */
+    --shadow-medical: 0 4px 12px hsl(215 20% 20% / 0.05);
+    --shadow-medical-lg: 0 6px 20px hsl(215 20% 20% / 0.08);
+    --shadow-medical-xl: 0 8px 28px hsl(215 20% 20% / 0.1);
   }
 
   .dark {
     /* ========== DARK MODE - PROFESSIONAL NIGHT SHIFT ========== */
     
     /* Core Background & Foreground */
-    --background: 215 28% 6%;
+    --background: 215 28% 3%; /* Darker for better contrast */
     --foreground: 215 20% 95%;
 
     /* Card & Popover Surfaces */
-    --card: 215 28% 8%;
+    --card: 215 28% 12%; /* Lighter card background for better contrast */
     --card-foreground: 215 20% 95%;
-    --popover: 215 28% 8%;
+    --popover: 215 28% 12%;
     --popover-foreground: 215 20% 95%;
 
     /* Primary Medical Blue - Bright & Accessible */
@@ -236,7 +240,7 @@
     --primary-950: 212 100% 36%;
 
     /* Secondary Healthcare Teal - Dark Mode */
-    --secondary: 215 28% 14%;
+    --secondary: 174 44% 10%; /* Darker teal for better contrast */
     --secondary-foreground: 174 25% 85%;
     --secondary-50: 174 44% 98%;
     --secondary-100: 174 44% 96%;
@@ -264,7 +268,7 @@
     --muted-900: 215 20% 18%;
 
     /* Accent - Dark Mode Interaction */
-    --accent: 215 28% 14%;
+    --accent: 215 28% 18%; /* Lighter for better differentiation */
     --accent-foreground: 215 20% 95%;
     --accent-50: 215 20% 98%;
     --accent-100: 215 20% 95%;
@@ -297,11 +301,11 @@
     --ring: 212 100% 70%;
 
     /* Sidebar - Dark Professional Medical Environment */
-    --sidebar-background: 215 28% 4%;
+    --sidebar-background: 215 28% 8%; /* Slightly lighter than main background */
     --sidebar-foreground: 215 20% 90%;
     --sidebar-primary: 212 100% 70%;
     --sidebar-primary-foreground: 215 28% 6%;
-    --sidebar-accent: 215 28% 12%;
+    --sidebar-accent: 215 28% 14%; /* Adjusted for consistency */
     --sidebar-accent-foreground: 215 20% 90%;
     --sidebar-border: 215 28% 16%;
     --sidebar-ring: 212 100% 70%;
@@ -408,6 +412,11 @@
     --neutral-800: 210 10% 23%;
     --neutral-900: 210 11% 15%;
     --neutral-950: 210 13% 9%;
+
+    /* Custom Shadows for Dark Mode */
+    --shadow-medical: 0 4px 12px hsl(215 28% 10% / 0.15);
+    --shadow-medical-lg: 0 6px 20px hsl(215 28% 10% / 0.2);
+    --shadow-medical-xl: 0 8px 28px hsl(215 28% 10% / 0.25);
   }
 }
 
@@ -466,33 +475,27 @@
     @apply backdrop-blur-sm;
   }
   
-  /* Active/Healthy - Enhanced Green */
   .status-active {
     @apply bg-success/10 text-success-700 border-success/20 hover:bg-success/15;
   }
   
-  /* Pending/Scheduled - Enhanced Amber */
   .status-pending {
     @apply bg-warning/10 text-warning-700 border-warning/20 hover:bg-warning/15;
   }
   
-  /* In Progress - Enhanced Blue */
   .status-in-progress {
     @apply bg-info/10 text-info-700 border-info/20 hover:bg-info/15;
   }
   
-  /* Inactive/Discharged - Enhanced Gray */
   .status-inactive {
     @apply bg-muted/50 text-muted-foreground border-muted/30 hover:bg-muted/70;
   }
   
-  /* Urgent/Critical - Enhanced Red */
   .status-urgent {
     @apply bg-destructive/10 text-destructive-700 border-destructive/20 hover:bg-destructive/15;
     @apply animate-pulse;
   }
   
-  /* Primary Status - Enhanced Primary */
   .status-primary {
     @apply bg-primary/10 text-primary-700 border-primary/20 hover:bg-primary/15;
   }
@@ -533,33 +536,47 @@
     @apply transition-all duration-200;
   }
 
-  /* Enhanced Department Color Classes */
+  /* Enhanced Department Color Classes with Hover and Active States */
   .dept-cardiology {
     @apply text-medical-cardiology-600 bg-medical-cardiology-50 border-medical-cardiology-200;
+    @apply hover:bg-medical-cardiology-100 active:bg-medical-cardiology-200;
+    @apply transition-colors duration-200;
   }
 
   .dept-neurology {
     @apply text-medical-neurology-600 bg-medical-neurology-50 border-medical-neurology-200;
+    @apply hover:bg-medical-neurology-100 active:bg-medical-neurology-200;
+    @apply transition-colors duration-200;
   }
 
   .dept-pediatrics {
     @apply text-medical-pediatrics-600 bg-medical-pediatrics-50 border-medical-pediatrics-200;
+    @apply hover:bg-medical-pediatrics-100 active:bg-medical-pediatrics-200;
+    @apply transition-colors duration-200;
   }
 
   .dept-oncology {
     @apply text-medical-oncology-600 bg-medical-oncology-50 border-medical-oncology-200;
+    @apply hover:bg-medical-oncology-100 active:bg-medical-oncology-200;
+    @apply transition-colors duration-200;
   }
 
   .dept-orthopedics {
     @apply text-medical-orthopedics-600 bg-medical-orthopedics-50 border-medical-orthopedics-200;
+    @apply hover:bg-medical-orthopedics-100 active:bg-medical-orthopedics-200;
+    @apply transition-colors duration-200;
   }
 
   .dept-dermatology {
     @apply text-medical-dermatology-600 bg-medical-dermatology-50 border-medical-dermatology-200;
+    @apply hover:bg-medical-dermatology-100 active:bg-medical-dermatology-200;
+    @apply transition-colors duration-200;
   }
 
   .dept-emergency {
     @apply text-medical-emergency-600 bg-medical-emergency-50 border-medical-emergency-200;
+    @apply hover:bg-medical-emergency-100 active:bg-medical-emergency-200;
+    @apply transition-colors duration-200;
   }
 
   /* Professional Loading States */
@@ -621,76 +638,76 @@
 
   /* Professional Gradient Backgrounds */
   .bg-gradient-medical {
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.05) 0%, hsl(var(--secondary) / 0.05) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.15) 0%, hsl(var(--secondary) / 0.15) 100%); /* Stronger gradient for visibility */
   }
 
   .bg-gradient-medical-dark {
-    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--secondary) / 0.1) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.2) 0%, hsl(var(--secondary) / 0.2) 100%); /* Enhanced for dark mode */
   }
 
   /* Enhanced Typography System - Medical UI */
   .typography-display-xl {
-    @apply text-display-xl font-display font-bold tracking-tight text-foreground;
+    @apply text-6xl font-display font-bold tracking-tight text-foreground;
   }
 
   .typography-display-lg {
-    @apply text-display-lg font-display font-bold tracking-tight text-foreground;
+    @apply text-5xl font-display font-bold tracking-tight text-foreground;
   }
 
   .typography-display-md {
-    @apply text-display-md font-display font-bold tracking-tight text-foreground;
+    @apply text-4xl font-display font-bold tracking-tight text-foreground;
   }
 
   .typography-display-sm {
-    @apply text-display-sm font-display font-bold tracking-tight text-foreground;
+    @apply text-3xl font-display font-bold tracking-tight text-foreground;
   }
 
   .typography-heading-xl {
-    @apply text-heading-xl font-body font-semibold tracking-tight text-foreground;
+    @apply text-3xl font-body font-semibold tracking-tight text-foreground;
   }
 
   .typography-heading-lg {
-    @apply text-heading-lg font-body font-semibold tracking-tight text-foreground;
+    @apply text-2xl font-body font-semibold tracking-tight text-foreground;
   }
 
   .typography-heading-md {
-    @apply text-heading-md font-body font-medium text-foreground;
+    @apply text-xl font-body font-medium text-foreground;
   }
 
   .typography-heading-sm {
-    @apply text-heading-sm font-body font-medium text-foreground;
+    @apply text-lg font-body font-medium text-foreground;
   }
 
   .typography-heading-xs {
-    @apply text-heading-xs font-body font-medium text-foreground;
+    @apply text-base font-body font-medium text-foreground;
   }
 
   .typography-body-lg {
-    @apply text-body-lg font-body text-foreground leading-relaxed;
+    @apply text-lg font-body text-foreground leading-relaxed;
   }
 
   .typography-body-md {
-    @apply text-body-md font-body text-foreground;
+    @apply text-base font-body text-foreground;
   }
 
   .typography-body-sm {
-    @apply text-body-sm font-body text-muted-foreground;
+    @apply text-sm font-body text-muted-foreground;
   }
 
   .typography-body-xs {
-    @apply text-body-xs font-body text-muted-foreground;
+    @apply text-xs font-body text-muted-foreground;
   }
 
   .typography-label-lg {
-    @apply text-label-lg font-body font-medium text-foreground;
+    @apply text-base font-body font-medium text-foreground;
   }
 
   .typography-label-md {
-    @apply text-label-md font-body font-medium text-muted-foreground;
+    @apply text-sm font-body font-medium text-muted-foreground;
   }
 
   .typography-label-sm {
-    @apply text-label-sm font-body font-medium text-muted-foreground uppercase tracking-wider;
+    @apply text-xs font-body font-medium text-muted-foreground uppercase tracking-wider;
   }
 
   /* Medical content specific typography */
@@ -716,11 +733,96 @@
 
   /* Enhanced medical form layouts */
   .medical-form-grid {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-6 p-6;
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6;
   }
 
   .medical-form-section {
     @apply space-y-4 p-4 border border-border rounded-lg bg-card;
+  }
+
+  /* New Components */
+  /* Medical Modal */
+  .modal-medical {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm;
+  }
+
+  .modal-content {
+    @apply bg-card border border-border rounded-lg shadow-medical-lg p-6 max-w-lg w-full mx-4;
+    @apply transform transition-all duration-300;
+  }
+
+  /* Medical Tooltip */
+  .tooltip-medical {
+    @apply relative inline-block;
+  }
+
+  .tooltip-medical .tooltip-content {
+    @apply absolute z-10 hidden px-3 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-md shadow-medical;
+    @apply group-hover:block;
+  }
+
+  /* Medical Progress Bar */
+  .progress-medical {
+    @apply h-2 w-full rounded-full bg-muted/50 overflow-hidden;
+  }
+
+  .progress-bar {
+    @apply h-full transition-all duration-300;
+  }
+
+  .progress-primary {
+    @apply progress-bar bg-primary;
+  }
+
+  .progress-success {
+    @apply progress-bar bg-success;
+  }
+
+  .progress-warning {
+    @apply progress-bar bg-warning;
+  }
+
+  .progress-destructive {
+    @apply progress-bar bg-destructive;
+  }
+
+  /* Medical Alert */
+  .alert-medical {
+    @apply flex items-center gap-3 p-4 rounded-lg border bg-card shadow-medical;
+  }
+
+  .alert-success {
+    @apply alert-medical border-success/20 bg-success/10 text-success-700;
+  }
+
+  .alert-warning {
+    @apply alert-medical border-warning/20 bg-warning/10 text-warning-700;
+  }
+
+  .alert-destructive {
+    @apply alert-medical border-destructive/20 bg-destructive/10 text-destructive-700;
+  }
+
+  .alert-info {
+    @apply alert-medical border-info/20 bg-info/10 text-info-700;
+  }
+
+  /* Medical Dashboard Grid */
+  .dashboard-grid {
+    @apply grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4;
+  }
+
+  /* Medical Chart Utilities */
+  .chart-container {
+    @apply bg-card border border-border rounded-lg p-4 shadow-medical;
+  }
+
+  .chart-title {
+    @apply medical-subheading mb-4;
+  }
+
+  .chart-legend {
+    @apply flex flex-wrap gap-4 text-sm text-muted-foreground;
   }
 }
 
@@ -730,8 +832,41 @@
     font-weight: 700;
     letter-spacing: -0.02em;
   }
-  .font-body {
-    font-family: 'Inter', 'system-ui', 'sans-serif';
-    font-weight: 400;
+
+  /* Animation Utilities */
+  .animate-scale-in {
+    @apply transform transition-transform duration-200 ease-in-out;
+    transform: scale(0.95);
+  }
+
+  .animate-scale-in:hover {
+    transform: scale(1);
+  }
+
+  .animate-pulse-slow {
+    @apply animate-pulse;
+    animation-duration: 2s;
+  }
+
+  /* Accessibility Utilities */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+  }
+
+  .focus-visible {
+    @apply focus-medical;
+  }
+
+  /* Responsive Medical Grid Utilities */
+  .medical-grid-2 {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4;
+  }
+
+  .medical-grid-3 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4;
+  }
+
+  .medical-grid-4 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4;
   }
 }

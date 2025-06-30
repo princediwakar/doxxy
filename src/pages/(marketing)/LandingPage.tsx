@@ -15,7 +15,11 @@ import {
   ArrowRight,
   Globe,
   Lock,
-  BarChart3
+  BarChart3,
+  Eye,
+  Printer,
+  Activity,
+  Pill
 } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
@@ -138,6 +142,353 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* Real UI Showcase Section */}
+      <section className="py-20 px-4 bg-gradient-to-br from-background via-primary/5 to-background">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+              See Doxxy in Action
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+              Don't just read about features - see the actual interface that thousands of doctors use daily. Clean, intuitive, and designed for real clinical workflows.
+            </p>
+          </div>
+
+          {/* Consultation Interface Showcase */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <div className="relative">
+              <div className="bg-white rounded-lg shadow-xl border overflow-hidden">
+                <div className="p-6 border-b bg-gradient-to-r from-primary/10 to-accent/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center">
+                        <Stethoscope className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">John Doe</h3>
+                        <p className="text-sm text-muted-foreground">Male • Age 35</p>
+                      </div>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">In Progress</Badge>
+                  </div>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Chief Complaint
+                    </h4>
+                    <p className="text-sm text-blue-800">Persistent headache for 3 days with mild nausea</p>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <h4 className="font-medium text-purple-900 mb-2 flex items-center gap-2">
+                      <Activity className="h-4 w-4" />
+                      Assessment
+                    </h4>
+                    <p className="text-sm text-purple-800">Tension headache, likely stress-related</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
+                      <Pill className="h-4 w-4" />
+                      Prescription
+                    </h4>
+                    <p className="text-sm text-green-800">Acetaminophen 500mg - Take 1 tablet every 6 hours</p>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button size="sm" className="flex-1">
+                      <Eye className="h-4 w-4 mr-2" />
+                      Preview
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1">
+                      <Printer className="h-4 w-4 mr-2" />
+                      Print
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-foreground mb-4">Digital Consultation Interface</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Our consultation interface adapts to your specialty with smart templates for over 11 medical fields. From chief complaints to prescriptions, every detail is captured efficiently with auto-save and print-ready formatting.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Specialty-specific consultation templates</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Auto-save every 5 seconds - never lose your work</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">One-click prescription printing with clinic letterhead</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Medicine database with dosage recommendations</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Patient Records Showcase */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <div className="order-2 lg:order-1">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Complete Patient Medical Records</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Every patient gets a comprehensive digital file with their complete medical history, consultation notes, prescriptions, and timeline. Search through thousands of records in seconds.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Complete medical timeline with searchable history</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Prescription history with drug interaction alerts</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">One-click PDF export of complete medical records</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Family medical history tracking</span>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 lg:order-2 relative">
+              <div className="bg-white rounded-lg shadow-xl border overflow-hidden">
+                <div className="p-4 border-b">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Patient Records
+                    </h3>
+                    <Button size="sm">Export PDF</Button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+                  <div className="space-y-2">
+                    <div className="p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                      <p className="font-medium text-sm">Sarah Johnson</p>
+                      <p className="text-xs text-muted-foreground">Last visit: Dec 15</p>
+                    </div>
+                    <div className="p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                      <p className="font-medium text-sm">Mike Chen</p>
+                      <p className="text-xs text-muted-foreground">Last visit: Dec 12</p>
+                    </div>
+                    <div className="p-2 border rounded hover:bg-gray-50 cursor-pointer bg-primary/5 border-primary/30">
+                      <p className="font-medium text-sm">John Doe</p>
+                      <p className="text-xs text-muted-foreground">Last visit: Today</p>
+                    </div>
+                  </div>
+                  <div className="md:col-span-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">John Doe</h4>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">Edit</Button>
+                        <Button size="sm" variant="outline">Schedule</Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <p><span className="text-muted-foreground">Age:</span> 35 • Male</p>
+                      <p><span className="text-muted-foreground">Phone:</span> +91 98765 43210</p>
+                      <p><span className="text-muted-foreground">Last Visit:</span> Today</p>
+                    </div>
+                    <div className="border-t pt-3">
+                      <h5 className="font-medium mb-2">Recent Consultations</h5>
+                      <div className="space-y-2">
+                        <div className="p-2 bg-gray-50 rounded text-xs">
+                          <p className="font-medium">Dec 18, 2024 - Headache consultation</p>
+                          <p className="text-muted-foreground">Prescribed: Acetaminophen 500mg</p>
+                        </div>
+                        <div className="p-2 bg-gray-50 rounded text-xs">
+                          <p className="font-medium">Nov 15, 2024 - Routine checkup</p>
+                          <p className="text-muted-foreground">Normal examination</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Dashboard Showcase */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <div className="relative">
+              <div className="bg-white rounded-lg shadow-xl border overflow-hidden">
+                <div className="p-6 border-b">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5 text-primary" />
+                    Practice Dashboard
+                  </h3>
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-900">Total Patients</span>
+                      </div>
+                      <p className="text-2xl font-bold text-blue-600">1,247</p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Calendar className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-medium text-green-900">Appointments</span>
+                      </div>
+                      <p className="text-2xl font-bold text-green-600">3,892</p>
+                    </div>
+                    <div className="p-4 bg-yellow-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-yellow-600" />
+                        <span className="text-sm font-medium text-yellow-900">Pending</span>
+                      </div>
+                      <p className="text-2xl font-bold text-yellow-600">8</p>
+                    </div>
+                    <div className="p-4 bg-purple-50 rounded-lg">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Stethoscope className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-medium text-purple-900">Completed</span>
+                      </div>
+                      <p className="text-2xl font-bold text-purple-600">3,847</p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <h4 className="font-medium">Today's Appointments</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div>
+                          <p className="font-medium text-sm">Sarah Johnson</p>
+                          <p className="text-xs text-muted-foreground">10:30 AM - Routine Checkup</p>
+                        </div>
+                        <Badge variant="outline">Scheduled</Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div>
+                          <p className="font-medium text-sm">Mike Chen</p>
+                          <p className="text-xs text-muted-foreground">2:15 PM - Follow-up</p>
+                        </div>
+                        <Badge className="bg-green-100 text-green-800">Completed</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <h3 className="text-2xl font-bold text-foreground mb-4">Smart Practice Dashboard</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Get a complete overview of your practice with real-time metrics, upcoming appointments, and performance insights. Track patient flow, revenue trends, and appointment completion rates at a glance.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Real-time practice metrics and KPIs</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Visual charts for revenue and appointment trends</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Quick appointment scheduling from dashboard</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Role-based views for doctors, staff, and admins</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Showcase */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="order-2 lg:order-1">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Professional Billing & Invoicing</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed">
+                Generate professional invoices with clinic letterhead, track payments, and manage billing across multiple services. Complete integration with appointments and consultations for seamless workflow.
+              </p>
+              <div className="space-y-3">
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Auto-generate invoices from appointments</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Multiple service billing with itemized costs</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Payment tracking and outstanding balance alerts</span>
+                </div>
+                <div className="flex items-center">
+                  <CheckCircle className="h-5 w-5 text-success mr-3" />
+                  <span className="text-foreground">Professional PDF invoices with clinic branding</span>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 lg:order-2 relative">
+              <div className="bg-white rounded-lg shadow-xl border overflow-hidden">
+                <div className="p-6 border-b bg-gradient-to-r from-green-50 to-blue-50">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold">INVOICE</h3>
+                    <Badge>Paid</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">Invoice #: INV-2024-001247</p>
+                  <p className="text-sm text-muted-foreground">Date: December 18, 2024</p>
+                </div>
+                <div className="p-6 space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Billed To:</h4>
+                      <p className="text-sm">John Doe</p>
+                      <p className="text-sm text-muted-foreground">+91 98765 43210</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">From:</h4>
+                      <p className="text-sm">Metro Health Clinic</p>
+                      <p className="text-sm text-muted-foreground">Dr. Sarah Johnson</p>
+                    </div>
+                  </div>
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium mb-3">Services</h4>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>General Consultation</span>
+                        <span>₹500.00</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Prescription & Follow-up</span>
+                        <span>₹200.00</span>
+                      </div>
+                      <div className="border-t pt-2 flex justify-between font-semibold">
+                        <span>Total</span>
+                        <span>₹700.00</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button size="sm" className="flex-1">
+                      <Printer className="h-4 w-4 mr-2" />
+                      Print
+                    </Button>
+                    <Button size="sm" variant="outline" className="flex-1">
+                      <Eye className="h-4 w-4 mr-2" />
+                      View PDF
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Simple Healthcare Management Section */}
               <section className="py-20 px-4 bg-background">
         <div className="max-w-7xl mx-auto">
@@ -209,35 +560,18 @@ const LandingPage = () => {
             </div>
             <div className="order-1 lg:order-2 relative">
               <img 
-                src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&h=400&fit=crop" 
-                alt="Simple, transparent pricing calculator showing cost savings" 
+                src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=600&h=400&fit=crop" 
+                alt="Transparent pricing dashboard showing cost per appointment" 
                 className="rounded-lg shadow-xl w-full"
               />
-              <div className="absolute -top-4 -left-4 bg-background p-4 rounded-lg shadow-lg">
+              <div className="absolute -bottom-4 -left-4 bg-background p-4 rounded-lg shadow-lg">
                 <div className="flex items-center space-x-2">
-                          <div className="w-3 h-3 bg-primary rounded-full"></div>
-        <span className="text-sm font-medium text-foreground">Transparent Costs</span>
+                  <div className="text-2xl font-bold text-primary">₹10</div>
+                  <div>
+                    <div className="text-sm font-medium text-foreground">Per Appointment</div>
+                    <div className="text-xs text-muted-foreground">No hidden fees</div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="mt-16 bg-gradient-to-r from-primary/5 to-success/5 rounded-2xl p-8">
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div>
-                        <div className="text-3xl font-bold text-primary mb-2">₹10</div>
-        <div className="text-muted-foreground">Per appointment</div>
-        <div className="text-sm text-muted-foreground/70 mt-1">Only when you actually see patients</div>
-              </div>
-              <div>
-                        <div className="text-3xl font-bold text-success mb-2">100</div>
-        <div className="text-muted-foreground">Free appointments</div>
-        <div className="text-sm text-muted-foreground/70 mt-1">Complete access to start your practice</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold  mb-2">∞</div>
-                <div className="text-muted-foreground">Unlimited doctors</div>
-                                  <div className="text-sm text-muted-foreground mt-1">No per-user fees as you grow</div>
               </div>
             </div>
           </div>

@@ -68,7 +68,7 @@ const doctorProfileSchema = z.object({
       });
     }
   }),
-  consultationFee: z.coerce.number().min(0).default(500).optional(),
+  consultationFee: z.coerce.number().min(0).optional(),
 });
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
@@ -90,7 +90,7 @@ const CreateClinicPage = () => {
     bio: '',
     phone: '',
     selectedDepartment: '',
-    consultationFee: 500,
+    consultationFee: 0,
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -199,25 +199,45 @@ const CreateClinicPage = () => {
       if (updateError) throw updateError;
 
       // Insert selected departments into clinic_departments first
+      // IMPORTANT: clinic_members.department_id references clinic_departments.id (NOT department_types.id)
+      let userDepartmentId: string | null = null;
       if (departments.length > 0) {
+        console.log('Creating departments:', departments);
         const departmentRows = departments.map((departmentTypeId) => ({
           clinic_id: createdClinicId,
           department_type_id: departmentTypeId,
         }));
-        const { error: deptError } = await supabase
+        const { data: insertedDepartments, error: deptError } = await supabase
           .from('clinic_departments')
-          .insert(departmentRows);
+          .insert(departmentRows)
+          .select('id, department_type_id');
         if (deptError) throw deptError;
+
+        // Find the clinic_departments.id for the user's selected department
+        // We need clinic_departments.id (not department_types.id) for the foreign key
+        if (data.isDoctor === 'yes' && data.selectedDepartment && insertedDepartments) {
+          console.log('Finding user department:', {
+            selectedDepartment: data.selectedDepartment,
+            insertedDepartments
+          });
+          const userDepartment = insertedDepartments.find(
+            dept => dept.department_type_id === data.selectedDepartment
+          );
+          userDepartmentId = userDepartment?.id || null;
+          console.log('Found user department:', userDepartmentId);
+        }
       }
 
       // Only create doctor profile if the superadmin is a practicing doctor
-      if (data.isDoctor === 'yes' && data.selectedDepartment) {
+      if (data.isDoctor === 'yes') {
+        console.log('Creating doctor profile with department:', userDepartmentId);
         // First update the clinic_members record with the selected department
+        // BUT keep the role as superadmin since they are the clinic creator
         const { error: memberUpdateError } = await supabase
           .from('clinic_members')
           .update({ 
-            department_id: data.selectedDepartment,
-            role: 'doctor'
+            department_id: userDepartmentId,
+            role: 'superadmin' // Keep as superadmin
           })
           .eq('user_id', user.id)
           .eq('clinic_id', createdClinicId);
@@ -230,8 +250,9 @@ const CreateClinicPage = () => {
           clinicId: createdClinicId,
           name: user.user_metadata?.name || user.email || '',
           email: user.email,
-          consultationFee: data.consultationFee || 500,
-          bio: data.bio || 'Medical professional'
+          consultationFee: data.consultationFee || 0,
+          bio: data.bio || 'Medical professional',
+          departmentId: userDepartmentId
         });
         if (doctorError) throw doctorError;
       } else {
@@ -293,8 +314,8 @@ const CreateClinicPage = () => {
   );
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <div className="w-full max-w-md rounded-lg shadow-md bg-background p-6">
+    <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+      <div className="w-full max-w-md medical-card p-6 border-4 border-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-2 text-center text-foreground">Create New Clinic</h1>
         <StepIndicator />
         

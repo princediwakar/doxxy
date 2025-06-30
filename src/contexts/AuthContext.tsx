@@ -6,8 +6,16 @@ import { Database } from "@/integrations/supabase/types";
 const supabase = getSupabase();
 
 type ClinicMember = Database['public']['Tables']['clinic_members']['Row'];
-type ClinicMemberWithClinic = ClinicMember & {
+type ClinicMemberWithClinic = {
+  id: string;
+  user_id: string;
+  clinic_id: string;
+  role: Database['public']['Enums']['user_role'];
+  department_id: string | null;
+  created_at: string;
   clinics: Database['public']['Tables']['clinics']['Row'] | null;
+  clinic_name?: string;
+  joined_at?: string;
 };
 
 interface AuthContextProps {
@@ -168,7 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const selectedClinic = currentUserClinics.find(clinic => clinic.clinic_id === clinicId);
         if (selectedClinic) {
           setActiveClinicState(selectedClinic);
-          setProfileName(selectedClinic.clinics?.name || null);
+          setProfileName(user?.user_metadata?.name || user?.email || null);
           localStorage.setItem('activeClinicId', selectedClinic.clinic_id);
           console.log("AuthContext: Set active clinic:", selectedClinic.clinics?.name);
           
@@ -283,7 +291,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (initialActiveClinic) {
         setActiveClinicState(initialActiveClinic);
-        setProfileName(initialActiveClinic.clinics?.name || null);
+        setProfileName(userFromSession?.user_metadata?.name || userFromSession?.email || null);
         
         // Check doctor profile for superadmins
         if (userFromSession.id && initialActiveClinic.role === 'superadmin') {
@@ -492,9 +500,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, [
     session, user, initialLoading, clinicLoading, signOut,
-    userClinics, activeClinic, setActiveClinicId, activeClinicRole,
+    userClinics, activeClinic, setActiveClinicId, activeClinicRole, fetchUserAndClinicData,
     profileName, needsProfileCompletion, checkProfileCompletion,
-    markProfileComplete, hasDoctorProfile, fetchUserAndClinicData
+    markProfileComplete, hasDoctorProfile
   ]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

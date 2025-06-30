@@ -6,7 +6,7 @@ import { Suspense } from "react";
 // Loading component for Suspense fallback
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[400px]">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
   </div>
 );
 
@@ -14,19 +14,21 @@ const Layout = () => {
   const { loading } = useAuth();
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-muted/50">
       <AppSidebar />
-      <main className="flex-1 p-4 md:p-8 max-w-7xl mx-auto bg-white min-h-screen overflow-x-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-            <div className="rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <Suspense fallback={<PageLoader />}>
-            <Outlet />
-          </Suspense>
-        )}
-      </main>
+      <div className="flex-1 mt-4 mr-4">
+        <main className="bg-white rounded-xl shadow-sm p-2 border border-border/40 md:p-6 max-w-7xl mx-auto min-h-[calc(100vh-3rem)] md:min-h-[calc(100vh-4rem)] overflow-x-hidden">
+          {loading ? (
+            <div className="flex items-center justify-center min-h-[calc(100vh-8rem)]">
+              <div className="animate-spin rounded-full h-12 w-12 border-2 border-primary border-t-transparent"></div>
+            </div>
+          ) : (
+            <Suspense fallback={<PageLoader />}>
+              <Outlet />
+            </Suspense>
+          )}
+        </main>
+      </div>
     </div>
   );
 };

@@ -11,9 +11,10 @@ export async function createDoctorProfile({
   name,
   email,
   primarySpecialization = 'General Medicine',
-  consultationFee = 500,
+  consultationFee,
   availability = 'Mon-Fri 9:00 AM - 5:00 PM',
-  bio
+  bio,
+  departmentId
 }: {
   userId: string;
   clinicId: string;
@@ -23,12 +24,13 @@ export async function createDoctorProfile({
   consultationFee?: number;
   availability?: string;
   bio?: string;
+  departmentId?: string | null;
 }) {
   try {
     // Check if the user already has a clinic membership and their current role
     const { data: existingMembership, error: membershipCheckError } = await supabase
       .from('clinic_members')
-      .select('role')
+      .select('role, department_id')
       .eq('user_id', userId)
       .eq('clinic_id', clinicId)
       .single();
@@ -44,7 +46,8 @@ export async function createDoctorProfile({
         .upsert({
           user_id: userId,
           clinic_id: clinicId,
-          role: 'doctor'
+          role: 'doctor',
+          department_id: departmentId
         }, {
           onConflict: 'user_id,clinic_id'
         });
@@ -52,8 +55,22 @@ export async function createDoctorProfile({
       if (membershipError) {
         console.warn('Could not create clinic membership:', membershipError.message);
       }
+    } else if (departmentId) {
+      // If user is a superadmin, just update their department_id
+      // BUT keep their role as superadmin
+      const { error: updateError } = await supabase
+        .from('clinic_members')
+        .update({ 
+          department_id: departmentId,
+          role: 'superadmin' // Ensure role stays as superadmin
+        })
+        .eq('user_id', userId)
+        .eq('clinic_id', clinicId);
+
+      if (updateError) {
+        console.warn('Could not update department_id:', updateError.message);
+      }
     }
-    // If user is already a superadmin, we skip updating their role to preserve admin privileges
 
     // Wait a bit for the membership to be processed
     await new Promise(resolve => setTimeout(resolve, 1000));

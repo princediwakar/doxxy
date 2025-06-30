@@ -1,7 +1,7 @@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, Building2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const ClinicSwitcher = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
@@ -22,6 +22,7 @@ const ClinicSwitcher = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
           )}
           aria-label="Select clinic"
         >
+          <Building2 size={16} className="mr-2" />
           <span className={cn(
              "flex-grow overflow-hidden text-ellipsis whitespace-nowrap transition-opacity duration-200",
              sidebarOpen ? "opacity-100" : "opacity-0 md:opacity-0 hidden md:block"
@@ -46,7 +47,8 @@ const ClinicSwitcher = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
                )}
                onClick={() => setActiveClinicId(clinic.clinic_id)}
             >
-               <span className="flex-grow text-left truncate">{clinic.clinics?.name}</span>
+               <span className="flex-grow text-left truncate">
+                {clinic.clinics?.name}</span>
                {activeClinic?.clinic_id === clinic.clinic_id && (
                   <Check size={16} className="text-primary" />
                )}

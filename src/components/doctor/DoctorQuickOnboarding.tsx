@@ -37,7 +37,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     selectedDepartment: '',
     primarySpecialization: '',
     phone: '',
-    consultation_fee: '500',
+    consultation_fee: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -210,7 +210,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
               type="number"
               value={formData.consultation_fee}
               onChange={(e) => setFormData(prev => ({ ...prev, consultation_fee: e.target.value }))}
-              placeholder="500"
+              placeholder="350"
               min="0"
             />
             <p className="text-xs text-muted-foreground">Base consultation fee (you can adjust this later)</p>

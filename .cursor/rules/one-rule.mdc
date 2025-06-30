@@ -1,7 +1,7 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 # Clinic Management System - Cursor Agent Rules
 
@@ -73,14 +73,51 @@ const schema = z.object({
 4. `npm run build`
 5. Log in `development-log.md`
 
-### After Every Code Change
-1. Auto-fix lint errors: `npm run lint:fix`
-2. Verify build: `npm run build`
-3. Check for `console.log` statements
+### **🚨 MANDATORY: After Every Code Change**
+
+#### **1. Code Quality Pipeline**
+```bash
+npm run lint           # Check for lint errors (don't break on pre-existing)
+npm run build          # Verify build succeeds (MUST pass)
+```
+**Note**: Focus on ensuring your changes don't introduce NEW lint errors. Pre-existing errors can be addressed separately.
+
+#### **2. Browser Testing with Playwright MCP (REQUIRED)**
+- **Navigate**: Start dev server and navigate to affected pages
+- **Console Check**: Use `mcp_playwright_browser_console_messages` to check for errors
+- **Screenshot**: Take screenshots of key UI states
+- **Flow Testing**: Test the complete user flow end-to-end
+- **Error Validation**: Verify error handling and user feedback
+
+#### **3. Comprehensive Flow Testing**
+**For UI Changes:**
+- ✅ Login flow works
+- ✅ Navigation functions properly  
+- ✅ Forms validate and submit correctly
+- ✅ Loading states display
+- ✅ Error messages are user-friendly
+- ✅ Mobile responsiveness
+
+**For Database Changes:**
+- ✅ Data persists correctly
+- ✅ Foreign key constraints respected
+- ✅ RLS policies prevent cross-clinic access
+- ✅ Edge cases handled (empty states, validation)
+
+#### **4. Test Case Management**
+- **Update existing test files** in `tests/` directory if functionality changed
+- **Create new test cases** for new features
+- **Run test to verify** the flow works as expected
+- **Document test scenarios** in code comments
 
 ### Quality Gates (Must Pass)
-- [ ] Build succeeds
-- [ ] No lint errors
+- [ ] **Schema/Types checked BEFORE code changes** (for DB-related changes)
+- [ ] Foreign key relationships understood and respected
+- [ ] **`npm run lint` checked (no NEW errors)**
+- [ ] **`npm run build` succeeds**
+- [ ] **Browser console has no errors**
+- [ ] **Complete user flow tested with Playwright**
+- [ ] **Test cases updated/created**
 - [ ] RLS policies prevent cross-clinic access
 - [ ] Types updated if schema changed
 
@@ -130,6 +167,29 @@ supabase/
 - useCallback for event handlers
 - Index all `clinic_id` columns
 
+### **🚨 CRITICAL: Schema & Types First (MANDATORY)**
+**BEFORE making ANY database-related code changes:**
+
+1. **Read Types**: `read_file src/integrations/supabase/types.ts` (focus on relevant tables)
+2. **Check Relationships**: Identify foreign key constraints from the `Relationships` array
+3. **Verify Data Flow**: Ensure you understand table relationships (e.g., `clinic_members.department_id` → `clinic_departments.id`, NOT `department_types.id`)
+4. **Plan Correctly**: Map out the exact sequence of inserts/updates needed
+
+**Example Foreign Key Analysis:**
+```typescript
+// ❌ WRONG: Using department_type_id directly
+department_id: selectedDepartmentTypeId
+
+// ✅ CORRECT: Using clinic_departments.id after insert
+const { data: insertedDepts } = await supabase
+  .from('clinic_departments')
+  .insert({...})
+  .select('id, department_type_id');
+const deptId = insertedDepts.find(d => d.department_type_id === selectedTypeId)?.id;
+```
+
+**If you skip this step and cause foreign key errors → immediately escalate for rule improvement.**
+
 ---
 
 ## 🛠️ Cursor Workflow
@@ -137,19 +197,30 @@ supabase/
 ### Terminal Management (CRITICAL)
 **Always use this pattern for terminal commands:**
 
-1. **Check for existing terminal**: Use `list_terminals` first
-2. **Reuse if appropriate**: Use existing terminal for related commands
-3. **Close and restart when needed**: Close existing terminal if switching contexts or if commands conflict
-4. **Single terminal per task group**: Keep related commands (build, test, lint) in same terminal
+1. **Check for existing processes**: Check for running dev servers, build processes
+2. **Clean up before starting**: Kill existing instances to prevent conflicts
+3. **Use integrated terminal**: Dev servers should run in bottom terminal panel (user's workspace)
+4. **Background for long-running**: Use `is_background: true` for dev servers, false for quick commands
 
 ```bash
-# Example workflow:
-1. list_terminals                    # Check current terminals
-2. close_terminal [id]              # If switching contexts
-3. run_terminal_cmd "npm run build" # Execute in clean terminal
+# Dev Server Management Pattern:
+1. pkill -f "vite"                  # Kill existing dev servers
+2. npm run dev (is_background: true) # Start in background/integrated terminal
+3. sleep 3 && curl localhost:8080   # Verify server started
 ```
 
+### **🚨 CRITICAL: Dev Server Management**
+**Before starting ANY dev server:**
+- ✅ Kill existing instances: `pkill -f "vite"` or `pkill -f "node.*dev"`
+- ✅ **USER MUST START SERVER**: AI cannot control terminal placement - inform user to start `npm run dev` in their preferred terminal
+- ✅ Verify startup with curl/health check after user starts server
+- ✅ Never leave multiple dev servers running
+
+**IMPORTANT**: `is_background: true` only controls command completion waiting, NOT terminal placement. Only the user can choose which terminal to use.
+
 ### Context Gathering (Always Do First)
+- **MANDATORY**: `read_file src/integrations/supabase/types.ts` (for DB changes)
+- **MANDATORY**: Check foreign key relationships in types (for DB changes)
 - `read_file` current state
 - `codebase_search` for related patterns
 - `grep_search` for exact matches
@@ -161,27 +232,94 @@ supabase/
 - Use terminal management pattern for all shell operations
 - Auto-retry failed builds (max 3 attempts)
 
+### **🧪 Testing Workflow (MANDATORY)**
+
+#### **Immediate Testing After Code Changes**
+```bash
+# 1. Quality Gates
+npm run lint
+npm run build
+
+# 2. Clean up and prepare for dev server
+pkill -f "vite"                    # Kill existing instances
+# Note: Ask user to start `npm run dev` in their preferred terminal
+# AI cannot control terminal placement - user chooses where to run server
+
+# 3. Browser testing with Playwright MCP
+mcp_playwright_browser_navigate http://localhost:8080
+mcp_playwright_browser_snapshot
+mcp_playwright_browser_console_messages
+
+# 4. Cleanup when done (optional - user can keep server running)
+# pkill -f "vite"                  # Only if specifically requested
+```
+
+#### **Dev Server Best Practices**
+- ✅ **Always kill existing** before user starts new instance
+- ✅ **Let user choose terminal** - AI cannot control terminal placement
+- ✅ **Verify startup** with curl/health check after user starts server
+- ✅ **Inform user of cleanup** - provide kill commands but let them manage terminals
+- ✅ **Document port clearly** so user knows where to access app
+
+**KEY INSIGHT**: AI tools run in whatever terminal context they're called from. Only the user can decide which terminal (integrated vs file editing space) to use for long-running processes.
+
+#### **Complete Flow Testing Pattern**
+1. **Navigate** to affected page
+2. **Test** the specific feature/fix
+3. **Verify** console has no errors
+4. **Screenshot** key states (before/after)
+5. **Test edge cases** (validation, empty states)
+6. **Document** any issues found
+
+#### **Test Case Documentation**
+- Create/update `.spec.ts` files in `tests/` directory
+- Include test scenarios in development log
+- Add comments explaining complex test cases
+- Verify tests pass before finalizing changes
+
 ---
 
 ## 📋 Condensed Checklists
 
 ### Code Changes ✓
-Build passes, no lint errors, no console.log
+- [ ] Lint: `npm run lint` checked
+- [ ] Build: `npm run build` succeeds  
+- [ ] Browser: Console has no errors
+- [ ] Flow: Complete user journey tested
+- [ ] Tests: Cases updated/created
 
 ### Database Changes ✓
-Migration applied, types updated, RLS tested, hooks updated
+- [ ] Schema: Types checked first
+- [ ] Migration: Applied successfully
+- [ ] Types: Updated in supabase/types.ts
+- [ ] RLS: Tested with Playwright
+- [ ] Hooks: Updated for new schema
+- [ ] Flow: Data persistence verified
 
 ### UI Changes ✓
-Responsive, accessible, role-based rendering, loading states
+- [ ] Responsive: Mobile + desktop tested
+- [ ] Accessible: Role-based rendering
+- [ ] Loading: States implemented
+- [ ] Errors: User-friendly messages
+- [ ] Navigation: Links work correctly
+- [ ] Screenshots: Key states captured
 
 ---
 
 ## 🚨 Error Handling
 
 ### Common Issues & Solutions
+- **Foreign key constraint errors** → Check types.ts relationships → Use correct referenced IDs
 - **Build fails** → `npm run lint:fix` → retry
 - **Type errors** → regenerate types → update imports
 - **RLS blocks** → check user clinic context
+
+### 🚨 MOST COMMON MISTAKE: Foreign Key Violations
+```bash
+# Error: "Key is not present in table X"
+# Cause: Using wrong ID reference (e.g., department_type_id instead of clinic_departments.id)
+# Fix: Always read types.ts first, understand Relationships array
+```
 
 ### Escalation Format
 ```
@@ -233,10 +371,84 @@ Responsive, accessible, role-based rendering, loading states
 1. **Understand scope** - read related files, check patterns
 2. **Implement completely** - all files (types, hooks, UI, migrations)
 3. **Validate thoroughly** - run quality gates with proper terminal management
-4. **Document clearly** - update logs and comments
-5. **Suggest improvements** - performance, security, maintainability
+4. **Test comprehensively** - browser testing, console monitoring, flow verification
+5. **Document clearly** - update logs and comments
+6. **Create/update tests** - ensure regression prevention
+7. **Suggest improvements** - performance, security, maintainability
 
 **Remember**: Healthcare data requires extra care. When in doubt about data safety → escalate.
+
+---
+
+## ✅ **MANDATORY COMPLETION CHECKLIST**
+
+After EVERY code change, you MUST complete ALL items:
+
+### **Code Quality**
+- [ ] Schema/types checked first (for DB changes)
+- [ ] `npm run lint` - no NEW errors introduced
+- [ ] `npm run build` - successful build
+- [ ] Code properly documented with comments
+
+### **Browser Testing**  
+- [ ] Existing dev servers killed (`pkill -f "vite"`)
+- [ ] User informed to start `npm run dev` in their preferred terminal
+- [ ] Server startup verified (`curl localhost:8080`)
+- [ ] Browser navigation tested
+- [ ] Console monitored for errors
+- [ ] Screenshots taken of key states
+- [ ] User flow tested end-to-end
+
+### **Test Management**
+- [ ] Existing tests updated if needed
+- [ ] New test cases created for new features
+- [ ] Tests run and verified to pass
+- [ ] Test scenarios documented
+
+### **Documentation**
+- [ ] `development-log.md` updated
+- [ ] Testing results documented  
+- [ ] Key learnings captured
+- [ ] Prevention strategies noted
+
+**If ANY item is incomplete → continue working until ALL are done.**
+
+---
+
+## 🚀 **COMPLETE WORKFLOW EXAMPLE**
+
+Here's the full workflow when making code changes:
+
+```bash
+# 1. Pre-change analysis (for DB changes)
+read_file src/integrations/supabase/types.ts  # Check schema/relationships
+
+# 2. Make code changes
+edit_file src/pages/SomeComponent.tsx
+
+# 3. Quality gates
+npm run lint                    # Check for new errors
+npm run build                   # Must pass
+
+# 4. Dev server management  
+pkill -f "vite"                 # Kill existing
+# User starts: npm run dev       # In their preferred terminal
+sleep 3 && curl localhost:8080 # Verify after user starts
+
+# 5. Browser testing
+mcp_playwright_browser_navigate http://localhost:8080
+mcp_playwright_browser_console_messages
+mcp_playwright_browser_snapshot
+
+# 6. Test management
+edit_file tests/new-feature.spec.ts  # Create/update tests
+npm run test:e2e -- tests/new-feature.spec.ts
+
+# 7. Documentation
+edit_file development-log.md    # Document changes
+```
+
+**Result**: Bulletproof development process with zero regressions! 🎯
 
 ---
 

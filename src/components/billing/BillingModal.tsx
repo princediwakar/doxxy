@@ -436,7 +436,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
             {/* Service Items Table */}
             <div className="mb-8">
               <table className="min-w-full border rounded-lg overflow-hidden">
-                <thead className="bg-gray-100">
+                <thead className="bg-background">
                   <tr>
                     <th className="px-4 py-2 text-left w-2/5">Description</th>
                     <th className="px-2 py-2 text-right w-16">Qty</th>
@@ -675,7 +675,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                     </div>
                   </div>
                   <table className="min-w-full border rounded-lg overflow-hidden">
-                    <thead className="bg-gray-100">
+                    <thead className="bg-background">
                       <tr>
                         <th className="px-4 py-2 text-left w-2/5">Description</th>
                         <th className="px-2 py-2 text-right w-16">Qty</th>

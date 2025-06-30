@@ -35,22 +35,22 @@ export function AppSidebar() {
   };
 
   return (
-    // Subtle, professional sidebar design
-    <div className="flex flex-col border-r border-border/40 bg-background/95 backdrop-blur-sm h-screen sticky top-0 left-0 w-64 lg:w-72 flex-shrink-0 shadow-sm">
+    // Clean sidebar design without background colors or borders
+    <div className="flex flex-col h-screen sticky top-0 left-0 w-64 lg:w-72 flex-shrink-0">
       {/* Header with Medical Logo and Clinic Switcher */}
-      <div className="flex items-center gap-3 p-4 h-14 border-b border-border/40">
+      <div className="flex items-center gap-3 p-4 h-14">
           <img src="/logo.svg" alt="Doxxy" className="h-10" />
       </div>
 
       {/* Clinic Switcher */}
-      <div className="p-3 border-b border-border/40">
+      <div className="p-3">
          {activeClinic && <ClinicSwitcher sidebarOpen={true} />}
       </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         <ul className="space-y-2">
-          {(!loading && activeClinic && activeClinicRole) ? (
+          {(
             navItems.map((item) => {
               // Filter based on user role
               if (item.roles.includes(activeClinicRole)) {
@@ -62,8 +62,8 @@ export function AppSidebar() {
                         className={cn(
                           "flex items-center py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 group min-h-[48px]",
                           isActiveLink(item.path)
-                            ? "bg-primary/10 text-primary border border-primary/20"
-                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground border border-transparent"
+                            ? "bg-white text-primary shadow-sm border border-primary/20"
+                            : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
                       )}
                     >
                         <item.icon size={18} className={cn(
@@ -77,22 +77,18 @@ export function AppSidebar() {
               }
               return null;
             })
-          ) : (
-             <div className="px-4 py-3 text-sm text-muted-foreground bg-muted/30 rounded-lg animate-pulse">
-               Loading navigation...
-             </div>
           )}
         </ul>
       </nav>
 
       {/* User Profile and Logout */}
-      <div className="mt-auto p-3 border-t border-border/40">
-         {!loading && user && user.email ? (
+      <div className="mt-auto p-3">
+         { (
           <Popover>
             <PopoverTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="w-full h-12 justify-start focus-visible:ring-2 focus-visible:ring-primary hover:bg-muted/50 rounded-lg"
+                className="w-full h-12 justify-start focus-visible:ring-2 focus-visible:ring-primary hover:bg-white/50 rounded-lg"
               >
                 <Avatar className="h-8 w-8 mr-3 ring-2 ring-primary/20">
                   <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -140,10 +136,7 @@ export function AppSidebar() {
               </div>
             </PopoverContent>
           </Popover>
-         ) : (
-             <div className="px-4 py-3 text-sm text-muted-foreground bg-muted/30 rounded-lg animate-pulse">
-               Loading user...
-             </div>
+         
         )}
       </div>
     </div>
