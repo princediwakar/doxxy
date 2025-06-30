@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Calendar,
-  Users,
-  CreditCard,
-  Shield,
-  Clock,
+import { 
+  Calendar, 
+  Users, 
+  CreditCard, 
+  Shield, 
+  Clock, 
   FileText,
   Stethoscope,
   CheckCircle,
@@ -131,88 +131,14 @@ const LandingPage = () => {
     }
   ];
 
-  const specialties = [
-    {
-      name: "Cardiology",
-      description: "Heart & vascular specialists",
-      image: "https://images.unsplash.com/photo-1618939304347-e91b1f33d2ab?w=300&h=250&fit=crop",
-      alt: "Cardiologist examining patient with stethoscope",
-      indicatorColor: "bg-destructive"
-    },
-    {
-      name: "Neurology",
-      description: "Brain & nervous system",
-      image: "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=300&h=250&fit=crop",
-      alt: "Neurologist examining brain scan",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "Ophthalmology",
-      description: "Comprehensive eye care",
-      image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=250&fit=crop",
-      alt: "Ophthalmologist performing eye examination",
-      indicatorColor: "bg-success"
-    },
-    {
-      name: "Pediatrics",
-      description: "Specialized child healthcare",
-      image: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=300&h=250&fit=crop",
-      alt: "Pediatrician examining child patient",
-      indicatorColor: "bg-accent"
-    },
-    {
-      name: "Dermatology",
-      description: "Skin & aesthetic care",
-      image: "https://images.unsplash.com/photo-1576671081837-49000212a370?w=300&h=250&fit=crop",
-      alt: "Dermatologist examining patient skin condition",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "Orthopedics",
-      description: "Bone & musculoskeletal",
-      image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=300&h=250&fit=crop",
-      alt: "Orthopedic surgeon examining x-ray",
-      indicatorColor: "bg-accent"
-    },
-    {
-      name: "Psychiatry",
-      description: "Mental health & wellness",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=250&fit=crop",
-      alt: "Psychiatrist in therapy session consultation",
-      indicatorColor: "bg-secondary"
-    },
-    {
-      name: "General Medicine",
-      description: "Primary healthcare",
-      image: "https://images.unsplash.com/photo-1594824204175-b70147e9cbc5?w=300&h=250&fit=crop",
-      alt: "General practitioner consulting with patient",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "ENT",
-      description: "Ear, nose & throat specialists",
-      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&h=250&fit=crop",
-      alt: "ENT specialist examining patient's throat",
-      indicatorColor: "bg-accent"
-    },
-    {
-      name: "Gynecology",
-      description: "Women's health & wellness",
-      image: "https://images.unsplash.com/photo-1691934338603-af553029aaa3??w=300&h=250&fit=crop",
-      alt: "Gynecologist consulting with female patient",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "Pulmonology",
-      description: "Respiratory & lung care",
-      image: "https://images.unsplash.com/photo-1584515933487-779824d29309?w=300&h=250&fit=crop",
-      alt: "Pulmonologist examining chest x-ray",
-      indicatorColor: "bg-secondary"
-    }
+  const benefits = [
+    "Pay Only For What You Use: Our per-appointment pricing means you only pay for actual appointments. No wasted resources during slow months.",
+    "Free For First 100 Appointments: Start with zero risk - our Practice Essentials plan gives you full access to essential features for your first 100 appointments, completely free. No hidden fees or surprise charges.",
+    "No Doctor-Based Pricing: Our pricing is based solely on appointments, allowing unlimited doctors and staff on all plans.",
+    "No Annual Commitments: We don't believe in locking you into long-term contracts. Scale up or down as needed, with the flexibility to adjust to your practice's changing needs.",
+    "Transparent Pricing: Our pricing is simple and transparent - ₹10 per appointment with all features included. No surprise fees, hidden costs, or expensive add-ons required for essential functionality.",
+    "Grow At Your Own Pace: Our pricing model grows smoothly with your practice. No sudden pricing tier jumps when you hit arbitrary user or appointment thresholds."
   ];
-
-  const firstRow = specialties.slice(0, 8);
-  const secondRow = specialties.slice(8);
 
   const testimonials = [
     {
@@ -222,7 +148,7 @@ const LandingPage = () => {
       rating: 5
     },
     {
-      name: "Dr. Michael Chen",
+      name: "Dr. Michael Chen", 
       role: "Ophthalmologist, Vision Care Center",
       content: "The multi-clinic support is incredible. I can manage all three of my locations from a single dashboard.",
       rating: 5
@@ -242,33 +168,37 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen mx-auto">
+    <div className="min-h-screen bg-background">
       {/* Enhanced Hero Section */}
-      <section className="relative pt-16 pb-20 px-4">
-
-
+      <section className="relative pt-16 pb-20 px-4 bg-gradient-to-br from-primary/10 via-background to-blue-50/30 overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full">
+          <div className="absolute top-20 right-20 w-72 h-72 bg-primary/5 rounded-full blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+        
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center">
             <div className="flex justify-center mb-6">
-              <Badge variant="outline" className="px-6 py-3 text-primary border-primary/30 ">
+              <Badge variant="outline" className="px-6 py-3 text-primary border-primary/30 bg-background/80 backdrop-blur-sm">
                 <Stethoscope className="h-4 w-4 mr-2" />
                 Trusted by 2,500+ Healthcare Providers
               </Badge>
             </div>
-
+            
             <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-8 leading-tight">
               Clinic work,
               <span className="text-primary block md:inline"> made simple.</span>
             </h1>
-
+            
             <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed">
-              Stop fighting with complicated software. Doxxy's intelligent platform handles
-              <span className="text-primary font-semibold"> scheduling, records, and billing</span> so you can focus on
+              Stop fighting with complicated software. Doxxy's intelligent platform handles 
+              <span className="text-primary font-semibold"> scheduling, records, and billing</span> so you can focus on 
               <span className="text-foreground font-semibold"> patient care.</span>
             </p>
-
-
-
+            
+            
+            
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Link to="/auth">
                 <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-xl px-10 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
@@ -276,9 +206,9 @@ const LandingPage = () => {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-
+              
             </div>
-
+            
             <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-primary" />
@@ -290,45 +220,45 @@ const LandingPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="font-medium">Simple & Secure</span>
+                <span className="font-medium">HIPAA compliant</span>
               </div>
             </div>
           </div>
         </div>
 
-
+        
       </section>
-      {/* Success Metrics Banner */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 max-w-4xl mx-auto">
-        {successMetrics.map((metric, index) => (
-          <div key={index} className="text-center p-4 backdrop-blur-sm rounded-xl border border-border/50">
-            <div className="flex justify-center mb-2">
-              <metric.icon className="h-6 w-6 text-primary" />
+{/* Success Metrics Banner */}
+<div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 max-w-4xl mx-auto">
+              {successMetrics.map((metric, index) => (
+                <div key={index} className="text-center p-4 bg-background/60 backdrop-blur-sm rounded-xl border border-border/50">
+                  <div className="flex justify-center mb-2">
+                    <metric.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="text-2xl font-bold text-foreground">{metric.value}</div>
+                  <div className="text-sm font-medium text-primary">{metric.label}</div>
+                  <div className="text-xs text-muted-foreground">{metric.description}</div>
+                </div>
+              ))}
             </div>
-            <div className="text-2xl font-bold text-foreground">{metric.value}</div>
-            <div className="text-sm font-medium text-primary">{metric.label}</div>
-            <div className="text-xs text-muted-foreground">{metric.description}</div>
-          </div>
-        ))}
-      </div>
       {/* Pain Points Section */}
-      <section className="py-20 px-4 ">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-20 px-4 bg-gradient-to-b from-red-50/30 to-background">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Problems?
-              <span className="text-red-600 block md:inline"> No Problem.</span>
+              Are These Clinic Problems 
+              <span className="text-red-600 block md:inline"> Draining Your Energy?</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Every day, healthcare providers waste hours on preventable administrative chaos.
+              Every day, healthcare providers waste hours on preventable administrative chaos. 
               Sound familiar?
             </p>
           </div>
-
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {painPoints.map((pain, index) => (
               <div key={index} className="group">
-                <div className="p-8 brounded-2xl border border-red-200/50 hover:border-red-300 transition-all duration-300 hover:shadow-xl">
+                <div className="p-8 bg-background rounded-2xl border border-red-200/50 hover:border-red-300 transition-all duration-300 hover:shadow-xl">
                   <div className="flex items-start gap-4 mb-6">
                     <div className="flex-shrink-0 w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200 transition-colors">
                       <pain.icon className="h-7 w-7 text-red-600" />
@@ -338,13 +268,13 @@ const LandingPage = () => {
                       <p className="text-muted-foreground leading-relaxed">{pain.description}</p>
                     </div>
                   </div>
-
+                  
                   <div className="border-t pt-6">
                     <div className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-primary mb-1">Doxxy Solution:</h4>
-                        <p className="text-primary/80 text-sm leading-relaxed">{pain.solution}</p>
+                                    <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-semibold text-primary mb-1">Doxxy Solution:</h4>
+                <p className="text-primary/80 text-sm leading-relaxed">{pain.solution}</p>
                       </div>
                     </div>
                   </div>
@@ -352,7 +282,7 @@ const LandingPage = () => {
               </div>
             ))}
           </div>
-
+          
           <div className="text-center mt-12">
             <Link to="/auth">
               <Button size="lg" className="bg-primary text-white hover:bg-primary/90 px-8 py-4 text-lg rounded-xl shadow-lg">
@@ -365,8 +295,8 @@ const LandingPage = () => {
       </section>
 
       {/* Social Proof & Testimonials Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-20 px-4 bg-background">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
               Trusted by Healthcare Professionals
@@ -376,10 +306,10 @@ const LandingPage = () => {
               See what doctors and practice managers are saying about their transformation with Doxxy
             </p>
           </div>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-border/50 hover:shadow-xl transition-all duration-300 hover:scale-105">
+              <Card key={index} className="border-border/50 hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-background to-primary/5">
                 <CardContent className="p-8">
                   <div className="flex mb-6">
                     {[...Array(testimonial.rating)].map((_, i) => (
@@ -395,21 +325,21 @@ const LandingPage = () => {
               </Card>
             ))}
           </div>
-
-
+          
+       
         </div>
       </section>
 
       {/* Core Features Showcase Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-20 px-4 bg-gradient-to-br from-background via-primary/5 to-background">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
               See Doxxy's
               <span className="text-primary block md:inline"> Real Interface</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Don't just read about features - see the actual interface that thousands of doctors use daily.
+              Don't just read about features - see the actual interface that thousands of doctors use daily. 
               Clean, intuitive, and designed for real clinical workflows.
             </p>
           </div>
@@ -429,7 +359,7 @@ const LandingPage = () => {
                         <p className="text-sm text-gray-600">December 18, 2024 • 8 appointments</p>
                       </div>
                     </div>
-                    <Badge className="bg-primary-100 text-primary-700 px-3 py-1">Live Updates</Badge>
+                    <Badge className="bg-blue-100 text-blue-800 px-3 py-1">Live Updates</Badge>
                   </div>
                 </div>
                 <div className="p-6 space-y-4">
@@ -446,7 +376,7 @@ const LandingPage = () => {
                       <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Consultation</Button>
                     </div>
                   </div>
-
+                  
                   <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold text-yellow-900 flex items-center gap-2">
@@ -460,7 +390,7 @@ const LandingPage = () => {
                       <Button size="sm" variant="outline" className="text-yellow-700 border-yellow-300">View Records</Button>
                     </div>
                   </div>
-
+                  
                   <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold text-blue-900 flex items-center gap-2">
@@ -474,7 +404,7 @@ const LandingPage = () => {
                       <Button size="sm" variant="outline" className="text-blue-700 border-blue-300">Send Reminder</Button>
                     </div>
                   </div>
-
+                  
                   <div className="pt-4 border-t">
                     <Button className="w-full bg-primary hover:bg-primary/90">
                       <Calendar className="h-4 w-4 mr-2" />
@@ -487,26 +417,26 @@ const LandingPage = () => {
             <div>
               <h3 className="text-3xl font-bold text-foreground mb-6">Smart Appointment Management</h3>
               <p className="text-muted-foreground mb-8 leading-relaxed text-lg">
-                Eliminate double bookings, reduce no-shows by 40%, and keep your schedule organized.
-                Real-time updates, automated reminders, and intelligent conflict detection work together
+                Eliminate double bookings, reduce no-shows by 40%, and keep your schedule organized. 
+                Real-time updates, automated reminders, and intelligent conflict detection work together 
                 to create the smoothest appointment experience for both staff and patients.
               </p>
               <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 brounded-xl border">
+                <div className="flex items-start gap-4 p-4 bg-background rounded-xl border">
                   <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">Automated SMS & Email Reminders</h4>
                     <p className="text-muted-foreground text-sm">Reduce no-shows by 40% with smart reminder sequences</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-4 p-4 brounded-xl border">
+                <div className="flex items-start gap-4 p-4 bg-background rounded-xl border">
                   <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">Real-time Conflict Detection</h4>
                     <p className="text-muted-foreground text-sm">Never double-book again with intelligent scheduling</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-4 p-4 brounded-xl border">
+                <div className="flex items-start gap-4 p-4 bg-background rounded-xl border">
                   <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
                   <div>
                     <h4 className="font-semibold text-foreground mb-1">Patient Self-Scheduling Portal</h4>
@@ -773,64 +703,200 @@ const LandingPage = () => {
         </div>
       </section>
 
-
+     
 
       {/* Healthcare Specialties Showcase */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-20 px-4 bg-muted/30">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Serving Every Specialty, Every Size
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                Serving Every Specialty, Every Size
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
               Specialized consultation workflows for every medical discipline. From solo practitioners to multi-specialty hospitals, Doxxy's intelligent forms adapt to your clinical requirements.
             </p>
           </div>
-
-              
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
-
-                
-                  {firstRow.map((specialty, index) => (
-                    <div key={index} className="text-center group">
-                      <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
-                        <img
-                          src={specialty.image}
-                          alt={specialty.alt}
-                          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                        <div className="absolute bottom-2 left-2 text-secondary">
-                          <div className={`w-2 h-2 ${specialty.indicatorColor} rounded-full animate-pulse`}></div>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-lg">{specialty.name}</h3>
-                      <p className="text-sm text-muted-foreground">{specialty.description}</p>
-                    </div>
-                  ))}
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1618939304347-e91b1f33d2ab?w=300&h=250&fit=crop" 
+                  alt="Cardiologist examining patient with stethoscope" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-destructive rounded-full animate-pulse"></div>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {secondRow.map((specialty, index) => (
-                    <div key={index} className="text-center group">
-                      <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
-                        <img
-                          src={specialty.image}
-                          alt={specialty.alt}
-                          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                        <div className="absolute bottom-2 left-2 text-secondary">
-                          <div className={`w-2 h-2 ${specialty.indicatorColor} rounded-full animate-pulse`}></div>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-lg">{specialty.name}</h3>
-                      <p className="text-sm text-muted-foreground">{specialty.description}</p>
-                    </div>
-                  ))}
+              </div>
+              <h3 className="font-semibold text-lg">Cardiology</h3>
+                                  <p className="text-sm text-muted-foreground">Heart & vascular specialists</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=300&h=250&fit=crop" 
+                  alt="Neurologist examining brain scan" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                 </div>
-
-
+              </div>
+              <h3 className="font-semibold text-lg">Neurology</h3>
+              <p className="text-sm text-muted-foreground">Brain & nervous system</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=250&fit=crop" 
+                  alt="Ophthalmologist performing eye examination" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">Ophthalmology</h3>
+              <p className="text-sm text-muted-foreground">Comprehensive eye care</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=300&h=250&fit=crop" 
+                  alt="Pediatrician examining child patient" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">Pediatrics</h3>
+              <p className="text-sm text-muted-foreground">Specialized child healthcare</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1576671081837-49000212a370?w=300&h=250&fit=crop" 
+                  alt="Dermatologist examining patient skin condition" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">Dermatology</h3>
+              <p className="text-sm text-muted-foreground">Skin & aesthetic care</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=300&h=250&fit=crop" 
+                  alt="Orthopedic surgeon examining x-ray" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">Orthopedics</h3>
+              <p className="text-sm text-muted-foreground">Bone & musculoskeletal</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=250&fit=crop" 
+                  alt="Psychiatrist in therapy session consultation" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">Psychiatry</h3>
+              <p className="text-sm text-muted-foreground">Mental health & wellness</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1594824204175-b70147e9cbc5?w=300&h=250&fit=crop" 
+                  alt="General practitioner consulting with patient" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">General Medicine</h3>
+              <p className="text-sm text-muted-foreground">Primary healthcare</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&h=250&fit=crop" 
+                  alt="ENT specialist examining patient's throat" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">ENT</h3>
+              <p className="text-sm text-muted-foreground">Ear, nose & throat specialists</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1691934338603-af553029aaa3??w=300&h=250&fit=crop" 
+                  alt="Gynecologist consulting with female patient" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">Gynecology</h3>
+              <p className="text-sm text-muted-foreground">Women's health & wellness</p>
+            </div>
+            
+            <div className="text-center group">
+              <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
+                <img 
+                  src="https://images.unsplash.com/photo-1584515933487-779824d29309?w=300&h=250&fit=crop" 
+                  alt="Pulmonologist examining chest x-ray" 
+                  className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
+                <div className="absolute bottom-2 left-2 text-secondary ">
+                  <div className="w-2 h-2 bg-secondary rounded-full animate-pulse"></div>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg">Pulmonology</h3>  
+              <p className="text-sm text-muted-foreground">Respiratory & lung care</p>
+            </div>
+          </div>
+          
           <div className="text-center mt-12">
             <p className="text-sm text-muted-foreground/70 mb-4">Each specialty comes with intelligent forms, mandatory field validation, and specialty-specific workflows</p>
             <Link to="/auth">
@@ -844,19 +910,19 @@ const LandingPage = () => {
       </section>
 
       {/* Pricing & Value Props Section */}
-      <section className="py-20 px-4 ">
-        <div className="max-w-5xl mx-auto">
+      <section className="py-20 px-4 bg-gradient-to-br from-green-50/50 to-blue-50/50">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
               Simple Pricing That
               <span className="text-primary block md:inline"> Actually Makes Sense</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Stop paying monthly fees for software you barely use. With Doxxy's per-appointment pricing,
+              Stop paying monthly fees for software you barely use. With Doxxy's per-appointment pricing, 
               you only pay when you actually see patients.
             </p>
           </div>
-
+          
           <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-2xl border p-8 relative overflow-hidden">
@@ -873,7 +939,7 @@ const LandingPage = () => {
                       </div>
                     </div>
                   </div>
-
+                  
                   <div className="space-y-4 mb-8">
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
@@ -900,33 +966,34 @@ const LandingPage = () => {
                       <span className="text-gray-700">Multi-specialty consultation templates</span>
                     </div>
                   </div>
-
+                  
                   <Link to="/auth">
                     <Button className="w-full bg-primary hover:bg-primary/90 text-white py-4 text-lg font-semibold rounded-xl">
                       Start Free Trial Now
                     </Button>
                   </Link>
-
+                  
                   <p className="text-center text-sm text-gray-500 mt-4">
                     No credit card required • Cancel anytime • No hidden fees
                   </p>
                 </div>
               </div>
             </div>
-
+            
             <div className="space-y-8">
               <div>
+                <h3 className="text-2xl font-bold text-foreground mb-6">Why Our Pricing is Different</h3>
                 <div className="space-y-6">
                   <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border">
                     <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
                       <X className="h-6 w-6 text-red-600" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-gray-900 ">Other Software</h4>
+                      <h4 className="font-bold text-gray-900 mb-2">Other Software</h4>
                       <p className="text-gray-600">₹2,000-15,000/month regardless of patient volume. Pay even during slow months.</p>
                     </div>
                   </div>
-
+                  
                   <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-green-200">
                     <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                       <CheckCircle className="h-6 w-6 text-primary" />
@@ -938,8 +1005,8 @@ const LandingPage = () => {
                   </div>
                 </div>
               </div>
-
-              <div className="p-6 rounded-xl">
+              
+              <div className="bg-blue-50 p-6 rounded-xl">
                 <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
                   <Target className="h-5 w-5" />
                   Perfect for Growing Practices
@@ -957,7 +1024,7 @@ const LandingPage = () => {
       </section>
 
       {/* Enhanced Features Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
@@ -965,11 +1032,11 @@ const LandingPage = () => {
               <span className="text-primary block md:inline"> Practice</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              From appointment scheduling to billing, Doxxy provides all the tools
+              From appointment scheduling to billing, Doxxy provides all the tools 
               you need to deliver exceptional patient care.
             </p>
           </div>
-
+          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <Card key={index} className="border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:scale-105 group">
@@ -988,7 +1055,7 @@ const LandingPage = () => {
               </Card>
             ))}
           </div>
-
+          
           <div className="text-center mt-16">
             <Link to="/features">
               <Button size="lg" variant="outline" className="px-8 py-4 text-lg border-primary/30 hover:bg-primary/5 rounded-xl">
@@ -1001,7 +1068,7 @@ const LandingPage = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-4">
+      <section className="py-20 px-4 bg-gradient-to-b from-muted/30 to-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
@@ -1011,11 +1078,11 @@ const LandingPage = () => {
               Join thousands of medical professionals who have transformed their practice operations with intelligent, cost-effective healthcare management software.
             </p>
           </div>
-
+          
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16">
             <div>
               <div className="space-y-6">
-                <div className="flex items-start gap-4 p-6 brounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
+                <div className="flex items-start gap-4 p-6 bg-background rounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
                   <div className="flex-shrink-0 w-14 h-14 bg-accent rounded-xl flex items-center justify-center">
                     <BarChart3 className="h-7 w-7 text-accent-foreground" />
                   </div>
@@ -1024,8 +1091,8 @@ const LandingPage = () => {
                     <p className="text-muted-foreground leading-relaxed">Your first 100 appointments are completely free forever. No credit card required, no time limits, no feature restrictions. Experience the full platform before committing to anything.</p>
                   </div>
                 </div>
-
-                <div className="flex items-start gap-4 p-6 brounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
+                
+                <div className="flex items-start gap-4 p-6 bg-background rounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
                   <div className="flex-shrink-0 w-14 h-14 bg-primary rounded-xl flex items-center justify-center">
                     <Shield className="h-7 w-7 text-primary" />
                   </div>
@@ -1034,7 +1101,7 @@ const LandingPage = () => {
                     <p className="text-muted-foreground leading-relaxed">Advanced encryption, multi-factor authentication, and complete data isolation between clinics. HIPAA-compliant infrastructure with 99.9% uptime guarantee and automated backups.</p>
                   </div>
                 </div>
-
+                
                 <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                   <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
                     <Users className="h-7 w-7 text-secondary " />
@@ -1046,7 +1113,7 @@ const LandingPage = () => {
                 </div>
               </div>
             </div>
-
+            
             <div className="relative">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-6">
@@ -1057,7 +1124,7 @@ const LandingPage = () => {
                     <h4 className="font-bold text-foreground mb-2 text-lg">3+ Hours Saved</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">Daily administrative time savings through automated workflows and intelligent scheduling</p>
                   </Card>
-
+                  
                   <Card className="p-8 text-center bg-success/10 border-success/20 hover:scale-105 transition-transform">
                     <div className="w-20 h-20 bg-success rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                       <Lock className="h-10 w-10 text-success-foreground" />
@@ -1066,7 +1133,7 @@ const LandingPage = () => {
                     <p className="text-sm text-muted-foreground leading-relaxed">Zero data breaches with enterprise-grade security and complete clinic data isolation</p>
                   </Card>
                 </div>
-
+                
                 <div className="space-y-6 mt-8">
                   <Card className="p-8 text-center bg-secondary/10 border-secondary/20 hover:scale-105 transition-transform">
                     <div className="w-20 h-20 bg-secondary rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -1075,7 +1142,7 @@ const LandingPage = () => {
                     <h4 className="font-bold text-foreground mb-2 text-lg">11+ Specialties</h4>
                     <p className="text-sm text-muted-foreground leading-relaxed">Custom workflows for cardiology, neurology, pediatrics, and more medical specialties</p>
                   </Card>
-
+                  
                   <Card className="p-8 text-center bg-accent/10 border-accent/20 hover:scale-105 transition-transform">
                     <div className="w-20 h-20 bg-accent rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
                       <Globe className="h-10 w-10 text-accent-foreground" />
@@ -1085,7 +1152,7 @@ const LandingPage = () => {
                   </Card>
                 </div>
               </div>
-
+              
               <div className="absolute -top-6 -right-6 w-32 h-32 bg-primary/10 rounded-full opacity-10 animate-pulse"></div>
               <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-success/10 rounded-full opacity-10 animate-pulse delay-1000"></div>
             </div>
@@ -1094,7 +1161,10 @@ const LandingPage = () => {
         </div>
       </section>
 
+
+
       <SignupCTA />
+
       <SiteFooter />
     </div>
   );

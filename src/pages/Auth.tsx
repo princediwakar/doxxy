@@ -359,7 +359,7 @@ const Auth = () => {
   const showTabs = authFlow === "login" || authFlow === "signup";
 
   return (
-    <div className="min-h-screen pt-16 bg-background">
+    <div className="min-h-screen pt-16">
       <div className="flex items-center justify-center">
         <Card className="w-full max-w-md border-primary/10">
           <CardHeader className="space-y-4 text-center">

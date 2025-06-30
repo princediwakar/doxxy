@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Mail, Phone } from "lucide-react";
 
 const SiteFooter = () => {
   return (
-    <footer className="py-12 px-4 bg-muted/50 border-t">
+    <footer className="py-12 px-4 border-t">
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           <div className="col-span-1 md:col-span-2">

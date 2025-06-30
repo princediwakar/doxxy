@@ -57,7 +57,7 @@ export const AppHeader = memo(() => {
 
   return (
     <>
-      <div className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-border supports-[backdrop-filter]:bg-background/80">
+      <div className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-border supports-[backdrop-filter]:bg-white/80">
         <header className="flex justify-between items-center max-w-7xl h-full px-4 mx-auto">
           <nav className="flex items-center space-x-8">
             <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">

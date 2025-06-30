@@ -191,9 +191,7 @@ const Features = () => {
             <Button size="lg" asChild>
               <Link to="/auth">Start Free Practice</Link>
             </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link to="/contact">Schedule Demo</Link>
-            </Button>
+            
           </div>
         </div>
       </section>
