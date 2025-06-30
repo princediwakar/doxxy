@@ -168,14 +168,13 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-6">
           <DialogTitle className="flex items-center space-x-2">
               <Eye className="h-5 w-5" />
               <span>Consultation Notes - {patient.name}</span>
           </DialogTitle>
             {consultationData && (
               <Button
-                variant="outline"
                 size="sm"
                 onClick={handlePrint}
               >

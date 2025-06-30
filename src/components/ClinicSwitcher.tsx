@@ -34,7 +34,7 @@ const ClinicSwitcher = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0 shadow-medical border">
+      <PopoverContent className="w-64 p-0 border">
          {userClinics.map((clinic) => (
             <Button
                key={clinic.clinic_id}

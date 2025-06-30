@@ -27,7 +27,7 @@ const SettingsPage = () => {
   if (!isSuperadmin) {
     return (
       <div className="container mx-auto">
-        <Card className="medical-card shadow-medical">
+        <Card className="">
           <CardContent className="p-8">
             <div className="text-center space-y-4">
               <div className="bg-destructive/10 p-4 rounded-full w-fit mx-auto">
@@ -76,7 +76,7 @@ const SettingsPage = () => {
         </div>
 
         {/* Info Card
-        <Card className="medical-card border-primary/20 bg-primary/5">
+        <Card className="border-primary/20 bg-primary/5">
           <CardContent className="p-4">
             <div className="flex items-start space-x-3">
               <div className="bg-primary/10 p-2 rounded-lg">

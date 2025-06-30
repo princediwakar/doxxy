@@ -66,6 +66,7 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
             id,
             date,
             time,
+            status,
             doctor_id
           )
         `)
@@ -87,6 +88,7 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
               ...consultation,
               appointment: {
                 ...consultation.appointments,
+                status: consultation.appointments?.status,
                 doctor_name: 'Unknown Doctor',
                 department_name: 'Unknown Department',
               }
@@ -104,6 +106,7 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
             ...consultation,
             appointment: {
               ...consultation.appointments,
+              status: consultation.appointments?.status,
               doctor_name: doctor?.name || 'Unknown Doctor',
               department_name: doctor?.department_name || 'Unknown Department',
             }
@@ -111,9 +114,12 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
         })
       );
 
+      // Only include consultations whose associated appointment status is 'Completed'
+      const completedConsultations = consultationsWithDoctors.filter(c => (c.appointment?.status || '').toLowerCase() === 'completed');
+
       return {
         ...patient,
-        consultations: consultationsWithDoctors,
+        consultations: completedConsultations,
         prescriptions: prescriptions || [],
       };
     })
@@ -318,7 +324,7 @@ const PatientRecords = () => {
 
   if (!activeClinic) {
     return (
-      <Card className="medical-card m-6">
+      <Card className="m-6">
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <FileText className="w-12 h-12 text-muted-foreground mx-auto" />
@@ -331,7 +337,7 @@ const PatientRecords = () => {
 
   if (error) {
     return (
-      <Card className="medical-card m-6">
+      <Card className="m-6">
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <Activity className="w-12 h-12 text-destructive mx-auto" />

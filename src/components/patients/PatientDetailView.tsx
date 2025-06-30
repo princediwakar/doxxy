@@ -30,7 +30,7 @@ export const PatientDetailView = ({
 }: PatientDetailViewProps) => {
     return (
         <div className="space-y-6">
-            <Card className="medical-card shadow-medical border-l-4 border-l-primary">
+            <Card className="border-l-4 border-l-primary">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
@@ -114,7 +114,7 @@ export const PatientDetailView = ({
                 </div>
 
                 <TabsContent value="consultations" className="space-y-4">
-                    <Card className="medical-card shadow-medical">
+                    <Card className="">
                         <CardHeader>
                             <CardTitle className="flex items-center space-x-2 text-primary">
                                 <Stethoscope className="h-5 w-5" />
@@ -132,7 +132,7 @@ export const PatientDetailView = ({
                                 ) : (
                                     <div className="space-y-4">
                                         {patient.consultations.map((consultation) => (
-                                            <Card key={consultation.id} className="medical-card border-l-4 border-l-primary hover:shadow-medical transition-shadow">
+                                            <Card key={consultation.id} className="border-l-4 border-l-primary hover:transition-shadow">
                                                 <CardContent className="p-4">
                                                     <div className="flex items-start justify-between">
                                                         <div className="space-y-2">
@@ -211,11 +211,6 @@ export const PatientDetailView = ({
                                                                     {format(parseISO(prescription.created_at!), 'PPP')}
                                                                 </span>
                                                             </div>
-                                                            {prescription.follow_up_date && (
-                                                                <Badge variant="secondary" className="status-badge status-pending">
-                                                                    Follow-up: {format(parseISO(prescription.follow_up_date), 'PP')}
-                                                                </Badge>
-                                                            )}
                                                         </div>
 
                                                         <div className="text-sm">
@@ -229,13 +224,6 @@ export const PatientDetailView = ({
                                                                 }
                                                             </div>
                                                         </div>
-
-                                                        {prescription.instructions && (
-                                                            <div className="text-sm">
-                                                                <strong>Instructions:</strong>
-                                                                <p className="mt-1 text-muted-foreground">{prescription.instructions}</p>
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </CardContent>
                                             </Card>

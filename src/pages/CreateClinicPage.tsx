@@ -315,7 +315,7 @@ const CreateClinicPage = () => {
 
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-background">
-      <div className="w-full max-w-md medical-card p-6 border-4 border-white rounded-lg shadow-md">
+      <div className="w-full max-w-mdp-6 border-4 border-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-2 text-center text-foreground">Create New Clinic</h1>
         <StepIndicator />
         

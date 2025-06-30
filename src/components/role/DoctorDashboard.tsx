@@ -176,7 +176,7 @@ export default function DoctorDashboard() {
         <div className="flex gap-4">
           <Button
             onClick={handleNewAppointment}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 "
           >
             <Plus size={18} className="mr-2" />
             New Appointment
@@ -185,7 +185,7 @@ export default function DoctorDashboard() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <DashboardStatsCard
-          icon={<Users size={18} className="mr-2 text-blue-500" />}
+          icon={<Users size={18} className="mr-2 text-primary" />}
           label="My Patients"
           value={doctorDashboardData?.total_patients ?? 0}
           ariaLabel="View My Patients"
@@ -193,7 +193,7 @@ export default function DoctorDashboard() {
           description={`Active patient relationships`}
         />
         <DashboardStatsCard
-          icon={<Stethoscope size={18} className="mr-2 text-green-500" />}
+          icon={<Stethoscope size={18} className="mr-2 text-primary" />}
           label="Total Appointments"
           value={doctorDashboardData?.total_appointments ?? 0}
           ariaLabel="View My Appointments"
@@ -201,7 +201,7 @@ export default function DoctorDashboard() {
           description={`${completionRate}% completion rate`}
         />
         <DashboardStatsCard
-          icon={<Clock size={18} className="mr-2 text-orange-500" />}
+          icon={<Clock size={18} className="mr-2 text-warning" />}
           label="Pending Consultations"
           value={doctorDashboardData?.pending_consultations ?? 0}
           ariaLabel="View Pending Consultations"
@@ -209,7 +209,7 @@ export default function DoctorDashboard() {
           variant={doctorDashboardData?.pending_consultations ? "secondary" : "default"}
         />
         <DashboardStatsCard
-          icon={<Activity size={18} className="mr-2 text-emerald-500" />}
+          icon={<Activity size={18} className="mr-2 text-success" />}
           label="Completed Consultations"
           value={doctorDashboardData?.completed_consultations ?? 0}
           ariaLabel="View Completed Consultations"

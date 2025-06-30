@@ -189,19 +189,15 @@ const ClinicDepartmentsManagement = () => {
       </div>
 
       {/* Search */}
-      <Card className="medical-card">
-        <CardContent className="p-6">
-          <div className="relative max-w-sm">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search departments..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-background border-border focus:ring-primary"
+              className="pl-10 border-border focus:ring-primary"
             />
           </div>
-        </CardContent>
-      </Card>
 
       {/* Loading State */}
       {isLoading && (
@@ -225,7 +221,7 @@ const ClinicDepartmentsManagement = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeDepartments.map((department) => (
-              <Card key={department.id} className="medical-card shadow-medical border-success/20 bg-success/5">
+              <Card key={department.id} className="border-success/20 bg-success/5">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
@@ -263,7 +259,7 @@ const ClinicDepartmentsManagement = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {availableDepartments.map((department) => (
-              <Card key={department.id} className="medical-card hover:border-primary/30 hover:shadow-medical transition-all cursor-pointer">
+              <Card key={department.id} className="hover:border-primary/30 hover:transition-all cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">

@@ -53,7 +53,7 @@ export function DashboardStatsCard({
   return (
     <Card 
       className={cn(
-        "medical-card shadow-medical col-span-1 transition-all duration-200",
+        "col-span-1 transition-all duration-200",
         isClickable && "hover:shadow-lg hover:scale-[1.02] cursor-pointer hover:border-primary/50",
         variant === "primary" && "border-primary/20 bg-primary/5",
         variant === "secondary" && "border-secondary/20 bg-secondary/5"

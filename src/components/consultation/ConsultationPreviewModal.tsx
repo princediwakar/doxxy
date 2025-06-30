@@ -101,13 +101,12 @@ export const ConsultationPreviewModal = ({
     <Dialog open={showPreview} onOpenChange={setShowPreview}>
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-6">
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
               Consultation Preview
             </DialogTitle>
             <Button
-              variant="outline"
               size="sm"
               onClick={handlePrint}
             >

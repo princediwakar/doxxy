@@ -43,7 +43,7 @@ export const ConsultationFormField = ({
   // Get character limit for this field
   const getCharacterLimit = () => {
     if (fieldConfig.type === 'textarea') {
-      return CHARACTER_LIMITS.textarea[fieldConfig.name as keyof typeof CHARACTER_LIMITS.textarea] || 1000;
+      return CHARACTER_LIMITS.textarea.default;
     }
     return CHARACTER_LIMITS.input.default;
   };

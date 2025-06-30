@@ -285,7 +285,9 @@ const ClinicMembersManagement = () => {
         rpcParams.updated_department_id = null;
       }
       
-      const { data, error } = await supabase.rpc("update_clinic_member_details", rpcParams);
+      // The RPC exists in the database but is not yet present in the generated TS types.
+      // Suppress the type error until the types are regenerated.
+      const { data, error } = await (supabase.rpc as any)("update_clinic_member_details", rpcParams);
       
       if (error) throw error;
       return data;
@@ -464,19 +466,15 @@ const ClinicMembersManagement = () => {
       </div>
 
       {/* Search */}
-      <Card className="medical-card">
-        <CardContent className="p-6">
-          <div className="relative max-w-sm">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search members..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-background border-border focus:ring-primary"
+              className="pl-10 border-border focus:ring-primary"
             />
           </div>
-        </CardContent>
-      </Card>
 
 
       {/* Members Table */}

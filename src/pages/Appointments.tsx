@@ -546,7 +546,7 @@ const Appointments = () => {
 
   if (!activeClinic) {
     return (
-      <Card className="medical-card m-6">
+      <Card className="m-6">
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <Calendar className="w-12 h-12 text-muted-foreground mx-auto" />
@@ -561,7 +561,7 @@ const Appointments = () => {
     console.error("Appointments: Error fetching data", error);
     toast.error("Failed to load appointments");
     return (
-      <Card className="medical-card m-6">
+      <Card className="m-6">
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <Activity className="w-12 h-12 text-destructive mx-auto" />
@@ -592,7 +592,7 @@ const Appointments = () => {
         {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin' || activeClinicRole === 'doctor') && (
           <Button
             onClick={handleNewAppointment}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 "
           >
             <Plus size={18} className="mr-2" />
             New Appointment
@@ -601,8 +601,8 @@ const Appointments = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="medical-card shadow-medical">
+      {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -617,7 +617,7 @@ const Appointments = () => {
           </CardContent>
         </Card>
         
-        <Card className="medical-card shadow-medical">
+        <Card className="">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -634,7 +634,7 @@ const Appointments = () => {
           </CardContent>
         </Card>
         
-        <Card className="medical-card shadow-medical">
+        <Card className="">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -650,7 +650,7 @@ const Appointments = () => {
           </CardContent>
         </Card>
         
-        <Card className="medical-card shadow-medical">
+        <Card className="">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
@@ -666,26 +666,19 @@ const Appointments = () => {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       {/* Search Section */}
-      <Card className="medical-card">
-        <CardContent className="p-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search by patient or doctor name, or date..."
-              className="pl-10 bg-background border-border focus:ring-primary"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage({ today: 1, upcoming: 1, past: 1 });
-              }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search by patient or doctor name, or date..."
+            className="pl-10 border-border focus:ring-primary"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
       {isLoading ? (
         <div className="space-y-4">
@@ -695,16 +688,19 @@ const Appointments = () => {
           ))}
         </div>
       ) : (
-        <Card className="medical-card shadow-medical">
+        <Card className=" ">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
               Appointment Schedule
             </CardTitle>
+            <CardDescription>
+            Total Appointments: {filteredAppointments.today.length + filteredAppointments.upcoming.length + filteredAppointments.past.length}
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-              <div className="px-6 pt-6">
+              <div className="px-6">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="today" className="flex items-center gap-2">
                     <AlertCircle size={16} />

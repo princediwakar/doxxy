@@ -87,15 +87,15 @@ Pre-built status classes for common healthcare states:
 
 ### Medical Cards
 ```html
-<div class="medical-card">
+<div class="">
   <!-- Card content -->
 </div>
 ```
 Provides consistent spacing, shadows, and hover effects for medical information cards.
 
 ### Shadows
-- `shadow-medical`: Subtle green-blue medical shadow
-- `shadow-medical-lg`: Larger variant for elevated components
+- ``: Subtle green-blue medical shadow
+- `-lg`: Larger variant for elevated components
 
 ## Accessibility Guidelines
 
@@ -143,7 +143,7 @@ The dark theme maintains the professional medical aesthetic while being easier o
 
 ### Medical Card
 ```tsx
-<div className="medical-card p-6">
+<div className="p-6">
   <h3 className="text-foreground font-semibold">Patient Information</h3>
   <p className="text-muted-foreground mt-2">Patient details...</p>
 </div>

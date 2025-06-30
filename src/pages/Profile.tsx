@@ -264,7 +264,7 @@ const Profile = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* Basic Profile Card */}
-        <Card className="medical-card">
+        <Card className="">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -327,7 +327,7 @@ const Profile = () => {
 
         {/* Medical Profile Card - Only for doctors */}
         {(activeClinicRole === 'doctor' || doctorProfile) && (
-          <Card className="medical-card">
+          <Card className="">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
@@ -392,7 +392,7 @@ const Profile = () => {
 
         {/* For non-doctors, show role-specific information */}
         {!localHasDoctorProfile && (
-          <Card className="medical-card">
+          <Card className="">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <roleConfig.icon className={`w-5 h-5 ${roleConfig.iconClass}`} />

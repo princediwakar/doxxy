@@ -180,19 +180,15 @@ const Billing = () => {
       </div>
 
 {/* Search */}
-<Card className="medical-card">
-        <CardContent className="p-6">
-          <div className="relative max-w-sm">
+          <div className="relative max-w-md">
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search bills..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-background border-border focus:ring-primary"
+              className="pl-10 border-border focus:ring-primary"
             />
           </div>
-        </CardContent>
-      </Card>
 
       <div className="border rounded-lg overflow-x-auto">
           <Table>

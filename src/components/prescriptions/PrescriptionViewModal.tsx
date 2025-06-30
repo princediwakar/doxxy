@@ -20,10 +20,6 @@ import {
   Clock,
   Stethoscope,
   Building2,
-  Printer,
-  Download,
-  Eye,
-  Activity
 } from "lucide-react";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";

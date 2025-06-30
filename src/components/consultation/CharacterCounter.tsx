@@ -19,7 +19,7 @@ export const CharacterCounter = ({
         isAtLimit ? 'text-destructive' : isNearLimit ? 'text-warning' : 'text-muted-foreground'
       } ${className}`}
     >
-      {current}/{max}
+      {current} characters
     </span>
   );
 }; 

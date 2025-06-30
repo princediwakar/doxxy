@@ -359,9 +359,9 @@ const Auth = () => {
   const showTabs = authFlow === "login" || authFlow === "signup";
 
   return (
-    <div className="pt-16 min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+    <div className="min-h-screen pt-16 bg-background">
       <div className="flex items-center justify-center">
-        <Card className="w-full max-w-md medical-card shadow-medical-lg border-primary/10">
+        <Card className="w-full max-w-md border-primary/10">
           <CardHeader className="space-y-4 text-center">
             <div className="flex items-center justify-center">
               <img src="/logo.svg" alt="Doxxy" className="w-32 " />
@@ -370,13 +370,6 @@ const Auth = () => {
               <CardDescription className="text-base">
                 {getCardDescription()}
               </CardDescription>
-            </div>
-            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-              
-              <div className="flex items-center gap-1">
-                <Heart className="w-3 h-3 text-accent" />
-                <span>Healthcare Focused</span>
-              </div>
             </div>
           </CardHeader>
         <CardContent className="space-y-4">
@@ -439,7 +432,7 @@ const Auth = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
                   disabled={loading}
                 >
                   {loading ? "Setting password..." : "Set Password & Continue"}
@@ -487,7 +480,7 @@ const Auth = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
                   disabled={loading}
                 >
                   {loading ? "Updating password..." : "Update Password"}
@@ -500,7 +493,7 @@ const Auth = () => {
           {authFlow === "reset" && (
             <form onSubmit={handleForgotPassword}>
               <div className="space-y-4">
-                <div className="relative">
+                <div className="flex items-center relative">
                   <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     type="email"
@@ -513,7 +506,7 @@ const Auth = () => {
                 </div>
                 <Button 
                   type="submit" 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
                   disabled={loading}
                 >
                   {loading ? "Sending..." : "Send Reset Email"}
@@ -552,25 +545,25 @@ const Auth = () => {
                 <form onSubmit={handleLogin}>
                   <div className="space-y-2">
                     <div className="relative">
-                      <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         type="email"
                         placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-8"
+                        className="pl-9"
                         required
                       />
                     </div>
 
                     <div className="relative">
-                      <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input
                         type={showPassword ? "text" : "password"}
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-8"
+                        className="pl-9"
                         required
                       />
                       <button
@@ -599,7 +592,7 @@ const Auth = () => {
 
                     <Button 
                       type="submit" 
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
                       disabled={loading}
                     >
                       {loading ? "Logging in..." : "Log In"}
@@ -659,7 +652,7 @@ const Auth = () => {
 
                     <Button 
                       type="submit" 
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical" 
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
                       disabled={loading}
                     >
                       {loading ? "Creating account..." : "Sign Up"}
@@ -673,9 +666,31 @@ const Auth = () => {
         <CardFooter className="flex-col">
           {showTabs && (
             <p className="text-center text-sm text-muted-foreground">
-              {activeTab === "login"
-                ? "Don't have an account? Try signing up."
-                : "Already have an account? Log in instead."}
+              {activeTab === "login" ? (
+                <>
+                  Don't have an account? Go to{" "}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("signup")}
+                    className="text-primary hover:underline cursor-pointer"
+                  >
+                    Sign Up
+                  </button>
+                  .
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("login")}
+                    className="text-primary hover:underline cursor-pointer"
+                  >
+                    Log in
+                  </button>{" "}
+                  instead.
+                </>
+              )}
             </p>
           )}
         </CardFooter>

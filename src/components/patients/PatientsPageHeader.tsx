@@ -30,7 +30,7 @@ export const PatientsPageHeader = ({ onNewPatient, onExport, isPatientSelected }
         </Button>
         <Button
           onClick={onNewPatient}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 "
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Patient

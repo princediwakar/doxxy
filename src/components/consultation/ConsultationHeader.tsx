@@ -42,7 +42,7 @@ export const ConsultationHeader = ({
   onComplete
 }: ConsultationHeaderProps) => {
   const canComplete = mandatoryFieldsStatus.isValid && !autoSaveMutation.isPending && !isConsultationCompleted;
-  
+
   const getCompleteButtonTooltip = () => {
     if (isConsultationCompleted) return "Consultation already completed";
     if (autoSaveMutation.isPending) return "Please wait for auto-save to complete";
@@ -97,6 +97,7 @@ export const ConsultationHeader = ({
                   {autoSaveMutation.isPending ? "Saving..." : "Saved"}
                 </Badge>
               )}
+
               <Button
                 onClick={onSave}
                 disabled={autoSaveMutation.isPending || isConsultationCompleted}
@@ -108,6 +109,7 @@ export const ConsultationHeader = ({
                 <Save className="h-4 w-4" />
                 Save
               </Button>
+              {/* 
               <Button
                 onClick={onPrint}
                 variant="outline"
@@ -118,7 +120,7 @@ export const ConsultationHeader = ({
               >
                 <Printer className="h-4 w-4" />
                 Print
-              </Button>
+              </Button> */}
               <Button
                 onClick={onPreview}
                 variant="outline"
@@ -134,11 +136,10 @@ export const ConsultationHeader = ({
                     onClick={onComplete}
                     disabled={!canComplete}
                     size="sm"
-                    className={`flex items-center gap-1 transition-all ${
-                      canComplete 
-                        ? 'bg-green-600 hover:bg-green-700 text-secondary ' 
+                    className={`flex items-center gap-1 transition-all ${canComplete
+                        ? 'bg-green-600 hover:bg-green-700 text-secondary '
                         : 'opacity-60'
-                    }`}
+                      }`}
                     variant={canComplete ? "default" : "secondary"}
                   >
                     <CheckCircle className="h-4 w-4" />

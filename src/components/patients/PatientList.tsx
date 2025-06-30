@@ -55,7 +55,7 @@ export const PatientList = ({
   setSelectedPatient,
 }: PatientListProps) => {
   return (
-    <Card className="medical-card shadow-medical">
+    <Card className="">
       <CardHeader>
         <CardTitle className="flex items-center space-x-2 text-primary">
           <User className="h-5 w-5" />

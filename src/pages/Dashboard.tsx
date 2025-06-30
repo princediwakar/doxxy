@@ -181,7 +181,7 @@ const Dashboard = () => {
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Card key={index} className="medical-card animate-pulse">
+            <Card key={index} className="animate-pulse">
               <CardHeader>
                 <div className="h-6 bg-muted rounded w-3/4"></div>
                 <div className="h-4 bg-muted rounded w-1/2"></div>
@@ -297,7 +297,7 @@ const Dashboard = () => {
           {(activeClinicRole === 'staff' || activeClinicRole === 'superadmin' || activeClinicRole === 'doctor') && (
             <Button
               onClick={handleNewAppointment}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-medical"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 "
             >
               <Plus size={18} className="mr-2" />
               New Appointment
@@ -362,7 +362,7 @@ const Dashboard = () => {
                 ariaLabel="View My Patients"
               />
               <DashboardStatsCard
-                icon={<CalendarCheck size={18} className="mr-2 text-success" />}
+                icon={<CalendarCheck size={18} className="mr-2 text-primary" />}
                 label="My Appointments"
                 value={doctorDashboardData?.total_appointments ?? 0}
                 ariaLabel="View My Appointments"
@@ -374,7 +374,7 @@ const Dashboard = () => {
                 ariaLabel="View Pending Consultations"
               />
               <DashboardStatsCard
-                icon={<Activity size={18} className="mr-2 text-accent" />}
+                icon={<Activity size={18} className="mr-2 text-success" />}
                 label="Completed Consultations"
                 value={doctorDashboardData?.completed_consultations ?? 0}
                 ariaLabel="View Completed Consultations"
@@ -392,7 +392,7 @@ const Dashboard = () => {
             ariaLabel="View Patients"
           />
           <DashboardStatsCard
-            icon={<Stethoscope size={18} className="mr-2 text-success" />}
+            icon={<Stethoscope size={18} className="mr-2 text-primary" />}
             label="Total Appointments"
             value={dashboardData?.total_appointments ?? 0}
             ariaLabel="View Appointments"
@@ -404,7 +404,7 @@ const Dashboard = () => {
             ariaLabel="View Pending Consultations"
           />
           <DashboardStatsCard
-            icon={<Activity size={18} className="mr-2 text-accent" />}
+            icon={<Activity size={18} className="mr-2 text-success" />}
             label="Completed Consultations"
             value={dashboardData?.completed_consultations ?? 0}
             ariaLabel="View Completed Consultations"
