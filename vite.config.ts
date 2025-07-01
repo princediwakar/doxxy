@@ -93,10 +93,5 @@ export default defineConfig(({ mode }) => ({
     // Enable source maps for better debugging in production
     sourcemap: mode === 'development',
   },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
-    css: true,
-  },
+  include: ['**/*.spec.tsx'],
 }));
