@@ -3,8 +3,8 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Layout from "./components/Layout";
 import PrivateRoute from "./components/PrivateRoute";
 import { AppHeader } from "./components/AppHeader";
@@ -59,21 +59,8 @@ const PageLoader = () => (
   </div>
 );
 
-import { useLocation } from "react-router-dom";
 
 const AppContent = () => {
-  const location = useLocation();
-  const { user, activeClinic, needsProfileCompletion } = useAuth();
-  // Redirect authenticated users away from landing page and public routes
-  if (user && needsProfileCompletion && location.pathname !== '/complete-profile') {
-    return <Navigate to="/complete-profile" replace />;
-  }
-  if (user && !needsProfileCompletion && !activeClinic && location.pathname !== '/create-clinic') {
-    return <Navigate to="/create-clinic" replace />;
-  }
-  if (user && activeClinic && location.pathname === '/') {
-    return <Navigate to="/dashboard" replace />;
-  }
   return (
     <>
       <Suspense fallback={<PageLoader />}>
@@ -134,3 +121,5 @@ const App = () => (
 );
 
 export default App;
+
+

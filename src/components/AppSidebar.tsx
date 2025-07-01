@@ -38,7 +38,7 @@ export function AppSidebar() {
     // Clean sidebar design without background colors or borders
     <div className="flex flex-col h-screen sticky top-0 left-0 w-64 lg:w-72 flex-shrink-0">
       {/* Header with Medical Logo and Clinic Switcher */}
-      <div className="flex items-center gap-3 p-4 h-14">
+      <div className="flex items-center gap-3 p-3 h-14">
           <img src="/logo.svg" alt="Doxxy" className="h-10" />
       </div>
 
@@ -48,7 +48,7 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav className="flex-1 overflow-y-auto p-3 ">
         <ul className="space-y-2">
           {(
             navItems.map((item) => {

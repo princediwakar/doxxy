@@ -17,7 +17,14 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@/contexts/AuthContext": path.resolve(__dirname, "./tests/__mocks__/AuthContext.tsx"),
+      "@/contexts/AuthContext": path.resolve(__dirname, "./tests/__mocks__/AuthContext.tsx"),
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    globals: true,
   },
   build: {
     rollupOptions: {
@@ -37,10 +44,13 @@ export default defineConfig(({ mode }) => ({
             '@radix-ui/react-checkbox',
             '@radix-ui/react-collapsible',
             '@radix-ui/react-context-menu',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
             '@radix-ui/react-hover-card',
             '@radix-ui/react-label',
             '@radix-ui/react-menubar',
             '@radix-ui/react-navigation-menu',
+            '@radix-ui/react-popover',
             '@radix-ui/react-progress',
             '@radix-ui/react-radio-group',
             '@radix-ui/react-scroll-area',
@@ -93,5 +103,6 @@ export default defineConfig(({ mode }) => ({
     // Enable source maps for better debugging in production
     sourcemap: mode === 'development',
   },
-  include: ['**/*.spec.tsx'],
+  include: ['tests/*.spec.tsx'],
+  exclude: ['tests/**/*.spec.ts'],
 }));

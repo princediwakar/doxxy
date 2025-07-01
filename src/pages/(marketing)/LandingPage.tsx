@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 // --- DATA ---
 const painPoints = [
@@ -474,6 +476,58 @@ const TestimonialsSection = ({ testimonials }) => (
 // --- MAIN LANDING PAGE ---
 
 const LandingPage = () => {
+  const { user, loading: initialLoading, activeClinic, clinicLoading, needsProfileCompletion } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Wait for initial loading to complete
+    if (initialLoading) return;
+
+    // If user is authenticated, redirect to appropriate page
+    if (user) {
+      console.log('LandingPage: Authenticated user detected, checking redirect logic', {
+        user: !!user,
+        needsProfileCompletion,
+        clinicLoading,
+        activeClinic: activeClinic ? activeClinic.clinics?.name : null
+      });
+
+      // Profile incomplete - redirect to complete profile
+      if (needsProfileCompletion) {
+        console.log('LandingPage: Redirecting to /complete-profile');
+        navigate('/complete-profile', { replace: true });
+        return;
+      }
+
+      // Profile complete but clinic loading - wait
+      if (clinicLoading) {
+        console.log('LandingPage: Clinic data loading, waiting...');
+        return;
+      }
+
+      // Profile complete, no clinic - redirect to create clinic
+      if (!activeClinic) {
+        console.log('LandingPage: No active clinic, redirecting to /create-clinic');
+        navigate('/create-clinic', { replace: true });
+        return;
+      }
+
+      // Profile complete, has clinic - redirect to dashboard
+      console.log('LandingPage: User has active clinic, redirecting to /dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, initialLoading, needsProfileCompletion, clinicLoading, activeClinic, navigate]);
+
+  // Show loading spinner while checking authentication
+  if (initialLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  // Only render landing page for unauthenticated users
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
       <HeroSection />

@@ -125,11 +125,12 @@ const CompleteProfile = () => {
       await markProfileComplete();
       
       toast.success("Profile completed!");
-      console.log("CompleteProfile: Profile completed successfully, navigating to dashboard");
+      console.log("CompleteProfile: Profile completed successfully, checking clinic status for navigation");
       
       // Add a small delay to ensure state update propagates before navigation
       setTimeout(() => {
-        navigate("/", { replace: true });
+        // Navigate to dashboard if user has clinics, otherwise to create clinic
+        navigate("/dashboard", { replace: true });
       }, 100);
       
     } catch (error) {

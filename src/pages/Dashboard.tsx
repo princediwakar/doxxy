@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { CalendarCheck, Users, Stethoscope, Activity, Clock, Building2, Heart, Plus, Calendar, LeafyGreen } from "lucide-react";
+import { CalendarCheck, Users, Stethoscope, Activity, Clock, Building2, Heart, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { formatTimeIST } from '@/lib/utils';
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { useState } from "react";
 import { Enums } from "@/integrations/supabase/types";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 import { ConsultationViewModal } from "@/components/consultation/ConsultationViewModal";
@@ -276,11 +277,7 @@ const Dashboard = () => {
   return (
     <div className="space-y-6 ">
       <div className="flex justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-            <LeafyGreen className="w-5 h-5 " />
-          </div>
-          <div>
+        <div className="">
           <h1 className="text-3xl font-bold">{greeting}</h1>
           <p className="text-muted-foreground">
             {isEnhancedSuperadmin 
@@ -288,7 +285,6 @@ const Dashboard = () => {
               : "Here's a quick overview of your clinic's activity today."
             }
           </p>
-          </div>
         </div>
         <div className="flex gap-4">
           {/* Show New Appointment button for Doctors, Staff and Superadmins */}
