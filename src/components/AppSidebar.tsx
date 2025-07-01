@@ -62,13 +62,12 @@ export function AppSidebar() {
                         className={cn(
                           "flex items-center py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 group min-h-[48px]",
                           isActiveLink(item.path)
-                            ? "bg-white text-primary shadow-sm border border-primary/20"
+                            ? "bg-white  shadow-sm border "
                             : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
                       )}
                     >
                         <item.icon size={18} className={cn(
                           "mr-3 flex-shrink-0 transition-transform group-hover:scale-105",
-                          isActiveLink(item.path) ? "text-primary" : "text-muted-foreground"
                         )} />
                       <span className="font-medium">{item.label}</span>
                     </NavLink>

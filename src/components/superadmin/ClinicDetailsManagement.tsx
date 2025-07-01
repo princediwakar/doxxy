@@ -229,14 +229,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
       </div>
 
       {/* Form Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Building className="h-5 w-5" />
-            <span>Clinic Information</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      
           {isLoadingClinic ? (
             <div className="space-y-4">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -247,7 +240,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
               ))}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 border border-border rounded-lg p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Clinic Name */}
                 <div className="space-y-2">
@@ -380,8 +373,6 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
               </div>
             </form>
           )}
-        </CardContent>
-      </Card>
     </div>
   );
 };

@@ -1,102 +1,131 @@
 // src/pages/Privacy.tsx
+import React from 'react';
+
+// Helper component for consistent section styling
+const SectionContainer = ({ children, className = '' }) => (
+  <section className={`py-16 md:py-20 ${className}`}>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  </section>
+);
+
+// Modular component for the header
+const PrivacyHeader = ({ title, effectiveDate }) => (
+  <SectionContainer className="bg-white pt-24 md:pt-32 pb-8 md:pb-12">
+    <h1 className="text-4xl lg:text-5xl font-semibold text-gray-900 mb-4 leading-tight tracking-tight">
+      {title}
+    </h1>
+    <p className="text-sm uppercase tracking-wide text-gray-500">
+      Effective Date: {effectiveDate}
+    </p>
+  </SectionContainer>
+);
+
+// Modular component for each privacy section
+const PrivacySection = ({ title, children, isList = false }) => (
+  <SectionContainer className="bg-white border-t border-gray-200">
+    <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-6 leading-snug">
+      {title}
+    </h2>
+    {isList ? (
+      <ul className="list-disc list-inside space-y-4 text-lg text-gray-600 leading-relaxed">
+        {children}
+      </ul>
+    ) : (
+      <p className="text-lg text-gray-600 leading-relaxed">
+        {children}
+      </p>
+    )}
+  </SectionContainer>
+);
+
+// Modular component for contact information
+const PrivacyContactInfo = ({ children }) => (
+  <SectionContainer className="bg-white border-t border-gray-200">
+    <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-6 leading-snug">
+      Contact
+    </h2>
+    <p className="text-lg text-gray-600 leading-relaxed">
+      {children}
+    </p>
+  </SectionContainer>
+);
 
 export default function PrivacyPage() {
   return (
-    <div className="pt-16">
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 text-sm leading-relaxed text-foreground">
-        <h1 className="text-3xl font-semibold mb-6">Privacy Policy for Doxxy</h1>
-        <p className="mb-6">Effective Date: 08-06-2025</p>
+    <div className="font-sans antialiased text-gray-900">
+      <PrivacyHeader
+        title="Privacy Policy for Doxxy"
+        effectiveDate="08-06-2025"
+      />
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">1. Scope</h2>
-          <p>This policy applies to all users of Doxxy including healthcare professionals, clinic staff, and patients.</p>
-        </section>
+      <PrivacySection title="1. Scope">
+        This policy applies to all users of Doxxy including healthcare professionals, clinic staff, and patients.
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">2. Information We Collect</h2>
-          <ul className="list-disc list-inside space-y-2">
-            <li><strong>Patient Information:</strong> Name, contact, DOB, gender, medical history, prescriptions, reports, appointment records.</li>
-            <li><strong>Doctor and Staff Information:</strong> Name, contact, specialization, license details, consultation history.</li>
-            <li><strong>Administrative Data:</strong> Billing records, payment metadata, clinic subscription status.</li>
-            <li><strong>Technical Data:</strong> Device identifiers, IP address, usage logs, error reports.</li>
-            <li><strong>Communication:</strong> Messages, support queries, feedback forms.</li>
-          </ul>
-        </section>
+      <PrivacySection title="2. Information We Collect" isList>
+        <li><strong>Patient Information:</strong> Name, contact, DOB, gender, medical history, prescriptions, reports, appointment records.</li>
+        <li><strong>Doctor and Staff Information:</strong> Name, contact, specialization, license details, consultation history.</li>
+        <li><strong>Administrative Data:</strong> Billing records, payment metadata, clinic subscription status.</li>
+        <li><strong>Technical Data:</strong> Device identifiers, IP address, usage logs, error reports.</li>
+        <li><strong>Communication:</strong> Messages, support queries, feedback forms.</li>
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">3. Purpose of Data Processing</h2>
-          <p>We use data to deliver core Doxxy services, ensure secure healthcare workflows, comply with medical regulations, and enhance operational performance.</p>
-        </section>
+      <PrivacySection title="3. Purpose of Data Processing">
+        We use data to deliver core Doxxy services, ensure secure healthcare workflows, comply with medical regulations, and enhance operational performance.
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">4. Legal Basis</h2>
-          <p>Processing is based on consent, contract necessity, legal obligations, and our legitimate interests in providing secure clinic management software.</p>
-        </section>
+      <PrivacySection title="4. Legal Basis">
+        Processing is based on consent, contract necessity, legal obligations, and our legitimate interests in providing secure clinic management software.
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">5. Data Sharing</h2>
-          <ul className="list-disc list-inside space-y-2">
-            <li>Access controlled sharing with authorized clinic personnel</li>
-            <li>Third-party vendors under confidentiality and compliance agreements</li>
-            <li>Regulatory authorities under legal mandate</li>
-            <li>Patient-initiated consent-based sharing (e.g., insurance)</li>
-          </ul>
-        </section>
+      <PrivacySection title="5. Data Sharing" isList>
+        <li>Access controlled sharing with authorized clinic personnel</li>
+        <li>Third-party vendors under confidentiality and compliance agreements</li>
+        <li>Regulatory authorities under legal mandate</li>
+        <li>Patient-initiated consent-based sharing (e.g., insurance)</li>
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">6. Data Retention</h2>
-          <p>Health records are retained per medical law. Metadata is retained for operational and compliance purposes. Deletion requests are honored where legally permitted.</p>
-        </section>
+      <PrivacySection title="6. Data Retention">
+        Health records are retained per medical law. Metadata is retained for operational and compliance purposes. Deletion requests are honored where legally permitted.
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">7. Data Security</h2>
-          <ul className="list-disc list-inside space-y-2">
-            <li>Encryption at rest and in transit</li>
-            <li>Role-based access controls (RBAC)</li>
-            <li>Regular audits and vulnerability patching</li>
-            <li>Secure cloud infrastructure</li>
-          </ul>
-        </section>
+      <PrivacySection title="7. Data Security" isList>
+        <li>Encryption at rest and in transit</li>
+        <li>Role-based access controls (RBAC)</li>
+        <li>Regular audits and vulnerability patching</li>
+        <li>Secure cloud infrastructure</li>
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">8. Your Rights</h2>
-          <p>You can request access, correction, deletion, or export of your data. Contact us at doxxy@neurovisionhospital.com for any data rights request.</p>
-        </section>
+      <PrivacySection title="8. Your Rights">
+        You can request access, correction, deletion, or export of your data. Contact us at doxxy@neurovisionhospital.com for any data rights request.
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">9. Children's Privacy</h2>
-          <p>Doxxy does not knowingly collect data from individuals under 18 without verified guardian consent. Clinics must verify and document such consent.</p>
-        </section>
+      <PrivacySection title="9. Children's Privacy">
+        Doxxy does not knowingly collect data from individuals under 18 without verified guardian consent. Clinics must verify and document such consent.
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">10. International Transfers</h2>
-          <p>Data transfers outside your jurisdiction comply with applicable cross-border data protection laws and safeguards (e.g., localization, SCCs).</p>
-        </section>
+      <PrivacySection title="10. International Transfers">
+        Data transfers outside your jurisdiction comply with applicable cross-border data protection laws and safeguards (e.g., localization, SCCs).
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">11. Compliance</h2>
-          <ul className="list-disc list-inside space-y-2">
-            <li>India: Digital Personal Data Protection Act, 2023 (DPDP)</li>
-            <li>EU: General Data Protection Regulation (GDPR)</li>
-          </ul>
-        </section>
+      <PrivacySection title="11. Compliance" isList>
+        <li>India: Digital Personal Data Protection Act, 2023 (DPDP)</li>
+        <li>EU: General Data Protection Regulation (GDPR)</li>
+      </PrivacySection>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-2">12. Policy Updates</h2>
-          <p>Material updates will be communicated through the platform or registered email. Continued use after changes constitutes acceptance.</p>
-        </section>
+      <PrivacySection title="12. Policy Updates">
+        Material updates will be communicated through the platform or registered email. Continued use after changes constitutes acceptance.
+      </PrivacySection>
 
-        <section>
-          <h2 className="text-xl font-semibold mb-2">13. Contact</h2>
-          <p>
-            For questions or data rights requests, contact:
-            <br />
-            Doxxy <br />
-            Mumbai, India <br />
-            Email: doxxy@neurovisionhospital.com <br />
-          </p>
-        </section>
-      </div>
+      <PrivacyContactInfo>
+        For questions or data rights requests, contact:
+        <br />
+        Doxxy <br />
+        Mumbai, India <br />
+        Email: doxxy@neurovisionhospital.com <br />
+      </PrivacyContactInfo>
     </div>
   );
 }

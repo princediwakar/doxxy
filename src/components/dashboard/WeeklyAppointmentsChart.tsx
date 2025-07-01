@@ -114,7 +114,7 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Activity size={18} className="text-purple-500" />
+            <Activity size={18} />
             <CardTitle className="text-base">Weekly Appointments</CardTitle>
           </div>
           {totalAppointments > 0 && (
@@ -145,7 +145,6 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
             <BarChart 
               data={data} 
               margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
-              onClick={onBarClick ? handleBarClick : undefined}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis 
@@ -162,7 +161,7 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
               <Tooltip content={<CustomTooltip />} />
               <Bar
                 dataKey="count"
-                fill="#6366f1"
+                fill="#0080ff"
                 radius={[4, 4, 0, 0]}
                 cursor={onBarClick ? 'pointer' : 'default'}
                 onClick={onBarClick ? handleBarClick : undefined}

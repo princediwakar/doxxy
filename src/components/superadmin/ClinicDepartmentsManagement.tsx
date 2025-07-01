@@ -96,20 +96,40 @@ const ClinicDepartmentsManagement = () => {
   const removeDepartmentMutation = useMutation({
     mutationFn: async (clinicDepartmentId: string) => {
       if (!clinicId) throw new Error('Active clinic not found.');
+
+      const { count, error: countError } = await supabase
+        .from('clinic_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('department_id', clinicDepartmentId)
+
+      if (countError) {
+        throw new Error(`Failed to check for department members: ${countError.message}`);
+      }
+
+      if (count && count > 0) {
+        throw new Error(`Cannot remove department: ${count} member(s) are still assigned.`);
+      }
+
       const { error } = await supabase
         .from('clinic_departments')
         .delete()
         .eq('id', clinicDepartmentId);
-      if (error) throw error;
+
+      if (error) {
+        if (error.message.includes('violates foreign key constraint')) {
+          throw new Error("This department is in use and cannot be removed.");
+        }
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clinicDepartmentsForClinic', clinicId] });
-      queryClient.invalidateQueries({ queryKey: ['clinicDepartments', clinicId] }); // Also invalidate for members component
+      queryClient.invalidateQueries({ queryKey: ['clinicDepartments', clinicId] });
       toast.success('Department removed successfully');
     },
     onError: (error: Error) => {
       console.error('Error removing department:', error);
-      toast.error('Failed to remove department: ' + error.message);
+      toast.error(error.message || 'Failed to remove department.');
     },
   });
 
@@ -173,16 +193,16 @@ const ClinicDepartmentsManagement = () => {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-2xl font-bold">Clinic Departments</h2>
+          <h2 className="text-2xl font-bold text-foreground">Clinic Departments</h2>
           <p className="text-muted-foreground">
             Manage medical departments and specialties for your clinic
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge className="status-badge status-active text-sm">
+          <Badge className="status-badge bg-primary/10 text-primary border border-primary/20 text-sm font-medium">
             {activeDepartments.length} Active
           </Badge>
-          <Badge className="status-badge status-primary text-sm">
+          <Badge className="status-badge bg-muted text-muted-foreground border border-border text-sm font-medium">
             {availableDepartments.length} Available
           </Badge>
         </div>
@@ -216,21 +236,21 @@ const ClinicDepartmentsManagement = () => {
       {!isLoading && activeDepartments.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Check className="h-5 w-5 text-success" />
-            <h3 className="text-lg font-semibold text-primary">Active Departments</h3>
+            <Check className="h-5 w-5 text-primary" />
+            <h3 className="text-lg font-semibold text-foreground">Active Departments</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeDepartments.map((department) => (
-              <Card key={department.id} className="border-success/20 bg-success/5">
+              <Card key={department.id} className="border-primary/20 bg-primary/5">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-success/10 text-success">
+                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
                         {getDepartmentIcon(department.name)}
                       </div>
                       <div>
-                        <h4 className="font-medium text-success">{department.name}</h4>
-                        <Badge className="status-badge status-active text-xs">Active</Badge>
+                        <h4 className="font-medium text-primary">{department.name}</h4>
+                        <Badge className="status-badge bg-primary/10 text-primary border border-primary/20 text-xs">Active</Badge>
                       </div>
                     </div>
                     <Button
@@ -254,21 +274,21 @@ const ClinicDepartmentsManagement = () => {
       {!isLoading && availableDepartments.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Plus className="h-5 w-5 text-primary" />
-            <h3 className="text-lg font-semibold text-primary">Available Departments</h3>
+            <Plus className="h-5 w-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold text-foreground">Available Departments</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {availableDepartments.map((department) => (
-              <Card key={department.id} className="hover:border-primary/30 hover:transition-all cursor-pointer">
+              <Card key={department.id} className="hover:border-border hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      <div className="p-2 rounded-lg bg-muted text-muted-foreground">
                         {getDepartmentIcon(department.name)}
                       </div>
                       <div>
-                        <h4 className="font-medium">{department.name}</h4>
-                        <Badge className="status-badge status-pending text-xs">Available</Badge>
+                        <h4 className="font-medium text-foreground">{department.name}</h4>
+                        <Badge className="status-badge bg-muted text-muted-foreground border border-border text-xs">Available</Badge>
                       </div>
                     </div>
                     <Button
@@ -276,7 +296,7 @@ const ClinicDepartmentsManagement = () => {
                       size="sm"
                       onClick={() => handleToggleDepartment(department)}
                       disabled={isLoading}
-                      className="text-primary hover:text-primary hover:bg-primary/10"
+                      className="text-foreground hover:text-foreground hover:bg-muted"
                     >
                       <Plus className="h-4 w-4" />
                     </Button>

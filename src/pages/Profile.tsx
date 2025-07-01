@@ -165,9 +165,9 @@ const Profile = () => {
         title: displayName,
         subtitle: doctorProfile?.primary_specialization || 'Medical Professional',
         icon: Stethoscope,
-        iconClass: "text-primary",
-        bgClass: "bg-primary/10",
-        badge: isHybridSuperadmin ? { text: 'Administrator', icon: Shield } : null
+        iconClass: "",
+        bgClass: "bg-muted",
+        badge: isHybridSuperadmin ? { text: 'Superadmin', icon: Shield } : null
       };
     }
 
@@ -239,7 +239,7 @@ const Profile = () => {
             <IconComponent className={`w-5 h-5 ${roleConfig.iconClass}`} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-primary">Profile</h1>
+            <h1 className="text-3xl font-bold ">Profile</h1>
             <p className="text-muted-foreground">Manage your profile information and settings</p>
           </div>
         </div>

@@ -1,5 +1,3 @@
-// components/Header.tsx
-
 import { memo } from "react";
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -27,6 +25,34 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+// --- MODULAR COMPONENTS ---
+
+const NavLinkItem = ({ to, label, currentPath }) => (
+  <Link 
+    to={to} 
+    className={`text-sm font-medium transition-colors duration-200 ease-in-out 
+      ${currentPath === to ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+  >
+    {label}
+  </Link>
+);
+
+const MobileNavItem = ({ to, label, icon: Icon, onClick, currentPath }) => (
+  <Link
+    to={to}
+    onClick={onClick}
+    className={`flex items-center gap-3 p-3 rounded-lg transition-colors duration-200 ease-in-out 
+      ${currentPath === to 
+        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' 
+        : 'text-muted-foreground hover:bg-gray-100 hover:text-foreground dark:hover:bg-gray-800'}`}
+  >
+    <Icon className="h-5 w-5" />
+    {label}
+  </Link>
+);
+
+// --- MAIN COMPONENT ---
+
 export const AppHeader = memo(() => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -50,67 +76,42 @@ export const AppHeader = memo(() => {
     { href: "/features", label: "Features", icon: Zap },
     { href: "/pricing", label: "Pricing", icon: CreditCard },
     { href: "/comparisons", label: "Comparisons", icon: BarChart3 },
-    { href: "/about", label: "About", icon: Users },
     { href: "/contact", label: "Contact", icon: Phone },
   ];
 
+  const showNav = location.pathname !== '/auth' && location.pathname !== '/complete-profile';
 
   return (
     <>
-      <div className="h-16 fixed top-0 left-0 right-0 z-50 border-b border-border supports-[backdrop-filter]:bg-white/80">
-        <header className="flex justify-between items-center max-w-7xl h-full px-4 mx-auto">
-          <nav className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <div className="flex items-center gap-2">
-                <img src="/logo.svg" alt="Doxxy" className="w-24" />
-              </div>
+      <div className="h-16 fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200 dark:border-gray-700">
+        <header className="flex justify-between items-center max-w-7xl h-full px-6 lg:px-8 mx-auto">
+          <nav className="flex items-center space-x-8" aria-label="Main navigation">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200 ease-in-out">
+              <img src="/logo.svg" alt="Doxxy" className="w-24" />
             </Link>
             
             {/* Desktop Navigation */}
-            {location.pathname !== '/auth' && location.pathname !== '/complete-profile' && (
+            {showNav && ( 
               <div className="hidden lg:flex items-center space-x-6">
                 {navigationItems.slice(1).map((item) => (
-                  <Link 
-                    key={item.href}
+                  <NavLinkItem 
+                    key={item.href} 
                     to={item.href} 
-                    className={`text-sm font-medium transition-colors hover:text-primary ${
-                      location.pathname === item.href 
-                        ? 'text-primary' 
-                        : 'text-muted-foreground'
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
+                    label={item.label} 
+                    currentPath={location.pathname} 
+                  />
                 ))}
-                
-                {/* Resources Dropdown */}
-                {/* <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                    Resources
-                    <ChevronDown className="h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    {resourceItems.map((item) => (
-                      <DropdownMenuItem key={item.href} asChild>
-                        <Link to={item.href} className="flex items-center gap-2 w-full">
-                          <item.icon className="h-4 w-4" />
-                          {item.label}
-                        </Link>
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu> */}
               </div>
             )}
           </nav>
           
           <div className="flex items-center space-x-4">
             {/* CTA Button - only show on non-auth routes */}
-            {location.pathname !== '/auth' && location.pathname !== '/complete-profile' && (
+            {showNav && (
               <Link to="/auth">
                 <Button 
                   size="sm" 
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl shadow-none transition-colors duration-200 ease-in-out"
                 >
                   Get Started
                 </Button>
@@ -118,10 +119,10 @@ export const AppHeader = memo(() => {
             )}
             
             {/* Mobile Menu Button */}
-            {location.pathname !== '/auth' && location.pathname !== '/complete-profile' && (
+            {showNav && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 text-muted-foreground hover:text-primary transition-colors"
+                className="lg:hidden p-2 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-in-out"
                 aria-label="Toggle mobile menu"
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -131,46 +132,19 @@ export const AppHeader = memo(() => {
         </header>
 
         {/* Mobile Navigation Menu */}
-        {mobileMenuOpen && location.pathname !== '/auth' && location.pathname !== '/complete-profile' && (
-          <div className="lg:hidden fixed top-16 left-0 right-0 bg-background border-b border-border shadow-lg">
+        {mobileMenuOpen && showNav && (
+          <div className="lg:hidden fixed top-16 left-0 right-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 shadow-lg z-40 transition-transform duration-300 ease-in-out transform origin-top">
             <nav className="p-4 space-y-3">
               {navigationItems.map((item) => (
-                <Link
+                <MobileNavItem
                   key={item.href}
                   to={item.href}
+                  label={item.label}
+                  icon={item.icon}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                    location.pathname === item.href
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  }`}
-                >
-                  <item.icon className="h-5 w-5" />
-                  {item.label}
-                </Link>
+                  currentPath={location.pathname}
+                />
               ))}
-              
-              {/* Mobile Resources Section */}
-              {/* <div className="pt-3 border-t border-border">
-                <div className="text-xs font-medium text-muted-foreground mb-3 px-3">
-                  RESOURCES
-                </div>
-                {resourceItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-                      location.pathname === item.href
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                    }`}
-                  >
-                    <item.icon className="h-5 w-5" />
-                    {item.label}
-                  </Link>
-                ))}
-              </div> */}
             </nav>
           </div>
         )}

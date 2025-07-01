@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
   Users,
@@ -9,98 +7,79 @@ import {
   Shield,
   Clock,
   FileText,
-  Stethoscope,
   CheckCircle,
   Star,
   ArrowRight,
   Globe,
   Lock,
   BarChart3,
-  Eye,
-  Printer,
-  Activity,
-  Pill,
   TrendingUp,
-  Target,
-  Zap,
-  Heart,
-  Brain,
-  Building,
   Award,
   DollarSign,
-  PhoneCall,
-  UserCheck,
-  Workflow,
   AlertTriangle,
-  X
+  UserCheck,
 } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 
-const LandingPage = () => {
-  const painPoints = [
+// --- DATA ---
+const painPoints = [
     {
       icon: AlertTriangle,
-      title: "Double Bookings & Scheduling Chaos",
-      description: "Manually managing appointments leads to conflicts, no-shows, and frustrated patients.",
-      solution: "Smart appointment system with automated reminders and conflict detection"
+      title: "Scheduling Chaos",
+      description: "Manual appointment management leads to double bookings, no-shows, and frustrated patients.",
+      solution: "Automated reminders & conflict detection"
     },
     {
       icon: FileText,
-      title: "Paper Records & Lost Information",
+      title: "Lost Information",
       description: "Physical files get misplaced, patient history is incomplete, and finding records takes forever.",
-      solution: "Digital patient records with instant search and complete medical timeline"
+      solution: "Instant search & complete digital records"
     },
     {
       icon: DollarSign,
-      title: "Billing Errors & Payment Delays",
+      title: "Billing Errors",
       description: "Manual invoicing creates errors, payment tracking is messy, and revenue gets delayed.",
-      solution: "Automated billing with integrated payment tracking and professional invoices"
+      solution: "Automated billing & payment tracking"
     },
     {
       icon: Clock,
-      title: "Administrative Time Drain",
-      description: "Hours spent on paperwork instead of patient care, reducing clinic efficiency.",
-      solution: "Streamlined workflows that save 3+ hours daily on administrative tasks"
+      title: "Administrative Drain",
+      description: "Hours spent on paperwork instead of patient care, reducing clinic efficiency and revenue.",
+      solution: "Workflows that save 3+ hours daily"
     }
   ];
 
   const features = [
     {
       icon: Calendar,
-      title: "Smart Appointment Management",
-      description: "Streamline scheduling with automated reminders, online booking, and real-time availability.",
-      highlight: "Reduces no-shows by 40%"
+      title: "Smart Scheduling",
+      description: "Automated reminders, online booking, and real-time availability to reduce no-shows by 40%.",
     },
     {
       icon: Users,
-      title: "Comprehensive Patient Records",
+      title: "Patient Records",
       description: "Secure, centralized patient data with medical history, prescriptions, and treatment plans.",
-      highlight: "Complete medical timeline"
     },
     {
       icon: CreditCard,
-      title: "Integrated Billing System",
+      title: "Integrated Billing",
       description: "Automated invoicing, payment tracking, and insurance claim management in one place.",
-      highlight: "Professional invoices"
     },
     {
       icon: FileText,
       title: "Digital Consultations",
-      description: "Record clinical notes, manage prescriptions, and track patient progress efficiently.",
-      highlight: "11+ specialty templates"
+      description: "Record clinical notes, manage prescriptions, and track patient progress with 11+ templates.",
     },
     {
       icon: Globe,
       title: "Multi-Clinic Support",
-      description: "Manage multiple clinic locations with role-based access and data isolation.",
-      highlight: "Unlimited locations"
+      description: "Manage multiple clinic locations with role-based access and centralized data.",
     },
     {
       icon: BarChart3,
-      title: "Analytics & Reporting",
+      title: "Practice Analytics",
       description: "Insightful dashboards with practice metrics, revenue tracking, and performance analytics.",
-      highlight: "Real-time insights"
     }
   ];
 
@@ -109,995 +88,407 @@ const LandingPage = () => {
       icon: TrendingUp,
       value: "2,500+",
       label: "Active Clinics",
-      description: "Healthcare providers trust Doxxy"
     },
     {
       icon: Users,
       value: "50,000+",
       label: "Patients Managed",
-      description: "Comprehensive records maintained"
     },
     {
       icon: Calendar,
       value: "1M+",
       label: "Appointments Scheduled",
-      description: "Seamless booking experiences"
     },
     {
       icon: Award,
       value: "99.9%",
       label: "Uptime Guarantee",
-      description: "Reliable, always-available platform"
     }
   ];
 
   const specialties = [
-    {
-      name: "Cardiology",
-      description: "Heart & vascular specialists",
-      image: "https://images.unsplash.com/photo-1618939304347-e91b1f33d2ab?w=300&h=250&fit=crop",
-      alt: "Cardiologist examining patient with stethoscope",
-      indicatorColor: "bg-destructive"
-    },
-    {
-      name: "Neurology",
-      description: "Brain & nervous system",
-      image: "https://images.unsplash.com/photo-1530497610245-94d3c16cda28?w=300&h=250&fit=crop",
-      alt: "Neurologist examining brain scan",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "Ophthalmology",
-      description: "Comprehensive eye care",
-      image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=300&h=250&fit=crop",
-      alt: "Ophthalmologist performing eye examination",
-      indicatorColor: "bg-success"
-    },
-    {
-      name: "Pediatrics",
-      description: "Specialized child healthcare",
-      image: "https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=300&h=250&fit=crop",
-      alt: "Pediatrician examining child patient",
-      indicatorColor: "bg-accent"
-    },
-    {
-      name: "Dermatology",
-      description: "Skin & aesthetic care",
-      image: "https://images.unsplash.com/photo-1576671081837-49000212a370?w=300&h=250&fit=crop",
-      alt: "Dermatologist examining patient skin condition",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "Orthopedics",
-      description: "Bone & musculoskeletal",
-      image: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=300&h=250&fit=crop",
-      alt: "Orthopedic surgeon examining x-ray",
-      indicatorColor: "bg-accent"
-    },
-    {
-      name: "Psychiatry",
-      description: "Mental health & wellness",
-      image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=250&fit=crop",
-      alt: "Psychiatrist in therapy session consultation",
-      indicatorColor: "bg-secondary"
-    },
-    {
-      name: "General Medicine",
-      description: "Primary healthcare",
-      image: "https://images.unsplash.com/photo-1594824204175-b70147e9cbc5?w=300&h=250&fit=crop",
-      alt: "General practitioner consulting with patient",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "ENT",
-      description: "Ear, nose & throat specialists",
-      image: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=300&h=250&fit=crop",
-      alt: "ENT specialist examining patient's throat",
-      indicatorColor: "bg-accent"
-    },
-    {
-      name: "Gynecology",
-      description: "Women's health & wellness",
-      image: "https://images.unsplash.com/photo-1691934338603-af553029aaa3??w=300&h=250&fit=crop",
-      alt: "Gynecologist consulting with female patient",
-      indicatorColor: "bg-primary"
-    },
-    {
-      name: "Pulmonology",
-      description: "Respiratory & lung care",
-      image: "https://images.unsplash.com/photo-1584515933487-779824d29309?w=300&h=250&fit=crop",
-      alt: "Pulmonologist examining chest x-ray",
-      indicatorColor: "bg-secondary"
-    }
+    { name: "Cardiology", description: "Heart & vascular", image: "https://images.unsplash.com/photo-1618939304347-e91b1f33d2ab?w=400&h=400&fit=crop", alt: "3D Heart Illustration" },
+    { name: "Neurology", description: "Brain & nervous system", image: "https://images.unsplash.com/photo-1679639539537-0d2e452890f7?w=400&h=400&fit=crop", alt: "3D Brain Illustration" },
+    { name: "Ophthalmology", description: "Comprehensive eye care", image: "https://images.unsplash.com/photo-1615552441070-cbe0d49f5ae9?w=400&h=400&fit=crop", alt: "3D Eye Illustration" },
+    { name: "Dermatology", description: "Skin & aesthetic care", image: "https://images.unsplash.com/photo-1700760934166-4c766d708139?w=400&h=400&fit=crop", alt: "3D Skincare Product Illustration" },
+    { name: "Orthopedics", description: "Bone & musculoskeletal", image: "https://images.unsplash.com/photo-1508387104394-d13e1b497f85?w=400&h=400&fit=crop", alt: "3D Bone Illustration" },
+    { name: "Dental", description: "Oral health & hygiene", image: "https://images.unsplash.com/photo-1621516799962-7dad52802428?q=80?w=400&h=400&fit=crop", alt: "3D Tooth Illustration" },
+    { name: "Pulmonology", description: "Oral health & hygiene", image: "https://images.unsplash.com/photo-1743767587847-08c42b31cdec?w=400&h=400&fit=crop", alt: "3D Tooth Illustration" },
+    { name: "ENT", description: "Ear, nose & throat", image: "https://images.unsplash.com/photo-1715111641804-f8af88e93b01?w=400&h=400&fit=crop", alt: "3D Tooth Illustration" },
   ];
-
-  const firstRow = specialties.slice(0, 8);
-  const secondRow = specialties.slice(8);
 
   const testimonials = [
     {
-      name: "Dr. Sarah Johnson",
-      role: "Neurologist, Metro Health Clinic",
-      content: "Doxxy has transformed our practice. Patient management is now seamless, and our staff productivity has increased by 40%.",
-      rating: 5
+      name: "Dr. Priya Sharma",
+      role: "Cardiologist, Apollo Hospitals, Delhi",
+      content: "Doxxy has revolutionized how we manage patient flow. The scheduling is flawless, and it has freed up my team to focus on what matters most—patient care.",
     },
     {
-      name: "Dr. Michael Chen",
-      role: "Ophthalmologist, Vision Care Center",
-      content: "The multi-clinic support is incredible. I can manage all three of my locations from a single dashboard.",
-      rating: 5
+      name: "Dr. Rohan Gupta",
+      role: "Orthopedic Surgeon, Fortis Hospital, Mumbai",
+      content: "The multi-clinic dashboard is a game-changer. I can oversee my practice in Bandra and Andheri from one screen. It's incredibly efficient.",
     },
     {
-      name: "Dr. Anil Sharma",
-      role: "General Practitioner, SmileWell Medical Center",
-      content: "The consultation templates and patient management features are fantastic. Documentation is so much faster now.",
-      rating: 5
+      name: "Anjali Mehta",
+      role: "Practice Manager, Manipal Hospital, Bangalore",
+      content: "The automated billing and invoicing system has cut our administrative workload by at least 50%. It's accurate, professional, and has significantly improved our revenue cycle.",
     },
     {
-      name: "Lisa Rodriguez",
-      role: "Practice Manager, Family Health Group",
-      content: "The billing system alone has saved us hours each week. Everything is automated and error-free.",
-      rating: 5
+      name: "Dr. Vikram Singh",
+      role: "General Physician, Max Healthcare, Gurgaon",
+      content: "I was skeptical about EMRs, but Doxxy is different. It's so intuitive. The consultation templates are tailored perfectly for Indian practice needs.",
     }
   ];
 
-  return (
-    <div className="min-h-screen mx-auto">
-      {/* Enhanced Hero Section */}
-      <section className="relative pt-16 pb-20 px-4">
+// --- MODULAR COMPONENTS ---
 
+const Section = ({ children, className = '' }) => (
+  <section className={`py-24 md:py-32 ${className}`}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  </section>
+);
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center">
-            <div className="flex justify-center mb-6">
-              <Badge variant="outline" className="px-6 py-3 text-primary border-primary/30 ">
-                <Stethoscope className="h-4 w-4 mr-2" />
-                Trusted by 2,500+ Healthcare Providers
-              </Badge>
-            </div>
+const SectionTitle = ({ children, className = '' }) => (
+    <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
+        {children}
+    </h2>
+);
 
-            <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-8 leading-tight">
-              Clinic work,
-              <span className="text-primary block md:inline"> made simple.</span>
-            </h1>
+const SectionSubtitle = ({ children, className = '' }) => (
+    <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
+        {children}
+    </p>
+);
 
-            <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed">
-              Stop fighting with complicated software. Doxxy's intelligent platform handles
-              <span className="text-primary font-semibold"> scheduling, records, and billing</span> so you can focus on
-              <span className="text-foreground font-semibold"> patient care.</span>
-            </p>
+const HeroSection = () => (
+  <section className="py-28 md:py-40 text-center">
+    <div className="max-w-4xl mx-auto px-4">
+      <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+        Clinic work, <br className="md:hidden" />
+        <span className="text-blue-600">made simple.</span>
+      </h1>
+      <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-10">
+        The intelligent platform for modern clinics. Spend less time on admin and more time on what matters: your patients.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+        <Link to="/auth">
+          <Button size="lg" className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">
+            Setup Your Practice for Free
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
+      <div className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /><span>No setup fees</span></div>
+        <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /><span>Cancel anytime</span></div>
+        <div className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-blue-500" /><span>100 free appointments</span></div>
+      </div>
+    </div>
+  </section>
+);
 
-
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-              <Link to="/auth">
-                <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-xl px-10 py-6 text-lg font-semibold rounded-xl transition-all duration-300 hover:scale-105">
-                  Setup Your Practice
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-
-            </div>
-
-            <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="font-medium">No setup fees</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="font-medium">Cancel anytime</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-primary" />
-                <span className="font-medium">Simple & Secure</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-      </section>
-      {/* Success Metrics Banner */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 max-w-4xl mx-auto">
-        {successMetrics.map((metric, index) => (
-          <div key={index} className="text-center p-4 backdrop-blur-sm rounded-xl border border-border/50">
-            <div className="flex justify-center mb-2">
-              <metric.icon className="h-6 w-6 text-primary" />
-            </div>
-            <div className="text-2xl font-bold text-foreground">{metric.value}</div>
-            <div className="text-sm font-medium text-primary">{metric.label}</div>
-            <div className="text-xs text-muted-foreground">{metric.description}</div>
+const SuccessMetrics = ({ metrics }) => (
+  <div className="pb-24 md:pb-32">
+    <div className="max-w-5xl mx-auto px-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        {metrics.map((metric, index) => (
+          <div key={index} className="text-center">
+            <div className="text-4xl md:text-5xl font-bold text-blue-600">{metric.value}</div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-300 mt-1">{metric.label}</div>
           </div>
         ))}
       </div>
-      {/* Pain Points Section */}
-      <section className="py-20 px-4 ">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Problems?
-              <span className="text-red-600 block md:inline"> No Problem.</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Every day, healthcare providers waste hours on preventable administrative chaos.
-              Sound familiar?
-            </p>
+    </div>
+  </div>
+);
+
+const PainPoints = ({ points }) => (
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
+    <SectionTitle>From Chaos to Clarity.</SectionTitle>
+    <SectionSubtitle className="mt-4">We solve the core administrative problems that slow your practice down, so you can focus on patient care.</SectionSubtitle>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
+      {points.map((pain, index) => (
+        <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
+          <div className="flex-shrink-0 w-12 h-12 bg-red-100 dark:bg-red-900/50 rounded-lg flex items-center justify-center mb-4">
+            <pain.icon className="h-6 w-6 text-red-500 dark:text-red-400" />
           </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {painPoints.map((pain, index) => (
-              <div key={index} className="group">
-                <div className="p-8 brounded-2xl border border-red-200/50 hover:border-red-300 transition-all duration-300 hover:shadow-xl">
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="flex-shrink-0 w-14 h-14 bg-red-100 rounded-xl flex items-center justify-center group-hover:bg-red-200 transition-colors">
-                      <pain.icon className="h-7 w-7 text-red-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-foreground mb-3">{pain.title}</h3>
-                      <p className="text-muted-foreground leading-relaxed">{pain.description}</p>
-                    </div>
-                  </div>
-
-                  <div className="border-t pt-6">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-primary mb-1">Doxxy Solution:</h4>
-                        <p className="text-primary/80 text-sm leading-relaxed">{pain.solution}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link to="/auth">
-              <Button size="lg" className="bg-primary text-white hover:bg-primary/90 px-8 py-4 text-lg rounded-xl shadow-lg">
-                <Zap className="mr-2 h-5 w-5" />
-                Solve These Problems Today
-              </Button>
-            </Link>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{pain.title}</h3>
+          <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">{pain.description}</p>
+          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-sm font-medium">
+            <CheckCircle className="h-4 w-4" />
+            <span>{pain.solution}</span>
           </div>
         </div>
-      </section>
+      ))}
+    </div>
+  </Section>
+);
 
-      {/* Social Proof & Testimonials Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Trusted by Healthcare Professionals
-              <span className="text-primary block md:inline"> Across India</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              See what doctors and practice managers are saying about their transformation with Doxxy
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className="border-border/50 hover:shadow-xl transition-all duration-300 hover:scale-105">
-                <CardContent className="p-8">
-                  <div className="flex mb-6">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <p className="text-foreground mb-6 italic text-lg leading-relaxed">"{testimonial.content}"</p>
-                  <div className="border-t pt-6">
-                    <p className="font-bold text-foreground text-lg">{testimonial.name}</p>
-                    <p className="text-sm text-primary font-medium">{testimonial.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-
-        </div>
-      </section>
-
-      {/* Core Features Showcase Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-              See Doxxy's
-              <span className="text-primary block md:inline"> Real Interface</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Don't just read about features - see the actual interface that thousands of doctors use daily.
-              Clean, intuitive, and designed for real clinical workflows.
-            </p>
-          </div>
-
-          {/* Smart Appointment Management Showcase */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
-            <div className="relative">
-              <div className="bg-white rounded-xl shadow-2xl border overflow-hidden">
-                <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-                        <Calendar className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900">Today's Schedule</h3>
-                        <p className="text-sm text-gray-600">December 18, 2024 • 8 appointments</p>
-                      </div>
+const ProductShowcase = () => {
+    const ShowcaseCard = ({ title, description, items }) => (
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-8 h-full flex flex-col">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{title}</h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 flex-grow">{description}</p>
+            <div className="space-y-3">
+                {items.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                        <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                        <span>{item}</span>
                     </div>
-                    <Badge className="bg-primary-100 text-primary-700 px-3 py-1">Live Updates</Badge>
-                  </div>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div className="p-4 bg-green-50 rounded-xl border border-green-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-primary flex items-center gap-2">
-                        <UserCheck className="h-4 w-4" />
-                        Sarah Johnson
-                      </h4>
-                      <Badge className="bg-green-500 text-white text-xs">Checked In</Badge>
-                    </div>
-                    <p className="text-sm text-primary">10:30 AM • General Consultation</p>
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">Start Consultation</Button>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-yellow-900 flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Mike Chen
-                      </h4>
-                      <Badge className="bg-yellow-500 text-white text-xs">Waiting</Badge>
-                    </div>
-                    <p className="text-sm text-yellow-800">11:00 AM • Follow-up Visit</p>
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" variant="outline" className="text-yellow-700 border-yellow-300">View Records</Button>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-blue-900 flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Emma Wilson
-                      </h4>
-                      <Badge className="bg-blue-500 text-white text-xs">Scheduled</Badge>
-                    </div>
-                    <p className="text-sm text-blue-800">2:30 PM • Routine Checkup</p>
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" variant="outline" className="text-blue-700 border-blue-300">Send Reminder</Button>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t">
-                    <Button className="w-full bg-primary hover:bg-primary/90">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Schedule New Appointment
-                    </Button>
-                  </div>
-                </div>
-              </div>
+                ))}
             </div>
+        </div>
+    );
+
+    const MockupCard = ({ children, className = '' }) => (
+        <div className={`bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 shadow-sm border border-gray-200/75 dark:border-gray-700/50 ${className}`}>
+            {children}
+        </div>
+    );
+
+    return (
+        <Section>
+            <SectionTitle>See Doxxy in Action.</SectionTitle>
+            <SectionSubtitle className="mt-4">This is how modern healthcare software should look and feel—powerful, intuitive, and a pleasure to use.</SectionSubtitle>
+
+            <div className="space-y-20 mt-20">
+                {/* Showcase 1: Smart Appointment Management */}
+                <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+                    <ShowcaseCard 
+                        title="Smart Appointment Management"
+                        description="Eliminate double bookings and reduce no-shows. Real-time updates and automated reminders create the smoothest experience for staff and patients."
+                        items={["Automated SMS & Email Reminders", "Real-time Conflict Detection", "Patient Self-Scheduling Portal"]}
+                    />
+                    <MockupCard>
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Today's Schedule</h3>
+                        </div>
+                        <div className="p-4 space-y-3">
+                            <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-500/30">
+                                <div className="flex justify-between items-center"><h4 className="font-semibold text-green-800 dark:text-green-200">Priya Sharma</h4><span className="text-xs font-medium text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/50 px-2 py-1 rounded-full">Checked In</span></div>
+                                <p className="text-sm text-green-700 dark:text-green-300">10:30 AM - Cardiology Consult</p>
+                            </div>
+                            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-200 dark:border-yellow-500/30">
+                                <div className="flex justify-between items-center"><h4 className="font-semibold text-yellow-800 dark:text-yellow-200">Rohan Gupta</h4><span className="text-xs font-medium text-yellow-600 dark:text-yellow-400 bg-yellow-100 dark:bg-yellow-900/50 px-2 py-1 rounded-full">Waiting</span></div>
+                                <p className="text-sm text-yellow-700 dark:text-yellow-300">11:00 AM - Orthopedic Follow-up</p>
+                            </div>
+                             <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-500/30">
+                                <div className="flex justify-between items-center"><h4 className="font-semibold text-blue-800 dark:text-blue-200">Anjali Mehta</h4><span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50 px-2 py-1 rounded-full">Scheduled</span></div>
+                                <p className="text-sm text-blue-700 dark:text-blue-300">11:30 AM - New Patient</p>
+                            </div>
+                        </div>
+                    </MockupCard>
+                </div>
+
+                {/* Showcase 2: Patient Records */}
+                <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+                    <MockupCard className="lg:order-last">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">Patient: Vikram Singh</h3>
+                        </div>
+                        <div className="p-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                                <div><p className="text-gray-500 dark:text-gray-400">Age</p><p className="font-semibold">42</p></div>
+                                <div><p className="text-gray-500 dark:text-gray-400">Gender</p><p className="font-semibold">Male</p></div>
+                                <div><p className="text-gray-500 dark:text-gray-400">Phone</p><p className="font-semibold">+91 98XXXXXX01</p></div>
+                                <div><p className="text-gray-500 dark:text-gray-400">Last Visit</p><p className="font-semibold">12/06/2025</p></div>
+                            </div>
+                            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                <h5 className="font-semibold text-gray-900 dark:text-white mb-2">Recent Consultations</h5>
+                                <div className="text-sm p-2 bg-white dark:bg-gray-700/50 rounded-md">Fever and cough. Prescribed Paracetamol.</div>
+                            </div>
+                        </div>
+                    </MockupCard>
+                    <ShowcaseCard 
+                        title="Complete Patient Records"
+                        description="A comprehensive digital file with complete medical history, notes, and prescriptions. Search thousands of records in seconds."
+                        items={["Searchable Medical Timeline", "Prescription History & Alerts", "One-Click PDF Export"]}
+                    />
+                </div>
+
+                {/* Showcase 3: Practice Dashboard */}
+                <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+                    <ShowcaseCard 
+                        title="Practice Dashboard"
+                        description="Get a complete overview of your practice with real-time metrics. Track patient flow, revenue, and appointment trends at a glance."
+                        items={["Real-time Practice Metrics & KPIs", "Visual Charts for Revenue Trends", "Role-Based Views for Staff"]}
+                    />
+                    <MockupCard>
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700"><h3 className="font-semibold text-gray-900 dark:text-white">Clinic Overview</h3></div>
+                        <div className="p-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 bg-white dark:bg-gray-700/50 rounded-lg text-center"><p className="text-sm text-gray-500 dark:text-gray-400">Appointments</p><p className="text-2xl font-bold text-blue-500">32</p></div>
+                                <div className="p-3 bg-white dark:bg-gray-700/50 rounded-lg text-center"><p className="text-sm text-gray-500 dark:text-gray-400">Revenue</p><p className="text-2xl font-bold text-blue-500">₹45,000</p></div>
+                                <div className="p-3 bg-white dark:bg-gray-700/50 rounded-lg text-center"><p className="text-sm text-gray-500 dark:text-gray-400">Pending</p><p className="text-2xl font-bold text-yellow-500">4</p></div>
+                                <div className="p-3 bg-white dark:bg-gray-700/50 rounded-lg text-center"><p className="text-sm text-gray-500 dark:text-gray-400">Completed</p><p className="text-2xl font-bold text-green-500">28</p></div>
+                            </div>
+                        </div>
+                    </MockupCard>
+                </div>
+
+                 {/* Showcase 4: Professional Billing */}
+                 <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+                    <MockupCard className="lg:order-last">
+                        <div className="p-4 border-b border-gray-200 dark:border-gray-700"><h3 className="font-semibold text-gray-900 dark:text-white">Invoice: #INV-0042</h3></div>
+                        <div className="p-4">
+                            <div className="text-sm space-y-2">
+                                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-300">Consultation</span><span className="font-medium text-gray-800 dark:text-gray-200">₹800.00</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600 dark:text-gray-300">Lab Test</span><span className="font-medium text-gray-800 dark:text-gray-200">₹1200.00</span></div>
+                            </div>
+                            <div className="flex justify-between font-bold text-base border-t border-gray-200 dark:border-gray-700 mt-3 pt-3">
+                                <span className="text-gray-900 dark:text-white">Total</span>
+                                <span className="text-blue-600">₹2000.00</span>
+                            </div>
+                        </div>
+                    </MockupCard>
+                    <ShowcaseCard 
+                        title="Professional Billing"
+                        description="Generate professional invoices, track payments, and manage billing seamlessly. Integrated with appointments for an error-free workflow."
+                        items={["Auto-Generate Invoices", "Payment Tracking & Alerts", "Professional PDF Invoices"]}
+                    />
+                </div>
+            </div>
+        </Section>
+    );
+}
+
+const Specialties = ({ specialties }) => (
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
+    <SectionTitle>Built for Every Specialty.</SectionTitle>
+    <SectionSubtitle className="mt-4">Our platform is built with flexible, specialty-specific workflows for cardiology, dentistry, and everything in between.</SectionSubtitle>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-8 mt-16">
+      {specialties.map((specialty) => (
+        <div key={specialty.name} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200/75 dark:border-gray-700/50 group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+            <div className="relative h-40 w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <img src={specialty.image} alt={specialty.alt} className="w-full h-full object-cover" />
+            </div>
+            <div className="p-4 text-center">
+                <h3 className="font-semibold text-gray-900 dark:text-white">{specialty.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{specialty.description}</p>
+            </div>
+        </div>
+      ))}
+    </div>
+  </Section>
+);
+
+const PricingSection = () => (
+  <Section>
+    <SectionTitle>Fair & Transparent Pricing.</SectionTitle>
+    <SectionSubtitle className="mt-4">One simple, transparent price. No monthly subscriptions, no hidden fees, and no surprises. Ever.</SectionSubtitle>
+    <div className="max-w-md mx-auto mt-16 bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200/75 dark:border-gray-700/50 p-8 text-center">
+        <h3 className="text-5xl font-bold text-gray-900 dark:text-white">₹10</h3>
+        <p className="text-gray-600 dark:text-gray-300 mt-2">per appointment</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">(First 100 are free)</p>
+        <Link to="/auth">
+            <Button size="lg" className="w-full mt-6 bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold">
+                Try Now for Free
+            </Button>
+        </Link>
+        <div className="space-y-3 mt-8 text-left text-sm">
+            <div className="flex items-center gap-3"><CheckCircle className="h-4 w-4 text-blue-500" /><span>Unlimited doctors & staff</span></div>
+            <div className="flex items-center gap-3"><CheckCircle className="h-4 w-4 text-blue-500" /><span>Patient records & scheduling</span></div>
+            <div className="flex items-center gap-3"><CheckCircle className="h-4 w-4 text-blue-500" /><span>Billing & invoicing</span></div>
+            <div className="flex items-center gap-3"><CheckCircle className="h-4 w-4 text-blue-500" /><span>Digital consultations & notes</span></div>
+            <div className="flex items-center gap-3"><CheckCircle className="h-4 w-4 text-blue-500" /><span>Multi-specialty support</span></div>
+          
+
+        </div>
+    </div>
+  </Section>
+);
+
+const CoreFeatures = ({ features }) => (
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
+    <SectionTitle>The Complete Practice Toolkit.</SectionTitle>
+    <SectionSubtitle className="mt-4">We’ve built every feature you need to run a modern practice, all in one cohesive and intuitive platform.</SectionSubtitle>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
+      {features.map((feature) => (
+        <div key={feature.title} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
+          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mb-4">
+            <feature.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">{feature.title}</h3>
+          <p className="text-gray-600 dark:text-gray-300 text-sm">{feature.description}</p>
+        </div>
+      ))}
+    </div>
+  </Section>
+);
+
+const BenefitsSection = () => (
+  <Section>
+    <SectionTitle>The Doxxy Advantage.</SectionTitle>
+    <SectionSubtitle className="mt-4">Secure, scalable, and efficient. Discover the core advantages that make Doxxy the trusted choice for modern clinics.</SectionSubtitle>
+    <div className="grid lg:grid-cols-3 gap-8 mt-16">
+        <div className="flex items-start gap-4">
+            <Shield className="h-8 w-8 text-blue-500 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="text-3xl font-bold text-foreground mb-6">Smart Appointment Management</h3>
-              <p className="text-muted-foreground mb-8 leading-relaxed text-lg">
-                Eliminate double bookings, reduce no-shows by 40%, and keep your schedule organized.
-                Real-time updates, automated reminders, and intelligent conflict detection work together
-                to create the smoothest appointment experience for both staff and patients.
-              </p>
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 brounded-xl border">
-                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Automated SMS & Email Reminders</h4>
-                    <p className="text-muted-foreground text-sm">Reduce no-shows by 40% with smart reminder sequences</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-4 brounded-xl border">
-                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Real-time Conflict Detection</h4>
-                    <p className="text-muted-foreground text-sm">Never double-book again with intelligent scheduling</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4 p-4 brounded-xl border">
-                  <CheckCircle className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                  <div>
-                    <h4 className="font-semibold text-foreground mb-1">Patient Self-Scheduling Portal</h4>
-                    <p className="text-muted-foreground text-sm">Let patients book online 24/7 with automatic confirmations</p>
-                  </div>
-                </div>
-              </div>
+                <h4 className="font-semibold text-gray-900 dark:text-white text-lg">Bank-Level Security</h4>
+                <p className="text-gray-600 dark:text-gray-300">Advanced encryption and data isolation. HIPAA-compliant with 99.9% uptime.</p>
             </div>
-          </div>
-
-          {/* Patient Records Showcase */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
-            <div className="order-2 lg:order-1">
-              <h3 className="text-2xl font-bold text-foreground mb-4">Complete Patient Medical Records</h3>
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                Every patient gets a comprehensive digital file with their complete medical history, consultation notes, prescriptions, and timeline. Search through thousands of records in seconds.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Complete medical timeline with searchable history</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Prescription history with drug interaction alerts</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">One-click PDF export of complete medical records</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Family medical history tracking</span>
-                </div>
-              </div>
-            </div>
-            <div className="order-1 lg:order-2 relative">
-              <div className="bg-white rounded-lg shadow-xl border overflow-hidden">
-                <div className="p-4 border-b">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <Users className="h-5 w-5 text-primary" />
-                      Patient Records
-                    </h3>
-                    <Button size="sm">Export PDF</Button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-                  <div className="space-y-2">
-                    <div className="p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                      <p className="font-medium text-sm">Sarah Johnson</p>
-                      <p className="text-xs text-muted-foreground">Last visit: Dec 15</p>
-                    </div>
-                    <div className="p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                      <p className="font-medium text-sm">Mike Chen</p>
-                      <p className="text-xs text-muted-foreground">Last visit: Dec 12</p>
-                    </div>
-                    <div className="p-2 border rounded hover:bg-gray-50 cursor-pointer bg-primary/5 border-primary/30">
-                      <p className="font-medium text-sm">John Doe</p>
-                      <p className="text-xs text-muted-foreground">Last visit: Today</p>
-                    </div>
-                  </div>
-                  <div className="md:col-span-2 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">John Doe</h4>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline">Edit</Button>
-                        <Button size="sm" variant="outline">Schedule</Button>
-                      </div>
-                    </div>
-                    <div className="space-y-2 text-sm">
-                      <p><span className="text-muted-foreground">Age:</span> 35 • Male</p>
-                      <p><span className="text-muted-foreground">Phone:</span> +91 98765 43210</p>
-                      <p><span className="text-muted-foreground">Last Visit:</span> Today</p>
-                    </div>
-                    <div className="border-t pt-3">
-                      <h5 className="font-medium mb-2">Recent Consultations</h5>
-                      <div className="space-y-2">
-                        <div className="p-2 bg-gray-50 rounded text-xs">
-                          <p className="font-medium">Dec 18, 2024 - Headache consultation</p>
-                          <p className="text-muted-foreground">Prescribed: Acetaminophen 500mg</p>
-                        </div>
-                        <div className="p-2 bg-gray-50 rounded text-xs">
-                          <p className="font-medium">Nov 15, 2024 - Routine checkup</p>
-                          <p className="text-muted-foreground">Normal examination</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Dashboard Showcase */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
-            <div className="relative">
-              <div className="bg-white rounded-lg shadow-xl border overflow-hidden">
-                <div className="p-6 border-b">
-                  <h3 className="font-semibold flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5 text-primary" />
-                    Practice Dashboard
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-blue-900">Total Patients</span>
-                      </div>
-                      <p className="text-2xl font-bold text-blue-600">1,247</p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <span className="text-sm font-medium text-primary">Appointments</span>
-                      </div>
-                      <p className="text-2xl font-bold text-primary">3,892</p>
-                    </div>
-                    <div className="p-4 bg-yellow-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Clock className="h-4 w-4 text-yellow-600" />
-                        <span className="text-sm font-medium text-yellow-900">Pending</span>
-                      </div>
-                      <p className="text-2xl font-bold text-yellow-600">8</p>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Stethoscope className="h-4 w-4 text-purple-600" />
-                        <span className="text-sm font-medium text-purple-900">Completed</span>
-                      </div>
-                      <p className="text-2xl font-bold text-purple-600">3,847</p>
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Today's Appointments</h4>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div>
-                          <p className="font-medium text-sm">Sarah Johnson</p>
-                          <p className="text-xs text-muted-foreground">10:30 AM - Routine Checkup</p>
-                        </div>
-                        <Badge variant="outline">Scheduled</Badge>
-                      </div>
-                      <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div>
-                          <p className="font-medium text-sm">Mike Chen</p>
-                          <p className="text-xs text-muted-foreground">2:15 PM - Follow-up</p>
-                        </div>
-                        <Badge className="bg-primary/10 text-primary">Completed</Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        </div>
+        <div className="flex items-start gap-4">
+            <Users className="h-8 w-8 text-blue-500 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="text-2xl font-bold text-foreground mb-4">Smart Practice Dashboard</h3>
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                Get a complete overview of your practice with real-time metrics, upcoming appointments, and performance insights. Track patient flow, revenue trends, and appointment completion rates at a glance.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Real-time practice metrics and KPIs</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Visual charts for revenue and appointment trends</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Quick appointment scheduling from dashboard</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Role-based views for doctors, staff, and admins</span>
-                </div>
-              </div>
+                <h4 className="font-semibold text-gray-900 dark:text-white text-lg">Scale Without Limits</h4>
+                <p className="text-gray-600 dark:text-gray-300">Add unlimited staff without per-user charges. Pricing scales with your patient volume, not team size.</p>
             </div>
-          </div>
-
-          {/* Billing Showcase */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="order-2 lg:order-1">
-              <h3 className="text-2xl font-bold text-foreground mb-4">Professional Billing & Invoicing</h3>
-              <p className="text-muted-foreground mb-6 leading-relaxed">
-                Generate professional invoices with clinic letterhead, track payments, and manage billing across multiple services. Complete integration with appointments and consultations for seamless workflow.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Auto-generate invoices from appointments</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Multiple service billing with itemized costs</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Payment tracking and outstanding balance alerts</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-success mr-3" />
-                  <span className="text-foreground">Professional PDF invoices with clinic branding</span>
-                </div>
-              </div>
-            </div>
-            <div className="order-1 lg:order-2 relative">
-              <div className="bg-white rounded-lg shadow-xl border overflow-hidden">
-                <div className="p-6 border-b bg-gradient-to-r from-green-50 to-blue-50">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold">INVOICE</h3>
-                    <Badge>Paid</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">Invoice #: INV-2024-001247</p>
-                  <p className="text-sm text-muted-foreground">Date: December 18, 2024</p>
-                </div>
-                <div className="p-6 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Billed To:</h4>
-                      <p className="text-sm">John Doe</p>
-                      <p className="text-sm text-muted-foreground">+91 98765 43210</p>
-                    </div>
-                    <div>
-                      <h4 className="font-medium mb-2">From:</h4>
-                      <p className="text-sm">Metro Health Clinic</p>
-                      <p className="text-sm text-muted-foreground">Dr. Sarah Johnson</p>
-                    </div>
-                  </div>
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium mb-3">Services</h4>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>General Consultation</span>
-                        <span>₹500.00</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Prescription & Follow-up</span>
-                        <span>₹200.00</span>
-                      </div>
-                      <div className="border-t pt-2 flex justify-between font-semibold">
-                        <span>Total</span>
-                        <span>₹700.00</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <Button size="sm" className="flex-1">
-                      <Printer className="h-4 w-4 mr-2" />
-                      Print
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1">
-                      <Eye className="h-4 w-4 mr-2" />
-                      View PDF
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-      </section>
-
-
-
-      {/* Healthcare Specialties Showcase */}
-      <section className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Serving Every Specialty, Every Size
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Specialized consultation workflows for every medical discipline. From solo practitioners to multi-specialty hospitals, Doxxy's intelligent forms adapt to your clinical requirements.
-            </p>
-          </div>
-
-              
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
-
-                
-                  {firstRow.map((specialty, index) => (
-                    <div key={index} className="text-center group">
-                      <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
-                        <img
-                          src={specialty.image}
-                          alt={specialty.alt}
-                          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                        <div className="absolute bottom-2 left-2 text-secondary">
-                          <div className={`w-2 h-2 ${specialty.indicatorColor} rounded-full animate-pulse`}></div>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-lg">{specialty.name}</h3>
-                      <p className="text-sm text-muted-foreground">{specialty.description}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {secondRow.map((specialty, index) => (
-                    <div key={index} className="text-center group">
-                      <div className="relative overflow-hidden rounded-xl mb-4 shadow-lg">
-                        <img
-                          src={specialty.image}
-                          alt={specialty.alt}
-                          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
-                        <div className="absolute bottom-2 left-2 text-secondary">
-                          <div className={`w-2 h-2 ${specialty.indicatorColor} rounded-full animate-pulse`}></div>
-                        </div>
-                      </div>
-                      <h3 className="font-semibold text-lg">{specialty.name}</h3>
-                      <p className="text-sm text-muted-foreground">{specialty.description}</p>
-                    </div>
-                  ))}
-                </div>
-
-
-          <div className="text-center mt-12">
-            <p className="text-sm text-muted-foreground/70 mb-4">Each specialty comes with intelligent forms, mandatory field validation, and specialty-specific workflows</p>
-            <Link to="/auth">
-              <Button size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4">
-                Explore Your Specialty
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing & Value Props Section */}
-      <section className="py-20 px-4 ">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Simple Pricing That
-              <span className="text-primary block md:inline"> Actually Makes Sense</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-4xl mx-auto">
-              Stop paying monthly fees for software you barely use. With Doxxy's per-appointment pricing,
-              you only pay when you actually see patients.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-            <div className="relative">
-              <div className="bg-white rounded-2xl shadow-2xl border p-8 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/10 rounded-full blur-2xl"></div>
-                <div className="relative">
-                  <div className="text-center mb-8">
-                    <div className="inline-flex items-center gap-3 mb-4">
-                      <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-                        <DollarSign className="h-8 w-8 text-primary" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="text-3xl font-bold text-gray-900">₹10</h3>
-                        <p className="text-primary font-medium">per appointment</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 mb-8">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span className="text-gray-700"><strong>First 100 appointments FREE</strong> forever</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span className="text-gray-700">Unlimited doctors & staff</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span className="text-gray-700">Complete patient records system</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span className="text-gray-700">Smart appointment scheduling</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span className="text-gray-700">Professional billing & invoicing</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                      <span className="text-gray-700">Multi-specialty consultation templates</span>
-                    </div>
-                  </div>
-
-                  <Link to="/auth">
-                    <Button className="w-full bg-primary hover:bg-primary/90 text-white py-4 text-lg font-semibold rounded-xl">
-                      Start Free Trial Now
-                    </Button>
-                  </Link>
-
-                  <p className="text-center text-sm text-gray-500 mt-4">
-                    No credit card required • Cancel anytime • No hidden fees
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-8">
-              <div>
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border">
-                    <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <X className="h-6 w-6 text-red-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 ">Other Software</h4>
-                      <p className="text-gray-600">₹2,000-15,000/month regardless of patient volume. Pay even during slow months.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-green-200">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <CheckCircle className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-primary mb-2">Doxxy</h4>
-                      <p className="text-primary/80">₹10 only when you see patients. 100 free appointments to start. Grow at your own pace.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-6 rounded-xl">
-                <h4 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Perfect for Growing Practices
-                </h4>
-                <ul className="space-y-2 text-blue-800">
-                  <li>• Start completely free with 100 appointments</li>
-                  <li>• Scale costs with your patient volume</li>
-                  <li>• No sudden pricing jumps or user limits</li>
-                  <li>• Add unlimited staff without extra charges</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Enhanced Features Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Everything You Need to Run Your
-              <span className="text-primary block md:inline"> Practice</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              From appointment scheduling to billing, Doxxy provides all the tools
-              you need to deliver exceptional patient care.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="border-border/50 hover:border-primary/30 transition-all duration-300 hover:shadow-xl hover:scale-105 group">
-                <CardContent className="p-8">
-                  <div className="flex items-center mb-6">
-                    <div className="p-4 bg-primary/10 rounded-xl mr-4 group-hover:bg-primary/20 transition-colors">
-                      <feature.icon className="h-8 w-8 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-foreground">{feature.title}</h3>
-                      <Badge variant="outline" className="text-xs text-primary mt-1">{feature.highlight}</Badge>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed text-lg">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-16">
-            <Link to="/features">
-              <Button size="lg" variant="outline" className="px-8 py-4 text-lg border-primary/30 hover:bg-primary/5 rounded-xl">
-                Explore All Features
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Why Healthcare Professionals Choose Doxxy
-            </h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Join thousands of medical professionals who have transformed their practice operations with intelligent, cost-effective healthcare management software.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16">
+        <div className="flex items-start gap-4">
+            <Clock className="h-8 w-8 text-blue-500 flex-shrink-0 mt-1" />
             <div>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4 p-6 brounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
-                  <div className="flex-shrink-0 w-14 h-14 bg-accent rounded-xl flex items-center justify-center">
-                    <BarChart3 className="h-7 w-7 text-accent-foreground" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-foreground mb-2 text-lg">Start Free, Grow Confidently</h4>
-                    <p className="text-muted-foreground leading-relaxed">Your first 100 appointments are completely free forever. No credit card required, no time limits, no feature restrictions. Experience the full platform before committing to anything.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-6 brounded-xl shadow-lg border border-border hover:shadow-xl transition-shadow">
-                  <div className="flex-shrink-0 w-14 h-14 bg-primary rounded-xl flex items-center justify-center">
-                    <Shield className="h-7 w-7 text-primary" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-foreground mb-2 text-lg">Bank-Level Security & Compliance</h4>
-                    <p className="text-muted-foreground leading-relaxed">Advanced encryption, multi-factor authentication, and complete data isolation between clinics. HIPAA-compliant infrastructure with 99.9% uptime guarantee and automated backups.</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
-                  <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Users className="h-7 w-7 text-secondary " />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 mb-2 text-lg">Scale Without Limits or Extra Fees</h4>
-                    <p className="text-gray-600 leading-relaxed">Add unlimited doctors, nurses, and administrative staff without per-user charges. Manage multiple clinics from one dashboard. Pricing scales with your patient volume, not your team size.</p>
-                  </div>
-                </div>
-              </div>
+                <h4 className="font-semibold text-gray-900 dark:text-white text-lg">Save Time, Daily</h4>
+                <p className="text-gray-600 dark:text-gray-300">Automated workflows for appointments, billing, and records save clinics over 3 hours every day.</p>
             </div>
-
-            <div className="relative">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-6">
-                  <Card className="p-8 text-center bg-primary/10 border-primary/20 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-primary rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Clock className="h-10 w-10 text-primary-foreground" />
-                    </div>
-                    <h4 className="font-bold text-foreground mb-2 text-lg">3+ Hours Saved</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Daily administrative time savings through automated workflows and intelligent scheduling</p>
-                  </Card>
-
-                  <Card className="p-8 text-center bg-success/10 border-success/20 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-success rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Lock className="h-10 w-10 text-success-foreground" />
-                    </div>
-                    <h4 className="font-bold text-foreground mb-2 text-lg">100% Data Security</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Zero data breaches with enterprise-grade security and complete clinic data isolation</p>
-                  </Card>
-                </div>
-
-                <div className="space-y-6 mt-8">
-                  <Card className="p-8 text-center bg-secondary/10 border-secondary/20 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-secondary rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <FileText className="h-10 w-10 text-secondary-foreground" />
-                    </div>
-                    <h4 className="font-bold text-foreground mb-2 text-lg">11+ Specialties</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Custom workflows for cardiology, neurology, pediatrics, and more medical specialties</p>
-                  </Card>
-
-                  <Card className="p-8 text-center bg-accent/10 border-accent/20 hover:scale-105 transition-transform">
-                    <div className="w-20 h-20 bg-accent rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Globe className="h-10 w-10 text-accent-foreground" />
-                    </div>
-                    <h4 className="font-bold text-foreground mb-2 text-lg">Multi-Clinic Ready</h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed">Seamlessly manage multiple locations with unified reporting and centralized billing</p>
-                  </Card>
-                </div>
-              </div>
-
-              <div className="absolute -top-6 -right-6 w-32 h-32 bg-primary/10 rounded-full opacity-10 animate-pulse"></div>
-              <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-success/10 rounded-full opacity-10 animate-pulse delay-1000"></div>
-            </div>
-          </div>
-
         </div>
-      </section>
+    </div>
+  </Section>
+);
 
+const TestimonialsSection = ({ testimonials }) => (
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
+    <SectionTitle>Trusted by India's Leading Doctors.</SectionTitle>
+    <SectionSubtitle className="mt-4">Don’t just take our word for it. Here’s what leading doctors and practice managers across India are saying about Doxxy.</SectionSubtitle>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16">
+      {testimonials.map((testimonial) => (
+        <figure key={testimonial.name} className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50">
+          <div className="flex mb-4">
+            {[...Array(5)].map((_, i) => (<Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />))}
+          </div>
+          <blockquote className="text-gray-700 dark:text-gray-300 mb-6">
+            <p>"{testimonial.content}"</p>
+          </blockquote>
+          <figcaption className="text-sm">
+            <div className="font-bold text-gray-900 dark:text-white">{testimonial.name}</div>
+            <div className="text-gray-500 dark:text-gray-400">{testimonial.role}</div>
+          </figcaption>
+        </figure>
+      ))}
+    </div>
+  </Section>
+);
+
+// --- MAIN LANDING PAGE ---
+
+const LandingPage = () => {
+  return (
+    <div className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
+      <HeroSection />
+      {/* <SuccessMetrics metrics={successMetrics} /> */}
+      <PainPoints points={painPoints} />
+      <ProductShowcase />
+      <Specialties specialties={specialties} />
+      <PricingSection />
+      <CoreFeatures features={features} />
+      <BenefitsSection />
+      <TestimonialsSection testimonials={testimonials} />
       <SignupCTA />
       <SiteFooter />
     </div>
   );
 };
 
-export default LandingPage; 
+export default LandingPage;

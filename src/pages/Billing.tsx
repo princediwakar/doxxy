@@ -135,11 +135,11 @@ const Billing = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-              <CreditCard className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+              <CreditCard className="w-5 h-5 " />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-primary">Billing</h1>
+              <h1 className="text-3xl font-bold ">Billing</h1>
               <p className="text-muted-foreground">Manage patient bills and payments</p>
             </div>
           </div>
@@ -277,7 +277,6 @@ const Billing = () => {
 };
 
 export default Billing;
-
 
 
 

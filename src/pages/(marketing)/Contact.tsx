@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,11 +12,199 @@ import {
   Building2,
   Globe,
   Calendar,
-  CheckCircle
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
 import { getSupabase } from "@/integrations/supabase/client";
+
+// --- REUSABLE COMPONENTS ---
+
+const Section = ({ children, className = '' }) => (
+  <section className={`py-24 md:py-32 ${className}`}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  </section>
+);
+
+const SectionTitle = ({ children, className = '' }) => (
+  <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
+    {children}
+  </h2>
+);
+
+const SectionSubtitle = ({ children, className = '' }) => (
+  <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
+    {children}
+  </p>
+);
+
+// --- MODULAR SUBCOMPONENTS ---
+
+const HeroSection = () => (
+  <Section className="text-center !pt-28 md:!pt-40">
+    <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+      We're Here to Help.
+    </h1>
+    <SectionSubtitle>
+      Have questions about Doxxy? Our team of healthcare technology experts is ready to help you transform your practice.
+    </SectionSubtitle>
+  </Section>
+);
+
+const ThankYouMessage = ({ onSendAnother }) => (
+  <div className="max-w-md mx-auto text-center p-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/75 dark:border-gray-700/50">
+    <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
+      <CheckCircle className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+    </div>
+    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+      Thank You!
+    </h3>
+    <p className="text-gray-600 dark:text-gray-300 mb-6">
+      We've received your message and will get back to you within 24 hours.
+    </p>
+    <Button onClick={onSendAnother} className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold">
+      Send Another Message
+    </Button>
+  </div>
+);
+
+const ContactForm = ({ formData, handleChange, handleSubmit, isSubmitting, error }) => (
+  <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50">
+    <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">Send us a Message</h3>
+    <p className="text-gray-600 dark:text-gray-300 text-center mb-8">Fill out the form below and we'll get back to you within 24 hours.</p>
+    
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div>
+        <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message *</label>
+        <Textarea
+          id="message"
+          required
+          rows={5}
+          value={formData.message}
+          onChange={(e) => handleChange('message', e.target.value)}
+          placeholder="Tell us more about your practice and how we can help..."
+          className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
+        />
+      </div>
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name *</label>
+          <Input
+            id="name"
+            required
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            placeholder="Dr. John Smith"
+            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
+          />
+        </div>
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address *</label>
+          <Input
+            id="email"
+            type="email"
+            required
+            value={formData.email}
+            onChange={(e) => handleChange('email', e.target.value)}
+            placeholder="john@example.com"
+            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
+          />
+        </div>
+        <div>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
+          <Input
+            id="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={(e) => handleChange('phone', e.target.value)}
+            placeholder="+91 80-1234-5678"
+            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
+          />
+        </div>
+        <div>
+          <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Practice/Organization Name</label>
+          <Input
+            id="company"
+            value={formData.company}
+            onChange={(e) => handleChange('company', e.target.value)}
+            placeholder="ABC Medical Center"
+            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
+          />
+        </div>
+        <div>
+          <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">City</label>
+          <Input
+            id="city"
+            value={formData.city}
+            onChange={(e) => handleChange('city', e.target.value)}
+            placeholder="Bengaluru"
+            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
+          />
+        </div>
+      </div>
+      {error && (
+        <div className="text-red-500 dark:text-red-400 mb-4 text-sm">
+          {error}
+        </div>
+      )}
+      <Button 
+        type="submit" 
+        size="lg" 
+        className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold"
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? 'Sending...' : 'Send Message'}
+      </Button>
+    </form>
+  </div>
+);
+
+const ContactInfoCard = ({ icon: Icon, title, details, description }) => (
+  <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
+    <div className="flex items-start space-x-4">
+      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
+        <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+      </div>
+      <div className="flex-1">
+        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
+        {details.map((detail, idx) => (
+          <p key={idx} className="text-gray-700 dark:text-gray-300 font-medium">{detail}</p>
+        ))}
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{description}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const OfficeCard = ({ city, country, address, phone, email, image }) => (
+  <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200/75 dark:border-gray-700/50">
+    <img 
+      src={image} 
+      alt={`${city} office`} 
+      className="w-full h-48 object-cover"
+    />
+    <div className="p-6">
+      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{city}, {country}</h3>
+      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+        <p className="flex items-center"><MapPin className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />{address}</p>
+        <p className="flex items-center"><Phone className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />{phone}</p>
+        <p className="flex items-center"><Mail className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />{email}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const FAQItem = ({ question, answer }) => (
+  <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
+    <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-2">{question}</h3>
+    <p className="text-gray-600 dark:text-gray-300">{answer}</p>
+  </div>
+);
+
+// --- MAIN PAGE COMPONENT ---
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -43,7 +229,7 @@ const Contact = () => {
       const supabase = getSupabase();
       
       // Call the RPC function to submit the contact form
-      const { data, error } = await supabase.rpc('submit_contact_form', {
+      const { data, error: rpcError } = await supabase.rpc('submit_contact_form', {
         name: formData.name,
         email: formData.email,
         phone: formData.phone || null,
@@ -52,8 +238,8 @@ const Contact = () => {
         message: formData.message
       });
       
-      if (error) {
-        throw new Error(error.message || 'Failed to submit form');
+      if (rpcError) {
+        throw new Error(rpcError.message || 'Failed to submit form');
       }
       
       console.log('Contact form submitted successfully with ID:', data);
@@ -109,13 +295,13 @@ const Contact = () => {
 
   const contactInfo = [
       {
-        icon: <Phone className="h-6 w-6" />,
+        icon: Phone,
         title: "Call Us",
         details: ["+91 7388890554"],
         description: "Speak directly with our team during business hours"
       },
     {
-      icon: <Mail className="h-6 w-6" />,
+      icon: Mail,
       title: "Email Us",
       details: ["doxxyapp@gmail.com"],
       description: "Get in touch via email for support or sales inquiries"
@@ -161,301 +347,79 @@ const Contact = () => {
     }
   ];
 
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-success/5 flex items-center justify-center px-4">
-        <Card className="max-w-md mx-auto text-center p-8">
-          <div className="mx-auto mb-6 p-3 bg-success/10 rounded-full w-fit">
-            <CheckCircle className="h-12 w-12 text-success" />
-          </div>
-          <CardTitle className="text-2xl font-bold text-foreground mb-4">
-            Thank You!
-          </CardTitle>
-          <CardDescription className="text-muted-foreground mb-6">
-            We've received your message and will get back to you within 24 hours. 
-            A member of our team will contact you soon.
-          </CardDescription>
-          <Button onClick={() => setIsSubmitted(false)} className="w-full">
-            Send Another Message
-          </Button>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-success/5">
-      
-      {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
-        <div className="max-w-7xl mx-auto text-center">
-          <Badge variant="outline" className="mb-4 px-4 py-2">
-            Get in Touch
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            We're Here to
-            <span className="text-primary"> Help</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-            Have questions about Doxxy? Want to schedule a demo? Our team of healthcare 
-            technology experts is ready to help you transform your practice.
-          </p>
-        </div>
-      </section>
-
-      {/* Contact Form & Info */}
-      <section className=" px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid lg:grid-cols-3 gap-12">
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <Card className="p-8">
-                <CardHeader className="text-center pb-8">
-                  <CardTitle className="text-2xl font-bold">Send us a Message</CardTitle>
-                  <CardDescription>
-                    Fill out the form below and we'll get back to you within 24 hours.
-                  </CardDescription>
-                </CardHeader>
-                
-                <CardContent>
-                  {isSubmitted ? (
-                    <div className="text-center py-8">
-                      <div className="mx-auto w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mb-4">
-                        <CheckCircle className="h-6 w-6 text-success" />
-                      </div>
-                      <h3 className="text-xl font-semibold text-foreground mb-2">
-                        Message Sent Successfully!
-                      </h3>
-                      <p className="text-muted-foreground mb-6">
-                        Thank you for reaching out. We'll get back to you within 24 hours at {formData.email}.
-                      </p>
-                      <Button onClick={() => {
-                        setFormData({
-                          name: '',
-                          email: '',
-                          phone: '',
-                          company: '',
-                          city: '',
-                          message: '',
-                        });
-                        setIsSubmitted(false);
-                      }}>
-                        Send Another Message
-                      </Button>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Message *
-                      </label>
-                      <Textarea
-                        required
-                        rows={5}
-                        value={formData.message}
-                        onChange={(e) => handleChange('message', e.target.value)}
-                        placeholder="Tell us more about your practice and how we can help..."
-                      />
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-
-                    
-
-                      <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        Practice/Organization Name
-                      </label>
-                      <Input
-                        value={formData.company}
-                        onChange={(e) => handleChange('company', e.target.value)}
-                        placeholder="ABC Medical Center"
-                      />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          City
-                        </label>
-                        <Input
-                          value={formData.city}
-                          onChange={(e) => handleChange('city', e.target.value)}
-                          placeholder="Bengaluru"
-                        />
-                      </div>
-                      <div>
-                    
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Full Name *
-                        </label>
-                        <Input
-                          required
-                          value={formData.name}
-                          onChange={(e) => handleChange('name', e.target.value)}
-                          placeholder="Dr. John Smith"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Email Address *
-                        </label>
-                        <Input
-                          type="email"
-                          required
-                          value={formData.email}
-                          onChange={(e) => handleChange('email', e.target.value)}
-                          placeholder="john@example.com"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-foreground mb-2">
-                          Phone Number
-                        </label>
-                        <Input
-                          type="tel"
-                          value={formData.phone}
-                          onChange={(e) => handleChange('phone', e.target.value)}
-                          placeholder="+91 80-1234-5678"
-                        />
-                      </div>
-                     
-                    </div>
-
-                  
-
-
-
-
-                    {error && (
-                      <div className="text-destructive mb-4 text-sm">
-                        {error}
-                      </div>
-                    )}
-                    <Button 
-                      type="submit" 
-                      size="lg" 
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Sending...' : 'Send Message'}
-                    </Button>
-                                      </form>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Contact Information */}
-            <div className="space-y-6">
-              {contactInfo.map((info, index) => (
-                <Card key={index} className="p-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                      {info.icon}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground mb-2">{info.title}</h3>
-                      {info.details.map((detail, idx) => (
-                        <p key={idx} className="text-primary font-medium">{detail}</p>
-                      ))}
-                      <p className="text-sm text-muted-foreground mt-2">{info.description}</p>
-                    </div>
+    <div className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
+      {isSubmitted ? (
+        <ThankYouMessage onSendAnother={() => {
+          setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            company: '',
+            city: '',
+            message: '',
+          });
+          setIsSubmitted(false);
+        }} />
+      ) : (
+        <>
+          <HeroSection />
+          <Section className="bg-gray-50 dark:bg-gray-800/50">
+            <div className="grid lg:grid-cols-3 gap-8">
+              <ContactForm 
+                formData={formData}
+                handleChange={handleChange}
+                handleSubmit={handleSubmit}
+                isSubmitting={isSubmitting}
+                error={error}
+              />
+              <div className="space-y-8">
+                {contactInfo.map((info, index) => (
+                  <ContactInfoCard key={index} {...info} />
+                ))}
+                {/* Quick Demo CTA */}
+                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50 text-center">
+                  <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                   </div>
-                </Card>
-              ))}
-
-              {/* Quick Demo CTA */}
-              <Card className="p-6 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
-                <div className="text-center">
-                  <Calendar className="h-8 w-8 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Book a Demo</h3>
-                  <p className="text-sm opacity-90 mb-4">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Book a Demo</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                     See Doxxy in action with a personalized demo
                   </p>
-                  <Button variant="secondary" size="sm" className="w-full">
+                  <Button size="lg" className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold">
                     Schedule Now
                   </Button>
                 </div>
-              </Card>
+              </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </Section>
 
-      {/* Global Offices */}
-      {/* <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Our Global Offices
-            </h2>
-            <p className="text-lg text-gray-600">
-              Visit us in person or reach out to our local teams.
-            </p>
-          </div>
+          {/* Global Offices (Commented) */}
+          {/* <Section>
+            <SectionTitle>Our Global Offices</SectionTitle>
+            <SectionSubtitle className="mt-4">Visit us in person or reach out to our local teams.</SectionSubtitle>
+            <div className="grid md:grid-cols-2 gap-8 mt-16">
+              {offices.map((office, index) => (
+                <OfficeCard key={index} {...office} />
+              ))}
+            </div>
+          </Section> */}
 
-          <div className="grid md:grid-cols-2 gap-8">
-            {offices.map((office, index) => (
-              <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <img 
-                  src={office.image} 
-                  alt={`${office.city} office`}
-                  className="w-full h-48 object-cover"
-                />
-                <CardContent className="p-6">
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {office.city}, {office.country}
-                  </h3>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <p className="flex items-center">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      {office.address}
-                    </p>
-                    <p className="flex items-center">
-                      <Phone className="h-4 w-4 mr-2" />
-                      {office.phone}
-                    </p>
-                    <p className="flex items-center">
-                      <Mail className="h-4 w-4 mr-2" />
-                      {office.email}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section> */}
-
-      {/* FAQ Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Quick answers to common questions about Doxxy.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            {faqs.map((faq, index) => (
-              <Card key={index} className="p-6">
-                <h3 className="font-semibold text-foreground mb-3">{faq.question}</h3>
-                <p className="text-muted-foreground">{faq.answer}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
+          <Section className="bg-gray-50 dark:bg-gray-800/50">
+            <SectionTitle>Frequently Asked Questions.</SectionTitle>
+            <SectionSubtitle className="mt-4">Quick answers to common questions about Doxxy.</SectionSubtitle>
+            <div className="max-w-3xl mx-auto mt-16 space-y-8">
+              {faqs.map((faq, index) => (
+                <FAQItem key={index} {...faq} />
+              ))}
+            </div>
+          </Section>
+        </>
+      )}
       <SignupCTA />
       <SiteFooter />
     </div>
   );
 };
 
-export default Contact; 
+export default Contact;

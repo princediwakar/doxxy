@@ -172,9 +172,9 @@ export function MedicalTimeline({
   const getEventColor = (type: string, status?: string) => {
     switch (type) {
       case 'consultation':
-        return 'border-l-blue-500 bg-blue-50';
+        return 'border-l-primary bg-primary/5';
       case 'prescription':
-        return 'border-l-green-500 bg-green-50';
+        return 'border-l-green-500 bg-success/5';
       case 'appointment':
         if (status === 'Completed') return 'border-l-purple-500 bg-purple-50';
         if (status === 'Cancelled') return 'border-l-red-500 bg-red-50';
@@ -222,12 +222,12 @@ export function MedicalTimeline({
         {timelineEvents.map((event, index) => (
           <Card 
             key={event.id} 
-            className={`border-l-4 ${getEventColor(event.type, event.status)} transition-all hover:shadow-md`}
+            className={` ${getEventColor(event.type, event.status)} transition-all hover:shadow-md`}
           >
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-3 flex-1">
-                  <div className="p-2 rounded-full bg-white shadow-sm">
+                  <div className="p-2 rounded-full bg-muted shadow-sm">
                     {getEventIcon(event.type)}
                   </div>
                   <div className="flex-1 space-y-2">

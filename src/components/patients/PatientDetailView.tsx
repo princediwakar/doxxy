@@ -30,11 +30,11 @@ export const PatientDetailView = ({
 }: PatientDetailViewProps) => {
     return (
         <div className="space-y-6">
-            <Card className="border-l-4 border-l-primary">
+            <Card className="">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <div>
-                            <CardTitle className="text-xl text-primary">{patient.name}</CardTitle>
+                            <CardTitle className="text-xl ">{patient.name}</CardTitle>
                             <p className="text-muted-foreground">
                                 {patient.gender} • Age {getAge(patient.date_of_birth)} •
                                 Medical ID: {patient.medical_id || 'Not assigned'}
@@ -116,7 +116,7 @@ export const PatientDetailView = ({
                 <TabsContent value="consultations" className="space-y-4">
                     <Card className="">
                         <CardHeader>
-                            <CardTitle className="flex items-center space-x-2 text-primary">
+                            <CardTitle className="flex items-center space-x-2 ">
                                 <Stethoscope className="h-5 w-5" />
                                 <span>Consultation History</span>
                                 <Badge variant="default" className="status-badge status-active">{patient.consultations.length}</Badge>
@@ -132,7 +132,7 @@ export const PatientDetailView = ({
                                 ) : (
                                     <div className="space-y-4">
                                         {patient.consultations.map((consultation) => (
-                                            <Card key={consultation.id} className="border-l-4 border-l-primary hover:transition-shadow">
+                                            <Card key={consultation.id} className=" hover:transition-shadow">
                                                 <CardContent className="p-4">
                                                     <div className="flex items-start justify-between">
                                                         <div className="space-y-2">
@@ -199,7 +199,7 @@ export const PatientDetailView = ({
                                         {patient.prescriptions.map((prescription) => (
                                             <Card
                                                 key={prescription.id}
-                                                className="border-l-4 border-l-green-500 cursor-pointer hover:shadow-md transition-shadow"
+                                                className=" cursor-pointer hover:shadow-md transition-shadow"
                                                 onClick={() => onViewPrescription(prescription)}
                                             >
                                                 <CardContent className="p-4">

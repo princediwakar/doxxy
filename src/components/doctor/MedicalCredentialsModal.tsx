@@ -74,7 +74,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { activeClinic } = useAuth();
-  const [activeTab, setActiveTab] = useState("registration");
+  const [activeTab, setActiveTab] = useState("practice");
 
   const { data: departments = [] } = useQuery({
     queryKey: ['clinicDepartments', activeClinic?.clinics?.id],

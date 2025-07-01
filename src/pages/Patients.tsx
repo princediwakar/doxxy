@@ -390,15 +390,11 @@ const PatientRecords = () => {
               isLoading={isLoading}
             />
           ) : (
-            <Card>
-              <CardContent className="p-8">
-                <div className="text-center text-muted-foreground">
+                <div className="p-8 text-center text-muted-foreground">
                   <User className="h-12 w-12 mx-auto mb-3 opacity-50" />
                   <p>Select a patient to view their medical records</p>
                   <p className="text-sm mt-2">Click on a patient from the list to see their complete medical history, consultations, and prescriptions.</p>
                 </div>
-              </CardContent>
-            </Card>
           )}
         </div>
       </div>

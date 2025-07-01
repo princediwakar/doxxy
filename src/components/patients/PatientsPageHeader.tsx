@@ -11,11 +11,11 @@ export const PatientsPageHeader = ({ onNewPatient, onExport, isPatientSelected }
   return (
     <div className="flex justify-between items-start">
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-          <User className="w-5 h-5 text-primary" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+          <User className="w-5 h-5 " />
         </div>
         <div>
-          <h1 className="text-3xl font-bold text-primary">Patient Records</h1>
+          <h1 className="text-3xl font-bold ">Patient Records</h1>
           <p className="text-muted-foreground">Comprehensive patient medical history and records</p>
         </div>
       </div>

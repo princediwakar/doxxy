@@ -68,7 +68,7 @@ export function UpcomingAppointmentsList({
     <Card className="col-span-1">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center">
-          <CalendarCheck size={18} className="mr-2 text-purple-500" />
+          <CalendarCheck size={18} className="mr-2 " />
           <CardTitle className="text-base">Upcoming Appointments</CardTitle>
         </div>
         {showViewAllButton && onViewAll && (

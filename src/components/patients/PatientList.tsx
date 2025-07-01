@@ -4,34 +4,8 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getAge } from "@/lib/utils";
 import { User } from "lucide-react";
-import { Database } from '@/integrations/supabase/types';
-import { PatientWithConsultations } from "@/types/patients";
+import {  PatientWithConsultations } from "@/types/patients";
 
-type Patient = Database['public']['Tables']['patients']['Row'];
-type Prescription = Database['public']['Tables']['prescriptions']['Row'];
-type Consultation = Database['public']['Tables']['consultations']['Row'];
-
-interface ConsultationWithAppointment extends Consultation {
-  appointment: {
-    id?: string;
-    clinic_id?: string;
-    patient_id?: string;
-    doctor_id?: string;
-    date: string;
-    time: string;
-    type?: string;
-    status?: string;
-    notes?: string;
-    created_at?: string;
-    doctor_name: string;
-    department_name: string;
-  };
-}
-
-interface PatientWithConsultations extends Patient {
-  consultations: ConsultationWithAppointment[];
-  prescriptions: Prescription[];
-}
 
 interface PatientListProps {
   isLoading: boolean;
@@ -57,10 +31,10 @@ export const PatientList = ({
   return (
     <Card className="">
       <CardHeader>
-        <CardTitle className="flex items-center space-x-2 text-primary">
+        <CardTitle className="flex items-center space-x-2 ">
           <User className="h-5 w-5" />
           <span>Patients</span>
-          <Badge variant="default" className="status-badge status-active">{totalCount}</Badge>
+          <Badge variant="default" className="status-badge ">{totalCount}</Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -76,14 +50,14 @@ export const PatientList = ({
               {(patients || []).map((patient) => (
                 <div
                   key={patient.id}
-                  className={`p-4 cursor-pointer transition-colors border-b hover:bg-primary/5 ${selectedPatient?.id === patient.id ? 'bg-primary/10 border-primary/20' : ''
+                  className={`p-4 cursor-pointer transition-colors border-b hover:bg-primary/10 ${selectedPatient?.id === patient.id ? 'bg-primary/10 border-primary/20' : ''
                     }`}
                   onClick={() => setSelectedPatient(patient)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User className="h-5 w-5 text-primary" />
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-5 w-5 " />
                       </div>
                       <div>
                         <h4 className="font-medium">{patient.name}</h4>
@@ -96,8 +70,8 @@ export const PatientList = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <Badge variant="default" className="text-xs status-badge status-active">
-                        {patient.consultations.length} visits
+                      <Badge variant="outline" className="text-xs">
+                        {patient.consultations.length === 1 ? patient.consultations.length + ' visit' : patient.consultations.length + ' visits'}
                       </Badge>
                     </div>
                   </div>

@@ -1,17 +1,136 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { toast } from "sonner";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { getSupabase } from "@/integrations/supabase/client";
-import { Eye, EyeOff, Mail, Lock, Text, Stethoscope, Heart, Shield } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Text } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
+import React from "react";
 
 const supabase = getSupabase();
 
 type AuthFlow = "login" | "signup" | "invite" | "reset" | "update-password";
+
+
+
+interface AuthFormProps {
+  onSubmit: (e: React.FormEvent) => void;
+  children: React.ReactNode;
+}
+
+const AuthForm: React.FC<AuthFormProps> = ({ onSubmit, children }) => (
+  <form onSubmit={onSubmit} className="space-y-4">
+    {children}
+  </form>
+);
+
+interface PasswordFieldProps {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder: string;
+  showPassword?: boolean;
+  toggleShowPassword?: () => void;
+  required?: boolean;
+}
+
+const PasswordField: React.FC<PasswordFieldProps> = ({
+  value,
+  onChange,
+  placeholder,
+  showPassword,
+  toggleShowPassword,
+  required = false,
+}) => (
+  <div className="relative">
+    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <Input
+      type={showPassword ? "text" : "password"}
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      className="pl-9 py-2 text-base rounded-lg border border-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+      required={required}
+      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
+    />
+    {toggleShowPassword && (
+      <button
+        type="button"
+        className="absolute right-3 top-1/2 -translate-y-1/2"
+        onClick={toggleShowPassword}
+      >
+        {showPassword ? (
+          <EyeOff className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <Eye className="h-4 w-4 text-muted-foreground" />
+        )}
+      </button>
+    )}
+  </div>
+);
+
+const OAuthDivider: React.FC = () => (
+  <div className="relative flex items-center py-4">
+    <div className="flex-grow border-t border-muted-foreground/20" />
+    <span className="mx-4 text-muted-foreground text-xs font-sans">or</span>
+    <div className="flex-grow border-t border-foreground/20" />
+  </div>
+);
+
+interface GoogleButtonProps {
+  onClick: () => void;
+  loading: boolean;
+}
+
+const GoogleButton: React.FC<GoogleButtonProps> = ({ onClick, loading }) => (
+  <Button
+    onClick={onClick}
+    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border bg-white hover:bg-muted/20 text-foreground font-medium"
+    variant="outline"
+    disabled={loading}
+    style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
+  >
+    <img src="/google.svg" alt="Google" className="h-5 w-5" />
+    {loading ? "Signing in..." : "Sign in with Google"}
+  </Button>
+);
+
+interface FormFooterSwitcherProps {
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+}
+
+const FormFooterSwitcher: React.FC<FormFooterSwitcherProps> = ({ activeTab, setActiveTab }) => (
+  <p className="text-center text-sm text-muted-foreground font-sans pt-4">
+    {activeTab === "login" ? (
+      <>
+        Don't have an account?{" "}
+        <button
+          type="button"
+          onClick={() => setActiveTab("signup")}
+          className="text-primary hover:underline cursor-pointer font-medium"
+        >
+          Sign Up
+        </button>
+        .
+      </>
+    ) : (
+      <>
+        Already have an account?{" "}
+        <button
+          type="button"
+          onClick={() => setActiveTab("login")}
+          className="text-primary hover:underline cursor-pointer font-medium"
+        >
+          Log in
+        </button>{" "}
+        instead.
+      </>
+    )}
+  </p>
+);
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -359,342 +478,226 @@ const Auth = () => {
   const showTabs = authFlow === "login" || authFlow === "signup";
 
   return (
-    <div className="min-h-screen pt-16">
-      <div className="flex items-center justify-center">
-        <Card className="w-full max-w-md border-primary/10">
-          <CardHeader className="space-y-4 text-center">
-            <div className="flex items-center justify-center">
-              <img src="/logo.svg" alt="Doxxy" className="w-32 " />
-            </div>
-            <div>
-              <CardDescription className="text-base">
-                {getCardDescription()}
-              </CardDescription>
-            </div>
-          </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Google OAuth Button */}
+    <div className="flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8 font-sans">
+      <div className="w-full max-w-md">
+        <div className="space-y-4 text-center px-6 pt-8 pb-4">
+          <div className="flex items-center justify-center">
+            <img src="/logo.svg" alt="Doxxy" className="w-32" />
+          </div>
+          <p className="text-base text-muted-foreground font-sans">{getCardDescription()}</p>
+        </div>
+        <div className="space-y-4 px-6 pb-6">
           {showGoogleButton && (
             <>
-              <Button
-                onClick={handleGoogleSignIn}
-                className="w-full flex items-center justify-center gap-2 border-primary/20 hover:bg-primary/5 hover:border-primary/30"
-                variant="outline"
-                disabled={googleLoading}
-              >
-                <img src="/google.svg" alt="Google" className="h-5 w-5" />
-                {googleLoading ? "Signing in..." : "Sign in with Google"}
-              </Button>
-              <div className="flex items-center my-2">
-                <div className="flex-grow border-t border-muted-foreground/20" />
-                <span className="mx-2 text-muted-foreground text-xs">or</span>
-                <div className="flex-grow border-t border-muted-foreground/20" />
-              </div>
+              <GoogleButton onClick={handleGoogleSignIn} loading={googleLoading} />
+              <OAuthDivider />
             </>
           )}
 
-          {/* Password setting form for invites */}
           {authFlow === "invite" && (
-            <form onSubmit={handleSetPassword}>
-              <div className="space-y-4">
-                <div className="relative">
-                  <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="New Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-8"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2.5 top-2.5"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-8"
-                    required
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
-                  disabled={loading}
-                >
-                  {loading ? "Setting password..." : "Set Password & Continue"}
-                </Button>
-              </div>
-            </form>
+            <AuthForm onSubmit={handleSetPassword}>
+              <PasswordField
+                placeholder="New Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                showPassword={showPassword}
+                toggleShowPassword={() => setShowPassword(!showPassword)}
+                required
+              />
+              <PasswordField
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                showPassword={showPassword}
+                toggleShowPassword={() => setShowPassword(!showPassword)}
+                required
+              />
+              <Button
+                type="submit"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 rounded-lg font-medium"
+                disabled={loading}
+              >
+                {loading ? "Setting password..." : "Set Password & Continue"}
+              </Button>
+            </AuthForm>
           )}
 
-          {/* Password update form for password reset */}
           {authFlow === "update-password" && (
-            <form onSubmit={handleSetPassword}>
-              <div className="space-y-4">
-                <div className="relative">
-                  <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="New Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-8"
-                    required
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2.5 top-2.5"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    ) : (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
-                    )}
-                  </button>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-8"
-                    required
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
-                  disabled={loading}
-                >
-                  {loading ? "Updating password..." : "Update Password"}
-                </Button>
-              </div>
-            </form>
+            <AuthForm onSubmit={handleSetPassword}>
+              <PasswordField
+                placeholder="New Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                showPassword={showPassword}
+                toggleShowPassword={() => setShowPassword(!showPassword)}
+                required
+              />
+              <PasswordField
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                showPassword={showPassword}
+                toggleShowPassword={() => setShowPassword(!showPassword)}
+                required
+              />
+              <Button
+                type="submit"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 rounded-lg font-medium"
+                disabled={loading}
+              >
+                {loading ? "Updating password..." : "Update Password"}
+              </Button>
+            </AuthForm>
           )}
 
-          {/* Forgot password form */}
           {authFlow === "reset" && (
-            <form onSubmit={handleForgotPassword}>
-              <div className="space-y-4">
-                <div className="flex items-center relative">
-                  <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-8"
-                    required
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
-                  disabled={loading}
-                >
-                  {loading ? "Sending..." : "Send Reset Email"}
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  className="w-full" 
-                  onClick={() => setAuthFlow("login")}
-                >
-                  Back to Login
-                </Button>
+            <AuthForm onSubmit={handleForgotPassword}>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-9 py-2 text-base rounded-lg border border-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+                  required
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
+                />
               </div>
-            </form>
+              <Button
+                type="submit"
+                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 rounded-lg font-medium"
+                disabled={loading}
+              >
+                {loading ? "Sending..." : "Send Reset Email"}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full text-primary hover:bg-primary/5 py-2 rounded-lg font-medium"
+                onClick={() => setAuthFlow("login")}
+              >
+                Back to Login
+              </Button>
+            </AuthForm>
           )}
 
-          {/* Regular login/signup tabs */}
           {showTabs && (
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid grid-cols-2 w-full bg-muted/30">
-                <TabsTrigger 
+              <TabsList className="grid grid-cols-2 w-full bg-muted/30 rounded-lg p-1">
+                <TabsTrigger
                   value="login"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md py-2 font-medium"
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
                 >
                   Login
                 </TabsTrigger>
-                <TabsTrigger 
+                <TabsTrigger
                   value="signup"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-md py-2 font-medium"
+                  style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
                 >
                   Sign Up
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="space-y-4 pt-4">
-                <form onSubmit={handleLogin}>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-9"
-                        required
-                      />
-                    </div>
+                <AuthForm onSubmit={handleLogin}>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-9 py-2 text-base rounded-lg border border-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+                      required
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
+                    />
+                  </div>
 
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-9"
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-2.5 top-2.5"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </button>
-                    </div>
+                  <PasswordField
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    showPassword={showPassword}
+                    toggleShowPassword={() => setShowPassword(!showPassword)}
+                    required
+                  />
 
-                    <div className="flex justify-end">
-                      <Button 
-                        type="button" 
-                        variant="link" 
-                        className="text-sm p-0 h-auto"
-                        onClick={() => setAuthFlow("reset")}
-                      >
-                        Forgot password?
-                      </Button>
-                    </div>
-
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
-                      disabled={loading}
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      variant="link"
+                      className="text-sm p-0 h-auto text-primary hover:underline font-medium"
+                      onClick={() => setAuthFlow("reset")}
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
                     >
-                      {loading ? "Logging in..." : "Log In"}
+                      Forgot password?
                     </Button>
                   </div>
-                </form>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 rounded-lg font-medium"
+                    disabled={loading}
+                  >
+                    {loading ? "Logging in..." : "Log In"}
+                  </Button>
+                </AuthForm>
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4 pt-4">
-                <form onSubmit={handleSignup}>
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Text className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="text"
-                        placeholder="Full Name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="pl-8"
-                        required
-                      />
-                    </div>
-                    <div className="relative">
-                      <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="email"
-                        placeholder="Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-8"
-                        required
-                      />
-                    </div>
-
-                    <div className="relative">
-                      <Lock className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-8"
-                        required
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-2.5 top-2.5"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </button>
-                    </div>
-
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90 " 
-                      disabled={loading}
-                    >
-                      {loading ? "Creating account..." : "Sign Up"}
-                    </Button>
+                <AuthForm onSubmit={handleSignup}>
+                  <div className="relative">
+                    <Text className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="Full Name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="pl-9 py-2 text-base rounded-lg border border-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+                      required
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
+                    />
                   </div>
-                </form>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-9 py-2 text-base rounded-lg border border-input focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0"
+                      required
+                      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
+                    />
+                  </div>
+
+                  <PasswordField
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    showPassword={showPassword}
+                    toggleShowPassword={() => setShowPassword(!showPassword)}
+                    required
+                  />
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary text-primary-foreground hover:bg-primary/90 py-2 rounded-lg font-medium"
+                    disabled={loading}
+                  >
+                    {loading ? "Creating account..." : "Sign Up"}
+                  </Button>
+                </AuthForm>
               </TabsContent>
             </Tabs>
           )}
-        </CardContent>
-        <CardFooter className="flex-col">
           {showTabs && (
-            <p className="text-center text-sm text-muted-foreground">
-              {activeTab === "login" ? (
-                <>
-                  Don't have an account? Go to{" "}
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("signup")}
-                    className="text-primary hover:underline cursor-pointer"
-                  >
-                    Sign Up
-                  </button>
-                  .
-                </>
-              ) : (
-                <>
-                  Already have an account?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("login")}
-                    className="text-primary hover:underline cursor-pointer"
-                  >
-                    Log in
-                  </button>{" "}
-                  instead.
-                </>
-              )}
-            </p>
+            <FormFooterSwitcher activeTab={activeTab} setActiveTab={setActiveTab} />
           )}
-        </CardFooter>
-      </Card>
+        </div>
       </div>
     </div>
   );

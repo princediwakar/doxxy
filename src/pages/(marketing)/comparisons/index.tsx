@@ -1,6 +1,4 @@
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { 
   ArrowRight, 
@@ -16,191 +14,178 @@ import { Link } from 'react-router-dom';
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from '@/components/SignupCTA';
 
+// --- DATA ---
+const comparisons = [
+  {
+    title: "Doxxy vs Eka Care",
+    description: "See how our innovative pricing and comprehensive features provide better value compared to Eka Care.",
+    icon: DollarSign,
+    link: "/comparisons/doxxy-vs-eka-care",
+    badge: "Most Popular"
+  },
+  {
+    title: "Doxxy vs Practo",
+    description: "Discover why our dedicated clinic management platform offers a more streamlined experience than Practo.",
+    icon: Shield,
+    link: "/comparisons/doxxy-vs-practo"
+  },
+  {
+    title: "Doxxy vs ClinicPlus",
+    description: "Compare our modern, cloud-based approach with ClinicPlus's traditional software model.",
+    icon: Smartphone,
+    link: "/comparisons/doxxy-vs-clinicplus"
+  },
+  {
+    title: "Doxxy vs Lybrate",
+    description: "Learn why we provide a more complete clinic solution compared to Lybrate's consultation-focused platform.",
+    icon: MessageSquare,
+    link: "/comparisons/doxxy-vs-lybrate"
+  },
+  {
+    title: "Doxxy vs MFine",
+    description: "See how our hybrid approach offers more flexibility than MFine's telemedicine-centric model.",
+    icon: FileText,
+    link: "/comparisons/doxxy-vs-mfine"
+  }
+];
+
+const whyCompareItems = [
+    { icon: BarChart3, title: "Understand Pricing Models", description: "See how different pricing structures affect your practice's costs as you grow." },
+    { icon: Shield, title: "Evaluate Feature Sets", description: "Compare essential features across platforms to ensure you get what you need." },
+    { icon: Zap, title: "Assess Implementation Ease", description: "Understand the time and effort required to get up and running." },
+    { icon: MessageSquare, title: "Read User Experiences", description: "Learn from healthcare professionals who have already made the switch." },
+];
+
+// --- REUSABLE COMPONENTS ---
+
+const Section = ({ children, className = '' }) => (
+  <section className={`py-24 md:py-32 ${className}`}>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  </section>
+);
+
+const SectionTitle = ({ children, className = '' }) => (
+  <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
+    {children}
+  </h2>
+);
+
+const SectionSubtitle = ({ children, className = '' }) => (
+  <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
+    {children}
+  </p>
+);
+
+// --- PAGE SECTIONS ---
+
+const HeroSection = () => (
+  <Section className="text-center !py-28 md:!py-40">
+    <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+      How Doxxy Compares.
+    </h1>
+    <SectionSubtitle>
+      See how Doxxy stacks up against other platforms. Discover why our transparent pricing and comprehensive features make us the preferred choice for modern clinics.
+    </SectionSubtitle>
+    <div className="mt-10 flex justify-center gap-4">
+      <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">
+        <Link to="/auth">Get Started for Free</Link>
+      </Button>
+      <Button size="lg" variant="outline" asChild className="rounded-xl px-8 py-3 text-base font-semibold dark:text-gray-300 dark:border-gray-600">
+        <Link to="/pricing">View Pricing</Link>
+      </Button>
+    </div>
+  </Section>
+);
+
+const ComparisonsGridSection = () => (
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
+    <SectionTitle>Detailed Comparisons.</SectionTitle>
+    <SectionSubtitle className="mt-4">
+      We've created feature-by-feature comparisons to help you make an informed decision for your practice.
+    </SectionSubtitle>
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
+      {comparisons.map((comp) => (
+        <Link key={comp.title} to={comp.link} className="block bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+          <div className="flex justify-between items-start">
+            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mb-4">
+                <comp.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            {comp.badge && <div className="text-xs bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-1 rounded-full font-medium">{comp.badge}</div>}
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{comp.title}</h3>
+          <p className="text-gray-600 dark:text-gray-300 mt-2 mb-6">{comp.description}</p>
+          <div className="flex items-center text-blue-600 dark:text-blue-400 font-medium">
+            Read Comparison <ArrowRight className="ml-2 h-4 w-4" />
+          </div>
+        </Link>
+      ))}
+    </div>
+  </Section>
+);
+
+const WhyCompareSection = () => (
+  <Section>
+    <div className="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
+          An Informed Decision is the Right Decision.
+        </h2>
+        <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
+          Choosing the right software is critical. Our guides help you compare pricing, features, and user experiences to find the perfect fit for your practice.
+        </p>
+        <ul className="space-y-6">
+          {whyCompareItems.map((item) => (
+            <li key={item.title} className="flex items-start">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                <item.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">{item.title}</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">{item.description}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="hidden md:block">
+        <img 
+          src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=500&fit=crop" 
+          alt="Doctor comparing healthcare platforms" 
+          className="rounded-2xl shadow-xl"
+        />
+      </div>
+    </div>
+  </Section>
+);
+
+const QuestionsSection = () => (
+  <Section className="bg-gray-50 dark:bg-gray-800/50 text-center">
+    <SectionTitle>Still Have Questions?</SectionTitle>
+    <SectionSubtitle className="mt-4">
+      Our team is ready to help you compare Doxxy with any platform you're currently using or considering.
+    </SectionSubtitle>
+    <div className="mt-8 flex justify-center gap-4">
+      <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold">
+        <Link to="/contact">Contact Our Team</Link>
+      </Button>
+      <Button size="lg" variant="outline" asChild className="rounded-xl px-8 py-3 text-base font-semibold dark:text-gray-300 dark:border-gray-600">
+        <Link to="/faq">View FAQ</Link>
+      </Button>
+    </div>
+  </Section>
+);
+
+// --- MAIN PAGE COMPONENT ---
+
 const ComparisonIndex = () => {
-  const comparisons = [
-    {
-      title: "Doxxy vs Eka Care",
-      description: "See how Doxxy's innovative pricing model and comprehensive feature set provides better value for healthcare practices compared to Eka Care.",
-      icon: <DollarSign className="h-8 w-8 text-primary" />,
-      link: "/comparisons/doxxy-vs-eka-care",
-      badge: "Most Popular"
-    },
-    {
-      title: "Doxxy vs Practo",
-      description: "See how Doxxy's dedicated clinic management platform offers better value and a more streamlined experience compared to Practo.",
-      icon: <Shield className="h-8 w-8 text-primary" />,
-      link: "/comparisons/doxxy-vs-practo"
-    },
-    {
-      title: "Doxxy vs ClinicPlus",
-      description: "Compare Doxxy's modern, cloud-based approach with ClinicPlus's traditional software model & discover why Doxxy is better.",
-      icon: <Smartphone className="h-8 w-8 text-primary" />,
-      link: "/comparisons/doxxy-vs-clinicplus"
-    },
-    {
-      title: "Doxxy vs Lybrate",
-      description: "Learn why Doxxy provides a more comprehensive clinic management solution compared to Lybrate's consultation-focused platform.",
-      icon: <MessageSquare className="h-8 w-8 text-destructive" />,
-      link: "/comparisons/doxxy-vs-lybrate"
-    },
-    {
-      title: "Doxxy vs MFine",
-      description: "Discover how Doxxy's hybrid approach to in-clinic and telemedicine appointments offers more flexibility than MFine's telemedicine-centric model.",
-      icon: <FileText className="h-8 w-8 text-primary" />,
-      link: "/comparisons/doxxy-vs-mfine"
-    }
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
-        <div className="max-w-7xl mx-auto text-center">
-          <Badge variant="outline" className="mb-4 px-4 py-2">
-            Comparisons
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            How Doxxy
-            <span className="text-primary"> Compares</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            See how Doxxy stacks up against other healthcare management platforms.
-            Discover why our transparent pricing and comprehensive feature set make us the preferred choice.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link to="/auth">
-                Start Free Practice
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link to="/pricing">View Pricing</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Comparisons Grid */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Detailed Comparisons
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              We've created detailed, feature-by-feature comparisons to help you make an informed decision.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {comparisons.map((comparison, index) => (
-              <Link key={index} to={comparison.link} className="block">
-                <Card className="hover:shadow-lg transition-all cursor-pointer">
-                  <CardHeader>
-                    <div className="flex items-center justify-between mb-4">
-                      {comparison.icon}
-                      {comparison.badge && (
-                        <Badge className="bg-primary">{comparison.badge}</Badge>
-                      )}
-                    </div>
-                    <CardTitle className="text-xl">{comparison.title}</CardTitle>
-                    <CardDescription className="text-gray-600">{comparison.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center text-primary font-medium">
-                      Read Comparison
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Compare Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Why Compare Healthcare Platforms?
-              </h2>
-              <p className="text-lg text-gray-600 mb-6">
-                Choosing the right healthcare management software is a critical decision that impacts your practice's efficiency, patient experience, and bottom line. Our comparison guides help you:
-              </p>
-              <ul className="space-y-4">
-                <li className="flex items-start">
-                  <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <BarChart3 className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Understand Pricing Models</p>
-                    <p className="text-gray-600">See how different pricing structures affect your practice's costs as you grow.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Shield className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Evaluate Feature Sets</p>
-                    <p className="text-gray-600">Compare essential features across platforms to ensure you get what you need.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <Zap className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Assess Implementation Ease</p>
-                    <p className="text-gray-600">Understand how much time and effort is required to get up and running.</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-blue-100 p-2 rounded-full mr-3">
-                    <MessageSquare className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Read User Experiences</p>
-                    <p className="text-gray-600">Learn from healthcare professionals who have already made the switch.</p>
-                  </div>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <img 
-                src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=600&h=500&fit=crop" 
-                alt="Doctor comparing healthcare platforms" 
-                className="rounded-lg shadow-xl"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Still Have Questions */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            Still Have Questions?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Our team is ready to help you compare Doxxy with any healthcare management platform you're currently using or considering.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link to="/contact">Contact Our Team</Link>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <Link to="/faq">View FAQ</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
+    <div className="bg-white dark:bg-gray-900">
+      <HeroSection />
+      <ComparisonsGridSection />
+      <WhyCompareSection />
+      <QuestionsSection />
       <SignupCTA />
       <SiteFooter />
     </div>

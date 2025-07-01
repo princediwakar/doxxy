@@ -5,458 +5,364 @@ alwaysApply: true
 ---
 # Clinic Management System - Cursor Agent Rules
 
-## Project Context
+## 🏥 Project Overview
 
-**Multi-tenant healthcare web app** for medical clinics (all specialties)  
-**Tech Stack**: Vite (React + TypeScript), Tailwind CSS, Shadcn UI, Supabase (RLS + MCP), Google OAuth, React Query, zod, Twilio, Resend  
-**Critical Requirements**: Strict multi-tenancy, role-based access (superadmin, doctor, staff), HIPAA compliance, DPDT compliance (India)
-**Development Tools**: Supabase MCP for database operations, schema management, and RLS testing. Playwright MCP to access browser console, take page screenshots, navigate the web, fill out forms, and click on buttons etc..
-
-
----
-
-## 🚨 CRITICAL: Autonomous Operation & Escalation
-
-### Proceed Autonomously For
-- Code edits, migrations, type updates, browser testing, builds
-- Edge Function deployments, hook updates, UI changes
-- Performance optimizations, bug fixes, feature additions
-
-### Escalate Only When
-1. **Missing resources** - credentials, APIs, files unavailable
-2. **High-risk operations** - data deletion, schema drops, production deployments
-3. **Conflicting sources** - contradictory documentation after research
-4. **Unresolvable ambiguity** - after using all tools (`read_file`, `codebase_search`, `grep_search`, `web_search`, `supabase_mcp`)
-
-**Decision Rule**: If tools (including Supabase MCP) can resolve it → proceed autonomously. If not → escalate with research summary.
+**Multi-tenant healthcare web app** for medical clinics  
+**Stack**: Vite + React + TypeScript, Tailwind + Shadcn UI, Supabase (RLS + MCP)  
+**Critical**: Multi-tenancy, RBAC (superadmin/doctor/staff), HIPAA compliance  
+**Tools**: Supabase MCP (DB ops), Playwright MCP (browser testing)
 
 ---
 
-## 🎯 CRITICAL: Multi-Tenant Security
+## 🚨 CRITICAL: Security & Multi-Tenancy
 
-### Row Level Security (RLS) - ALWAYS ENFORCE
+### Row Level Security - ALWAYS ENFORCE
 ```sql
--- Every table must have clinic isolation
+-- Every table must isolate by clinic_id
 WHERE clinic_id IN (
   SELECT clinic_id FROM clinic_members 
   WHERE user_id = auth.uid()
 )
 ```
 
-### Data Access Pattern - ALWAYS FILTER
+### Data Access Pattern
 ```typescript
-// Every query must filter by clinic_id
+// Every query MUST filter by clinic_id
 const { data } = useQuery({
   queryKey: ['resource', clinic_id],
-  queryFn: () => getResource(clinic_id),
-  select: (data) => data.filter(item => item.clinic_id === clinic_id)
-})
+  queryFn: () => getResource(clinic_id)
+});
 ```
 
-### Input Validation - ALWAYS VALIDATE
+### Input Validation
 ```typescript
-// Every form/API call must validate clinic_id
+// Every form MUST validate clinic_id
 const schema = z.object({
   clinic_id: z.string().uuid(),
   // other fields...
-}).refine(data => data.clinic_id, "Clinic ID required");
+});
 ```
 
 ---
 
-## ⚡ CRITICAL: Automated Workflows
+## 🎯 CRITICAL: Autonomous Operation
 
-### After Every Database Change
-1. `supabase db push`
-2. `supabase gen types typescript --project-id chftygsapwhahqbqlfdx --schema public > src/integrations/supabase/types.ts`
-3. Update affected hooks/components
-4. `npm run build`
-5. Log in `development-log.md`
+### Proceed Autonomously For
+- Code edits, migrations, type updates, browser testing
+- UI changes, bug fixes, feature additions
+- Performance optimizations, hook updates
 
-### **🚨 MANDATORY: After Every Code Change**
+### Escalate Only When
+1. **Missing resources** - credentials, APIs unavailable
+2. **High-risk ops** - data deletion, production deploys
+3. **Unresolvable ambiguity** after using all tools
 
-#### **1. Code Quality Pipeline**
+**Rule**: If tools can resolve it → proceed. If not → escalate with research summary.
+
+---
+
+## 🎨 Design System (Healthcare-Focused)
+
+### Core Principles
+- **Trust**: Professional blue palette, clean typography
+- **Clarity**: Clear hierarchy, generous spacing
+- **Accessibility**: 44px touch targets, proper contrast
+- **Consistency**: Reusable components, design tokens
+
+### Design Tokens
+```typescript
+// Typography (Apple-inspired)
+const typography = {
+  title: 'text-2xl font-semibold tracking-tight',
+  headline: 'text-base font-semibold', 
+  body: 'text-sm font-normal leading-relaxed',
+  caption: 'text-xs text-gray-500'
+};
+
+// Colors (Healthcare-safe)
+const colors = {
+  primary: 'bg-blue-500 text-blue-500 border-blue-500',
+  success: 'bg-green-50 text-green-600 border-green-200',
+  warning: 'bg-amber-50 text-amber-600 border-amber-200',
+  error: 'bg-red-50 text-red-600 border-red-200'
+};
+
+// Spacing (8px grid)
+const spacing = {
+  tight: 'space-y-2 gap-2 p-2',
+  normal: 'space-y-4 gap-4 p-4', 
+  comfortable: 'space-y-6 gap-6 p-6'
+};
+```
+
+### Component Templates
+
+#### Button
+```tsx
+className={cn(
+  'px-4 py-2 rounded-lg font-medium min-h-[44px]',
+  'transition-all duration-150 ease-out',
+  'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+  'bg-blue-500 hover:bg-blue-600 text-white'
+)}
+```
+
+#### Card
+```tsx
+className={cn(
+  'bg-white rounded-xl shadow-sm border border-gray-200',
+  'hover:shadow-md transition-shadow duration-150'
+)}
+```
+
+#### Input
+```tsx
+className={cn(
+  'w-full px-3 py-2 border border-gray-300 rounded-lg',
+  'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
+  'transition-all duration-150 ease-out'
+)}
+```
+
+---
+
+## ⚡ MANDATORY: Quality Pipeline
+
+### After Every Code Change
+
+#### 1. Pre-Change (DB Changes Only)
 ```bash
-npm run lint           # Check for lint errors (don't break on pre-existing)
-npm run build          # Verify build succeeds (MUST pass)
+read_file src/integrations/supabase/types.ts  # Check schema/relationships
 ```
-**Note**: Focus on ensuring your changes don't introduce NEW lint errors. Pre-existing errors can be addressed separately.
 
-#### **2. Browser Testing with Playwright MCP (REQUIRED)**
-- **Navigate**: Start dev server and navigate to affected pages
-- **Console Check**: Use `mcp_playwright_browser_console_messages` to check for errors
-- **Screenshot**: Take screenshots of key UI states
-- **Flow Testing**: Test the complete user flow end-to-end
-- **Error Validation**: Verify error handling and user feedback
+#### 2. Code Quality
+```bash
+npm run lint    # Check for NEW errors only
+npm run build   # MUST pass
+```
 
-#### **3. Comprehensive Flow Testing**
-**For UI Changes:**
-- ✅ Login flow works
-- ✅ Navigation functions properly  
-- ✅ Forms validate and submit correctly
+#### 3. Browser Testing
+```bash
+pkill -f "vite"                              # Kill existing servers
+# USER starts: npm run dev (in their terminal)
+sleep 3 && curl localhost:8080              # Verify startup
+mcp_playwright_browser_navigate http://localhost:8080
+mcp_playwright_browser_console_messages     # Check for errors
+mcp_playwright_browser_snapshot             # Visual verification
+```
+
+#### 4. Flow Testing
+- ✅ Login/navigation works
+- ✅ Forms validate correctly  
 - ✅ Loading states display
-- ✅ Error messages are user-friendly
-- ✅ Mobile responsiveness
+- ✅ Error handling works
+- ✅ Mobile responsive
+- ✅ Touch targets ≥44px
+- ✅ Console has no errors
 
-**For Database Changes:**
-- ✅ Data persists correctly
-- ✅ Foreign key constraints respected
-- ✅ RLS policies prevent cross-clinic access
-- ✅ Edge cases handled (empty states, validation)
-
-#### **4. Test Case Management**
-- **Update existing test files** in `tests/` directory if functionality changed
-- **Create new test cases** for new features
-- **Run test to verify** the flow works as expected
-- **Document test scenarios** in code comments
-
-### Quality Gates (Must Pass)
-- [ ] **Schema/Types checked BEFORE code changes** (for DB-related changes)
-- [ ] Foreign key relationships understood and respected
-- [ ] **`npm run lint` checked (no NEW errors)**
-- [ ] **`npm run build` succeeds**
-- [ ] **Browser console has no errors**
-- [ ] **Complete user flow tested with Playwright**
-- [ ] **Test cases updated/created**
-- [ ] RLS policies prevent cross-clinic access
-- [ ] Types updated if schema changed
-
----
-
-## 📁 File Conventions
-
+#### 5. Documentation
+```bash
+edit_file development-log.md  # Log changes
 ```
-src/
-├── components/
-│   └── [patients]/           # PatientModal.tsx, PatientDetailsModal.tsx
-├── hooks/
-│   └── use[Feature].ts   # useAppointments.ts, usePatients.ts
-├── types/
-│   └── [feature].ts      # appointments.ts, billing.ts
-└── integrations/supabase/
-    └── types.ts          # Auto-generated, always update
 
-supabase/
-├── functions/
-│   └── [function-name]/  # send-sms/index.ts
-└── migrations/
-    └── YYYYMMDDHHMMSS_description.sql
-```
+### Quality Gates (All Must Pass)
+- [ ] `npm run build` succeeds
+- [ ] Browser console clean
+- [ ] Complete user flow tested
+- [ ] Design principles applied
+- [ ] Multi-tenant security verified
 
 ---
 
 ## 🔧 Technical Standards
 
+### Database Changes Flow
+1. **Read types first**: `src/integrations/supabase/types.ts`
+2. **Check relationships**: Foreign key constraints
+3. **Apply migration**: `supabase db push`
+4. **Update types**: `supabase gen types typescript`
+5. **Update hooks/components**
+
 ### TypeScript
 - Strict mode always on
-- Update `src/integrations/supabase/types.ts` for schema changes
-- No `any` types in production code
+- No `any` types in production
+- Update types after schema changes
 
 ### React Query
 - `staleTime: 5 * 60 * 1000` for frequent data
 - Always filter by `clinic_id`
-- Use `select` to reduce payload size
-
-### Security
-- Never expose service role keys
-- All Edge Functions use service role context properly
-- Validate all inputs with zod before Supabase calls
+- Use `select` to reduce payload
 
 ### Performance
 - React.memo for heavy components
-- useCallback for event handlers
 - Index all `clinic_id` columns
+- Bundle size <500KB initial
 
-### **🚨 CRITICAL: Schema & Types First (MANDATORY)**
-**BEFORE making ANY database-related code changes:**
+---
 
-1. **Read Types**: `read_file src/integrations/supabase/types.ts` (focus on relevant tables)
-2. **Check Relationships**: Identify foreign key constraints from the `Relationships` array
-3. **Verify Data Flow**: Ensure you understand table relationships (e.g., `clinic_members.department_id` → `clinic_departments.id`, NOT `department_types.id`)
-4. **Plan Correctly**: Map out the exact sequence of inserts/updates needed
+## 📁 File Structure
 
-**Example Foreign Key Analysis:**
-```typescript
-// ❌ WRONG: Using department_type_id directly
-department_id: selectedDepartmentTypeId
-
-// ✅ CORRECT: Using clinic_departments.id after insert
-const { data: insertedDepts } = await supabase
-  .from('clinic_departments')
-  .insert({...})
-  .select('id, department_type_id');
-const deptId = insertedDepts.find(d => d.department_type_id === selectedTypeId)?.id;
 ```
+src/
+├── components/
+│   ├── ui/              # Shadcn components
+│   └── [feature]/       # Feature components
+├── hooks/
+│   └── use[Feature].ts  # Custom hooks
+├── types/
+│   └── [feature].ts     # Type definitions
+└── integrations/supabase/
+    └── types.ts         # Auto-generated
 
-**If you skip this step and cause foreign key errors → immediately escalate for rule improvement.**
+supabase/
+├── functions/           # Edge functions
+└── migrations/          # DB migrations
+```
 
 ---
 
 ## 🛠️ Cursor Workflow
 
-### Terminal Management (CRITICAL)
-**Always use this pattern for terminal commands:**
+### Terminal Management
+1. **Kill existing processes**: `pkill -f "vite"`
+2. **User starts dev server**: AI cannot control terminal placement
+3. **Verify startup**: `curl localhost:8080`
+4. **Use `is_background: true`** only for detection, not placement
 
-1. **Check for existing processes**: Check for running dev servers, build processes
-2. **Clean up before starting**: Kill existing instances to prevent conflicts
-3. **Use integrated terminal**: Dev servers should run in bottom terminal panel (user's workspace)
-4. **Background for long-running**: Use `is_background: true` for dev servers, false for quick commands
-
-```bash
-# Dev Server Management Pattern:
-1. pkill -f "vite"                  # Kill existing dev servers
-2. npm run dev (is_background: true) # Start in background/integrated terminal
-3. sleep 3 && curl localhost:8080   # Verify server started
-```
-
-### **🚨 CRITICAL: Dev Server Management**
-**Before starting ANY dev server:**
-- ✅ Kill existing instances: `pkill -f "vite"` or `pkill -f "node.*dev"`
-- ✅ **USER MUST START SERVER**: AI cannot control terminal placement - inform user to start `npm run dev` in their preferred terminal
-- ✅ Verify startup with curl/health check after user starts server
-- ✅ Never leave multiple dev servers running
-
-**IMPORTANT**: `is_background: true` only controls command completion waiting, NOT terminal placement. Only the user can choose which terminal to use.
-
-### Context Gathering (Always Do First)
-- **MANDATORY**: `read_file src/integrations/supabase/types.ts` (for DB changes)
-- **MANDATORY**: Check foreign key relationships in types (for DB changes)
+### Context Gathering (Always First)
+- `read_file src/integrations/supabase/types.ts` (for DB changes)
 - `read_file` current state
-- `codebase_search` for related patterns
+- `codebase_search` for patterns
 - `grep_search` for exact matches
-- Check `supabase/migrations` and types
 
 ### Implementation Strategy
-- Bundle related changes (hook + component + types)
+- Bundle related changes
 - Use `edit_file` for logical groups
-- Use terminal management pattern for all shell operations
-- Auto-retry failed builds (max 3 attempts)
-
-### **🧪 Testing Workflow (MANDATORY)**
-
-#### **Immediate Testing After Code Changes**
-```bash
-# 1. Quality Gates
-npm run lint
-npm run build
-
-# 2. Clean up and prepare for dev server
-pkill -f "vite"                    # Kill existing instances
-# Note: Ask user to start `npm run dev` in their preferred terminal
-# AI cannot control terminal placement - user chooses where to run server
-
-# 3. Browser testing with Playwright MCP
-mcp_playwright_browser_navigate http://localhost:8080
-mcp_playwright_browser_snapshot
-mcp_playwright_browser_console_messages
-
-# 4. Cleanup when done (optional - user can keep server running)
-# pkill -f "vite"                  # Only if specifically requested
-```
-
-#### **Dev Server Best Practices**
-- ✅ **Always kill existing** before user starts new instance
-- ✅ **Let user choose terminal** - AI cannot control terminal placement
-- ✅ **Verify startup** with curl/health check after user starts server
-- ✅ **Inform user of cleanup** - provide kill commands but let them manage terminals
-- ✅ **Document port clearly** so user knows where to access app
-
-**KEY INSIGHT**: AI tools run in whatever terminal context they're called from. Only the user can decide which terminal (integrated vs file editing space) to use for long-running processes.
-
-#### **Complete Flow Testing Pattern**
-1. **Navigate** to affected page
-2. **Test** the specific feature/fix
-3. **Verify** console has no errors
-4. **Screenshot** key states (before/after)
-5. **Test edge cases** (validation, empty states)
-6. **Document** any issues found
-
-#### **Test Case Documentation**
-- Create/update `.spec.ts` files in `tests/` directory
-- Include test scenarios in development log
-- Add comments explaining complex test cases
-- Verify tests pass before finalizing changes
+- Auto-retry failed builds (max 3)
+- Apply design system consistently
 
 ---
 
-## 📋 Condensed Checklists
+## 🚨 Common Issues & Solutions
 
-### Code Changes ✓
-- [ ] Lint: `npm run lint` checked
-- [ ] Build: `npm run build` succeeds  
-- [ ] Browser: Console has no errors
-- [ ] Flow: Complete user journey tested
-- [ ] Tests: Cases updated/created
-
-### Database Changes ✓
-- [ ] Schema: Types checked first
-- [ ] Migration: Applied successfully
-- [ ] Types: Updated in supabase/types.ts
-- [ ] RLS: Tested with Playwright
-- [ ] Hooks: Updated for new schema
-- [ ] Flow: Data persistence verified
-
-### UI Changes ✓
-- [ ] Responsive: Mobile + desktop tested
-- [ ] Accessible: Role-based rendering
-- [ ] Loading: States implemented
-- [ ] Errors: User-friendly messages
-- [ ] Navigation: Links work correctly
-- [ ] Screenshots: Key states captured
-
----
-
-## 🚨 Error Handling
-
-### Common Issues & Solutions
-- **Foreign key constraint errors** → Check types.ts relationships → Use correct referenced IDs
-- **Build fails** → `npm run lint:fix` → retry
-- **Type errors** → regenerate types → update imports
-- **RLS blocks** → check user clinic context
-
-### 🚨 MOST COMMON MISTAKE: Foreign Key Violations
+### Foreign Key Errors
 ```bash
 # Error: "Key is not present in table X"
-# Cause: Using wrong ID reference (e.g., department_type_id instead of clinic_departments.id)
-# Fix: Always read types.ts first, understand Relationships array
+# Fix: Check types.ts Relationships array
+# Use correct referenced table IDs
 ```
 
-### Escalation Format
+### Build Failures
+```bash
+npm run lint:fix  # Auto-fix linting
+npm run build     # Retry build
 ```
-❌ Issue: [brief description]
-🔍 Investigated: [tools used, files checked]
-🔄 Attempted: [solutions tried]
-📋 Recommendation: [next steps or user input needed]
-```
+
+### RLS Blocks
+- Check user clinic context
+- Verify clinic_id in queries
+- Test with different user roles
 
 ---
 
-## 📝 Documentation
+## 📋 Essential Checklists
 
-### Always Update
-- `development-log.md` for significant changes
-- `README.md` for setup changes
-- Comments for complex RLS policies
+### Code Changes ✓
+- [ ] Schema checked first (DB changes)
+- [ ] Build succeeds
+- [ ] Console clean
+- [ ] Flow tested
+- [ ] Design applied
+- [ ] Documented
 
-### Log Format
-```markdown
-## [YYYY-MM-DD HH:MM] Feature/Fix Name
-- **Files**: [list]
-- **Migration**: [if applicable]
-```
+### UI Changes ✓
+- [ ] Mobile responsive
+- [ ] Touch targets ≥44px
+- [ ] Loading states
+- [ ] Error handling
+- [ ] Color contrast
+- [ ] Focus management
+
+### Database Changes ✓
+- [ ] Types updated
+- [ ] Migration applied
+- [ ] RLS tested
+- [ ] Hooks updated
+- [ ] Foreign keys correct
 
 ---
 
-## 🏥 Healthcare-Specific Rules
+## 🏥 Healthcare Specific
 
 ### HIPAA Compliance
-- No PHI in logs or error messages
-- All data access audited through RLS
-- Encryption for sensitive fields
+- No PHI in logs/errors
+- All access through RLS
+- Encryption for sensitive data
 
 ### Role-Based Access
-- `superadmin`: Full clinic management
-- `doctor`: Patient records, appointments
-- `staff`: Scheduling, basic patient info
+- **superadmin**: Full clinic management
+- **doctor**: Patient records, appointments  
+- **staff**: Scheduling, basic patient info
 
 ### Data Integrity
 - Cascade deletes for clinic relationships
 - Audit trails for sensitive operations
-- Regular cross-clinic leak detection
+- Cross-clinic leak prevention
 
 ---
 
-## 🎯 When User Requests Changes
+## 📝 Documentation Format
 
-1. **Understand scope** - read related files, check patterns
-2. **Implement completely** - all files (types, hooks, UI, migrations)
-3. **Validate thoroughly** - run quality gates with proper terminal management
-4. **Test comprehensively** - browser testing, console monitoring, flow verification
-5. **Document clearly** - update logs and comments
-6. **Create/update tests** - ensure regression prevention
-7. **Suggest improvements** - performance, security, maintainability
-
-**Remember**: Healthcare data requires extra care. When in doubt about data safety → escalate.
-
----
-
-## ✅ **MANDATORY COMPLETION CHECKLIST**
-
-After EVERY code change, you MUST complete ALL items:
-
-### **Code Quality**
-- [ ] Schema/types checked first (for DB changes)
-- [ ] `npm run lint` - no NEW errors introduced
-- [ ] `npm run build` - successful build
-- [ ] Code properly documented with comments
-
-### **Browser Testing**  
-- [ ] Existing dev servers killed (`pkill -f "vite"`)
-- [ ] User informed to start `npm run dev` in their preferred terminal
-- [ ] Server startup verified (`curl localhost:8080`)
-- [ ] Browser navigation tested
-- [ ] Console monitored for errors
-- [ ] Screenshots taken of key states
-- [ ] User flow tested end-to-end
-
-### **Test Management**
-- [ ] Existing tests updated if needed
-- [ ] New test cases created for new features
-- [ ] Tests run and verified to pass
-- [ ] Test scenarios documented
-
-### **Documentation**
-- [ ] `development-log.md` updated
-- [ ] Testing results documented  
-- [ ] Key learnings captured
-- [ ] Prevention strategies noted
-
-**If ANY item is incomplete → continue working until ALL are done.**
-
----
-
-## 🚀 **COMPLETE WORKFLOW EXAMPLE**
-
-Here's the full workflow when making code changes:
-
-```bash
-# 1. Pre-change analysis (for DB changes)
-read_file src/integrations/supabase/types.ts  # Check schema/relationships
-
-# 2. Make code changes
-edit_file src/pages/SomeComponent.tsx
-
-# 3. Quality gates
-npm run lint                    # Check for new errors
-npm run build                   # Must pass
-
-# 4. Dev server management  
-pkill -f "vite"                 # Kill existing
-# User starts: npm run dev       # In their preferred terminal
-sleep 3 && curl localhost:8080 # Verify after user starts
-
-# 5. Browser testing
-mcp_playwright_browser_navigate http://localhost:8080
-mcp_playwright_browser_console_messages
-mcp_playwright_browser_snapshot
-
-# 6. Test management
-edit_file tests/new-feature.spec.ts  # Create/update tests
-npm run test:e2e -- tests/new-feature.spec.ts
-
-# 7. Documentation
-edit_file development-log.md    # Document changes
+### Development Log
+```markdown
+## [YYYY-MM-DD HH:MM] Feature Name
+- **Files**: [list]
+- **Migration**: [if applicable]  
+- **Testing**: [browser/flow results]
+- **Notes**: [key learnings]
 ```
 
-**Result**: Bulletproof development process with zero regressions! 🎯
+---
+
+## ✅ Completion Checklist
+
+After EVERY change, verify ALL:
+
+### Technical ✓
+- [ ] Build passes
+- [ ] Console clean
+- [ ] Flow works end-to-end
+- [ ] Types updated (if DB changed)
+
+### Design ✓
+- [ ] Components use design tokens
+- [ ] Touch targets adequate
+- [ ] Responsive across breakpoints
+- [ ] Loading/error states handled
+
+### Security ✓
+- [ ] Multi-tenant isolation maintained
+- [ ] RLS policies working
+- [ ] Input validation applied
+- [ ] No PHI exposure
+
+### Documentation ✓
+- [ ] Changes logged
+- [ ] Test results documented
+- [ ] Issues/solutions noted
+
+**If ANY incomplete → continue until ALL done.**
 
 ---
 
-## 📊 Performance Targets
+## 🎯 Success Metrics
 
 - Page load: <1s
-- API response: <500ms
-- Database queries: <1s
-- Bundle size: <500KB initial
+- API response: <500ms  
+- Build time: <30s
+- Error-free console
+- 100% multi-tenant isolation
+- WCAG AA accessibility compliance
 
 ---
+*Remember: Healthcare data requires extra care. Multi-tenant security is non-negotiable. When in doubt → escalate.*

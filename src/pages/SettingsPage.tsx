@@ -58,37 +58,18 @@ const SettingsPage = () => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-                <Settings className="w-5 h-5 text-primary" />
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+                <Settings className="w-5 h-5 " />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-primary">Clinic Settings</h1>
+                <h1 className="text-3xl font-bold ">Clinic Settings</h1>
                 <p className="text-muted-foreground">
                   Manage settings and configuration for 
-                  <span className="font-bold text-primary">{" "} {clinicName}</span>
+                  <span className="font-bold ">{" "} {clinicName}</span>
                 </p>
               </div>
             </div>
-          <Badge className="">
-            <Stethoscope className="h-3 w-3 mr-1" />
-            Superadmin Access
-          </Badge>
         </div>
-
-        {/* Info Card
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-4">
-            <div className="flex items-start space-x-3">
-              <div className="bg-primary/10 p-2 rounded-lg">
-                <Info className="h-4 w-4 text-primary" />
-              </div>
-              <div className="text-sm text-primary">
-                <p className="font-medium mb-1">Settings Management</p>
-                <p className="text-muted-foreground">Use the tabs below to manage different aspects of your clinic. Changes are saved automatically and take effect immediately.</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card> */}
       </div>
 
       {/* Main Content */}
