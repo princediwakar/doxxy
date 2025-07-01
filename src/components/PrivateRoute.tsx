@@ -80,9 +80,16 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
 
   // 6. User is authenticated, profile is complete, and has an active clinic
   if (location.pathname === '/create-clinic') {
-    // If they have a clinic but are on create-clinic page, redirect to dashboard
-    console.log('PrivateRoute: Has active clinic but on /create-clinic, redirecting to /dashboard');
-    return <Navigate to="/dashboard" replace />;
+    // Allow users with existing clinics to create new clinics
+    console.log('PrivateRoute: User with active clinic on /create-clinic, allowing clinic creation');
+    // Render create clinic page without sidebar layout
+    return (
+      <div className="min-h-screen">
+        <main className="p-4 md:p-8 max-w-4xl mx-auto bg-white min-h-screen">
+          {children ? <>{children}</> : <Outlet />}
+        </main>
+      </div>
+    );
   }
 
   // 7. All conditions met - render protected content
