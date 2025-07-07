@@ -251,7 +251,7 @@ const CreateClinicPage = () => {
           name: user.user_metadata?.name || user.email || '',
           email: user.email,
           consultationFee: data.consultationFee || 0,
-          bio: data.bio || 'Medical professional',
+          bio: data.bio,
           departmentId: userDepartmentId
         });
         if (doctorError) throw doctorError;

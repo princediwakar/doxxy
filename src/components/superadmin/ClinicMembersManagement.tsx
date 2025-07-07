@@ -132,18 +132,19 @@ const ClinicMembersManagement = () => {
         const doctor = doctorsData?.find(d => d.user_id === member.user_id) || null;
         
         return {
-        member,
+          member,
           profile: profile || {
             id: member.user_id,
-            name: doctor?.name || null, // Fallback to doctor name if profile name not available
+            name: doctor?.name || null,
             email: doctor?.email || null,
             phone: null,
+            address: null, // Add this to satisfy the type
             created_at: null,
             updated_at: null
           },
-        department: member.department_id 
-          ? departmentsData.find(d => d.id === member.department_id) || null
-          : null,
+          department: member.department_id 
+            ? departmentsData.find(d => d.id === member.department_id) || null
+            : null,
         };
       });
     },

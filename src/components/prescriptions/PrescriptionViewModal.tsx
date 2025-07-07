@@ -97,7 +97,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
       return {
         ...prescriptionData,
         doctor_profile: doctorProfile,
-        doctor_department: doctorDepartment?.clinic_departments?.department_types?.name || 'General Medicine'
+        doctor_department: doctorDepartment?.clinic_departments?.department_types?.name
       };
     },
     enabled: open && !!prescription?.id && !!activeClinic?.clinic_id,
@@ -227,7 +227,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                        Dr. {doctorProfile?.name || doctor?.name || ''}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {enhancedPrescription?.doctor_department || 'General Medicine'}
+                        {enhancedPrescription?.doctor_department}
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />

@@ -448,10 +448,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {/* Show medical specialization if available, otherwise department */}
-                              {d.primary_specialization 
-                                ? `${d.department_name || 'General Medicine'} • ${d.primary_specialization}`
-                                : (d.department_name || 'General Medicine')
-                              }
+                              {d.department_name}
                             </div>
                           </div>
                         </SelectItem>

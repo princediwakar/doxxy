@@ -236,33 +236,60 @@ export type Database = {
       }
       clinics: {
         Row: {
+          accreditations: string[] | null
           address: string | null
+          clinic_images: string[] | null
           created_at: string | null
           created_by: string | null
+          description: string | null
           email: string | null
+          established_year: number | null
           id: string
+          is_public: boolean | null
+          license_number: string | null
           name: string
+          operating_hours: Json | null
           phone: string | null
+          slug: string | null
+          social_media: Json | null
           website: string | null
         }
         Insert: {
+          accreditations?: string[] | null
           address?: string | null
+          clinic_images?: string[] | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           email?: string | null
+          established_year?: number | null
           id?: string
+          is_public?: boolean | null
+          license_number?: string | null
           name: string
+          operating_hours?: Json | null
           phone?: string | null
+          slug?: string | null
+          social_media?: Json | null
           website?: string | null
         }
         Update: {
+          accreditations?: string[] | null
           address?: string | null
+          clinic_images?: string[] | null
           created_at?: string | null
           created_by?: string | null
+          description?: string | null
           email?: string | null
+          established_year?: number | null
           id?: string
+          is_public?: boolean | null
+          license_number?: string | null
           name?: string
+          operating_hours?: Json | null
           phone?: string | null
+          slug?: string | null
+          social_media?: Json | null
           website?: string | null
         }
         Relationships: [
@@ -388,13 +415,48 @@ export type Database = {
         }
         Relationships: []
       }
+      departments: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       doctors: {
         Row: {
           additional_qualifications: string | null
           availability: string | null
           bio: string | null
           board_certifications: string[] | null
-          clinic_id: string | null
+          clinic_id: string
           clinic_timings: Json | null
           consultation_fee: number | null
           created_at: string | null
@@ -425,7 +487,8 @@ export type Database = {
           profile_completion_percentage: number | null
           research_experience: string | null
           subspecialty: string[] | null
-          user_id: string | null
+          updated_at: string | null
+          user_id: string
           years_of_experience: number | null
         }
         Insert: {
@@ -433,7 +496,7 @@ export type Database = {
           availability?: string | null
           bio?: string | null
           board_certifications?: string[] | null
-          clinic_id?: string | null
+          clinic_id: string
           clinic_timings?: Json | null
           consultation_fee?: number | null
           created_at?: string | null
@@ -464,7 +527,8 @@ export type Database = {
           profile_completion_percentage?: number | null
           research_experience?: string | null
           subspecialty?: string[] | null
-          user_id?: string | null
+          updated_at?: string | null
+          user_id: string
           years_of_experience?: number | null
         }
         Update: {
@@ -472,7 +536,7 @@ export type Database = {
           availability?: string | null
           bio?: string | null
           board_certifications?: string[] | null
-          clinic_id?: string | null
+          clinic_id?: string
           clinic_timings?: Json | null
           consultation_fee?: number | null
           created_at?: string | null
@@ -503,7 +567,8 @@ export type Database = {
           profile_completion_percentage?: number | null
           research_experience?: string | null
           subspecialty?: string[] | null
-          user_id?: string | null
+          updated_at?: string | null
+          user_id?: string
           years_of_experience?: number | null
         }
         Relationships: [
@@ -680,6 +745,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          address: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -688,6 +754,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          address?: string | null
           created_at?: string | null
           email?: string | null
           id: string
@@ -696,6 +763,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          address?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -710,33 +778,70 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_clinic_member: {
+        Args: {
+          new_user_id: string
+          target_clinic_id: string
+          new_role: Database["public"]["Enums"]["user_role"]
+          new_department_id: string
+        }
+        Returns: Json
+      }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
         Returns: Json
       }
+      create_consultation: {
+        Args: {
+          p_patient_id: string
+          p_appointment_id: string
+          p_chief_complaint: string
+          p_history_present_illness: string
+          p_physical_examination: string
+          p_assessment_diagnosis: string
+          p_plan_treatment: string
+          p_prescriptions?: Json
+          p_notes?: string
+        }
+        Returns: string
+      }
       create_doctor_profile: {
-        Args:
-          | {
-              p_user_id: string
-              p_clinic_id: string
-              p_name: string
-              p_email?: string
-              p_primary_specialization?: string
-              p_consultation_fee?: number
-              p_availability?: string
-              p_bio?: string
-            }
-          | {
-              p_user_id: string
-              p_clinic_id: string
-              p_name: string
-              p_email?: string
-              p_primary_specialization?: string
-              p_consultation_fee?: number
-              p_availability?: string
-              p_bio?: string
-              p_department_id?: string
-            }
+        Args: {
+          p_user_id: string
+          p_clinic_id: string
+          p_name: string
+          p_email: string
+          p_primary_specialization?: string
+          p_consultation_fee?: number
+          p_availability?: Json
+          p_bio?: string
+          p_department_id?: string
+        }
+        Returns: string
+      }
+      create_patient: {
+        Args: {
+          p_clinic_id: string
+          p_name: string
+          p_phone: string
+          p_email: string
+          p_medical_id: string
+          p_gender: string
+          p_address: string
+          p_date_of_birth: string
+        }
+        Returns: string
+      }
+      delete_consultation: {
+        Args: { p_consultation_id: string }
+        Returns: boolean
+      }
+      delete_patient: {
+        Args: { p_patient_id: string }
+        Returns: boolean
+      }
+      generate_clinic_slug: {
+        Args: { clinic_name: string; clinic_id?: string }
         Returns: string
       }
       get_appointments_with_details_by_clinic: {
@@ -772,6 +877,19 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_clinic_members: {
+        Args: { p_clinic_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          clinic_id: string
+          role: Database["public"]["Enums"]["user_role"]
+          department_id: string
+          created_at: string
+          profile: Json
+          department: Json
+        }[]
+      }
       get_consultation_by_appointment: {
         Args: { p_appointment_id: string }
         Returns: {
@@ -786,6 +904,24 @@ export type Database = {
           notes: string
           created_at: string
           updated_at: string
+        }[]
+      }
+      get_consultation_details: {
+        Args: { p_consultation_id: string }
+        Returns: {
+          id: string
+          patient_id: string
+          appointment_id: string
+          chief_complaint: string
+          history_present_illness: string
+          physical_examination: string
+          assessment_diagnosis: string
+          plan_treatment: string
+          prescriptions: Json
+          notes: string
+          created_at: string
+          updated_at: string
+          patient_details: Json
         }[]
       }
       get_dashboard_data: {
@@ -845,6 +981,22 @@ export type Database = {
           clinic_timings: Json
         }[]
       }
+      get_patient_details: {
+        Args: { p_patient_id: string }
+        Returns: {
+          id: string
+          name: string
+          phone: string
+          email: string
+          medical_id: string
+          gender: string
+          address: string
+          date_of_birth: string
+          created_at: string
+          clinic_id: string
+          consultations: Json
+        }[]
+      }
       get_patients_by_clinic: {
         Args: { _clinic_id: string; _limit?: number; _offset?: number }
         Returns: {
@@ -858,6 +1010,95 @@ export type Database = {
           date_of_birth: string
           created_at: string
           clinic_id: string
+        }[]
+      }
+      get_profile: {
+        Args: { user_id: string }
+        Returns: {
+          id: string
+          email: string
+          name: string
+          phone: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_profile_details: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          name: string
+          email: string
+          phone: string
+          address: string
+          medical_license_number: string
+          medical_license_expiry: string
+          specialization: string
+          qualifications: string
+          avatar_url: string
+          created_at: string
+          updated_at: string
+          clinics: Json
+        }[]
+      }
+      get_profile_image_url: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
+      get_public_clinic_by_slug: {
+        Args: { p_slug: string }
+        Returns: {
+          id: string
+          name: string
+          slug: string
+          description: string
+          address: string
+          phone: string
+          email: string
+          website: string
+          operating_hours: Json
+          social_media: Json
+          clinic_images: string[]
+          established_year: number
+          license_number: string
+          accreditations: string[]
+          is_public: boolean
+        }[]
+      }
+      get_public_clinics: {
+        Args: { search_term?: string; limit_count?: number }
+        Returns: {
+          id: string
+          name: string
+          slug: string
+          description: string
+          address: string
+          phone: string
+          email: string
+          website: string
+          operating_hours: Json
+          social_media: Json
+          clinic_images: string[]
+          established_year: number
+          license_number: string
+          accreditations: string[]
+          is_public: boolean
+          doctor_count: number
+        }[]
+      }
+      get_public_doctors_by_clinic: {
+        Args: { p_clinic_id: string }
+        Returns: {
+          id: string
+          name: string
+          primary_specialization: string
+          medical_specializations: string[]
+          years_of_experience: number
+          bio: string
+          consultation_fee: number
+          languages_spoken: string[]
+          medical_qualifications: string[]
+          department_name: string
         }[]
       }
       get_user_clinic_memberships: {
@@ -874,6 +1115,16 @@ export type Database = {
         Returns: {
           clinic_id: string
         }[]
+      }
+      get_user_clinics_simple: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          clinic_id: string
+        }[]
+      }
+      is_superadmin_in_clinic: {
+        Args: { check_clinic_id: string }
+        Returns: boolean
       }
       search_medicines: {
         Args: { search_term?: string; limit_count?: number }
@@ -900,6 +1151,75 @@ export type Database = {
           city?: string
         }
         Returns: string
+      }
+      update_clinic_member_details: {
+        Args: {
+          member_user_id: string
+          target_clinic_id: string
+          updated_department_id: string
+          updated_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: undefined
+      }
+      update_consultation: {
+        Args: {
+          p_consultation_id: string
+          p_chief_complaint?: string
+          p_history_present_illness?: string
+          p_physical_examination?: string
+          p_assessment_diagnosis?: string
+          p_plan_treatment?: string
+          p_prescriptions?: Json
+          p_notes?: string
+        }
+        Returns: string
+      }
+      update_patient: {
+        Args: {
+          p_patient_id: string
+          p_name?: string
+          p_phone?: string
+          p_email?: string
+          p_medical_id?: string
+          p_gender?: string
+          p_address?: string
+          p_date_of_birth?: string
+        }
+        Returns: string
+      }
+      update_profile: {
+        Args: {
+          p_user_id: string
+          p_name?: string
+          p_email?: string
+          p_phone?: string
+          p_address?: string
+          p_medical_license_number?: string
+          p_medical_license_expiry?: string
+          p_specialization?: string
+          p_qualifications?: string
+        }
+        Returns: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+      }
+      update_profile_image: {
+        Args: { p_user_id: string; p_avatar_url: string }
+        Returns: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          updated_at: string | null
+        }
       }
     }
     Enums: {

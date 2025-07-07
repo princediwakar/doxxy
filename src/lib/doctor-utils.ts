@@ -7,10 +7,10 @@ const supabase = getSupabase();
  */
 export async function createDoctorProfile({
   userId,
-  clinicId,
+clinicId,
   name,
   email,
-  primarySpecialization = 'General Medicine',
+  primarySpecialization,
   consultationFee,
   availability = 'Mon-Fri 9:00 AM - 5:00 PM',
   bio,

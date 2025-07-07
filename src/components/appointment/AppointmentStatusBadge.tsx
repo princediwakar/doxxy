@@ -1,2 +1,0 @@
-return <Badge variant="outline" className="bg-success/10 text-success border-success/20">Confirmed</Badge>;
-return <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20">Cancelled</Badge>; 

@@ -18,6 +18,7 @@ const navItems = [
   // { icon: Pill, label: "Prescriptions", path: "/prescriptions", roles: ['doctor', 'superadmin'] },
   { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'doctor','superadmin'] },
   { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
+  { icon: User2, label: "Profile", path: "/profile", roles: ['superadmin', 'staff', 'doctor'] },
 ];
 
 export function AppSidebar() {

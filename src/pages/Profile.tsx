@@ -3,11 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSupabase } from '@/integrations/supabase/client';
-import { useToast } from "@/hooks/use-toast";
 import { 
   User,
   Shield,
@@ -38,42 +36,10 @@ import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding
 
 const supabase = getSupabase();
 
-interface ProfileStats {
-  profileCompletion: number;
-  enhancementScore: number;
-  totalPatients?: number;
-  totalConsultations?: number;
-  yearsExperience?: number;
-  completedToday?: number;
-  registrationNumber: string;
-  clinicRole: string;
-}
 
-interface DoctorProfile {
-  id: string;
-  name: string;
-  primary_specialization?: string;
-  medical_registration_number?: string;
-  medical_council?: string;
-  license_state?: string;
-  medical_college?: string;
-  years_of_experience?: number;
-  department_id?: string;
-  department_name?: string;
-  bio?: string;
-  consultation_fee_min?: number;
-  consultation_fee_max?: number;
-  consultation_fee?: number;
-  medical_qualifications?: string;
-  medical_license_state?: string;
-  board_certifications?: string;
-  professional_summary?: string;
-  emergency_contact?: string;
-}
 
 const Profile = () => {
   const { user, activeClinic, activeClinicRole, hasDoctorProfile } = useAuth();
-  const { toast } = useToast();
   const [isBasicModalOpen, setIsBasicModalOpen] = useState(false);
   const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
@@ -145,8 +111,6 @@ const Profile = () => {
     enabled: !!user?.id,
   });
 
-  // Show "Become a Doctor" button only if user is NOT a doctor
-  const showBecomeDoctorButton = (activeClinicRole === 'superadmin' && !localHasDoctorProfile);
 
   const handleBecomeDoctorClick = () => {
     setIsOnboardingModalOpen(true);
@@ -232,6 +196,7 @@ const Profile = () => {
           </CardContent>
         </Card>
       )}
+      
       {/* Consistent Page Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">

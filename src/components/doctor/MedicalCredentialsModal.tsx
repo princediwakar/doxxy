@@ -178,12 +178,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
-    if (!formData.medical_registration_number.trim()) errors.medical_registration_number = 'Medical registration number is required';
-    if (!formData.medical_council) errors.medical_council = 'Medical council is required';
-    if (!formData.department_id) errors.department_id = 'Department is required';
-    if (!formData.medical_degree) errors.medical_degree = 'Medical degree is required';
-    if (!formData.medical_college.trim()) errors.medical_college = 'Medical college is required';
-    if (!formData.graduation_year.trim()) errors.graduation_year = 'Graduation year is required';
+    // if (!formData.department_id) errors.department_id = 'Department is required';
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -357,17 +352,15 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="medical_registration_number">Registration Number *</Label>
+                        <Label htmlFor="medical_registration_number">Registration Number</Label>
                         <Input id="medical_registration_number" value={formData.medical_registration_number} onChange={(e) => handleFieldChange('medical_registration_number', e.target.value)} placeholder="e.g., MCI-12345" />
-                        {validationErrors.medical_registration_number && <p className="text-destructive text-sm mt-1">{validationErrors.medical_registration_number}</p>}
                       </div>
                       <div>
-                        <Label htmlFor="medical_council">Medical Council *</Label>
+                        <Label htmlFor="medical_council">Medical Council</Label>
                         <Select value={formData.medical_council} onValueChange={(value) => handleFieldChange('medical_council', value)}>
                           <SelectTrigger><SelectValue placeholder="Select medical council" /></SelectTrigger>
                           <SelectContent>{MEDICAL_COUNCILS.map((council) => (<SelectItem key={council} value={council}>{council}</SelectItem>))}</SelectContent>
                         </Select>
-                        {validationErrors.medical_council && <p className="text-destructive text-sm mt-1">{validationErrors.medical_council}</p>}
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -383,14 +376,6 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                         <Input id="medical_license_expiry" type="date" value={formData.medical_license_expiry} onChange={(e) => handleFieldChange('medical_license_expiry', e.target.value)} />
                       </div>
                     </div>
-                    <div>
-                      <Label htmlFor="department">Department *</Label>
-                      <Select value={formData.department_id} onValueChange={(value) => handleFieldChange('department_id', value)}>
-                        <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
-                        <SelectContent>{departments.map((dept) => (<SelectItem key={dept.id} value={dept.id}>{dept.name}</SelectItem>))}</SelectContent>
-                      </Select>
-                      {validationErrors.department_id && <p className="text-destructive text-sm mt-1">{validationErrors.department_id}</p>}
-                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -403,7 +388,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                       <h4 className="font-medium text-sm text-muted-foreground mb-3">Undergraduate Medical Education</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor="medical_degree">Medical Degree *</Label>
+                          <Label htmlFor="medical_degree">Medical Degree</Label>
                           <Select value={formData.medical_degree} onValueChange={(value) => handleFieldChange('medical_degree', value)}>
                             <SelectTrigger><SelectValue placeholder="Select medical degree" /></SelectTrigger>
                             <SelectContent>
@@ -420,7 +405,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                           {validationErrors.medical_degree && <p className="text-destructive text-sm mt-1">{validationErrors.medical_degree}</p>}
                         </div>
                         <div>
-                          <Label htmlFor="medical_college">Medical College *</Label>
+                          <Label htmlFor="medical_college">Medical College</Label>
                           <Input id="medical_college" value={formData.medical_college} onChange={(e) => handleFieldChange('medical_college', e.target.value)} placeholder="Name of medical college" />
                           {validationErrors.medical_college && <p className="text-destructive text-sm mt-1">{validationErrors.medical_college}</p>}
                         </div>
@@ -429,7 +414,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                           <Input id="medical_university" value={formData.medical_university} onChange={(e) => handleFieldChange('medical_university', e.target.value)} placeholder="e.g., Delhi University, RGUHS" />
                         </div>
                         <div>
-                          <Label htmlFor="graduation_year">Graduation Year *</Label>
+                          <Label htmlFor="graduation_year">Graduation Year</Label>
                           <Input id="graduation_year" type="number" value={formData.graduation_year} onChange={(e) => handleFieldChange('graduation_year', e.target.value)} placeholder="e.g., 2015" min="1950" max={new Date().getFullYear()} />
                           {validationErrors.graduation_year && <p className="text-destructive text-sm mt-1">{validationErrors.graduation_year}</p>}
                         </div>

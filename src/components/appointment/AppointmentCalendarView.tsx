@@ -1,1 +1,0 @@
-<User className="h-3 w-3 text-primary" /> 
