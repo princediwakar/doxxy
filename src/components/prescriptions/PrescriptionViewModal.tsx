@@ -224,7 +224,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                   ) : (
                     <>
                       <div className="font-semibold">
-                       Dr. {doctorProfile?.name || doctor?.name || ''}
+                       {doctorProfile?.name || doctor?.name || ''}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {enhancedPrescription?.doctor_department}

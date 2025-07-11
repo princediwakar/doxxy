@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,9 +30,9 @@ export const useConsultationForm = (
   );
   
   // Initialize form with existing data
-  const defaultValues: ConsultationFormValues = {
+  const defaultValues: ConsultationFormValues = useMemo(() => ({
     specialty_data: (existingConsultation?.specialty_data as z.infer<typeof consultationNotesSchema>) || {},
-  };
+  }), [existingConsultation?.specialty_data]);
   
   // Initialize form
   const form = useForm<ConsultationFormValues>({
@@ -45,7 +45,7 @@ export const useConsultationForm = (
   // Store initial values
   useEffect(() => {
     previousValuesRef.current = defaultValues;
-  }, []);
+  }, [defaultValues]);
 
   // Watch all form values
   const formValues = useWatch({
@@ -183,7 +183,7 @@ export const useConsultationForm = (
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [formValues, isConsultationCompleted]);
+  }, [formValues, isConsultationCompleted, autoSaveMutation, form]);
 
   // Manual save (only if consultation not completed)
   const handleSave = useCallback(() => {

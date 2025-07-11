@@ -1,28 +1,20 @@
+// src/components/BasicProfileEditor.tsx
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { 
   User as UserIcon, 
-  Mail, 
-  Phone, 
   Save, 
   X, 
-  Camera,
-  Shield, 
-  Clock, 
-  Sparkles,
-  CheckCircle2,
-  AlertCircle,
   Upload
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
@@ -44,6 +36,8 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   onProfileUpdate 
 }) => {
   const { toast } = useToast();
+  const { markProfileComplete, activeClinic } = useAuth();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [editedName, setEditedName] = useState(user?.user_metadata?.name || '');
@@ -69,23 +63,23 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
     enabled: !!user?.id && open,
   });
 
-  // Initialize phone from profile data
+  // Initialize phone and name from profile data
   React.useEffect(() => {
+    if (profileData?.name) {
+      setEditedName(profileData.name);
+    }
     if (profileData?.phone) {
       setEditedPhone(profileData.phone);
     }
-  }, [profileData?.phone]);
+  }, [profileData]);
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setFormErrors(prev => ({ ...prev, photo: 'Please select an image file' }));
         return;
       }
-      
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setFormErrors(prev => ({ ...prev, photo: 'File size must be less than 5MB' }));
         return;
@@ -98,7 +92,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         return newErrors;
       });
 
-      // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setPhotoPreview(e.target?.result as string);
@@ -150,30 +143,82 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
           avatar_url: avatarUrl,
         }
       });
+      if (authError) {
+        console.error('Auth update error:', authError);
+        throw authError;
+      }
 
-      if (authError) throw authError;
+      // Create or update profiles table
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user!.id)
+        .maybeSingle();
 
-      // Use the standardized profile update function
-      const { data: profileData, error: profileError } = await supabase
-        .rpc('update_profile', {
-          p_user_id: user!.id,
-          p_name: editedName.trim(),
-          p_phone: editedPhone.trim() || null
+      if (!existingProfile) {
+        const { error: insertError } = await supabase.from('profiles').insert({
+          id: user!.id,
+          name: editedName.trim(),
+          phone: editedPhone.trim() || null,
+          email: user!.email,
+          created_at: new Date().toISOString(),
         });
+        if (insertError) {
+          console.error('Profile insert error:', insertError);
+          throw insertError;
+        }
+      } else {
+        const { error: profileError } = await supabase
+          .rpc('update_profile', {
+            p_user_id: user!.id,
+            p_name: editedName.trim(),
+            p_email: user!.email,
+            p_phone: editedPhone.trim() || null
+          });
+        if (profileError) {
+          console.error('Profile update error:', profileError);
+          throw profileError;
+        }
+      }
 
-      if (profileError) throw profileError;
+      // Update doctors table if user has a doctor profile
+      const { data: doctorProfile } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      if (doctorProfile) {
+        const { error: doctorError } = await supabase
+          .from('doctors')
+          .update({
+            name: editedName.trim(),
+            phone: editedPhone.trim() || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('user_id', user!.id);
+        if (doctorError) {
+          console.error('Doctor update error:', doctorError);
+          throw doctorError;
+        }
+      }
     },
     onSuccess: () => {
+      console.log('Profile update successful, closing modal');
       setFormErrors({});
+      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id] });
       toast({ 
         title: 'Profile updated successfully!', 
         description: 'Your changes have been saved.',
         variant: 'default'
       });
+      markProfileComplete();
       onProfileUpdate?.();
       onClose();
     },
     onError: (error: Error) => {
+      console.error('Profile update failed:', error);
       if (error.message !== 'Validation failed') {
         toast({ 
           title: 'Error updating profile', 
@@ -182,14 +227,18 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         });
       }
     },
+    onSettled: () => {
+      console.log('Mutation settled');
+    },
   });
 
   const handleSaveChanges = () => {
+    console.log('Initiating profile update with name:', editedName);
     updateBasicProfileMutation.mutate();
   };
 
   const handleCancel = () => {
-    setEditedName(user?.user_metadata?.name || '');
+    setEditedName(profileData?.name || user?.user_metadata?.name || '');
     setEditedPhone(profileData?.phone || '');
     setProfilePhoto(null);
     setPhotoPreview(user?.user_metadata?.avatar_url || '');
@@ -197,15 +246,12 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
     onClose();
   };
 
-  const lastLoginDate = user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleDateString() : 'Never';
-
   if (!open) return null;
-  if (profileLoading) return null; // Wait for profile data to load
+  if (profileLoading) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-        {/* Header */}
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
@@ -220,10 +266,8 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Scrollable Content */}
         <div className="flex-1 overflow-y-auto pr-2">
           <div className="pt-6 space-y-6">
-            {/* Simple Profile Header */}
             <div className="flex items-center gap-4">
               <Avatar className="w-16 h-16 border-2 border-border">
                 <AvatarImage 
@@ -234,7 +278,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   {editedName?.split(' ').map((n: string) => n[0]).join('') || user?.user_metadata?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
                 </AvatarFallback>
               </Avatar>
-              
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-foreground">
                   {editedName || user?.user_metadata?.name || 'Enter your name'}
@@ -245,9 +288,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
 
             <Separator />
 
-            {/* Form Fields */}
             <div className="space-y-4">
-              {/* Name Field */}
               <div className="space-y-2">
                 <Label htmlFor="name" className="text-sm font-medium">
                   Full Name <span className="text-destructive">*</span>
@@ -274,7 +315,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                 )}
               </div>
 
-              {/* Phone Field */}
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-medium">
                   Phone Number
@@ -301,7 +341,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                 )}
               </div>
 
-              {/* Photo Upload Field */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Profile Photo</Label>
                 <div className="flex items-center gap-3">
@@ -329,7 +368,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                 )}
               </div>
 
-              {/* Email Field - Read Only */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Email Address</Label>
                 <div className="p-3 bg-muted/30 rounded-lg border flex items-center justify-between">
@@ -343,7 +381,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
           </div>
         </div>
 
-        {/* Fixed Footer */}
         <div className="flex-shrink-0 border-t pt-4">
           <div className="flex justify-end gap-3">
             <Button
@@ -376,4 +413,4 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};

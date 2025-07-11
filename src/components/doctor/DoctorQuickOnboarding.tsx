@@ -1,8 +1,8 @@
-import { useState } from "react";
+// src/components/doctor/DoctorQuickOnboarding.tsx
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { getSupabase } from '@/integrations/supabase/client';
@@ -11,7 +11,8 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Stethoscope, 
   X,
-  Loader2
+  Loader2,
+  User as UserIcon
 } from "lucide-react";
 import { 
   Dialog,
@@ -29,11 +30,12 @@ interface DoctorQuickOnboardingProps {
 }
 
 export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickOnboardingProps) {
-  const { user, activeClinic } = useAuth();
+  const { user, activeClinic, markProfileComplete } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [formData, setFormData] = useState({
+    name: '',
     selectedDepartment: '',
     primarySpecialization: '',
     phone: '',
@@ -41,6 +43,62 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Fetch profile data from profiles table
+  const { data: profileData } = useQuery({
+    queryKey: ['userProfile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('name, phone')
+        .eq('id', user.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" error
+      return data;
+    },
+    enabled: !!user?.id && open,
+  });
+
+  // Fetch existing doctor profile
+  const { data: existingDoctorProfile } = useQuery({
+    queryKey: ['doctorProfile', user?.id, activeClinic?.clinic_id],
+    queryFn: async () => {
+      if (!user?.id || !activeClinic?.clinic_id) return null;
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('clinic_id', activeClinic.clinic_id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!activeClinic?.clinic_id && open,
+  });
+
+  // Initialize form with profile data
+  React.useEffect(() => {
+    if (profileData) {
+      setFormData(prev => ({
+        ...prev,
+        name: profileData.name || user?.user_metadata?.name || '',
+        phone: profileData.phone || prev.phone,
+      }));
+    }
+    if (existingDoctorProfile) {
+      setFormData(prev => ({
+        ...prev,
+        name: profileData?.name || existingDoctorProfile.name || user?.user_metadata?.name || '',
+        primarySpecialization: existingDoctorProfile.primary_specialization || '',
+        phone: profileData?.phone || existingDoctorProfile.phone || '',
+        consultation_fee: existingDoctorProfile.consultation_fee?.toString() || '',
+      }));
+    }
+  }, [profileData, existingDoctorProfile, user]);
 
   // Fetch available departments
   const { data: departments = [] } = useQuery({
@@ -57,71 +115,138 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     enabled: !!activeClinic?.clinic_id && open,
   });
 
-  const createDoctorMutation = useMutation({
+  const createOrUpdateDoctorMutation = useMutation({
     mutationFn: async () => {
       if (!user || !activeClinic) throw new Error('User or clinic not found');
 
-      // Create the doctor profile (without department_id - proper multi-tenant architecture)
-      const { error: doctorError } = await supabase.from('doctors').insert({
-        user_id: user.id,
-        clinic_id: activeClinic.clinic_id,
-        name: user.user_metadata?.name || user.email || '',
-        email: user.email || '',
-        phone: formData.phone || user.phone || '',
-        primary_specialization: formData.primarySpecialization,
-        consultation_fee: parseInt(formData.consultation_fee),
-        is_active: true,
-        bio: `Medical professional specializing in ${formData.primarySpecialization}`,
+      // Validate form
+      const errors: Record<string, string> = {};
+      if (!formData.name.trim()) {
+        errors.name = 'Name is required';
+      }
+      if (!formData.selectedDepartment) {
+        errors.selectedDepartment = 'Please select a department';
+      }
+      if (formData.phone && !/^\+?[0-9]{10,15}$/.test(formData.phone)) {
+        errors.phone = 'Please enter a valid phone number';
+      }
+      if (formData.consultation_fee && isNaN(parseInt(formData.consultation_fee))) {
+        errors.consultation_fee = 'Please enter a valid consultation fee';
+      }
+      
+      if (Object.keys(errors).length > 0) {
+        setFormErrors(errors);
+        throw new Error('Validation failed');
+      }
+
+      // Create profiles record if it doesn't exist
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (!existingProfile) {
+        await supabase.from('profiles').insert({
+          id: user.id,
+          name: formData.name.trim(),
+          phone: formData.phone.trim() || null,
+          email: user.email,
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        // Update profiles table
+        const { error: profileError } = await supabase.rpc('update_profile', {
+          p_user_id: user.id,
+          p_name: formData.name.trim(),
+          p_phone: formData.phone.trim() || null
+        });
+        if (profileError) throw profileError;
+      }
+
+      // Update auth user metadata
+      const { error: authError } = await supabase.auth.updateUser({
+        data: {
+          name: formData.name.trim(),
+        }
       });
+      if (authError) throw authError;
 
-      if (doctorError) throw doctorError;
-
-      // Update department assignment in clinic_members table (proper multi-tenant approach)
-        const { error: deptError } = await supabase
-          .from('clinic_members')
-          .update({ department_id: formData.selectedDepartment })
+      // Create or update doctor profile
+      if (existingDoctorProfile) {
+        const { error: doctorError } = await supabase
+          .from('doctors')
+          .update({
+            name: formData.name.trim(),
+            email: user.email || '',
+            phone: formData.phone || user.phone || '',
+            primary_specialization: formData.primarySpecialization || null,
+            consultation_fee: parseInt(formData.consultation_fee) || null,
+            bio: `Medical professional specializing in ${formData.primarySpecialization || 'Medicine'}`,
+            updated_at: new Date().toISOString(),
+          })
           .eq('user_id', user.id)
           .eq('clinic_id', activeClinic.clinic_id);
-        
+        if (doctorError) throw doctorError;
+      } else {
+        const { error: doctorError } = await supabase.from('doctors').insert({
+          user_id: user.id,
+          clinic_id: activeClinic.clinic_id,
+          name: formData.name.trim(),
+          email: user.email || '',
+          phone: formData.phone || user.phone || '',
+          primary_specialization: formData.primarySpecialization || null,
+          consultation_fee: parseInt(formData.consultation_fee) || null,
+          is_active: true,
+          bio: `Medical professional specializing in ${formData.primarySpecialization || 'Medicine'}`,
+        });
+        if (doctorError) throw doctorError;
+      }
+
+      // Update department assignment in clinic_members table
+      const { error: deptError } = await supabase
+        .from('clinic_members')
+        .update({ department_id: formData.selectedDepartment })
+        .eq('user_id', user.id)
+        .eq('clinic_id', activeClinic.clinic_id);
       if (deptError) throw deptError;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userHasDoctorProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinic_id] });
       toast({ 
         title: "Success",
-        description: "Medical profile created successfully! You can now see patients and manage appointments.",
+        description: "Medical profile created or updated successfully! You can now see patients and manage appointments.",
       });
+      markProfileComplete();
       onSuccess();
       onClose();
     },
-    onError: (error) => {
-      console.error('Error creating doctor profile:', error);
-      toast({ 
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create medical profile.",
-        variant: "destructive",
-      });
+    onError: (error: Error) => {
+      console.error('Error creating or updating doctor profile:', error);
+      if (error.message !== 'Validation failed') {
+        toast({ 
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    },
+    onSettled: () => {
+      setIsSubmitting(false);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.selectedDepartment) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a department.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
-    createDoctorMutation.mutate();
+    createOrUpdateDoctorMutation.mutate();
   };
 
   const handleClose = () => {
     if (!isSubmitting) {
+      setFormErrors({});
       onClose();
     }
   };
@@ -151,74 +276,124 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Name Field */}
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-sm font-medium">
+              Full Name <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, name: e.target.value }));
+                if (formErrors.name) {
+                  setFormErrors(prev => ({ ...prev, name: '' }));
+                }
+              }}
+              placeholder="Enter your full name"
+            />
+            {formErrors.name && (
+              <p className="text-destructive text-sm">{formErrors.name}</p>
+            )}
+            <p className="text-xs text-muted-foreground">Your professional name as it will appear to patients</p>
+          </div>
+
           {/* Department Selection */}
-                <div className="space-y-2">
+          <div className="space-y-2">
             <Label htmlFor="department" className="text-sm font-medium">
               Department <span className="text-destructive">*</span>
-                  </Label>
-            <Select value={formData.selectedDepartment} onValueChange={(value) => setFormData(prev => ({ ...prev, selectedDepartment: value }))}>
+            </Label>
+            <Select 
+              value={formData.selectedDepartment} 
+              onValueChange={(value) => {
+                setFormData(prev => ({ ...prev, selectedDepartment: value }));
+                if (formErrors.selectedDepartment) {
+                  setFormErrors(prev => ({ ...prev, selectedDepartment: '' }));
+                }
+              }}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select your primary department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.department_types?.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              </SelectTrigger>
+              <SelectContent>
+                {departments.map((dept) => (
+                  <SelectItem key={dept.id} value={dept.id}>
+                    {dept.department_types?.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {formErrors.selectedDepartment && (
+              <p className="text-destructive text-sm">{formErrors.selectedDepartment}</p>
+            )}
             <p className="text-xs text-muted-foreground">This helps with appointment categorization</p>
-                </div>
+          </div>
 
           {/* Specialization */}
-                <div className="space-y-2">
+          <div className="space-y-2">
             <Label htmlFor="specialization" className="text-sm font-medium">
               Medical Specialization <span className="text-muted-foreground">(Optional)</span>
-                  </Label>
-                  <Input
+            </Label>
+            <Input
               id="specialization"
-                    value={formData.primarySpecialization}
-                    onChange={(e) => setFormData(prev => ({ ...prev, primarySpecialization: e.target.value }))}
+              value={formData.primarySpecialization}
+              onChange={(e) => setFormData(prev => ({ ...prev, primarySpecialization: e.target.value }))}
               placeholder="e.g., Cardiology, Neurology, General Medicine"
-                  />
+            />
             <p className="text-xs text-muted-foreground">Your area of medical expertise</p>
-                </div>
+          </div>
 
           {/* Phone */}
-                  <div className="space-y-2">
+          <div className="space-y-2">
             <Label htmlFor="phone" className="text-sm font-medium">
               Professional Phone <span className="text-muted-foreground">(Optional)</span>
             </Label>
-                    <Input
+            <Input
               id="phone"
               type="tel"
               value={formData.phone}
-              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, phone: e.target.value }));
+                if (formErrors.phone) {
+                  setFormErrors(prev => ({ ...prev, phone: '' }));
+                }
+              }}
               placeholder="+91 98765 43210"
             />
+            {formErrors.phone && (
+              <p className="text-destructive text-sm">{formErrors.phone}</p>
+            )}
             <p className="text-xs text-muted-foreground">For patient contact and appointments</p>
-                </div>
+          </div>
 
           {/* Consultation Fee */}
-                <div className="space-y-2">
+          <div className="space-y-2">
             <Label htmlFor="fee" className="text-sm font-medium">
               Consultation Fee <span className="text-muted-foreground">(₹)</span>
-                  </Label>
-                  <Input
+            </Label>
+            <Input
               id="fee"
               type="number"
               value={formData.consultation_fee}
-              onChange={(e) => setFormData(prev => ({ ...prev, consultation_fee: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, consultation_fee: e.target.value }));
+                if (formErrors.consultation_fee) {
+                  setFormErrors(prev => ({ ...prev, consultation_fee: '' }));
+                }
+              }}
               placeholder="350"
               min="0"
             />
+            {formErrors.consultation_fee && (
+              <p className="text-destructive text-sm">{formErrors.consultation_fee}</p>
+            )}
             <p className="text-xs text-muted-foreground">Base consultation fee (you can adjust this later)</p>
           </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-3 pt-4">
-          <Button
+            <Button
               type="button"
               variant="outline"
               onClick={handleClose}
@@ -228,11 +403,11 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Create Medical Profile
-          </Button>
-        </div>
+              {existingDoctorProfile ? 'Update Medical Profile' : 'Create Medical Profile'}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
   );
-} 
+}

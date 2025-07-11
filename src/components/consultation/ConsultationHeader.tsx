@@ -1,159 +1,84 @@
-import { ArrowLeft, Save, Printer, Eye, CheckCircle, Lock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { format } from 'date-fns';
-import { Patient } from './types';
-import { getAge } from '@/lib/utils';
-
-interface AutoSaveMutation {
-  isPending: boolean;
-}
-
-interface MandatoryFieldsStatus {
-  isValid: boolean;
-  errors: string[];
-  missingFields: number;
-  validationMessage: string;
-}
+import React from "react";
+import { DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from "date-fns";
+import { formatTimeIST } from "@/lib/utils";
+import { Appointment } from "@/hooks/useConsultation";
 
 interface ConsultationHeaderProps {
-  patient: Patient | null;
-  isConsultationCompleted: boolean;
-  autoSaveMutation: AutoSaveMutation;
-  mandatoryFieldsStatus: MandatoryFieldsStatus;
-  onBack: () => void;
-  onSave: () => void;
-  onPrint: () => void;
-  onPreview: () => void;
-  onComplete: () => void;
+  appointment: Appointment | null;
+  effectiveDepartmentType: string;
+  isCurrentUserSuperadminConsulting: boolean;
+  autoSaveStatus: { status: 'idle' | 'saving' | 'saved' | 'error'; timestamp?: string };
+  editedFields: string[];
+  getAge: (dateString?: string | null) => string;
 }
 
-export const ConsultationHeader = ({
-  patient,
-  isConsultationCompleted,
-  autoSaveMutation,
-  mandatoryFieldsStatus,
-  onBack,
-  onSave,
-  onPrint,
-  onPreview,
-  onComplete
-}: ConsultationHeaderProps) => {
-  const canComplete = mandatoryFieldsStatus.isValid && !autoSaveMutation.isPending && !isConsultationCompleted;
-
-  const getCompleteButtonTooltip = () => {
-    if (isConsultationCompleted) return "Consultation already completed";
-    if (autoSaveMutation.isPending) return "Please wait for auto-save to complete";
-    if (!mandatoryFieldsStatus.isValid) {
-      return `Missing ${mandatoryFieldsStatus.missingFields} required field${mandatoryFieldsStatus.missingFields > 1 ? 's' : ''}: ${mandatoryFieldsStatus.errors.join(', ')}`;
-    }
-    return "Complete consultation";
-  };
-
+export const ConsultationHeader: React.FC<ConsultationHeaderProps> = ({
+  appointment,
+  effectiveDepartmentType,
+  isCurrentUserSuperadminConsulting,
+  autoSaveStatus,
+  editedFields,
+  getAge,
+}) => {
   return (
-    <TooltipProvider>
-      <div className="sticky top-0 z-50 bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                onClick={onBack}
-                className="flex items-center gap-2"
-                size="sm"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold text-gray-900">
-                    {patient?.name}
-                  </h1>
-                  {isConsultationCompleted && (
-                    <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Completed
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-sm text-gray-600">
-                  {patient?.date_of_birth && `${getAge(patient.date_of_birth, true)}`}
-                  {patient?.gender && ` • ${patient.gender}`}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isConsultationCompleted ? (
-                <Badge variant="outline" className="text-xs border-green-200 text-green-700">
-                  <Lock className="h-3 w-3 mr-1" />
-                  Read Only
-                </Badge>
-              ) : (
-                <Badge variant={autoSaveMutation.isPending ? "secondary" : "outline"} className="text-xs">
-                  {autoSaveMutation.isPending ? "Saving..." : "Saved"}
-                </Badge>
-              )}
-
-              <Button
-                onClick={onSave}
-                disabled={autoSaveMutation.isPending || isConsultationCompleted}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                title={isConsultationCompleted ? "Cannot save completed consultation" : "Save consultation"}
-              >
-                <Save className="h-4 w-4" />
-                Save
-              </Button>
-              {/* 
-              <Button
-                onClick={onPrint}
-                variant="outline"
-                disabled={isConsultationCompleted}
-                size="sm"
-                className="flex items-center gap-1"
-                title={isConsultationCompleted ? "Cannot print completed consultation" : "Print consultation"}
-              >
-                <Printer className="h-4 w-4" />
-                Print
-              </Button> */}
-              <Button
-                onClick={onPreview}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-              >
-                <Eye className="h-4 w-4" />
-                Preview
-              </Button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={onComplete}
-                    disabled={!canComplete}
-                    size="sm"
-                    className={`flex items-center gap-1 transition-all ${canComplete
-                        ? 'bg-green-600 hover:bg-green-700 text-secondary '
-                        : 'opacity-60'
-                      }`}
-                    variant={canComplete ? "default" : "secondary"}
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    {isConsultationCompleted ? "Completed" : "Complete"}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">{getCompleteButtonTooltip()}</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
+    <DialogHeader className="px-4 py-3 sm:px-6 sm:py-4 border-b bg-background">
+      <div className="flex items-center justify-between">
+        <DialogTitle className="text-base sm:text-lg font-semibold text-foreground">
+          {appointment?.patient_name || 'Unknown Patient'} - Consultation
+          {effectiveDepartmentType && (
+            <Badge className="status-badge status-pending ml-2 text-xs">
+              {effectiveDepartmentType}
+              {isCurrentUserSuperadminConsulting && effectiveDepartmentType === 'General' && " (Default)"}
+            </Badge>
+          )}
+        </DialogTitle>
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground mr-4">
+          {autoSaveStatus.status === 'saving' && <span>Saving...</span>}
+          {autoSaveStatus.status === 'saved' && autoSaveStatus.timestamp && (
+            <span>Saved at {autoSaveStatus.timestamp}</span>
+          )}
+          {autoSaveStatus.status === 'error' && (
+            <span className="text-destructive">Error</span>
+          )}
         </div>
       </div>
-    </TooltipProvider>
+      
+      {appointment && (
+        <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+          <div>
+            <span className="font-medium">Doctor:</span> {appointment.doctor_name || 'Unknown Doctor'}
+          </div>
+          <div className="flex items-center gap-2 sm:gap-4">
+            <span>
+              {format(parseISO(appointment.date), 'PPP')} at {formatTimeIST(appointment.time)}
+            </span>
+            {appointment.patient_date_of_birth && (
+              <span>{getAge(appointment.patient_date_of_birth)} yrs</span>
+            )}
+            {appointment.patient_gender && (
+              <span className="capitalize">{appointment.patient_gender}</span>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {editedFields.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1">
+          <span className="text-xs text-muted-foreground">Edited:</span>
+          {editedFields.slice(0, 3).map((field) => (
+            <Badge key={field} variant="secondary" className="text-xs">
+              {field}
+            </Badge>
+          ))}
+          {editedFields.length > 3 && (
+            <Badge variant="secondary" className="text-xs">
+              +{editedFields.length - 3} more
+            </Badge>
+          )}
+        </div>
+      )}
+    </DialogHeader>
   );
 }; 

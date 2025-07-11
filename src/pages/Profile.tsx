@@ -11,35 +11,23 @@ import {
   Shield,
   Stethoscope, 
   UserPlus, 
-  Settings,
-  AlertTriangle,
-  Loader,
   Building2,
-  Activity,
-  GraduationCap,
-  FileText,
   Edit,
   Phone,
   Mail,
-  MapPin,
-  Calendar,
   CheckCircle,
   CheckCircle2,
-  BookOpen,
-  Heart,
-  Users
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { BasicProfileEditor } from "@/components/BasicProfileEditor";
 import { MedicalCredentialsModal } from "@/components/doctor/MedicalCredentialsModal";
 import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding";
-
-const supabase = getSupabase();
-
+import { useQueryClient } from '@tanstack/react-query';
 
 
 const Profile = () => {
   const { user, activeClinic, activeClinicRole, hasDoctorProfile } = useAuth();
+  const queryClient = useQueryClient();
   const [isBasicModalOpen, setIsBasicModalOpen] = useState(false);
   const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
@@ -49,14 +37,13 @@ const Profile = () => {
   useEffect(() => {
     setLocalHasDoctorProfile(hasDoctorProfile);
   }, [hasDoctorProfile]);
-
+  const supabase = getSupabase()
   // Fetch doctor profile if user has one
   const { data: doctorProfile, isLoading: isDoctorLoading, refetch: refetchDoctorProfile } = useQuery({
     queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id],
     queryFn: async () => {
       if (!user?.id || !activeClinic?.clinics?.id) return null;
       
-      // Fetch doctor profile (without department_id - removed for multi-tenant architecture)
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
@@ -66,13 +53,11 @@ const Profile = () => {
       
       if (error) {
         if (error.code === 'PGRST116') {
-          // No doctor profile found - this is normal for non-doctors
           return null;
         }
         throw error;
       }
       
-      // Fetch department information from clinic_members table (proper multi-tenant approach)
       const { data: memberData } = await supabase
         .from('clinic_members')
         .select(`
@@ -105,12 +90,11 @@ const Profile = () => {
         .eq('id', user.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" error
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     enabled: !!user?.id,
   });
-
 
   const handleBecomeDoctorClick = () => {
     setIsOnboardingModalOpen(true);
@@ -120,10 +104,9 @@ const Profile = () => {
     const isDoctorRole = activeClinicRole === 'doctor' || doctorProfile;
     const isHybridSuperadmin = activeClinicRole === 'superadmin' && doctorProfile;
 
+    const displayName = userProfile?.name || user?.user_metadata?.name || 'User';
+
     if (isDoctorRole) {
-      // Ensure consistent "Dr." prefix for all doctors
-      const doctorName = doctorProfile?.name || user?.user_metadata?.name || 'Doctor';
-      const displayName = doctorName.startsWith('Dr.') ? doctorName : `Dr. ${doctorName}`;
       
       return {
         title: displayName,
@@ -137,7 +120,7 @@ const Profile = () => {
 
     if (activeClinicRole === 'superadmin') {
       return {
-        title: user?.user_metadata?.name || 'Administrator',
+        title: displayName,
         subtitle: 'Clinic Administrator',
         icon: Shield,
         iconClass: "text-slate-600",
@@ -147,7 +130,7 @@ const Profile = () => {
     }
 
     return {
-      title: user?.user_metadata?.name || 'Staff Member',
+      title: displayName,
       subtitle: 'Healthcare Team',
       icon: User,
       iconClass: "text-success",
@@ -197,7 +180,6 @@ const Profile = () => {
         </Card>
       )}
       
-      {/* Consistent Page Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
           <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${roleConfig.bgClass}`}>
@@ -225,10 +207,7 @@ const Profile = () => {
         </div>
       </div>
                   
-      {/* Profile Information Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Basic Profile Card */}
         <Card className="">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
@@ -263,7 +242,6 @@ const Profile = () => {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Contact Information */}
             <div className="space-y-3">
               <h4 className="font-medium text-sm">Contact Information</h4>
               <div className="space-y-2">
@@ -290,7 +268,6 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {/* Medical Profile Card - Only for doctors */}
         {(activeClinicRole === 'doctor' || doctorProfile) && (
           <Card className="">
             <CardHeader className="pb-4">
@@ -355,7 +332,6 @@ const Profile = () => {
           </Card>
         )}
 
-        {/* For non-doctors, show role-specific information */}
         {!localHasDoctorProfile && (
           <Card className="">
             <CardHeader className="pb-4">
@@ -381,7 +357,6 @@ const Profile = () => {
                 </p>
               </div>
 
-              {/* Become Doctor option for superadmins */}
               {activeClinicRole === 'superadmin' && (
                 <>
                   <Separator />
@@ -406,14 +381,14 @@ const Profile = () => {
         )}
       </div>
                   
-      {/* Modal Components with corrected props */}
       {isBasicModalOpen && (
         <BasicProfileEditor 
           open={isBasicModalOpen}
           onClose={() => setIsBasicModalOpen(false)}
           user={user} 
           onProfileUpdate={() => {
-            window.location.reload();
+            queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
+            queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id] });
           }} 
         />
       )}

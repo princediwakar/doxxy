@@ -2,28 +2,15 @@ import { memo } from "react";
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { 
-  Stethoscope, 
-  Shield, 
-  FileText, 
-  ChevronDown,
   Menu,
   X,
   Home,
   Zap,
   CreditCard,
-  Users,
   Phone,
-  HelpCircle,
-  BookOpen,
   BarChart3
 } from "lucide-react";
 import { useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 // --- MODULAR COMPONENTS ---
 

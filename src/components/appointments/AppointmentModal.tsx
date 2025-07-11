@@ -444,7 +444,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         <SelectItem key={d.id} value={d.id}>
                           <div className="flex flex-col items-start">
                             <div className="font-medium">
-                              Dr. {d.name}
+                              {d.name}
                             </div>
                             <div className="text-sm text-muted-foreground">
                               {/* Show medical specialization if available, otherwise department */}

@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, subMonths, subYears } from "date-fns";
@@ -184,7 +183,7 @@ export function ExportOptionsModal({
                 <Checkbox
                   id="consultations"
                   checked={includeConsultations}
-                  onCheckedChange={setIncludeConsultations}
+                  onCheckedChange={(checked) => setIncludeConsultations(checked === true)}
                 />
                 <Label htmlFor="consultations" className="flex items-center space-x-2">
                   <Stethoscope className="h-4 w-4" />
@@ -197,7 +196,7 @@ export function ExportOptionsModal({
                 <Checkbox
                   id="prescriptions"
                   checked={includePrescriptions}
-                  onCheckedChange={setIncludePrescriptions}
+                  onCheckedChange={(checked) => setIncludePrescriptions(checked === true)}
                 />
                 <Label htmlFor="prescriptions" className="flex items-center space-x-2">
                   <Pill className="h-4 w-4" />
@@ -221,7 +220,7 @@ export function ExportOptionsModal({
                 <Checkbox
                   id="dateRange"
                   checked={useDateRange}
-                  onCheckedChange={setUseDateRange}
+                  onCheckedChange={(checked) => setUseDateRange(checked === true)}
                 />
                 <Label htmlFor="dateRange">Filter by date range</Label>
               </div>

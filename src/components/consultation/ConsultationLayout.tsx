@@ -286,7 +286,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           <div className="doctor-info text-right space-y-4">
             <div className="space-y-2">
               <h2 className="text-xl font-bold text-gray-900">
-                Dr. {doctorInfo?.name || ''}
+                {doctorInfo?.name || ''}
               </h2>
               <div className="text-sm text-gray-600 font-medium">
                 {doctorInfo?.specialization && (

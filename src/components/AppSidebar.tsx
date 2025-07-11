@@ -15,14 +15,14 @@ const navItems = [
   { icon: Home, label: "Dashboard", path: "/dashboard", roles: ['superadmin', 'staff', 'doctor'] },
   { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ['staff', 'doctor', 'superadmin'] },
   { icon: Users, label: "Patients", path: "/patients", roles: ['staff', 'doctor', 'superadmin'] },
-  // { icon: Pill, label: "Prescriptions", path: "/prescriptions", roles: ['doctor', 'superadmin'] },
   { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'doctor','superadmin'] },
-  { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
   { icon: User2, label: "Profile", path: "/profile", roles: ['superadmin', 'staff', 'doctor'] },
+  { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
 ];
 
 export function AppSidebar() {
   const { user, activeClinic, activeClinicRole, signOut, loading, profileName } = useAuth();
+
   const location = useLocation();
   const navigate = useNavigate();
   // Helper to determine if a link is active
@@ -34,6 +34,8 @@ export function AppSidebar() {
     // For other paths, check if the current path starts with the item's path
     return location.pathname.startsWith(path);
   };
+
+  
 
   return (
     // Clean sidebar design without background colors or borders
