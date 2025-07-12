@@ -133,7 +133,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">No Appointment</SelectItem>
+                          <SelectItem value="No Appointment">No Appointment</SelectItem>
                           {appointments?.map((apt) => (
                             <SelectItem key={apt.id} value={apt.id}>
                               {apt.patient_name} - {apt.date} {apt.time}
