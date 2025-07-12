@@ -2851,3 +2851,148 @@ supabase functions delete delete-user
 - Build pipeline now clean
 - Ready for production deployment
 - Manual cleanup of unused Supabase functions recommended when CLI access is available
+
+## [2025-07-11] RLS Security Fix and Testing Guide
+
+### RLS Security Issue Fixed
+**Issue**: `contact_messages` table had RLS disabled, creating a security vulnerability
+**Solution**: Created migration `20250711_fix_contact_messages_rls.sql` with:
+- ✅ Enabled Row Level Security on `contact_messages` table
+- ✅ Added policy for public INSERT (allows contact form submissions)
+- ✅ Added policy for authenticated READ (admin access only)
+- ✅ Added policies for authenticated UPDATE/DELETE (admin management)
+
+### Development Server Status
+- ✅ Server running on `http://localhost:8080`
+- ✅ Build passes with no errors
+- ✅ All type and lint issues resolved
+
+### Comprehensive Testing Checklist
+
+#### 🔐 Authentication Flow
+- [ ] **Landing Page**: Navigate to `/` - should show marketing page
+- [ ] **Sign Up**: Click "Get Started" → should redirect to `/auth`
+- [ ] **Login Form**: Test email/password login
+- [ ] **Profile Completion**: After first login → `/complete-profile`
+- [ ] **Clinic Creation**: If no clinics → `/create-clinic`
+- [ ] **Dashboard Access**: With completed profile → `/dashboard`
+
+#### 🏥 Core Healthcare Workflows
+
+**Patient Management**
+- [ ] **Add Patient**: `/patients` → "New Patient" → fill form → save
+- [ ] **Search Patients**: Use search bar to find patients
+- [ ] **View Patient Details**: Click patient → view medical history
+- [ ] **Edit Patient**: Update patient information
+- [ ] **Export Patient Data**: Test PDF export functionality
+
+**Appointment Management**
+- [ ] **Create Appointment**: `/appointments` → "New Appointment"
+- [ ] **View Today's Appointments**: Check today's tab
+- [ ] **Filter Appointments**: Test upcoming/past filters
+- [ ] **Cancel Appointment**: Test cancellation flow
+- [ ] **Start Consultation**: Click "Start Consultation" button
+
+**Consultation Workflow**
+- [ ] **Open Consultation**: From appointment → consultation form
+- [ ] **Fill Medical Notes**: Test all form sections (chief complaint, examination, etc.)
+- [ ] **Auto-save**: Verify form auto-saves progress
+- [ ] **Complete Consultation**: Mark as complete
+- [ ] **View Consultation**: Test read-only view of completed consultations
+- [ ] **Print Consultation**: Test PDF generation
+
+**Prescription Management**
+- [ ] **Create Prescription**: From consultation → add medications
+- [ ] **Medicine Search**: Test medicine autocomplete
+- [ ] **Save Prescription**: Verify prescription saves correctly
+- [ ] **View Prescriptions**: Check prescription history
+- [ ] **Print Prescription**: Test PDF generation
+
+**Billing System**
+- [ ] **Create Bill**: `/billing` → "New Bill"
+- [ ] **Add Service Items**: Test adding multiple services
+- [ ] **Calculate Totals**: Verify tax/discount calculations
+- [ ] **Generate Invoice**: Test invoice number generation
+- [ ] **View Bills**: Check billing history
+
+#### 👥 Multi-User & Role Management
+
+**Clinic Administration (Superadmin)**
+- [ ] **Invite Members**: `/settings` → invite doctor/staff
+- [ ] **Manage Departments**: Add/edit clinic departments
+- [ ] **View Members**: Check clinic members list
+- [ ] **Update Roles**: Change member roles/departments
+
+**Doctor Dashboard**
+- [ ] **Doctor View**: Login as doctor → see doctor-specific dashboard
+- [ ] **My Patients**: View only assigned patients
+- [ ] **My Appointments**: See only doctor's appointments
+- [ ] **Quick Actions**: Test appointment/consultation shortcuts
+
+**Staff Dashboard**
+- [ ] **Staff View**: Login as staff → see appropriate permissions
+- [ ] **Limited Access**: Verify restricted access to sensitive data
+
+#### 🔒 Security & Data Integrity
+
+**Row Level Security**
+- [ ] **Multi-tenant Isolation**: Verify users only see their clinic's data
+- [ ] **Contact Form**: Test contact form submission (public access)
+- [ ] **Unauthorized Access**: Verify proper access restrictions
+
+**Data Validation**
+- [ ] **Form Validation**: Test required fields and validation messages
+- [ ] **Data Consistency**: Verify foreign key relationships
+- [ ] **Error Handling**: Test network errors and edge cases
+
+#### 📱 UI/UX Testing
+
+**Responsive Design**
+- [ ] **Mobile View**: Test on mobile screen sizes
+- [ ] **Tablet View**: Test on tablet screen sizes
+- [ ] **Touch Targets**: Verify buttons are ≥44px for mobile
+
+**Navigation & Flow**
+- [ ] **Header Navigation**: Test all navigation links
+- [ ] **Breadcrumbs**: Verify navigation breadcrumbs
+- [ ] **Back Buttons**: Test back navigation
+- [ ] **Loading States**: Verify loading indicators
+- [ ] **Error States**: Test error message displays
+
+#### 🌐 Marketing Pages
+- [ ] **Features Page**: `/features` → content loads correctly
+- [ ] **Pricing Page**: `/pricing` → pricing tiers display
+- [ ] **Contact Page**: `/contact` → form submission works
+- [ ] **FAQ Page**: `/faq` → search and expand functionality
+- [ ] **Blog**: `/blog` → blog posts load and display
+
+### Testing Commands
+```bash
+# Start development server
+npm run dev -- --host 0.0.0.0 --port 8080
+
+# Run tests
+npm run test
+
+# Check build
+npm run build
+
+# Lint check
+npm run lint
+```
+
+### Critical Test URLs
+- Landing: `http://localhost:8080/`
+- Auth: `http://localhost:8080/auth`
+- Dashboard: `http://localhost:8080/dashboard`
+- Patients: `http://localhost:8080/patients`
+- Appointments: `http://localhost:8080/appointments`
+- Billing: `http://localhost:8080/billing`
+- Settings: `http://localhost:8080/settings`
+
+### Notes
+- All major flows should be tested manually in browser
+- Pay special attention to multi-tenant data isolation
+- Verify all CRUD operations work correctly
+- Test error scenarios and edge cases
+- Ensure mobile responsiveness on all pages
