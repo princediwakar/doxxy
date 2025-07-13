@@ -19,7 +19,7 @@ const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Profile = lazy(() => import("./pages/Profile"));
 const CreateClinicPage = lazy(() => import("./pages/CreateClinicPage"));
-const SettingsPage = lazy(() => import("./pages/SettingsPage"));
+const SettingsPage = lazy(() => import("./pages/Settings"));
 const CompleteProfile = lazy(() => import("@/pages/CompleteProfile"));
 const TermsPage = lazy(() => import("./pages/(marketing)/Terms"));
 const PrivacyPage = lazy(() => import("./pages/(marketing)/Privacy"));

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -77,6 +77,9 @@ export const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Invite New Member</DialogTitle>
+          <DialogDescription>
+            Send an invitation to add a new member to your clinic team
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

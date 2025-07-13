@@ -15,7 +15,7 @@ export const PatientsPageHeader = ({ onNewPatient, onExport, isPatientSelected }
           <User className="w-5 h-5 " />
         </div>
         <div>
-          <h1 className="text-3xl font-bold ">Patient Records</h1>
+          <h1 className="text-2xl font-bold ">Patient Records</h1>
           <p className="text-muted-foreground">Comprehensive patient medical history and records</p>
         </div>
       </div>

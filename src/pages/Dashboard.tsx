@@ -173,7 +173,7 @@ const Dashboard = () => {
       <div className="space-y-6 ">
         {user ? (
           <div className="mb-6">
-            <h1 className="text-3xl font-bold mb-2">{greeting}</h1>
+            <h1 className="text-2xl font-bold mb-2">{greeting}</h1>
             <div className="h-4 w-96 bg-muted/50 rounded animate-pulse" />
           </div>
         ) : (
@@ -278,7 +278,7 @@ const Dashboard = () => {
     <div className="space-y-6 ">
       <div className="flex justify-between mb-6">
         <div className="">
-          <h1 className="text-3xl font-bold">{greeting}</h1>
+          <h1 className="text-2xl font-bold">{greeting}</h1>
           <p className="text-muted-foreground">
             {isEnhancedSuperadmin 
               ? "Complete overview of clinic operations and your personal practice."

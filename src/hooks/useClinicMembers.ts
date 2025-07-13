@@ -199,9 +199,9 @@ export const useClinicMembers = () => {
       const { data, error } = await supabase.rpc('invite_and_add_member', {
         p_email: formData.email,
         p_name: formData.name,
-        p_phone: formData.phone,
         p_clinic_id: activeClinic.clinic_id,
         p_role: formData.role,
+        p_phone: formData.phone,
         p_department_id: formData.departmentId === 'no-department' ? null : formData.departmentId,
       });
 

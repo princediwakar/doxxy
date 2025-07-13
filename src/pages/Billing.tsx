@@ -139,7 +139,7 @@ const Billing = () => {
               <CreditCard className="w-5 h-5 " />
             </div>
             <div>
-              <h1 className="text-3xl font-bold ">Billing</h1>
+              <h1 className="text-2xl font-bold">Billing</h1>
               <p className="text-muted-foreground">Manage patient bills and payments</p>
             </div>
           </div>
@@ -277,6 +277,5 @@ const Billing = () => {
 };
 
 export default Billing;
-
 
 

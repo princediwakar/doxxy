@@ -14,6 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointment_billing: {
+        Row: {
+          amount: number
+          appointment_id: string
+          billing_type: string
+          clinic_id: string
+          created_at: string | null
+          credits_used: number | null
+          id: string
+          monthly_billing_cycle_id: string | null
+        }
+        Insert: {
+          amount?: number
+          appointment_id: string
+          billing_type: string
+          clinic_id: string
+          created_at?: string | null
+          credits_used?: number | null
+          id?: string
+          monthly_billing_cycle_id?: string | null
+        }
+        Update: {
+          amount?: number
+          appointment_id?: string
+          billing_type?: string
+          clinic_id?: string
+          created_at?: string | null
+          credits_used?: number | null
+          id?: string
+          monthly_billing_cycle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_billing_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: true
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_billing_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_billing_monthly_billing_cycle_id_fkey"
+            columns: ["monthly_billing_cycle_id"]
+            isOneToOne: false
+            referencedRelation: "monthly_billing_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           clinic_id: string
@@ -154,6 +209,44 @@ export type Database = {
           },
         ]
       }
+      clinic_credits: {
+        Row: {
+          clinic_id: string
+          created_at: string | null
+          credit_balance: number
+          id: string
+          total_credits_purchased: number
+          total_credits_used: number
+          updated_at: string | null
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string | null
+          credit_balance?: number
+          id?: string
+          total_credits_purchased?: number
+          total_credits_used?: number
+          updated_at?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string | null
+          credit_balance?: number
+          id?: string
+          total_credits_purchased?: number
+          total_credits_used?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_credits_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: true
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinic_departments: {
         Row: {
           clinic_id: string | null
@@ -197,6 +290,7 @@ export type Database = {
           department_id: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -205,6 +299,7 @@ export type Database = {
           department_id?: string | null
           id?: string
           role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -213,6 +308,7 @@ export type Database = {
           department_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -597,6 +693,60 @@ export type Database = {
         }
         Relationships: []
       }
+      monthly_billing_cycles: {
+        Row: {
+          appointments_count: number
+          billing_month: string
+          clinic_id: string
+          created_at: string | null
+          due_date: string
+          id: string
+          payment_status: string
+          payment_transaction_id: string | null
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          appointments_count?: number
+          billing_month: string
+          clinic_id: string
+          created_at?: string | null
+          due_date: string
+          id?: string
+          payment_status?: string
+          payment_transaction_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Update: {
+          appointments_count?: number
+          billing_month?: string
+          clinic_id?: string
+          created_at?: string | null
+          due_date?: string
+          id?: string
+          payment_status?: string
+          payment_transaction_id?: string | null
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monthly_billing_cycles_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "monthly_billing_cycles_payment_transaction_id_fkey"
+            columns: ["payment_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "payment_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null
@@ -637,6 +787,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "patients_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          clinic_id: string
+          created_at: string | null
+          credits_purchased: number | null
+          currency: string
+          id: string
+          metadata: Json | null
+          payment_method: string | null
+          payment_status: string
+          razorpay_order_id: string | null
+          razorpay_payment_id: string | null
+          razorpay_signature: string | null
+          transaction_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          clinic_id: string
+          created_at?: string | null
+          credits_purchased?: number | null
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          transaction_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          clinic_id?: string
+          created_at?: string | null
+          credits_purchased?: number | null
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payment_method?: string | null
+          payment_status?: string
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string | null
+          razorpay_signature?: string | null
+          transaction_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_clinic_id_fkey"
             columns: ["clinic_id"]
             isOneToOne: false
             referencedRelation: "clinics"
@@ -745,6 +954,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_clinic_credits: {
+        Args:
+          | {
+              clinic_id_param: string
+              credits_to_add: number
+              transaction_id_param?: string
+            }
+          | {
+              p_clinic_id: string
+              p_credits: number
+              p_payment_id?: string
+              p_order_id?: string
+            }
+        Returns: boolean
+      }
       add_clinic_member: {
         Args: {
           new_user_id: string
@@ -799,6 +1023,14 @@ export type Database = {
         }
         Returns: string
       }
+      deduct_appointment_credit: {
+        Args: {
+          appointment_id_param: string
+          clinic_id_param: string
+          credits_to_deduct?: number
+        }
+        Returns: boolean
+      }
       delete_consultation: {
         Args: { p_consultation_id: string }
         Returns: boolean
@@ -847,6 +1079,21 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      get_clinic_billing_summary: {
+        Args: { clinic_id_param: string }
+        Returns: {
+          credit_balance: number
+          total_credits_purchased: number
+          total_credits_used: number
+          current_month_appointments: number
+          current_month_amount: number
+          pending_payments: number
+        }[]
+      }
+      get_clinic_credit_balance: {
+        Args: { clinic_id_param: string }
+        Returns: number
       }
       get_clinic_members: {
         Args: { p_clinic_id: string }
@@ -1071,9 +1318,9 @@ export type Database = {
         Args: {
           p_email: string
           p_name: string
-          p_phone: string
           p_clinic_id: string
           p_role: Database["public"]["Enums"]["user_role"]
+          p_phone?: string
           p_department_id?: string
           p_availability?: string
           p_bio?: string

@@ -118,7 +118,7 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
   return (
     <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-6">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="today" className="flex items-center gap-2">
+        <TabsTrigger value="today" className="flex items-center gap-2 ">
           Today
           <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
             {appointments.today.length}

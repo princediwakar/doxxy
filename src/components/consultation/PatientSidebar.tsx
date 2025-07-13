@@ -4,7 +4,7 @@ import { formatTimeIST } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { Patient, Prescription, Consultation, PrescriptionMedication } from './types';
@@ -69,6 +69,9 @@ const ConsultationPreviewModal = ({
             <FileText className="h-5 w-5" />
             Consultation Details - {format(new Date(consultation.created_at), 'MMM d, yyyy')}
           </DialogTitle>
+          <DialogDescription>
+            View detailed consultation notes and treatment information
+          </DialogDescription>
         </DialogHeader>
         <ScrollArea className="max-h-[60vh]">
           <div className="space-y-4">

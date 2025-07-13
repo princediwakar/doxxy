@@ -19,7 +19,7 @@ Pre-Change Verification: Read target files and tests fully to avoid side effects
 Implement Edits: Apply code changes or new files using precise, workspace-relative paths.
 Incremental Commits: Structure work into logical, testable steps.
 5. Tool-Driven Validation & Autonomous Corrections
-
+Use MCP to test all the flow directly in the browser. Server runs at port 8080
 Run Automated Tests: Execute unit, integration, and end-to-end suites; run linters and static analysis.
 Self-Heal Failures: Diagnose and fix any failures; rerun until all pass unless prevented by missing permissions or irreversibility.
 6. Verification & Reporting

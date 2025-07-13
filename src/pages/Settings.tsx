@@ -2,10 +2,10 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import ClinicDepartmentsManagement from '@/components/superadmin/ClinicDepartmentsManagement';
 import ClinicMembersManagement from '@/components/superadmin/ClinicMembersManagement';
 import ClinicDetailsManagement from '@/components/superadmin/ClinicDetailsManagement';
+import { PaymentsDashboard } from '@/components/payments/PaymentsDashboard';
 import { 
   Settings, 
   Users, 
@@ -13,9 +13,7 @@ import {
   Building, 
   ShieldAlert,
   Info,
-  Shield,
-  Heart,
-  Stethoscope
+  Wallet
 } from 'lucide-react';
 
 const SettingsPage = () => {
@@ -62,7 +60,7 @@ const SettingsPage = () => {
                 <Settings className="w-5 h-5 " />
               </div>
               <div>
-                <h1 className="text-3xl font-bold ">Clinic Settings</h1>
+                <h1 className="text-2xl font-bold ">Clinic Settings</h1>
                 <p className="text-muted-foreground">
                   Manage settings and configuration for 
                   <span className="font-bold ">{" "} {clinicName}</span>
@@ -74,7 +72,7 @@ const SettingsPage = () => {
 
       {/* Main Content */}
       <Tabs defaultValue="members" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 lg:w-[400px] bg-muted/30">
+        <TabsList className="grid w-full grid-cols-4 lg:w-[500px] bg-muted/30">
           <TabsTrigger 
             value="members" 
             className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
@@ -96,6 +94,13 @@ const SettingsPage = () => {
             <Building className="h-4 w-4" />
             <span>Details</span>
           </TabsTrigger>
+          <TabsTrigger 
+            value="payments" 
+            className="flex items-center space-x-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+          >
+            <Wallet className="h-4 w-4" />
+            <span>Payments</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="members" className="space-y-0">
@@ -108,6 +113,10 @@ const SettingsPage = () => {
 
         <TabsContent value="details" className="space-y-0">
           <ClinicDetailsManagement />
+        </TabsContent>
+
+        <TabsContent value="payments" className="space-y-0">
+          <PaymentsDashboard />
         </TabsContent>
       </Tabs>
     </div>

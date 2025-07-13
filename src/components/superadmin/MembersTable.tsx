@@ -18,6 +18,7 @@ import {
 import { MoreHorizontal, User, Mail, Edit, Trash2 } from "lucide-react";
 import { MemberWithProfile } from "@/hooks/useClinicMembers";
 
+
 interface MembersTableProps {
   members: MemberWithProfile[];
   isSuperadmin: boolean;

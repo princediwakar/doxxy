@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -77,10 +77,17 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogTitle className="flex items-center gap-2">
-          <FileText className="h-5 w-5" />
-          {getModalTitle()}
-        </DialogTitle>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            {getModalTitle()}
+          </DialogTitle>
+          <DialogDescription>
+            {mode === 'view' ? 'View billing details and invoice information' : 
+             mode === 'edit' ? 'Edit billing information and service items' : 
+             'Create a new bill for the selected patient and appointment'}
+          </DialogDescription>
+        </DialogHeader>
         
         <ScrollArea className="max-h-[80vh] overflow-y-auto">
           <Form {...form}>

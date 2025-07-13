@@ -83,7 +83,40 @@ serve(async (req) => {
 
     console.log(`Processing invitation for ${email} as ${role} in clinic ${clinic_id}`);
 
-    // Step 1: Use RPC to handle all database operations
+    // Step 1: Invite the user by email, which creates an auth.users entry but doesn't send an email if the user already exists.
+    console.log(`Attempting to invite user: ${email}`);
+    const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
+      email.toLowerCase(),
+      {
+        data: {
+          name: name || email.split('@')[0],
+          full_name: name || email.split('@')[0],
+          email: email.toLowerCase(),
+          invited_at: new Date().toISOString(),
+          clinic_id: clinic_id,
+          role: role
+        }
+      }
+    );
+
+    if (inviteError) {
+      // If the error is that the user is already registered, it's not a fatal error.
+      // We can proceed to add them to the clinic.
+      if (inviteError.message.includes('User is already registered')) {
+        console.log(`User ${email} is already registered. Proceeding to add to clinic.`);
+      } else {
+        console.error('Error inviting user:', inviteError);
+        return new Response(
+          JSON.stringify({ error: `Failed to invite user: ${inviteError.message}` }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    } else {
+      console.log('User invited successfully (or was already invited).');
+    }
+
+    // Step 2: Use RPC to handle all database operations
+    // This function will create the profile, clinic_member, and doctor records.
     const { data: rpcResult, error: rpcError } = await supabase.rpc('invite_and_add_member', {
       p_email: email.toLowerCase(),
       p_name: name || email.split('@')[0],
@@ -108,69 +141,14 @@ serve(async (req) => {
 
     console.log('RPC Result:', JSON.stringify(rpcResult, null, 2));
 
-    // Step 2: Check if user already exists in auth.users
-    const { data: userList, error: listError } = await supabase.auth.admin.listUsers();
-    if (listError) {
-      console.error('Failed to list users:', listError);
-      // Continue anyway - this is not critical
-    }
-
-    const existingUser = userList?.users?.find(user => user.email === email.toLowerCase());
-    let inviteResult = null;
-
-    // Step 3: Send email invitation only if user doesn't exist
-    if (!existingUser) {
-      console.log(`Sending email invitation to ${email}`);
-      
-      try {
-        const { data: inviteData, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
-          email.toLowerCase(),
-          {
-            data: {
-              name: name || email.split('@')[0],
-              full_name: name || email.split('@')[0],
-              email: email.toLowerCase(),
-              invited_at: new Date().toISOString(),
-              clinic_id: clinic_id,
-              role: role
-            }
-          }
-        );
-
-        if (inviteError) {
-          console.error('Email invitation failed:', inviteError);
-          // Don't fail the entire request - the database operations succeeded
-          inviteResult = { error: inviteError.message };
-        } else {
-          console.log('Email invitation sent successfully');
-          inviteResult = { success: true, user_id: inviteData?.user?.id };
-        }
-      } catch (error) {
-        console.error('Email invitation exception:', error);
-        inviteResult = { error: error.message };
-      }
-    } else {
-      console.log(`User ${email} already exists in auth.users, skipping email invitation`);
-      inviteResult = { 
-        success: true, 
-        user_id: existingUser.id, 
-        message: 'User already exists' 
-      };
-    }
-
-    // Step 4: Return comprehensive result
+    // Step 3: Return comprehensive result
     const response = {
       success: true,
       user_id: rpcResult.user_id,
       profile: rpcResult.profile,
       clinic_member: rpcResult.clinic_member,
       doctor: rpcResult.doctor,
-      email_invitation: inviteResult,
       message: rpcResult.message,
-      // Add warning if email failed but database succeeded
-      warning: inviteResult?.error ? 
-        `Member added to clinic successfully, but email invitation failed: ${inviteResult.error}` : 
-        null
     };
 
     console.log('Final response:', JSON.stringify(response, null, 2));

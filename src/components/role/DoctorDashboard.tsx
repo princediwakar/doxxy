@@ -170,7 +170,7 @@ export default function DoctorDashboard() {
     <div className="space-y-6">
       <div className="flex justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-primary">{greeting}</h1>
+          <h1 className="text-2xl font-bold text-primary">{greeting}</h1>
           <p className="text-muted-foreground">Review your appointments and patient updates for today.</p>
         </div>
         <div className="flex gap-4">

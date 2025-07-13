@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -187,6 +188,9 @@ export const PatientModal = ({
             <UserIcon className="h-4 w-4" />
             {patient ? "Edit Patient" : "New Patient"}
           </div></DialogTitle>
+          <DialogDescription>
+            {patient ? "Edit patient details" : "Add a new patient"}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">

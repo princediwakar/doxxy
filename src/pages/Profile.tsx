@@ -186,7 +186,7 @@ const Profile = () => {
             <IconComponent className={`w-5 h-5 ${roleConfig.iconClass}`} />
           </div>
           <div>
-            <h1 className="text-3xl font-bold ">Profile</h1>
+            <h1 className="text-2xl font-bold ">Profile</h1>
             <p className="text-muted-foreground">Manage your profile information and settings</p>
           </div>
         </div>
@@ -273,7 +273,7 @@ const Profile = () => {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Stethoscope className="w-5 h-5 text-primary" />
+                  <Stethoscope className="w-5 h-5" />
                   Medical Profile
                 </CardTitle>
                 <Button 

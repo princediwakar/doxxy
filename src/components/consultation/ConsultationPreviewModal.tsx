@@ -1,5 +1,5 @@
 import { Eye, Printer } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ConsultationFormValues, Patient } from './types';
 import { UseFormReturn } from 'react-hook-form';
@@ -106,6 +106,9 @@ export const ConsultationPreviewModal = ({
               <Eye className="h-5 w-5" />
               Consultation Preview
             </DialogTitle>
+            <DialogDescription>
+              Review your consultation notes before saving or printing
+            </DialogDescription>
             <Button
               size="sm"
               onClick={handlePrint}

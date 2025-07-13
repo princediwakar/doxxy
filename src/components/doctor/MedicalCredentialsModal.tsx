@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -270,13 +270,16 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
   }, [validationErrors]);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col p-0">
-        <DialogHeader className="p-6 pb-4">
-          <DialogTitle className="flex items-center gap-3">
-            <Stethoscope className="w-6 h-6 text-primary" />
-            Medical Credentials
+    <Dialog open={open} onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Stethoscope className="h-5 w-5" />
+            Medical Credentials & Profile
           </DialogTitle>
+          <DialogDescription>
+            Update your medical credentials, qualifications, and professional information
+          </DialogDescription>
         </DialogHeader>
 
         <div className="border-b px-6">

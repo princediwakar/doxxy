@@ -118,7 +118,7 @@ const Appointments = () => {
               <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold ">Appointments</h1>
+              <h1 className="text-2xl font-bold">Appointments</h1>
               <p className="text-muted-foreground">Manage and track all clinic appointments</p>
             </div>
           </div>

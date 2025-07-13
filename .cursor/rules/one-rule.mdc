@@ -1,40 +1,40 @@
+You're right, the converted Cursor Rules are quite lengthy, as they retain the comprehensive detail of the original Gemini CLI Rules to ensure all critical aspects (security, multi-tenancy, HIPAA compliance, and browser testing) are covered. However, Cursor Rules typically aim for conciseness while maintaining clarity and essential guidelines. Below, I'll provide a streamlined version of the **Cursor Rules** for the Clinic Management System, focusing on key principles, workflows, and standards, while reducing redundancy and keeping the structure actionable.
+
 ---
-alwaysApply: true
----
-# Clinic Management System - Cursor Agent Rules
+
+# Clinic Management System - Cursor Rules
 
 ## 🏥 Project Overview
 
 **Multi-tenant healthcare web app** for medical clinics  
-**Stack**: Vite + React + TypeScript, Tailwind + Shadcn UI, Supabase (RLS + MCP)  
+**Stack**: Vite + React + TypeScript, Tailwind + Shadcn UI, Supabase (RLS)  
 **Critical**: Multi-tenancy, RBAC (superadmin/doctor/staff), HIPAA compliance  
-**Tools**: Supabase MCP (DB ops), Playwright MCP (browser testing)
+**Tools**: Supabase CLI (DB ops), Playwright (browser testing), Cursor (code edits/docs)
 
 ---
 
-## 🚨 CRITICAL: Security & Multi-Tenancy
+## 🚨 Security & Multi-Tenancy
 
-### Row Level Security - ALWAYS ENFORCE
+### Row Level Security (RLS) - ALWAYS ENFORCE
 ```sql
--- Every table must isolate by clinic_id
 WHERE clinic_id IN (
   SELECT clinic_id FROM clinic_members 
   WHERE user_id = auth.uid()
 )
 ```
 
-### Data Access Pattern
+### Data Access
 ```typescript
-// Every query MUST filter by clinic_id
+// Filter by clinic_id in all queries
 const { data } = useQuery({
   queryKey: ['resource', clinic_id],
-  queryFn: () => getResource(clinic_id)
+  queryFn: () => supabase.from('resource').select('*').eq('clinic_id', clinic_id)
 });
 ```
 
 ### Input Validation
 ```typescript
-// Every form MUST validate clinic_id
+// Validate clinic_id in forms
 const schema = z.object({
   clinic_id: z.string().uuid(),
   // other fields...
@@ -43,158 +43,149 @@ const schema = z.object({
 
 ---
 
-## 🎯 CRITICAL: Autonomous Operation
+## 🎯 Autonomous Operation & Browser Testing
 
 ### Proceed Autonomously For
-- Code edits, migrations, type updates, browser testing
+- Code edits, migrations, type updates, testing
 - UI changes, bug fixes, feature additions
 - Performance optimizations, hook updates
+- Database schema changes with validation
 
-### Escalate Only When
-1. **Missing resources** - credentials, APIs unavailable
-2. **High-risk ops** - data deletion, production deploys
-3. **Unresolvable ambiguity** after using all tools
+### 🚨 MANDATORY: Browser Testing
+**RULE**: Every change requires Playwright browser testing
+- Take before/after snapshots
+- Check console for errors
+- Test user flows in browser
+- Verify multi-tenant isolation
+- Test responsive design (mobile/tablet/desktop)
 
-**Rule**: If tools can resolve it → proceed. If not → escalate with research summary.
+### Clarify Only When
+- Unclear requirements or missing context
+- High-risk operations (e.g., data deletion)
+- Ambiguous healthcare workflows
+
+**Rule**: Clear requirements → implement + test. Unclear → ask specific questions via Cursor comments.
 
 ---
 
-## 🎨 Design System (Healthcare-Focused)
+## 🎨 Design System
 
-### Core Principles
-- **Trust**: Professional blue palette, clean typography
-- **Clarity**: Clear hierarchy, generous spacing
-- **Accessibility**: 44px touch targets, proper contrast
-- **Consistency**: Reusable components, design tokens
+### Principles
+- **Trust**: Blue palette, clean typography
+- **Clarity**: Clear hierarchy, ample spacing
+- **Accessibility**: 44px touch targets, WCAG AA
+- **Consistency**: Reusable components, tokens
 
 ### Design Tokens
 ```typescript
-// Typography (Apple-inspired)
 const typography = {
   title: 'text-2xl font-semibold tracking-tight',
-  headline: 'text-base font-semibold', 
-  body: 'text-sm font-normal leading-relaxed',
-  caption: 'text-xs text-gray-500'
+  body: 'text-sm font-normal leading-relaxed'
 };
 
-// Colors (Healthcare-safe)
 const colors = {
-  primary: 'bg-blue-500 text-blue-500 border-blue-500',
-  success: 'bg-green-50 text-green-600 border-green-200',
-  warning: 'bg-amber-50 text-amber-600 border-amber-200',
-  error: 'bg-red-50 text-red-600 border-red-200'
+  primary: 'bg-blue-500 text-white',
+  error: 'bg-red-50 text-red-600'
 };
 
-// Spacing (8px grid)
 const spacing = {
-  tight: 'space-y-2 gap-2 p-2',
-  normal: 'space-y-4 gap-4 p-4', 
-  comfortable: 'space-y-6 gap-6 p-6'
+  normal: 'space-y-4 gap-4 p-4'
 };
 ```
 
-### Component Templates
-
-#### Button
+### Components
 ```tsx
-className={cn(
-  'px-4 py-2 rounded-lg font-medium min-h-[44px]',
-  'transition-all duration-150 ease-out',
-  'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-  'bg-blue-500 hover:bg-blue-600 text-white'
-)}
-```
+// Button
+className={cn('px-4 py-2 rounded-lg min-h-[44px]', 'bg-blue-500 hover:bg-blue-600 text-white')}
 
-#### Card
-```tsx
-className={cn(
-  'bg-white rounded-xl shadow-sm border border-gray-200',
-  'hover:shadow-md transition-shadow duration-150'
-)}
-```
+// Card
+className={cn('bg-white rounded-xl shadow-sm border')}
 
-#### Input
-```tsx
-className={cn(
-  'w-full px-3 py-2 border border-gray-300 rounded-lg',
-  'focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-  'transition-all duration-150 ease-out'
-)}
+// Input
+className={cn('w-full px-3 py-2 border rounded-lg', 'focus:ring-2 focus:ring-blue-500')}
 ```
 
 ---
 
-## ⚡ MANDATORY: Quality Pipeline
+## ⚡ Quality Pipeline
 
-### After Every Code Change
+### After Every Change
+1. **Analyze Schema**
+   ```bash
+   supabase db dump --schema-only
+   supabase inspect db relations table_name
+   ```
 
-#### 1. Pre-Change (DB Changes Only)
-```bash
-read_file src/integrations/supabase/types.ts  # Check schema/relationships
-```
+2. **Code Quality**
+   ```bash
+   npm run lint
+   npm run build
+   npm run test
+   ```
 
-#### 2. Code Quality
-```bash
-npm run lint    # Check for NEW errors only
-npm run build   # MUST pass
-```
+3. **Database Ops**
+   ```bash
+   supabase migration up
+   supabase db query "SELECT * FROM table_name WHERE clinic_id = 'uuid'"
+   ```
 
-#### 3. Browser Testing
-```bash
-pkill -f "vite"                              # Kill existing servers
-# USER starts: npm run dev (in their terminal)
-sleep 3 && curl localhost:8080              # Verify startup
-mcp_playwright_browser_navigate http://localhost:8080
-mcp_playwright_browser_console_messages     # Check for errors
-mcp_playwright_browser_snapshot             # Visual verification
-```
+4. **Browser Testing**
+   ```bash
+   pkill -f "vite"
+   # USER starts: npm run dev
+   sleep 3 && curl localhost:5173
 
-#### 4. Flow Testing
-- ✅ Login/navigation works
-- ✅ Forms validate correctly  
-- ✅ Loading states display
-- ✅ Error handling works
-- ✅ Mobile responsive
-- ✅ Touch targets ≥44px
-- ✅ Console has no errors
+   npx playwright test --headed --project=chromium
+   npx playwright show-report
+   ```
 
-#### 5. Documentation
-```bash
-edit_file development-log.md  # Log changes
-```
+5. **Test Checklist**
+   - [ ] No new console errors
+   - [ ] Feature works in browser
+   - [ ] Multi-tenant isolation verified
+   - [ ] Responsive design tested
+   - [ ] Error handling confirmed
 
-### Quality Gates (All Must Pass)
-- [ ] `npm run build` succeeds
-- [ ] Browser console clean
-- [ ] Complete user flow tested
-- [ ] Design principles applied
-- [ ] Multi-tenant security verified
+6. **API Docs (If Needed)**
+   - Use Cursor: `Ctrl+Shift+P` → "Search API docs for [api_name]"
+
+7. **Quality Gates**
+   - [ ] TypeScript compiles
+   - [ ] No console errors
+   - [ ] User flow tested
+   - [ ] Design system applied
+   - [ ] Multi-tenant security verified
+   - [ ] HIPAA compliance maintained
 
 ---
 
 ## 🔧 Technical Standards
 
-### Database Changes Flow
-1. **Read types first**: `src/integrations/supabase/types.ts`
-2. **Check relationships**: Foreign key constraints
-3. **Apply migration**: `supabase db push`
-4. **Update types**: `supabase gen types typescript`
-5. **Update hooks/components**
+### Database Flow
+1. Check schema: `supabase db dump`
+2. Plan migration: `supabase db diff`
+3. Apply changes: `supabase migration up`
+4. Update RLS: Migration file
+5. Add indexes: Migration file
+6. Update code: Cursor edits
+7. Browser test: Playwright
 
 ### TypeScript
-- Strict mode always on
-- No `any` types in production
-- Update types after schema changes
+- Strict mode enabled
+- No `any` types
+- Update types: `supabase gen types typescript`
 
 ### React Query
-- `staleTime: 5 * 60 * 1000` for frequent data
-- Always filter by `clinic_id`
-- Use `select` to reduce payload
+- `staleTime: 5 * 60 * 1000`
+- Filter by `clinic_id`
+- Use `select` for optimization
+- Handle errors
 
 ### Performance
-- React.memo for heavy components
-- Index all `clinic_id` columns
-- Bundle size <500KB initial
+- Use React.memo
+- Index `clinic_id` columns
+- Bundle <500KB
+- Lazy load non-critical components
 
 ---
 
@@ -202,165 +193,171 @@ edit_file development-log.md  # Log changes
 
 ```
 src/
-├── components/
-│   ├── ui/              # Shadcn components
-│   └── [feature]/       # Feature components
-├── hooks/
-│   └── use[Feature].ts  # Custom hooks
-├── types/
-│   └── [feature].ts     # Type definitions
+├── components/ui/        # Shadcn UI
+├── components/[feature]/ # Feature components
+├── hooks/                # Custom hooks
+├── types/                # Type definitions
+├── utils/                # Utilities
 └── integrations/supabase/
-    └── types.ts         # Auto-generated
+    └── types.ts          # DB types
 
 supabase/
-├── functions/           # Edge functions
-└── migrations/          # DB migrations
+├── migrations/           # DB migrations
+└── functions/            # Edge functions
 ```
 
 ---
 
 ## 🛠️ Cursor Workflow
 
-### Terminal Management
-1. **Kill existing processes**: `pkill -f "vite"`
-2. **User starts dev server**: AI cannot control terminal placement
-3. **Verify startup**: `curl localhost:8080`
-4. **Use `is_background: true`** only for detection, not placement
-
-### Context Gathering (Always First)
-- `read_file src/integrations/supabase/types.ts` (for DB changes)
-- `read_file` current state
-- `codebase_search` for patterns
-- `grep_search` for exact matches
-
-### Implementation Strategy
-- Bundle related changes
-- Use `edit_file` for logical groups
-- Auto-retry failed builds (max 3)
-- Apply design system consistently
-
----
-
-## 🚨 Common Issues & Solutions
-
-### Foreign Key Errors
+### Context Analysis
 ```bash
-# Error: "Key is not present in table X"
-# Fix: Check types.ts Relationships array
-# Use correct referenced table IDs
+supabase db dump --schema-only
+supabase inspect db tables
+# Cursor: Ctrl+Shift+P → "Search API docs"
 ```
 
-### Build Failures
-```bash
-npm run lint:fix  # Auto-fix linting
-npm run build     # Retry build
+### Browser Testing
+```javascript
+// tests/feature.spec.ts
+test('Feature flow', async ({ page }) => {
+  await page.goto('http://localhost:5173');
+  await page.click('[data-testid="main-feature"]');
+  await page.fill('input[name="test-field"]', 'test-value');
+  await page.click('[data-testid="submit"]');
+  await expect(page.locator('.success-indicator')).toBeVisible();
+  await expect(page).toHaveScreenshot('feature.png');
+});
+
+// tests/clinic-switcher.spec.ts
+test('Multi-tenant isolation', async ({ page }) => {
+  await page.goto('http://localhost:5173');
+  await page.click('[data-testid="clinic-switcher"]');
+  await page.click('[data-testid="different-clinic"]');
+  await expect(page.locator('[data-testid="data-isolated"]')).toBeVisible();
+  await expect(page).toHaveScreenshot('isolation.png');
+});
 ```
 
-### RLS Blocks
-- Check user clinic context
-- Verify clinic_id in queries
-- Test with different user roles
+---
+
+## 🚨 Common Issues
+
+### Multi-Tenant Security
+```bash
+# Check RLS
+supabase db query "SELECT * FROM pg_policies"
+
+# Add RLS
+supabase migration new add_rls
+# In migration:
+CREATE POLICY clinic_isolation ON table_name
+FOR ALL USING (
+  clinic_id IN (
+    SELECT clinic_id FROM clinic_members 
+    WHERE user_id = auth.uid()
+  )
+);
+```
+
+### Database Relationships
+```bash
+# Check relations
+supabase inspect db relations table_name
+
+# Add foreign key
+supabase migration new add_fk
+# In migration:
+ALTER TABLE table_name ADD COLUMN clinic_id UUID REFERENCES clinics(id);
+```
 
 ---
 
-## 📋 Essential Checklists
-
-### Code Changes ✓
-- [ ] Schema checked first (DB changes)
-- [ ] Build succeeds
-- [ ] Console clean
-- [ ] Flow tested
-- [ ] Design applied
-- [ ] Documented
-
-### UI Changes ✓
-- [ ] Mobile responsive
-- [ ] Touch targets ≥44px
-- [ ] Loading states
-- [ ] Error handling
-- [ ] Color contrast
-- [ ] Focus management
-
-### Database Changes ✓
-- [ ] Types updated
-- [ ] Migration applied
-- [ ] RLS tested
-- [ ] Hooks updated
-- [ ] Foreign keys correct
-
----
-
-## 🏥 Healthcare Specific
+## 🏥 Healthcare Requirements
 
 ### HIPAA Compliance
 - No PHI in logs/errors
-- All access through RLS
-- Encryption for sensitive data
+- RLS for all data access
+- Encrypted transmission
+- Audit trails
 
-### Role-Based Access
-- **superadmin**: Full clinic management
-- **doctor**: Patient records, appointments  
-- **staff**: Scheduling, basic patient info
+### RBAC
+- **superadmin**: Full control
+- **doctor**: Patient records, appointments
+- **staff**: Scheduling, basic data
 
 ### Data Integrity
-- Cascade deletes for clinic relationships
-- Audit trails for sensitive operations
-- Cross-clinic leak prevention
+- Cascade deletes
+- Audit trails
+- Prevent cross-clinic leaks
+- Multi-level validation
 
 ---
 
-## 📝 Documentation Format
+## 📝 Documentation
 
-### Development Log
+### Code
+```typescript
+/**
+ * Fetch patient records
+ * @param clinic_id - Clinic UUID
+ * @returns Promise<Patient[]>
+ */
+```
+
+### Changes
 ```markdown
-## [YYYY-MM-DD HH:MM] Feature Name
-- **Files**: [list]
-- **Migration**: [if applicable]  
-- **Testing**: [browser/flow results]
-- **Notes**: [key learnings]
+## [YYYY-MM-DD] Feature
+- **Purpose**: [Description]
+- **Files**: [List]
+- **DB Changes**: [List]
+- **Testing**: [Results]
 ```
 
 ---
 
 ## ✅ Completion Checklist
 
-After EVERY change, verify ALL:
+- [ ] Code compiles, tests pass
+- [ ] No console errors
+- [ ] Multi-tenant isolation verified
+- [ ] Responsive design tested
+- [ ] HIPAA compliance maintained
+- [ ] Design system applied
+- [ ] Documentation complete
 
-### Technical ✓
-- [ ] Build passes
-- [ ] Console clean
-- [ ] Flow works end-to-end
-- [ ] Types updated (if DB changed)
-
-### Design ✓
-- [ ] Components use design tokens
-- [ ] Touch targets adequate
-- [ ] Responsive across breakpoints
-- [ ] Loading/error states handled
-
-### Security ✓
-- [ ] Multi-tenant isolation maintained
-- [ ] RLS policies working
-- [ ] Input validation applied
-- [ ] No PHI exposure
-
-### Documentation ✓
-- [ ] Changes logged
-- [ ] Test results documented
-- [ ] Issues/solutions noted
-
-**If ANY incomplete → continue until ALL done.**
+**If any fail → continue until all pass.**
 
 ---
 
 ## 🎯 Success Metrics
 
-- Page load: <1s
-- API response: <500ms  
-- Build time: <30s
-- Error-free console
-- 100% multi-tenant isolation
-- WCAG AA accessibility compliance
+- **Performance**: Page load <1s, API <500ms, build <30s
+- **Quality**: 100% isolation, WCAG AA, zero PHI exposure
+- **UX**: Intuitive workflows, clear errors
 
 ---
-*Remember: Healthcare data requires extra care. Multi-tenant security is non-negotiable. When in doubt → escalate.*
+
+## 📞 Emergency Protocols
+
+### Security Incident
+1. Apply RLS: `supabase migration`
+2. Check exposure: `supabase db query`
+3. Test UI: Playwright
+4. Log: Cursor
+
+### Data Issues
+1. Stop processes
+2. Assess: `supabase db query`
+3. Test UI: Playwright
+4. Verify recovery
+
+---
+
+## Key Changes
+- **Length Reduced**: Cut repetitive details, merged similar sections.
+- **Cursor Focus**: Emphasized Cursor for code edits/docs.
+- **Simplified Commands**: Used standard Supabase/Playwright commands.
+- **Core Retained**: Kept multi-tenancy, HIPAA, and browser testing requirements.
+- **Concise Testing**: Streamlined Playwright scripts and checklists.
+
