@@ -160,14 +160,6 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   }, [open, appointment, patient, form, activeClinic?.clinic_id]);
 
-  // Helper function for badge variant
-  const getTypeBadgeVariant = (type: Enums<'appointment_type'>) => {
-    switch (type) {
-      case 'Walk-in': return 'default';
-      case 'Digital': return 'secondary';
-      default: return 'outline';
-    }
-  };
 
   // Fetch patients using RPC instead of direct query
   const { data: patients, isLoading: isLoadingPatients } = useQuery({

@@ -3,13 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Calendar } from 'lucide-react';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
-import { ConsultationModal } from '@/components/consultation/ConsultationModal';
+
 import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
 import { BillingModal } from '@/components/billing/BillingModal';
 import { useAppointments, AppointmentWithDetails } from '@/hooks/useAppointments';
 import { AppointmentsTabs } from '@/components/appointments/AppointmentsTabs';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Appointments = () => {
+  const navigate = useNavigate();
   const {
     appointments,
     isLoading,
@@ -27,10 +30,10 @@ const Appointments = () => {
     cancelLoading,
   } = useAppointments();
 
+  const { activeClinicRole } = useAuth();
   // Modal states
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
-  const [isConsultationModalOpen, setIsConsultationModalOpen] = useState(false);
   const [isConsultationViewModalOpen, setIsConsultationViewModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
 
@@ -57,9 +60,8 @@ const Appointments = () => {
 
   const handleStartConsultationClick = async (appointment: AppointmentWithDetails) => {
     try {
-      handleStartConsultation(appointment.id);
-      setSelectedAppointment(appointment);
-      setIsConsultationModalOpen(true);
+      await handleStartConsultation(appointment.id);
+      navigate(`/consultation/${appointment.id}`);
     } catch (error) {
       console.error('Error starting consultation:', error);
     }
@@ -77,14 +79,6 @@ const Appointments = () => {
 
   const handleBillingModalClose = (open: boolean) => {
     setIsBillingModalOpen(open);
-    if (!open) {
-      refreshAppointments();
-      setSelectedAppointment(null);
-    }
-  };
-
-  const handleConsultationModalClose = (open: boolean) => {
-    setIsConsultationModalOpen(open);
     if (!open) {
       refreshAppointments();
       setSelectedAppointment(null);
@@ -154,7 +148,7 @@ const Appointments = () => {
             onStartConsultation={handleStartConsultationClick}
             onViewConsultation={handleViewConsultation}
             onCreateBill={handleCreateBill}
-            activeClinicRole={null} // Will be passed from useAuth context
+            activeClinicRole={activeClinicRole}
             cancelLoading={cancelLoading}
           />
 
@@ -165,11 +159,7 @@ const Appointments = () => {
         appointment={selectedAppointment}
       />
 
-      <ConsultationModal
-        open={isConsultationModalOpen}
-        onOpenChange={handleConsultationModalClose}
-        appointment={selectedAppointment}
-      />
+      
 
       <ConsultationViewModal
         open={isConsultationViewModalOpen}

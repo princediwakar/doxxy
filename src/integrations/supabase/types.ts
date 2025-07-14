@@ -333,6 +333,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_clinic_members_profiles"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       clinics: {
@@ -647,6 +654,13 @@ export type Database = {
           },
           {
             foreignKeyName: "doctors_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_doctors_profiles"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -974,7 +988,7 @@ export type Database = {
           new_user_id: string
           target_clinic_id: string
           new_role: Database["public"]["Enums"]["user_role"]
-          new_department_id: string
+          new_department_id?: string
         }
         Returns: Json
       }
@@ -1063,6 +1077,7 @@ export type Database = {
           doctor_name: string
           department_name: string
           billing_status: string
+          doctor_user_id: string
         }[]
       }
       get_bills_by_clinic: {
@@ -1169,8 +1184,12 @@ export type Database = {
         Args: { clinic_id: string }
         Returns: {
           id: string
+          user_id: string
           name: string
           department_name: string
+          phone: string
+          email: string
+          bio: string
         }[]
       }
       get_patient_details: {

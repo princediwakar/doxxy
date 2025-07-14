@@ -16,10 +16,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Calendar, Activity, Stethoscope, Eye, FileText } from 'lucide-react';
+import { MoreHorizontal, Calendar, Stethoscope, Eye } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { formatTimeIST } from '@/lib/utils';
 import { AppointmentWithDetails } from '@/hooks/useAppointments';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppointmentsTableProps {
   appointments: AppointmentWithDetails[];
@@ -42,6 +43,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
   activeClinicRole,
   cancelLoading = false,
 }) => {
+  const { user } = useAuth();
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Scheduled': return 'bg-blue-100 text-blue-800';
@@ -52,13 +54,6 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
     }
   };
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'Walk-in': return <Calendar className="h-3 w-3" />;
-      case 'Digital': return <Activity className="h-3 w-3" />;
-      default: return <Calendar className="h-3 w-3" />;
-    }
-  };
 
   if (appointments.length === 0) {
     return (
@@ -80,7 +75,6 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
             <TableHead>Patient</TableHead>
             <TableHead>Doctor</TableHead>
             <TableHead>Date & Time</TableHead>
-            <TableHead>Type</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Billing</TableHead>
             <TableHead className="w-[70px]">Actions</TableHead>
@@ -88,7 +82,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
         </TableHeader>
         <TableBody>
           {appointments.map((appointment) => (
-            <TableRow 
+            <TableRow
               key={appointment.id}
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => onAppointmentClick(appointment)}
@@ -117,76 +111,96 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                   </div>
                 </div>
               </TableCell>
+              
               <TableCell>
-                <div className="flex items-center gap-2">
-                  {getTypeIcon(appointment.type)}
-                  <span className="text-sm">{appointment.type}</span>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge 
-                  variant="outline" 
+                <Badge
+                  variant="outline"
                   className={getStatusColor(appointment.status)}
                 >
                   {appointment.status}
                 </Badge>
               </TableCell>
               <TableCell>
-                <Badge 
+                <Badge
                   variant={appointment.billing_status === 'Paid' ? 'default' : 'secondary'}
                   className={
-                    appointment.billing_status === 'Paid' 
-                      ? 'bg-green-100 text-green-800' 
+                    appointment.billing_status === 'Paid'
+                      ? 'bg-green-100 text-green-800'
                       : appointment.billing_status === 'Pending'
-                      ? 'bg-orange-100 text-orange-800'
-                      : 'bg-gray-100 text-gray-800'
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-gray-100 text-gray-800'
                   }
                 >
                   {appointment.billing_status || 'Unbilled'}
                 </Badge>
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
+                <div className="flex items-center gap-2">
+                  {appointment.status === 'Scheduled' && appointment.doctor_user_id === user?.id && (
+                    <Button
+                      size="sm"
+                      onClick={() => onStartConsultation(appointment)}
+                      title="Start Consultation"
+                    >
+                      <span>Start</span>
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    
-                    {appointment.status === 'Scheduled' && activeClinicRole === 'doctor' && (
-                      <DropdownMenuItem onClick={() => onStartConsultation(appointment)}>
-                        <Stethoscope className="mr-2 h-4 w-4" />
-                        Start Consultation
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {appointment.status === 'Completed' && (
-                      <DropdownMenuItem onClick={() => onViewConsultation(appointment)}>
+                  )}
+
+                  {appointment.status === 'In Progress' && appointment.doctor_user_id === user?.id && (
+                    <Button
+                      size="sm"
+                      onClick={() => onStartConsultation(appointment)}
+                      title="Continue Consultation"
+                    >
+                      <span>Continue</span>
+                    </Button>
+                  )}
+
+                  {appointment.status === 'Completed' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onViewConsultation(appointment)}
+                      title="View Notes"
+                    >
+                      <span>View Notes</span>
+                    </Button>
+                  )}
+
+                  {appointment.status === 'Completed' && !appointment.billing_status && (
+                    <Button
+                      size="sm"
+                      onClick={() => onCreateBill(appointment)}
+                      title="Create Bill"
+                    >
+                      <span>Create Bill</span>
+                    </Button>
+                  )}
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => onAppointmentClick(appointment)}>
                         <Eye className="mr-2 h-4 w-4" />
-                        View Consultation
+                        View/Edit Appointment
                       </DropdownMenuItem>
-                    )}
-                    
-                    {appointment.status === 'Completed' && !appointment.billing_status && (
-                      <DropdownMenuItem onClick={() => onCreateBill(appointment)}>
-                        <FileText className="mr-2 h-4 w-4" />
-                        Create Bill
-                      </DropdownMenuItem>
-                    )}
-                    
-                    {appointment.status === 'Scheduled' && (
-                      <DropdownMenuItem 
-                        onClick={() => onCancelAppointment(appointment.id)}
-                        className="text-destructive"
-                        disabled={cancelLoading}
-                      >
-                        Cancel Appointment
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
+                        <DropdownMenuItem
+                          onClick={() => onCancelAppointment(appointment.id)}
+                          className="text-destructive"
+                          disabled={cancelLoading}
+                        >
+                          Cancel Appointment
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))}

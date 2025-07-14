@@ -1,48 +1,6 @@
-You're right, the converted Cursor Rules are quite lengthy, as they retain the comprehensive detail of the original Gemini CLI Rules to ensure all critical aspects (security, multi-tenancy, HIPAA compliance, and browser testing) are covered. However, Cursor Rules typically aim for conciseness while maintaining clarity and essential guidelines. Below, I'll provide a streamlined version of the **Cursor Rules** for the Clinic Management System, focusing on key principles, workflows, and standards, while reducing redundancy and keeping the structure actionable.
-
 ---
-
-# Clinic Management System - Cursor Rules
-
-## 🏥 Project Overview
-
-**Multi-tenant healthcare web app** for medical clinics  
-**Stack**: Vite + React + TypeScript, Tailwind + Shadcn UI, Supabase (RLS)  
-**Critical**: Multi-tenancy, RBAC (superadmin/doctor/staff), HIPAA compliance  
-**Tools**: Supabase CLI (DB ops), Playwright (browser testing), Cursor (code edits/docs)
-
+alwaysApply: true
 ---
-
-## 🚨 Security & Multi-Tenancy
-
-### Row Level Security (RLS) - ALWAYS ENFORCE
-```sql
-WHERE clinic_id IN (
-  SELECT clinic_id FROM clinic_members 
-  WHERE user_id = auth.uid()
-)
-```
-
-### Data Access
-```typescript
-// Filter by clinic_id in all queries
-const { data } = useQuery({
-  queryKey: ['resource', clinic_id],
-  queryFn: () => supabase.from('resource').select('*').eq('clinic_id', clinic_id)
-});
-```
-
-### Input Validation
-```typescript
-// Validate clinic_id in forms
-const schema = z.object({
-  clinic_id: z.string().uuid(),
-  // other fields...
-});
-```
-
----
-
 ## 🎯 Autonomous Operation & Browser Testing
 
 ### Proceed Autonomously For
@@ -133,7 +91,7 @@ className={cn('w-full px-3 py-2 border rounded-lg', 'focus:ring-2 focus:ring-blu
    ```bash
    pkill -f "vite"
    # USER starts: npm run dev
-   sleep 3 && curl localhost:5173
+   sleep 3 && curl localhost:8080
 
    npx playwright test --headed --project=chromium
    npx playwright show-report
@@ -221,7 +179,7 @@ supabase inspect db tables
 ```javascript
 // tests/feature.spec.ts
 test('Feature flow', async ({ page }) => {
-  await page.goto('http://localhost:5173');
+  await page.goto('http://localhost:8080');
   await page.click('[data-testid="main-feature"]');
   await page.fill('input[name="test-field"]', 'test-value');
   await page.click('[data-testid="submit"]');
@@ -231,7 +189,7 @@ test('Feature flow', async ({ page }) => {
 
 // tests/clinic-switcher.spec.ts
 test('Multi-tenant isolation', async ({ page }) => {
-  await page.goto('http://localhost:5173');
+  await page.goto('http://localhost:8080');
   await page.click('[data-testid="clinic-switcher"]');
   await page.click('[data-testid="different-clinic"]');
   await expect(page.locator('[data-testid="data-isolated"]')).toBeVisible();

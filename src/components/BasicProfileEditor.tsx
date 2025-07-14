@@ -144,7 +144,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         }
       });
       if (authError) {
-        console.error('Auth update error:', authError);
         throw authError;
       }
 
@@ -204,7 +203,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       }
     },
     onSuccess: () => {
-      console.log('Profile update successful, closing modal');
       setFormErrors({});
       queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id] });
@@ -228,12 +226,10 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       }
     },
     onSettled: () => {
-      console.log('Mutation settled');
     },
   });
 
   const handleSaveChanges = () => {
-    console.log('Initiating profile update with name:', editedName);
     updateBasicProfileMutation.mutate();
   };
 

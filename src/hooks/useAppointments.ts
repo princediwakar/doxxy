@@ -45,7 +45,11 @@ const sortAppointments = (appointments: AppointmentWithDetails[], filter: Appoin
   });
 };
 
-const fetchAppointments = async (clinicId: string, searchTerm: string) => {
+const fetchAppointments = async (clinicId: string | undefined, searchTerm: string) => {
+  if (!clinicId) {
+    console.warn("No clinicId provided to fetchAppointments.");
+    return { all: [], today: [], upcoming: [], past: [], totalCount: 0 };
+  }
   // Using the RPC to get appointments with patient and doctor names
   const { data, error } = await supabase
     .rpc('get_appointments_with_details_by_clinic', { clinic_id: clinicId });
@@ -96,7 +100,7 @@ export const useAppointments = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['appointments', activeClinic?.clinics?.id, searchTerm],
     queryFn: () => fetchAppointments(activeClinic!.clinics?.id, searchTerm),
-    enabled: !!activeClinic && !authLoading,
+    enabled: !!activeClinic?.clinics?.id && !authLoading,
     retry: 1,
   });
 

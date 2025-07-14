@@ -1,6 +1,7 @@
 Clinic Management System - Gemini CLI Rules
 🏥 Project Overview
-Multi-tenant healthcare web app for medical clinicsStack: Vite + React + TypeScript, Tailwind + Shadcn UI, Supabase (RLS + MCP)Critical: Multi-tenancy, RBAC (superadmin/doctor/staff), HIPAA complianceTools: Supabase MCP (DB ops), Playwright MCP (browser testing), Context 7 MCP (API docs)
+Multi-tenant healthcare web app for medical clinicsStack: Vite + React + TypeScript, Tailwind + Shadcn UI, Supabase (RLS + MCP)Critical: Multi-tenancy, RBAC (superadmin/doctor/staff), HIPAA complianceTools: Supabase MCP (DB ops), Playwright MCP (browser testing interactive instead of automated written tests), Context 7 MCP (API docs)
+
 
 🚨 Security & Multi-Tenancy
 Row Level Security (RLS) - ALWAYS ENFORCE
@@ -97,20 +98,15 @@ npm run build
 npm run test
 
 
-Database Ops
-mcp_supabase_create_table table_name columns
-mcp_supabase_add_rls_policy table_name policy
-mcp_supabase_query table_name "clinic_id = 'uuid'"
-
 
 Browser Testing
 pkill -f "vite"
 # USER starts: npm run dev
 sleep 3 && curl localhost:8080
 
-mcp_playwright_browser_navigate http://localhost:8080
-mcp_playwright_browser_snapshot
-mcp_playwright_browser_console_messages
+Navigate to localhost:8080
+Take snapshot
+Check console errors
 
 
 Test Checklist
@@ -123,7 +119,7 @@ Test Checklist
 
 
 API Docs (If Needed)
-mcp_context7_get_api_docs api_name
+use context 7 to get updated api docs
 
 
 Quality Gates
@@ -187,14 +183,14 @@ supabase/
 
 🛠️ Gemini CLI + MCP Workflow
 Context Analysis
-mcp_supabase_list_tables
-mcp_context7_get_api_docs api_name
+list tables using supabase mcp
+get updated api docs using context7 mcp
 
 Browser Testing
 # Baseline
-mcp_playwright_browser_navigate http://localhost:8080
-mcp_playwright_browser_snapshot
-mcp_playwright_browser_console_messages
+navigate to http://localhost:8080
+take snapshot using playwright mcp
+check console messages using playwright mcp
 
 # Feature Test
 mcp_playwright_browser_click "[data-testid='main-feature']"

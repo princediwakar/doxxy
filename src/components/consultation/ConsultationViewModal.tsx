@@ -61,7 +61,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
       if (!appointment?.id) return null;
       const { data, error } = await supabase
         .from('consultations')
-        .select('*, clinical_notes')
+        .select('*')
         .eq('appointment_id', appointment.id)
         .single();
       if (error && error.code !== 'PGRST116') {
@@ -78,10 +78,13 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     queryKey: ['doctorDetails', appointment?.doctor_id, activeClinic?.clinic_id],
     queryFn: async () => {
       if (!appointment?.doctor_id || !activeClinic?.clinic_id) return null;
-          const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
-      clinic_id: activeClinic.clinic_id,
-    });
-      if (error) throw error;
+      const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+        clinic_id: activeClinic.clinic_id,
+      });
+      if (error) {
+        console.error('RPC Error:', error);
+        throw error;
+      }
       const doctor = data?.find(d => d.id === appointment.doctor_id);
       return doctor ? [doctor] : null;
     },
@@ -90,13 +93,13 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
 
   // Determine department and get field configs
   const departmentType = doctorDetails?.[0]?.department_name || 'General';
-  
+
   // Get consultation specialty data
-  const specialtyData = consultationData?.specialty_data && 
-    typeof consultationData.specialty_data === 'object' && 
-    !Array.isArray(consultationData.specialty_data) 
-      ? consultationData.specialty_data as Record<string, unknown>
-      : {};
+  const specialtyData = consultationData?.specialty_data &&
+    typeof consultationData.specialty_data === 'object' &&
+    !Array.isArray(consultationData.specialty_data)
+    ? consultationData.specialty_data as Record<string, unknown>
+    : {};
 
   // Get patient info with fallback to fetched patient data
   const patient = patientData || {
@@ -114,7 +117,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
 
   // Get the full clinic object for printing
   const clinicDetails = activeClinic?.clinics || null;
-  
+
   // Prepare clinic info for layout display
   const clinicInfo = clinicDetails ? {
     name: clinicDetails.name,
@@ -123,7 +126,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     email: clinicDetails.email,
     website: clinicDetails.website
   } : null;
-  
+
   // Prepare doctor info
   const doctorInfo = {
     name: doctorDetails?.[0]?.name || appointment?.doctor_name || user?.user_metadata?.full_name || 'Doctor Name',
@@ -143,9 +146,9 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
       toast.error('No consultation data to print');
       return;
     }
-    
+
     try {
-      
+
       await printConsultation(
         specialtyData,
         patient,
@@ -169,10 +172,10 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
           <div className="flex items-center justify-between pr-6">
-          <DialogTitle className="flex items-center space-x-2">
+            <DialogTitle className="flex items-center space-x-2">
               <Eye className="h-5 w-5" />
               <span>Consultation Notes - {patient.name}</span>
-          </DialogTitle>
+            </DialogTitle>
             {consultationData && (
               <Button
                 size="sm"
@@ -186,20 +189,20 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
         </DialogHeader>
 
         <ScrollArea className="max-h-[80vh]">
-            {/* Loading State */}
-            {isLoadingConsultation && (
+          {/* Loading State */}
+          {isLoadingConsultation && (
             <div className="flex items-center justify-center p-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span className="ml-2">Loading consultation details...</span>
-                  </div>
-            )}
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-2">Loading consultation details...</span>
+            </div>
+          )}
 
-            {/* No Data State */}
-            {!isLoadingConsultation && !consultationData && (
+          {/* No Data State */}
+          {!isLoadingConsultation && !consultationData && (
             <div className="text-center text-muted-foreground p-8">
               <Eye className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                    <p>No consultation notes found for this appointment.</p>
-                  </div>
+              <p>No consultation notes found for this appointment.</p>
+            </div>
           )}
 
           {/* Consultation Layout */}
