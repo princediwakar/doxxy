@@ -166,8 +166,7 @@ serve(async (req: Request) => {
 
     // Get site URL for redirect
     const siteUrl = Deno.env.get('SITE_URL') ||
-                    Deno.env.get('SUPABASE_URL')?.replace('/v1', '') ||
-                    'http://127.0.0.1:8080'
+                    Deno.env.get('SUPABASE_URL')?.replace('/v1', '')
     const redirectUrl = `${siteUrl}/auth?token=${invitation.invitation_token}&email=${encodeURIComponent(memberData.email)}&action=invite`
 
     console.log('Using site URL:', siteUrl)

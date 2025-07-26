@@ -10,6 +10,14 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  define: {
+    // Fix useLayoutEffect SSR warning in production
+    global: 'globalThis',
+    // Polyfill for React 18 strict mode compatibility
+    __DEV__: mode === 'development',
+    // Fix React hooks SSR compatibility
+    'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),
+  },
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
@@ -55,9 +63,22 @@ export default defineConfig(({ mode }) => ({
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
   },
+  esbuild: {
+    // Define NODE_ENV for better optimization
+    define: {
+      'process.env.NODE_ENV': mode === 'production' ? '"production"' : '"development"'
+    }
+  },
   build: {
     rollupOptions: {
       output: {
+        // Inject polyfill in all chunks
+        banner: `
+          // React SSR polyfill for production builds
+          if (typeof globalThis.React === 'object' && globalThis.React && !globalThis.React.useLayoutEffect && globalThis.React.useEffect) {
+            globalThis.React.useLayoutEffect = globalThis.React.useEffect;
+          }
+        `,
         manualChunks: (id) => {
           // Core React ecosystem
           if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
