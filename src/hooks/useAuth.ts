@@ -6,21 +6,18 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const supabase = getSupabase();
 
-export type AuthFlow = "login" | "signup" | "invite" | "reset" | "update-password";
+export type AuthFlow = "login" | "signup" | "invite" | "reset" | "update-password" | "otp";
 
 export const useAuthFlow = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [activeTab, setActiveTab] = useState("login");
   const [authFlow, setAuthFlow] = useState<AuthFlow>("login");
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   
   const [searchParams] = useSearchParams();
-  const { user, activeClinic, loading: authLoading, checkProfileCompletion, needsProfileCompletion } = useAuth();
+  const { user, activeClinic, loading: authLoading, needsProfileCompletion } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -43,7 +40,10 @@ export const useAuthFlow = () => {
       }
 
       if (data.session && data.user) {
+        // Store the invitation token for PrivateRoute logic
+        sessionStorage.setItem('invitation_token', inviteToken);
         console.log("Auth: Invite verified successfully, user logged in:", data.user.id);
+        console.log("Auth: Stored invitation token in sessionStorage:", inviteToken);
         setAuthFlow("invite");
         setEmail(inviteEmail || data.user.email || '');
         toast.info("Welcome! Please set your password to complete your account setup.");
@@ -102,20 +102,38 @@ export const useAuthFlow = () => {
   useEffect(() => {
     const token = searchParams.get("token");
     const type = searchParams.get("type");
+    const action = searchParams.get("action");
     const emailFromUrl = searchParams.get("email");
 
-    if (token && type) {
-      if (type === "invite") {
+    console.log("Auth: useEffect running - checking URL params:", {
+      token: token ? "present" : "missing",
+      type,
+      action,
+      email: emailFromUrl ? "present" : "missing"
+    });
+
+    if (token && (type || action)) {
+      console.log("Auth: Conditions met for invitation/reset processing");
+      if (type === "invite" || action === "invite") {
+        console.log("Auth: Processing invitation...");
         const processInvite = () => handleInvite(token, emailFromUrl);
         processInvite();
       } else if (type === "recovery") {
+        console.log("Auth: Processing password reset...");
         const processPasswordReset = () => handlePasswordReset(token, emailFromUrl);
         processPasswordReset();
       }
+    } else {
+      console.log("Auth: No invitation/reset processing needed");
     }
   }, [searchParams, handleInvite, handlePasswordReset]);
 
   // Redirect authenticated users
+  // Set auth flow to unified approach
+  useEffect(() => {
+    setAuthFlow("otp");
+  }, []);
+
   useEffect(() => {
     // Wait for auth loading to complete
     if (authLoading) return;
@@ -151,79 +169,7 @@ export const useAuthFlow = () => {
     }
   }, [user, authLoading, needsProfileCompletion, activeClinic, navigate, location.state?.from?.pathname]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data.user) {
-        toast.success("Logged in successfully!");
-      }
-    } catch (error: unknown) {
-      toast.error((error as Error).message || "An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password || !name) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            name: name.trim(),
-          },
-        },
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data.user) {
-        if (data.user.email_confirmed_at) {
-          toast.success("Account created successfully!");
-        } else {
-          toast.success("Please check your email to verify your account");
-        }
-      }
-    } catch (error: unknown) {
-      toast.error((error as Error).message || "An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
       toast.error("Please enter your email address");
@@ -232,40 +178,54 @@ export const useAuthFlow = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo: `${window.location.origin}/auth?type=recovery`,
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          shouldCreateUser: true,
+        },
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error('Email Auth Error:', error);
+        
+        // Handle specific error cases with better messaging
+        if (error.message?.includes('Error sending confirmation email') || 
+            error.message?.includes('Database error') || 
+            error.message?.includes('500')) {
+          toast.error("Having trouble sending the verification code. Please try signing in with Google instead.");
+        } else if (error.message?.includes('rate limit')) {
+          toast.error("Too many attempts. Please wait a few minutes before trying again.");
+        } else if (error.message?.includes('invalid email')) {
+          toast.error("Please enter a valid email address.");
+        } else {
+          toast.error(`Authentication failed: ${error.message}`);
+        }
         return;
       }
 
-      toast.success("Password reset email sent! Check your inbox.");
-      setAuthFlow("login");
+      setOtpSent(true);
+      toast.success("Magic link sent to your email! Check your inbox and click the link to sign in.");
     } catch (error: unknown) {
-      toast.error((error as Error).message || "An unexpected error occurred");
+      console.error('Email Auth Exception:', error);
+      toast.error("Unable to send verification code. Please try again or use Google sign-in.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSetPassword = async (e: React.FormEvent) => {
+  const handleOTPVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!password) {
-      toast.error("Please enter a password");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+    if (!email || !otp) {
+      toast.error("Please enter the verification code");
       return;
     }
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        password,
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otp.trim(),
+        type: 'email',
       });
 
       if (error) {
@@ -274,19 +234,40 @@ export const useAuthFlow = () => {
       }
 
       if (data.user) {
-        toast.success("Password set successfully!");
-        
-        // Check if profile completion is needed
-        const needsCompletion = await checkProfileCompletion(data.user.id);
-        
-        if (needsCompletion) {
-          navigate("/complete-profile");
-        } else {
-          navigate("/dashboard");
-        }
+        toast.success("Account created successfully!");
       }
     } catch (error: unknown) {
       toast.error((error as Error).message || "An unexpected error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resendOTP = async () => {
+    if (!email) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          shouldCreateUser: true,
+        },
+      });
+
+      if (error) {
+        console.error('Resend OTP Error:', error);
+        toast.error("Failed to resend code. Please try again.");
+        return;
+      }
+
+      toast.success("New verification code sent!");
+    } catch (error: unknown) {
+      console.error('Resend OTP Exception:', error);
+      toast.error("Failed to resend code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -316,19 +297,12 @@ export const useAuthFlow = () => {
     // State
     email,
     setEmail,
-    password,
-    setPassword,
-    confirmPassword,
-    setConfirmPassword,
-    name,
-    setName,
+    otp,
+    setOtp,
     loading,
-    showPassword,
-    setShowPassword,
-    activeTab,
-    setActiveTab,
     authFlow,
     googleLoading,
+    otpSent,
     
     // Auth context
     user,
@@ -337,10 +311,9 @@ export const useAuthFlow = () => {
     needsProfileCompletion,
     
     // Handlers
-    handleLogin,
-    handleSignup,
-    handleForgotPassword,
-    handleSetPassword,
+    handleEmailAuth,
+    handleOTPVerify,
+    resendOTP,
     handleGoogleSignIn,
   };
 }; 

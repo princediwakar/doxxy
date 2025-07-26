@@ -11,13 +11,9 @@ import {
   Star,
   ArrowRight,
   Globe,
-  Lock,
   BarChart3,
-  TrendingUp,
-  Award,
   DollarSign,
   AlertTriangle,
-  UserCheck,
 } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
@@ -85,28 +81,6 @@ const painPoints = [
     }
   ];
 
-  const successMetrics = [
-    {
-      icon: TrendingUp,
-      value: "2,500+",
-      label: "Active Clinics",
-    },
-    {
-      icon: Users,
-      value: "50,000+",
-      label: "Patients Managed",
-    },
-    {
-      icon: Calendar,
-      value: "1M+",
-      label: "Appointments Scheduled",
-    },
-    {
-      icon: Award,
-      value: "99.9%",
-      label: "Uptime Guarantee",
-    }
-  ];
 
   const specialties = [
     { name: "Cardiology", description: "Heart & vascular", image: "https://images.unsplash.com/photo-1618939304347-e91b1f33d2ab?w=400&h=400&fit=crop", alt: "3D Heart Illustration" },
@@ -191,20 +165,6 @@ const HeroSection = () => (
   </section>
 );
 
-const SuccessMetrics = ({ metrics }) => (
-  <div className="pb-24 md:pb-32">
-    <div className="max-w-5xl mx-auto px-4">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-        {metrics.map((metric, index) => (
-          <div key={index} className="text-center">
-            <div className="text-4xl md:text-5xl font-bold text-blue-600">{metric.value}</div>
-            <div className="text-sm font-medium text-gray-600 dark:text-gray-300 mt-1">{metric.label}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-);
 
 const PainPoints = ({ points }) => (
   <Section className="bg-gray-50 dark:bg-gray-800/50">

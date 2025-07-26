@@ -23,7 +23,6 @@ const supabase = getSupabase();
 // Types
 type Consultation = Database['public']['Tables']['consultations']['Row'];
 type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
-type AppointmentType = Database['public']['Tables']['appointments']['Row'];
 
 interface ConsultationViewModalProps {
   open: boolean;

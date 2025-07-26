@@ -12,7 +12,6 @@ import {
   Stethoscope, 
   X,
   Loader2,
-  User as UserIcon
 } from "lucide-react";
 import { 
   Dialog,

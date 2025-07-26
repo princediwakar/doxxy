@@ -158,7 +158,7 @@ export const PatientModal = ({
       }
       return data;
     },
-    onSuccess: (updatedPatient) => {
+    onSuccess: () => {
       toast.success("Patient updated successfully.");
       // Invalidate patients query to refetch the list
       queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });

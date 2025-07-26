@@ -1,12 +1,12 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, Users, Stethoscope, Activity, Clock, User, Plus } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Users, Stethoscope, Activity, Clock, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { getSupabase } from '@/integrations/supabase/client';
-import { FormattedAppointment, DatabaseAppointment, DoctorDashboardData, EnhancedPatientForDoctorList } from "@/types/dashboard";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { FormattedAppointment, DatabaseAppointment, DoctorDashboardData } from "@/types/dashboard";
+import { useQuery } from "@tanstack/react-query";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { useNavigate } from "react-router-dom";

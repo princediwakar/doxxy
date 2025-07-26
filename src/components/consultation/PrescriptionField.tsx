@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { PrescriptionMedication, PrescriptionFieldProps } from './types';
+import { PrescriptionFieldProps } from './types';
 import { MedicineCombobox } from '@/components/ui/medicine-combobox';
 
 export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: PrescriptionFieldProps) => {
@@ -25,14 +25,6 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
     if (isReadOnly) return;
     const newValue = value.filter((_, i) => i !== index);
     onChange(newValue);
-  };
-
-  // Auto-remove medications with empty names when user moves away
-  const validateAndCleanMedications = () => {
-    const validMedications = value.filter(med => med.name && med.name.trim().length > 0);
-    if (validMedications.length !== value.length) {
-      onChange(validMedications);
-    }
   };
 
   const updateMedication = (index: number, field: string, val: string) => {

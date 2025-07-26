@@ -1,258 +1,132 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AuthForm, EmailField, NameField, PasswordField, OAuthDivider, GoogleButton, FormFooterSwitcher } from "./AuthFormFields";
+import { AuthForm, EmailField, OAuthDivider, GoogleButton } from "./AuthFormFields";
 import { AuthFlow } from "@/hooks/useAuth";
 
 interface AuthFlowProps {
   email: string;
   setEmail: (email: string) => void;
-  password: string;
-  setPassword: (password: string) => void;
-  confirmPassword: string;
-  setConfirmPassword: (password: string) => void;
-  name: string;
-  setName: (name: string) => void;
   loading: boolean;
   googleLoading: boolean;
-  showPassword: boolean;
-  setShowPassword: (show: boolean) => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
   authFlow: AuthFlow;
-  handleLogin: (e: React.FormEvent) => void;
-  handleSignup: (e: React.FormEvent) => void;
-  handleForgotPassword: (e: React.FormEvent) => void;
-  handleSetPassword: (e: React.FormEvent) => void;
+  handleEmailAuth: (e: React.FormEvent) => void;
   handleGoogleSignIn: () => void;
+  otpSent: boolean;
+  resendOTP: () => void;
 }
 
-const getCardDescription = (authFlow: AuthFlow) => {
-  switch (authFlow) {
-    case "signup":
-      return "Create a new account to get started";
-    case "reset":
-      return "Enter your email to reset your password";
-    case "invite":
-      return "Complete your account setup by setting a password";
-    case "update-password":
-      return "Please set your new password";
-    default:
-      return "Welcome back! Please sign in to your account";
-  }
+const getCardDescription = (otpSent: boolean) => {
+  return otpSent 
+    ? "Enter the verification code sent to your email" 
+    : "Enter your email to sign in or create an account";
 };
 
-export const LoginFlow: React.FC<Pick<AuthFlowProps, 'email' | 'setEmail' | 'password' | 'setPassword' | 'loading' | 'googleLoading' | 'showPassword' | 'setShowPassword' | 'handleLogin' | 'handleGoogleSignIn' | 'setActiveTab'>> = ({
+const getCardTitle = (otpSent: boolean) => {
+  return otpSent ? "Verify Your Email" : "Welcome to Doxxy";
+};
+
+export const UnifiedAuthFlow: React.FC<AuthFlowProps> = ({
   email,
   setEmail,
-  password,
-  setPassword,
   loading,
   googleLoading,
-  showPassword,
-  setShowPassword,
-  handleLogin,
+  handleEmailAuth,
   handleGoogleSignIn,
-  setActiveTab
+  otpSent,
+  resendOTP
 }) => (
   <>
-    <AuthForm onSubmit={handleLogin}>
-      <EmailField
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <PasswordField
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Enter your password"
-        showPassword={showPassword}
-        toggleShowPassword={() => setShowPassword(!showPassword)}
-        required
-      />
-      <div className="flex justify-end">
-        <button
-          type="button"
-          onClick={() => setActiveTab("reset")}
-          className="text-sm text-primary hover:underline cursor-pointer"
-        >
-          Forgot your password?
-        </button>
+    {!otpSent ? (
+      // Email Entry Step
+      <>
+        <AuthForm onSubmit={handleEmailAuth}>
+          <EmailField
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <Button
+            type="submit"
+            className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base"
+            disabled={loading}
+            style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
+          >
+            {loading ? "Sending code..." : "Continue with Email"}
+          </Button>
+        </AuthForm>
+        
+        <div className="text-center text-xs text-muted-foreground">
+          We'll send you a verification code to sign in or create your account
+        </div>
+        
+        <OAuthDivider />
+        <GoogleButton onClick={handleGoogleSignIn} loading={googleLoading} />
+      </>
+    ) : (
+      // Magic Link Verification Step
+      <div className="text-center space-y-4">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Check Your Email</h3>
+          <p className="text-sm text-muted-foreground">
+            We sent a magic link to <strong>{email}</strong>
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Click the link in your email to sign in instantly
+          </p>
+        </div>
+        
+        <div className="bg-muted/50 p-4 rounded-lg text-center">
+          <p className="text-sm text-muted-foreground">
+            You can close this window and check your email, or wait here - you'll be signed in automatically when you click the link.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            onClick={resendOTP}
+            disabled={loading}
+          >
+            Resend Link
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="flex-1"
+            onClick={() => window.location.reload()}
+          >
+            Change Email
+          </Button>
+        </div>
       </div>
-      <Button
-        type="submit"
-        className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base"
-        disabled={loading}
-        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
-      >
-        {loading ? "Signing in..." : "Sign In"}
-      </Button>
-    </AuthForm>
-    
-    <OAuthDivider />
-    <GoogleButton onClick={handleGoogleSignIn} loading={googleLoading} />
+    )}
   </>
-);
-
-export const SignupFlow: React.FC<Pick<AuthFlowProps, 'name' | 'setName' | 'email' | 'setEmail' | 'password' | 'setPassword' | 'confirmPassword' | 'setConfirmPassword' | 'loading' | 'googleLoading' | 'showPassword' | 'setShowPassword' | 'handleSignup' | 'handleGoogleSignIn'>> = ({
-  name,
-  setName,
-  email,
-  setEmail,
-  password,
-  setPassword,
-  confirmPassword,
-  setConfirmPassword,
-  loading,
-  googleLoading,
-  showPassword,
-  setShowPassword,
-  handleSignup,
-  handleGoogleSignIn
-}) => (
-  <>
-    <AuthForm onSubmit={handleSignup}>
-      <NameField
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        required
-      />
-      <EmailField
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <PasswordField
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Create a password"
-        showPassword={showPassword}
-        toggleShowPassword={() => setShowPassword(!showPassword)}
-        required
-      />
-      <PasswordField
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        placeholder="Confirm your password"
-        required
-      />
-      <Button
-        type="submit"
-        className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base"
-        disabled={loading}
-        style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
-      >
-        {loading ? "Creating account..." : "Create Account"}
-      </Button>
-    </AuthForm>
-    
-    <OAuthDivider />
-    <GoogleButton onClick={handleGoogleSignIn} loading={googleLoading} />
-  </>
-);
-
-export const ResetPasswordFlow: React.FC<Pick<AuthFlowProps, 'email' | 'setEmail' | 'loading' | 'handleForgotPassword' | 'setActiveTab'>> = ({
-  email,
-  setEmail,
-  loading,
-  handleForgotPassword,
-  setActiveTab
-}) => (
-  <AuthForm onSubmit={handleForgotPassword}>
-    <EmailField
-      value={email}
-      onChange={(e) => setEmail(e.target.value)}
-      required
-    />
-    <Button
-      type="submit"
-      className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base"
-      disabled={loading}
-      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
-    >
-      {loading ? "Sending..." : "Send Reset Email"}
-    </Button>
-    <Button
-      type="button"
-      variant="outline"
-      className="w-full"
-      onClick={() => setActiveTab("login")}
-    >
-      Back to Sign In
-    </Button>
-  </AuthForm>
-);
-
-export const SetPasswordFlow: React.FC<Pick<AuthFlowProps, 'password' | 'setPassword' | 'confirmPassword' | 'setConfirmPassword' | 'loading' | 'showPassword' | 'setShowPassword' | 'handleSetPassword'>> = ({
-  password,
-  setPassword,
-  confirmPassword,
-  setConfirmPassword,
-  loading,
-  showPassword,
-  setShowPassword,
-  handleSetPassword
-}) => (
-  <AuthForm onSubmit={handleSetPassword}>
-    <PasswordField
-      value={password}
-      onChange={(e) => setPassword(e.target.value)}
-      placeholder="Enter your new password"
-      showPassword={showPassword}
-      toggleShowPassword={() => setShowPassword(!showPassword)}
-      required
-    />
-    <PasswordField
-      value={confirmPassword}
-      onChange={(e) => setConfirmPassword(e.target.value)}
-      placeholder="Confirm your new password"
-      required
-    />
-    <Button
-      type="submit"
-      className="w-full py-2 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-base"
-      disabled={loading}
-      style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
-    >
-      {loading ? "Setting password..." : "Set Password"}
-    </Button>
-  </AuthForm>
 );
 
 export const AuthCard: React.FC<AuthFlowProps> = (props) => {
-  const { authFlow, activeTab, setActiveTab } = props;
-  
-  const showTabsAndSwitcher = authFlow === "login" || authFlow === "signup";
+  const { otpSent } = props;
   
   return (
     <Card className="w-full max-w-md shadow-lg border-0 bg-card">
       <CardHeader className="space-y-2 text-center pb-4">
         <CardTitle className="text-xl font-semibold text-foreground font-sans">
-          {authFlow === "invite" ? "Complete Your Account" : 
-           authFlow === "update-password" ? "Set New Password" :
-           authFlow === "reset" ? "Reset Password" : "Doxxy"}
+          {getCardTitle(otpSent)}
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground font-sans">
-          {getCardDescription(authFlow)}
+          {getCardDescription(otpSent)}
         </CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-4 pt-0">
-        {authFlow === "reset" ? (
-          <ResetPasswordFlow {...props} />
-        ) : authFlow === "invite" || authFlow === "update-password" ? (
-          <SetPasswordFlow {...props} />
-        ) : showTabsAndSwitcher ? (
-          <>
-            {activeTab === "login" ? (
-              <LoginFlow {...props} />
-            ) : (
-              <SignupFlow {...props} />
-            )}
-            <FormFooterSwitcher activeTab={activeTab} setActiveTab={setActiveTab} />
-          </>
-        ) : null}
+        <UnifiedAuthFlow {...props} />
       </CardContent>
     </Card>
   );
-}; 
+};

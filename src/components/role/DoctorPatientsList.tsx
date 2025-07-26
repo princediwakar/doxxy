@@ -2,9 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Import Supabase generated types
-import { Tables } from "@/integrations/supabase/types";
-import { getAge, renderGender } from "@/lib/utils";
+import { getAge } from "@/lib/utils";
 import { EnhancedPatientForDoctorList } from "@/types/dashboard";
 
 interface DoctorPatientsListProps {

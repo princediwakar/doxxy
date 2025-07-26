@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,8 @@ import {
   User, 
   BookOpen, 
   Video, 
-  FileText, 
   Download,
-  ArrowRight,
-  Tag
+  ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SignupCTA from "@/components/SignupCTA";
@@ -142,12 +140,6 @@ const Blog = () => {
     }
   ];
 
-  const filteredPosts = [...featuredPosts, ...blogPosts].filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || post.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

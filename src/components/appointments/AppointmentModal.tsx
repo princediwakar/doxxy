@@ -36,7 +36,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database, Enums } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Popover,
@@ -124,7 +124,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   patient,
 }) => {
   const queryClient = useQueryClient();
-  const { activeClinic, activeClinicRole } = useAuth();
+  const { activeClinic } = useAuth();
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [patientSearch, setPatientSearch] = useState("");
   const [newlyCreatedPatient, setNewlyCreatedPatient] = useState<Patient | null>(null);
@@ -232,7 +232,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         bio: doctor.bio,
         created_at: doctor.created_at,
         role: 'doctor',
-        department_name: 'General Medicine',
+        department_name: doctor.primary_specialization || 'General Medicine',
         department_id: null,
         is_active: doctor.is_active,
         primary_specialization: doctor.primary_specialization,

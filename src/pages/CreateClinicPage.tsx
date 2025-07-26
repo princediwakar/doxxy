@@ -24,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Stethoscope, UserCheck, Building2 } from "lucide-react";
+import { Stethoscope, Building2 } from "lucide-react";
 import { createDoctorProfile } from "@/lib/doctor-utils";
 
 const supabase = getSupabase();
@@ -73,7 +73,7 @@ const doctorProfileSchema = z.object({
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
 const CreateClinicPage = () => {
-  const { user, fetchUserAndClinicData, activeClinic } = useAuth();
+  const { user, fetchUserAndClinicData } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
@@ -85,7 +85,7 @@ const CreateClinicPage = () => {
     website: "",
   });
   const [departments, setDepartments] = React.useState<string[]>([]);
-  const [doctorProfile, setDoctorProfile] = React.useState<DoctorProfileForm>({
+  const [doctorProfile] = React.useState<DoctorProfileForm>({
     isDoctor: 'no',
     bio: '',
     phone: '',

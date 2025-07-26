@@ -1,0 +1,266 @@
+# Page snapshot
+
+```yaml
+- banner:
+  - navigation "Main navigation":
+    - link "Doxxy":
+      - /url: /
+      - img "Doxxy"
+    - link "Features":
+      - /url: /features
+    - link "Pricing":
+      - /url: /pricing
+    - link "Comparisons":
+      - /url: /comparisons
+    - link "Contact":
+      - /url: /contact
+  - link "Get Started":
+    - /url: /auth
+    - button "Get Started"
+- heading "Clinic work, made simple." [level=1]
+- paragraph: "The intelligent platform for modern clinics. Spend less time on admin and more time on what matters: your patients."
+- link "Setup Your Practice for Free":
+  - /url: /auth
+  - button "Setup Your Practice for Free":
+    - text: Setup Your Practice for Free
+    - img
+- img
+- text: No setup fees
+- img
+- text: Cancel anytime
+- img
+- text: 100 free appointments
+- heading "From Chaos to Clarity." [level=2]
+- paragraph: We solve the core administrative problems that slow your practice down, so you can focus on patient care.
+- img
+- heading "Scheduling Chaos" [level=3]
+- paragraph: Manual appointment management leads to double bookings, no-shows, and frustrated patients.
+- img
+- text: Automated reminders & conflict detection
+- img
+- heading "Lost Information" [level=3]
+- paragraph: Physical files get misplaced, patient history is incomplete, and finding records takes forever.
+- img
+- text: Instant search & complete digital records
+- img
+- heading "Billing Errors" [level=3]
+- paragraph: Manual invoicing creates errors, payment tracking is messy, and revenue gets delayed.
+- img
+- text: Automated billing & payment tracking
+- img
+- heading "Administrative Drain" [level=3]
+- paragraph: Hours spent on paperwork instead of patient care, reducing clinic efficiency and revenue.
+- img
+- text: Workflows that save 3+ hours daily
+- heading "See Doxxy in Action." [level=2]
+- paragraph: This is how modern healthcare software should look and feel—powerful, intuitive, and a pleasure to use.
+- heading "Smart Appointment Management" [level=3]
+- paragraph: Eliminate double bookings and reduce no-shows. Real-time updates and automated reminders create the smoothest experience for staff and patients.
+- img
+- text: Automated SMS & Email Reminders
+- img
+- text: Real-time Conflict Detection
+- img
+- text: Patient Self-Scheduling Portal
+- heading "Today's Schedule" [level=3]
+- heading "Priya Sharma" [level=4]
+- text: Checked In
+- paragraph: 10:30 AM - Cardiology Consult
+- heading "Rohan Gupta" [level=4]
+- text: Waiting
+- paragraph: 11:00 AM - Orthopedic Follow-up
+- heading "Anjali Mehta" [level=4]
+- text: Scheduled
+- paragraph: 11:30 AM - New Patient
+- 'heading "Patient: Vikram Singh" [level=3]'
+- paragraph: Age
+- paragraph: "42"
+- paragraph: Gender
+- paragraph: Male
+- paragraph: Phone
+- paragraph: +91 98XXXXXX01
+- paragraph: Last Visit
+- paragraph: 12/06/2025
+- heading "Recent Consultations" [level=5]
+- text: Fever and cough. Prescribed Paracetamol.
+- heading "Complete Patient Records" [level=3]
+- paragraph: A comprehensive digital file with complete medical history, notes, and prescriptions. Search thousands of records in seconds.
+- img
+- text: Searchable Medical Timeline
+- img
+- text: Prescription History & Alerts
+- img
+- text: One-Click PDF Export
+- heading "Practice Dashboard" [level=3]
+- paragraph: Get a complete overview of your practice with real-time metrics. Track patient flow, revenue, and appointment trends at a glance.
+- img
+- text: Real-time Practice Metrics & KPIs
+- img
+- text: Visual Charts for Revenue Trends
+- img
+- text: Role-Based Views for Staff
+- heading "Clinic Overview" [level=3]
+- paragraph: Appointments
+- paragraph: "32"
+- paragraph: Revenue
+- paragraph: ₹45,000
+- paragraph: Pending
+- paragraph: "4"
+- paragraph: Completed
+- paragraph: "28"
+- 'heading "Invoice: #INV-0042" [level=3]'
+- text: Consultation ₹800.00 Lab Test ₹1200.00 Total ₹2000.00
+- heading "Professional Billing" [level=3]
+- paragraph: Generate professional invoices, track payments, and manage billing seamlessly. Integrated with appointments for an error-free workflow.
+- img
+- text: Auto-Generate Invoices
+- img
+- text: Payment Tracking & Alerts
+- img
+- text: Professional PDF Invoices
+- heading "Built for Every Specialty." [level=2]
+- paragraph: Our platform is built with flexible, specialty-specific workflows for cardiology, dentistry, and everything in between.
+- img "3D Heart Illustration"
+- heading "Cardiology" [level=3]
+- paragraph: Heart & vascular
+- img "3D Brain Illustration"
+- heading "Neurology" [level=3]
+- paragraph: Brain & nervous system
+- img "3D Eye Illustration"
+- heading "Ophthalmology" [level=3]
+- paragraph: Comprehensive eye care
+- img "3D Skincare Product Illustration"
+- heading "Dermatology" [level=3]
+- paragraph: Skin & aesthetic care
+- img "3D Bone Illustration"
+- heading "Orthopedics" [level=3]
+- paragraph: Bone & musculoskeletal
+- img "3D Tooth Illustration"
+- heading "Dental" [level=3]
+- paragraph: Oral health & hygiene
+- img "3D Tooth Illustration"
+- heading "Pulmonology" [level=3]
+- paragraph: Oral health & hygiene
+- img "3D Tooth Illustration"
+- heading "ENT" [level=3]
+- paragraph: Ear, nose & throat
+- heading "Fair & Transparent Pricing." [level=2]
+- paragraph: One simple, transparent price. No monthly subscriptions, no hidden fees, and no surprises. Ever.
+- heading "₹10" [level=3]
+- paragraph: per appointment
+- paragraph: (First 100 are free)
+- link "Try Now for Free":
+  - /url: /auth
+  - button "Try Now for Free"
+- img
+- text: Unlimited doctors & staff
+- img
+- text: Patient records & scheduling
+- img
+- text: Billing & invoicing
+- img
+- text: Digital consultations & notes
+- img
+- text: Multi-specialty support
+- heading "The Complete Practice Toolkit." [level=2]
+- paragraph: We’ve built every feature you need to run a modern practice, all in one cohesive and intuitive platform.
+- img
+- heading "Smart Scheduling" [level=3]
+- paragraph: Automated reminders, online booking, and real-time availability to reduce no-shows by 40%.
+- img
+- heading "Patient Records" [level=3]
+- paragraph: Secure, centralized patient data with medical history, prescriptions, and treatment plans.
+- img
+- heading "Integrated Billing" [level=3]
+- paragraph: Automated invoicing, payment tracking, and insurance claim management in one place.
+- img
+- heading "Digital Consultations" [level=3]
+- paragraph: Record clinical notes, manage prescriptions, and track patient progress with 11+ templates.
+- img
+- heading "Multi-Clinic Support" [level=3]
+- paragraph: Manage multiple clinic locations with role-based access and centralized data.
+- img
+- heading "Practice Analytics" [level=3]
+- paragraph: Insightful dashboards with practice metrics, revenue tracking, and performance analytics.
+- heading "The Doxxy Advantage." [level=2]
+- paragraph: Secure, scalable, and efficient. Discover the core advantages that make Doxxy the trusted choice for modern clinics.
+- img
+- heading "Bank-Level Security" [level=4]
+- paragraph: Advanced encryption and data isolation. HIPAA-compliant with 99.9% uptime.
+- img
+- heading "Scale Without Limits" [level=4]
+- paragraph: Add unlimited staff without per-user charges. Pricing scales with your patient volume, not team size.
+- img
+- heading "Save Time, Daily" [level=4]
+- paragraph: Automated workflows for appointments, billing, and records save clinics over 3 hours every day.
+- heading "Trusted by India's Leading Doctors." [level=2]
+- paragraph: Don’t just take our word for it. Here’s what leading doctors and practice managers across India are saying about Doxxy.
+- figure "Dr. Priya Sharma Cardiologist, Apollo Hospitals, Delhi":
+  - img
+  - img
+  - img
+  - img
+  - img
+  - blockquote:
+    - paragraph: "\"Doxxy has revolutionized how we manage patient flow. The scheduling is flawless, and it has freed up my team to focus on what matters most—patient care.\""
+  - text: Dr. Priya Sharma Cardiologist, Apollo Hospitals, Delhi
+- figure "Dr. Rohan Gupta Orthopedic Surgeon, Fortis Hospital, Mumbai":
+  - img
+  - img
+  - img
+  - img
+  - img
+  - blockquote:
+    - paragraph: "\"The multi-clinic dashboard is a game-changer. I can oversee my practice in Bandra and Andheri from one screen. It's incredibly efficient.\""
+  - text: Dr. Rohan Gupta Orthopedic Surgeon, Fortis Hospital, Mumbai
+- figure "Anjali Mehta Practice Manager, Manipal Hospital, Bangalore":
+  - img
+  - img
+  - img
+  - img
+  - img
+  - blockquote:
+    - paragraph: "\"The automated billing and invoicing system has cut our administrative workload by at least 50%. It's accurate, professional, and has significantly improved our revenue cycle.\""
+  - text: Anjali Mehta Practice Manager, Manipal Hospital, Bangalore
+- figure "Dr. Vikram Singh General Physician, Max Healthcare, Gurgaon":
+  - img
+  - img
+  - img
+  - img
+  - img
+  - blockquote:
+    - paragraph: "\"I was skeptical about EMRs, but Doxxy is different. It's so intuitive. The consultation templates are tailored perfectly for Indian practice needs.\""
+  - text: Dr. Vikram Singh General Physician, Max Healthcare, Gurgaon
+- heading "Ready to Get Started?" [level=2]
+- paragraph: Join thousands of healthcare professionals who have transformed their practice with Doxxy. Get started for free with our Practice Essentials plan.
+- link "Start Free Practice":
+  - /url: /auth
+  - text: Start Free Practice
+  - img
+- paragraph: No setup fees • Cancel anytime • 24/7 support included
+- contentinfo:
+  - img "Doxxy"
+  - paragraph: Doxxy is the modern healthcare management platform for small to medium clinics.
+  - img
+  - text: +91 7388890554
+  - img
+  - text: doxxyapp@gmail.com
+  - heading "Product" [level=4]
+  - link "Features":
+    - /url: /features
+  - link "Pricing":
+    - /url: /pricing
+  - link "Doxxy vs Others":
+    - /url: /comparisons
+  - heading "Resources" [level=4]
+  - link "About Us":
+    - /url: /about
+  - link "Contact Us":
+    - /url: /contact
+  - heading "Legal" [level=4]
+  - link "Privacy Policy":
+    - /url: /privacy
+  - link "Terms of Service":
+    - /url: /terms
+  - paragraph: © 2025 Doxxy. All rights reserved.
+```

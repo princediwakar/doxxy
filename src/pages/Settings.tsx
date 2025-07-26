@@ -110,7 +110,6 @@ const SettingsPage = () => {
         <TabsContent value="departments" className="space-y-0">
           <ClinicDepartmentsManagement />
         </TabsContent>
-
         <TabsContent value="details" className="space-y-0">
           <ClinicDetailsManagement />
         </TabsContent>

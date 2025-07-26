@@ -7,15 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { z } from "zod";
 import { toast } from "sonner";
+import { processInvitationsOnProfileComplete } from "@/lib/invitation-utils";
 
 const supabase = getSupabase();
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
   phone: z.string()
-    .min(10, "Phone number must be at least 10 digits")
-    .max(15, "Phone number must be at most 15 digits")
-    .regex(/^[0-9]+$/, "Phone number must contain only digits")
+    .refine((val) => !val || (val.length >= 10 && val.length <= 15 && /^[0-9]+$/.test(val)), {
+      message: "Phone number must be 10-15 digits"
+    })
     .optional()
     .nullable(),
 });
@@ -23,11 +24,12 @@ const profileSchema = z.object({
 type ProfileForm = z.infer<typeof profileSchema>;
 
 const CompleteProfile = () => {
-  const { user, signOut, markProfileComplete } = useAuth();
+  const { user, signOut, markProfileComplete, fetchUserAndClinicData } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState<ProfileForm>({ name: "", phone: "" });
   const [loading, setLoading] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState<string>("");
   const [email, setEmail] = useState("");
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
@@ -79,6 +81,7 @@ const CompleteProfile = () => {
       return;
     }
     setLoading(true);
+    setProcessingMessage("Saving your profile...");
     
     try {
       // First update auth.users if phone is provided
@@ -95,49 +98,88 @@ const CompleteProfile = () => {
         }
       }
 
-      // Then update the profiles table
-      const { data, error } = await supabase
+      // Update the profiles table - try UPDATE first, then INSERT if it doesn't exist
+      let { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
+        .update({
           name: form.name,
-          phone: form.phone || null
+          phone: form.phone || null,
+          updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
+
+      // If update failed because profile doesn't exist, try to insert
+      if (error && error.code === 'PGRST116') {
+        console.log("CompleteProfile: Profile doesn't exist, creating new one");
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            name: form.name,
+            phone: form.phone || null,
+            email: user.email,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        error = insertError;
+      }
       
       if (error) {
         console.error("CompleteProfile: Error updating profile:", error);
         
-        // Handle potential race conditions with retries
-        if (retryCount < MAX_RETRIES && error.message.includes('profile not found')) {
+        // Handle specific error cases
+        if (error.code === '23505' && error.message.includes('unique_email')) {
+          console.warn("CompleteProfile: Email conflict detected, but continuing as profile may exist");
+          // Don't fail for email conflicts - the profile might already exist with this email
+        } else if (retryCount < MAX_RETRIES && (error.message.includes('profile not found') || error.code === 'PGRST116')) {
           setRetryCount(prev => prev + 1);
           // Wait briefly before retry
           await new Promise(resolve => setTimeout(resolve, 1000));
           handleSubmit(e);
           return;
+        } else {
+          toast.error("Failed to save profile: " + error.message);
+          return;
         }
-        
-        toast.error("Failed to save profile: " + error.message);
-        return;
       }
 
       // Mark profile as complete in auth context
       await markProfileComplete();
       
-      toast.success("Profile completed!");
-      console.log("CompleteProfile: Profile completed successfully, checking clinic status for navigation");
+      console.log("CompleteProfile: Profile completed successfully, processing invitations");
       
-      // Add a small delay to ensure state update propagates before navigation
-      setTimeout(() => {
-        // Navigate to dashboard if user has clinics, otherwise to create clinic
+      // Process any pending invitations explicitly
+      setProcessingMessage("Processing your invitation...");
+      const invitationResult = await processInvitationsOnProfileComplete(
+        user, 
+        form.name, 
+        form.phone || undefined
+      );
+      
+      console.log("CompleteProfile: Invitation processing result:", invitationResult);
+      
+      if (invitationResult.shouldNavigateToDashboard) {
+        setProcessingMessage("Loading your clinic data...");
+        await fetchUserAndClinicData(user);
+        toast.success(invitationResult.message || "Profile completed!");
         navigate("/dashboard", { replace: true });
-      }, 100);
+      } else if (invitationResult.shouldNavigateToCreateClinic) {
+        toast.success("Profile completed! Let's set up your clinic.");
+        navigate("/create-clinic", { replace: true });
+      } else {
+        // This shouldn't happen with the new explicit processing, but just in case
+        setProcessingMessage("Loading your clinic data...");
+        await fetchUserAndClinicData(user);
+        toast.success("Profile completed!");
+        navigate("/dashboard", { replace: true });
+      }
       
     } catch (error) {
       console.error("CompleteProfile: Exception during profile update:", error);
       toast.error("An error occurred while updating your profile.");
     } finally {
       setLoading(false);
+      setProcessingMessage("");
     }
   };
 
@@ -178,8 +220,13 @@ const CompleteProfile = () => {
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Saving..." : "Save & Continue"}
+              {loading ? (processingMessage || "Saving...") : "Save & Continue"}
             </Button>
+            {processingMessage && (
+              <div className="mt-2 text-center text-sm text-muted-foreground">
+                {processingMessage}
+              </div>
+            )}
           </form>
         </CardContent>
         <CardFooter className="flex-col">

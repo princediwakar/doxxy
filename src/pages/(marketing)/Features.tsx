@@ -3,14 +3,11 @@ import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
   Users, 
-  FileText, 
   CreditCard, 
   Video, 
   Building2, 
   BarChart3, 
-  Shield, 
   Clock, 
-  Smartphone,
   Globe,
   Zap,
   Lock,
@@ -18,11 +15,6 @@ import {
   Stethoscope,
   Database,
   Settings,
-  Bell,
-  Eye,
-  Printer,
-  Activity,
-  Pill,
   CheckCircle,
   ArrowRight
 } from 'lucide-react';

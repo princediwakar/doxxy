@@ -1,10 +1,9 @@
 import * as React from "react"
-import { Check, ChevronsUpDown, Pill, Search, X } from "lucide-react"
+import { Pill, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Badge } from "@/components/ui/badge"
 import { useQuery } from "@tanstack/react-query"
 import { getSupabase } from "@/integrations/supabase/client"
 import { useDebounce } from "use-debounce"
@@ -324,10 +323,6 @@ export function MedicineCombobox({
     onClear?.()
   }
 
-  const formatPrice = (price: number | null) => {
-    if (price === null || price === undefined) return "Price N/A"
-    return `₹${price.toFixed(2)}`
-  }
 
   const formatComposition = (comp1: string | null, comp2: string | null) => {
     if (!comp1) return "Composition N/A"
@@ -335,19 +330,6 @@ export function MedicineCombobox({
       return `${comp1} + ${comp2}`
     }
     return comp1
-  }
-
-  const highlightSearchTerm = (text: string, searchTerm: string) => {
-    if (!searchTerm) return text
-    const regex = new RegExp(`(${searchTerm})`, 'gi')
-    const parts = text.split(regex)
-    return parts.map((part, i) => 
-      regex.test(part) ? (
-        <span key={i} className="bg-yellow-200 text-yellow-800 font-medium">
-          {part}
-        </span>
-      ) : part
-    )
   }
 
   return (

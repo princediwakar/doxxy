@@ -72,7 +72,7 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
       try {
         const aptDate = typeof apt.date === 'string' ? parseISO(apt.date) : apt.date;
         return isValid(aptDate) && isSameDay(day, aptDate);
-      } catch (error) {
+      } catch {
         console.warn('Invalid date format:', apt.date);
         return false;
       }

@@ -14,7 +14,6 @@ import {
   Shield,
   Settings,
   Zap,
-  ArrowRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SignupCTA from "@/components/SignupCTA";

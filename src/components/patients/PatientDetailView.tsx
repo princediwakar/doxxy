@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAge } from "@/lib/utils";
-import { Calendar, CreditCard, Edit, Eye, FileText, History, Mail, MapPin, Phone, Pill, Stethoscope, User } from "lucide-react";
+import { Calendar, CreditCard, Edit, Eye, FileText, History, Mail, MapPin, Phone, Pill, Stethoscope } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ConsultationWithAppointment, PatientWithConsultations, Prescription } from "@/types/patients";
 import { MedicalTimeline } from "./MedicalTimeline";

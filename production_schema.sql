@@ -189,68 +189,74 @@ $$;
 ALTER FUNCTION "public"."add_clinic_credits"("p_clinic_id" "uuid", "p_credits" integer, "p_payment_id" "text", "p_order_id" "text") OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."add_clinic_member"("new_user_id" "text", "target_clinic_id" "text", "new_role" "public"."user_role", "new_department_id" "text") RETURNS "json"
-    LANGUAGE "plpgsql"
-    AS $$  
+CREATE OR REPLACE FUNCTION "public"."add_clinic_member"("new_user_id" "uuid", "target_clinic_id" "uuid", "new_role" "public"."user_role", "new_department_id" "uuid" DEFAULT NULL::"uuid") RETURNS "json"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
 DECLARE
-    new_member_id UUID;
-    member_data JSON;
+  new_member_id UUID;
+  member_data JSON;
 BEGIN
-    -- Validate user_id
-    IF NOT EXISTS (SELECT 1 FROM profiles WHERE id = new_user_id) THEN
-        RAISE EXCEPTION 'User ID % does not exist', new_user_id;
-    END IF;
+  -- Validate user_id
+  IF NOT EXISTS (SELECT 1 FROM profiles WHERE id = new_user_id) THEN
+    RAISE EXCEPTION 'User ID % does not exist in profiles', new_user_id;
+  END IF;
 
-    -- Validate clinic_id
-    IF NOT EXISTS (SELECT 1 FROM clinics WHERE id = target_clinic_id) THEN
-        RAISE EXCEPTION 'Clinic ID % does not exist', target_clinic_id;
-    END IF;
+  -- Validate clinic_id
+  IF NOT EXISTS (SELECT 1 FROM clinics WHERE id = target_clinic_id) THEN
+    RAISE EXCEPTION 'Clinic ID % does not exist', target_clinic_id;
+  END IF;
 
-    -- Validate department_id (if provided)
-    IF new_department_id IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM clinic_departments WHERE id = new_department_id
-    ) THEN
-        RAISE EXCEPTION 'Department ID % does not exist', new_department_id;
-    END IF;
+  -- Validate department_id (if provided)
+  IF new_department_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM clinic_departments WHERE id = new_department_id
+  ) THEN
+    RAISE EXCEPTION 'Department ID % does not exist', new_department_id;
+  END IF;
 
-    -- Insert or update clinic member
-    BEGIN
-        INSERT INTO clinic_members (
-            user_id,
-            clinic_id,
-            role,
-            department_id
-        ) VALUES (
-            new_user_id,
-            target_clinic_id,
-            new_role,
-            new_department_id
-        )
-        ON CONFLICT (user_id, clinic_id)
-        DO UPDATE SET
-            role = EXCLUDED.role,
-            department_id = EXCLUDED.department_id,
-            updated_at = now()
-        RETURNING id INTO new_member_id;
-    EXCEPTION WHEN OTHERS THEN
-        RAISE EXCEPTION 'Failed to add or update member: %', SQLERRM;
-    END;
+  -- Insert or update clinic member
+  INSERT INTO clinic_members (
+    id,
+    user_id,
+    clinic_id,
+    role,
+    department_id,
+    created_at,
+    updated_at
+  ) VALUES (
+    gen_random_uuid(),
+    new_user_id,
+    target_clinic_id,
+    new_role,
+    new_department_id,
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (user_id, clinic_id)
+  DO UPDATE SET
+    role = EXCLUDED.role,
+    department_id = EXCLUDED.department_id,
+    updated_at = NOW()
+  RETURNING id INTO new_member_id;
 
-    -- Fetch member data as JSON
-    SELECT json_build_object(
-        'id', cm.id,
-        'role', cm.role,
-        'department_id', cm.department_id
-    ) INTO member_data
-    FROM clinic_members cm
-    WHERE cm.id = new_member_id;
+  -- Fetch member data as JSON
+  SELECT json_build_object(
+    'id', cm.id,
+    'user_id', cm.user_id,
+    'clinic_id', cm.clinic_id,
+    'role', cm.role,
+    'department_id', cm.department_id,
+    'created_at', cm.created_at,
+    'updated_at', cm.updated_at
+  ) INTO member_data
+  FROM clinic_members cm
+  WHERE cm.id = new_member_id;
 
-    RETURN member_data;
+  RETURN member_data;
 END;
-  $$;
+$$;
 
 
-ALTER FUNCTION "public"."add_clinic_member"("new_user_id" "text", "target_clinic_id" "text", "new_role" "public"."user_role", "new_department_id" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."add_clinic_member"("new_user_id" "uuid", "target_clinic_id" "uuid", "new_role" "public"."user_role", "new_department_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."create_clinic_with_admin"("clinic_name" "text", "user_phone" "text" DEFAULT NULL::"text") RETURNS "json"
@@ -533,6 +539,54 @@ $$;
 ALTER FUNCTION "public"."create_profile_for_new_user"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."debug_invitation_flow"("user_email" "text") RETURNS "json"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  result JSON;
+BEGIN
+  SELECT json_build_object(
+    'user_exists', EXISTS(SELECT 1 FROM auth.users WHERE email = user_email),
+    'profile_exists', EXISTS(SELECT 1 FROM public.profiles WHERE email = user_email),
+    'pending_invitations', (
+      SELECT json_agg(
+        json_build_object(
+          'id', id,
+          'clinic_id', clinic_id,
+          'role', role,
+          'name', name,
+          'phone', phone,
+          'created_at', created_at,
+          'accepted_at', accepted_at,
+          'expires_at', expires_at
+        )
+      )
+      FROM public.pending_invitations
+      WHERE email = user_email
+    ),
+    'clinic_memberships', (
+      SELECT json_agg(
+        json_build_object(
+          'clinic_id', clinic_id,
+          'role', role,
+          'department_id', department_id,
+          'created_at', created_at
+        )
+      )
+      FROM public.clinic_members cm
+      JOIN auth.users u ON cm.user_id = u.id
+      WHERE u.email = user_email
+    )
+  ) INTO result;
+  
+  RETURN result;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."debug_invitation_flow"("user_email" "text") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."deduct_appointment_credit"("appointment_id_param" "uuid", "clinic_id_param" "uuid", "credits_to_deduct" integer DEFAULT 1) RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -664,6 +718,58 @@ $$;
 
 
 ALTER FUNCTION "public"."ensure_doctor_has_clinic_member"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."fix_empty_display_names"() RETURNS integer
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  user_record RECORD;
+  fixed_count INTEGER := 0;
+  new_name TEXT;
+BEGIN
+  -- Find users with empty or null names
+  FOR user_record IN 
+    SELECT p.id, p.email, p.name, u.raw_user_meta_data
+    FROM public.profiles p
+    JOIN auth.users u ON p.id = u.id
+    WHERE p.name IS NULL OR p.name = '' OR p.name = '-'
+  LOOP
+    -- Extract name from metadata
+    new_name := COALESCE(
+      user_record.raw_user_meta_data->>'full_name',
+      user_record.raw_user_meta_data->>'name',
+      user_record.raw_user_meta_data->>'display_name',
+      user_record.raw_user_meta_data->>'given_name' || ' ' || user_record.raw_user_meta_data->>'family_name',
+      user_record.raw_user_meta_data->>'first_name' || ' ' || user_record.raw_user_meta_data->>'last_name'
+    );
+    
+    -- Clean up the name
+    IF new_name IS NOT NULL THEN
+      new_name := trim(regexp_replace(new_name, '\s+', ' ', 'g'));
+      -- If name is empty after cleaning, use email prefix
+      IF new_name = '' OR new_name IS NULL THEN
+        new_name := split_part(user_record.email, '@', 1);
+      END IF;
+    ELSE
+      new_name := split_part(user_record.email, '@', 1);
+    END IF;
+    
+    -- Update the profile
+    UPDATE public.profiles
+    SET name = new_name, updated_at = NOW()
+    WHERE id = user_record.id;
+    
+    fixed_count := fixed_count + 1;
+    RAISE NOTICE 'Fixed display name for user %: % -> %', user_record.email, user_record.name, new_name;
+  END LOOP;
+  
+  RETURN fixed_count;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."fix_empty_display_names"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."generate_clinic_slug"("clinic_name" "text", "clinic_id" "uuid" DEFAULT NULL::"uuid") RETURNS "text"
@@ -903,11 +1009,8 @@ BEGIN
         'name', p.name,
         'email', p.email,
         'phone', p.phone,
-        'avatar_url', p.avatar_url,
-        'medical_license_number', p.medical_license_number,
-        'medical_license_expiry', p.medical_license_expiry,
-        'specialization', p.specialization,
-        'qualifications', p.qualifications
+        'created_at', p.created_at,
+        'updated_at', p.updated_at
       )
       FROM profiles p
       WHERE p.id = cm.user_id
@@ -915,14 +1018,18 @@ BEGIN
     (
       SELECT jsonb_build_object(
         'id', cd.id,
-        'name', dt.name
+        'department_types', jsonb_build_object(
+          'id', dt.id,
+          'name', dt.name
+        )
       )
       FROM clinic_departments cd
       JOIN department_types dt ON dt.id = cd.department_type_id
       WHERE cd.id = cm.department_id
     ) AS department
   FROM clinic_members cm
-  WHERE cm.clinic_id = p_clinic_id;
+  WHERE cm.clinic_id = p_clinic_id
+  ORDER BY cm.created_at DESC;
 END;
 $$;
 
@@ -1118,26 +1225,25 @@ ALTER FUNCTION "public"."get_doctor_dashboard_data"("_clinic_id" "uuid", "_user_
 
 CREATE OR REPLACE FUNCTION "public"."get_doctors_by_clinic"("clinic_id" "text") RETURNS TABLE("id" "text", "user_id" "text", "name" "text", "department_name" "text", "phone" "text", "email" "text", "bio" "text")
     LANGUAGE "plpgsql"
-    AS $_$
+    AS $$
 BEGIN
   RETURN QUERY
   SELECT 
-    d.id,
-    d.user_id,
+    d.id::text,
+    d.user_id::text,
     COALESCE(d.name, p.name, 'Unknown Doctor') AS name,
     COALESCE(dt.name, 'General Medicine') AS department_name,
     p.phone,
     p.email,
-    p.bio
+    d.bio
   FROM doctors d
-  LEFT JOIN profiles p ON d.user_id = p.id
-  LEFT JOIN clinic_members cm ON d.user_id = cm.user_id AND cm.clinic_id = $1
-  LEFT JOIN clinic_departments cd ON cm.department_id = cd.id
-  LEFT JOIN department_types dt ON cd.department_type_id = dt.id
-  WHERE d.clinic_id = $1
+  LEFT JOIN profiles p ON p.user_id = d.user_id
+  LEFT JOIN clinic_departments cd ON cd.id = d.department_id  
+  LEFT JOIN department_types dt ON dt.id = cd.department_type_id
+  WHERE d.clinic_id::text = get_doctors_by_clinic.clinic_id
     AND d.is_active = true;
 END;
-$_$;
+$$;
 
 
 ALTER FUNCTION "public"."get_doctors_by_clinic"("clinic_id" "text") OWNER TO "postgres";
@@ -1472,130 +1578,292 @@ ALTER FUNCTION "public"."get_user_clinics_simple"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
+    LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
-   BEGIN
-     IF NEW.role = 'doctor' THEN
-       INSERT INTO public.doctors (user_id, clinic_id, name, email)
-       SELECT 
-         NEW.user_id,
-         NEW.clinic_id,
-         COALESCE(p.name, 'Pending User ' || NEW.user_id),
-         COALESCE(p.email, 'pending_' || NEW.user_id || '@example.com')
-       FROM public.profiles p
-       WHERE p.id = NEW.user_id
-       ON CONFLICT (user_id, clinic_id) DO UPDATE
-       SET 
-         name = COALESCE(EXCLUDED.name, public.doctors.name),
-         email = COALESCE(EXCLUDED.email, public.doctors.email),
-         updated_at = NOW();
-     END IF;
-     RETURN NEW;
-   END;
-   $$;
+DECLARE
+  user_email TEXT;
+  user_name TEXT;
+  user_phone TEXT;
+  existing_invitation RECORD;
+  profile_created BOOLEAN := false;
+BEGIN
+  -- Get user email
+  user_email := LOWER(TRIM(COALESCE(NEW.email, '')));
+  
+  -- Skip processing if no email
+  IF user_email = '' THEN
+    RAISE NOTICE 'No email for user %, skipping invitation processing', NEW.id;
+    RETURN NEW;
+  END IF;
+
+  -- Extract name from raw_user_meta_data (NOT user_metadata)
+  user_name := COALESCE(
+    NEW.raw_user_meta_data->>'name',
+    NEW.raw_user_meta_data->>'full_name',
+    ''
+  );
+  
+  -- Extract phone
+  user_phone := COALESCE(
+    NEW.raw_user_meta_data->>'phone'
+  );
+
+  -- Create basic profile
+  BEGIN
+    INSERT INTO public.profiles (
+      id,
+      name,
+      email,
+      phone,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      NEW.id,
+      user_name,
+      user_email,
+      user_phone,
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name = COALESCE(EXCLUDED.name, profiles.name),
+      email = COALESCE(EXCLUDED.email, profiles.email),
+      phone = COALESCE(EXCLUDED.phone, profiles.phone),
+      updated_at = NOW();
+      
+    profile_created := true;
+    RAISE NOTICE 'Profile created/updated for user: %', user_email;
+    
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'Failed to create profile for %: %', user_email, SQLERRM;
+    profile_created := false;
+  END;
+
+  -- Process email-based invitations
+  BEGIN
+    -- Look for pending invitations
+    SELECT * INTO existing_invitation
+    FROM public.pending_invitations
+    WHERE LOWER(TRIM(email)) = user_email
+      AND accepted_at IS NULL
+      AND (expires_at IS NULL OR expires_at > NOW())
+    ORDER BY created_at DESC
+    LIMIT 1;
+
+    IF existing_invitation.id IS NOT NULL THEN
+      RAISE NOTICE 'Found pending invitation for %: % with department_id: %', user_email, existing_invitation.id, existing_invitation.department_id;
+      
+      -- Create clinic membership WITH department_id
+      INSERT INTO public.clinic_members (
+        user_id,
+        clinic_id,
+        role,
+        department_id,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        NEW.id,
+        existing_invitation.clinic_id,
+        existing_invitation.role,
+        existing_invitation.department_id,
+        NOW(),
+        NOW()
+      )
+      ON CONFLICT (user_id, clinic_id) DO NOTHING;
+      
+      -- Create doctor profile if role is doctor
+      IF existing_invitation.role = 'doctor' THEN
+        INSERT INTO public.doctors (
+          user_id,
+          clinic_id,
+          name,
+          email,
+          phone,
+          is_active,
+          created_at,
+          updated_at
+        )
+        VALUES (
+          NEW.id,
+          existing_invitation.clinic_id,
+          user_name,
+          user_email,
+          user_phone,
+          true,
+          NOW(),
+          NOW()
+        )
+        ON CONFLICT (user_id, clinic_id) DO NOTHING;
+        
+        RAISE NOTICE 'Doctor profile created for %', user_email;
+      END IF;
+      
+      -- Mark invitation as accepted
+      UPDATE public.pending_invitations
+      SET accepted_at = NOW(), updated_at = NOW()
+      WHERE id = existing_invitation.id;
+      
+      RAISE NOTICE 'Invitation processed successfully for % with role % and department %', user_email, existing_invitation.role, existing_invitation.department_id;
+    ELSE
+      RAISE NOTICE 'No pending invitation found for %', user_email;
+    END IF;
+    
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'Error processing invitation for %: %', user_email, SQLERRM;
+  END;
+
+  RETURN NEW;
+  
+EXCEPTION WHEN OTHERS THEN
+  RAISE WARNING 'Critical error in handle_new_user for %: %', user_email, SQLERRM;
+  RETURN NEW;
+END;
+$$;
 
 
 ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."invite_and_add_member"("p_email" "text", "p_name" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_phone" "text" DEFAULT NULL::"text", "p_department_id" "uuid" DEFAULT NULL::"uuid", "p_availability" "text" DEFAULT NULL::"text", "p_bio" "text" DEFAULT NULL::"text") RETURNS "json"
+CREATE OR REPLACE FUNCTION "public"."handle_new_user_manual"("user_record" "auth"."users") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
 DECLARE
-  v_user_id UUID;
-  v_profile_data JSON;
-  v_clinic_member_data JSON;
-  v_doctor_data JSON;
-  v_message TEXT;
+  user_name TEXT;
+  user_phone TEXT;
+  clinic_id_from_metadata UUID;
+  role_from_metadata TEXT;
+  invitation_token_from_metadata UUID;
 BEGIN
-  -- Check if user exists in profiles table
-  SELECT id INTO v_user_id
-  FROM profiles
-  WHERE email = LOWER(p_email);
-
-  -- If user doesn't exist, create a profile
-  IF v_user_id IS NULL THEN
-    INSERT INTO profiles (id, email, name, phone, created_at, updated_at)
-    VALUES (
-      gen_random_uuid(),
-      LOWER(p_email),
-      p_name,
-      p_phone,
-      NOW(),
-      NOW()
-    )
-    RETURNING id INTO v_user_id;
-    
-    v_message := 'New user profile created and added to clinic';
-  ELSE
-    v_message := 'Existing user added to clinic';
-  END IF;
-
-  -- Add or update user in clinic_members
-  INSERT INTO clinic_members (id, user_id, clinic_id, role, department_id, created_at, updated_at)
-  VALUES (gen_random_uuid(), v_user_id, p_clinic_id, p_role, p_department_id, NOW(), NOW())
-  ON CONFLICT (user_id, clinic_id)
-  DO UPDATE SET
-    role = p_role,
-    department_id = p_department_id,
-    updated_at = NOW();
-
-  -- If role is doctor, create or update doctor profile
-  IF p_role = 'doctor' THEN
-    INSERT INTO doctors (id, user_id, clinic_id, name, email, phone, availability, bio, is_active, created_at, updated_at)
-    VALUES (
-      gen_random_uuid(),
-      v_user_id,
-      p_clinic_id,
-      p_name,
-      LOWER(p_email),
-      p_phone,
-      p_availability,
-      p_bio,
-      true,
-      NOW(),
-      NOW()
-    )
-    ON CONFLICT (user_id, clinic_id)
-    DO UPDATE SET
-      name = p_name,
-      email = LOWER(p_email),
-      phone = p_phone,
-      availability = p_availability,
-      bio = p_bio,
-      updated_at = NOW();
-  END IF;
-
-  -- Get profile data
-  SELECT to_json(p.*) INTO v_profile_data
-  FROM profiles p
-  WHERE p.id = v_user_id;
-
-  -- Get clinic member data
-  SELECT to_json(cm.*) INTO v_clinic_member_data
-  FROM clinic_members cm
-  WHERE cm.user_id = v_user_id AND cm.clinic_id = p_clinic_id;
-
-  -- Get doctor data if applicable
-  IF p_role = 'doctor' THEN
-    SELECT to_json(d.*) INTO v_doctor_data
-    FROM doctors d
-    WHERE d.user_id = v_user_id AND d.clinic_id = p_clinic_id;
-  END IF;
-
-  -- Return comprehensive result
-  RETURN json_build_object(
-    'user_id', v_user_id,
-    'profile', v_profile_data,
-    'clinic_member', v_clinic_member_data,
-    'doctor', v_doctor_data,
-    'message', v_message
+  -- Extract user name
+  user_name := COALESCE(
+    user_record.raw_user_meta_data->>'name',
+    user_record.raw_user_meta_data->>'full_name',
+    user_record.raw_user_meta_data->>'display_name',
+    split_part(user_record.email, '@', 1)
   );
+  
+  -- Extract phone
+  user_phone := COALESCE(
+    user_record.phone,
+    user_record.raw_user_meta_data->>'phone'
+  );
+  
+  -- Extract metadata
+  clinic_id_from_metadata := (user_record.raw_user_meta_data->>'clinic_id')::UUID;
+  role_from_metadata := user_record.raw_user_meta_data->>'role';
+  invitation_token_from_metadata := (user_record.raw_user_meta_data->>'invitation_token')::UUID;
+  
+  -- Create or update profile
+  INSERT INTO public.profiles (id, name, email, phone, created_at, updated_at)
+  VALUES (user_record.id, user_name, user_record.email, user_phone, user_record.created_at, user_record.updated_at)
+  ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    email = EXCLUDED.email,
+    phone = EXCLUDED.phone,
+    updated_at = NOW();
+  
+  -- Create clinic membership if metadata exists
+  IF clinic_id_from_metadata IS NOT NULL AND role_from_metadata IS NOT NULL THEN
+    INSERT INTO public.clinic_members (clinic_id, user_id, role, department_id, created_at, updated_at)
+    VALUES (clinic_id_from_metadata, user_record.id, role_from_metadata::user_role, NULL, NOW(), NOW())
+    ON CONFLICT (user_id, clinic_id) DO NOTHING;
+    
+    -- Create doctor profile if needed
+    IF role_from_metadata = 'doctor' THEN
+      INSERT INTO public.doctors (user_id, clinic_id, name, email, phone, is_active, created_at, updated_at)
+      VALUES (user_record.id, clinic_id_from_metadata, user_name, user_record.email, user_phone, true, NOW(), NOW())
+      ON CONFLICT (user_id, clinic_id) DO NOTHING;
+    END IF;
+    
+    -- Mark invitation as accepted
+    IF invitation_token_from_metadata IS NOT NULL THEN
+      UPDATE public.pending_invitations
+      SET accepted_at = NOW(), updated_at = NOW()
+      WHERE invitation_token = invitation_token_from_metadata;
+    END IF;
+  END IF;
 END;
 $$;
 
 
-ALTER FUNCTION "public"."invite_and_add_member"("p_email" "text", "p_name" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_phone" "text", "p_department_id" "uuid", "p_availability" "text", "p_bio" "text") OWNER TO "postgres";
+ALTER FUNCTION "public"."handle_new_user_manual"("user_record" "auth"."users") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."invite_user_by_email"("p_email" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role" DEFAULT 'staff'::"public"."user_role", "p_name" "text" DEFAULT NULL::"text", "p_phone" "text" DEFAULT NULL::"text", "p_department_id" "uuid" DEFAULT NULL::"uuid") RETURNS "json"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_invitation_id UUID;
+  v_existing_user_id UUID;
+BEGIN
+  -- Validate inputs
+  IF p_email IS NULL OR p_email = '' THEN
+    RETURN json_build_object('success', false, 'error', 'Email is required');
+  END IF;
+  
+  IF p_clinic_id IS NULL THEN
+    RETURN json_build_object('success', false, 'error', 'Clinic ID is required');
+  END IF;
+
+  -- Check if user is already a member of this clinic
+  SELECT user_id INTO v_existing_user_id
+  FROM clinic_members cm
+  JOIN auth.users u ON cm.user_id = u.id
+  WHERE u.email = p_email AND cm.clinic_id = p_clinic_id;
+  
+  IF v_existing_user_id IS NOT NULL THEN
+    RETURN json_build_object('success', false, 'error', 'User is already a member of this clinic');
+  END IF;
+
+  -- Insert or update pending invitation WITH department_id
+  INSERT INTO public.pending_invitations (
+    email,
+    clinic_id,
+    role,
+    name,
+    phone,
+    department_id,
+    created_at,
+    updated_at,
+    expires_at
+  )
+  VALUES (
+    LOWER(TRIM(p_email)),
+    p_clinic_id,
+    p_role,
+    p_name,
+    p_phone,
+    p_department_id,
+    NOW(),
+    NOW(),
+    NOW() + INTERVAL '30 days'
+  )
+  ON CONFLICT (email, clinic_id) 
+  DO UPDATE SET
+    role = EXCLUDED.role,
+    name = EXCLUDED.name,
+    phone = EXCLUDED.phone,
+    department_id = EXCLUDED.department_id,
+    updated_at = NOW(),
+    expires_at = NOW() + INTERVAL '30 days',
+    accepted_at = NULL
+  RETURNING id INTO v_invitation_id;
+
+  RETURN json_build_object(
+    'success', true, 
+    'invitation_id', v_invitation_id,
+    'message', 'User invited successfully'
+  );
+
+EXCEPTION WHEN OTHERS THEN
+  RETURN json_build_object('success', false, 'error', SQLERRM);
+END;
+$$;
+
+
+ALTER FUNCTION "public"."invite_user_by_email"("p_email" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_name" "text", "p_phone" "text", "p_department_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."is_superadmin_in_clinic"("check_clinic_id" "uuid") RETURNS boolean
@@ -1612,32 +1880,6 @@ $$;
 
 
 ALTER FUNCTION "public"."is_superadmin_in_clinic"("check_clinic_id" "uuid") OWNER TO "postgres";
-
-
-CREATE OR REPLACE FUNCTION "public"."on_auth_user_created"() RETURNS "trigger"
-    LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
-    AS $$
-BEGIN
-  INSERT INTO public.profiles (id, email, name, phone)
-  VALUES (
-    NEW.id,
-    LOWER(NEW.email),
-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', 'Pending User ' || NEW.id),
-    NULL
-  )
-  ON CONFLICT (id) DO UPDATE
-  SET
-    email = EXCLUDED.email,
-    name = COALESCE(EXCLUDED.name, public.profiles.name),
-    phone = EXCLUDED.phone,
-    updated_at = NOW();
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."on_auth_user_created"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."search_medicines"("search_term" "text" DEFAULT ''::"text", "limit_count" integer DEFAULT 50) RETURNS TABLE("id" bigint, "name" "text", "price" numeric, "is_discontinued" boolean, "manufacturer_name" "text", "pack_size_label" "text", "pack_type" "text", "short_composition1" "text", "short_composition2" "text", "created_at" timestamp with time zone)
@@ -1862,7 +2104,11 @@ CREATE TABLE IF NOT EXISTS "public"."profiles" (
     "email" "text",
     "phone" "text",
     "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    "updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP
+    "updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    "password_hash" "text",
+    "session_token" "text",
+    "session_expires_at" timestamp with time zone,
+    "avatar_url" "text"
 );
 
 
@@ -2070,7 +2316,7 @@ CREATE TABLE IF NOT EXISTS "public"."clinic_members" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "user_id" "uuid",
     "clinic_id" "uuid",
-    "role" "public"."user_role" NOT NULL,
+    "role" "public"."user_role" DEFAULT 'staff'::"public"."user_role" NOT NULL,
     "department_id" "uuid",
     "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     "updated_at" timestamp with time zone DEFAULT "now"()
@@ -2299,6 +2545,26 @@ CREATE TABLE IF NOT EXISTS "public"."payment_transactions" (
 ALTER TABLE "public"."payment_transactions" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."pending_invitations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "email" "text" NOT NULL,
+    "clinic_id" "uuid" NOT NULL,
+    "role" "public"."user_role" NOT NULL,
+    "department_id" "uuid",
+    "name" "text",
+    "phone" "text",
+    "invitation_token" "text" DEFAULT "gen_random_uuid"(),
+    "invited_by" "uuid",
+    "accepted_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "expires_at" timestamp with time zone
+);
+
+
+ALTER TABLE "public"."pending_invitations" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."prescriptions" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "clinic_id" "uuid" NOT NULL,
@@ -2312,6 +2578,24 @@ CREATE TABLE IF NOT EXISTS "public"."prescriptions" (
 
 
 ALTER TABLE "public"."prescriptions" OWNER TO "postgres";
+
+
+CREATE OR REPLACE VIEW "public"."user_profile_debug" AS
+ SELECT "u"."id",
+    "u"."email",
+    "u"."phone" AS "auth_phone",
+    "u"."raw_user_meta_data",
+    "p"."name" AS "profile_name",
+    "p"."email" AS "profile_email",
+    "p"."phone" AS "profile_phone",
+    "p"."created_at" AS "profile_created",
+    "p"."updated_at" AS "profile_updated"
+   FROM ("auth"."users" "u"
+     LEFT JOIN "public"."profiles" "p" ON (("u"."id" = "p"."id")))
+  ORDER BY "u"."created_at" DESC;
+
+
+ALTER TABLE "public"."user_profile_debug" OWNER TO "postgres";
 
 
 ALTER TABLE ONLY "public"."appointment_billing"
@@ -2355,6 +2639,11 @@ ALTER TABLE ONLY "public"."clinic_members"
 
 
 ALTER TABLE ONLY "public"."clinic_members"
+    ADD CONSTRAINT "clinic_members_user_clinic_unique" UNIQUE ("user_id", "clinic_id");
+
+
+
+ALTER TABLE ONLY "public"."clinic_members"
     ADD CONSTRAINT "clinic_members_user_id_clinic_id_key" UNIQUE ("user_id", "clinic_id");
 
 
@@ -2394,6 +2683,11 @@ ALTER TABLE ONLY "public"."doctors"
 
 
 
+ALTER TABLE ONLY "public"."doctors"
+    ADD CONSTRAINT "doctors_user_clinic_unique" UNIQUE ("user_id", "clinic_id");
+
+
+
 ALTER TABLE ONLY "public"."medicines"
     ADD CONSTRAINT "medicines_pkey" PRIMARY KEY ("id");
 
@@ -2424,6 +2718,16 @@ ALTER TABLE ONLY "public"."payment_transactions"
 
 
 
+ALTER TABLE ONLY "public"."pending_invitations"
+    ADD CONSTRAINT "pending_invitations_email_clinic_id_key" UNIQUE ("email", "clinic_id");
+
+
+
+ALTER TABLE ONLY "public"."pending_invitations"
+    ADD CONSTRAINT "pending_invitations_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."prescriptions"
     ADD CONSTRAINT "prescriptions_pkey" PRIMARY KEY ("id");
 
@@ -2436,6 +2740,11 @@ ALTER TABLE ONLY "public"."profiles"
 
 ALTER TABLE ONLY "public"."doctors"
     ADD CONSTRAINT "unique_doctor_per_user_clinic" UNIQUE ("user_id", "clinic_id");
+
+
+
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "unique_email" UNIQUE ("email");
 
 
 
@@ -2563,6 +2872,18 @@ CREATE INDEX "idx_payment_transactions_status" ON "public"."payment_transactions
 
 
 
+CREATE INDEX "idx_pending_invitations_clinic_id" ON "public"."pending_invitations" USING "btree" ("clinic_id");
+
+
+
+CREATE INDEX "idx_pending_invitations_email" ON "public"."pending_invitations" USING "btree" ("email");
+
+
+
+CREATE INDEX "idx_pending_invitations_token" ON "public"."pending_invitations" USING "btree" ("invitation_token");
+
+
+
 CREATE INDEX "idx_prescriptions_appointment_id" ON "public"."prescriptions" USING "btree" ("appointment_id");
 
 
@@ -2583,11 +2904,11 @@ CREATE INDEX "idx_prescriptions_patient_id" ON "public"."prescriptions" USING "b
 
 
 
+CREATE INDEX "idx_profiles_email" ON "public"."profiles" USING "btree" ("email");
+
+
+
 CREATE OR REPLACE TRIGGER "clinic_credits_updated_at_trigger" BEFORE UPDATE ON "public"."clinic_credits" FOR EACH ROW EXECUTE FUNCTION "public"."update_clinic_credits_updated_at"();
-
-
-
-CREATE OR REPLACE TRIGGER "handle_new_user" AFTER INSERT ON "public"."clinic_members" FOR EACH ROW EXECUTE FUNCTION "public"."handle_new_user"();
 
 
 
@@ -2725,6 +3046,16 @@ ALTER TABLE ONLY "public"."doctors"
 
 
 
+ALTER TABLE ONLY "public"."clinic_members"
+    ADD CONSTRAINT "fk_clinic_members_profiles" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."doctors"
+    ADD CONSTRAINT "fk_doctors_profiles" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."monthly_billing_cycles"
     ADD CONSTRAINT "monthly_billing_cycles_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id") ON DELETE CASCADE;
 
@@ -2742,6 +3073,21 @@ ALTER TABLE ONLY "public"."patients"
 
 ALTER TABLE ONLY "public"."payment_transactions"
     ADD CONSTRAINT "payment_transactions_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."pending_invitations"
+    ADD CONSTRAINT "pending_invitations_clinic_id_fkey" FOREIGN KEY ("clinic_id") REFERENCES "public"."clinics"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."pending_invitations"
+    ADD CONSTRAINT "pending_invitations_department_id_fkey" FOREIGN KEY ("department_id") REFERENCES "public"."clinic_departments"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."pending_invitations"
+    ADD CONSTRAINT "pending_invitations_invited_by_fkey" FOREIGN KEY ("invited_by") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
 
 
 
@@ -2770,6 +3116,22 @@ ALTER TABLE ONLY "public"."prescriptions"
 
 
 
+CREATE POLICY "Allow service role access to clinic_members" ON "public"."clinic_members" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "Allow service role access to doctors" ON "public"."doctors" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "Allow service role access to profiles" ON "public"."profiles" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "Anyone can view department types" ON "public"."department_types" FOR SELECT USING (true);
+
+
+
 CREATE POLICY "Anyone can view departments in public clinics" ON "public"."clinic_departments" FOR SELECT USING (("clinic_id" IN ( SELECT "clinics"."id"
    FROM "public"."clinics"
   WHERE ("clinics"."is_public" = true))));
@@ -2779,6 +3141,24 @@ CREATE POLICY "Anyone can view departments in public clinics" ON "public"."clini
 CREATE POLICY "Anyone can view doctors in public clinics" ON "public"."doctors" FOR SELECT USING (("clinic_id" IN ( SELECT "clinics"."id"
    FROM "public"."clinics"
   WHERE ("clinics"."is_public" = true))));
+
+
+
+CREATE POLICY "Clinic members can view clinic members" ON "public"."clinic_members" FOR SELECT USING (("clinic_id" IN ( SELECT "clinic_members_1"."clinic_id"
+   FROM "public"."clinic_members" "clinic_members_1"
+  WHERE ("clinic_members_1"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "Clinic members can view doctors" ON "public"."doctors" FOR SELECT USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "Clinic members can view their clinic" ON "public"."clinics" FOR SELECT USING (("id" IN ( SELECT "clinic_members"."clinic_id"
+   FROM "public"."clinic_members"
+  WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
 
 
 
@@ -2802,6 +3182,10 @@ UNION
 
 
 
+CREATE POLICY "Doctors can update their own profile" ON "public"."doctors" FOR UPDATE USING (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "Enable read access for clinic members" ON "public"."doctors" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM "public"."clinic_members" "cm"
   WHERE (("cm"."clinic_id" = "doctors"."clinic_id") AND ("cm"."user_id" = "auth"."uid"())))));
@@ -2809,6 +3193,18 @@ CREATE POLICY "Enable read access for clinic members" ON "public"."doctors" FOR 
 
 
 CREATE POLICY "Service role can insert profiles" ON "public"."profiles" FOR INSERT TO "service_role" WITH CHECK (true);
+
+
+
+CREATE POLICY "Superadmins can manage clinic members" ON "public"."clinic_members" USING ((EXISTS ( SELECT 1
+   FROM "public"."clinic_members" "clinic_members_1"
+  WHERE (("clinic_members_1"."user_id" = "auth"."uid"()) AND ("clinic_members_1"."clinic_id" = "clinic_members_1"."clinic_id") AND ("clinic_members_1"."role" = 'superadmin'::"public"."user_role")))));
+
+
+
+CREATE POLICY "Superadmins can manage doctors" ON "public"."doctors" USING ((EXISTS ( SELECT 1
+   FROM "public"."clinic_members"
+  WHERE (("clinic_members"."user_id" = "auth"."uid"()) AND ("clinic_members"."clinic_id" = "doctors"."clinic_id") AND ("clinic_members"."role" = 'superadmin'::"public"."user_role")))));
 
 
 
@@ -2840,6 +3236,10 @@ CREATE POLICY "Users can update bills for their clinic" ON "public"."bills" FOR 
 
 
 
+CREATE POLICY "Users can update own profile" ON "public"."profiles" FOR UPDATE USING (("auth"."uid"() = "id"));
+
+
+
 CREATE POLICY "Users can update patients in their clinic" ON "public"."patients" FOR UPDATE USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
    FROM "public"."clinic_members"
   WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
@@ -2854,6 +3254,10 @@ CREATE POLICY "Users can view appointments for their clinic" ON "public"."appoin
 CREATE POLICY "Users can view bills for their clinic" ON "public"."bills" FOR SELECT USING (("clinic_id" IN ( SELECT "clinic_members"."clinic_id"
    FROM "public"."clinic_members"
   WHERE ("clinic_members"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "Users can view own profile" ON "public"."profiles" FOR SELECT USING (("auth"."uid"() = "id"));
 
 
 
@@ -2903,9 +3307,6 @@ CREATE POLICY "clinic_credits_access" ON "public"."clinic_credits" USING (("clin
 
 
 ALTER TABLE "public"."clinic_departments" ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."clinic_members" ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "clinic_members_delete" ON "public"."clinic_members" FOR DELETE TO "authenticated" USING ((("user_id" = "auth"."uid"()) OR "public"."is_superadmin_in_clinic"("clinic_id")));
@@ -2986,9 +3387,6 @@ CREATE POLICY "department_types_read_all" ON "public"."department_types" FOR SEL
 
 CREATE POLICY "department_types_read_public" ON "public"."department_types" FOR SELECT TO "anon" USING (true);
 
-
-
-ALTER TABLE "public"."doctors" ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "doctors_delete_simple" ON "public"."doctors" FOR DELETE USING ((EXISTS ( SELECT 1
@@ -3092,9 +3490,6 @@ CREATE POLICY "prescriptions_update_policy" ON "public"."prescriptions" FOR UPDA
 
 
 
-ALTER TABLE "public"."profiles" ENABLE ROW LEVEL SECURITY;
-
-
 CREATE POLICY "profiles_delete" ON "public"."profiles" FOR DELETE TO "authenticated" USING (("id" = "auth"."uid"()));
 
 
@@ -3121,6 +3516,10 @@ CREATE POLICY "public_clinics_select" ON "public"."clinics" FOR SELECT USING (("
 
 
 ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
+
+
+
+
 
 
 REVOKE USAGE ON SCHEMA "public" FROM PUBLIC;
@@ -3292,9 +3691,9 @@ GRANT ALL ON FUNCTION "public"."add_clinic_credits"("p_clinic_id" "uuid", "p_cre
 
 
 
-GRANT ALL ON FUNCTION "public"."add_clinic_member"("new_user_id" "text", "target_clinic_id" "text", "new_role" "public"."user_role", "new_department_id" "text") TO "anon";
-GRANT ALL ON FUNCTION "public"."add_clinic_member"("new_user_id" "text", "target_clinic_id" "text", "new_role" "public"."user_role", "new_department_id" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."add_clinic_member"("new_user_id" "text", "target_clinic_id" "text", "new_role" "public"."user_role", "new_department_id" "text") TO "service_role";
+GRANT ALL ON FUNCTION "public"."add_clinic_member"("new_user_id" "uuid", "target_clinic_id" "uuid", "new_role" "public"."user_role", "new_department_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."add_clinic_member"("new_user_id" "uuid", "target_clinic_id" "uuid", "new_role" "public"."user_role", "new_department_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."add_clinic_member"("new_user_id" "uuid", "target_clinic_id" "uuid", "new_role" "public"."user_role", "new_department_id" "uuid") TO "service_role";
 
 
 
@@ -3328,6 +3727,12 @@ GRANT ALL ON FUNCTION "public"."create_profile_for_new_user"() TO "service_role"
 
 
 
+GRANT ALL ON FUNCTION "public"."debug_invitation_flow"("user_email" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."debug_invitation_flow"("user_email" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."debug_invitation_flow"("user_email" "text") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."deduct_appointment_credit"("appointment_id_param" "uuid", "clinic_id_param" "uuid", "credits_to_deduct" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."deduct_appointment_credit"("appointment_id_param" "uuid", "clinic_id_param" "uuid", "credits_to_deduct" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."deduct_appointment_credit"("appointment_id_param" "uuid", "clinic_id_param" "uuid", "credits_to_deduct" integer) TO "service_role";
@@ -3349,6 +3754,12 @@ GRANT ALL ON FUNCTION "public"."delete_patient"("p_patient_id" "uuid") TO "servi
 GRANT ALL ON FUNCTION "public"."ensure_doctor_has_clinic_member"() TO "anon";
 GRANT ALL ON FUNCTION "public"."ensure_doctor_has_clinic_member"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."ensure_doctor_has_clinic_member"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."fix_empty_display_names"() TO "anon";
+GRANT ALL ON FUNCTION "public"."fix_empty_display_names"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."fix_empty_display_names"() TO "service_role";
 
 
 
@@ -3496,21 +3907,18 @@ GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."invite_and_add_member"("p_email" "text", "p_name" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_phone" "text", "p_department_id" "uuid", "p_availability" "text", "p_bio" "text") TO "anon";
-GRANT ALL ON FUNCTION "public"."invite_and_add_member"("p_email" "text", "p_name" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_phone" "text", "p_department_id" "uuid", "p_availability" "text", "p_bio" "text") TO "authenticated";
-GRANT ALL ON FUNCTION "public"."invite_and_add_member"("p_email" "text", "p_name" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_phone" "text", "p_department_id" "uuid", "p_availability" "text", "p_bio" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."invite_user_by_email"("p_email" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_name" "text", "p_phone" "text", "p_department_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."invite_user_by_email"("p_email" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_name" "text", "p_phone" "text", "p_department_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."invite_user_by_email"("p_email" "text", "p_clinic_id" "uuid", "p_role" "public"."user_role", "p_name" "text", "p_phone" "text", "p_department_id" "uuid") TO "service_role";
 
 
 
 GRANT ALL ON FUNCTION "public"."is_superadmin_in_clinic"("check_clinic_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_superadmin_in_clinic"("check_clinic_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_superadmin_in_clinic"("check_clinic_id" "uuid") TO "service_role";
-
-
-
-GRANT ALL ON FUNCTION "public"."on_auth_user_created"() TO "anon";
-GRANT ALL ON FUNCTION "public"."on_auth_user_created"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."on_auth_user_created"() TO "service_role";
 
 
 
@@ -3703,9 +4111,21 @@ GRANT ALL ON TABLE "public"."payment_transactions" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."pending_invitations" TO "anon";
+GRANT ALL ON TABLE "public"."pending_invitations" TO "authenticated";
+GRANT ALL ON TABLE "public"."pending_invitations" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."prescriptions" TO "anon";
 GRANT ALL ON TABLE "public"."prescriptions" TO "authenticated";
 GRANT ALL ON TABLE "public"."prescriptions" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."user_profile_debug" TO "anon";
+GRANT ALL ON TABLE "public"."user_profile_debug" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_profile_debug" TO "service_role";
 
 
 

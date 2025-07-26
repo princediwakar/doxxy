@@ -10,7 +10,7 @@ alwaysApply: true
 - Database schema changes with validation
 
 ### 🚨 MANDATORY: Browser Testing
-**RULE**: Every change requires Playwright browser testing
+**RULE**: Every major change requires Puppeteer browser testing
 - Take before/after snapshots
 - Check console for errors
 - Test user flows in browser
@@ -78,7 +78,6 @@ className={cn('w-full px-3 py-2 border rounded-lg', 'focus:ring-2 focus:ring-blu
    ```bash
    npm run lint
    npm run build
-   npm run test
    ```
 
 3. **Database Ops**

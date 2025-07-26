@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useParams, Link, Navigate } from "react-router-dom";
-import { blogPosts, BlogPost as BlogPostType } from "@/content/blog";
+import { blogPosts } from "@/content/blog";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
 import SiteFooter from "@/components/SiteFooter";

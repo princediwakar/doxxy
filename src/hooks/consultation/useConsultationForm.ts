@@ -9,7 +9,7 @@ import { toast } from '@/hooks/use-toast';
 import { ConsultationFormValues, PrescriptionMedication } from '@/components/consultation/types';
 import { Tables, Json } from '@/integrations/supabase/types';
 import { consultationNotesSchema, getMandatoryFieldsForDepartment } from '@/lib/consultationNotesSchemas';
-import isEqual from 'lodash/isEqual';
+import { isEqual } from 'lodash-es';
 
 export const useConsultationForm = (
   appointmentId: string | undefined,

@@ -5,15 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { 
   Mail, 
   Phone, 
-  MapPin, 
-  Clock, 
-  MessageSquare, 
-  Users, 
-  Building2,
-  Globe,
   Calendar,
-  CheckCircle,
-  ArrowRight
+  CheckCircle
 } from 'lucide-react';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
@@ -179,23 +172,6 @@ const ContactInfoCard = ({ icon: Icon, title, details, description }) => (
   </div>
 );
 
-const OfficeCard = ({ city, country, address, phone, email, image }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200/75 dark:border-gray-700/50">
-    <img 
-      src={image} 
-      alt={`${city} office`} 
-      className="w-full h-48 object-cover"
-    />
-    <div className="p-6">
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{city}, {country}</h3>
-      <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
-        <p className="flex items-center"><MapPin className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />{address}</p>
-        <p className="flex items-center"><Phone className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />{phone}</p>
-        <p className="flex items-center"><Mail className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />{email}</p>
-      </div>
-    </div>
-  </div>
-);
 
 const FAQItem = ({ question, answer }) => (
   <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
@@ -309,24 +285,6 @@ const Contact = () => {
     
   ];
 
-  const offices = [
-    {
-      city: "Bengaluru",
-      country: "India",
-      address: "Koramangala, Bengaluru, Karnataka 560034",
-      phone: "+91 7388890554",
-      email: "doxxyapp@gmail.com",
-      image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop"
-    },
-    {
-      city: "Delhi", 
-      country: "India",
-      address: "Connaught Place, New Delhi, Delhi 110001",
-      phone: "+91 7388890554",
-      email: "doxxyapp@gmail.com",
-      image: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=400&h=300&fit=crop"
-    }
-  ];
 
   const faqs = [
     {

@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -11,14 +12,43 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
+    // Bundle analyzer - generate stats.html after build
+    mode === 'production' && visualizer({
+      filename: 'dist/stats.html',
+      open: true,
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@/contexts/AuthContext": path.resolve(__dirname, "./tests/__mocks__/AuthContext.tsx"),
+      // Fix lodash import issues by aliasing to lodash-es
+      "lodash": "lodash-es",
     },
+  },
+  // Optimize dependency pre-bundling
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router-dom',
+      '@tanstack/react-query',
+      '@supabase/supabase-js',
+      'lucide-react',
+      'date-fns',
+      'zod',
+      'react-hook-form',
+      'recharts',
+      'lodash-es',
+    ],
+    exclude: [
+      // Exclude heavy libraries from pre-bundling for better chunking
+      'jspdf',
+      'html2canvas',
+    ],
   },
   test: {
     environment: 'jsdom',
@@ -28,79 +58,130 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Vendor chunks - separate large libraries
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-ui': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-aspect-ratio',
-          ],
-          'vendor-data': [
-            '@supabase/supabase-js',
-            '@tanstack/react-query',
-            'date-fns',
-          ],
-          'vendor-forms': [
-            'react-hook-form',
-            '@hookform/resolvers',
-            'zod',
-          ],
-          'vendor-utils': [
-            'lucide-react',
-            'clsx',
-            'class-variance-authority',
-            'tailwind-merge',
-            'cmdk',
-            'sonner',
-            'vaul',
-            'use-debounce',
-            'lodash.isequal',
-          ],
-          'vendor-charts': ['recharts'],
-          'vendor-pdf': ['jspdf', 'html2canvas'],
-          'vendor-calendar': ['react-day-picker'],
-          'vendor-misc': [
-            'embla-carousel-react',
-            'input-otp',
-            'next-themes',
-            'react-resizable-panels',
-            'tailwindcss-animate',
-          ],
+        manualChunks: (id) => {
+          // Core React ecosystem
+          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            return 'vendor-react';
+          }
+          
+          // Core UI components (most commonly used)
+          if (id.includes('@radix-ui/react-dialog') || 
+              id.includes('@radix-ui/react-select') ||
+              id.includes('@radix-ui/react-popover') ||
+              id.includes('@radix-ui/react-dropdown-menu')) {
+            return 'vendor-ui-core';
+          }
+          
+          // Form-related UI components
+          if (id.includes('@radix-ui/react-checkbox') || 
+              id.includes('@radix-ui/react-radio-group') ||
+              id.includes('@radix-ui/react-switch') ||
+              id.includes('@radix-ui/react-slider') ||
+              id.includes('@radix-ui/react-label')) {
+            return 'vendor-ui-forms';
+          }
+          
+          // Layout & Navigation UI components
+          if (id.includes('@radix-ui/react-tabs') ||
+              id.includes('@radix-ui/react-accordion') ||
+              id.includes('@radix-ui/react-navigation-menu') ||
+              id.includes('@radix-ui/react-menubar') ||
+              id.includes('@radix-ui/react-separator') ||
+              id.includes('@radix-ui/react-scroll-area')) {
+            return 'vendor-ui-layout';
+          }
+          
+          // Interactive UI components (less commonly used)
+          if (id.includes('@radix-ui/react-alert-dialog') ||
+              id.includes('@radix-ui/react-context-menu') ||
+              id.includes('@radix-ui/react-hover-card') ||
+              id.includes('@radix-ui/react-tooltip') ||
+              id.includes('@radix-ui/react-toast') ||
+              id.includes('@radix-ui/react-collapsible') ||
+              id.includes('@radix-ui/react-toggle') ||
+              id.includes('@radix-ui/react-aspect-ratio') ||
+              id.includes('@radix-ui/react-avatar') ||
+              id.includes('@radix-ui/react-progress') ||
+              id.includes('@radix-ui/react-slot')) {
+            return 'vendor-ui-interactive';
+          }
+          
+          // Data & API
+          if (id.includes('@supabase/supabase-js') || 
+              id.includes('@tanstack/react-query') || 
+              id.includes('date-fns')) {
+            return 'vendor-data';
+          }
+          
+          // Forms & Validation
+          if (id.includes('react-hook-form') || 
+              id.includes('@hookform/resolvers') || 
+              id.includes('zod')) {
+            return 'vendor-forms';
+          }
+          
+          // Utility libraries
+          if (id.includes('lucide-react') || 
+              id.includes('clsx') || 
+              id.includes('class-variance-authority') ||
+              id.includes('tailwind-merge') ||
+              id.includes('cmdk') ||
+              id.includes('use-debounce') ||
+              id.includes('lodash')) {
+            return 'vendor-utils';
+          }
+          
+          // Heavy libraries - separate chunks
+          if (id.includes('recharts') || id.includes('d3-')) {
+            return 'vendor-charts';
+          }
+          
+          if (id.includes('jspdf') || id.includes('html2canvas')) {
+            return 'vendor-pdf';
+          }
+          
+          if (id.includes('react-day-picker')) {
+            return 'vendor-calendar';
+          }
+          
+          // UI libraries that can be grouped
+          if (id.includes('sonner') || 
+              id.includes('vaul') ||
+              id.includes('embla-carousel') ||
+              id.includes('input-otp') ||
+              id.includes('next-themes') ||
+              id.includes('react-resizable-panels') ||
+              id.includes('tailwindcss-animate')) {
+            return 'vendor-misc';
+          }
+          
+          // Everything else goes to vendor-common
+          if (id.includes('node_modules')) {
+            return 'vendor-common';
+          }
         },
       },
     },
-    // Increase chunk size warning limit since we're now splitting properly
-    chunkSizeWarningLimit: 1000,
-    // Enable source maps for better debugging in production
+    // Optimized chunk size limits
+    chunkSizeWarningLimit: 600, // Stricter limit to catch large chunks
+    // Minification options for better compression
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: mode === 'production', // Remove console.log in production
+        drop_debugger: true,
+        pure_funcs: mode === 'production' ? ['console.log', 'console.warn'] : [],
+      },
+      mangle: {
+        safari10: true, // Fix Safari 10 issues
+      },
+    },
+    // Report compressed size only in development for faster builds
+    reportCompressedSize: mode === 'development',
+    // Enable source maps for development only
     sourcemap: mode === 'development',
+    // Target modern browsers for smaller bundles
+    target: 'es2020',
   },
   include: ['tests/*.spec.tsx'],
   exclude: ['tests/**/*.spec.ts'],

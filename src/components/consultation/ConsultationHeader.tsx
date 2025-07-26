@@ -1,9 +1,8 @@
-import { ArrowLeft, Save, Printer, Eye, CheckCircle, Lock } from 'lucide-react';
+import { ArrowLeft, Save, Eye, CheckCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { format } from 'date-fns';
 import { Patient } from './types';
 import { getAge } from '@/lib/utils';
 
@@ -25,7 +24,6 @@ interface ConsultationHeaderProps {
   mandatoryFieldsStatus: MandatoryFieldsStatus;
   onBack: () => void;
   onSave: () => void;
-  onPrint: () => void;
   onPreview: () => void;
   onComplete: () => void;
 }
@@ -37,7 +35,6 @@ export const ConsultationHeader = ({
   mandatoryFieldsStatus,
   onBack,
   onSave,
-  onPrint,
   onPreview,
   onComplete
 }: ConsultationHeaderProps) => {

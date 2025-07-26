@@ -2,10 +2,6 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { 
   Check, 
-  X, 
-  Star, 
-  Zap, 
-  Building2, 
   Users, 
   Shield,
   Phone,
@@ -13,10 +9,7 @@ import {
   Award,
   ArrowRight,
   DollarSign,
-  Percent,
   Wallet,
-  CreditCard,
-  Calendar,
   BarChart3
 } from 'lucide-react';
 import { Link } from 'react-router-dom';

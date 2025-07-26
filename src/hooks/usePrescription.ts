@@ -59,7 +59,6 @@ export const usePrescription = ({
   appointment,
   doctorId: initialDoctorId,
   patientId: initialPatientId,
-  clinicId,
   onOpenChange
 }: UsePrescriptionProps) => {
   const { activeClinic } = useAuth();

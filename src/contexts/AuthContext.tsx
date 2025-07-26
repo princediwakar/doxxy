@@ -70,6 +70,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [user, memoizedProfileName, clinicData]);
 
   const fetchUserAndClinicData = useCallback(async (userFromSession: User | null) => {
+    // Update the current user ref for real-time subscription
+    clinicData.currentUserRef.current = userFromSession;
+    
+    // Set up real-time subscription for clinic changes
+    clinicData.setupRealtimeSubscription(userFromSession);
+    
     await clinicData.fetchUserAndClinicData(userFromSession, profileCompletion.checkProfileCompletion);
   }, [clinicData, profileCompletion]);
 

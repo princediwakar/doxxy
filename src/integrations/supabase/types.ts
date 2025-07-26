@@ -7,10 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          operationName?: string
+          query?: string
+          variables?: Json
+          extensions?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -249,22 +269,28 @@ export type Database = {
       }
       clinic_departments: {
         Row: {
-          clinic_id: string | null
+          clinic_id: string
           created_at: string | null
-          department_type_id: string | null
+          department_type_id: string
           id: string
+          is_active: boolean | null
+          updated_at: string | null
         }
         Insert: {
-          clinic_id?: string | null
+          clinic_id: string
           created_at?: string | null
-          department_type_id?: string | null
+          department_type_id: string
           id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
         }
         Update: {
-          clinic_id?: string | null
+          clinic_id?: string
           created_at?: string | null
-          department_type_id?: string | null
+          department_type_id?: string
           id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -285,31 +311,31 @@ export type Database = {
       }
       clinic_members: {
         Row: {
-          clinic_id: string | null
+          clinic_id: string
           created_at: string | null
           department_id: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string | null
-          user_id: string | null
+          user_id: string
         }
         Insert: {
-          clinic_id?: string | null
-          created_at?: string | null
-          department_id?: string | null
-          id?: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          clinic_id?: string | null
+          clinic_id: string
           created_at?: string | null
           department_id?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string | null
+          department_id?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -328,13 +354,6 @@ export type Database = {
           },
           {
             foreignKeyName: "clinic_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_clinic_members_profiles"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -360,6 +379,7 @@ export type Database = {
           phone: string | null
           slug: string | null
           social_media: Json | null
+          updated_at: string | null
           website: string | null
         }
         Insert: {
@@ -379,6 +399,7 @@ export type Database = {
           phone?: string | null
           slug?: string | null
           social_media?: Json | null
+          updated_at?: string | null
           website?: string | null
         }
         Update: {
@@ -398,17 +419,10 @@ export type Database = {
           phone?: string | null
           slug?: string | null
           social_media?: Json | null
+          updated_at?: string | null
           website?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "clinics_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       consultations: {
         Row: {
@@ -472,177 +486,108 @@ export type Database = {
           },
         ]
       }
-      contact_messages: {
-        Row: {
-          city: string | null
-          company: string | null
-          created_at: string | null
-          email: string
-          id: string
-          message: string
-          name: string
-          phone: string | null
-        }
-        Insert: {
-          city?: string | null
-          company?: string | null
-          created_at?: string | null
-          email: string
-          id?: string
-          message: string
-          name: string
-          phone?: string | null
-        }
-        Update: {
-          city?: string | null
-          company?: string | null
-          created_at?: string | null
-          email?: string
-          id?: string
-          message?: string
-          name?: string
-          phone?: string | null
-        }
-        Relationships: []
-      }
       department_types: {
         Row: {
           created_at: string | null
+          description: string | null
           id: string
           name: string
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
+          description?: string | null
           id?: string
           name: string
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
+          description?: string | null
           id?: string
           name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
-      doctors: {
+      departments: {
         Row: {
-          additional_qualifications: string | null
-          availability: string | null
-          bio: string | null
-          board_certifications: string[] | null
           clinic_id: string
-          clinic_timings: Json | null
-          consultation_fee: number | null
           created_at: string | null
-          email: string | null
-          fellowship_details: string | null
-          graduation_year: number | null
+          department_type_id: string
           id: string
           is_active: boolean | null
-          languages_spoken: string[] | null
-          medical_college: string | null
-          medical_council: string | null
-          medical_degree: string | null
-          medical_license_expiry: string | null
-          medical_license_state: string | null
-          medical_qualifications: string[] | null
-          medical_registration_number: string | null
-          medical_specializations: string[] | null
-          medical_university: string | null
-          name: string
-          pg_completion_year: number | null
-          pg_institution: string | null
-          pg_specialization: string | null
-          phone: string | null
-          postgraduate_degree: string | null
-          practice_timings: Json | null
-          primary_specialization: string | null
-          professional_summary: string | null
-          profile_completion_percentage: number | null
-          research_experience: string | null
-          subspecialty: string[] | null
           updated_at: string | null
-          user_id: string
-          years_of_experience: number | null
         }
         Insert: {
-          additional_qualifications?: string | null
-          availability?: string | null
-          bio?: string | null
-          board_certifications?: string[] | null
           clinic_id: string
-          clinic_timings?: Json | null
-          consultation_fee?: number | null
           created_at?: string | null
-          email?: string | null
-          fellowship_details?: string | null
-          graduation_year?: number | null
+          department_type_id: string
           id?: string
           is_active?: boolean | null
-          languages_spoken?: string[] | null
-          medical_college?: string | null
-          medical_council?: string | null
-          medical_degree?: string | null
-          medical_license_expiry?: string | null
-          medical_license_state?: string | null
-          medical_qualifications?: string[] | null
-          medical_registration_number?: string | null
-          medical_specializations?: string[] | null
-          medical_university?: string | null
-          name: string
-          pg_completion_year?: number | null
-          pg_institution?: string | null
-          pg_specialization?: string | null
-          phone?: string | null
-          postgraduate_degree?: string | null
-          practice_timings?: Json | null
-          primary_specialization?: string | null
-          professional_summary?: string | null
-          profile_completion_percentage?: number | null
-          research_experience?: string | null
-          subspecialty?: string[] | null
           updated_at?: string | null
-          user_id: string
-          years_of_experience?: number | null
         }
         Update: {
-          additional_qualifications?: string | null
-          availability?: string | null
-          bio?: string | null
-          board_certifications?: string[] | null
           clinic_id?: string
-          clinic_timings?: Json | null
-          consultation_fee?: number | null
           created_at?: string | null
-          email?: string | null
-          fellowship_details?: string | null
-          graduation_year?: number | null
+          department_type_id?: string
           id?: string
           is_active?: boolean | null
-          languages_spoken?: string[] | null
-          medical_college?: string | null
-          medical_council?: string | null
-          medical_degree?: string | null
-          medical_license_expiry?: string | null
-          medical_license_state?: string | null
-          medical_qualifications?: string[] | null
-          medical_registration_number?: string | null
-          medical_specializations?: string[] | null
-          medical_university?: string | null
-          name?: string
-          pg_completion_year?: number | null
-          pg_institution?: string | null
-          pg_specialization?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "departments_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "departments_department_type_id_fkey"
+            columns: ["department_type_id"]
+            isOneToOne: false
+            referencedRelation: "department_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          clinic_id: string
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          phone: string | null
+          specialization: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
           phone?: string | null
-          postgraduate_degree?: string | null
-          practice_timings?: Json | null
-          primary_specialization?: string | null
-          professional_summary?: string | null
-          profile_completion_percentage?: number | null
-          research_experience?: string | null
-          subspecialty?: string[] | null
+          specialization?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          phone?: string | null
+          specialization?: string | null
           updated_at?: string | null
           user_id?: string
-          years_of_experience?: number | null
         }
         Relationships: [
           {
@@ -654,13 +599,6 @@ export type Database = {
           },
           {
             foreignKeyName: "doctors_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_doctors_profiles"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -867,6 +805,62 @@ export type Database = {
           },
         ]
       }
+      pending_invitations: {
+        Row: {
+          accepted_at: string | null
+          clinic_id: string
+          created_at: string | null
+          department_id: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invitation_token: string | null
+          invited_by: string | null
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          clinic_id: string
+          created_at?: string | null
+          department_id?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invitation_token?: string | null
+          invited_by?: string | null
+          name?: string | null
+          phone?: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          clinic_id?: string
+          created_at?: string | null
+          department_id?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invitation_token?: string | null
+          invited_by?: string | null
+          name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pending_invitations_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prescriptions: {
         Row: {
           appointment_id: string | null
@@ -938,6 +932,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -946,6 +941,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           id: string
@@ -954,6 +950,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -1037,6 +1034,10 @@ export type Database = {
         }
         Returns: string
       }
+      debug_invitation_flow: {
+        Args: { user_email: string }
+        Returns: Json
+      }
       deduct_appointment_credit: {
         Args: {
           appointment_id_param: string
@@ -1052,6 +1053,10 @@ export type Database = {
       delete_patient: {
         Args: { p_patient_id: string }
         Returns: boolean
+      }
+      fix_empty_display_names: {
+        Args: Record<PropertyKey, never>
+        Returns: number
       }
       generate_clinic_slug: {
         Args: { clinic_name: string; clinic_id?: string }
@@ -1333,16 +1338,18 @@ export type Database = {
           clinic_id: string
         }[]
       }
-      invite_and_add_member: {
+      handle_new_user_manual: {
+        Args: { user_record: unknown }
+        Returns: undefined
+      }
+      invite_user_by_email: {
         Args: {
           p_email: string
-          p_name: string
           p_clinic_id: string
-          p_role: Database["public"]["Enums"]["user_role"]
+          p_role?: Database["public"]["Enums"]["user_role"]
+          p_name?: string
           p_phone?: string
           p_department_id?: string
-          p_availability?: string
-          p_bio?: string
         }
         Returns: Json
       }
@@ -1419,6 +1426,7 @@ export type Database = {
           p_phone: string
         }
         Returns: {
+          avatar_url: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -1430,6 +1438,7 @@ export type Database = {
       update_profile_image: {
         Args: { p_user_id: string; p_avatar_url: string }
         Returns: {
+          avatar_url: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -1447,7 +1456,7 @@ export type Database = {
         | "Cancelled"
       appointment_type: "Walk-in" | "Digital"
       bill_status: "Paid" | "Pending" | "Overdue"
-      user_role: "staff" | "doctor" | "superadmin"
+      user_role: "doctor" | "staff" | "superadmin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1573,6 +1582,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       appointment_status: [
@@ -1583,7 +1595,8 @@ export const Constants = {
       ],
       appointment_type: ["Walk-in", "Digital"],
       bill_status: ["Paid", "Pending", "Overdue"],
-      user_role: ["staff", "doctor", "superadmin"],
+      user_role: ["doctor", "staff", "superadmin"],
     },
   },
 } as const
+

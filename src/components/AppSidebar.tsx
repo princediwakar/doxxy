@@ -1,6 +1,6 @@
 // File: src/components/app-sidebar.tsx
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Users, CalendarPlus, CreditCard, Home, LogOut, Settings, Pill, User2 } from "lucide-react";
+import { Users, CalendarPlus, CreditCard, Home, LogOut, Settings, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,7 +21,7 @@ const navItems = [
 ];
 
 export function AppSidebar() {
-  const { user, activeClinic, activeClinicRole, signOut, loading, profileName } = useAuth();
+  const { user, activeClinic, activeClinicRole, signOut, profileName } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();

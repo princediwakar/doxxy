@@ -3,7 +3,7 @@ import { CalendarCheck, Users, Stethoscope, Activity, Clock, Building2, Heart, P
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { formatTimeIST } from '@/lib/utils';
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData } from "@/types/dashboard";
 import { AppointmentData } from "@/types/patients";
@@ -14,7 +14,6 @@ import { toast } from "sonner";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { useState } from "react";
 import { Enums } from "@/integrations/supabase/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 import { ConsultationViewModal } from "@/components/consultation/ConsultationViewModal";
@@ -42,7 +41,6 @@ function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
 const Dashboard = () => {
   const { activeClinic, user, activeClinicRole, loading: authLoading, profileName } = useAuth();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const today = new Date().toISOString().split('T')[0];
 
   // Pagination state for upcoming appointments

@@ -1,7 +1,8 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { getSupabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { Database } from "@/integrations/supabase/types";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 const supabase = getSupabase();
 
@@ -23,6 +24,8 @@ export const useClinicData = () => {
   const [activeClinic, setActiveClinicState] = useState<ClinicMemberWithClinic | null>(null);
   const [hasDoctorProfile, setHasDoctorProfile] = useState<boolean | undefined>(undefined);
   const isFetchingRef = useRef(false);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
+  const currentUserRef = useRef<User | null>(null);
 
   const activeClinicRole = activeClinic ? activeClinic.role : null;
 
@@ -220,6 +223,65 @@ export const useClinicData = () => {
     setHasDoctorProfile(undefined);
     localStorage.removeItem('activeClinicId');
     isFetchingRef.current = false;
+    
+    // Clean up subscription
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+      subscriptionRef.current = null;
+    }
+  }, []);
+
+  // Real-time subscription for clinic membership changes
+  const setupRealtimeSubscription = useCallback((user: User | null) => {
+    // Clean up existing subscription
+    if (subscriptionRef.current) {
+      subscriptionRef.current.unsubscribe();
+      subscriptionRef.current = null;
+    }
+
+    if (!user) return;
+
+    console.log('Setting up real-time subscription for user clinic membership changes');
+    
+    subscriptionRef.current = supabase
+      .channel('clinic-membership-changes')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'clinic_members',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('Real-time: New clinic membership created:', payload);
+        // Refresh clinic data when new membership is created
+        if (currentUserRef.current) {
+          fetchUserAndClinicData(currentUserRef.current, async () => true, 0);
+        }
+      })
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'clinic_members',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        console.log('Real-time: Clinic membership updated:', payload);
+        // Refresh clinic data when membership is updated
+        if (currentUserRef.current) {
+          fetchUserAndClinicData(currentUserRef.current, async () => true, 0);
+        }
+      })
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+      });
+  }, [fetchUserAndClinicData]);
+
+  // Set up subscription when user changes
+  useEffect(() => {
+    return () => {
+      // Clean up subscription on unmount
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+    };
   }, []);
 
   return {
@@ -238,5 +300,9 @@ export const useClinicData = () => {
     setUserClinics,
     setActiveClinicState,
     setHasDoctorProfile,
+    setupRealtimeSubscription,
+    
+    // Refs for external access
+    currentUserRef,
   };
 }; 

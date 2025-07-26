@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { ConsultationFormValues, Patient } from './types';
 import { UseFormReturn } from 'react-hook-form';
-import { specialtyFieldSections, FieldSection } from '@/lib/consultationNotesSchemas';
+import { FieldSection } from '@/lib/consultationNotesSchemas';
 import { Tables } from '@/integrations/supabase/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ConsultationLayout } from './ConsultationLayout';
@@ -12,7 +12,6 @@ import { printConsultation } from './printUtils';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 
 const supabase = getSupabase();
 
@@ -25,8 +24,6 @@ interface ConsultationPreviewModalProps {
   specialtySections: FieldSection[];
   departmentType?: string;
 }
-
-type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
 
 export const ConsultationPreviewModal = ({
   showPreview,

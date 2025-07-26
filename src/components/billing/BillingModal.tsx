@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { useBilling, BillingFormValues, ServiceItem } from '@/hooks/useBilling';
+import { useBilling, BillingFormValues } from '@/hooks/useBilling';
 import { ServiceItemsSection } from './ServiceItemsSection';
 import { Database } from '@/integrations/supabase/types';
 
@@ -46,10 +46,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     appointments,
     patients,
     isLoadingInvoiceNumber,
-    isLoadingAppointments,
-    isLoadingPatients,
-    selectedAppointment,
-    doctorFee,
     calculateTotals,
     addServiceItem,
     removeServiceItem,

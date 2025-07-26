@@ -5,11 +5,9 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, parseISO } from "date-fns";
 import { 
@@ -24,7 +22,6 @@ import {
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tables } from "@/integrations/supabase/types";
-import { toast } from 'sonner';
 import { getAge } from '@/lib/utils';
 
 const supabase = getSupabase();
@@ -109,7 +106,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
     if (typeof medications === 'string') {
       return medications;
     } else if (Array.isArray(medications)) {
-      return medications.map((med, index) => {
+      return medications.map((med) => {
         if (typeof med === 'string') return { medication: med, instructions: null };
         
         const parts = [];

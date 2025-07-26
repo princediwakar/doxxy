@@ -240,7 +240,7 @@ export const printConsultation = async (
     // Replace the URL so that browsers don't print about:blank in the footer
     try {
       printWindow.history.replaceState({}, '', '');
-    } catch (err) {
+    } catch {
       // Some browsers might restrict this; ignore safely
     }
     printWindow.document.write(printContent);

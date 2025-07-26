@@ -29,13 +29,13 @@ interface ClinicTimingsEditorProps {
 }
 
 const DAYS = [
-  { key: 'monday' as keyof WeeklyTimings, label: 'Monday', short: 'Mon' },
-  { key: 'tuesday' as keyof WeeklyTimings, label: 'Tuesday', short: 'Tue' },
-  { key: 'wednesday' as keyof WeeklyTimings, label: 'Wednesday', short: 'Wed' },
-  { key: 'thursday' as keyof WeeklyTimings, label: 'Thursday', short: 'Thu' },
-  { key: 'friday' as keyof WeeklyTimings, label: 'Friday', short: 'Fri' },
-  { key: 'saturday' as keyof WeeklyTimings, label: 'Saturday', short: 'Sat' },
-  { key: 'sunday' as keyof WeeklyTimings, label: 'Sunday', short: 'Sun' },
+  { key: 'monday' as keyof WeeklyTimings, label: 'Monday' },
+  { key: 'tuesday' as keyof WeeklyTimings, label: 'Tuesday' },
+  { key: 'wednesday' as keyof WeeklyTimings, label: 'Wednesday' },
+  { key: 'thursday' as keyof WeeklyTimings, label: 'Thursday' },
+  { key: 'friday' as keyof WeeklyTimings, label: 'Friday' },
+  { key: 'saturday' as keyof WeeklyTimings, label: 'Saturday' },
+  { key: 'sunday' as keyof WeeklyTimings, label: 'Sunday' },
 ];
 
 // Generate time options (15-minute intervals)
@@ -176,7 +176,7 @@ export function ClinicTimingsEditor({ value, onChange, className }: ClinicTiming
 
         {/* Days List */}
         <div className="space-y-3">
-          {DAYS.map(({ key, label, short }) => {
+          {DAYS.map(({ key, label }) => {
             const dayTiming = timings[key];
             
             return (

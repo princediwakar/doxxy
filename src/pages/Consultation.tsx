@@ -112,8 +112,6 @@ const Consultation = () => {
     autoSaveMutation,
     handleSave,
     handleCompleteConsultation,
-    validateMandatoryFields,
-    getMandatoryFieldsStatus,
     mandatoryFieldsStatus,
   } = useConsultationForm(
     appointmentId, 

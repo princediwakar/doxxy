@@ -37,6 +37,19 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
+  // Clean up invitation tokens if user has active clinic
+  if (activeClinic) {
+    const shouldCleanup = 
+      sessionStorage.getItem('invitation_token') || 
+      sessionStorage.getItem('invitation_start_time');
+    
+    if (shouldCleanup) {
+      console.log('PrivateRoute: User has active clinic, cleaning up invitation tokens');
+      sessionStorage.removeItem('invitation_token');
+      sessionStorage.removeItem('invitation_start_time');
+    }
+  }
+
   // Priority 1: Profile completion (allow this even without a clinic)
   if (needsProfileCompletion && location.pathname !== '/complete-profile') {
     console.log('PrivateRoute: Profile incomplete, redirecting to /complete-profile');
@@ -71,6 +84,16 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
         </main>
       </div>
     );
+  }
+
+  // Clear invitation tokens if we have an active clinic (invitation was processed successfully)
+  if (activeClinic) {
+    const invitationToken = sessionStorage.getItem('invitation_token');
+    if (invitationToken) {
+      console.log('PrivateRoute: Invitation processed successfully, clearing tokens');
+      sessionStorage.removeItem('invitation_token');
+      sessionStorage.removeItem('invitation_start_time');
+    }
   }
 
   console.log('PrivateRoute: Rendering protected content');

@@ -29,7 +29,6 @@ interface AppointmentsTableProps {
   onStartConsultation: (appointment: AppointmentWithDetails) => void;
   onViewConsultation: (appointment: AppointmentWithDetails) => void;
   onCreateBill: (appointment: AppointmentWithDetails) => void;
-  activeClinicRole: string | null;
   cancelLoading?: boolean;
 }
 
@@ -40,7 +39,6 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
   onStartConsultation,
   onViewConsultation,
   onCreateBill,
-  activeClinicRole,
   cancelLoading = false,
 }) => {
   const { user } = useAuth();

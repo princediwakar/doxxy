@@ -6,15 +6,9 @@ import {
   Users, 
   Award, 
   Globe, 
-  Building2,
   TrendingUp,
   Shield,
-  Stethoscope,
-  Lightbulb,
-  MapPin,
-  Mail,
-  Linkedin,
-  ArrowRight
+  Lightbulb
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SignupCTA from "@/components/SignupCTA";
@@ -33,24 +27,6 @@ const values = [
   { icon: Shield, title: "Security & Privacy", description: "We maintain the highest standards of data security to protect sensitive health information." },
   { icon: Lightbulb, title: "Innovation", description: "We continuously innovate to bring cutting-edge technology solutions to healthcare professionals worldwide." },
   { icon: Users, title: "Accessibility", description: "Making quality healthcare management tools accessible to practices of all sizes, from solo practitioners to large hospitals." }
-];
-
-const team = [
-    { name: "Dr. Priya Sharma", role: "CEO & Co-Founder", bio: "Former practicing physician with 15+ years in healthcare technology. MBBS from AIIMS Delhi, MBA from IIM Bengaluru.", image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=300&h=400&fit=crop", linkedin: "#" },
-    { name: "Rajesh Kumar", role: "CTO & Co-Founder", bio: "Former Senior Engineering Manager at Google. Built scalable healthcare systems serving millions of users.", image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=400&fit=crop", linkedin: "#" },
-    { name: "Dr. Sarah Johnson", role: "Chief Medical Officer", bio: "Board-certified internist and healthcare informatics specialist. Previously at Mayo Clinic's Innovation Lab.", image: "https://images.unsplash.com/photo-1594824204175-b70147e9cbc5?w=300&h=400&fit=crop", linkedin: "#" },
-    { name: "Amit Patel", role: "VP of Engineering", bio: "Former Lead Architect at Microsoft Healthcare. Expert in FHIR standards and healthcare interoperability.", image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&h=400&fit=crop", linkedin: "#" },
-    { name: "Dr. Maria Rodriguez", role: "Head of Product", bio: "Emergency medicine physician turned product manager. Deep understanding of clinical workflows and user needs.", image: "https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=300&h=400&fit=crop", linkedin: "#" },
-    { name: "Vikram Singh", role: "VP of Sales", bio: "15+ years in healthcare technology sales. Former regional director at Epic Systems and Allscripts.", image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&h=400&fit=crop", linkedin: "#" }
-];
-
-const milestones = [
-    { year: "2019", title: "Company Founded", description: "Doxxy was founded by a team of healthcare professionals and technologists in Bengaluru, India." },
-    { year: "2020", title: "First 1,000 Users", description: "Reached our first milestone of 1,000 healthcare professionals using our platform." },
-    { year: "2021", title: "Series A Funding", description: "Raised $10M Series A to expand our platform and enter international markets." },
-    { year: "2022", title: "Launched in the US", description: "Launched in the United States market." },
-    { year: "2023", title: "AI Integration", description: "Launched AI-powered features for appointment scheduling and patient insights." },
-    { year: "2024", title: "Global Expansion", description: "Expanded to 15 countries and crossed 50,000 healthcare professionals on our platform." }
 ];
 
 // --- REUSABLE COMPONENTS ---

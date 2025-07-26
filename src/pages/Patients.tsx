@@ -24,7 +24,6 @@ import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 import { PatientModal } from '@/components/patients/PatientModal';
 import { BillingModal } from '@/components/billing/BillingModal';
 import { toast } from 'sonner';
-import { printConsultation } from '@/components/consultation/printUtils';
 import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
 import { PatientSearch } from "@/components/patients/PatientSearch";
 import { PatientList } from "@/components/patients/PatientList";
@@ -132,7 +131,7 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
 };
 
 const PatientRecords = () => {
-  const { activeClinic, activeClinicRole, loading: authLoading, user } = useAuth();
+  const { activeClinic, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -213,56 +212,6 @@ const PatientRecords = () => {
     }
   };
 
-  const handlePrintConsultation = async (consultation: ConsultationWithAppointment) => {
-    if (!selectedPatient || !activeClinic?.clinics) return;
-
-    try {
-
-      // Prepare clinic info
-      const clinicInfo = activeClinic.clinics;
-
-      // Prepare doctor info
-      const doctorInfo = {
-        name: consultation.appointment.doctor_name,
-        specialization: consultation.appointment.department_name || 'General',
-        qualification: '',
-        registration_number: ''
-      };
-
-      // Prepare appointment info
-      const appointmentInfo = {
-        id: consultation.appointment.id || '',
-        clinic_id: consultation.appointment.clinic_id || '',
-        patient_id: consultation.appointment.patient_id || '',
-        doctor_id: consultation.appointment.doctor_id || '',
-        date: consultation.appointment.date,
-        time: formatTimeIST(consultation.appointment.time),
-        type: consultation.appointment.type || 'Consultation',
-        status: consultation.appointment.status || 'Completed',
-        notes: consultation.appointment.notes || '',
-        created_at: consultation.appointment.created_at || ''
-      };
-
-      // Use the unified print function
-      await printConsultation(
-        consultation.specialty_data as Record<string, unknown>,
-        selectedPatient,
-        {
-          ...appointmentInfo,
-          type: (appointmentInfo.type as 'Walk-in' | 'Digital') || 'Walk-in',
-          status: (appointmentInfo.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled') || 'Completed',
-        },
-        clinicInfo,
-        doctorInfo,
-        user,
-        consultation.appointment.department_name || 'General'
-      );
-      toast.success('Print dialog opened successfully');
-    } catch (error) {
-      console.error('Error printing consultation:', error);
-      toast.error('Failed to open print dialog');
-    }
-  };
 
   const handleExport = async (options: { dateRange?: { from: Date; to: Date; }; includeConsultations?: boolean; includePrescriptions?: boolean; }) => {
     if (!selectedPatient || !activeClinic) return;
@@ -424,7 +373,7 @@ const PatientRecords = () => {
         open={isPatientModalOpen}
         onOpenChange={setIsPatientModalOpen}
         patient={editingPatient}
-        onPatientCreated={(newPatient) => {
+        onPatientCreated={() => {
           setIsPatientModalOpen(false);
           queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
         }}

@@ -76,7 +76,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
   const { activeClinic } = useAuth();
   const [activeTab, setActiveTab] = useState("practice");
 
-  const { data: departments = [] } = useQuery({
+  useQuery({
     queryKey: ['clinicDepartments', activeClinic?.clinics?.id],
     queryFn: async () => {
       if (!activeClinic?.clinics?.id) return [];

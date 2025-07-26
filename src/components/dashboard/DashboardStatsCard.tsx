@@ -1,5 +1,5 @@
 // src/components/DashboardStatsCard.tsx
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { ReactNode } from "react";
 import React from "react";
 import { cn } from "@/lib/utils";

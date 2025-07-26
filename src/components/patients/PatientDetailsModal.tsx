@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Calendar, Phone, Mail, MapPin, User, Clock, Plus, CreditCard } from 'lucide-react';
+import { Calendar, Phone, Mail, MapPin, User, Clock, Plus } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,14 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentModal } from '../appointments/AppointmentModal';
 import { BillingModal } from '../billing/BillingModal';
-import { getAge, renderGender, formatTimeIST } from "@/lib/utils";
+import { getAge, formatTimeIST } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
@@ -76,7 +75,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   });
 
   // Fetch patient bills
-  const { data: bills, isLoading: billsLoading } = useQuery({
+  useQuery({
     queryKey: ['patientBills', patient?.id, activeClinic?.clinic_id],
     queryFn: async () => {
       if (!patient?.id || !activeClinic?.clinic_id) return [];

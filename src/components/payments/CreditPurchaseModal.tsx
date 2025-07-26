@@ -63,11 +63,9 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   onOpenChange,
 }) => {
   const {
-    billingSummary,
     creditPackages,
     createRazorpayOrder,
     processPaymentSuccess,
-    processPaymentFailure,
     isProcessingPayment,
     setIsProcessingPayment,
   } = usePayments();
@@ -75,7 +73,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   const { user, activeClinic } = useAuth();
 
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
-  const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
+  const [, setIsRazorpayLoaded] = useState(false);
 
   // Fetch user profile data to get phone number
   const { data: userProfile } = useQuery({

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -79,7 +79,6 @@ export const usePayments = () => {
       
       // Calculate totals from completed transactions
       const totalCreditsPurchased = completedTransactions?.reduce((sum, t) => sum + (t.credits_purchased || 0), 0) || 0;
-      const totalAmountSpent = completedTransactions?.reduce((sum, t) => sum + parseFloat(t.amount?.toString() || '0'), 0) || 0;
       
       // Get pending payments count
       const { data: pendingTransactions, error: pendingError } = await supabase

@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MedicineCombobox } from "@/components/ui/medicine-combobox";
 import { Plus, Trash2, Calendar, User, Stethoscope } from "lucide-react";
 import { formatTimeIST } from '@/lib/utils';
-import { PrescriptionFormValues, Appointment } from "@/hooks/usePrescription";
+import { PrescriptionFormValues } from "@/hooks/usePrescription";
 
 interface AppointmentSelectorProps {
   appointmentsForSelect: Array<{
