@@ -152,7 +152,7 @@ const PatientRecords = () => {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['patientsWithMedicalRecords', activeClinic?.clinics?.id, searchTerm, currentPage],
-    queryFn: () => fetchPatientsWithMedicalRecords(activeClinic!.clinics?.id, searchTerm, currentPage, itemsPerPage),
+    queryFn: () => fetchPatientsWithMedicalRecords(activeClinic?.clinics?.id || '', searchTerm, currentPage, itemsPerPage),
     enabled: !!activeClinic && !authLoading,
     retry: 1,
   });

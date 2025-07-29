@@ -334,7 +334,7 @@ export class MedicalRecordPDFExporter {
 
     if (options.dateRange) {
       filteredConsultations = consultations.filter(consultation => {
-        const consultationDate = new Date(consultation.appointment.date);
+        const consultationDate = new Date(consultation.appointment?.date || consultation.created_at);
         return consultationDate >= options.dateRange!.from && consultationDate <= options.dateRange!.to;
       });
 
@@ -360,7 +360,7 @@ export class MedicalRecordPDFExporter {
     this.addFooter();
 
     // Generate filename
-    const filename = `${patient.name.replace(/\s+/g, '_')}_Medical_Record_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+    const filename = `${patient.name?.replace(/\s+/g, '_') || 'unknown-patient'}_Medical_Record_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
     
     // Save the PDF
     this.pdf.save(filename);

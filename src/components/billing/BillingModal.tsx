@@ -52,6 +52,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     updateServiceItem,
     saveBillMutation,
     isSubmitting,
+    refetchInvoiceNumber,
   } = useBilling({ bill, patient, appointment, mode, open });
 
   const onSubmit = (values: BillingFormValues) => {
@@ -156,11 +157,24 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                     <FormItem>
                       <FormLabel>Invoice Number</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          placeholder="Invoice number"
-                          disabled={mode === 'view' || isLoadingInvoiceNumber}
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            {...field}
+                            placeholder={isLoadingInvoiceNumber ? "Generating invoice number..." : "Invoice number"}
+                            disabled={mode === 'view' || isLoadingInvoiceNumber}
+                          />
+                          {mode === 'create' && !field.value && !isLoadingInvoiceNumber && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => refetchInvoiceNumber()}
+                              disabled={isLoadingInvoiceNumber}
+                            >
+                              Generate
+                            </Button>
+                          )}
+                        </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -228,7 +228,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                               )}
                             </div>
                             <div className="flex items-center gap-2">
-                              <Badge variant={getStatusBadgeVariant(appointment.status)}>
+                              <Badge variant={getStatusBadgeVariant(appointment.status || 'Unknown')}>
                                 {appointment.status}
                               </Badge>
                               <Badge variant="outline">

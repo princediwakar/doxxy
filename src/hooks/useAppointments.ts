@@ -99,7 +99,7 @@ export const useAppointments = () => {
   // Fetch appointments data
   const { data, isLoading, error } = useQuery({
     queryKey: ['appointments', activeClinic?.clinics?.id, searchTerm],
-    queryFn: () => fetchAppointments(activeClinic!.clinics?.id, searchTerm),
+    queryFn: () => fetchAppointments(activeClinic?.clinics?.id || '', searchTerm),
     enabled: !!activeClinic?.clinics?.id && !authLoading,
     retry: 1,
   });

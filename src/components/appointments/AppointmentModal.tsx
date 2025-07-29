@@ -133,7 +133,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
-      date: appointment ? new Date(appointment.date) : new Date(),
+      date: appointment?.date ? new Date(appointment.date) : new Date(),
       time: appointment?.time || getNextTimeSlot(),
       patient_id: appointment?.patient_id || patient?.id || '',
       doctor_id: appointment?.doctor_id || '',
@@ -146,7 +146,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   // Effect to reset form when modal opens or props change
   useEffect(() => {
     if (open) {
-      const defaultDate = appointment ? new Date(appointment.date) : new Date();
+      const defaultDate = appointment?.date ? new Date(appointment.date) : new Date();
       const defaultValues = {
         date: isNaN(defaultDate.getTime()) ? new Date() : defaultDate,
         time: appointment?.time || getNextTimeSlot(),
@@ -174,22 +174,22 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinics?.id,
+    enabled: open && !!activeClinic?.clinic_id,
   });
 
   // Filter patients by search
   const filteredPatients = (patients || []).filter((p) =>
-    p.name.toLowerCase().includes(patientSearch.toLowerCase())
+    p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ?? false
   );
 
   const { data: doctors, isLoading: isLoadingDoctors } = useQuery<Doctor[], Error>({
-    queryKey: ['doctorsForAppointment', activeClinic?.clinics?.id],
+    queryKey: ['doctorsForAppointment', activeClinic?.clinic_id],
     queryFn: async () => {
-      if (!activeClinic?.clinics?.id) return [];
+      if (!activeClinic?.clinic_id) return [];
 
       // Try RPC function first
       const { data: rpcData, error: rpcError } = await supabase.rpc('get_doctors_by_clinic', {
-        clinic_id: activeClinic.clinics.id,
+        clinic_id: activeClinic.clinic_id,
       });
 
       if (!rpcError && rpcData) {
@@ -214,7 +214,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           consultation_fee,
           profiles!doctors_user_id_fkey(name, email, phone)
         `)
-        .eq('clinic_id', activeClinic.clinics.id)
+        .eq('clinic_id', activeClinic.clinic_id)
         .eq('is_active', true);
 
       if (fallbackError) {
@@ -257,7 +257,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
       return transformedData;
     },
-    enabled: open && !!activeClinic?.clinics?.id,
+    enabled: open && !!activeClinic?.clinic_id,
   });
 
   // Additional effect to set doctor_id when doctors are loaded and appointment exists
@@ -273,9 +273,9 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   // Mutation for creating/updating appointment
   const mutation = useMutation({
     mutationFn: async (values: AppointmentFormValues) => {
-      if (!activeClinic?.clinics?.id) throw new Error('No active clinic selected.');
+      if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
       const baseAppointmentData = {
-        clinic_id: activeClinic.clinics.id,
+        clinic_id: activeClinic.clinic_id,
         date: format(values.date, 'yyyy-MM-dd'),
         time: values.time || '',
         patient_id: values.patient_id,
@@ -307,8 +307,8 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     },
     onSuccess: () => {
       toast.success(appointment ? 'Appointment updated!' : 'Appointment created!');
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinics?.id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinics?.id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['patientAppointments'] });
       onOpenChange(false);
     },

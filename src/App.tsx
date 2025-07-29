@@ -38,6 +38,11 @@ const DoxxyVsLybrate = lazy(() => import("./pages/(marketing)/comparisons/DoxxyV
 const DoxxyVsClinicPlus = lazy(() => import("./pages/(marketing)/comparisons/DoxxyVsClinicPlus"));
 const FAQ = lazy(() => import("./pages/(marketing)/FAQ"));
 const Security = lazy(() => import("./pages/(marketing)/Security"));
+// PDF test pages - temporarily commented out
+// const PDFTestPage = lazy(() => import("./pages/PDFTestPage"));
+// const PDFTestSimple = lazy(() => import("./pages/PDFTestSimple"));
+// const PDFTestWorking = lazy(() => import("./pages/PDFTestWorking"));
+// const PDFTestMinimal = lazy(() => import("./pages/PDFTestMinimal"));
 
 
 // Configure QueryClient with better caching
@@ -84,6 +89,11 @@ const AppContent = () => {
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/auth" element={<Auth />} />
+            {/* PDF test routes - temporarily commented out */}
+            {/* <Route path="/pdf-test" element={<PDFTestPage />} /> */}
+            {/* <Route path="/pdf-simple" element={<PDFTestSimple />} /> */}
+            {/* <Route path="/pdf-working" element={<PDFTestWorking />} /> */}
+            {/* <Route path="/pdf-minimal" element={<PDFTestMinimal />} /> */}
 
           </Route>
           {/* Protected routes handled by PrivateRoute */}

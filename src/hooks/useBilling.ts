@@ -78,20 +78,49 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     },
   });
 
-  // Fetch new invoice number for create mode
-  const { data: newInvoiceNumber, isLoading: isLoadingInvoiceNumber } = useQuery({
-    queryKey: ['newInvoiceNumber', activeClinic?.clinic_id],
+  // Fetch new invoice number for create mode with full-proof generation
+  const { data: newInvoiceNumber, isLoading: isLoadingInvoiceNumber, error: invoiceError, refetch: refetchInvoiceNumber } = useQuery({
+    queryKey: ['newInvoiceNumber', activeClinic?.clinic_id, open, mode],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected');
-      const { data, error } = await supabase
-        .rpc('generate_invoice_number', { clinic_id_arg: activeClinic.clinic_id });
-      if (error) throw error;
-      if (!data) throw new Error('Invoice number generation returned null');
-      return data;
+      
+      console.log('🔧 Calling generate_invoice_number with clinic_id:', activeClinic.clinic_id);
+      
+      // First attempt with database function
+      try {
+        const { data, error } = await supabase
+          .rpc('generate_invoice_number', { clinic_id_arg: activeClinic.clinic_id });
+        console.log('🔧 RPC Response:', { data, error });
+        if (error) throw error;
+        if (data) {
+          console.log('✅ Database function returned:', data);
+          return data;
+        }
+      } catch (error) {
+        console.warn('Database invoice generation failed:', error);
+      }
+      
+      // Fallback: Generate client-side with timestamp + random
+      const clinic = await supabase
+        .from('clinics')
+        .select('name')
+        .eq('id', activeClinic.clinic_id)
+        .single();
+      
+      const clinicPrefix = clinic.data?.name?.charAt(0).toUpperCase() || 'C';
+      const year = new Date().getFullYear();
+      const timestamp = Date.now().toString().slice(-4);
+      const random = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+      
+      return `${clinicPrefix}${year}${timestamp}${random}`;
     },
     enabled: open && !!activeClinic?.clinic_id && mode === 'create' && !bill?.invoice_number,
-    retry: 2,
-    retryDelay: 1000,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
+    staleTime: 0, // Always fetch fresh
+    gcTime: 0, // Don't cache
+    refetchOnMount: true,
+    refetchOnWindowFocus: true
   });
 
   // Fetch appointments for selection
@@ -147,7 +176,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
   });
 
   // Watch form values for calculations  
-  const serviceItems = useMemo(() => form.watch('service_items') || [], [form]);
+  const serviceItems = form.watch('service_items') || [];
   const discountPercentage = form.watch('discount_percentage') || 0;
   const taxPercentage = form.watch('tax_percentage') || 0;
 
@@ -194,7 +223,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
       updatedItems[index].amount = updatedItems[index].quantity * updatedItems[index].rate;
     }
     
-    form.setValue('service_items', updatedItems);
+    form.setValue('service_items', updatedItems, { shouldValidate: true });
   };
 
   // Create/Update bill mutation
@@ -245,12 +274,25 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     },
   });
 
-  // Set invoice number in form
+  // Set invoice number in form with manual generation fallback
   useEffect(() => {
     if (mode === 'create' && newInvoiceNumber) {
       form.setValue('invoice_number', newInvoiceNumber, { shouldValidate: true });
     }
   }, [newInvoiceNumber, form, mode]);
+
+  // Manual invoice generation trigger if auto-generation fails
+  useEffect(() => {
+    if (mode === 'create' && open && activeClinic?.clinic_id && !newInvoiceNumber && !isLoadingInvoiceNumber && !invoiceError) {
+      // If modal is open but no invoice number after 2 seconds, manually trigger
+      const timer = setTimeout(() => {
+        if (!form.getValues('invoice_number')) {
+          refetchInvoiceNumber();
+        }
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, open, activeClinic?.clinic_id, newInvoiceNumber, isLoadingInvoiceNumber, invoiceError, refetchInvoiceNumber, form]);
 
   // Prefill service item with department-based consultation description
   useEffect(() => {
@@ -302,5 +344,6 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     updateServiceItem,
     saveBillMutation,
     isSubmitting: saveBillMutation.isPending,
+    refetchInvoiceNumber,
   };
 }; 

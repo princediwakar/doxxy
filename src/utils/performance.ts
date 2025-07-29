@@ -138,8 +138,12 @@ class PerformanceMonitor {
     let cumulativeLayoutShift = 0;
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (!(entry as any).hadRecentInput) {
-          cumulativeLayoutShift += (entry as any).value;
+        const layoutShiftEntry = entry as PerformanceEntry & {
+          hadRecentInput?: boolean;
+          value?: number;
+        };
+        if (!layoutShiftEntry.hadRecentInput && layoutShiftEntry.value) {
+          cumulativeLayoutShift += layoutShiftEntry.value;
         }
       }
       console.log(`📐 CLS: ${cumulativeLayoutShift.toFixed(4)}`);
@@ -173,7 +177,7 @@ class PerformanceMonitor {
   }
 
   // Report metrics to analytics service
-  private reportMetric(metric: string, data: any) {
+  private reportMetric(metric: string, data: Record<string, unknown>) {
     // In a real app, you'd send this to your analytics service
     if (import.meta.env.DEV) {
       console.log(`📊 Metric: ${metric}`, data);

@@ -85,7 +85,7 @@ export function ExportOptionsModal({
       const to = new Date(dateTo);
 
       consultationCount = patient.consultations.filter(consultation => {
-        const consultationDate = new Date(consultation.appointment?.date || consultation.created_at);
+        const consultationDate = new Date(consultation.appointment?.date ?? consultation.created_at);
         return consultationDate >= from && consultationDate <= to;
       }).length;
 
@@ -128,7 +128,7 @@ export function ExportOptionsModal({
 
   const counts = getFilteredCounts();
   const defaultFilename = patient ? 
-    `${patient.name.replace(/\s+/g, '_')}_Medical_Record_${format(new Date(), 'yyyy-MM-dd')}` : 
+    `${patient.name?.replace(/\s+/g, '_') || 'unknown-patient'}_Medical_Record_${format(new Date(), 'yyyy-MM-dd')}` : 
     'Medical_Record';
 
   if (!patient) return null;

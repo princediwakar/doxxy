@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -101,7 +100,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     : {};
 
   // Get patient info with fallback to fetched patient data
-  const patient = patientData || {
+  const patient: Patient = patientData || {
     name: appointment?.patient_name || 'Unknown',
     gender: appointment?.patient_gender || 'Unknown',
     date_of_birth: appointment?.patient_date_of_birth || null,
@@ -120,10 +119,10 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
   // Prepare clinic info for layout display
   const clinicInfo = clinicDetails ? {
     name: clinicDetails.name,
-    address: clinicDetails.address,
-    phone: clinicDetails.phone,
-    email: clinicDetails.email,
-    website: clinicDetails.website
+    address: clinicDetails.address || undefined,
+    phone: clinicDetails.phone || undefined,
+    email: clinicDetails.email || undefined,
+    website: clinicDetails.website || undefined
   } : null;
 
   // Prepare doctor info
@@ -151,11 +150,23 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
       await printConsultation(
         specialtyData,
         patient,
-        { ...appointment, notes: appointment.notes || '' },
+        { 
+          ...appointment, 
+          clinic_id: appointment?.clinic_id || '',
+          id: appointment?.id || '',
+          patient_id: appointment?.patient_id || '',
+          doctor_id: appointment?.doctor_id || '',
+          date: appointment?.date || '',
+          time: appointment?.time || '',
+          notes: appointment?.notes || '',
+          created_at: appointment?.created_at || null,
+          status: appointment?.status || null,
+          type: appointment?.type || null
+        },
         clinicDetails,
         doctorInfo,
         user,
-        departmentType
+        departmentType,
       );
       toast.success('Print dialog opened successfully');
     } catch (error) {

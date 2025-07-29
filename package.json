@@ -89,7 +89,7 @@
     "caniuse-lite": "^1.0.30001726",
     "dotenv": "^16.6.1",
     "dotenv-cli": "^8.0.0",
-    "eslint": "^9.9.0",
+    "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "framer-motion": "^12.19.2",

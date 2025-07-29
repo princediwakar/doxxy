@@ -119,8 +119,8 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
 
       // Upload photo if selected
       if (profilePhoto) {
-        const fileExt = profilePhoto.name.split('.').pop();
-        const fileName = `${user!.id}_${Date.now()}.${fileExt}`;
+        const fileExt = profilePhoto.name?.split('.').pop() || 'jpg';
+        const fileName = `${user?.id}_${Date.now()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('avatars')
@@ -150,15 +150,15 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       const { data: existingProfile } = await supabase
         .from('profiles')
         .select('id')
-        .eq('id', user!.id)
+        .eq('id', user?.id || '')
         .maybeSingle();
 
       if (!existingProfile) {
         const { error: insertError } = await supabase.from('profiles').insert({
-          id: user!.id,
+          id: user?.id || '',
           name: editedName.trim(),
           phone: editedPhone.trim() || null,
-          email: user!.email,
+          email: user?.email || null,
           created_at: new Date().toISOString(),
         });
         if (insertError) {
@@ -168,10 +168,10 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       } else {
         const { error: profileError } = await supabase
           .rpc('update_profile', {
-            p_user_id: user!.id,
+            p_user_id: user?.id || '',
             p_name: editedName.trim(),
-            p_email: user!.email,
-            p_phone: editedPhone.trim() || null
+            p_email: user?.email || '',
+            p_phone: editedPhone.trim() || ''
           });
         if (profileError) {
           console.error('Profile update error:', profileError);
@@ -183,7 +183,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       const { data: doctorProfile } = await supabase
         .from('doctors')
         .select('id')
-        .eq('user_id', user!.id)
+        .eq('user_id', user?.id || '')
         .maybeSingle();
 
       if (doctorProfile) {
@@ -194,7 +194,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
             phone: editedPhone.trim() || null,
             updated_at: new Date().toISOString(),
           })
-          .eq('user_id', user!.id);
+          .eq('user_id', user?.id || '');
         if (doctorError) {
           console.error('Doctor update error:', doctorError);
           throw doctorError;
@@ -270,7 +270,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   className="object-cover"
                 />
                 <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
-                  {editedName?.split(' ').map((n: string) => n[0]).join('') || user?.user_metadata?.name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
+                  {editedName?.split(' ').map((n: string) => n[0]).join('') || (user?.user_metadata?.name ? user.user_metadata.name.split(' ').map((n: string) => n[0]).join('') : '') || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">

@@ -1,4 +1,4 @@
-import { ConsultationFormValues, Patient, Clinic } from './types';
+import { ConsultationFormValues, Patient } from './types';
 import { Tables } from '@/integrations/supabase/types';
 import { createRoot } from 'react-dom/client';
 import { ConsultationLayout } from './ConsultationLayout';
@@ -17,6 +17,7 @@ type DoctorInfo = {
 };
 
 type AppointmentRow = Tables<'appointments'>;
+type Clinic = Tables<'clinics'>;
 type SupabaseUser = {
   id: string;
   email?: string;
@@ -59,10 +60,10 @@ export const generatePrintContent = (
   // Prepare clinic info for the layout
   const clinicInfo = clinicDetails ? {
     name: clinicDetails.name,
-    address: clinicDetails.address,
-    phone: clinicDetails.phone,
-    email: clinicDetails.email,
-    website: clinicDetails.website
+    address: clinicDetails.address || undefined,
+    phone: clinicDetails.phone || undefined,
+    email: clinicDetails.email || undefined,
+    website: clinicDetails.website || undefined
   } : null;
   
   // Prepare doctor info for the layout

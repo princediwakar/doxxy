@@ -56,7 +56,7 @@ export function AppSidebar() {
           {(
             navItems.map((item) => {
               // Filter based on user role
-              if (item.roles.includes(activeClinicRole)) {
+              if (activeClinicRole && item.roles.includes(activeClinicRole)) {
                 const fullPath = item.path;
                 return (
                   <li key={item.path}>

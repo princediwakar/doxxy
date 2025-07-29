@@ -15,6 +15,7 @@ import {
   Eye
 } from 'lucide-react';
 import { Tables } from "@/integrations/supabase/types";
+import { ConsultationWithAppointment } from "@/types/patients";
 
 // Define proper types
 type Consultation = Tables<"consultations"> & {
@@ -50,10 +51,10 @@ interface TimelineEvent {
 }
 
 interface MedicalTimelineProps {
-  consultations: Consultation[];
+  consultations: Consultation[] | ConsultationWithAppointment[];
   prescriptions: Prescription[];
   appointments?: AppointmentData[];
-  onViewConsultation?: (consultation: Consultation) => void;
+  onViewConsultation?: (consultation: Consultation | ConsultationWithAppointment) => void;
   onViewPrescription?: (prescription: Prescription) => void;
   loading?: boolean;
 }
@@ -118,7 +119,7 @@ export function MedicalTimeline({
           description: `${appointment.type} appointment`,
           doctor_name: appointment.doctor_name,
           department_name: appointment.department_name,
-          status: appointment.status,
+          status: appointment.status || undefined,
           data: appointment
         });
       }

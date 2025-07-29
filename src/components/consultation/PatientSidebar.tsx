@@ -67,7 +67,7 @@ const ConsultationPreviewModal = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Consultation Details - {format(new Date(consultation.created_at), 'MMM d, yyyy')}
+            Consultation Details - {consultation.created_at ? format(new Date(consultation.created_at), 'MMM d, yyyy') : 'Unknown date'}
           </DialogTitle>
           <DialogDescription>
             View detailed consultation notes and treatment information

@@ -45,10 +45,10 @@ export const ConsultationPreviewModal = ({
   // Prepare clinic info for layout display
   const clinicInfo = clinicDetails ? {
     name: clinicDetails.name,
-    address: clinicDetails.address,
-    phone: clinicDetails.phone,
-    email: clinicDetails.email,
-    website: clinicDetails.website
+    address: clinicDetails.address || undefined,
+    phone: clinicDetails.phone || undefined,
+    email: clinicDetails.email || undefined,
+    website: clinicDetails.website || undefined
   } : null;
   
   // Fetch doctor details for current user

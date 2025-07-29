@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Calendar, Stethoscope, Eye } from 'lucide-react';
+import { MoreHorizontal, Calendar, Stethoscope, Eye, Receipt } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { formatTimeIST } from '@/lib/utils';
 import { AppointmentWithDetails } from '@/hooks/useAppointments';
@@ -165,12 +165,14 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                     </Button>
                   )}
 
-                  {appointment.status === 'Completed' && !appointment.billing_status && (
+                  {appointment.status !== 'Cancelled' && 
+                   (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
                     <Button
                       size="sm"
                       onClick={() => onCreateBill(appointment)}
                       title="Create Bill"
                     >
+                      <Receipt className="h-4 w-4 mr-1" />
                       <span>Create Bill</span>
                     </Button>
                   )}

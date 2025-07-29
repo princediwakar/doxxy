@@ -66,7 +66,14 @@ payment_transactions (id, clinic_id, transaction_type, amount, razorpay_payment_
 
 ## 📝 MANDATORY LOGGING
 
-**Every development session must be logged in `development-log.md`**
+**⚠️ CRITICAL: Every development session MUST be logged in `development-log.md`**
+
+**This is NOT optional - it's required for:**
+- Healthcare compliance and audit trails
+- Team knowledge sharing and continuity
+- Debugging and troubleshooting support
+- Performance tracking and improvement
+- Security change documentation
 
 ### Required Log Structure
 ```markdown
@@ -106,7 +113,20 @@ payment_transactions (id, clinic_id, transaction_type, amount, razorpay_payment_
 ### 🤖 CLAUDE CODE SESSION
 **Commands Used:** [Claude Code commands executed]
 **AI Insights:** [Key insights or recommendations from Claude]
+**Migration Commands:** [Database migration commands executed]
+**Schema Changes:** [Tables/policies modified]
 **Follow-up Actions:** [Tasks identified for next session]
+
+### 🔄 MIGRATION TRACKING
+**Migration Files Created:** [List new migration files]
+**Local Testing Status:** [Pass/Fail with details]
+**Production Deployment:** [Success/Failed with verification]
+**Type Generation:** [Updated src/integrations/supabase/types.ts]
+
+### 📄 DOCUMENTATION CREATED
+**Files Added to docs/:** [List documentation files created]
+**Category:** [architecture/migrations/security/workflows/troubleshooting]
+**Purpose:** [Brief description of documentation purpose]
 ```
 
 ---
@@ -133,9 +153,54 @@ supabase/
 ├── functions/               # Edge functions
 └── config.toml             # Supabase configuration
 
-development-log.md           # MANDATORY development log
+docs/                        # 📁 Organized project documentation
+├── README.md               # Documentation standards & organization
+├── architecture/           # System design, technical decisions
+├── migrations/             # Database migration documentation
+├── security/               # RLS policies, compliance docs
+├── workflows/              # Development & deployment guides
+└── troubleshooting/        # Debugging guides, common fixes
+
+development-log.md           # ⚠️ MANDATORY session log - STAYS IN ROOT for easy access
 claude.md                   # This file - Claude Code guidelines
 ```
+
+---
+
+## 📚 Documentation Standards
+
+### **MANDATORY: Project documentation goes in `docs/` folder**
+
+**Exception:** `development-log.md` stays in root for easy access during sessions
+
+**Categories:**
+- `docs/architecture/` - System design, technical decisions, data flows
+- `docs/migrations/` - Migration documentation & analysis (NOT schema dumps)
+- `docs/security/` - RLS policies, HIPAA compliance, auth changes
+- `docs/workflows/` - Development processes, deployment guides
+- `docs/troubleshooting/` - Common issues, debugging guides, fixes
+
+**Schema Management:**
+- ✅ **Migrations are source of truth** - stored in `supabase/migrations/`
+- ❌ **No schema dumps in repo** - generate locally with `/tmp/` when needed
+- ✅ **TypeScript types committed** - `src/integrations/supabase/types.ts`
+
+### **When to Create Documentation:**
+- 🔐 **Security changes** (RLS policies, auth modifications)
+- 🗄️ **Database migrations** (schema changes, data transformations)
+- 🏗️ **Architecture decisions** (major design choices, refactoring)
+- 🚨 **Critical fixes** (production issues, emergency solutions)
+
+### **File Naming:**
+```
+[YYYY-MM-DD]-[category]-[brief-description].md
+```
+
+### **Documentation Integration:**
+- Reference created docs in development-log.md
+- Use template from docs/README.md
+- Cross-reference related documents
+- Archive (don't delete) outdated documentation
 
 ---
 
@@ -150,18 +215,39 @@ claude-code "Validate multi-tenant security for [feature]"
 claude-code "Generate migration for [schema change] with RLS policies"
 ```
 
-### Database Operations
+### Database Operations & Migration Workflow
 ```bash
-# Check current state
+# ESSENTIAL: Check system status before any work
 npx supabase status
-npx supabase db dump --schema-only
 
-# Migration workflow
+# MIGRATION CREATION & LOCAL TESTING
+# 1. Create new migration
 npx supabase migration new [descriptive_name]
-npx supabase migration up
+
+# 2. Test migration locally first (MANDATORY)
+npx supabase migration up --local
+
+# 3. Generate TypeScript types after successful local migration
 npx supabase gen types typescript --local > src/integrations/supabase/types.ts
 
-# Quick data inspection
+# PRODUCTION DEPLOYMENT
+# 4. Push to production (only after local testing)
+npx supabase db push
+
+# 5. Verify production state (CRITICAL for healthcare data)
+npx supabase migration list --linked
+
+# SCHEMA SYNCHRONIZATION
+# Check differences between local and remote
+npx supabase db diff --linked
+
+# Pull remote schema changes to local (when needed)
+npx supabase db pull
+
+# Generate migration from schema differences
+npx supabase db diff --linked --schema=public > migration_[timestamp].sql
+
+# DATA INSPECTION & DEBUGGING
 npx supabase db query "SELECT * FROM [table] WHERE clinic_id = '[uuid]' LIMIT 5"
 ```
 
@@ -224,12 +310,15 @@ npx supabase db query "SELECT * FROM pg_stat_statements ORDER BY total_time DESC
 - **Performance**: <1s page loads, <500ms API responses
 - **React Query**: For server state management with proper cache config
 
-### Database Changes
-1. Analyze current schema: `npx supabase db dump --schema-only`
-2. Create migration: `npx supabase migration new [name]`
-3. Include RLS policies in migration
-4. Update TypeScript types: `npx supabase gen types typescript --local`
-5. Test with browser validation
+### Database Changes - MANDATORY WORKFLOW
+1. **Check current state**: `npx supabase status && npx supabase migration list`
+2. **Create migration**: `npx supabase migration new [descriptive_name]`
+3. **Test locally FIRST**: `npx supabase migration up --local`
+4. **Generate types after local success**: `npx supabase gen types typescript --local > src/integrations/supabase/types.ts`
+5. **Deploy to production**: `npx supabase db push`
+6. **Verify production**: `npx supabase migration list --linked`
+7. **Browser validation**: Test all affected workflows
+8. **Update development log**: Document in `development-log.md`
 
 ### Browser Testing Protocol
 ```bash
@@ -355,14 +444,20 @@ npx supabase db query "SELECT auth.uid(), current_user"
 npm run dev 2>&1 | grep -i error
 ```
 
-### Database Schema Verification
+### Database Schema Management
 ```bash
-# Before major changes
-npx supabase db dump --schema-only > schema_backup_$(date +%Y%m%d_%H%M).sql
+# Schema is managed through migrations ONLY - they are the source of truth
+# Never manually edit schema dumps or commit them to the repo
 
-# After migrations
+# Verify migration state
 npx supabase migration list
-npx supabase gen types typescript --local --check
+npx supabase migration list --linked  # Check production sync
+
+# Generate current schema for reference (not committed)
+npx supabase db dump --schema-only > /tmp/current_schema_$(date +%Y%m%d).sql
+
+# After migrations - ALWAYS update types
+npx supabase gen types typescript --local > src/integrations/supabase/types.ts
 ```
 
 ---

@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAge } from "@/lib/utils";
 import { Calendar, CreditCard, Edit, Eye, FileText, History, Mail, MapPin, Phone, Pill, Stethoscope } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { ConsultationWithAppointment, PatientWithConsultations, Prescription } from "@/types/patients";
+import { ConsultationWithAppointment, PatientWithConsultations, Prescription, Consultation } from "@/types/patients";
 import { MedicalTimeline } from "./MedicalTimeline";
 
 interface PatientDetailViewProps {
@@ -14,7 +14,7 @@ interface PatientDetailViewProps {
     onEditPatient: () => void;
     onScheduleAppointment: () => void;
     onCreateBill: () => void;
-    onViewConsultation: (consultation: ConsultationWithAppointment) => void;
+    onViewConsultation: (consultation: ConsultationWithAppointment | Consultation) => void;
     onViewPrescription: (prescription: Prescription) => void;
     isLoading: boolean;
 }

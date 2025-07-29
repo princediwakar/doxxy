@@ -14,7 +14,7 @@ import { useState } from "react";
 
 // --- MODULAR COMPONENTS ---
 
-const NavLinkItem = ({ to, label, currentPath }) => (
+const NavLinkItem = ({ to, label, currentPath }: { to: string; label: string; currentPath: string }) => (
   <Link 
     to={to} 
     className={`text-sm font-medium transition-colors duration-200 ease-in-out 
@@ -24,7 +24,7 @@ const NavLinkItem = ({ to, label, currentPath }) => (
   </Link>
 );
 
-const MobileNavItem = ({ to, label, icon: Icon, onClick, currentPath }) => (
+const MobileNavItem = ({ to, label, icon: Icon, onClick, currentPath }: { to: string; label: string; icon: React.ComponentType<{ className?: string }>; onClick: () => void; currentPath: string }) => (
   <Link
     to={to}
     onClick={onClick}

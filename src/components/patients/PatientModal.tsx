@@ -121,6 +121,8 @@ export const PatientModal = ({
     },
     onSuccess: (newPatient) => {
       toast.success("Patient created successfully.");
+      // Invalidate patients query to refetch the list
+      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
       onPatientCreated(newPatient);
       form.reset();
     },

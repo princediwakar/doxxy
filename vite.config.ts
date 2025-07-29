@@ -72,13 +72,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        // Inject polyfill in all chunks
-        banner: `
-          // React SSR polyfill for production builds
-          if (typeof globalThis.React === 'object' && globalThis.React && !globalThis.React.useLayoutEffect && globalThis.React.useEffect) {
-            globalThis.React.useLayoutEffect = globalThis.React.useEffect;
-          }
-        `,
         manualChunks: (id) => {
           // Core React ecosystem
           if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
@@ -157,8 +150,9 @@ export default defineConfig(({ mode }) => ({
             return 'vendor-charts';
           }
           
+          // PDF libraries - only loaded dynamically, exclude from initial bundle
           if (id.includes('jspdf') || id.includes('html2canvas')) {
-            return 'vendor-pdf';
+            return 'vendor-pdf-dynamic';
           }
           
           if (id.includes('react-day-picker')) {

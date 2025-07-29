@@ -68,7 +68,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
   const sections = specialtySections || specialtyFieldSections[departmentType] || specialtyFieldSections.General;
 
   // Helper function to render field value
-  const renderFieldValue = (fieldName: string, value: unknown) => {
+  const renderFieldValue = (fieldName: string, value: unknown): React.ReactNode => {
     if (!value) return null;
 
     if (fieldName === 'prescriptions' && Array.isArray(value)) {
@@ -382,7 +382,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           {sections.map((section, sectionIndex) => {
             // Filter out empty fields
             const fieldsWithContent = section.fields.filter(field => {
-              const value = consultationData[field.name];
+              const value = consultationData?.[field.name as keyof typeof consultationData];
               if (!value) return false;
               if (typeof value === 'string' && !value.trim()) return false;
               if (Array.isArray(value) && value.length === 0) return false;
@@ -396,7 +396,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">{section.title}</h3>
                 <div className="space-y-4">
                   {fieldsWithContent.map((field, fieldIndex) => {
-                    const value = consultationData[field.name];
+                    const value = consultationData?.[field.name as keyof typeof consultationData];
                     return (
                       <div key={fieldIndex} className="field-group">
                         <div className="text-sm font-medium text-gray-700 mb-1">{field.label}</div>
