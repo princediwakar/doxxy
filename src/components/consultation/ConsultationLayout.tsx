@@ -162,8 +162,8 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
         
         /* Letterhead styles */
         .letterhead { 
-          padding: 1rem !important; 
-          margin-bottom: 1rem !important;
+          padding: 0.5rem !important; 
+          margin-bottom: 0.5rem !important;
           page-break-inside: avoid !important;
         }
         
@@ -178,8 +178,8 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
         .info-cards {
           display: grid !important;
           grid-template-columns: 1fr 1fr !important;
-          gap: 1rem !important;
-          margin-bottom: 1rem !important;
+          gap: 0.75rem !important;
+          margin-bottom: 0.5rem !important;
           page-break-inside: avoid !important;
         }
         
@@ -195,15 +195,29 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           page-break-before: auto !important;
         }
         
+        /* Reduce spacing between sections for print */
+        .space-y-6 > * + * {
+          margin-top: 0.75rem !important;
+        }
+        
         .section-notes {
           page-break-inside: avoid !important;
-          margin-bottom: 1rem !important;
+          margin-bottom: 0.75rem !important;
+        }
+        
+        /* Section titles */
+        .section-notes h3 {
+          margin-bottom: 0.5rem !important;
         }
         
         /* Field group styles */
         .field-group {
           page-break-inside: avoid !important;
-          margin-bottom: 0.5rem !important;
+          margin-bottom: 0.25rem !important;
+        }
+        
+        .space-y-4 > * + * {
+          margin-top: 0.5rem !important;
         }
         
         /* Table styles for prescriptions */
@@ -235,7 +249,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
       {showPrintStyles && <div dangerouslySetInnerHTML={{ __html: printStyles }} />}
       
       {/* Enhanced Professional Clinic Letterhead */}
-      <div className="letterhead relative border-b-2 border-blue-600 bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4 mb-4">
+      <div className="letterhead relative border-b-2 border-blue-600 bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4 mb-4 print:p-2 print:mb-2">
         {/* Decorative top border */}
         <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-600 via-green-500 to-blue-600"></div>
         
@@ -321,7 +335,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
       </div>
 
       {/* Patient and Appointment Information */}
-      <div className="info-cards grid grid-cols-2 gap-4 mb-4">
+      <div className="info-cards grid grid-cols-2 gap-4 mb-4 print:gap-3 print:mb-2">
         {/* Patient Information */}
         <Card className="bg-white">
           <CardContent className="p-4">
@@ -378,7 +392,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
       {/* Main Content */}
       <div className="flex-1 consultation-content">
         {/* Consultation Notes */}
-        <div className="space-y-6">
+        <div className="space-y-6 print:space-y-3">
           {sections.map((section, sectionIndex) => {
             // Filter out empty fields
             const fieldsWithContent = section.fields.filter(field => {
@@ -392,13 +406,13 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
             if (fieldsWithContent.length === 0) return null;
 
             return (
-              <div key={sectionIndex} className="section-notes">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">{section.title}</h3>
-                <div className="space-y-4">
+              <div key={sectionIndex} className="section-notes print:mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 print:mb-2">{section.title}</h3>
+                <div className="space-y-4 print:space-y-2">
                   {fieldsWithContent.map((field, fieldIndex) => {
                     const value = consultationData?.[field.name as keyof typeof consultationData];
                     return (
-                      <div key={fieldIndex} className="field-group">
+                      <div key={fieldIndex} className="field-group print:mb-2">
                         <div className="text-sm font-medium text-gray-700 mb-1">{field.label}</div>
                         <div className="text-sm text-gray-900">{renderFieldValue(field.name, value)}</div>
                       </div>

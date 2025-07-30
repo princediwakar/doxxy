@@ -103,7 +103,7 @@ export const generatePrintContent = (
           <script src="https://cdn.tailwindcss.com"></script>
       <style>
             @page { 
-              margin: 15mm; 
+              margin: 8mm; 
               size: A4; 
             }
             * { 
@@ -124,7 +124,7 @@ export const generatePrintContent = (
             /* Force layout consistency for print */
             @media print {
               @page { 
-                margin: 10mm 15mm 10mm 15mm; 
+                margin: 6mm 8mm 8mm 8mm; 
                 size: A4; 
               }
               
@@ -133,7 +133,7 @@ export const generatePrintContent = (
             
             /* Standalone @page rule for broader browser support */
             @page { 
-              margin: 10mm 15mm 10mm 15mm !important; 
+              margin: 6mm 8mm 8mm 8mm !important; 
               size: A4 !important;
               /* Completely disable all browser headers and footers */
               @top-left { content: "" !important; }
@@ -150,7 +150,7 @@ export const generatePrintContent = (
             
             @media print {
               body { 
-                margin: 10mm !important;
+                margin: 0 !important;
                 padding: 0 !important;
               }
               .max-w-4xl { 
@@ -178,8 +178,30 @@ export const generatePrintContent = (
               /* Reduce letterhead padding for print */
               .letterhead { 
                 margin: 0 !important;
-                padding: 1rem !important; 
-                margin-bottom: 1rem !important; 
+                padding: 0.5rem !important; 
+                margin-bottom: 0.5rem !important; 
+              }
+              
+              /* Reduce spacing between consultation sections */
+              .space-y-6 > * + * {
+                margin-top: 0.75rem !important;
+              }
+              
+              .space-y-4 > * + * {
+                margin-top: 0.5rem !important;
+              }
+              
+              /* Ensure sections are tightly spaced */
+              .section-notes {
+                margin-bottom: 0.75rem !important;
+              }
+              
+              .section-notes h3 {
+                margin-bottom: 0.5rem !important;
+              }
+              
+              .field-group {
+                margin-bottom: 0.25rem !important;
               }
             }
 
@@ -263,7 +285,7 @@ export const printConsultation = async (
       }
       @media print {
         @page {
-          margin: 10mm 15mm 10mm 15mm !important;
+          margin: 6mm 8mm 8mm 8mm !important;
           size: A4 !important;
           @top-left { content: "" !important; }
           @top-center { content: "" !important; }
@@ -277,6 +299,19 @@ export const printConsultation = async (
         body::before, body::after {
           display: none !important;
           content: "" !important;
+        }
+        
+        /* Additional spacing fixes */
+        .space-y-6 > * + * {
+          margin-top: 0.75rem !important;
+        }
+        
+        .space-y-4 > * + * {
+          margin-top: 0.5rem !important;
+        }
+        
+        .section-notes {
+          margin-bottom: 0.75rem !important;
         }
       }
     `;
@@ -293,7 +328,7 @@ export const printConsultation = async (
         const extraStyle = document.createElement('style');
         extraStyle.textContent = \`
           @page {
-            margin: 10mm 15mm 10mm 15mm !important;
+            margin: 6mm 8mm 8mm 8mm !important;
             size: A4 !important;
             @top-left { content: "" !important; }
             @top-center { content: "" !important; }
