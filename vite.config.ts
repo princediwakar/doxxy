@@ -51,6 +51,8 @@ export default defineConfig(({ mode }) => ({
       'react-hook-form',
       'recharts',
       'lodash-es',
+      // Force inclusion of Radix UI dependencies that use useLayoutEffect
+      '@radix-ui/react-use-layout-effect',
     ],
     exclude: [
       // Exclude heavy libraries from pre-bundling for better chunking
@@ -73,8 +75,8 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Core React ecosystem
-          if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+          // Core React ecosystem - ensure this loads first
+          if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router')) {
             return 'vendor-react';
           }
           
