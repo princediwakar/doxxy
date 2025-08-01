@@ -9,6 +9,9 @@
     "build:dev": "vite build --mode development",
     "build:analyze": "npm run build && echo 'Bundle analysis saved to dist/stats.html'",
     "build:size": "npm run build && du -sh dist/ && echo 'Individual file sizes:' && ls -lah dist/assets/",
+    "build:validate": "npm run build && npm run preview:test",
+    "preview:test": "timeout 10s npm run preview > /dev/null 2>&1 && curl -f http://localhost:4173 -o /dev/null -s || echo 'Build validation failed'",
+    "type-check": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview"
   },

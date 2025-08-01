@@ -1,0 +1,66 @@
+name: Build Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Type check
+      run: npm run type-check
+      
+    - name: Lint check
+      run: npm run lint
+      
+    - name: Build production
+      run: npm run build
+      
+    - name: Check build artifacts
+      run: |
+        # Verify critical files exist
+        if [ ! -f "dist/index.html" ]; then
+          echo "Error: index.html not found in build output"
+          exit 1
+        fi
+        
+        # Check for common bundling issues
+        if grep -r "is not a function" dist/assets/ 2>/dev/null; then
+          echo "Error: Potential bundling issues detected"
+          exit 1
+        fi
+        
+        echo "Build validation passed"
+        
+    - name: Test production build
+      run: |
+        npm run preview &
+        PREVIEW_PID=$!
+        sleep 5
+        
+        # Test if the app loads without errors
+        if curl -f http://localhost:4173 -o /dev/null -s; then
+          echo "Production build loads successfully"
+        else
+          echo "Error: Production build failed to load"
+          kill $PREVIEW_PID 2>/dev/null || true
+          exit 1
+        fi
+        
+        kill $PREVIEW_PID 2>/dev/null || true

@@ -73,53 +73,22 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
+      // Ensure proper module format and dependencies
+      external: [],
       output: {
+        // Ensure consistent module format
+        format: 'es',
+        // Better interop handling
+        interop: 'auto',
         manualChunks: (id) => {
           // Core React ecosystem - ensure this loads first
           if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router')) {
             return 'vendor-react';
           }
           
-          // Core UI components (most commonly used)
-          if (id.includes('@radix-ui/react-dialog') || 
-              id.includes('@radix-ui/react-select') ||
-              id.includes('@radix-ui/react-popover') ||
-              id.includes('@radix-ui/react-dropdown-menu')) {
-            return 'vendor-ui-core';
-          }
-          
-          // Form-related UI components
-          if (id.includes('@radix-ui/react-checkbox') || 
-              id.includes('@radix-ui/react-radio-group') ||
-              id.includes('@radix-ui/react-switch') ||
-              id.includes('@radix-ui/react-slider') ||
-              id.includes('@radix-ui/react-label')) {
-            return 'vendor-ui-forms';
-          }
-          
-          // Layout & Navigation UI components
-          if (id.includes('@radix-ui/react-tabs') ||
-              id.includes('@radix-ui/react-accordion') ||
-              id.includes('@radix-ui/react-navigation-menu') ||
-              id.includes('@radix-ui/react-menubar') ||
-              id.includes('@radix-ui/react-separator') ||
-              id.includes('@radix-ui/react-scroll-area')) {
-            return 'vendor-ui-layout';
-          }
-          
-          // Interactive UI components (less commonly used)
-          if (id.includes('@radix-ui/react-alert-dialog') ||
-              id.includes('@radix-ui/react-context-menu') ||
-              id.includes('@radix-ui/react-hover-card') ||
-              id.includes('@radix-ui/react-tooltip') ||
-              id.includes('@radix-ui/react-toast') ||
-              id.includes('@radix-ui/react-collapsible') ||
-              id.includes('@radix-ui/react-toggle') ||
-              id.includes('@radix-ui/react-aspect-ratio') ||
-              id.includes('@radix-ui/react-avatar') ||
-              id.includes('@radix-ui/react-progress') ||
-              id.includes('@radix-ui/react-slot')) {
-            return 'vendor-ui-interactive';
+          // All Radix UI components together to prevent cross-chunk dependency issues
+          if (id.includes('@radix-ui/')) {
+            return 'vendor-radix';
           }
           
           // Data & API
@@ -188,9 +157,18 @@ export default defineConfig(({ mode }) => ({
         drop_console: mode === 'production', // Remove console.log in production
         drop_debugger: true,
         pure_funcs: mode === 'production' ? ['console.log', 'console.warn'] : [],
+        // Prevent aggressive function inlining that can break module exports
+        inline: 1,
       },
       mangle: {
         safari10: true, // Fix Safari 10 issues
+        // Preserve function names for better debugging
+        keep_fnames: /^use[A-Z]/, // Keep React hook names
+        reserved: ['React', 'useLayoutEffect', 'useEffect'], // Preserve critical identifiers
+      },
+      // Prevent module wrapper issues
+      format: {
+        preserve_annotations: true,
       },
     },
     // Report compressed size only in development for faster builds
