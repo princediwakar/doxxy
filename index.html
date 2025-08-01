@@ -19,10 +19,10 @@
   
   <!-- React hooks polyfill - load before anything else -->
   <script>
-    // Ensure useLayoutEffect is available globally before any modules load
+    // Critical: Ensure React hooks are available globally before any modules load
     if (typeof window !== 'undefined') {
-      // Create a temporary React-like object with hooks
-      window.__REACT_HOOKS_POLYFILL__ = {
+      // Create a more comprehensive React mock
+      window.React = window.React || {
         useLayoutEffect: function() {
           console.warn('useLayoutEffect called before React loaded, using fallback');
           return function() {}; // no-op cleanup
@@ -30,12 +30,35 @@
         useEffect: function() {
           console.warn('useEffect called before React loaded, using fallback');  
           return function() {}; // no-op cleanup
+        },
+        useState: function(initial) {
+          console.warn('useState called before React loaded, using fallback');
+          return [initial, function() {}];
+        },
+        useCallback: function(fn) {
+          console.warn('useCallback called before React loaded, using fallback');
+          return fn;
+        },
+        useMemo: function(fn) {
+          console.warn('useMemo called before React loaded, using fallback');
+          return fn();
+        },
+        useRef: function(initial) {
+          console.warn('useRef called before React loaded, using fallback');
+          return { current: initial };
         }
       };
       
-      // Make hooks available globally as fallback
-      window.useLayoutEffect = window.__REACT_HOOKS_POLYFILL__.useLayoutEffect;
-      window.useEffect = window.__REACT_HOOKS_POLYFILL__.useEffect;
+      // Also make hooks available globally as direct fallbacks
+      window.useLayoutEffect = window.React.useLayoutEffect;
+      window.useEffect = window.React.useEffect;
+      window.useState = window.React.useState;
+      window.useCallback = window.React.useCallback;  
+      window.useMemo = window.React.useMemo;
+      window.useRef = window.React.useRef;
+      
+      // Flag that polyfill is active
+      window.__REACT_POLYFILL_ACTIVE__ = true;
     }
   </script>
 </head>

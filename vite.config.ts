@@ -17,6 +17,8 @@ export default defineConfig(({ mode }) => ({
     __DEV__: mode === 'development',
     // Fix React hooks SSR compatibility
     'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),
+    // Ensure React hooks are available globally at build time
+    'typeof window !== "undefined" && window.React': 'window.React || {}',
   },
   plugins: [
     react(),
@@ -80,6 +82,13 @@ export default defineConfig(({ mode }) => ({
         format: 'es',
         // Better interop handling
         interop: 'auto',
+        // Force specific entry chunk ordering
+        entryFileNames: (chunkInfo) => {
+          if (chunkInfo.name.includes('react')) {
+            return 'assets/[name]-[hash].js';
+          }
+          return 'assets/[name]-[hash].js';
+        },
         manualChunks: (id) => {
           // Core React ecosystem - MUST load first with priority naming
           if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router')) {
