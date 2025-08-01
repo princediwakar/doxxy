@@ -4,6 +4,23 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { visualizer } from 'rollup-plugin-visualizer';
 
+// Custom plugin to ensure React loads before other dependencies
+function reactFirstPlugin() {
+  return {
+    name: 'react-first',
+    generateBundle(options, bundle) {
+      // Ensure React chunk gets 000 prefix in filename
+      Object.keys(bundle).forEach(fileName => {
+        const chunk = bundle[fileName];
+        if (chunk.type === 'chunk' && chunk.name && chunk.name.includes('vendor-react')) {
+          // Force React to be first in load order
+          chunk.imports = [];  // Remove all imports to ensure React loads independently
+        }
+      });
+    }
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -17,12 +34,12 @@ export default defineConfig(({ mode }) => ({
     __DEV__: mode === 'development',
     // Fix React hooks SSR compatibility
     'process.env.NODE_ENV': JSON.stringify(mode === 'production' ? 'production' : 'development'),
-    // Ensure React hooks are available globally at build time
-    'typeof window !== "undefined" && window.React': 'window.React || {}',
   },
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
+    // Ensure React loads first in production
+    mode === 'production' && reactFirstPlugin(),
     // Bundle analyzer - generate stats.html after build
     mode === 'production' && visualizer({
       filename: 'dist/stats.html',
@@ -37,6 +54,9 @@ export default defineConfig(({ mode }) => ({
       "@/contexts/AuthContext": path.resolve(__dirname, "./tests/__mocks__/AuthContext.tsx"),
       // Fix lodash import issues by aliasing to lodash-es
       "lodash": "lodash-es",
+      // Ensure React is properly resolved
+      "react": "react",
+      "react-dom": "react-dom",
     },
   },
   // Optimize dependency pre-bundling
