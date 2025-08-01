@@ -16,6 +16,28 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@lovable_dev" />
   <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  
+  <!-- React hooks polyfill - load before anything else -->
+  <script>
+    // Ensure useLayoutEffect is available globally before any modules load
+    if (typeof window !== 'undefined') {
+      // Create a temporary React-like object with hooks
+      window.__REACT_HOOKS_POLYFILL__ = {
+        useLayoutEffect: function() {
+          console.warn('useLayoutEffect called before React loaded, using fallback');
+          return function() {}; // no-op cleanup
+        },
+        useEffect: function() {
+          console.warn('useEffect called before React loaded, using fallback');  
+          return function() {}; // no-op cleanup
+        }
+      };
+      
+      // Make hooks available globally as fallback
+      window.useLayoutEffect = window.__REACT_HOOKS_POLYFILL__.useLayoutEffect;
+      window.useEffect = window.__REACT_HOOKS_POLYFILL__.useEffect;
+    }
+  </script>
 </head>
 
 <body>

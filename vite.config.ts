@@ -81,28 +81,28 @@ export default defineConfig(({ mode }) => ({
         // Better interop handling
         interop: 'auto',
         manualChunks: (id) => {
-          // Core React ecosystem - ensure this loads first
+          // Core React ecosystem - MUST load first with priority naming
           if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router')) {
-            return 'vendor-react';
+            return '000-vendor-react';
           }
           
           // All Radix UI components together to prevent cross-chunk dependency issues
           if (id.includes('@radix-ui/')) {
-            return 'vendor-radix';
+            return '001-vendor-radix';
           }
           
           // Data & API
           if (id.includes('@supabase/supabase-js') || 
               id.includes('@tanstack/react-query') || 
               id.includes('date-fns')) {
-            return 'vendor-data';
+            return '002-vendor-data';
           }
           
           // Forms & Validation
           if (id.includes('react-hook-form') || 
               id.includes('@hookform/resolvers') || 
               id.includes('zod')) {
-            return 'vendor-forms';
+            return '003-vendor-forms';
           }
           
           // Utility libraries
@@ -113,21 +113,21 @@ export default defineConfig(({ mode }) => ({
               id.includes('cmdk') ||
               id.includes('use-debounce') ||
               id.includes('lodash')) {
-            return 'vendor-utils';
+            return '004-vendor-utils';
           }
           
           // Heavy libraries - separate chunks
           if (id.includes('recharts') || id.includes('d3-')) {
-            return 'vendor-charts';
+            return '005-vendor-charts';
           }
           
           // PDF libraries - only loaded dynamically, exclude from initial bundle
           if (id.includes('jspdf') || id.includes('html2canvas')) {
-            return 'vendor-pdf-dynamic';
+            return '999-vendor-pdf-dynamic';
           }
           
           if (id.includes('react-day-picker')) {
-            return 'vendor-calendar';
+            return '006-vendor-calendar';
           }
           
           // UI libraries that can be grouped
@@ -138,12 +138,12 @@ export default defineConfig(({ mode }) => ({
               id.includes('next-themes') ||
               id.includes('react-resizable-panels') ||
               id.includes('tailwindcss-animate')) {
-            return 'vendor-misc';
+            return '007-vendor-misc';
           }
           
-          // Everything else goes to vendor-common
+          // Everything else goes to vendor-common - load last
           if (id.includes('node_modules')) {
-            return 'vendor-common';
+            return '998-vendor-common';
           }
         },
       },

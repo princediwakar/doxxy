@@ -8,11 +8,25 @@ if (typeof window !== 'undefined') {
   // Make React available globally for libraries that expect it
   (window as any).React = React;
   
-  // Explicitly ensure useLayoutEffect exists
-  if (!React.useLayoutEffect) {
-    console.warn('useLayoutEffect not found in React, using useEffect fallback');
-    (React as any).useLayoutEffect = React.useEffect;
-  }
+  // Create a global React proxy that always has hooks available
+  const ReactProxy = new Proxy(React, {
+    get(target, prop) {
+      if (prop === 'useLayoutEffect') {
+        return target.useLayoutEffect || target.useEffect;
+      }
+      if (prop === 'useEffect') {
+        return target.useEffect;
+      }
+      return target[prop as keyof typeof React];
+    }
+  });
+  
+  // Override the global React reference
+  (window as any).React = ReactProxy;
+  
+  // Also make hooks directly available globally as a fallback
+  (window as any).useLayoutEffect = React.useLayoutEffect || React.useEffect;
+  (window as any).useEffect = React.useEffect;
   
   // Create a global hook availability check
   (window as any).__REACT_HOOKS_AVAILABLE__ = true;
