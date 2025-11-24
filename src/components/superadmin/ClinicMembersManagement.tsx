@@ -29,10 +29,20 @@ import {
 const supabase = getSupabase();
 
 type UserRole = Database['public']['Enums']['user_role'];
-type Profile = Database['public']['Tables']['profiles']['Row'];
 // Using generated types from production schema
 type ClinicDepartment = Database['public']['Tables']['clinic_departments']['Row'];
 type DepartmentType = Database['public']['Tables']['department_types']['Row'];
+
+// Custom Profile interface that matches the actual fields being queried
+interface ProfileData {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 interface MemberWithDetails {
   id: string;
@@ -42,7 +52,7 @@ interface MemberWithDetails {
   department_id: string | null;
   created_at: string | null;
   updated_at: string | null;
-  profile: Profile | null;
+  profile: ProfileData | null;
   department: (ClinicDepartment & { department_types: DepartmentType | null }) | null;
   hasDoctor: boolean;
 }
@@ -141,21 +151,12 @@ const ClinicMembersManagement = () => {
       
       // Transform the data to match our interface
       const membersWithDetails: MemberWithDetails[] = await Promise.all(
-        clinicMembersData.map(async (member: {
-          id: string;
-          user_id: string | null;
-          clinic_id: string | null;
-          role: Database['public']['Enums']['user_role'];
-          department_id: string | null;
-          created_at: string | null;
-          updated_at: string | null;
-          profiles: Profile | null;
-        }) => {
+        clinicMembersData.map(async (member) => {
           console.log('Processing member:', member);
           
           // Safely access profile data
-          const profileData = member.profiles;
-          if (!profileData) {
+          const profile = member.profiles || null;
+          if (!profile) {
             console.warn('No profile data for member:', member.user_id);
           }
           
@@ -192,7 +193,7 @@ const ClinicMembersManagement = () => {
             department_id: member.department_id,
             created_at: member.created_at,
             updated_at: member.updated_at,
-            profile: profileData || null,
+            profile: profile,
             department: departmentInfo as (ClinicDepartment & { department_types: DepartmentType | null }) | null,
             hasDoctor: !!doctorProfile
           };

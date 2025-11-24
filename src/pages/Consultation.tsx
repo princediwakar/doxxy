@@ -210,7 +210,7 @@ const Consultation = () => {
                     )}
                   expandedFields={expandedFields}
                   setExpandedFields={setExpandedFields}
-                  isConsultationCompleted={!canEditConsultation}
+                  isConsultationCompleted={canEditConsultation === false}
                 />
               ))}
             </CardContent>
@@ -249,8 +249,8 @@ const Consultation = () => {
       {/* Header */}
       <ConsultationHeader
         patient={patient}
-        isConsultationCompleted={isConsultationCompleted}
-        canEditConsultation={canEditConsultation}
+        isConsultationCompleted={!!isConsultationCompleted}
+        canEditConsultation={!!canEditConsultation}
         autoSaveMutation={autoSaveMutation}
         mandatoryFieldsStatus={mandatoryFieldsStatus}
         onBack={() => navigate('/appointments')}
@@ -282,11 +282,11 @@ const Consultation = () => {
                         }, 0)}/{specialtySections.length} sections completed
                       </p>
                     </div>
-                    <Badge 
-                      variant={isConsultationCompleted ? "default" : "secondary"}
+                    <Badge
+                      variant={isConsultationCompleted === true ? "default" : "secondary"}
                       className="text-sm"
                     >
-                      {isConsultationCompleted ? "Completed" : "In Progress"}
+                      {isConsultationCompleted === true ? "Completed" : "In Progress"}
                     </Badge>
                   </div>
                 </CardContent>
@@ -297,7 +297,7 @@ const Consultation = () => {
               </form>
               
               {/* Completion Status */}
-              {isConsultationCompleted && (
+              {isConsultationCompleted === true && (
                 <Card className="border-green-200 bg-green-50 mt-8">
                   <CardContent className="pt-6">
                     <div className="flex items-center gap-3">

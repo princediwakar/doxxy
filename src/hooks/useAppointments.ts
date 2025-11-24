@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Database } from "@/integrations/supabase/types";
 import { parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { toast } from 'sonner';
+import { usePayments } from './usePayments';
 
 const supabase = getSupabase();
 
@@ -87,6 +88,7 @@ const fetchAppointments = async (clinicId: string | undefined, searchTerm: strin
 
 export const useAppointments = () => {
   const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const { deductCreditsForAppointment, canBookAppointment } = usePayments();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<AppointmentFilter>('today');
@@ -185,8 +187,30 @@ export const useAppointments = () => {
     cancelAppointmentMutation.mutate(appointmentId);
   };
 
-  const handleStartConsultation = (appointmentId: string) => {
-    updateAppointmentStatusMutation.mutate({ appointmentId, status: 'In Progress' });
+  const handleStartConsultation = async (appointmentId: string) => {
+    // Check if clinic has sufficient credits before starting consultation
+    if (!canBookAppointment(1)) {
+      toast.error("Insufficient credits", {
+        description: "You don't have enough credits to start this consultation. Please purchase more credits."
+      });
+      return;
+    }
+
+    try {
+      // First deduct credits
+      await deductCreditsForAppointment.mutateAsync({
+        appointmentId,
+        creditsToDeduct: 1
+      });
+
+      // Then update appointment status to "In Progress"
+      updateAppointmentStatusMutation.mutate({ appointmentId, status: 'In Progress' });
+    } catch (error) {
+      console.error('Failed to start consultation:', error);
+      toast.error('Failed to start consultation', {
+        description: 'Please try again or contact support if the issue persists.'
+      });
+    }
   };
 
   const refreshAppointments = () => {
