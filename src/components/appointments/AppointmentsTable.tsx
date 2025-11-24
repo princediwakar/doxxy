@@ -21,6 +21,7 @@ import { format, parseISO } from 'date-fns';
 import { formatTimeIST } from '@/lib/utils';
 import { AppointmentWithDetails } from '@/hooks/useAppointments';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface AppointmentsTableProps {
   appointments: AppointmentWithDetails[];
@@ -29,6 +30,7 @@ interface AppointmentsTableProps {
   onStartConsultation: (appointment: AppointmentWithDetails) => void;
   onViewConsultation: (appointment: AppointmentWithDetails) => void;
   onCreateBill: (appointment: AppointmentWithDetails) => void;
+  activeClinicRole?: string | null;
   cancelLoading?: boolean;
 }
 
@@ -42,6 +44,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
   cancelLoading = false,
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Scheduled': return 'bg-blue-100 text-blue-800';
@@ -158,10 +161,19 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onViewConsultation(appointment)}
-                      title="View Notes"
+                      onClick={() => {
+                        // Associated doctors can edit completed consultations
+                        if (appointment.doctor_user_id === user?.id) {
+                          // Navigate to consultation page for editing
+                          navigate(`/consultation/${appointment.id}`);
+                        } else {
+                          // Staff and other doctors can only view
+                          onViewConsultation(appointment);
+                        }
+                      }}
+                      title={appointment.doctor_user_id === user?.id ? "Edit Notes" : "View Notes"}
                     >
-                      <span>View Notes</span>
+                      <span>{appointment.doctor_user_id === user?.id ? "Edit Notes" : "View Notes"}</span>
                     </Button>
                   )}
 

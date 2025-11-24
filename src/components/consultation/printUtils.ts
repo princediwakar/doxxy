@@ -6,12 +6,12 @@ import React from 'react';
 
 // Flexible doctor type that works with both profiles and doctors table
 type DoctorInfo = {
-  name?: string;
-  email?: string;
-  phone?: string;
-  qualification?: string;
-  registration_number?: string;
-  specialization?: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  qualification?: string | null;
+  registration_number?: string | null;
+  specialization?: string | null;
   // allow any additional fields without using `any`
   [key: string]: unknown;
 };
@@ -45,8 +45,8 @@ export const generatePrintContent = (
   formData: ConsultationFormValues['specialty_data'],
   patient: Patient,
   appointment: AppointmentRow | null,
-  clinicDetails: Clinic | null,
-  doctorDetails: DoctorInfo | null,
+  clinicDetails: Clinic | null | undefined,
+  doctorDetails: DoctorInfo | null | undefined,
   user: SupabaseUser | null,
   departmentType: string = 'General'
 ) => {
@@ -233,8 +233,8 @@ export const printConsultation = async (
   formData: ConsultationFormValues['specialty_data'],
   patient: Patient,
   appointment: AppointmentRow | null,
-  clinicDetails: Clinic | null,
-  doctorDetails: DoctorInfo | null,
+  clinicDetails: Clinic | null | undefined,
+  doctorDetails: DoctorInfo | null | undefined,
   user: SupabaseUser | null,
   departmentType: string = 'General'
 ) => {

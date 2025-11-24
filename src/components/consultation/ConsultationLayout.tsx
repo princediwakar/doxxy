@@ -316,13 +316,6 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
             </div>
 
             <div className="doctor-details space-y-2 text-xs text-gray-700">
-              {doctorInfo?.phone && (
-                <div className="contact-row flex items-center justify-end gap-3">
-                  <span className="font-medium">{doctorInfo.phone}</span>
-                  <Phone className="h-4 w-4 text-green-500 shrink-0" />
-                </div>
-              )}
-              
               {doctorInfo?.email && (
                 <div className="contact-row flex items-center justify-end gap-3">
                   <span className="font-medium">{doctorInfo.email}</span>

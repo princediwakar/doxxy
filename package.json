@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --noEmit --noEmitOnError && vite build",
     "build:dev": "vite build --mode development",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --noEmitOnError",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -81,6 +81,7 @@
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/lodash-es": "^4.17.12",
     "@types/node": "^22.5.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

@@ -59,6 +59,8 @@ const fetchAppointments = async (clinicId: string | undefined, searchTerm: strin
     throw error;
   }
 
+  console.log('Appointments data from RPC:', data);
+
   let filteredData = data || [];
 
   if (searchTerm.trim()) {

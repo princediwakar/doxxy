@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -87,8 +86,8 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
             department_types(name)
           )
         `)
-        .eq('user_id', prescriptionData.doctors.user_id)
-        .eq('clinic_id', activeClinic?.clinic_id)
+        .eq('user_id', prescriptionData.doctors.user_id || '')
+        .eq('clinic_id', activeClinic?.clinic_id || '')
         .single();
 
       return {
@@ -228,7 +227,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                       </div>
                       <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        <span>Prescribed on {format(parseISO(prescriptionData.created_at), 'PPP')}</span>
+                        <span>Prescribed on {prescriptionData.created_at ? format(parseISO(prescriptionData.created_at), 'PPP') : 'Unknown date'}</span>
                       </div>
                     </>
                   )}
@@ -274,7 +273,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
             {/* Additional Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Instructions */}
-              {'instructions' in prescriptionData && prescriptionData.instructions && (
+              {('instructions' in prescriptionData && prescriptionData.instructions) ? (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
@@ -286,10 +285,10 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                     <p className="text-sm whitespace-pre-wrap">{String(prescriptionData.instructions)}</p>
                   </CardContent>
                 </Card>
-              )}
+              ) : null}
 
               {/* Follow-up */}
-              {'follow_up_date' in prescriptionData && prescriptionData.follow_up_date && (
+              {('follow_up_date' in prescriptionData && prescriptionData.follow_up_date) ? (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center space-x-2">
@@ -304,7 +303,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                     </div>
                   </CardContent>
                 </Card>
-              )}
+              ) : null}
             </div>
 
             {/* Clinic Information */}
@@ -319,11 +318,11 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="font-medium text-muted-foreground">Date Issued:</span>
-                    <p>{format(parseISO(prescriptionData.created_at), 'PPP')}</p>
+                    <p>{prescriptionData.created_at ? format(parseISO(prescriptionData.created_at), 'PPP') : 'Unknown date'}</p>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Time:</span>
-                    <p>{format(parseISO(prescriptionData.created_at), 'p')}</p>
+                    <p>{prescriptionData.created_at ? format(parseISO(prescriptionData.created_at), 'p') : 'Unknown time'}</p>
                   </div>
                 </div>
               </CardContent>

@@ -6,20 +6,7 @@
                 "-y",
                 "@supabase/mcp-server-supabase@latest",
                 "--access-token",
-                "sbp_10a08565fbedf23afbf0cc4e49cc94690f82c1c2"
-            ]
-        },
-        "playwright": {
-            "command": "npx",
-            "args": [
-              "@playwright/mcp"
-            ]
-          },
-        "context7": {
-            "command": "npx",
-            "args": [
-                "-y",
-                "@upstash/context7-mcp"
+                "sbp_62f838622178e3978bac719373584b2b7c13315d"
             ]
         }
     }

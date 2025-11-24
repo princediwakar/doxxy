@@ -107,8 +107,7 @@ const Blog = () => {
     }
   ];
 
-  const slugMap = {
-    
+  const slugMap: Record<number, string> = {
     2: "ai-transforming-healthcare-management",
     3: "telemedicine-best-practices",
     4: "patient-data-security-checklist",

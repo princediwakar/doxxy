@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Users, Stethoscope, Activity, Clock, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";

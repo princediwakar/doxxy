@@ -109,6 +109,7 @@ const Consultation = () => {
   const {
     form,
     isConsultationCompleted,
+    canEditConsultation,
     autoSaveMutation,
     handleSave,
     handleCompleteConsultation,
@@ -209,7 +210,7 @@ const Consultation = () => {
                     )}
                   expandedFields={expandedFields}
                   setExpandedFields={setExpandedFields}
-                  isConsultationCompleted={isConsultationCompleted}
+                  isConsultationCompleted={!canEditConsultation}
                 />
               ))}
             </CardContent>
@@ -249,6 +250,7 @@ const Consultation = () => {
       <ConsultationHeader
         patient={patient}
         isConsultationCompleted={isConsultationCompleted}
+        canEditConsultation={canEditConsultation}
         autoSaveMutation={autoSaveMutation}
         mandatoryFieldsStatus={mandatoryFieldsStatus}
         onBack={() => navigate('/appointments')}

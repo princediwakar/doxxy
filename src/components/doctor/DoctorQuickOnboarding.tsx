@@ -158,7 +158,8 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         const { error: profileError } = await supabase.rpc('update_profile', {
           p_user_id: user.id,
           p_name: formData.name.trim(),
-          p_phone: formData.phone.trim() || null
+          p_phone: formData.phone.trim() || '',
+          p_email: user.email || ''
         });
         if (profileError) throw profileError;
       }

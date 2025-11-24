@@ -95,11 +95,54 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
           }
 
           // Use the get_doctors_by_clinic RPC to get doctor details
-          const { data: doctors } = await supabase.rpc('get_doctors_by_clinic', {
+          let doctors = null;
+          const { data: rpcData, error: rpcError } = await supabase.rpc('get_doctors_by_clinic', {
             clinic_id: clinicId,
           });
 
-          const doctor = doctors?.find(d => d.id === consultation.appointments.doctor_id);
+          if (!rpcError && rpcData) {
+            doctors = rpcData;
+          } else {
+            console.warn('RPC function failed, using fallback query:', rpcError?.message);
+            // Fallback to direct query if RPC fails
+            const { data: fallbackData } = await supabase
+              .from('doctors')
+              .select(`
+                id,
+                name,
+                primary_specialization,
+                clinic_members!clinic_members_user_id_fkey(
+                  department_id,
+                  clinic_departments!clinic_members_department_id_fkey(
+                    department_type_id,
+                    department_types!clinic_departments_department_type_id_fkey(name)
+                  )
+                )
+              `)
+              .eq('clinic_id', clinicId)
+              .eq('is_active', true);
+
+            doctors = fallbackData?.map((doctor: {
+              id: string;
+              name: string;
+              primary_specialization?: string;
+              clinic_members?: Array<{
+                clinic_departments?: {
+                  department_types?: {
+                    name?: string;
+                  };
+                };
+              }>;
+            }) => ({
+              id: doctor.id,
+              name: doctor.name,
+              department_name: doctor.clinic_members?.[0]?.clinic_departments?.department_types?.name ||
+                               doctor.primary_specialization ||
+                               'General Medicine'
+            })) || [];
+          }
+
+          const doctor = doctors?.find(d => d.id === consultation.appointments?.doctor_id);
 
           return {
             ...consultation,

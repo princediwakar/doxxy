@@ -20,17 +20,20 @@ interface MandatoryFieldsStatus {
 interface ConsultationHeaderProps {
   patient: Patient | null;
   isConsultationCompleted: boolean;
+  canEditConsultation: boolean;
   autoSaveMutation: AutoSaveMutation;
   mandatoryFieldsStatus: MandatoryFieldsStatus;
   onBack: () => void;
   onSave: () => void;
   onPreview: () => void;
   onComplete: () => void;
+  onPrint?: () => void;
 }
 
 export const ConsultationHeader = ({
   patient,
   isConsultationCompleted,
+  canEditConsultation,
   autoSaveMutation,
   mandatoryFieldsStatus,
   onBack,
@@ -97,11 +100,11 @@ export const ConsultationHeader = ({
 
               <Button
                 onClick={onSave}
-                disabled={autoSaveMutation.isPending || isConsultationCompleted}
+                disabled={autoSaveMutation.isPending || !canEditConsultation}
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-1"
-                title={isConsultationCompleted ? "Cannot save completed consultation" : "Save consultation"}
+                title={!canEditConsultation ? "Cannot save consultation" : "Save consultation"}
               >
                 <Save className="h-4 w-4" />
                 Save

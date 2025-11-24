@@ -175,14 +175,20 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     enabled: !!selectedAppointment?.doctor_id && mode !== 'view',
   });
 
-  // Watch form values for calculations  
-  const serviceItems = form.watch('service_items') || [];
-  const discountPercentage = form.watch('discount_percentage') || 0;
-  const taxPercentage = form.watch('tax_percentage') || 0;
-
   // Calculate totals
   const calculateTotals = useMemo(() => {
-    const subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+    const serviceItems = form.watch('service_items') || [];
+    const discountPercentage = form.watch('discount_percentage') || 0;
+    const taxPercentage = form.watch('tax_percentage') || 0;
+
+    // In view mode, use the stored bill amount as fallback
+    let subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+    // If subtotal is 0 in view mode and we have a bill with amount, use the bill amount
+    if (mode === 'view' && bill?.amount && subtotal === 0) {
+      subtotal = Number(bill.amount);
+    }
+
     const discountAmount = subtotal * (discountPercentage / 100);
     const subtotalAfterDiscount = subtotal - discountAmount;
     const taxAmount = subtotalAfterDiscount * (taxPercentage / 100);
@@ -195,7 +201,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
       taxAmount,
       total,
     };
-  }, [serviceItems, discountPercentage, taxPercentage]);
+  }, [form, mode, bill]);
 
   // Service item management
   const addServiceItem = () => {

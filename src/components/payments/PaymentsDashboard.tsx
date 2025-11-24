@@ -157,7 +157,7 @@ export const PaymentsDashboard: React.FC = () => {
                         {transaction.transaction_type === 'credit_purchase' ? 'Credit Purchase' : 'Monthly Billing'}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {format(new Date(transaction.created_at), 'MMM dd, yyyy • h:mm a')}
+                        {format(new Date(transaction.created_at || ''), 'MMM dd, yyyy • h:mm a')}
                       </div>
                       {transaction.credits_purchased && (
                         <div className="text-sm text-blue-600">

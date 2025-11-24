@@ -1,4 +1,3 @@
-import React from "react";
 import { useAuthFlow } from "@/hooks/useAuth";
 import { AuthCard } from "@/components/auth/AuthFlows";
 

@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, Check, Star, Zap } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { CreditCard, Check, Star, Zap, IndianRupee } from 'lucide-react';
 import { usePayments, CreditPackage } from '@/hooks/usePayments';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -73,6 +75,8 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   const { user, activeClinic } = useAuth();
 
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
+  const [customAmount, setCustomAmount] = useState<string>('');
+  const [isCustomAmountSelected, setIsCustomAmountSelected] = useState(false);
   const [, setIsRazorpayLoaded] = useState(false);
 
   // Fetch user profile data to get phone number
@@ -119,15 +123,41 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     }
   }, [open]);
 
-  const handlePurchase = async (creditPackage: CreditPackage) => {
+  const handlePurchase = async (creditPackage?: CreditPackage) => {
     setIsProcessingPayment(true);
-    setSelectedPackage(creditPackage);
+
+    let packageId: string;
+    let amount: number;
+    let credits: number;
+
+    if (creditPackage) {
+      // Purchase from predefined package
+      setSelectedPackage(creditPackage);
+      packageId = creditPackage.id;
+      amount = creditPackage.amount;
+      credits = creditPackage.credits;
+    } else {
+      // Purchase custom amount
+      const customAmountNum = parseInt(customAmount);
+      if (!customAmountNum || customAmountNum < 100) {
+        toast.error('Invalid amount', {
+          description: 'Please enter a valid amount (minimum ₹100)'
+        });
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      packageId = 'custom';
+      amount = customAmountNum;
+      // Calculate credits based on the Professional package rate (₹10 per credit)
+      credits = Math.floor(amount / 10);
+    }
 
     try {
       const { transaction, order } = await createRazorpayOrder.mutateAsync({
-        packageId: creditPackage.id,
-        amount: creditPackage.amount,
-        credits: creditPackage.credits,
+        packageId,
+        amount,
+        credits,
       });
 
       // Initialize Razorpay payment
@@ -136,7 +166,9 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
         amount: order.amount,
         currency: order.currency,
         name: 'Doxxy Healthcare',
-        description: `${creditPackage.name} - ${creditPackage.credits} appointment credits`,
+        description: creditPackage
+          ? `${creditPackage.name} - ${creditPackage.credits} appointment credits`
+          : `Custom amount - ${credits} appointment credits`,
         image: 'https://doxxy.neurovisionhospital.com/logo.svg', // Use absolute HTTPS URL instead of relative path
         order_id: order.id,
         handler: async (response: RazorpayResponse) => {
@@ -145,13 +177,13 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
               transactionId: transaction.id,
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature,
-              credits: creditPackage.credits,
+              credits,
             });
-            
+
             toast.success('Payment successful!', {
-              description: `${creditPackage.credits} credits have been added to your account.`,
+              description: `${credits} credits have been added to your account.`,
             });
-            
+
             onOpenChange(false);
           } catch (error) {
             console.error('Payment verification failed:', error);
@@ -167,7 +199,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
         },
         notes: {
           clinic_id: activeClinic?.clinic_id || '',
-          package_id: creditPackage.id,
+          package_id: packageId,
         },
         theme: {
           color: '#3B82F6',
@@ -176,6 +208,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
           ondismiss: () => {
             setIsProcessingPayment(false);
             setSelectedPackage(null);
+            setIsCustomAmountSelected(false);
             // Restore our modal when Razorpay is dismissed
             onOpenChange(true);
             toast('Payment cancelled', {
@@ -214,6 +247,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
       
       setIsProcessingPayment(false);
       setSelectedPackage(null);
+      setIsCustomAmountSelected(false);
     }
   };
 
@@ -251,7 +285,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm">Per appointment</span>
-            <span className="font-semibold">₹{(pkg.amount / pkg.credits).toFixed(2)}</span>
+            <span className="font-semibold">₹{(pkg.amount / pkg.credits)}</span>
           </div>
           <Separator />
           <div className="space-y-2">
@@ -272,7 +306,11 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
         
         <Button
           className="w-full mt-6"
-          onClick={() => handlePurchase(pkg)}
+          onClick={() => {
+            handlePurchase(pkg);
+            setIsCustomAmountSelected(false);
+            setCustomAmount('');
+          }}
           disabled={isProcessingPayment}
           variant={pkg.popular ? 'default' : 'outline'}
         >
@@ -310,6 +348,66 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
           {creditPackages.map((pkg) => (
             <PackageCard key={pkg.id} package={pkg} />
           ))}
+        </div>
+
+        {/* Custom Amount Option */}
+        <div className="mt-6">
+          <Separator className="mb-6" />
+          <div className="text-center mb-4">
+            <h3 className="text-lg font-semibold mb-2">Or Enter Custom Amount</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Purchase any amount of credits (minimum ₹100)
+            </p>
+          </div>
+
+          <div className="max-w-md mx-auto space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="custom-amount" className="text-sm font-medium">
+                Enter Amount (₹)
+              </Label>
+              <div className="relative">
+                <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  id="custom-amount"
+                  type="number"
+                  placeholder="500"
+                  min="100"
+                  step="100"
+                  value={customAmount}
+                  onChange={(e) => {
+                    setCustomAmount(e.target.value);
+                    setIsCustomAmountSelected(!!e.target.value);
+                    setSelectedPackage(null);
+                  }}
+                  className="pl-10"
+                />
+              </div>
+              {customAmount && (
+                <div className="text-sm text-muted-foreground">
+                  You'll receive {Math.floor(parseInt(customAmount) / 10)} credits
+                </div>
+              )}
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={() => handlePurchase()}
+              disabled={isProcessingPayment || !customAmount || parseInt(customAmount) < 100}
+              variant="outline"
+            >
+              {isProcessingPayment && isCustomAmountSelected ? (
+                <>
+                  <Zap className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Purchase Custom Amount
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Payment Info */}

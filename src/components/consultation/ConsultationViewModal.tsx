@@ -21,7 +21,30 @@ const supabase = getSupabase();
 
 // Types
 type Consultation = Database['public']['Tables']['consultations']['Row'];
-type DoctorDetails = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+
+// Interface for transformed doctor data
+interface TransformedDoctorData {
+  id: string;
+  name: string;
+  department_name: string;
+  phone: string | null;
+  email: string | null;
+  bio: string | null;
+  user_id?: string; // Optional since we might not have it in transformed data
+}
+
+// Interfaces for nested clinic member data
+interface DepartmentType {
+  name: string;
+}
+
+interface ClinicDepartment {
+  department_types: DepartmentType;
+}
+
+interface ClinicMember {
+  clinic_departments: ClinicDepartment;
+}
 
 interface ConsultationViewModalProps {
   open: boolean;
@@ -72,25 +95,79 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
   });
 
   // Fetch doctor details to determine specialty
-  const { data: doctorDetails } = useQuery<DoctorDetails[] | null>({
+  const { data: doctorDetails } = useQuery<TransformedDoctorData[] | null>({
     queryKey: ['doctorDetails', appointment?.doctor_id, activeClinic?.clinic_id],
     queryFn: async () => {
       if (!appointment?.doctor_id || !activeClinic?.clinic_id) return null;
-      const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
+
+      // Try RPC function first
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_doctors_by_clinic', {
         clinic_id: activeClinic.clinic_id,
       });
-      if (error) {
-        console.error('RPC Error:', error);
-        throw error;
+
+      if (!rpcError && rpcData) {
+        console.log('RPC function succeeded, returning data:', rpcData);
+        const doctor = rpcData?.find(d => d.id === appointment.doctor_id);
+        return doctor ? [{
+          id: doctor.id,
+          name: doctor.name,
+          department_name: doctor.department_name,
+          phone: doctor.phone,
+          email: doctor.email,
+          bio: doctor.bio,
+          user_id: doctor.user_id
+        }] : null;
       }
-      const doctor = data?.find(d => d.id === appointment.doctor_id);
+
+      console.warn('RPC function failed, using fallback query:', rpcError?.message);
+
+      // Fallback to direct query if RPC fails
+      const { data: fallbackData } = await supabase
+        .from('doctors')
+        .select(`
+          id,
+          name,
+          primary_specialization,
+          phone,
+          email,
+          bio,
+          clinic_members!clinic_members_user_id_fkey(
+            department_id,
+            clinic_departments!clinic_members_department_id_fkey(
+              department_type_id,
+              department_types!clinic_departments_department_type_id_fkey(name)
+            )
+          )
+        `)
+        .eq('clinic_id', activeClinic.clinic_id)
+        .eq('is_active', true);
+
+      const transformedData = fallbackData?.map((doctor) => {
+        // Type-safe access to nested clinic_members data
+        const clinicMember = doctor.clinic_members?.[0] as unknown as ClinicMember | undefined;
+        const departmentType = clinicMember?.clinic_departments?.department_types;
+
+        return {
+          id: doctor.id,
+          name: doctor.name,
+          department_name: departmentType?.name ||
+                           doctor.primary_specialization ||
+                           'General Medicine',
+          phone: doctor.phone,
+          email: doctor.email,
+          bio: doctor.bio
+        };
+      }) || [];
+
+      const doctor = transformedData?.find(d => d.id === appointment.doctor_id);
       return doctor ? [doctor] : null;
     },
     enabled: open && !!appointment?.doctor_id && !!activeClinic?.clinic_id,
   });
 
   // Determine department and get field configs
-  const departmentType = doctorDetails?.[0]?.department_name || 'General';
+  const firstDoctor = doctorDetails && doctorDetails.length > 0 ? doctorDetails[0] : null;
+  const departmentType = firstDoctor?.department_name || 'General';
 
   // Get consultation specialty data
   const specialtyData = consultationData?.specialty_data &&
@@ -127,13 +204,13 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
 
   // Prepare doctor info
   const doctorInfo = {
-    name: doctorDetails?.[0]?.name || appointment?.doctor_name || user?.user_metadata?.full_name || 'Doctor Name',
-    specialization: doctorDetails?.[0]?.department_name || departmentType,
+    name: firstDoctor?.name || appointment?.doctor_name || user?.user_metadata?.full_name || 'Doctor Name',
+    specialization: firstDoctor?.department_name || departmentType,
     qualification: '', // Default qualification
     registration_number: '', // Not available in current database schema
-    phone: doctorDetails?.[0]?.phone || '',
-    email: doctorDetails?.[0]?.email || user?.email || '',
-    bio: doctorDetails?.[0]?.bio || ''
+    phone: firstDoctor?.phone || '',
+    email: firstDoctor?.email || user?.email || '',
+    bio: firstDoctor?.bio || ''
   };
 
   // Get field sections for the department

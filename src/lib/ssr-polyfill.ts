@@ -9,7 +9,7 @@ export const useIsomorphicLayoutEffect =
 // Global polyfill for production builds where React hooks might be undefined
 if (typeof window !== 'undefined' && typeof window.React === 'undefined') {
   import('react').then((React) => {
-    (window as any).React = React;
+    window.React = React.default;
   }).catch(() => {
     // Silently fail if React cannot be loaded
   });

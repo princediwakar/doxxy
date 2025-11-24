@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { format } from 'date-fns';
 import { CalendarIcon, Plus } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm, ControllerRenderProps } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -137,8 +137,8 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       time: appointment?.time || getNextTimeSlot(),
       patient_id: appointment?.patient_id || patient?.id || '',
       doctor_id: appointment?.doctor_id || '',
-      type: appointment ? appointment.type : "Walk-in",
-      status: appointment ? appointment.status : "Scheduled",
+      type: appointment?.type || "Walk-in",
+      status: appointment?.status || "Scheduled",
       notes: appointment?.notes || '',
     },
   });
@@ -152,8 +152,8 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         time: appointment?.time || getNextTimeSlot(),
         patient_id: appointment?.patient_id || patient?.id || '',
         doctor_id: appointment?.doctor_id || '',
-        type: appointment ? appointment.type : "Walk-in",
-        status: appointment ? appointment.status : "Scheduled",
+        type: appointment?.type || "Walk-in",
+        status: appointment?.status || "Scheduled",
         notes: appointment?.notes || '',
       };
       form.reset(defaultValues);
@@ -178,7 +178,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   });
 
   // Filter patients by search
-  const filteredPatients = (patients || []).filter((p) =>
+  const filteredPatients = (patients || []).filter((p: Patient) =>
     p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ?? false
   );
 
@@ -193,6 +193,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
       });
 
       if (!rpcError && rpcData) {
+        console.log('RPC function succeeded, returning data:', rpcData);
         return rpcData;
       }
 
@@ -212,7 +213,14 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           is_active,
           primary_specialization,
           consultation_fee,
-          profiles!doctors_user_id_fkey(name, email, phone)
+          profiles!doctors_user_id_fkey(name, email, phone),
+          clinic_members!clinic_members_user_id_fkey(
+            department_id,
+            clinic_departments!clinic_members_department_id_fkey(
+              department_type_id,
+              department_types!clinic_departments_department_type_id_fkey(name)
+            )
+          )
         `)
         .eq('clinic_id', activeClinic.clinic_id)
         .eq('is_active', true);
@@ -222,40 +230,70 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         throw new Error('Failed to fetch doctors');
       }
 
-      // Transform the data to match expected format
-      const transformedData = fallbackData?.map(doctor => ({
-        id: doctor.id,
-        user_id: doctor.user_id,
-        name: doctor.name || doctor.profiles?.name || 'Unknown Doctor',
-        email: doctor.email || doctor.profiles?.email || '',
-        phone: doctor.phone || doctor.profiles?.phone || '',
-        bio: doctor.bio,
-        created_at: doctor.created_at,
-        role: 'doctor',
-        department_name: doctor.primary_specialization || 'General Medicine',
-        department_id: null,
-        is_active: doctor.is_active,
-        primary_specialization: doctor.primary_specialization,
-        medical_specializations: [],
-        years_of_experience: null,
-        consultation_fee: doctor.consultation_fee,
-        languages_spoken: [],
-        practice_timings: null,
-        professional_summary: null,
-        medical_registration_number: null,
-        medical_qualifications: [],
-        medical_council: null,
-        medical_license_state: null,
-        medical_license_expiry: null,
-        subspecialty: [],
-        board_certifications: [],
-        fellowship_details: null,
-        medical_college: null,
-        graduation_year: null,
-        clinic_timings: null
-      })) || [];
+      console.log('Fallback query data:', fallbackData);
 
-      return transformedData;
+      // Transform the data to match expected format
+      const transformedData = fallbackData?.map((doctor: unknown) => {
+        const doctorData = doctor as {
+          id: string;
+          user_id: string;
+          name: string;
+          email: string;
+          phone: string;
+          bio: string;
+          created_at: string;
+          is_active: boolean;
+          primary_specialization: string;
+          consultation_fee: number;
+          profiles?: { name?: string; email?: string; phone?: string };
+          clinic_members?: Array<{
+            department_id: string;
+            clinic_departments?: {
+              department_type_id: string;
+              department_types?: { name: string };
+            };
+          }>;
+        };
+
+        // Extract department name from nested joins
+        const departmentName = doctorData.clinic_members?.[0]?.clinic_departments?.department_types?.name ||
+                              doctorData.primary_specialization ||
+                              'General Medicine';
+
+        return {
+          id: doctorData.id,
+          user_id: doctorData.user_id,
+          name: doctorData.name || doctorData.profiles?.name || 'Unknown Doctor',
+          email: doctorData.email || doctorData.profiles?.email || '',
+          phone: doctorData.phone || doctorData.profiles?.phone || '',
+          bio: doctorData.bio,
+          created_at: doctorData.created_at,
+          role: 'doctor',
+          department_name: departmentName,
+          department_id: doctorData.clinic_members?.[0]?.department_id || null,
+          is_active: doctorData.is_active,
+          primary_specialization: doctorData.primary_specialization,
+          medical_specializations: [],
+          years_of_experience: null,
+          consultation_fee: doctorData.consultation_fee,
+          languages_spoken: [],
+          practice_timings: null,
+          professional_summary: null,
+          medical_registration_number: null,
+          medical_qualifications: [],
+          medical_council: null,
+          medical_license_state: null,
+          medical_license_expiry: null,
+          subspecialty: [],
+          board_certifications: [],
+          fellowship_details: null,
+          medical_college: null,
+          graduation_year: null,
+          clinic_timings: null
+        };
+      }) || [];
+
+      return transformedData as Doctor[];
     },
     enabled: open && !!activeClinic?.clinic_id,
   });
@@ -346,7 +384,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   }, [newlyCreatedPatient]);
 
   useEffect(() => {
-    if (pendingPatientId && patients?.some(p => p.id === pendingPatientId)) {
+    if (pendingPatientId && patients?.some((p: Patient) => p.id === pendingPatientId)) {
       form.setValue("patient_id", pendingPatientId);
       setPendingPatientId(null);
     }
@@ -371,7 +409,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               <FormField
                 control={form.control}
                 name="patient_id"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<AppointmentFormValues, 'patient_id'> }) => (
                   <FormItem className="md:col-span-2">
                     <div className="flex justify-between mb-1">
                     <FormLabel>Patient</FormLabel>
@@ -400,11 +438,11 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                             type="text"
                             placeholder="Search patients..."
                             value={patientSearch}
-                            onChange={e => setPatientSearch(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPatientSearch(e.target.value)}
                             className="mb-2"
                           />
                         </div>
-                        {filteredPatients.map((p) => (
+                        {filteredPatients.map((p: Patient) => (
                           <SelectItem key={p.id} value={p.id}>
                             {p.name}
                           </SelectItem>
@@ -456,7 +494,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               <FormField
                 control={form.control}
                 name="time"
-                render={({ field }) => (
+                render={({ field }: { field: ControllerRenderProps<AppointmentFormValues, 'time'> }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Time</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value || ''}>
@@ -505,7 +543,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
-                        disabled={(date) => date < new Date("1900-01-01")}
+                        disabled={(date: Date) => date < new Date("1900-01-01")}
                         captionLayout="dropdown"
                       />
                     </PopoverContent>
@@ -619,7 +657,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           open={isPatientModalOpen}
           onOpenChange={setIsPatientModalOpen}
           patient={null}
-          onPatientCreated={(newPatient) => {
+          onPatientCreated={(newPatient: Patient) => {
             setNewlyCreatedPatient(newPatient);
             setPendingPatientId(newPatient.id);
             form.setValue('patient_id', newPatient.id);

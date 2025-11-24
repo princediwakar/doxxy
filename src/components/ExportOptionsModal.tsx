@@ -90,7 +90,7 @@ export function ExportOptionsModal({
       }).length;
 
       prescriptionCount = patient.prescriptions.filter(prescription => {
-        const prescriptionDate = new Date(prescription.created_at);
+        const prescriptionDate = new Date(prescription.created_at || new Date().toISOString());
         return prescriptionDate >= from && prescriptionDate <= to;
       }).length;
     }

@@ -3,13 +3,17 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
 // --- MODULAR COMPONENTS ---
-const CTAHeader = ({ children }) => (
+interface CTAProps {
+  children: React.ReactNode;
+}
+
+const CTAHeader = ({ children }: CTAProps) => (
     <h2 className="text-4xl lg:text-5xl font-semibold text-gray-900 mb-6 leading-tight">
         {children}
     </h2>
 );
 
-const CTADescription = ({ children }) => (
+const CTADescription = ({ children }: CTAProps) => (
     <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
         {children}
     </p>
@@ -23,7 +27,7 @@ const CTAButtons = () => (
     </div>
 );
 
-const CTAAssuranceText = ({ children }) => (
+const CTAAssuranceText = ({ children }: CTAProps) => (
     <p className="text-sm mt-4 text-gray-500">
         {children}
     </p>

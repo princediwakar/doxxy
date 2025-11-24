@@ -42,7 +42,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: 'Senior',
     name: 'Senior Pack',
     credits: 200,
-    amount: 1800,
+    amount: 2000,
     description: '200 appointments',
     popular: true,
   },
@@ -50,7 +50,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: 'Professional',
     name: 'Professional Pack',
     credits: 1000,
-    amount: 9000,
+    amount: 10000,
     description: '1000 appointments',
     // savings: 'Save ₹1000'
   }

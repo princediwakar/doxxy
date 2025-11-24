@@ -13,8 +13,8 @@ import { isEqual } from 'lodash-es';
 
 export const useConsultationForm = (
   appointmentId: string | undefined,
-  appointment: Tables<'appointments'> | null,
-  existingConsultation: Tables<'consultations'> | null,
+  appointment: Tables<'appointments'> | null | undefined,
+  existingConsultation: Tables<'consultations'> | null | undefined,
   onConsultationCompleted?: () => void,
   departmentType?: string
 ) => {
@@ -28,6 +28,17 @@ export const useConsultationForm = (
   const [isConsultationCompleted, setIsConsultationCompleted] = useState(
     appointment?.status === 'Completed'
   );
+
+  // Check if current user is the associated doctor
+  const isAssociatedDoctor = useMemo(() => {
+    return appointment?.doctor_id && user?.id &&
+           appointment.doctor_id === user.id;
+  }, [appointment?.doctor_id, user?.id]);
+
+  // Allow editing if user is the associated doctor, even for completed consultations
+  const canEditConsultation = useMemo(() => {
+    return !isConsultationCompleted || isAssociatedDoctor;
+  }, [isConsultationCompleted, isAssociatedDoctor]);
   
   // Initialize form with existing data
   const defaultValues: ConsultationFormValues = useMemo(() => ({
@@ -59,8 +70,8 @@ export const useConsultationForm = (
       
       const consultationData = {
         appointment_id: appointmentId,
-        patient_id: appointment.patient_id,
-        doctor_id: appointment.doctor_id || user?.id,
+        patient_id: appointment?.patient_id || '',
+        doctor_id: appointment?.doctor_id || user?.id || '',
         clinic_id: activeClinic.clinics?.id,
         specialty_data: data.specialty_data,
       };
@@ -103,8 +114,8 @@ export const useConsultationForm = (
         if (validPrescriptions.length > 0) {
           const prescriptionsData = validPrescriptions.map((med: PrescriptionMedication) => ({
           consultation_id: result.id,
-          patient_id: appointment.patient_id,
-          doctor_id: appointment.doctor_id || user?.id,
+          patient_id: appointment?.patient_id || '',
+          doctor_id: appointment?.doctor_id || user?.id || '',
           clinic_id: activeClinic.clinics?.id,
           medications: [med] as unknown as Json,
         }));
@@ -151,7 +162,7 @@ export const useConsultationForm = (
 
   // Auto-save with debounce and deep comparison
   useEffect(() => {
-    if (isConsultationCompleted) return; // Don't auto-save completed consultations
+    if (!canEditConsultation) return; // Don't auto-save if editing is not allowed
     
     // Clear any existing timeout
     if (autoSaveTimeoutRef.current) {
@@ -183,14 +194,16 @@ export const useConsultationForm = (
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [formValues, isConsultationCompleted, autoSaveMutation, form]);
+  }, [formValues, isConsultationCompleted, autoSaveMutation, form, canEditConsultation]);
 
-  // Manual save (only if consultation not completed)
+  // Manual save (only if editing is allowed)
   const handleSave = useCallback(() => {
-    if (isConsultationCompleted) {
+    if (!canEditConsultation) {
       toast({
         title: 'Cannot Save',
-        description: 'This consultation has been completed and cannot be modified.',
+        description: isAssociatedDoctor
+          ? 'You do not have permission to edit this consultation.'
+          : 'This consultation has been completed and cannot be modified.',
         variant: 'destructive',
       });
       return;
@@ -198,7 +211,7 @@ export const useConsultationForm = (
     
     const formValues = form.getValues();
     autoSaveMutation.mutate(formValues);
-  }, [form, autoSaveMutation, isConsultationCompleted]);
+  }, [form, autoSaveMutation, canEditConsultation, isAssociatedDoctor]);
 
   // Validate mandatory fields before completion
   const validateMandatoryFields = useCallback(() => {
@@ -318,6 +331,7 @@ export const useConsultationForm = (
   return {
     form,
     isConsultationCompleted,
+    canEditConsultation,
     autoSaveMutation,
     handleSave,
     handleCompleteConsultation,

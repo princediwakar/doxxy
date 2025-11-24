@@ -11,18 +11,19 @@ import { Patient, Prescription, Consultation, PrescriptionMedication } from './t
 import { Tables } from '@/integrations/supabase/types';
 import { getAge } from '@/lib/utils';
 
-interface DepartmentInfo {
-  clinic_departments?: {
-    department_types?: {
-      name?: string | null;
+type DepartmentInfo = {
+  department_id: string | null;
+  clinic_departments: {
+    department_types: {
+      name: string;
     } | null;
   } | null;
-}
+} | null | undefined
 
 interface PatientSidebarProps {
   patient: Patient;
   appointment: Tables<'appointments'> | null;
-  departmentInfo: DepartmentInfo | null;
+  departmentInfo: DepartmentInfo | null | undefined;
   previousConsultations: Consultation[];
   recentPrescriptions: Prescription[];
 }

@@ -43,7 +43,7 @@ const clinicDetailsSchema = z.object({
     const domainPattern = /^[\da-z.-]+\.([a-z.]{2,6})$/i;
     
     return websitePattern.test(val) || domainPattern.test(val);
-  }, { message: "Please enter a valid website (e.g., example.com or https://example.com)" }),
+  }, { message: "Please enter a valid website (example.com or https://example.com)" }),
 });
 
 type ClinicDetailsForm = z.infer<typeof clinicDetailsSchema>;
@@ -175,7 +175,7 @@ const CreateClinicPage = () => {
       const { data: clinicResult, error: clinicError } = await supabase
         .rpc('create_clinic_with_admin', {
           clinic_name: clinicDetails.name,
-          user_phone: user.phone || null
+          user_phone: user.phone || undefined
         })
         .single();
 
@@ -330,7 +330,7 @@ const CreateClinicPage = () => {
                   <FormItem>
                     <FormLabel>Clinic Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Neurovision" {...field} />
+                      <Input placeholder="Neurovision" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -341,9 +341,9 @@ const CreateClinicPage = () => {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address</FormLabel>
+                    <FormLabel>Clinic Address</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., 123, Connaught Place, New Delhi" {...field} />
+                      <Input placeholder="123, Connaught Place, New Delhi" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -354,9 +354,9 @@ const CreateClinicPage = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Clinic Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="e.g., email@clinic.com" {...field} />
+                      <Input type="email" placeholder="email@clinic.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -367,9 +367,9 @@ const CreateClinicPage = () => {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone</FormLabel>
+                    <FormLabel>Clinic Phone</FormLabel>
                     <FormControl>
-                      <Input type="tel" placeholder="e.g., 98765 43210" {...field} />
+                      <Input type="tel" placeholder="9876543210" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -382,7 +382,7 @@ const CreateClinicPage = () => {
                   <FormItem>
                     <FormLabel>Website</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="e.g., www.clinic.com" {...field} />
+                      <Input type="text" placeholder="www.clinic.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -573,7 +573,7 @@ const CreateClinicPage = () => {
                         <FormItem>
                           <FormLabel>Professional Phone</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., +91 98765 43210" {...field} />
+                            <Input placeholder="+91 98765 43210" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -588,7 +588,7 @@ const CreateClinicPage = () => {
                           <FormLabel>Professional Bio (Optional)</FormLabel>
                           <FormControl>
                             <Textarea 
-                              placeholder="e.g., Specialist in cardiology with 10+ years of experience..."
+                              placeholder="Specialist in cardiology with 10+ years of experience..."
                               className="min-h-[80px]"
                               {...field} 
                             />
