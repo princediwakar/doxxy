@@ -160,4 +160,51 @@ sleep 3 && curl -f http://localhost:8080 || echo "Frontend not ready"
 
 ---
 
+## 🔒 BACKUP SAFETY PROTOCOL
+
+### Mandatory Backup Rules
+
+**WHEN TO CREATE BACKUPS:**
+- Before editing any file with unstaged git changes
+- Before significant refactoring operations
+- When user explicitly requests backup
+- Before making changes to files with complex logic
+
+**WHEN NOT TO CREATE BACKUPS:**
+- Simple one-line changes (comments, minor fixes)
+- Files without existing changes
+- When user explicitly says not to backup
+
+**BACKUP WORKFLOW:**
+1. Check if file has unstaged changes: `git status --porcelain <file>`
+2. If changes exist, create backup: `source .claude/backup-utils.sh && backup_file <file_path>`
+3. Make edits to original file
+4. Clean up backups before git commit: `source .claude/backup-utils.sh && clean_backups`
+
+**BACKUP MANAGEMENT:**
+- Single `.bak` file per original file (replaces existing)
+- Clean all backups before any git commit
+- Manual restoration available: `restore_backup <file_path>`
+- List current backups: `list_backups`
+
+### Backup Utility Commands
+```bash
+# Load backup utilities
+source .claude/backup-utils.sh
+
+# Create backup before editing
+backup_file "src/components/SomeComponent.tsx"
+
+# Restore from backup if needed
+restore_backup "src/components/SomeComponent.tsx"
+
+# List current backups
+list_backups
+
+# Clean all backups (MANDATORY before commits)
+clean_backups
+```
+
+---
+
 **Core Philosophy**: Think first, code second, test everything, log comprehensively, leverage AI effectively.
