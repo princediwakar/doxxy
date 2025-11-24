@@ -79,6 +79,16 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   const [isCustomAmountSelected, setIsCustomAmountSelected] = useState(false);
   const [, setIsRazorpayLoaded] = useState(false);
 
+  // Set Senior pack as default selected package
+  useEffect(() => {
+    if (creditPackages.length > 0 && !selectedPackage) {
+      const seniorPackage = creditPackages.find(pkg => pkg.id === 'Senior');
+      if (seniorPackage) {
+        setSelectedPackage(seniorPackage);
+      }
+    }
+  }, [creditPackages, selectedPackage]);
+
   // Fetch user profile data to get phone number
   const { data: userProfile } = useQuery({
     queryKey: ['user-profile', user?.id],
@@ -252,11 +262,17 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   };
 
   const PackageCard: React.FC<{ package: CreditPackage }> = ({ package: pkg }) => (
-    <Card className={cn(
-      'relative cursor-pointer transition-all duration-200 hover:shadow-lg',
-      pkg.popular && 'ring-2 ring-blue-500 ring-offset-2',
-      selectedPackage?.id === pkg.id && 'ring-2 ring-blue-500'
-    )}>
+    <Card
+      className={cn(
+        'relative cursor-pointer transition-all duration-200 hover:shadow-lg',
+        selectedPackage?.id === pkg.id && 'ring-2 ring-blue-500'
+      )}
+      onClick={() => {
+        setSelectedPackage(pkg);
+        setIsCustomAmountSelected(false);
+        setCustomAmount('');
+      }}
+    >
       {pkg.popular && (
         <Badge className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white">
           <Star className="w-3 h-3 mr-1" />
@@ -284,8 +300,8 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             <span className="font-semibold">{pkg.credits}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm">Per appointment</span>
-            <span className="font-semibold">₹{(pkg.amount / pkg.credits)}</span>
+            <span className="text-sm">Per consultation</span>
+            <span className="font-semibold">₹{Math.ceil((pkg.amount / pkg.credits))}</span>
           </div>
           <Separator />
           <div className="space-y-2">
@@ -308,11 +324,9 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
           className="w-full mt-6"
           onClick={() => {
             handlePurchase(pkg);
-            setIsCustomAmountSelected(false);
-            setCustomAmount('');
           }}
           disabled={isProcessingPayment}
-          variant={pkg.popular ? 'default' : 'outline'}
+          variant={selectedPackage?.id === pkg.id ? 'default' : 'outline'}
         >
           {isProcessingPayment && selectedPackage?.id === pkg.id ? (
             <>
@@ -384,7 +398,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
               </div>
               {customAmount && (
                 <div className="text-sm text-muted-foreground">
-                  You'll receive {Math.floor(parseInt(customAmount) / 10)} credits
+                  You'll receive {Math.ceil(parseInt(customAmount) / 10)} credits
                 </div>
               )}
             </div>

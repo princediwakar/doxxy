@@ -35,14 +35,14 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: 'Junior',
     name: 'Junior Pack',
     credits: 50,
-    amount: 500,
+    amount: 499,
     description: '50 appointments',
   },
   {
     id: 'Senior',
     name: 'Senior Pack',
     credits: 200,
-    amount: 2000,
+    amount: 1999,
     description: '200 appointments',
     popular: true,
   },
@@ -50,7 +50,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     id: 'Professional',
     name: 'Professional Pack',
     credits: 1000,
-    amount: 10000,
+    amount: 9999,
     description: '1000 appointments',
     // savings: 'Save ₹1000'
   }
@@ -89,14 +89,35 @@ export const usePayments = () => {
       
       if (pendingError) throw pendingError;
       
-      // For now, we'll assume no credits have been used yet (since we don't have appointment tracking)
-      // In a real system, this would come from appointment records
-      const totalCreditsUsed = 0;
+      // Count credits used from appointments that have started consultations
+      const { data: appointments, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('id, status')
+        .eq('clinic_id', activeClinic.clinic_id)
+        .in('status', ['In Progress', 'Completed']);
+
+      if (appointmentsError) throw appointmentsError;
+
+      // Each consultation uses 1 credit (only when status is In Progress or Completed)
+      const totalCreditsUsed = appointments?.length || 0;
       const creditBalance = totalCreditsPurchased - totalCreditsUsed;
       
-      // Get current month data (placeholder for now)
-      const currentMonthAppointments = 0;
-      const currentMonthAmount = 0;
+      // Get current month consultations (appointments that have started)
+      const currentMonthStart = new Date();
+      currentMonthStart.setDate(1);
+      currentMonthStart.setHours(0, 0, 0, 0);
+
+      const { data: currentMonthAppointmentsData, error: currentMonthError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('clinic_id', activeClinic.clinic_id)
+        .in('status', ['In Progress', 'Completed'])
+        .gte('created_at', currentMonthStart.toISOString());
+
+      if (currentMonthError) throw currentMonthError;
+
+      const currentMonthAppointments = currentMonthAppointmentsData?.length || 0;
+      const currentMonthAmount = currentMonthAppointments; // Each consultation costs 1 credit worth
       
       return {
         credit_balance: creditBalance,
