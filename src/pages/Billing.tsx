@@ -17,9 +17,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Plus, CreditCard, IndianRupee } from "lucide-react";
+import { Search, Plus, CreditCard, IndianRupee, Edit } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BillingModal } from "@/components/billing/BillingModal";
+import { MonthSelector } from "@/components/ui/MonthSelector";
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -42,25 +43,37 @@ const Billing = () => {
   const { activeClinic } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  });
   const itemsPerPage = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(null);
+  const [modalMode, setModalMode] = useState<'create' | 'view' | 'edit'>('create');
   
   const { data: bills = [], isLoading: isLoadingBills, refetch: refetchBills } = useQuery({
-    queryKey: ['bills', activeClinic?.clinic_id],
+    queryKey: ['bills', activeClinic?.clinic_id, selectedMonth],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
+
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+
       const { data, error } = await supabase
         .from('bills')
         .select(`*, patients(name)`)
         .eq('clinic_id', activeClinic.clinic_id)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString())
         .order('created_at', { ascending: false });
       if (error) throw new Error(error.message);
-      
+
       return (data || []).map(b => {
         const { patients, ...billData } = b;
         return {
-          ...billData, 
+          ...billData,
           patient_name: patients?.name,
         };
       }) as BillWithDetails[];
@@ -69,13 +82,20 @@ const Billing = () => {
   });
 
   const { data: stats, refetch: refetchStats } = useQuery<BillingStats, Error>({
-    queryKey: ['billingStats', activeClinic?.clinic_id],
+    queryKey: ['billingStats', activeClinic?.clinic_id, selectedMonth],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return { totalRevenue: 0, totalBills: 0 };
+
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+
       const { data, error } = await supabase
         .from('bills')
         .select('amount')
-        .eq('clinic_id', activeClinic.clinic_id);
+        .eq('clinic_id', activeClinic.clinic_id)
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString());
 
       if (error) throw new Error(error.message);
 
@@ -89,11 +109,19 @@ const Billing = () => {
 
   const handleBillClick = (bill: BillWithDetails) => {
     setSelectedBill(bill);
+    setModalMode('view');
+    setIsModalOpen(true);
+  };
+
+  const handleEditBill = (bill: BillWithDetails) => {
+    setSelectedBill(bill);
+    setModalMode('edit');
     setIsModalOpen(true);
   };
 
   const handleNewBill = () => {
     setSelectedBill(null);
+    setModalMode('create');
     setIsModalOpen(true);
   };
 
@@ -179,16 +207,23 @@ const Billing = () => {
         </Card>
       </div>
 
-{/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search bills..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-border focus:ring-primary"
-            />
-          </div>
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search bills..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 border-border focus:ring-primary"
+          />
+        </div>
+
+        <MonthSelector
+          value={selectedMonth}
+          onChange={setSelectedMonth}
+        />
+      </div>
 
       <div className="border rounded-lg overflow-x-auto">
           <Table>
@@ -199,27 +234,63 @@ const Billing = () => {
               <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
               <TableHead className="w-[40%]">Description</TableHead>
+              <TableHead className="w-[80px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
             {isLoadingBills ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">Loading bills...</TableCell>
+                <TableCell colSpan={6} className="text-center">Loading bills...</TableCell>
               </TableRow>
             ) : filteredBills.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">No bills found.</TableCell>
+                <TableCell colSpan={6} className="text-center">No bills found.</TableCell>
               </TableRow>
             ) : (
               filteredBills.map((bill) => (
-                <TableRow key={bill.id} onClick={() => handleBillClick(bill)} className="cursor-pointer hover:bg-muted/50">
-                  <TableCell className="font-medium">{bill.invoice_number}</TableCell>
-                  <TableCell>{bill.patient_name || 'N/A'}</TableCell>
-                  <TableCell>{new Date(bill.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>₹{Number(bill.amount).toFixed(2)}</TableCell>
-                  <TableCell className="truncate max-w-xs">{bill.description}</TableCell>
-                  </TableRow>
-                ))
+                <TableRow key={bill.id} className="hover:bg-muted/50">
+                  <TableCell
+                    className="font-medium cursor-pointer"
+                    onClick={() => handleBillClick(bill)}
+                  >
+                    {bill.invoice_number}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer"
+                    onClick={() => handleBillClick(bill)}
+                  >
+                    {bill.patient_name || 'N/A'}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer"
+                    onClick={() => handleBillClick(bill)}
+                  >
+                    {bill.created_at ? new Date(bill.created_at).toLocaleDateString() : 'N/A'}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer"
+                    onClick={() => handleBillClick(bill)}
+                  >
+                    ₹{Number(bill.amount).toFixed(2)}
+                  </TableCell>
+                  <TableCell
+                    className="truncate max-w-xs cursor-pointer"
+                    onClick={() => handleBillClick(bill)}
+                  >
+                    {bill.description}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditBill(bill)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
               )}
             </TableBody>
           </Table>
@@ -230,7 +301,8 @@ const Billing = () => {
           open={isModalOpen}
           onOpenChange={handleModalClose}
           bill={selectedBill}
-          mode={selectedBill ? 'view' : 'create'}
+          mode={modalMode}
+          onModeChange={setModalMode}
         />
       )}
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText } from 'lucide-react';
+import { FileText, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -31,6 +31,7 @@ interface BillingModalProps {
   patient?: Patient | null;
   appointment?: Appointment | null;
   mode?: 'create' | 'view' | 'edit';
+  onModeChange?: (mode: 'create' | 'view' | 'edit') => void;
 }
 
 export const BillingModal: React.FC<BillingModalProps> = ({
@@ -40,6 +41,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   patient,
   appointment,
   mode = 'create',
+  onModeChange,
 }) => {
   const {
     form,
@@ -110,7 +112,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                         <SelectContent>
                           {patients?.map((patient) => (
                             <SelectItem key={patient.id} value={patient.id}>
-                              {patient.name} - {patient.medical_id}
+                              {patient.name} {patient.medical_id}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -307,24 +309,50 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               </div>
 
               {/* Footer Actions */}
-              {mode !== 'view' && (
-                <div className="flex justify-end gap-3 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => onOpenChange(false)}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting || calculateTotals.total <= 0}
-                  >
-                    {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update Bill' : 'Create Bill'}
-                  </Button>
-                </div>
-              )}
+              <div className="flex justify-end gap-3 pt-4">
+                {mode === 'view' ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => onOpenChange(false)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => onModeChange?.('edit')}
+                      className="flex items-center gap-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      Edit Bill
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (mode === 'edit' && bill) {
+                          onModeChange?.('view');
+                        } else {
+                          onOpenChange(false);
+                        }
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      {mode === 'edit' ? 'Cancel' : 'Cancel'}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={isSubmitting || calculateTotals.total <= 0}
+                    >
+                      {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update Bill' : 'Create Bill'}
+                    </Button>
+                  </>
+                )}
+              </div>
             </form>
           </Form>
         </ScrollArea>
