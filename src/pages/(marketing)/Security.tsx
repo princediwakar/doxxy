@@ -1,4 +1,3 @@
-import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -171,7 +170,12 @@ const dataHandling = [
 
 // --- MODULAR COMPONENTS ---
 
-const Section = ({ children, className = '' }) => (
+interface SectionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const Section = ({ children, className = '' }: SectionProps) => (
   <section className={`py-20 md:py-28 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {children}
@@ -179,13 +183,13 @@ const Section = ({ children, className = '' }) => (
   </section>
 );
 
-const SectionTitle = ({ children, className = '' }) => (
+const SectionTitle = ({ children, className = '' }: SectionProps) => (
     <h2 className={`text-4xl lg:text-5xl font-semibold text-gray-900 text-center tracking-tight ${className}`}>
         {children}
     </h2>
 );
 
-const SectionSubtitle = ({ children, className = '' }) => (
+const SectionSubtitle = ({ children, className = '' }: SectionProps) => (
     <p className={`mt-4 text-lg text-gray-600 max-w-3xl mx-auto text-center leading-relaxed ${className}`}>
         {children}
     </p>
@@ -215,13 +219,24 @@ const SecurityHeroSection = () => (
   </Section>
 );
 
-const SecurityCertificationsSection = ({ certifications }) => (
+interface Certification {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  status: string;
+}
+
+interface SecurityCertificationsSectionProps {
+  certifications: Certification[];
+}
+
+const SecurityCertificationsSection = ({ certifications }: SecurityCertificationsSectionProps) => (
   <Section className="bg-gray-50">
     <SectionTitle>Security Certifications</SectionTitle>
     <SectionSubtitle>We maintain industry-leading certifications to ensure the highest standards of security and compliance.</SectionSubtitle>
 
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-      {certifications.map((cert, index) => (
+      {certifications.map((cert: Certification, index: number) => (
         <Card key={index} className="p-6 text-center bg-white border border-gray-200 rounded-xl">
           <CardHeader className="p-0 mb-4">
             <div className="mx-auto mb-3 flex items-center justify-center">
@@ -245,13 +260,23 @@ const SecurityCertificationsSection = ({ certifications }) => (
   </Section>
 );
 
-const SecurityFeaturesSection = ({ features }) => (
+interface SecurityFeature {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}
+
+interface SecurityFeaturesSectionProps {
+  features: SecurityFeature[];
+}
+
+const SecurityFeaturesSection = ({ features }: SecurityFeaturesSectionProps) => (
   <Section className="bg-white">
     <SectionTitle>Comprehensive Security Features</SectionTitle>
     <SectionSubtitle>Comprehensive security controls protecting your data at every level.</SectionSubtitle>
 
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-      {features.map((feature, index) => (
+      {features.map((feature: SecurityFeature, index: number) => (
         <Card key={index} className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
           <div className="flex items-start space-x-4">
             <div className="p-2 bg-gray-200 rounded-lg text-gray-600 flex-shrink-0">
@@ -270,19 +295,28 @@ const SecurityFeaturesSection = ({ features }) => (
   </Section>
 );
 
-const HIPAAComplianceSection = ({ safeguards }) => (
+interface HIPAAComplianceCategory {
+  title: string;
+  items: string[];
+}
+
+interface HIPAAComplianceSectionProps {
+  safeguards: HIPAAComplianceCategory[];
+}
+
+const HIPAAComplianceSection = ({ safeguards }: HIPAAComplianceSectionProps) => (
   <Section className="bg-gray-50">
     <SectionTitle>HIPAA Compliance</SectionTitle>
     <SectionSubtitle>Doxxy is fully compliant with HIPAA regulations, ensuring the utmost privacy and security for patient health information.</SectionSubtitle>
     <div className="grid md:grid-cols-3 gap-6 mt-16">
-      {safeguards.map((category, index) => (
+      {safeguards.map((category: HIPAAComplianceCategory, index: number) => (
         <Card key={index} className="p-6 bg-white border border-gray-200 rounded-xl">
           <CardHeader className="p-0 mb-4">
             <CardTitle className="text-lg font-medium text-gray-900">{category.title}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <ul className="space-y-2">
-              {category.items.map((item, idx) => (
+              {category.items.map((item: string, idx: number) => (
                 <li key={idx} className="flex items-start space-x-2">
                   <CheckCircle className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
                   <span className="text-sm text-gray-600 leading-relaxed">{item}</span>
@@ -296,13 +330,23 @@ const HIPAAComplianceSection = ({ safeguards }) => (
   </Section>
 );
 
-const DataHandlingLifecycleSection = ({ dataHandlingPhases }) => (
+interface DataHandlingPhase {
+  phase: string;
+  description: string;
+  controls: string[];
+}
+
+interface DataHandlingLifecycleSectionProps {
+  dataHandlingPhases: DataHandlingPhase[];
+}
+
+const DataHandlingLifecycleSection = ({ dataHandlingPhases }: DataHandlingLifecycleSectionProps) => (
   <Section className="bg-white">
     <SectionTitle>Secure Data Lifecycle</SectionTitle>
     <SectionSubtitle>Every stage of data handling is secured with multiple layers of protection.</SectionSubtitle>
 
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-      {dataHandlingPhases.map((phase, index) => (
+      {dataHandlingPhases.map((phase: DataHandlingPhase, index: number) => (
         <Card key={index} className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
           <CardHeader className="p-0 mb-4">
             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 font-medium text-lg mx-auto mb-4">
@@ -313,7 +357,7 @@ const DataHandlingLifecycleSection = ({ dataHandlingPhases }) => (
           </CardHeader>
           <CardContent className="p-0">
             <ul className="space-y-2">
-              {phase.controls.map((control, idx) => (
+              {phase.controls.map((control: string, idx: number) => (
                 <li key={idx} className="flex items-start space-x-2">
                   <CheckCircle className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
                   <span className="text-xs text-gray-600 leading-relaxed">{control}</span>

@@ -1,8 +1,12 @@
 // src/pages/Privacy.tsx
-import React from 'react';
 
 // Helper component for consistent section styling
-const SectionContainer = ({ children, className = '' }) => (
+interface SectionContainerProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const SectionContainer = ({ children, className = '' }: SectionContainerProps) => (
   <section className={`py-16 md:py-20 ${className}`}>
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       {children}
@@ -11,7 +15,12 @@ const SectionContainer = ({ children, className = '' }) => (
 );
 
 // Modular component for the header
-const PrivacyHeader = ({ title, effectiveDate }) => (
+interface PrivacyHeaderProps {
+  title: string;
+  effectiveDate: string;
+}
+
+const PrivacyHeader = ({ title, effectiveDate }: PrivacyHeaderProps) => (
   <SectionContainer className="bg-white pt-24 md:pt-32 pb-8 md:pb-12">
     <h1 className="text-4xl lg:text-5xl font-semibold text-gray-900 mb-4 leading-tight tracking-tight">
       {title}
@@ -23,7 +32,13 @@ const PrivacyHeader = ({ title, effectiveDate }) => (
 );
 
 // Modular component for each privacy section
-const PrivacySection = ({ title, children, isList = false }) => (
+interface PrivacySectionProps {
+  title: string;
+  children: React.ReactNode;
+  isList?: boolean;
+}
+
+const PrivacySection = ({ title, children, isList = false }: PrivacySectionProps) => (
   <SectionContainer className="bg-white border-t border-gray-200">
     <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-6 leading-snug">
       {title}
@@ -41,7 +56,11 @@ const PrivacySection = ({ title, children, isList = false }) => (
 );
 
 // Modular component for contact information
-const PrivacyContactInfo = ({ children }) => (
+interface PrivacyContactInfoProps {
+  children: React.ReactNode;
+}
+
+const PrivacyContactInfo = ({ children }: PrivacyContactInfoProps) => (
   <SectionContainer className="bg-white border-t border-gray-200">
     <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-6 leading-snug">
       Contact

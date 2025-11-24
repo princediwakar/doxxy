@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -110,7 +110,12 @@ const faqs = [
 
 // --- REUSABLE COMPONENTS ---
 
-const Section = ({ children, className = '' }) => (
+interface SectionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const Section = ({ children, className = '' }: SectionProps) => (
   <section className={`py-24 md:py-32 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {children}
@@ -118,13 +123,13 @@ const Section = ({ children, className = '' }) => (
   </section>
 );
 
-const SectionTitle = ({ children, className = '' }) => (
+const SectionTitle = ({ children, className = '' }: SectionProps) => (
   <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
     {children}
   </h2>
 );
 
-const SectionSubtitle = ({ children, className = '' }) => (
+const SectionSubtitle = ({ children, className = '' }: SectionProps) => (
   <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
     {children}
   </p>
@@ -132,7 +137,12 @@ const SectionSubtitle = ({ children, className = '' }) => (
 
 // --- MODULAR SUBCOMPONENTS ---
 
-const FAQHeader = ({ searchTerm, setSearchTerm }) => (
+interface FAQHeaderProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+}
+
+const FAQHeader = ({ searchTerm, setSearchTerm }: FAQHeaderProps) => (
   <Section className="text-center !pt-28 md:!pt-40">
     <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
       Frequently Asked Questions.
@@ -152,7 +162,22 @@ const FAQHeader = ({ searchTerm, setSearchTerm }) => (
   </Section>
 );
 
-const FAQCategory = ({ category, faqs, toggleItem, openItems }) => (
+interface FAQCategoryProps {
+  category: {
+    id: string;
+    name: string;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  };
+  faqs: Array<{
+    category: string;
+    question: string;
+    answer: string;
+  }>;
+  toggleItem: (index: number) => void;
+  openItems: number[];
+}
+
+const FAQCategory = ({ category, faqs, toggleItem, openItems }: FAQCategoryProps) => (
   <div className="mb-12">
     <div className="flex items-center space-x-3 mb-6">
       <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -162,7 +187,7 @@ const FAQCategory = ({ category, faqs, toggleItem, openItems }) => (
     </div>
     
     <div className="space-y-4">
-      {faqs.map((faq, index) => {
+      {faqs.map((faq: { category: string; question: string; answer: string }, index: number) => {
         const isOpen = openItems.includes(index);
         
         return (
@@ -197,7 +222,11 @@ const FAQCategory = ({ category, faqs, toggleItem, openItems }) => (
   </div>
 );
 
-const EmptyState = ({ searchTerm }) => (
+interface EmptyStateProps {
+  searchTerm: string;
+}
+
+const EmptyState = ({ searchTerm }: EmptyStateProps) => (
   <div className="text-center py-12">
     <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
     <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">

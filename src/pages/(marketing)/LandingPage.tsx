@@ -118,7 +118,12 @@ const painPoints = [
 
 // --- MODULAR COMPONENTS ---
 
-const Section = ({ children, className = '' }) => (
+interface SectionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const Section = ({ children, className = '' }: SectionProps) => (
   <section className={`py-24 md:py-32 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {children}
@@ -126,13 +131,13 @@ const Section = ({ children, className = '' }) => (
   </section>
 );
 
-const SectionTitle = ({ children, className = '' }) => (
+const SectionTitle = ({ children, className = '' }: SectionProps) => (
     <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
         {children}
     </h2>
 );
 
-const SectionSubtitle = ({ children, className = '' }) => (
+const SectionSubtitle = ({ children, className = '' }: SectionProps) => (
     <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
         {children}
     </p>
@@ -166,12 +171,23 @@ const HeroSection = () => (
 );
 
 
-const PainPoints = ({ points }) => (
+interface PainPoint {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  title: string;
+  description: string;
+  solution: string;
+}
+
+interface PainPointsProps {
+  points: PainPoint[];
+}
+
+const PainPoints = ({ points }: PainPointsProps) => (
   <Section className="bg-gray-50 dark:bg-gray-800/50">
     <SectionTitle>From Chaos to Clarity.</SectionTitle>
     <SectionSubtitle className="mt-4">We solve the core administrative problems that slow your practice down, so you can focus on patient care.</SectionSubtitle>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16">
-      {points.map((pain, index) => (
+      {points.map((pain: PainPoint, index: number) => (
         <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
           <div className="flex-shrink-0 w-12 h-12 bg-red-100 dark:bg-red-900/50 rounded-lg flex items-center justify-center mb-4">
             <pain.icon className="h-6 w-6 text-red-500 dark:text-red-400" />
@@ -189,12 +205,18 @@ const PainPoints = ({ points }) => (
 );
 
 const ProductShowcase = () => {
-    const ShowcaseCard = ({ title, description, items }) => (
+    interface ShowcaseCardProps {
+      title: string;
+      description: string;
+      items: string[];
+    }
+
+    const ShowcaseCard = ({ title, description, items }: ShowcaseCardProps) => (
         <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-8 h-full flex flex-col">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{title}</h3>
             <p className="text-gray-600 dark:text-gray-300 mb-6 flex-grow">{description}</p>
             <div className="space-y-3">
-                {items.map((item, i) => (
+                {items.map((item: string, i: number) => (
                     <div key={i} className="flex items-center gap-3">
                         <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
                         <span>{item}</span>
@@ -204,7 +226,12 @@ const ProductShowcase = () => {
         </div>
     );
 
-    const MockupCard = ({ children, className = '' }) => (
+    interface MockupCardProps {
+      children: React.ReactNode;
+      className?: string;
+    }
+
+    const MockupCard = ({ children, className = '' }: MockupCardProps) => (
         <div className={`bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 shadow-sm border border-gray-200/75 dark:border-gray-700/50 ${className}`}>
             {children}
         </div>
@@ -316,12 +343,23 @@ const ProductShowcase = () => {
     );
 }
 
-const Specialties = ({ specialties }) => (
+interface Specialty {
+  name: string;
+  description: string;
+  image: string;
+  alt: string;
+}
+
+interface SpecialtiesProps {
+  specialties: Specialty[];
+}
+
+const Specialties = ({ specialties }: SpecialtiesProps) => (
   <Section className="bg-gray-50 dark:bg-gray-800/50">
     <SectionTitle>Built for Every Specialty.</SectionTitle>
     <SectionSubtitle className="mt-4">Our platform is built with flexible, specialty-specific workflows for cardiology, dentistry, and everything in between.</SectionSubtitle>
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-8 mt-16">
-      {specialties.map((specialty) => (
+      {specialties.map((specialty: Specialty) => (
         <div key={specialty.name} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200/75 dark:border-gray-700/50 group transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
             <div className="relative h-40 w-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                 <img src={specialty.image} alt={specialty.alt} className="w-full h-full object-cover" />
@@ -362,12 +400,22 @@ const PricingSection = () => (
   </Section>
 );
 
-const CoreFeatures = ({ features }) => (
+interface CoreFeature {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  title: string;
+  description: string;
+}
+
+interface CoreFeaturesProps {
+  features: CoreFeature[];
+}
+
+const CoreFeatures = ({ features }: CoreFeaturesProps) => (
   <Section className="bg-gray-50 dark:bg-gray-800/50">
     <SectionTitle>The Complete Practice Toolkit.</SectionTitle>
     <SectionSubtitle className="mt-4">We’ve built every feature you need to run a modern practice, all in one cohesive and intuitive platform.</SectionSubtitle>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
-      {features.map((feature) => (
+      {features.map((feature: CoreFeature) => (
         <div key={feature.title} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
           <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mb-4">
             <feature.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
@@ -410,12 +458,22 @@ const BenefitsSection = () => (
   </Section>
 );
 
-const TestimonialsSection = ({ testimonials }) => (
+interface Testimonial {
+  name: string;
+  role: string;
+  content: string;
+}
+
+interface TestimonialsSectionProps {
+  testimonials: Testimonial[];
+}
+
+const TestimonialsSection = ({ testimonials }: TestimonialsSectionProps) => (
   <Section className="bg-gray-50 dark:bg-gray-800/50">
     <SectionTitle>Trusted by India's Leading Doctors.</SectionTitle>
     <SectionSubtitle className="mt-4">Don’t just take our word for it. Here’s what leading doctors and practice managers across India are saying about Doxxy.</SectionSubtitle>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-16">
-      {testimonials.map((testimonial) => (
+      {testimonials.map((testimonial: Testimonial) => (
         <figure key={testimonial.name} className="bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50">
           <div className="flex mb-4">
             {[...Array(5)].map((_, i) => (<Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />))}

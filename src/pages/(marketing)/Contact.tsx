@@ -62,7 +62,11 @@ const HeroSection = () => (
   </Section>
 );
 
-const ThankYouMessage = ({ onSendAnother }) => (
+interface ThankYouMessageProps {
+  onSendAnother: () => void;
+}
+
+const ThankYouMessage = ({ onSendAnother }: ThankYouMessageProps) => (
   <div className="max-w-md mx-auto text-center p-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/75 dark:border-gray-700/50">
     <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
       <CheckCircle className="h-7 w-7 text-blue-600 dark:text-blue-400" />
@@ -79,7 +83,22 @@ const ThankYouMessage = ({ onSendAnother }) => (
   </div>
 );
 
-const ContactForm = ({ formData, handleChange, handleSubmit, isSubmitting, error }) => (
+interface ContactFormProps {
+  formData: {
+    message: string;
+    name: string;
+    email: string;
+    phone: string;
+    company: string;
+    city: string;
+  };
+  handleChange: (field: string, value: string) => void;
+  handleSubmit: (e: React.FormEvent) => void;
+  isSubmitting: boolean;
+  error: string | null;
+}
+
+const ContactForm = ({ formData, handleChange, handleSubmit, isSubmitting, error }: ContactFormProps) => (
   <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50">
     <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">Send us a Message</h3>
     <p className="text-gray-600 dark:text-gray-300 text-center mb-8">Fill out the form below and we'll get back to you within 24 hours.</p>
@@ -170,7 +189,14 @@ const ContactForm = ({ formData, handleChange, handleSubmit, isSubmitting, error
   </div>
 );
 
-const ContactInfoCard = ({ icon: Icon, title, details, description }) => (
+interface ContactInfoCardProps {
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  title: string;
+  details: string[];
+  description: string;
+}
+
+const ContactInfoCard = ({ icon: Icon, title, details, description }: ContactInfoCardProps) => (
   <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
     <div className="flex items-start space-x-4">
       <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -178,7 +204,7 @@ const ContactInfoCard = ({ icon: Icon, title, details, description }) => (
       </div>
       <div className="flex-1">
         <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-        {details.map((detail, idx) => (
+        {details.map((detail: string, idx: number) => (
           <p key={idx} className="text-gray-700 dark:text-gray-300 font-medium">{detail}</p>
         ))}
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{description}</p>
@@ -188,7 +214,12 @@ const ContactInfoCard = ({ icon: Icon, title, details, description }) => (
 );
 
 
-const FAQItem = ({ question, answer }) => (
+interface FAQItemProps {
+  question: string;
+  answer: string;
+}
+
+const FAQItem = ({ question, answer }: FAQItemProps) => (
   <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
     <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-2">{question}</h3>
     <p className="text-gray-600 dark:text-gray-300">{answer}</p>
