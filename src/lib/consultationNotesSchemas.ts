@@ -24,9 +24,64 @@ const consultationMedicationSchema = z.object({
   eye: z.enum(["Left", "Right", "Both", "N/A"]).default("N/A"),
 });
 
+// Vital signs schema for general examination
+const vitalSignsSchema = z.object({
+  temperature: z.string().optional(),
+  pulse: z.string().optional(),
+  blood_pressure_systolic: z.string().optional(),
+  blood_pressure_diastolic: z.string().optional(),
+  respiratory_rate: z.string().optional(),
+  oxygen_saturation: z.string().optional(),
+  height: z.string().optional(),
+  weight: z.string().optional(),
+  bmi: z.string().optional(),
+}).optional();
+
+// Motor examination schema for neurology
+const motorExaminationSchema = z.object({
+  shoulder_left: z.string().optional(),
+  shoulder_right: z.string().optional(),
+  elbow_left: z.string().optional(),
+  elbow_right: z.string().optional(),
+  wrist_left: z.string().optional(),
+  wrist_right: z.string().optional(),
+  hip_left: z.string().optional(),
+  hip_right: z.string().optional(),
+  knee_left: z.string().optional(),
+  knee_right: z.string().optional(),
+  ankle_left: z.string().optional(),
+  ankle_right: z.string().optional(),
+  muscle_tone: z.string().optional(),
+  muscle_bulk: z.string().optional(),
+  involuntary_movements: z.string().optional(),
+  coordination: z.string().optional(),
+  notes: z.string().optional(),
+}).optional();
+
+// Reflex examination schema for neurology
+const reflexExaminationSchema = z.object({
+  biceps_left: z.string().optional(),
+  biceps_right: z.string().optional(),
+  triceps_left: z.string().optional(),
+  triceps_right: z.string().optional(),
+  supinator_left: z.string().optional(),
+  supinator_right: z.string().optional(),
+  knee_left: z.string().optional(),
+  knee_right: z.string().optional(),
+  ankle_left: z.string().optional(),
+  ankle_right: z.string().optional(),
+  plantar_left: z.string().optional(),
+  plantar_right: z.string().optional(),
+  abdominal_left: z.string().optional(),
+  abdominal_right: z.string().optional(),
+  clonus: z.string().optional(),
+  hoffmann: z.string().optional(),
+  notes: z.string().optional(),
+}).optional();
+
 // Base schema for consultation notes (used for General and extended by specialties)
 export const baseNotesSchema = z.object({
-  chief_complaint: z.string().min(1, "Chief Complaint is required"),
+  chief_complaint: z.string().optional(),
   history_of_present_illness: z.string().optional(),
   review_of_systems: z.string().optional(),
   past_medical_history: z.string().optional(),
@@ -36,6 +91,7 @@ export const baseNotesSchema = z.object({
   allergies: z.string().optional(),
   physical_exam: z.string().optional(),
   systemic_examination: z.string().optional(),
+  vital_signs: vitalSignsSchema,
   previous_investigations: z.string().optional(),
   assessment: z.string().optional(),
   planned_investigations: z.string().optional(),
@@ -53,9 +109,9 @@ export const generalNotesSchema = baseNotesSchema;
 export const neurologyNotesSchema = baseNotesSchema.extend({
   neurological_exam_findings: z.string().optional(),
   cranial_nerves: z.string().optional(),
-  motor_examination: z.string().optional(),
+  motor_examination: motorExaminationSchema,
   sensory_examination: z.string().optional(),
-  reflexes: z.string().optional(),
+  reflexes: reflexExaminationSchema,
   cerebellar_examination: z.string().optional(),
   other_examination: z.string().optional(),
   gait_coordination: z.string().optional(),
@@ -205,7 +261,7 @@ export type ConsultationMedication = z.infer<
 export type NoteFieldConfig = {
   name: string;
   label: string;
-  type: "input" | "textarea" | "prescription";
+  type: "input" | "textarea" | "prescription" | "vital_signs" | "tabular_eye" | "motor_examination" | "reflex_examination";
   rows?: number;
   placeholder?: string;
   mandatory?: boolean;
@@ -227,7 +283,6 @@ const baseFieldSections: FieldSection[] = [
         type: "textarea",
         rows: 3,
         placeholder: "Enter chief complaint",
-        mandatory: true,
       },
       {
         name: "history_of_present_illness",
@@ -283,6 +338,13 @@ const baseFieldSections: FieldSection[] = [
   {
     title: "Examination",
     fields: [
+
+      {
+        name: "vital_signs",
+        label: "Vital Signs",
+        type: "vital_signs",
+        placeholder: "Enter vital signs",
+      },
       {
         name: "physical_exam",
         label: "General Physical Exam",
@@ -290,6 +352,7 @@ const baseFieldSections: FieldSection[] = [
         rows: 4,
         placeholder: "Enter physical exam findings",
       },
+
       {
         name: "systemic_examination",
         label: "Systemic Examination",
@@ -376,57 +439,49 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
         {
           name: "visual_acuity",
           label: "Visual Acuity",
-          type: "textarea",
-          rows: 3,
+          type: "tabular_eye",
           placeholder: "Enter visual acuity",
         },
         {
           name: "refraction",
           label: "Refraction",
-          type: "textarea",
-          rows: 3,
+          type: "tabular_eye",
           placeholder: "Enter refraction details",
         },
         {
           name: "pupil_examination",
           label: "Pupil Examination",
-          type: "textarea",
-          rows: 3,
+          type: "tabular_eye",
           placeholder: "Describe pupil examination",
         },
         {
           name: "extraocular_movements",
           label: "Extraocular Movements",
-          type: "textarea",
-          rows: 3,
+          type: "tabular_eye",
           placeholder: "Describe extraocular movements",
         },
         {
           name: "slit_lamp_exam",
           label: "Slit Lamp Examination",
-          type: "textarea",
-          rows: 4,
+          type: "tabular_eye",
           placeholder: "Enter slit lamp findings",
         },
         {
           name: "intraocular_pressure",
           label: "Intraocular Pressure",
-          type: "textarea",
-          rows: 2,
+          type: "tabular_eye",
           placeholder: "Enter intraocular pressure",
         },
         {
           name: "fundus_exam",
           label: "Fundus Examination",
-          type: "textarea",
-          rows: 4,
+          type: "tabular_eye",
           placeholder: "Describe fundus examination",
         },
         {
           name: "visual_fields",
           label: "Visual Fields",
-          type: "textarea",
-          rows: 3,
+          type: "tabular_eye",
           placeholder: "Enter visual field results",
         },
       ],
@@ -453,9 +508,8 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
         {
           name: "motor_examination",
           label: "Motor Examination",
-          type: "textarea",
-          rows: 4,
-          placeholder: "Describe motor examination",
+          type: "motor_examination",
+          placeholder: "Enter motor examination findings",
         },
         {
           name: "sensory_examination",
@@ -467,8 +521,7 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
         {
           name: "reflexes",
           label: "Reflexes",
-          type: "textarea",
-          rows: 3,
+          type: "reflex_examination",
           placeholder: "Enter reflex findings",
         },
         {
@@ -1213,19 +1266,51 @@ export const consultationNotesSchema = z.object({
   prognosis: z.string().optional(),
   follow_up: z.string().optional(),
   referrals: z.string().optional(),
-  visual_acuity: z.string().optional(),
-  refraction: z.string().optional(),
-  slit_lamp_exam: z.string().optional(),
-  fundus_exam: z.string().optional(),
-  intraocular_pressure: z.string().optional(),
-  visual_fields: z.string().optional(),
-  pupil_examination: z.string().optional(),
-  extraocular_movements: z.string().optional(),
+  visual_acuity: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  refraction: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  slit_lamp_exam: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  fundus_exam: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  intraocular_pressure: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  visual_fields: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  pupil_examination: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+  extraocular_movements: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
   neurological_exam_findings: z.string().optional(),
   cranial_nerves: z.string().optional(),
-  motor_examination: z.string().optional(),
+  motor_examination: motorExaminationSchema,
   sensory_examination: z.string().optional(),
-  reflexes: z.string().optional(),
+  reflexes: reflexExaminationSchema,
   cerebellar_examination: z.string().optional(),
   other_examination: z.string().optional(),
   gait_coordination: z.string().optional(),
@@ -1295,7 +1380,7 @@ export const consultationNotesSchema = z.object({
   metabolic_assessment: z.string().optional(),
   bone_health: z.string().optional(),
   triage_assessment: z.string().optional(),
-  vital_signs: z.string().optional(),
+  vital_signs: vitalSignsSchema,
   trauma_assessment: z.string().optional(),
   acute_interventions: z.string().optional(),
   diagnostic_imaging: z.string().optional(),

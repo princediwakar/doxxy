@@ -7,16 +7,20 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CharacterCounter } from './CharacterCounter';
 import { CHARACTER_LIMITS } from './constants';
 import { PrescriptionField } from './PrescriptionField';
-import { FieldConfig, PrescriptionMedication } from './types';
+import { TabularEyeField } from './TabularEyeField';
+import { VitalSignsField } from './VitalSignsField';
+import { MotorExaminationField, MotorExaminationValue } from './MotorExaminationField';
+import { ReflexExaminationField, ReflexExaminationValue } from './ReflexExaminationField';
+import { FieldConfig, FieldValue } from './types';
 
 interface ConsultationFormFieldProps {
   fieldConfig: FieldConfig;
   fieldIndex: number;
-  value: string | readonly PrescriptionMedication[];
-  onChange: (value: string | PrescriptionMedication[]) => void;
+  value: FieldValue;
+  onChange: (value: FieldValue) => void;
   expandedFields: Record<string, boolean>;
   setExpandedFields: (fields: Record<string, boolean>) => void;
-  isConsultationCompleted?: boolean;
+  isReadOnly?: boolean;
 }
 
 export const ConsultationFormField = ({
@@ -26,13 +30,13 @@ export const ConsultationFormField = ({
   onChange,
   expandedFields,
   setExpandedFields,
-  isConsultationCompleted = false
+  isReadOnly = false
 }: ConsultationFormFieldProps) => {
   const isMandatory = fieldConfig.mandatory || false;
   const isExpanded = expandedFields[fieldConfig.name] ?? isMandatory;
   
   const toggleField = () => {
-    if (isConsultationCompleted) return; // Don't allow expansion changes in read-only mode
+    if (isReadOnly) return; // Don't allow expansion changes in read-only mode
     setExpandedFields({
       ...expandedFields,
       [fieldConfig.name]: !expandedFields[fieldConfig.name]
@@ -52,14 +56,14 @@ export const ConsultationFormField = ({
     return (
       <div key={fieldIndex} className="space-y-3">
         <Collapsible open={isExpanded} onOpenChange={toggleField}>
-          <CollapsibleTrigger asChild disabled={isConsultationCompleted}>
+          <CollapsibleTrigger asChild disabled={isReadOnly}>
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-              isConsultationCompleted 
-                ? 'bg-gray-50 cursor-not-allowed opacity-70' 
+              isReadOnly
+                ? 'bg-gray-50 cursor-not-allowed opacity-70'
                 : 'hover:bg-gray-50 cursor-pointer'
             }`}>
               <Label className={`font-medium flex items-center gap-2 ${
-                isConsultationCompleted ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+                isReadOnly ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
               }`}>
                 <Activity className="h-4 w-4 text-blue-600" />
                 {fieldConfig.label}
@@ -76,7 +80,197 @@ export const ConsultationFormField = ({
               <PrescriptionField
                 value={Array.isArray(value) ? value : []}
                 onChange={onChange}
-                isReadOnly={isConsultationCompleted}
+                isReadOnly={isReadOnly}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  }
+
+  // Special handling for tabular eye fields
+  if (fieldConfig.type === 'tabular_eye') {
+    const eyeValue = typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? value as { left?: string; right?: string; notes?: string }
+      : { left: '', right: '', notes: '' };
+
+    const handleEyeFieldChange = (newValue: { left?: string; right?: string; notes?: string }) => {
+      onChange(newValue);
+    };
+
+    return (
+      <div key={fieldIndex} className="space-y-3">
+        <Collapsible open={isExpanded} onOpenChange={toggleField}>
+          <CollapsibleTrigger asChild disabled={isReadOnly}>
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+              isReadOnly
+                ? 'bg-gray-50 cursor-not-allowed opacity-70'
+                : 'hover:bg-gray-50 cursor-pointer'
+            }`}>
+              <Label className={`font-medium flex items-center gap-2 ${
+                isReadOnly ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+              }`}>
+                {fieldConfig.label}
+                {isMandatory && <span className="text-destructive">*</span>}
+              </Label>
+              {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-2">
+              <TabularEyeField
+                value={eyeValue}
+                onChange={handleEyeFieldChange}
+                fieldType="textarea"
+                placeholder={fieldConfig.placeholder}
+                isReadOnly={isReadOnly}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  }
+
+  // Special handling for vital signs
+  if (fieldConfig.type === 'vital_signs') {
+    const vitalSignsValue = typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? value as {
+          temperature?: string;
+          pulse?: string;
+          blood_pressure_systolic?: string;
+          blood_pressure_diastolic?: string;
+          respiratory_rate?: string;
+          oxygen_saturation?: string;
+          height?: string;
+          weight?: string;
+          bmi?: string;
+        }
+      : {};
+
+    const handleVitalSignsChange = (newValue: {
+      temperature?: string;
+      pulse?: string;
+      blood_pressure_systolic?: string;
+      blood_pressure_diastolic?: string;
+      respiratory_rate?: string;
+      oxygen_saturation?: string;
+      height?: string;
+      weight?: string;
+      bmi?: string;
+    }) => {
+      onChange(newValue);
+    };
+
+    return (
+      <div key={fieldIndex} className="space-y-3">
+        <Collapsible open={isExpanded} onOpenChange={toggleField}>
+          <CollapsibleTrigger asChild disabled={isReadOnly}>
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+              isReadOnly
+                ? 'bg-gray-50 cursor-not-allowed opacity-70'
+                : 'hover:bg-gray-50 cursor-pointer'
+            }`}>
+              <Label className={`font-medium flex items-center gap-2 ${
+                isReadOnly ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+              }`}>
+                {fieldConfig.label}
+                {isMandatory && <span className="text-destructive">*</span>}
+              </Label>
+              {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-2">
+              <VitalSignsField
+                value={vitalSignsValue}
+                onChange={handleVitalSignsChange}
+                isReadOnly={isReadOnly}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  }
+
+  // Special handling for motor examination
+  if (fieldConfig.type === 'motor_examination') {
+    const motorExaminationValue = typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? value as MotorExaminationValue
+      : {};
+
+    const handleMotorExaminationChange = (newValue: MotorExaminationValue) => {
+      onChange(newValue);
+    };
+
+    return (
+      <div key={fieldIndex} className="space-y-3">
+        <Collapsible open={isExpanded} onOpenChange={toggleField}>
+          <CollapsibleTrigger asChild disabled={isReadOnly}>
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+              isReadOnly
+                ? 'bg-gray-50 cursor-not-allowed opacity-70'
+                : 'hover:bg-gray-50 cursor-pointer'
+            }`}>
+              <Label className={`font-medium flex items-center gap-2 ${
+                isReadOnly ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+              }`}>
+                {fieldConfig.label}
+                {isMandatory && <span className="text-destructive">*</span>}
+              </Label>
+              {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-2">
+              <MotorExaminationField
+                value={motorExaminationValue}
+                onChange={handleMotorExaminationChange}
+                isReadOnly={isReadOnly}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  }
+
+  // Special handling for reflex examination
+  if (fieldConfig.type === 'reflex_examination') {
+    const reflexExaminationValue = typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? value as ReflexExaminationValue
+      : {};
+
+    const handleReflexExaminationChange = (newValue: ReflexExaminationValue) => {
+      onChange(newValue);
+    };
+
+    return (
+      <div key={fieldIndex} className="space-y-3">
+        <Collapsible open={isExpanded} onOpenChange={toggleField}>
+          <CollapsibleTrigger asChild disabled={isReadOnly}>
+            <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
+              isReadOnly
+                ? 'bg-gray-50 cursor-not-allowed opacity-70'
+                : 'hover:bg-gray-50 cursor-pointer'
+            }`}>
+              <Label className={`font-medium flex items-center gap-2 ${
+                isReadOnly ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+              }`}>
+                {fieldConfig.label}
+                {isMandatory && <span className="text-destructive">*</span>}
+              </Label>
+              {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="pt-2">
+              <ReflexExaminationField
+                value={reflexExaminationValue}
+                onChange={handleReflexExaminationChange}
+                isReadOnly={isReadOnly}
               />
             </div>
           </CollapsibleContent>
@@ -94,14 +288,14 @@ export const ConsultationFormField = ({
     <div key={fieldIndex} className="space-y-3">
       <Collapsible open={isExpanded} onOpenChange={toggleField}>
         {!isMandatory && (
-          <CollapsibleTrigger asChild disabled={isConsultationCompleted}>
+          <CollapsibleTrigger asChild disabled={isReadOnly}>
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
-              isConsultationCompleted 
+              isReadOnly 
                 ? 'bg-gray-50 cursor-not-allowed opacity-70' 
                 : 'hover:bg-gray-50 cursor-pointer'
             }`}>
               <Label className={`font-medium flex items-center gap-2 ${
-                isConsultationCompleted ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
+                isReadOnly ? 'cursor-not-allowed text-gray-500' : 'cursor-pointer text-gray-900'
               }`}>
                 {fieldConfig.label}
                 {isMandatory && <span className="text-destructive">*</span>}
@@ -118,12 +312,12 @@ export const ConsultationFormField = ({
           <div className="space-y-3">
             {isMandatory && (
               <Label className={`font-medium flex items-center gap-2 ${
-                isConsultationCompleted ? 'text-gray-500' : 'text-gray-900'
+                isReadOnly ? 'text-gray-500' : 'text-gray-900'
               }`}>
                 {fieldConfig.label}
                 <span className="text-destructive">*</span>
                 <CharacterCounter current={characterCount} max={characterLimit} />
-                {!hasValue && !isConsultationCompleted && (
+                {!hasValue && !isReadOnly && (
                   <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
                     Required for completion
                   </span>
@@ -133,10 +327,10 @@ export const ConsultationFormField = ({
             
             {fieldConfig.type === 'textarea' ? (
               <Textarea
-                placeholder={isConsultationCompleted ? "No data entered" : fieldConfig.placeholder}
+                placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => {
-                  if (isConsultationCompleted) return;
+                  if (isReadOnly) return;
                   const newValue = e.target.value;
                   if (newValue.length <= characterLimit) {
                     onChange(newValue);
@@ -144,26 +338,26 @@ export const ConsultationFormField = ({
                 }}
                 rows={fieldConfig.rows || 4}
                 className={`min-h-[100px] resize-none transition-colors ${
-                  isConsultationCompleted 
+                  isReadOnly 
                     ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
                     : 'focus:border-blue-500 focus:ring-blue-500/20'
-                } ${isMandatory && !hasValue && !isConsultationCompleted ? 'border-amber-300 bg-amber-50/30' : ''}`}
+                } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}
                 maxLength={characterLimit}
-                readOnly={isConsultationCompleted}
-                disabled={isConsultationCompleted}
+                readOnly={isReadOnly}
+                disabled={isReadOnly}
               />
             ) : fieldConfig.type === 'select' ? (
               <Select 
                 value={typeof value === 'string' ? value : ''} 
-                onValueChange={isConsultationCompleted ? undefined : onChange}
-                disabled={isConsultationCompleted}
+                onValueChange={isReadOnly ? undefined : onChange}
+                disabled={isReadOnly}
               >
                 <SelectTrigger className={`transition-colors ${
-                  isConsultationCompleted 
+                  isReadOnly 
                     ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
                     : 'focus:border-blue-500 focus:ring-blue-500/20'
-                } ${isMandatory && !hasValue && !isConsultationCompleted ? 'border-amber-300 bg-amber-50/30' : ''}`}>
-                  <SelectValue placeholder={isConsultationCompleted ? "No selection" : fieldConfig.placeholder} />
+                } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}>
+                  <SelectValue placeholder={isReadOnly ? "No selection" : fieldConfig.placeholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {fieldConfig.options?.map((option) => (
@@ -175,23 +369,23 @@ export const ConsultationFormField = ({
               </Select>
             ) : (
               <Input
-                placeholder={isConsultationCompleted ? "No data entered" : fieldConfig.placeholder}
+                placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => {
-                  if (isConsultationCompleted) return;
+                  if (isReadOnly) return;
                   const newValue = e.target.value;
                   if (newValue.length <= characterLimit) {
                     onChange(newValue);
                   }
                 }}
                 className={`transition-colors ${
-                  isConsultationCompleted 
+                  isReadOnly 
                     ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
                     : 'focus:border-blue-500 focus:ring-blue-500/20'
-                } ${isMandatory && !hasValue && !isConsultationCompleted ? 'border-amber-300 bg-amber-50/30' : ''}`}
+                } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}
                 maxLength={characterLimit}
-                readOnly={isConsultationCompleted}
-                disabled={isConsultationCompleted}
+                readOnly={isReadOnly}
+                disabled={isReadOnly}
               />
             )}
           </div>

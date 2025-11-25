@@ -29,16 +29,19 @@ export const useConsultationForm = (
     appointment?.status === 'Completed'
   );
 
+  // Track if consultation was just completed (for redirect)
+  const [justCompleted, setJustCompleted] = useState(false);
+
   // Check if current user is the associated doctor
   const isAssociatedDoctor = useMemo(() => {
-    return appointment?.doctor_id && user?.id &&
-           appointment.doctor_id === user.id;
-  }, [appointment?.doctor_id, user?.id]);
+    return appointment?.doctor?.user_id && user?.id &&
+           appointment.doctor.user_id === user.id;
+  }, [appointment?.doctor?.user_id, user?.id]);
 
-  // Allow editing if user is the associated doctor, even for completed consultations
+  // Allow editing only if user is the associated doctor
   const canEditConsultation = useMemo(() => {
-    return !isConsultationCompleted || isAssociatedDoctor;
-  }, [isConsultationCompleted, isAssociatedDoctor]);
+    return isAssociatedDoctor;
+  }, [isAssociatedDoctor]);
   
   // Initialize form with existing data
   const defaultValues: ConsultationFormValues = useMemo(() => ({
@@ -62,6 +65,14 @@ export const useConsultationForm = (
   const formValues = useWatch({
     control: form.control,
   });
+
+  // Reset justCompleted state when user starts editing a completed consultation
+  useEffect(() => {
+    if (isConsultationCompleted && canEditConsultation && justCompleted) {
+      // User is editing a completed consultation - reset the redirect state
+      setJustCompleted(false);
+    }
+  }, [isConsultationCompleted, canEditConsultation, justCompleted]);
 
   // Fixed auto-save mutation
   const autoSaveMutation = useMutation({
@@ -201,17 +212,15 @@ export const useConsultationForm = (
     if (!canEditConsultation) {
       toast({
         title: 'Cannot Save',
-        description: isAssociatedDoctor
-          ? 'You do not have permission to edit this consultation.'
-          : 'This consultation has been completed and cannot be modified.',
+        description: 'You do not have permission to edit this consultation.',
         variant: 'destructive',
       });
       return;
     }
-    
+
     const formValues = form.getValues();
     autoSaveMutation.mutate(formValues);
-  }, [form, autoSaveMutation, canEditConsultation, isAssociatedDoctor]);
+  }, [form, autoSaveMutation, canEditConsultation]);
 
   // Validate mandatory fields before completion
   const validateMandatoryFields = useCallback(() => {
@@ -301,14 +310,19 @@ export const useConsultationForm = (
     if (error) throw error;
     
     setIsConsultationCompleted(true);
+    setJustCompleted(true);
     queryClient.invalidateQueries({ queryKey: ['appointments'] });
     toast({
       title: 'Consultation Completed',
       description: 'The consultation has been marked as complete.',
     });
-    if (onConsultationCompleted) {
-      onConsultationCompleted();
-    }
+
+    // Set timeout for redirect
+    setTimeout(() => {
+      if (onConsultationCompleted) {
+        onConsultationCompleted();
+      }
+    }, 3000);
     } catch (error) {
        console.error('Error completing consultation:', error);
        toast({
@@ -338,5 +352,6 @@ export const useConsultationForm = (
     validateMandatoryFields,
     getMandatoryFieldsStatus,
     mandatoryFieldsStatus,
+    justCompleted,
   };
 }; 

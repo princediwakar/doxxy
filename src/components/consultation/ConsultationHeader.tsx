@@ -87,7 +87,7 @@ export const ConsultationHeader = ({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {isConsultationCompleted ? (
+              {isConsultationCompleted && !canEditConsultation ? (
                 <Badge variant="outline" className="text-xs border-green-200 text-green-700">
                   <Lock className="h-3 w-3 mr-1" />
                   Read Only

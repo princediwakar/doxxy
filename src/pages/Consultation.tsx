@@ -36,7 +36,7 @@ import {
   specialtyFieldSections,
   type FieldSection,
 } from "@/lib/consultationNotesSchemas";
-import { PrescriptionMedication } from "@/components/consultation/types";
+import { FieldValue } from "@/components/consultation/types";
 
 const Consultation = () => {
   const navigate = useNavigate();
@@ -139,6 +139,7 @@ const Consultation = () => {
     handleSave,
     handleCompleteConsultation,
     mandatoryFieldsStatus,
+    justCompleted,
   } = useConsultationForm(
     appointmentId,
     appointment,
@@ -238,7 +239,7 @@ const Consultation = () => {
                   value={
                     form.watch(
                       `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>
-                    ) as string | readonly PrescriptionMedication[]
+                    ) as FieldValue
                   }
                   onChange={(value) =>
                     form.setValue(
@@ -248,7 +249,7 @@ const Consultation = () => {
                   }
                   expandedFields={expandedFields}
                   setExpandedFields={setExpandedFields}
-                  isConsultationCompleted={canEditConsultation === false}
+                  isReadOnly={!canEditConsultation}
                 />
               ))}
             </CardContent>
@@ -368,8 +369,11 @@ const Consultation = () => {
                           Consultation Completed
                         </h3>
                         <p className="text-sm text-green-700">
-                          This consultation has been completed and saved. You
-                          will be redirected to the appointments page shortly.
+                          {justCompleted ? (
+                            "This consultation has been completed and saved. You will be redirected to the appointments page shortly."
+                          ) : (
+                            "This consultation has been completed. You can review and edit the notes as needed."
+                          )}
                         </p>
                       </div>
                     </div>
