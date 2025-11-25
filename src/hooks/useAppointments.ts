@@ -220,23 +220,90 @@ export const useAppointments = () => {
   };
 
   const handleStartConsultation = async (appointmentId: string) => {
-    // Check if clinic has sufficient credits before starting consultation
-    if (!canBookAppointment(1)) {
-      toast.error("Insufficient credits", {
-        description: "You don't have enough credits to start this consultation. Please purchase more credits."
-      });
-      return;
-    }
-
     try {
-      // First deduct credits
-      await deductCreditsForAppointment.mutateAsync({
-        appointmentId,
-        creditsToDeduct: 1
-      });
+      console.log('handleStartConsultation called with role:', activeClinicRole, 'clinic:', activeClinic?.clinic_id);
 
-      // Then update appointment status to "In Progress"
-      updateAppointmentStatusMutation.mutate({ appointmentId, status: 'In Progress' });
+      // First check if consultation already exists
+      const { data: existingConsultation, error: consultationError } = await supabase
+        .from('consultations')
+        .select('id')
+        .eq('appointment_id', appointmentId)
+        .maybeSingle();
+
+      // If consultation already exists, just navigate to consultation page
+      if (existingConsultation && !consultationError) {
+        // Update appointment status to "In Progress" without showing success toast
+        await supabase
+          .from('appointments')
+          .update({ status: 'In Progress' })
+          .eq('id', appointmentId);
+        return;
+      }
+
+      // For non-superadmin users, check credits and deduct one credit
+      if (activeClinicRole !== 'superadmin') {
+        console.log('Performing credit check and deduction for role:', activeClinicRole);
+
+        // Check if clinic has sufficient credits - use direct query only
+        const { data: clinicCredits, error: creditsError } = await supabase
+          .from('clinic_credits')
+          .select('credit_balance')
+          .eq('clinic_id', activeClinic?.clinic_id)
+          .maybeSingle();
+
+        console.log('Direct clinic_credits query result:', { clinicCredits, creditsError, clinicId: activeClinic?.clinic_id });
+
+        if (creditsError) {
+          console.warn('Failed to fetch clinic credits:', creditsError);
+          toast.error("Payment system error", {
+            description: "Unable to verify credits. Please try again or contact support."
+          });
+          return;
+        }
+
+        if (!clinicCredits || (clinicCredits.credit_balance || 0) < 1) {
+          console.log('Insufficient credits:', clinicCredits?.credit_balance);
+          toast.error("Insufficient credits", {
+            description: "You don't have enough credits to start this consultation. Please purchase more credits."
+          });
+          return;
+        }
+
+        console.log('Direct query shows sufficient credits:', clinicCredits?.credit_balance);
+
+        // Deduct one credit for this consultation
+        await deductCreditsForAppointment.mutateAsync({
+          appointmentId,
+          creditsToDeduct: 1
+        });
+      } else {
+        console.log('Skipping credit check and deduction for superadmin');
+      }
+
+      // Create consultation record
+      const { error: createConsultationError } = await supabase
+        .from('consultations')
+        .insert({
+          appointment_id: appointmentId,
+          clinic_id: activeClinic?.clinic_id,
+          patient_id: (await supabase.from('appointments').select('patient_id').eq('id', appointmentId).single()).data?.patient_id,
+          doctor_id: (await supabase.from('appointments').select('doctor_id').eq('id', appointmentId).single()).data?.doctor_id,
+          specialty_data: {},
+          clinical_notes: {}
+        });
+
+      if (createConsultationError) {
+        console.error('Failed to create consultation record:', createConsultationError);
+        toast.error('Failed to create consultation record');
+        return;
+      }
+
+      // Update appointment status to "In Progress" without showing success toast
+      await supabase
+        .from('appointments')
+        .update({ status: 'In Progress' })
+        .eq('id', appointmentId);
+
     } catch (error) {
       console.error('Failed to start consultation:', error);
       toast.error('Failed to start consultation', {

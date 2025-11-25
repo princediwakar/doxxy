@@ -61,47 +61,98 @@ export const usePayments = () => {
   const queryClient = useQueryClient();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // Fetch clinic billing summary - calculated from transactions
+  // Fetch clinic billing summary - read from clinic_credits table
   const { data: billingSummary, isLoading: isLoadingSummary } = useQuery<BillingSummary>({
     queryKey: ['clinic-billing-summary', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic');
-      
-      // Get all completed credit purchases
-      const { data: completedTransactions, error: transactionsError } = await supabase
-        .from('payment_transactions')
-        .select('credits_purchased, amount')
+
+      // Get clinic credits from clinic_credits table
+      const { data: clinicCredits, error: creditsError } = await supabase
+        .from('clinic_credits')
+        .select('credit_balance, total_credits_purchased, total_credits_used')
         .eq('clinic_id', activeClinic.clinic_id)
-        .eq('transaction_type', 'credit_purchase')
-        .eq('payment_status', 'completed');
-      
-      if (transactionsError) throw transactionsError;
-      
-      // Calculate totals from completed transactions
-      const totalCreditsPurchased = completedTransactions?.reduce((sum, t) => sum + (t.credits_purchased || 0), 0) || 0;
-      
+        .maybeSingle();
+
+      if (creditsError) {
+        // If clinic_credits record doesn't exist, fall back to calculation
+        console.warn('Clinic credits record not found, falling back to calculation:', creditsError);
+
+        // Get all completed credit purchases
+        const { data: completedTransactions, error: transactionsError } = await supabase
+          .from('payment_transactions')
+          .select('credits_purchased, amount')
+          .eq('clinic_id', activeClinic.clinic_id)
+          .eq('transaction_type', 'credit_purchase')
+          .eq('payment_status', 'completed');
+
+        if (transactionsError) throw transactionsError;
+
+        // Calculate totals from completed transactions
+        const totalCreditsPurchased = completedTransactions?.reduce((sum, t) => sum + (t.credits_purchased || 0), 0) || 0;
+
+        // Count credits used from appointments that have started consultations
+        const { data: appointments, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('id, status')
+          .eq('clinic_id', activeClinic.clinic_id)
+          .in('status', ['In Progress', 'Completed']);
+
+        if (appointmentsError) throw appointmentsError;
+
+        const totalCreditsUsed = appointments?.length || 0;
+        const creditBalance = totalCreditsPurchased - totalCreditsUsed;
+
+        // Get pending payments count
+        const { data: pendingTransactions, error: pendingError } = await supabase
+          .from('payment_transactions')
+          .select('id')
+          .eq('clinic_id', activeClinic.clinic_id)
+          .eq('payment_status', 'pending');
+
+        if (pendingError) throw pendingError;
+
+        // Get current month consultations (appointments that have started)
+        const currentMonthStart = new Date();
+        currentMonthStart.setDate(1);
+        currentMonthStart.setHours(0, 0, 0, 0);
+
+        const { data: currentMonthAppointmentsData, error: currentMonthError } = await supabase
+          .from('appointments')
+          .select('id')
+          .eq('clinic_id', activeClinic.clinic_id)
+          .in('status', ['In Progress', 'Completed'])
+          .gte('created_at', currentMonthStart.toISOString());
+
+        if (currentMonthError) throw currentMonthError;
+
+        const currentMonthAppointments = currentMonthAppointmentsData?.length || 0;
+        const currentMonthAmount = currentMonthAppointments; // Each consultation costs 1 credit worth
+
+        return {
+          credit_balance: creditBalance,
+          total_credits_purchased: totalCreditsPurchased,
+          total_credits_used: totalCreditsUsed,
+          current_month_appointments: currentMonthAppointments,
+          current_month_amount: currentMonthAmount,
+          pending_payments: pendingTransactions?.length || 0
+        };
+      }
+
+      // Use data from clinic_credits table
+      const creditBalance = clinicCredits?.credit_balance || 0;
+      const totalCreditsPurchased = clinicCredits?.total_credits_purchased || 0;
+      const totalCreditsUsed = clinicCredits?.total_credits_used || 0;
+
       // Get pending payments count
       const { data: pendingTransactions, error: pendingError } = await supabase
         .from('payment_transactions')
         .select('id')
         .eq('clinic_id', activeClinic.clinic_id)
         .eq('payment_status', 'pending');
-      
+
       if (pendingError) throw pendingError;
-      
-      // Count credits used from appointments that have started consultations
-      const { data: appointments, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('id, status')
-        .eq('clinic_id', activeClinic.clinic_id)
-        .in('status', ['In Progress', 'Completed']);
 
-      if (appointmentsError) throw appointmentsError;
-
-      // Each consultation uses 1 credit (only when status is In Progress or Completed)
-      const totalCreditsUsed = appointments?.length || 0;
-      const creditBalance = totalCreditsPurchased - totalCreditsUsed;
-      
       // Get current month consultations (appointments that have started)
       const currentMonthStart = new Date();
       currentMonthStart.setDate(1);
@@ -118,7 +169,7 @@ export const usePayments = () => {
 
       const currentMonthAppointments = currentMonthAppointmentsData?.length || 0;
       const currentMonthAmount = currentMonthAppointments; // Each consultation costs 1 credit worth
-      
+
       return {
         credit_balance: creditBalance,
         total_credits_purchased: totalCreditsPurchased,
@@ -313,8 +364,32 @@ export const usePayments = () => {
   });
 
   // Check if appointment can be booked (sufficient credits)
-  const canBookAppointment = (creditsRequired: number = 1): boolean => {
-    return (billingSummary?.credit_balance || 0) >= creditsRequired;
+  const canBookAppointment = async (creditsRequired: number = 1): Promise<boolean> => {
+    // Try to get real-time balance from clinic_credits first
+    if (activeClinic?.clinic_id) {
+      try {
+        const { data: clinicCredits, error } = await supabase
+          .from('clinic_credits')
+          .select('credit_balance')
+          .eq('clinic_id', activeClinic.clinic_id)
+          .maybeSingle();
+
+        console.log('canBookAppointment - clinic_credits query:', { clinicCredits, error, clinicId: activeClinic.clinic_id });
+
+        if (!error && clinicCredits) {
+          const result = (clinicCredits.credit_balance || 0) >= creditsRequired;
+          console.log('canBookAppointment - direct query result:', result, 'balance:', clinicCredits.credit_balance);
+          return result;
+        }
+      } catch (error) {
+        console.warn('Failed to fetch clinic credits, falling back to billing summary:', error);
+      }
+    }
+
+    // Fall back to billing summary
+    const fallbackResult = (billingSummary?.credit_balance || 0) >= creditsRequired;
+    console.log('canBookAppointment - fallback to billing summary:', fallbackResult, 'billingSummary:', billingSummary);
+    return fallbackResult;
   };
 
   // Get credit balance
