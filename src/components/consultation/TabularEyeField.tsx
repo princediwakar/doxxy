@@ -66,13 +66,13 @@ export const TabularEyeField = ({
 
     if (fieldType === 'textarea') {
       return (
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">{eyeLabel}</Label>
+        <div className="flex items-start gap-3">
+          <Label className="text-sm font-medium text-gray-700 min-w-[60px] pt-2">{eyeLabel}</Label>
           <Textarea
             placeholder={placeholder}
             value={eyeValue || ''}
             onChange={(e) => onEyeChange(e.target.value)}
-            className="min-h-[80px] resize-none"
+            className="min-h-[80px] resize-none flex-1"
             readOnly={isReadOnly}
             disabled={isReadOnly}
           />
@@ -121,7 +121,7 @@ export const TabularEyeField = ({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-blue-200">
+      <div className="space-y-4 pl-6 border-l-2 border-blue-200">
         {renderField('left', value.left, handleLeftChange)}
         {renderField('right', value.right, handleRightChange)}
       </div>

@@ -44,102 +44,102 @@ export const VitalSignsField = ({
 
 
   return (
-    <div className="space-y-4 pl-6 border-l-2 border-blue-200">
-      {/* All Vital Signs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="pl-6 border-l-2 border-blue-200">
+      {/* All Vital Signs - Compact Grid Layout */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {/* Temperature */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Temperature</Label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">Temperature</Label>
+          <div className="flex items-center gap-1">
             <Input
               placeholder="°C"
               value={value.temperature || ''}
               onChange={(e) => handleFieldChange('temperature', e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap">°C</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">°C</span>
           </div>
         </div>
 
         {/* Pulse */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Pulse</Label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">Pulse</Label>
+          <div className="flex items-center gap-1">
             <Input
               placeholder="bpm"
               value={value.pulse || ''}
               onChange={(e) => handleFieldChange('pulse', e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap">bpm</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">bpm</span>
           </div>
         </div>
 
         {/* Blood Pressure */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Blood Pressure</Label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">B.P.</Label>
+          <div className="flex items-center gap-1">
             <Input
               placeholder="Systolic"
               value={value.blood_pressure_systolic || ''}
               onChange={(e) => handleFieldChange('blood_pressure_systolic', e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500">/</span>
+            <span className="text-xs text-gray-500">/</span>
             <Input
               placeholder="Diastolic"
               value={value.blood_pressure_diastolic || ''}
               onChange={(e) => handleFieldChange('blood_pressure_diastolic', e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap">mmHg</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">mmHg</span>
           </div>
         </div>
 
         {/* Respiratory Rate */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Respiratory Rate</Label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">Resp. Rate</Label>
+          <div className="flex items-center gap-1">
             <Input
               placeholder="breaths/min"
               value={value.respiratory_rate || ''}
               onChange={(e) => handleFieldChange('respiratory_rate', e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap">/min</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">/min</span>
           </div>
         </div>
 
         {/* Oxygen Saturation */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">O₂ Saturation</Label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">O₂ Sat</Label>
+          <div className="flex items-center gap-1">
             <Input
               placeholder="%"
               value={value.oxygen_saturation || ''}
               onChange={(e) => handleFieldChange('oxygen_saturation', e.target.value)}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap">%</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">%</span>
           </div>
         </div>
 
         {/* Height */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Height</Label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">Height</Label>
+          <div className="flex items-center gap-1">
             <Input
               placeholder="cm"
               value={value.height || ''}
@@ -148,18 +148,18 @@ export const VitalSignsField = ({
                 // Auto-calculate BMI when height changes
                 setTimeout(calculateBMI, 100);
               }}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap">cm</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">cm</span>
           </div>
         </div>
 
         {/* Weight */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Weight</Label>
-          <div className="flex items-center gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">Weight</Label>
+          <div className="flex items-center gap-1">
             <Input
               placeholder="kg"
               value={value.weight || ''}
@@ -168,22 +168,22 @@ export const VitalSignsField = ({
                 // Auto-calculate BMI when weight changes
                 setTimeout(calculateBMI, 100);
               }}
-              className="flex-1"
+              className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-sm text-gray-500 whitespace-nowrap">kg</span>
+            <span className="text-xs text-gray-500 whitespace-nowrap">kg</span>
           </div>
         </div>
 
         {/* BMI (calculated) */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">BMI</Label>
+        <div className="space-y-1">
+          <Label className="text-xs font-medium text-gray-700">BMI</Label>
           <Input
             placeholder="Auto-calculated"
             value={value.bmi || ''}
             onChange={(e) => handleFieldChange('bmi', e.target.value)}
-            className="flex-1"
+            className="flex-1 text-sm h-8"
             readOnly={true}
             disabled={true}
           />

@@ -1,3 +1,4 @@
+// components/consultation/ConsultationRenderers.tsx
 import React from 'react';
 import { 
   FieldValue,
@@ -104,33 +105,33 @@ export const VitalSignsDisplay: React.FC<{ data: VitalSignsData }> = ({ data }) 
   const renderItem = (label: string, value: string | undefined, unit: string = '') => {
     if (!value) return null;
     return (
-      <div key={label} className="flex justify-between">
-        <span className="text-gray-700 font-medium">{label}:</span>
-        <span>{value} {unit}</span>
+      <div key={label} className="flex items-center gap-1">
+        <span className="text-gray-700 font-medium text-sm">{label}:</span>
+        <span className="text-sm">{value} {unit}</span>
       </div>
     );
   };
 
   const items = [];
-  if (data.temperature) items.push(renderItem('Temperature', data.temperature, '°C'));
+  if (data.temperature) items.push(renderItem('Temp', data.temperature, '°C'));
   if (data.pulse) items.push(renderItem('Pulse', data.pulse, 'bpm'));
   if (data.blood_pressure_systolic || data.blood_pressure_diastolic) {
     items.push(
-      <div key="bp" className="flex justify-between">
-        <span className="text-gray-700 font-medium">Blood Pressure:</span>
-        <span>{data.blood_pressure_systolic || '-'}/{data.blood_pressure_diastolic || '-'} mmHg</span>
+      <div key="bp" className="flex items-center gap-1">
+        <span className="text-gray-700 font-medium text-sm">B.P.:</span>
+        <span className="text-sm">{data.blood_pressure_systolic || '-'}/{data.blood_pressure_diastolic || '-'} mmHg</span>
       </div>
     );
   }
-  if (data.respiratory_rate) items.push(renderItem('Respiratory Rate', data.respiratory_rate, '/min'));
-  if (data.oxygen_saturation) items.push(renderItem('O₂ Saturation', data.oxygen_saturation, '%'));
+  if (data.respiratory_rate) items.push(renderItem('Resp. Rate', data.respiratory_rate, '/min'));
+  if (data.oxygen_saturation) items.push(renderItem('O₂ Sat', data.oxygen_saturation, '%'));
   if (data.height) items.push(renderItem('Height', data.height, 'cm'));
   if (data.weight) items.push(renderItem('Weight', data.weight, 'kg'));
   if (data.bmi) items.push(renderItem('BMI', data.bmi));
 
   return (
     <div className="vital-signs-display">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
         {items}
       </div>
     </div>
@@ -141,17 +142,17 @@ export const EyeFieldDisplay: React.FC<{ data: EyeData }> = ({ data }) => {
   return (
     <div className="eye-field-display space-y-2">
       {(data.left || data.right) && (
-        <div className="flex flex-wrap gap-4 text-sm">
+        <div className="space-y-2 text-sm">
           {data.left && (
-            <div className="flex items-center gap-2">
-              <div className="text-gray-700 font-semibold text-sm min-w-[40px]">Left:</div>
-              <div>{data.left}</div>
+            <div className="flex items-start gap-2">
+              <div className="text-gray-700 font-semibold text-sm min-w-[40px] pt-0.5">Left:</div>
+              <div className="whitespace-pre-wrap">{data.left}</div>
             </div>
           )}
           {data.right && (
-            <div className="flex items-center gap-2">
-              <div className="text-gray-700 font-semibold text-sm min-w-[40px]">Right:</div>
-              <div>{data.right}</div>
+            <div className="flex items-start gap-2">
+              <div className="text-gray-700 font-semibold text-sm min-w-[40px] pt-0.5">Right:</div>
+              <div className="whitespace-pre-wrap">{data.right}</div>
             </div>
           )}
         </div>

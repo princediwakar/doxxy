@@ -47,7 +47,7 @@ export const useConsultationForm = (
   const defaultValues: ConsultationFormValues = useMemo(() => ({
     specialty_data: (existingConsultation?.specialty_data as z.infer<typeof consultationNotesSchema>) || {},
   }), [existingConsultation?.specialty_data]);
-  
+
   // Initialize form
   const form = useForm<ConsultationFormValues>({
     resolver: zodResolver(z.object({
@@ -60,6 +60,20 @@ export const useConsultationForm = (
   useEffect(() => {
     previousValuesRef.current = defaultValues;
   }, [defaultValues]);
+
+  // Reset form when existing consultation data becomes available
+  useEffect(() => {
+    if (existingConsultation?.specialty_data) {
+      // Reset form with the loaded consultation data
+      form.reset({
+        specialty_data: existingConsultation.specialty_data as z.infer<typeof consultationNotesSchema>,
+      });
+      // Update the previous values reference
+      previousValuesRef.current = {
+        specialty_data: existingConsultation.specialty_data as z.infer<typeof consultationNotesSchema>,
+      };
+    }
+  }, [existingConsultation?.specialty_data, form]);
 
   // Watch all form values
   const formValues = useWatch({

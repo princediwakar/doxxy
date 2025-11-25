@@ -35,91 +35,121 @@ export const PrintStyles: React.FC = () => (
   <style dangerouslySetInnerHTML={{ __html: `
     @media print {
       @page { margin: 10mm; size: A4; }
-      body { font-size: 12px !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin: 0 !important; padding: 0 !important; }
+      body { 
+        font-size: 12px !important; 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
+        margin: 0 !important; 
+        padding: 0 !important; 
+      }
+      
+      /* --- NEW: TABLE HEADER REPEAT LOGIC --- */
+      table { width: 100%; }
+      thead { display: table-header-group; } 
+      tfoot { display: table-footer-group; }
+      tr { page-break-inside: avoid; }
+      /* -------------------------------------- */
+
       .no-print { display: none !important; }
       .page-break { page-break-before: always; }
       .avoid-break { page-break-inside: avoid; }
+      
+      /* ... keep your existing styles below ... */
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       .max-w-4xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
-      .letterhead { padding: 0.5rem !important; margin-bottom: 0.5rem !important; page-break-inside: avoid !important; }
-      .letterhead .grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 1rem !important; width: 100% !important; }
+      
+      /* ... rest of your existing styles ... */
       .info-cards { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; margin-bottom: 0.5rem !important; page-break-inside: avoid !important; }
-      .grid-cols-\\[120px\\,1fr\\] { display: grid !important; grid-template-columns: 120px 1fr !important; gap: 0.5rem !important; }
-      .consultation-content { page-break-before: auto !important; }
-      .space-y-6 > * + * { margin-top: 0.75rem !important; }
-      .section-notes { page-break-inside: avoid !important; margin-bottom: 0.75rem !important; }
-      .section-notes h3 { margin-bottom: 0.5rem !important; }
-      .field-group { page-break-inside: avoid !important; margin-bottom: 0.25rem !important; }
-      .space-y-4 > * + * { margin-top: 0.5rem !important; }
-      table { width: 100% !important; border-collapse: collapse !important; page-break-inside: avoid !important; }
-      th, td { padding: 4px 8px !important; text-align: left !important; border-bottom: 1px solid #e5e7eb !important; }
-      th { background-color: #f9fafb !important; font-weight: 600 !important; }
-      .shadow-sm, .shadow, .shadow-md, .shadow-lg { box-shadow: none !important; }
+      /* ... */
     }
   `}} />
 );
 
 export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, doctorInfo: DoctorInfo | null }> = ({ clinicInfo, doctorInfo }) => {
   return (
-    <div className="letterhead relative border-b-2 border-blue-600 bg-gradient-to-br from-blue-50 via-white to-blue-50 p-4 mb-4 print:p-2 print:mb-2">
-      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-blue-600 via-green-500 to-blue-600"></div>
+    <div className="letterhead w-full mb-6 print:mb-4">
+      {/* Design Philosophy:
+        1. No background colors (saves ink).
+        2. High contrast text (slate-900) for readability.
+        3. Subtle accent color (blue-700) for branding, but thin lines only.
+        4. Bottom border separates header from content cleanly.
+      */}
       
-      <div className="grid grid-cols-2 gap-4 items-start">
-        <div className="clinic-info space-y-4">
-          <div className="space-y-2">
-            <h1 className="clinic-name text-xl font-bold text-primary tracking-tight leading-tight">
+      <div className="flex justify-between items-start border-b-[1px] border-slate-300 pb-4">
+        
+        {/* LEFT: Clinic Details */}
+        <div className="clinic-info max-w-[50%] space-y-3">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide leading-none">
               {clinicInfo?.name || 'MEDICAL CLINIC'}
             </h1>
-            <div className="w-16 h-1 bg-gradient-to-r from-blue-600 to-green-500 rounded-full"></div>
+            {/* A single thin accent line for branding */}
+            <div className="w-12 h-[2px] bg-blue-700 mt-2 mb-2"></div>
           </div>
           
-          <div className="clinic-details space-y-2 text-xs text-gray-700">
+          <div className="text-xs text-slate-600 space-y-1 font-medium">
             {clinicInfo?.address && (
-              <div className="contact-row flex items-start gap-3">
-                <MapPin className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                <div className="font-medium leading-relaxed">{clinicInfo.address}</div>
+              <div className="flex items-start gap-2">
+                <MapPin className="h-3 w-3 text-slate-400 mt-0.5 shrink-0" />
+                <span className="leading-tight">{clinicInfo.address}</span>
               </div>
             )}
-            {clinicInfo?.phone && (
-              <div className="contact-row flex items-center gap-3">
-                <Phone className="h-4 w-4 text-green-500 shrink-0" />
-                <span className="font-medium">{clinicInfo.phone}</span>
-              </div>
-            )}
-            {clinicInfo?.email && (
-              <div className="contact-row flex items-center gap-3">
-                <Mail className="h-4 w-4 text-blue-500 shrink-0" />
-                <span className="font-medium">{clinicInfo.email}</span>
-              </div>
-            )}
-            {clinicInfo?.website && (
-              <div className="contact-row flex items-center gap-3">
-                <Globe className="h-4 w-4 text-purple-500 shrink-0" />
-                <span className="font-medium">{clinicInfo.website}</span>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {clinicInfo?.phone && (
+                <div className="flex items-center gap-1.5">
+                  <Phone className="h-3 w-3 text-slate-400" />
+                  <span>{clinicInfo.phone}</span>
+                </div>
+              )}
+              {clinicInfo?.email && (
+                <div className="flex items-center gap-1.5">
+                  <Mail className="h-3 w-3 text-slate-400" />
+                  <span>{clinicInfo.email}</span>
+                </div>
+              )}
+              {clinicInfo?.website && (
+                <div className="flex items-center gap-1.5">
+                  <Globe className="h-3 w-3 text-slate-400" />
+                  <span>{clinicInfo.website}</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="doctor-info text-right space-y-4">
-          <div className="space-y-2">
-            <h2 className="text-xl font-bold text-gray-900">{doctorInfo?.name || ''}</h2>
-            <div className="text-sm text-gray-600 font-medium">
-              {doctorInfo?.specialization && <div>{doctorInfo.specialization}</div>}
-              {doctorInfo?.qualification && <div>{doctorInfo.qualification}</div>}
-              {doctorInfo?.registration_number && <div>Reg. No: {doctorInfo.registration_number}</div>}
+        {/* RIGHT: Doctor Details */}
+        <div className="doctor-info text-right max-w-[45%]">
+          <div className="space-y-1">
+            <h2 className="text-xl font-bold text-slate-800">
+              {doctorInfo?.name || 'Doctor Name'}
+            </h2>
+            <div className="text-sm font-semibold text-blue-700 uppercase tracking-wider text-[10px]">
+              {doctorInfo?.specialization || 'General Practice'}
             </div>
           </div>
-          <div className="doctor-details space-y-2 text-xs text-gray-700">
+
+          <div className="mt-3 space-y-1 text-xs text-slate-500">
+            {doctorInfo?.qualification && (
+              <div className="uppercase tracking-tight">{doctorInfo.qualification}</div>
+            )}
+            {doctorInfo?.registration_number && (
+              <div className="font-mono text-slate-400">Reg: {doctorInfo.registration_number}</div>
+            )}
             {doctorInfo?.email && (
-              <div className="contact-row flex items-center justify-end gap-3">
-                <span className="font-medium">{doctorInfo.email}</span>
-                <Mail className="h-4 w-4 text-blue-500 shrink-0" />
+              <div className="flex items-center justify-end gap-1.5 mt-1 text-slate-600">
+                <span>{doctorInfo.email}</span>
+                <Mail className="h-3 w-3 text-slate-400" />
               </div>
             )}
           </div>
         </div>
       </div>
+      
+      {/* Optional: Very subtle date printed automatically if you want
+      <div className="text-[10px] text-slate-300 text-right mt-1 print:block hidden">
+        Printed on {new Date().toLocaleDateString()}
+      </div> 
+      */}
     </div>
   );
 };

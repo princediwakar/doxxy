@@ -416,7 +416,7 @@ export const usePayments = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
-      toast.success('Credits deducted successfully');
+      // Credits deduction happens silently without notification
     },
     onError: (error) => {
       toast.error('Failed to deduct credits', {

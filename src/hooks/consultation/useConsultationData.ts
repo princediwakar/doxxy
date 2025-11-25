@@ -169,5 +169,8 @@ export const useConsultationData = (appointmentId: string | undefined) => {
     doctorDetails: doctorDetailsQuery.data,
     existingConsultation: existingConsultationQuery.data,
     departmentInfo: departmentInfoQuery.data,
+    // Additional loading states for better UX
+    existingConsultationLoading: existingConsultationQuery.isLoading,
+    departmentInfoLoading: departmentInfoQuery.isLoading,
   };
 }; 

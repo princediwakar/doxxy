@@ -1,3 +1,4 @@
+// src/components/consultation/printUtils.ts
 import { ConsultationFormValues, Patient } from './types';
 import { Tables } from '@/integrations/supabase/types';
 import { createRoot } from 'react-dom/client';
@@ -195,13 +196,37 @@ export const generatePrintContent = (
               .section-notes {
                 margin-bottom: 0.75rem !important;
               }
-              
+
               .section-notes h3 {
                 margin-bottom: 0.5rem !important;
               }
-              
+
               .field-group {
                 margin-bottom: 0.25rem !important;
+              }
+
+              /* Compact vital signs layout for print */
+              .vital-signs-display .grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 0.5rem !important;
+              }
+
+              .vital-signs-display .grid > div {
+                font-size: 12px !important;
+                line-height: 1.3 !important;
+                padding: 0.125rem 0 !important;
+              }
+
+              /* Eye field alignment for print */
+              .eye-field-display .flex {
+                display: flex !important;
+                align-items: flex-start !important;
+              }
+
+              .eye-field-display .min-w-\[40px\] {
+                min-width: 40px !important;
+                padding-top: 0.125rem !important;
               }
             }
 
@@ -312,6 +337,30 @@ export const printConsultation = async (
         
         .section-notes {
           margin-bottom: 0.75rem !important;
+        }
+
+        /* Compact vital signs layout for print */
+        .vital-signs-display .grid {
+          display: grid !important;
+          grid-template-columns: repeat(4, 1fr) !important;
+          gap: 0.5rem !important;
+        }
+
+        .vital-signs-display .grid > div {
+          font-size: 12px !important;
+          line-height: 1.3 !important;
+          padding: 0.125rem 0 !important;
+        }
+
+        /* Eye field alignment for print */
+        .eye-field-display .flex {
+          display: flex !important;
+          align-items: flex-start !important;
+        }
+
+        .eye-field-display .min-w-\[40px\] {
+          min-width: 40px !important;
+          padding-top: 0.125rem !important;
         }
       }
     `;

@@ -101,7 +101,7 @@ const fetchAppointments = async (clinicId: string | undefined, searchTerm: strin
 
 export const useAppointments = () => {
   const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
-  const { deductCreditsForAppointment, canBookAppointment } = usePayments();
+  const { deductCreditsForAppointment } = usePayments();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<AppointmentFilter>('today');
@@ -245,10 +245,17 @@ export const useAppointments = () => {
         console.log('Performing credit check and deduction for role:', activeClinicRole);
 
         // Check if clinic has sufficient credits - use direct query only
+        if (!activeClinic?.clinic_id) {
+          toast.error("Clinic ID not found", {
+            description: "Unable to verify credits. Please try again or contact support."
+          });
+          return;
+        }
+
         const { data: clinicCredits, error: creditsError } = await supabase
           .from('clinic_credits')
           .select('credit_balance')
-          .eq('clinic_id', activeClinic?.clinic_id)
+          .eq('clinic_id', activeClinic.clinic_id)
           .maybeSingle();
 
         console.log('Direct clinic_credits query result:', { clinicCredits, creditsError, clinicId: activeClinic?.clinic_id });
@@ -285,9 +292,9 @@ export const useAppointments = () => {
         .from('consultations')
         .insert({
           appointment_id: appointmentId,
-          clinic_id: activeClinic?.clinic_id,
-          patient_id: (await supabase.from('appointments').select('patient_id').eq('id', appointmentId).single()).data?.patient_id,
-          doctor_id: (await supabase.from('appointments').select('doctor_id').eq('id', appointmentId).single()).data?.doctor_id,
+          clinic_id: activeClinic?.clinic_id || '',
+          patient_id: (await supabase.from('appointments').select('patient_id').eq('id', appointmentId).single()).data?.patient_id || '',
+          doctor_id: (await supabase.from('appointments').select('doctor_id').eq('id', appointmentId).single()).data?.doctor_id || null,
           specialty_data: {},
           clinical_notes: {}
         });
