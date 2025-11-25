@@ -152,9 +152,16 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     enabled: open && !!activeClinic?.clinic_id,
   });
 
-  // Watch for appointment selection
+  // Watch for patient and appointment selection
+  const selectedPatientId = form.watch('patient_id');
   const selectedAppointmentId = form.watch('appointment_id');
   const selectedAppointment = appointments?.find(apt => apt.id === selectedAppointmentId);
+
+  // Filter appointments by selected patient
+  const filteredAppointments = useMemo(() => {
+    if (!selectedPatientId) return appointments || [];
+    return (appointments || []).filter(apt => apt.patient_id === selectedPatientId);
+  }, [appointments, selectedPatientId]);
 
   // Fetch doctor consultation fee
   const { data: doctorFee } = useQuery({
@@ -175,13 +182,12 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     enabled: !!selectedAppointment?.doctor_id && mode !== 'view',
   });
 
-  // Calculate totals
+  // Watch form values to trigger recalculation
+  const serviceItems = form.watch('service_items') || [];
   const discountPercentage = form.watch('discount_percentage') || 0;
   const taxPercentage = form.watch('tax_percentage') || 0;
 
   const calculateTotals = useMemo(() => {
-    const serviceItems = form.watch('service_items') || [];
-
     // In view mode, use the stored bill amount as fallback
     let subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
 
@@ -202,7 +208,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
       taxAmount,
       total,
     };
-  }, [form, discountPercentage, taxPercentage, mode, bill]);
+  }, [serviceItems, discountPercentage, taxPercentage, mode, bill]);
 
   // Service item management
   const addServiceItem = () => {
@@ -223,14 +229,21 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
   const updateServiceItem = (index: number, field: keyof ServiceItem, value: string | number) => {
     const currentItems = form.getValues('service_items') || [];
     const updatedItems = [...currentItems];
+
+    // Update the field with the new value
     updatedItems[index] = { ...updatedItems[index], [field]: value };
-    
+
     // Auto-calculate amount when quantity or rate changes
     if (field === 'quantity' || field === 'rate') {
-      updatedItems[index].amount = updatedItems[index].quantity * updatedItems[index].rate;
+      const quantity = field === 'quantity' ? Number(value) : Number(updatedItems[index].quantity);
+      const rate = field === 'rate' ? Number(value) : Number(updatedItems[index].rate);
+      updatedItems[index].amount = quantity * rate;
     }
-    
-    form.setValue('service_items', updatedItems, { shouldValidate: true });
+
+    form.setValue('service_items', updatedItems, { shouldValidate: true, shouldDirty: true });
+
+    // Trigger form validation to update totals
+    form.trigger('service_items');
   };
 
   // Create/Update bill mutation
@@ -338,7 +351,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
 
   return {
     form,
-    appointments,
+    appointments: filteredAppointments,
     patients,
     isLoadingInvoiceNumber,
     isLoadingAppointments,

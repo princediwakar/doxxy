@@ -62,6 +62,19 @@ const fetchAppointments = async (clinicId: string | undefined, searchTerm: strin
 
   console.log('Appointments data from RPC:', data);
 
+  // Check for duplicate appointment IDs
+  if (data) {
+    const appointmentIds = data.map(app => app.id);
+    const uniqueIds = [...new Set(appointmentIds)];
+    if (appointmentIds.length !== uniqueIds.length) {
+      console.warn('Duplicate appointments detected in RPC response:', {
+        total: appointmentIds.length,
+        unique: uniqueIds.length,
+        duplicates: appointmentIds.filter((id, index) => appointmentIds.indexOf(id) !== index)
+      });
+    }
+  }
+
   let filteredData = data || [];
 
   if (searchTerm.trim()) {
@@ -115,9 +128,28 @@ export const useAppointments = () => {
 
   // Filter appointments for doctors if necessary
   const getFilteredAppointments = useCallback((appointmentList: AppointmentWithDetails[]) => {
-    return activeClinicRole === 'doctor'
-      ? appointmentList.filter(app => app.doctor_id === user?.id)
-      : appointmentList;
+    if (activeClinicRole === 'doctor') {
+      // For doctors, we need to filter appointments where the doctor's user_id matches the current user
+      // The appointment.doctor_id is the doctor record ID, not the user ID
+      // We need to check if the appointment's doctor has the same user_id as the current user
+      const filtered = appointmentList.filter(app => app.doctor_user_id === user?.id);
+
+      console.log('Doctor appointment filtering:', {
+        totalAppointments: appointmentList.length,
+        filteredAppointments: filtered.length,
+        currentUserId: user?.id,
+        sampleAppointments: appointmentList.slice(0, 3).map(app => ({
+          id: app.id,
+          doctor_id: app.doctor_id,
+          doctor_user_id: app.doctor_user_id,
+          patient_name: app.patient_name,
+          doctor_name: app.doctor_name
+        }))
+      });
+
+      return filtered;
+    }
+    return appointmentList;
   }, [activeClinicRole, user?.id]);
 
   const filteredAppointments = useMemo(() => ({

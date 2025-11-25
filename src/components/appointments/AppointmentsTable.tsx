@@ -82,9 +82,9 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {appointments.map((appointment) => (
+          {appointments.map((appointment, index) => (
             <TableRow
-              key={appointment.id}
+              key={`${appointment.id}-${index}`}
               className="cursor-pointer hover:bg-muted/50"
               onClick={() => onAppointmentClick(appointment)}
             >

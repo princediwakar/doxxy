@@ -58,6 +58,12 @@ serve(async (req: Request) => {
 
     console.log('Received invitation request:', memberData)
 
+    // Validate email format before proceeding
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(memberData.email)) {
+      throw new Error(`Invalid email format: ${memberData.email}`)
+    }
+
     // Get current user - handle both JWT and service role authentication
     let user: { id: string; email?: string } | null = null;
     try {
@@ -66,7 +72,7 @@ serve(async (req: Request) => {
         user = authUser;
       }
     } catch (err) {
-      console.log('JWT auth failed, checking if service role:', err.message);
+      console.log('JWT auth failed, checking if service role:', err instanceof Error ? err.message : String(err));
     }
 
     // If no user from JWT, check if this is a service role request
@@ -106,31 +112,15 @@ serve(async (req: Request) => {
         .single()
 
       if (inviteError) {
-        console.error('Database insert failed, proceeding with email only:', inviteError)
-        // Create a mock invitation object for email sending
-        invitation = {
-          id: invitationToken,
-          email: memberData.email.toLowerCase(),
-          name: memberData.name,
-          invitation_token: invitationToken,
-          clinic_id: memberData.clinic_id,
-          role: memberData.role
-        }
+        console.error('Database insert failed:', inviteError)
+        throw new Error(`Failed to create invitation record: ${inviteError.message}`)
       } else {
         invitation = data as InvitationRecord
         console.log('Invitation created in database:', invitation)
       }
     } catch (error) {
-      console.error('Database operation failed, proceeding with email only:', error)
-      // Create a mock invitation object for email sending
-      invitation = {
-        id: invitationToken,
-        email: memberData.email.toLowerCase(),
-        name: memberData.name,
-        invitation_token: invitationToken,
-        clinic_id: memberData.clinic_id,
-        role: memberData.role
-      }
+      console.error('Database operation failed:', error)
+      throw new Error(`Database operation failed: ${error instanceof Error ? error.message : String(error)}`)
     }
 
     // Get clinic information for the email
@@ -147,7 +137,7 @@ serve(async (req: Request) => {
 
     // Check if user already exists in Supabase Auth - MULTI-TENANT FIX
     console.log('Checking if user already exists in auth system...')
-    let existingUser: { id: string; email?: string } | null = null
+    let existingUser: { id: string; email?: string } | null | undefined = null
 
     try {
       const { data: existingUsers, error: userLookupError } = await supabaseAdmin.auth.admin.listUsers()
@@ -291,7 +281,7 @@ serve(async (req: Request) => {
           success: true,
           invitation: invitation,
           emailSent: false,
-          message: `Invitation record created but email failed: ${emailError.message}`
+          message: `Invitation record created but email failed: ${emailError instanceof Error ? emailError.message : String(emailError)}`
         }),
         {
           status: 200,
@@ -305,7 +295,7 @@ serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         error: 'Failed to send invitation',
-        details: error.message
+        details: error instanceof Error ? error.message : String(error)
       }),
       {
         status: 500,

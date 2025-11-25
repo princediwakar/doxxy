@@ -17,7 +17,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Plus, CreditCard, IndianRupee, Edit } from "lucide-react";
+import { Search, Plus, CreditCard, IndianRupee, Edit, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BillingModal } from "@/components/billing/BillingModal";
 import { MonthSelector } from "@/components/ui/MonthSelector";
@@ -234,7 +234,7 @@ const Billing = () => {
               <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
               <TableHead className="w-[40%]">Description</TableHead>
-              <TableHead className="w-[80px]">Actions</TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -249,45 +249,42 @@ const Billing = () => {
             ) : (
               filteredBills.map((bill) => (
                 <TableRow key={bill.id} className="hover:bg-muted/50">
-                  <TableCell
-                    className="font-medium cursor-pointer"
-                    onClick={() => handleBillClick(bill)}
-                  >
+                  <TableCell className="font-medium">
                     {bill.invoice_number}
                   </TableCell>
-                  <TableCell
-                    className="cursor-pointer"
-                    onClick={() => handleBillClick(bill)}
-                  >
+                  <TableCell>
                     {bill.patient_name || 'N/A'}
                   </TableCell>
-                  <TableCell
-                    className="cursor-pointer"
-                    onClick={() => handleBillClick(bill)}
-                  >
+                  <TableCell>
                     {bill.created_at ? new Date(bill.created_at).toLocaleDateString() : 'N/A'}
                   </TableCell>
-                  <TableCell
-                    className="cursor-pointer"
-                    onClick={() => handleBillClick(bill)}
-                  >
+                  <TableCell>
                     ₹{Number(bill.amount).toFixed(2)}
                   </TableCell>
-                  <TableCell
-                    className="truncate max-w-xs cursor-pointer"
-                    onClick={() => handleBillClick(bill)}
-                  >
+                  <TableCell className="truncate max-w-xs">
                     {bill.description}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditBill(bill)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleBillClick(bill)}
+                        className="h-8 w-8 p-0"
+                        title="View Bill"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditBill(bill)}
+                        className="h-8 w-8 p-0"
+                        title="Edit Bill"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

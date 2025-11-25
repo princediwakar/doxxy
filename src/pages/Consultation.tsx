@@ -1,13 +1,25 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { User, Stethoscope, Activity, ChevronDown, ChevronRight, ClipboardList, FileText } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { CheckCircle } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { FieldPath } from 'react-hook-form';
-import { toast } from 'sonner';
+import { useState, useCallback, useMemo } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  User,
+  Stethoscope,
+  Activity,
+  ChevronDown,
+  ChevronRight,
+  ClipboardList,
+  FileText,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { CheckCircle } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { FieldPath } from "react-hook-form";
+import { toast } from "sonner";
 
 // Import all the extracted components and hooks
 import {
@@ -17,35 +29,42 @@ import {
   ConsultationPreviewModal,
   printConsultation,
   ConsultationFormValues,
-  Patient
-} from '@/components/consultation';
-import { useConsultationData, useConsultationForm } from '@/hooks/consultation';
-import { specialtyFieldSections, type FieldSection } from '@/lib/consultationNotesSchemas';
-import { PrescriptionMedication } from '@/components/consultation/types';
+  Patient,
+} from "@/components/consultation";
+import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
+import {
+  specialtyFieldSections,
+  type FieldSection,
+} from "@/lib/consultationNotesSchemas";
+import { PrescriptionMedication } from "@/components/consultation/types";
 
 const Consultation = () => {
   const navigate = useNavigate();
   const { appointmentId } = useParams<{ appointmentId: string }>();
   const { user } = useAuth();
-  
+
   // Preview state
   const [showPreview, setShowPreview] = useState(false);
-  
+
   // Collapsible sections state - organized by section
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    'History': true,
-    'Examination': false,
-    'Assessment & Plan': true,
-    'Investigations': false,
+  const [expandedSections, setExpandedSections] = useState<
+    Record<string, boolean>
+  >({
+    History: true,
+    Examination: false,
+    Management: true,
+    Investigations: false,
   });
 
   // Individual field expansion state
-  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({
-    chief_complaint: true, // Always expanded
-    assessment: true, // Always expanded 
-    treatment_plan: true, // Always expanded
-    prescriptions: true, // Always expanded
-  });
+  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(
+    {
+      chief_complaint: true, // Always expanded
+      assessment: true, // Always expanded
+      prescriptions: true, // Always expanded
+      previous_investigations: true
+    }
+  );
 
   // Fetch all consultation data
   const {
@@ -62,47 +81,53 @@ const Consultation = () => {
   // Get specialty sections based on department
   const specialtySections = useMemo(() => {
     // Get department from the separate query
-    const departmentName = departmentInfo?.clinic_departments?.department_types?.name;
-    
+    const departmentName =
+      departmentInfo?.clinic_departments?.department_types?.name;
+
     // Map department names to schema keys
     const departmentMapping: Record<string, string> = {
-      'Ophthalmology': 'Ophthalmology',
-      'Neurology': 'Neurology',
-      'Cardiology': 'Cardiology',
-      'Dermatology': 'Dermatology',
-      'Orthopedics': 'Orthopedics',
-      'Psychiatry': 'Psychiatry',
-      'Pediatrics': 'Pediatrics',
-      'ENT': 'ENT',
-      'Gynecology': 'Gynecology',
-      'Pulmonology': 'Pulmonology',
-      'Dental': 'Dental',
-      'General Medicine': 'General'
+      Ophthalmology: "Ophthalmology",
+      Neurology: "Neurology",
+      Cardiology: "Cardiology",
+      Dermatology: "Dermatology",
+      Orthopedics: "Orthopedics",
+      Psychiatry: "Psychiatry",
+      Pediatrics: "Pediatrics",
+      ENT: "ENT",
+      Gynecology: "Gynecology",
+      Pulmonology: "Pulmonology",
+      Dental: "Dental",
+      "General Medicine": "General",
     };
-    
-    const mappedDepartment = departmentMapping[departmentName || ''] || 'General';
-    console.log('Department:', departmentName, 'Mapped to:', mappedDepartment);
-    return specialtyFieldSections[mappedDepartment] || specialtyFieldSections['General'];
+
+    const mappedDepartment =
+      departmentMapping[departmentName || ""] || "General";
+    console.log("Department:", departmentName, "Mapped to:", mappedDepartment);
+    return (
+      specialtyFieldSections[mappedDepartment] ||
+      specialtyFieldSections["General"]
+    );
   }, [departmentInfo]);
 
   // Get department type for validation
   const departmentType = useMemo(() => {
-    const departmentName = departmentInfo?.clinic_departments?.department_types?.name;
+    const departmentName =
+      departmentInfo?.clinic_departments?.department_types?.name;
     const departmentMapping: Record<string, string> = {
-      'Ophthalmology': 'Ophthalmology',
-      'Neurology': 'Neurology',
-      'Cardiology': 'Cardiology',
-      'Dermatology': 'Dermatology',
-      'Orthopedics': 'Orthopedics',
-      'Psychiatry': 'Psychiatry',
-      'Pediatrics': 'Pediatrics',
-      'ENT': 'ENT',
-      'Gynecology': 'Gynecology',
-      'Pulmonology': 'Pulmonology',
-      'Dental': 'Dental',
-      'General Medicine': 'General'
+      Ophthalmology: "Ophthalmology",
+      Neurology: "Neurology",
+      Cardiology: "Cardiology",
+      Dermatology: "Dermatology",
+      Orthopedics: "Orthopedics",
+      Psychiatry: "Psychiatry",
+      Pediatrics: "Pediatrics",
+      ENT: "ENT",
+      Gynecology: "Gynecology",
+      Pulmonology: "Pulmonology",
+      Dental: "Dental",
+      "General Medicine": "General",
     };
-    return departmentMapping[departmentName || ''] || 'General';
+    return departmentMapping[departmentName || ""] || "General";
   }, [departmentInfo]);
 
   // Form management
@@ -115,10 +140,10 @@ const Consultation = () => {
     handleCompleteConsultation,
     mandatoryFieldsStatus,
   } = useConsultationForm(
-    appointmentId, 
-    appointment, 
+    appointmentId,
+    appointment,
     existingConsultation,
-    () => navigate('/appointments'), // Redirect callback
+    () => navigate("/appointments"), // Redirect callback
     departmentType // Pass department type for validation
   );
 
@@ -126,11 +151,9 @@ const Consultation = () => {
   const handlePrint = useCallback(async () => {
     const formData = form.getValues().specialty_data;
     const patient = appointment?.patient;
-    
+
     if (patient) {
       try {
-        
-        
         await printConsultation(
           formData,
           patient,
@@ -140,10 +163,10 @@ const Consultation = () => {
           user,
           departmentType // Pass department type for consistent formatting
         );
-        toast.success('Print dialog opened successfully');
+        toast.success("Print dialog opened successfully");
       } catch (error) {
-        console.error('Error printing consultation:', error);
-        toast.error('Failed to open print dialog');
+        console.error("Error printing consultation:", error);
+        toast.error("Failed to open print dialog");
       }
     }
   }, [form, appointment, clinicDetails, doctorDetails, user, departmentType]);
@@ -151,25 +174,34 @@ const Consultation = () => {
   // Section rendering with improved UX
   const renderSection = (section: FieldSection, sectionIndex: number) => {
     const isExpanded = expandedSections[section.title] ?? false;
-    
+
     const toggleSection = () => {
-      setExpandedSections(prev => ({
+      setExpandedSections((prev) => ({
         ...prev,
-        [section.title]: !prev[section.title]
+        [section.title]: !prev[section.title],
       }));
     };
 
     const getSectionIcon = (title: string) => {
-      if (title.toLowerCase().includes('history')) return <User className="h-5 w-5 text-primary" />;
-      if (title.toLowerCase().includes('examination')) return <Stethoscope className="h-5 w-5 text-success" />;
-      if (title.toLowerCase().includes('plan') || title.toLowerCase().includes('assessment')) return <ClipboardList className="h-5 w-5 text-secondary" />;
-      if (title.toLowerCase().includes('investigation')) return <FileText className="h-5 w-5 text-accent" />;
+      if (title.toLowerCase().includes("history"))
+        return <User className="h-5 w-5 text-primary" />;
+      if (title.toLowerCase().includes("examination"))
+        return <Stethoscope className="h-5 w-5 text-success" />;
+      if (
+        title.toLowerCase().includes("plan") ||
+        title.toLowerCase().includes("diagnosis")
+      )
+        return <ClipboardList className="h-5 w-5 text-secondary" />;
+      if (title.toLowerCase().includes("investigation"))
+        return <FileText className="h-5 w-5 text-accent" />;
       return <Activity className="h-5 w-5 text-muted-foreground" />;
     };
 
-    const completedFields = section.fields.filter(field => {
+    const completedFields = section.fields.filter((field) => {
       const formValues = form.getValues();
-      const value = (formValues.specialty_data as Record<string, unknown>)?.[field.name];
+      const value = (formValues.specialty_data as Record<string, unknown>)?.[
+        field.name
+      ];
       return value && String(value).trim().length > 0;
     }).length;
 
@@ -187,10 +219,11 @@ const Consultation = () => {
                   <span className="text-xs text-gray-500">
                     {completedFields}/{section.fields.length} completed
                   </span>
-                  {isExpanded ? 
-                    <ChevronDown className="h-5 w-5 text-gray-400" /> : 
+                  {isExpanded ? (
+                    <ChevronDown className="h-5 w-5 text-gray-400" />
+                  ) : (
                     <ChevronRight className="h-5 w-5 text-gray-400" />
-                  }
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -202,12 +235,17 @@ const Consultation = () => {
                   key={fieldIndex}
                   fieldConfig={field}
                   fieldIndex={fieldIndex}
-                  value={form.watch(`specialty_data.${field.name}` as FieldPath<ConsultationFormValues>) as string | readonly PrescriptionMedication[]}
+                  value={
+                    form.watch(
+                      `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>
+                    ) as string | readonly PrescriptionMedication[]
+                  }
                   onChange={(value) =>
                     form.setValue(
                       `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>,
                       value as never
-                    )}
+                    )
+                  }
                   expandedFields={expandedFields}
                   setExpandedFields={setExpandedFields}
                   isConsultationCompleted={canEditConsultation === false}
@@ -253,7 +291,7 @@ const Consultation = () => {
         canEditConsultation={!!canEditConsultation}
         autoSaveMutation={autoSaveMutation}
         mandatoryFieldsStatus={mandatoryFieldsStatus}
-        onBack={() => navigate('/appointments')}
+        onBack={() => navigate("/appointments")}
         onSave={handleSave}
         onPrint={handlePrint}
         onPreview={() => setShowPreview(true)}
@@ -270,32 +308,55 @@ const Consultation = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-semibold text-gray-900">Medical Consultation</h2>
+                      <h2 className="text-xl font-semibold text-gray-900">
+                        Medical Consultation
+                      </h2>
                       <p className="text-sm text-gray-600 mt-1">
                         {specialtySections.reduce((completed, section) => {
-                          const hasContent = section.fields.some(field => {
+                          const hasContent = section.fields.some((field) => {
                             const formValues = form.getValues();
-                            const value = (formValues.specialty_data as Record<string, unknown>)?.[field.name];
-                            return value && (typeof value === 'string' ? value.length > 0 : Array.isArray(value) ? value.length > 0 : !!value);
+                            const value = (
+                              formValues.specialty_data as Record<
+                                string,
+                                unknown
+                              >
+                            )?.[field.name];
+                            return (
+                              value &&
+                              (typeof value === "string"
+                                ? value.length > 0
+                                : Array.isArray(value)
+                                ? value.length > 0
+                                : !!value)
+                            );
                           });
                           return completed + (hasContent ? 1 : 0);
-                        }, 0)}/{specialtySections.length} sections completed
+                        }, 0)}
+                        /{specialtySections.length} sections completed
                       </p>
                     </div>
                     <Badge
-                      variant={isConsultationCompleted === true ? "default" : "secondary"}
+                      variant={
+                        isConsultationCompleted === true
+                          ? "default"
+                          : "secondary"
+                      }
                       className="text-sm"
                     >
-                      {isConsultationCompleted === true ? "Completed" : "In Progress"}
+                      {isConsultationCompleted === true
+                        ? "Completed"
+                        : "In Progress"}
                     </Badge>
                   </div>
                 </CardContent>
               </Card>
-              
+
               <form className="space-y-6">
-                {specialtySections.map((section, index) => renderSection(section, index))}
+                {specialtySections.map((section, index) =>
+                  renderSection(section, index)
+                )}
               </form>
-              
+
               {/* Completion Status */}
               {isConsultationCompleted === true && (
                 <Card className="border-green-200 bg-green-50 mt-8">
@@ -303,9 +364,12 @@ const Consultation = () => {
                     <div className="flex items-center gap-3">
                       <CheckCircle className="h-6 w-6 text-success" />
                       <div>
-                        <h3 className="font-semibold text-green-800">Consultation Completed</h3>
+                        <h3 className="font-semibold text-green-800">
+                          Consultation Completed
+                        </h3>
                         <p className="text-sm text-green-700">
-                          This consultation has been completed and saved. You will be redirected to the appointments page shortly.
+                          This consultation has been completed and saved. You
+                          will be redirected to the appointments page shortly.
                         </p>
                       </div>
                     </div>
@@ -314,7 +378,7 @@ const Consultation = () => {
               )}
             </div>
           </div>
-          
+
           {/* Patient Information Sidebar */}
           <div className="lg:col-span-1">
             <PatientSidebar
@@ -327,7 +391,7 @@ const Consultation = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Preview Modal */}
       <ConsultationPreviewModal
         showPreview={showPreview}
@@ -342,4 +406,4 @@ const Consultation = () => {
   );
 };
 
-export default Consultation; 
+export default Consultation;

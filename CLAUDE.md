@@ -144,6 +144,39 @@ sleep 3 && curl -f http://localhost:8080 || echo "Frontend not ready"
 
 ---
 
+## 🔄 COMMIT FREQUENCY GUIDELINES
+
+### MANDATORY: Commit Early, Commit Often
+
+**Core Principle**: Create small, focused commits that represent logical, stable changes.
+
+### When to Commit:
+1. **After completing logical units** - When a feature, component, or fix is working
+2. **At stable checkpoints** - After testing confirms functionality works end-to-end
+3. **Before risky changes** - Before major refactors or AI-assisted file modifications
+4. **When something works** - After successful implementation before moving to related files
+
+### Commit Strategy:
+- **Group related changes** - Billing system, payment system, clinic management, etc.
+- **One logical change per commit** - Each commit should tell a clear story
+- **Test before committing** - Ensure the change works as expected
+- **Write descriptive messages** - Focus on "why" rather than "what"
+
+### Examples of Logical Commit Units:
+- Component updates with related hooks
+- Database migrations with associated type generation
+- Feature implementations across multiple related files
+- Documentation updates as a cohesive set
+- Configuration changes that work together
+
+### Proactive Commit Behavior:
+- **Suggest commits** after completing significant work units
+- **Group changes logically** rather than by file count
+- **Follow project commit message style** from recent history
+- **Push regularly** to keep remote repository synchronized
+
+---
+
 ## 🎯 Success Criteria
 
 ### Performance Targets
@@ -158,52 +191,6 @@ sleep 3 && curl -f http://localhost:8080 || echo "Frontend not ready"
 - Browser testing completed
 - Comprehensive logging maintained
 
----
-
-## 🔒 BACKUP SAFETY PROTOCOL
-
-### Mandatory Backup Rules
-
-**WHEN TO CREATE BACKUPS:**
-- Before editing any file with unstaged git changes
-- Before significant refactoring operations
-- When user explicitly requests backup
-- Before making changes to files with complex logic
-
-**WHEN NOT TO CREATE BACKUPS:**
-- Simple one-line changes (comments, minor fixes)
-- Files without existing changes
-- When user explicitly says not to backup
-
-**BACKUP WORKFLOW:**
-1. Check if file has unstaged changes: `git status --porcelain <file>`
-2. If changes exist, create backup: `source .claude/backup-utils.sh && backup_file <file_path>`
-3. Make edits to original file
-4. Clean up backups before git commit: `source .claude/backup-utils.sh && clean_backups`
-
-**BACKUP MANAGEMENT:**
-- Single `.bak` file per original file (replaces existing)
-- Clean all backups before any git commit
-- Manual restoration available: `restore_backup <file_path>`
-- List current backups: `list_backups`
-
-### Backup Utility Commands
-```bash
-# Load backup utilities
-source .claude/backup-utils.sh
-
-# Create backup before editing
-backup_file "src/components/SomeComponent.tsx"
-
-# Restore from backup if needed
-restore_backup "src/components/SomeComponent.tsx"
-
-# List current backups
-list_backups
-
-# Clean all backups (MANDATORY before commits)
-clean_backups
-```
 
 ---
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FileText, Edit } from 'lucide-react';
+import { FileText, Edit, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -60,9 +60,122 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   const onSubmit = (values: BillingFormValues) => {
     saveBillMutation.mutate(values, {
       onSuccess: () => {
-        onOpenChange(false);
+        if (mode === 'edit') {
+          onModeChange?.('view');
+        } else {
+          onOpenChange(false);
+        }
       },
     });
+  };
+
+  const handlePrint = () => {
+    const printContent = document.createElement('div');
+    printContent.innerHTML = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <h1 style="margin: 0; color: #333;">INVOICE</h1>
+          <p style="margin: 5px 0; color: #666;">${bill?.invoice_number || 'N/A'}</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+          <div>
+            <h3 style="margin: 0 0 10px 0; color: #333;">Bill To:</h3>
+            <p style="margin: 0; color: #666;">${patient?.name || 'N/A'}</p>
+            <p style="margin: 0; color: #666;">${patient?.phone || ''}</p>
+            <p style="margin: 0; color: #666;">${patient?.email || ''}</p>
+          </div>
+          <div>
+            <h3 style="margin: 0 0 10px 0; color: #333;">Bill Details:</h3>
+            <p style="margin: 0; color: #666;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <p style="margin: 0; color: #666;"><strong>Status:</strong> ${bill?.status || 'Pending'}</p>
+          </div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+          <thead>
+            <tr style="background-color: #f8f9fa;">
+              <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">Description</th>
+              <th style="padding: 10px; text-align: center; border: 1px solid #ddd;">Qty</th>
+              <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Rate</th>
+              <th style="padding: 10px; text-align: right; border: 1px solid #ddd;">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(form.watch('service_items') || []).map(item => `
+              <tr>
+                <td style="padding: 10px; border: 1px solid #ddd;">${item.description}</td>
+                <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${item.quantity}</td>
+                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">₹${item.rate.toFixed(2)}</td>
+                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">₹${item.amount.toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <div style="margin-left: auto; width: 300px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Subtotal:</span>
+            <span>₹${calculateTotals.subtotal.toFixed(2)}</span>
+          </div>
+          ${calculateTotals.discountAmount > 0 ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px; color: #dc2626;">
+              <span>Discount (${form.watch('discount_percentage')}%):</span>
+              <span>-₹${calculateTotals.discountAmount.toFixed(2)}</span>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+            <span>Subtotal after discount:</span>
+            <span>₹${calculateTotals.subtotalAfterDiscount.toFixed(2)}</span>
+          </div>
+          ${calculateTotals.taxAmount > 0 ? `
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <span>Tax (${form.watch('tax_percentage')}%):</span>
+              <span>₹${calculateTotals.taxAmount.toFixed(2)}</span>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1em; border-top: 2px solid #333; padding-top: 10px;">
+            <span>Total:</span>
+            <span>₹${calculateTotals.total.toFixed(2)}</span>
+          </div>
+        </div>
+
+        ${form.watch('notes') ? `
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+            <h3 style="margin: 0 0 10px 0; color: #333;">Notes:</h3>
+            <p style="margin: 0; color: #666;">${form.watch('notes')}</p>
+          </div>
+        ` : ''}
+      </div>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Invoice - ${bill?.invoice_number || 'N/A'}</title>
+            <style>
+              body { margin: 0; font-family: Arial, sans-serif; }
+              @media print {
+                body { margin: 0; }
+              }
+            </style>
+          </head>
+          <body>
+            ${printContent.innerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.focus();
+
+      // Wait for content to load before printing
+      setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+      }, 500);
+    }
   };
 
   const getModalTitle = () => {
@@ -73,8 +186,15 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     }
   };
 
+  const handleOpenChange = (newOpen: boolean) => {
+    // Only close the modal if we're not switching modes
+    if (!newOpen) {
+      onOpenChange(false);
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -139,7 +259,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="No Appointment">No Appointment</SelectItem>
+                          <SelectItem value="none">No Appointment</SelectItem>
                           {appointments?.map((apt) => (
                             <SelectItem key={apt.id} value={apt.id}>
                               {apt.patient_name} - {apt.date} {apt.time}
@@ -312,6 +432,15 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               <div className="flex justify-end gap-3 pt-4">
                 {mode === 'view' ? (
                   <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handlePrint}
+                      className="flex items-center gap-2"
+                    >
+                      <Printer className="h-4 w-4" />
+                      Print
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"

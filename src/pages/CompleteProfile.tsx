@@ -36,11 +36,16 @@ const CompleteProfile = () => {
 
   useEffect(() => {
     if (!user) return;
-    // Prefill from location state (invite flow), user object, or profile
-    const prefillName = location.state?.prefillName || user.user_metadata?.name || "";
-    const prefillEmail = location.state?.prefillEmail || user.email || "";
+
+    // Check for invitation data in sessionStorage (invite flow)
+    const invitationDataStr = sessionStorage.getItem('invitation_data');
+    const invitationData = invitationDataStr ? JSON.parse(invitationDataStr) : null;
+
+    // Prefill from invitation data, location state, user object, or profile
+    const prefillName = invitationData?.name || location.state?.prefillName || user.user_metadata?.name || "";
+    const prefillEmail = invitationData?.email || location.state?.prefillEmail || user.email || "";
     setEmail(prefillEmail);
-    
+
     // Fetch profile from Supabase
     supabase
       .from("profiles")
@@ -150,25 +155,45 @@ const CompleteProfile = () => {
       
       // Process any pending invitations explicitly
       setProcessingMessage("Processing your invitation...");
+      console.log("CompleteProfile: Calling processInvitationsOnProfileComplete with user:", user.id, user.email);
+      console.log("CompleteProfile: Checking localStorage for invitation data...");
+      const invitationToken = typeof localStorage !== 'undefined' ? localStorage.getItem('invitation_token') : null;
+      console.log("CompleteProfile: localStorage invitation_token:", invitationToken);
+
       const invitationResult = await processInvitationsOnProfileComplete(
-        user, 
-        form.name, 
+        user,
+        form.name,
         form.phone || undefined
       );
-      
+
       console.log("CompleteProfile: Invitation processing result:", invitationResult);
       
       if (invitationResult.shouldNavigateToDashboard) {
         setProcessingMessage("Loading your clinic data...");
+        // Clear invitation token immediately to prevent loading state
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('invitation_token');
+          localStorage.removeItem('invitation_data');
+        }
         await fetchUserAndClinicData(user);
         toast.success(invitationResult.message || "Profile completed!");
         navigate("/dashboard", { replace: true });
       } else if (invitationResult.shouldNavigateToCreateClinic) {
+        // Clear any leftover invitation data
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('invitation_token');
+          localStorage.removeItem('invitation_data');
+        }
         toast.success("Profile completed! Let's set up your clinic.");
         navigate("/create-clinic", { replace: true });
       } else {
         // This shouldn't happen with the new explicit processing, but just in case
         setProcessingMessage("Loading your clinic data...");
+        // Clear any leftover invitation data
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('invitation_token');
+          localStorage.removeItem('invitation_data');
+        }
         await fetchUserAndClinicData(user);
         toast.success("Profile completed!");
         navigate("/dashboard", { replace: true });

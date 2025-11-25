@@ -130,7 +130,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         if (session?.user) {
           console.log("AuthContext: Processing user session");
-          
+
+          // Check if this is an invitation sign-in from initial session
+          if (session.user.user_metadata?.invitation_token) {
+            console.log("AuthContext: Detected invitation sign-in from initial session, storing invitation data:", {
+              invitation_token: session.user.user_metadata.invitation_token,
+              clinic_id: session.user.user_metadata.clinic_id,
+              role: session.user.user_metadata.role
+            });
+
+            // Store invitation data in localStorage for profile completion
+            localStorage.setItem('invitation_token', session.user.user_metadata.invitation_token);
+            localStorage.setItem('invitation_data', JSON.stringify({
+              clinic_id: session.user.user_metadata.clinic_id,
+              role: session.user.user_metadata.role,
+              clinic_name: session.user.user_metadata.clinic_name,
+              name: session.user.user_metadata.name
+            }));
+
+            console.log("AuthContext: Invitation data stored in localStorage from initial session");
+          }
+
           if (mounted) {
             await fetchUserAndClinicData(session.user);
           }
@@ -175,6 +195,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
         
         if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
+          // Check if this is an invitation sign-in and store invitation data
+          if (newSession?.user && newSession.user.user_metadata?.invitation_token) {
+            console.log("AuthContext: Detected invitation sign-in, storing invitation data:", {
+              invitation_token: newSession.user.user_metadata.invitation_token,
+              clinic_id: newSession.user.user_metadata.clinic_id,
+              role: newSession.user.user_metadata.role
+            });
+
+            // Store invitation data in localStorage for profile completion
+            localStorage.setItem('invitation_token', newSession.user.user_metadata.invitation_token);
+            localStorage.setItem('invitation_data', JSON.stringify({
+              clinic_id: newSession.user.user_metadata.clinic_id,
+              role: newSession.user.user_metadata.role,
+              clinic_name: newSession.user.user_metadata.clinic_name,
+              name: newSession.user.user_metadata.name
+            }));
+
+            console.log("AuthContext: Invitation data stored in localStorage");
+          }
+
           // Only refetch data if the user changed or we don't have clinic data
           if (newSession?.user && (newSession.user.id !== currentUserId || clinicData.userClinics.length === 0)) {
             console.log("AuthContext: User changed or no clinic data, fetching data");

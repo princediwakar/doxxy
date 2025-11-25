@@ -78,19 +78,17 @@ interface AppointmentModalProps {
   patient?: Patient | null;
 }
 
-// Helper function to get the next 15-minute time slot from current time in IST
+// Helper function to get the next 15-minute time slot from current time
 const getNextTimeSlot = (): string => {
   const now = new Date();
-  // Convert to IST (UTC+5:30)
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
-  
-  const minutes = istTime.getUTCMinutes();
-  const hours = istTime.getUTCHours();
-  
+
+  // Use local time directly (no timezone conversion needed)
+  const minutes = now.getMinutes();
+  const hours = now.getHours();
+
   // Round up to the next 15-minute interval
   const roundedMinutes = Math.ceil(minutes / 15) * 15;
-  
+
   if (roundedMinutes === 60) {
     // If rounded to 60 minutes, go to next hour
     const nextHour = (hours + 1) % 24;
@@ -312,6 +310,16 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   const mutation = useMutation({
     mutationFn: async (values: AppointmentFormValues) => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected.');
+
+      console.log('Creating appointment with data:', {
+        date: format(values.date, 'yyyy-MM-dd'),
+        time: values.time,
+        patient_id: values.patient_id,
+        doctor_id: values.doctor_id,
+        type: values.type,
+        status: values.status
+      });
+
       const baseAppointmentData = {
         clinic_id: activeClinic.clinic_id,
         date: format(values.date, 'yyyy-MM-dd'),
@@ -322,7 +330,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         status: values.status,
         notes: values.notes || '',
       };
-      
+
         let result;
         if (appointment) {
           result = await supabase
@@ -341,6 +349,8 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         if (result.error) {
           throw result.error;
         }
+
+        console.log('Appointment created successfully:', result.data);
         return result.data;
     },
     onSuccess: () => {
@@ -358,6 +368,11 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   });
 
   const onSubmit = (values: AppointmentFormValues) => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      return;
+    }
+
     if (doctors) {
       const doctorIds = doctors.map(d => d.id);
       if (!doctorIds.includes(values.doctor_id)) {
@@ -635,6 +650,12 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
               <Button
                 type="submit"
                 disabled={isSubmitting || Object.keys(form.formState.errors).length > 0}
+                onClick={(e) => {
+                  // Prevent double-click submission
+                  if (isSubmitting) {
+                    e.preventDefault();
+                  }
+                }}
               >
                 {isSubmitting ? (
                   <span className="flex items-center">

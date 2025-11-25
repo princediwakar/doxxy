@@ -5,8 +5,20 @@ import * as z from "zod";
 const consultationMedicationSchema = z.object({
   name: z.string().min(1, "Medication name is required"),
   dosage: z.string().optional(),
-  route: z.enum(["Oral", "Topical", "IV", "IM", "Eye Drops", "Subcutaneous", "Inhaled"]).optional(),
-  frequency: z.enum(["OD", "BD", "TDS", "QID", "PRN", "Q4H", "Q6H", "Q8H", "Q12H"]).optional(),
+  route: z
+    .enum([
+      "Oral",
+      "Topical",
+      "IV",
+      "IM",
+      "Eye Drops",
+      "Subcutaneous",
+      "Inhaled",
+    ])
+    .optional(),
+  frequency: z
+    .enum(["OD", "BD", "TDS", "QID", "PRN", "Q4H", "Q6H", "Q8H", "Q12H"])
+    .optional(),
   duration: z.string().optional(),
   instructions: z.string().optional(),
   eye: z.enum(["Left", "Right", "Both", "N/A"]).default("N/A"),
@@ -27,7 +39,7 @@ export const baseNotesSchema = z.object({
   previous_investigations: z.string().optional(),
   assessment: z.string().optional(),
   planned_investigations: z.string().optional(),
-  treatment_plan: z.string().optional(),
+  treatment: z.string().optional(),
   prescriptions: z.array(consultationMedicationSchema).optional(),
   prognosis: z.string().optional(),
   follow_up: z.string().optional(),
@@ -183,8 +195,12 @@ export type PulmonologyNotes = z.infer<typeof pulmonologyNotesSchema>;
 export type DentalNotes = z.infer<typeof dentalNotesSchema>;
 export type UrologyNotes = z.infer<typeof urologyNotesSchema>;
 export type EndocrinologyNotes = z.infer<typeof endocrinologyNotesSchema>;
-export type EmergencyMedicineNotes = z.infer<typeof emergencyMedicineNotesSchema>;
-export type ConsultationMedication = z.infer<typeof consultationMedicationSchema>;
+export type EmergencyMedicineNotes = z.infer<
+  typeof emergencyMedicineNotesSchema
+>;
+export type ConsultationMedication = z.infer<
+  typeof consultationMedicationSchema
+>;
 
 export type NoteFieldConfig = {
   name: string;
@@ -205,39 +221,147 @@ const baseFieldSections: FieldSection[] = [
   {
     title: "History",
     fields: [
-      { name: "chief_complaint", label: "Chief Complaint", type: "textarea", rows: 3, placeholder: "Enter chief complaint",  mandatory: true},
-      { name: "history_of_present_illness", label: "History of Present Illness", type: "textarea", rows: 6, placeholder: "Describe history of present illness" },
-      { name: "review_of_systems", label: "Review of Systems", type: "textarea", rows: 3, placeholder: "Enter review of systems" },
-      { name: "past_medical_history", label: "Past Medical History", type: "textarea", rows: 3, placeholder: "List past medical history" },
-      { name: "family_history", label: "Family History", type: "textarea", rows: 3, placeholder: "Enter family history" },
-      { name: "social_history", label: "Social History", type: "textarea", rows: 3, placeholder: "Describe social history" },
-      { name: "medications", label: "Current Medications", type: "textarea", rows: 3, placeholder: "List current medications" },
-      { name: "allergies", label: "Allergies", type: "textarea", rows: 2, placeholder: "List allergies" },
+      {
+        name: "chief_complaint",
+        label: "Chief Complaint",
+        type: "textarea",
+        rows: 3,
+        placeholder: "Enter chief complaint",
+        mandatory: true,
+      },
+      {
+        name: "history_of_present_illness",
+        label: "History of Present Illness",
+        type: "textarea",
+        rows: 6,
+        placeholder: "Describe history of present illness",
+      },
+      {
+        name: "review_of_systems",
+        label: "Review of Systems",
+        type: "textarea",
+        rows: 3,
+        placeholder: "Enter review of systems",
+      },
+      {
+        name: "past_medical_history",
+        label: "Past Medical History",
+        type: "textarea",
+        rows: 3,
+        placeholder: "List past medical history",
+      },
+      {
+        name: "family_history",
+        label: "Family History",
+        type: "textarea",
+        rows: 3,
+        placeholder: "Enter family history",
+      },
+      {
+        name: "social_history",
+        label: "Social History",
+        type: "textarea",
+        rows: 3,
+        placeholder: "Describe social history",
+      },
+      {
+        name: "medications",
+        label: "Current Medications",
+        type: "textarea",
+        rows: 3,
+        placeholder: "List current medications",
+      },
+      {
+        name: "allergies",
+        label: "Allergies",
+        type: "textarea",
+        rows: 2,
+        placeholder: "List allergies",
+      },
     ],
   },
   {
     title: "Examination",
     fields: [
-      { name: "physical_exam", label: "General Physical Exam", type: "textarea", rows: 4, placeholder: "Enter physical exam findings" },
-      { name: "systemic_examination", label: "Systemic Examination", type: "textarea", rows: 4, placeholder: "Enter systemic examination findings" },
+      {
+        name: "physical_exam",
+        label: "General Physical Exam",
+        type: "textarea",
+        rows: 4,
+        placeholder: "Enter physical exam findings",
+      },
+      {
+        name: "systemic_examination",
+        label: "Systemic Examination",
+        type: "textarea",
+        rows: 4,
+        placeholder: "Enter systemic examination findings",
+      },
     ],
   },
   {
     title: "Previous Investigations",
     fields: [
-      { name: "previous_investigations", label: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter investigation results" },
+      {
+        name: "previous_investigations",
+        label: "Previous Investigations",
+        type: "textarea",
+        rows: 3,
+        placeholder: "Enter investigation results",
+      },
     ],
   },
   {
     title: "Management",
     fields: [
-      { name: "assessment", label: "Diagnosis", type: "textarea", rows: 3, placeholder: "Enter diagnosis"},
-      { name: "planned_investigations", label: "Planned Investigations", type: "textarea", rows: 3, placeholder: "Enter planned investigations" },
-      { name: "treatment_plan", label: "Treatment", type: "textarea", rows: 4, placeholder: "Describe treatment plan" },
-      { name: "prescriptions", label: "Prescriptions", type: "prescription", placeholder: "Enter prescriptions" },
-      { name: "prognosis", label: "Prognosis", type: "textarea", rows: 2, placeholder: "Enter prognosis" },
-      { name: "follow_up", label: "Follow-Up Plan", type: "textarea", rows: 2, placeholder: "Enter follow-up plan" },
-      { name: "referrals", label: "Referrals", type: "textarea", rows: 2, placeholder: "Enter referrals" },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        type: "textarea",
+        rows: 3,
+        placeholder: "Enter diagnosis",
+      },
+      {
+        name: "planned_investigations",
+        label: "Planned Investigations",
+        type: "textarea",
+        rows: 3,
+        placeholder: "Enter planned investigations",
+      },
+      {
+        name: "treatment",
+        label: "Treatment",
+        type: "textarea",
+        rows: 4,
+        placeholder: "Describe treatment plan",
+      },
+      {
+        name: "prescriptions",
+        label: "Prescriptions",
+        type: "prescription",
+        placeholder: "Enter prescriptions",
+      },
+      {
+        name: "prognosis",
+        label: "Prognosis",
+        type: "textarea",
+        rows: 2,
+        placeholder: "Enter prognosis",
+      },
+      {
+        name: "follow_up",
+        label: "Follow-Up Plan",
+        type: "textarea",
+        rows: 2,
+        placeholder: "Enter follow-up plan",
+      },
+      {
+        name: "referrals",
+        label: "Referrals",
+        type: "textarea",
+        rows: 2,
+        placeholder: "Enter referrals",
+      },
     ],
   },
 ];
@@ -249,14 +373,62 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "visual_acuity", label: "Visual Acuity", type: "textarea", rows: 3, placeholder: "Enter visual acuity"},
-        { name: "refraction", label: "Refraction", type: "textarea", rows: 3, placeholder: "Enter refraction details" },
-        { name: "pupil_examination", label: "Pupil Examination", type: "textarea", rows: 3, placeholder: "Describe pupil examination" },
-        { name: "extraocular_movements", label: "Extraocular Movements", type: "textarea", rows: 3, placeholder: "Describe extraocular movements" },
-        { name: "slit_lamp_exam", label: "Slit Lamp Examination", type: "textarea", rows: 4, placeholder: "Enter slit lamp findings" },
-        { name: "intraocular_pressure", label: "Intraocular Pressure", type: "textarea", rows: 2, placeholder: "Enter intraocular pressure" },
-        { name: "fundus_exam", label: "Fundus Examination", type: "textarea", rows: 4, placeholder: "Describe fundus examination" },
-        { name: "visual_fields", label: "Visual Fields", type: "textarea", rows: 3, placeholder: "Enter visual field results" },
+        {
+          name: "visual_acuity",
+          label: "Visual Acuity",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter visual acuity",
+        },
+        {
+          name: "refraction",
+          label: "Refraction",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter refraction details",
+        },
+        {
+          name: "pupil_examination",
+          label: "Pupil Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe pupil examination",
+        },
+        {
+          name: "extraocular_movements",
+          label: "Extraocular Movements",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe extraocular movements",
+        },
+        {
+          name: "slit_lamp_exam",
+          label: "Slit Lamp Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Enter slit lamp findings",
+        },
+        {
+          name: "intraocular_pressure",
+          label: "Intraocular Pressure",
+          type: "textarea",
+          rows: 2,
+          placeholder: "Enter intraocular pressure",
+        },
+        {
+          name: "fundus_exam",
+          label: "Fundus Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe fundus examination",
+        },
+        {
+          name: "visual_fields",
+          label: "Visual Fields",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter visual field results",
+        },
       ],
     },
   ],
@@ -264,14 +436,62 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "neurological_exam_findings", label: "Neurological Examination", type: "textarea", rows: 5, placeholder: "Enter neurological exam findings" },
-        { name: "cranial_nerves", label: "Cranial Nerves", type: "textarea", rows: 4, placeholder: "Describe cranial nerve examination" },
-        { name: "motor_examination", label: "Motor Examination", type: "textarea", rows: 4, placeholder: "Describe motor examination" },
-        { name: "sensory_examination", label: "Sensory Examination", type: "textarea", rows: 3, placeholder: "Describe sensory examination" },
-        { name: "reflexes", label: "Reflexes", type: "textarea", rows: 3, placeholder: "Enter reflex findings" },
-        { name: "cerebellar_examination", label: "Cerebellar Examination", type: "textarea", rows: 3, placeholder: "Describe cerebellar examination" },
-        { name: "gait_coordination", label: "Gait & Coordination", type: "textarea", rows: 3, placeholder: "Describe gait and coordination" },
-        { name: "other_examination", label: "Other Examination", type: "textarea", rows: 3, placeholder: "Describe other examination findings" },
+        {
+          name: "neurological_exam_findings",
+          label: "Neurological Examination",
+          type: "textarea",
+          rows: 5,
+          placeholder: "Enter neurological exam findings",
+        },
+        {
+          name: "cranial_nerves",
+          label: "Cranial Nerves",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe cranial nerve examination",
+        },
+        {
+          name: "motor_examination",
+          label: "Motor Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe motor examination",
+        },
+        {
+          name: "sensory_examination",
+          label: "Sensory Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe sensory examination",
+        },
+        {
+          name: "reflexes",
+          label: "Reflexes",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter reflex findings",
+        },
+        {
+          name: "cerebellar_examination",
+          label: "Cerebellar Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe cerebellar examination",
+        },
+        {
+          name: "gait_coordination",
+          label: "Gait & Coordination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe gait and coordination",
+        },
+        {
+          name: "other_examination",
+          label: "Other Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe other examination findings",
+        },
       ],
     },
   ],
@@ -279,17 +499,53 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "cardiac_examination", label: "Cardiac Examination", type: "textarea", rows: 4, placeholder: "Enter cardiac exam findings"},
+        {
+          name: "cardiac_examination",
+          label: "Cardiac Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Enter cardiac exam findings",
+        },
       ],
     },
     {
       title: "Previous Investigations",
       fields: [
-        { name: "ecg_findings", label: "ECG Findings", type: "textarea", rows: 3, placeholder: "Enter ECG results" },
-        { name: "echocardiogram", label: "Echocardiogram", type: "textarea", rows: 4, placeholder: "Describe echocardiogram findings" },
-        { name: "stress_test", label: "Stress Test", type: "textarea", rows: 3, placeholder: "Enter stress test results" },
-        { name: "cardiac_catheterization", label: "Cardiac Catheterization", type: "textarea", rows: 4, placeholder: "Describe cardiac catheterization" },
-        { name: "rhythm_assessment", label: "Rhythm Assessment", type: "textarea", rows: 3, placeholder: "Enter rhythm assessment" },
+        {
+          name: "ecg_findings",
+          label: "ECG Findings",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter ECG results",
+        },
+        {
+          name: "echocardiogram",
+          label: "Echocardiogram",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe echocardiogram findings",
+        },
+        {
+          name: "stress_test",
+          label: "Stress Test",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter stress test results",
+        },
+        {
+          name: "cardiac_catheterization",
+          label: "Cardiac Catheterization",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe cardiac catheterization",
+        },
+        {
+          name: "rhythm_assessment",
+          label: "Rhythm Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter rhythm assessment",
+        },
       ],
     },
   ],
@@ -297,17 +553,53 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "skin_examination", label: "Skin Examination", type: "textarea", rows: 4, placeholder: "Describe skin examination", },
-        { name: "lesion_description", label: "Lesion Description", type: "textarea", rows: 3, placeholder: "Describe lesions" },
-        { name: "dermoscopy_findings", label: "Dermoscopy Findings", type: "textarea", rows: 3, placeholder: "Enter dermoscopy findings" },
-        { name: "skin_type", label: "Skin Type", type: "textarea", rows: 2, placeholder: "Enter skin type" },
-        { name: "distribution_pattern", label: "Distribution Pattern", type: "textarea", rows: 3, placeholder: "Describe distribution pattern" },
+        {
+          name: "skin_examination",
+          label: "Skin Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe skin examination",
+        },
+        {
+          name: "lesion_description",
+          label: "Lesion Description",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe lesions",
+        },
+        {
+          name: "dermoscopy_findings",
+          label: "Dermoscopy Findings",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter dermoscopy findings",
+        },
+        {
+          name: "skin_type",
+          label: "Skin Type",
+          type: "textarea",
+          rows: 2,
+          placeholder: "Enter skin type",
+        },
+        {
+          name: "distribution_pattern",
+          label: "Distribution Pattern",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe distribution pattern",
+        },
       ],
     },
     {
       title: "Previous Investigations",
       fields: [
-        { name: "biopsy_results", label: "Biopsy Results", type: "textarea", rows: 3, placeholder: "Enter biopsy results" },
+        {
+          name: "biopsy_results",
+          label: "Biopsy Results",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter biopsy results",
+        },
       ],
     },
   ],
@@ -315,17 +607,53 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "musculoskeletal_exam", label: "Musculoskeletal Examination", type: "textarea", rows: 4, placeholder: "Describe musculoskeletal exam",  },
-        { name: "range_of_motion", label: "Range of Motion", type: "textarea", rows: 3, placeholder: "Enter range of motion" },
-        { name: "joint_examination", label: "Joint Examination", type: "textarea", rows: 3, placeholder: "Describe joint examination" },
-        { name: "stability_tests", label: "Stability Tests", type: "textarea", rows: 3, placeholder: "Enter stability test results" },
-        { name: "functional_assessment", label: "Functional Assessment", type: "textarea", rows: 3, placeholder: "Describe functional assessment" },
+        {
+          name: "musculoskeletal_exam",
+          label: "Musculoskeletal Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe musculoskeletal exam",
+        },
+        {
+          name: "range_of_motion",
+          label: "Range of Motion",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter range of motion",
+        },
+        {
+          name: "joint_examination",
+          label: "Joint Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe joint examination",
+        },
+        {
+          name: "stability_tests",
+          label: "Stability Tests",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter stability test results",
+        },
+        {
+          name: "functional_assessment",
+          label: "Functional Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe functional assessment",
+        },
       ],
     },
     {
       title: "Previous Investigations",
       fields: [
-        { name: "imaging_findings", label: "Imaging Findings", type: "textarea", rows: 3, placeholder: "Enter imaging findings" },
+        {
+          name: "imaging_findings",
+          label: "Imaging Findings",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter imaging findings",
+        },
       ],
     },
   ],
@@ -333,17 +661,53 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "mental_status_exam", label: "Mental Status Examination", type: "textarea", rows: 4, placeholder: "Describe mental status exam",  },
-        { name: "mood_assessment", label: "Mood Assessment", type: "textarea", rows: 3, placeholder: "Enter mood assessment" },
-        { name: "cognitive_assessment", label: "Cognitive Assessment", type: "textarea", rows: 3, placeholder: "Enter cognitive assessment" },
-        { name: "risk_assessment", label: "Risk Assessment", type: "textarea", rows: 3, placeholder: "Enter risk assessment" },
+        {
+          name: "mental_status_exam",
+          label: "Mental Status Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe mental status exam",
+        },
+        {
+          name: "mood_assessment",
+          label: "Mood Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter mood assessment",
+        },
+        {
+          name: "cognitive_assessment",
+          label: "Cognitive Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter cognitive assessment",
+        },
+        {
+          name: "risk_assessment",
+          label: "Risk Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter risk assessment",
+        },
       ],
     },
     {
       title: "Management",
       fields: [
-        { name: "psychosocial_factors", label: "Psychosocial Factors", type: "textarea", rows: 3, placeholder: "Describe psychosocial factors" },
-        { name: "therapy_plan", label: "Therapy Plan", type: "textarea", rows: 3, placeholder: "Enter therapy plan" },
+        {
+          name: "psychosocial_factors",
+          label: "Psychosocial Factors",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe psychosocial factors",
+        },
+        {
+          name: "therapy_plan",
+          label: "Therapy Plan",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter therapy plan",
+        },
       ],
     },
   ],
@@ -351,22 +715,58 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "developmental_milestones", label: "Developmental Milestones", type: "textarea", rows: 3, placeholder: "Enter developmental milestones" },
-        { name: "feeding_history", label: "Feeding History", type: "textarea", rows: 3, placeholder: "Describe feeding history" },
-        { name: "parental_concerns", label: "Parental Concerns", type: "textarea", rows: 3, placeholder: "Enter parental concerns" },
+        {
+          name: "developmental_milestones",
+          label: "Developmental Milestones",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter developmental milestones",
+        },
+        {
+          name: "feeding_history",
+          label: "Feeding History",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe feeding history",
+        },
+        {
+          name: "parental_concerns",
+          label: "Parental Concerns",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter parental concerns",
+        },
       ],
     },
     {
       title: "Examination",
       fields: [
-        { name: "growth_parameters", label: "Growth Parameters", type: "textarea", rows: 3, placeholder: "Enter growth parameters",  },
-        { name: "behavioral_assessment", label: "Behavioral Assessment", type: "textarea", rows: 3, placeholder: "Describe behavioral assessment" },
+        {
+          name: "growth_parameters",
+          label: "Growth Parameters",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter growth parameters",
+        },
+        {
+          name: "behavioral_assessment",
+          label: "Behavioral Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe behavioral assessment",
+        },
       ],
     },
     {
       title: "Management",
       fields: [
-        { name: "vaccination_status", label: "Vaccination Status", type: "textarea", rows: 3, placeholder: "Enter vaccination status" },
+        {
+          name: "vaccination_status",
+          label: "Vaccination Status",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter vaccination status",
+        },
       ],
     },
   ],
@@ -374,12 +774,48 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "otoscopy", label: "Otoscopy", type: "textarea", rows: 3, placeholder: "Enter otoscopy findings",  },
-        { name: "rhinoscopy", label: "Rhinoscopy", type: "textarea", rows: 3, placeholder: "Enter rhinoscopy findings" },
-        { name: "throat_examination", label: "Throat Examination", type: "textarea", rows: 3, placeholder: "Describe throat examination" },
-        { name: "nasal_examination", label: "Nasal Examination", type: "textarea", rows: 3, placeholder: "Describe nasal examination" },
-        { name: "hearing_assessment", label: "Hearing Assessment", type: "textarea", rows: 3, placeholder: "Enter hearing assessment" },
-        { name: "laryngoscopy", label: "Laryngoscopy", type: "textarea", rows: 3, placeholder: "Enter laryngoscopy findings" },
+        {
+          name: "otoscopy",
+          label: "Otoscopy",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter otoscopy findings",
+        },
+        {
+          name: "rhinoscopy",
+          label: "Rhinoscopy",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter rhinoscopy findings",
+        },
+        {
+          name: "throat_examination",
+          label: "Throat Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe throat examination",
+        },
+        {
+          name: "nasal_examination",
+          label: "Nasal Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe nasal examination",
+        },
+        {
+          name: "hearing_assessment",
+          label: "Hearing Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter hearing assessment",
+        },
+        {
+          name: "laryngoscopy",
+          label: "Laryngoscopy",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter laryngoscopy findings",
+        },
       ],
     },
   ],
@@ -387,22 +823,58 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "menstrual_history", label: "Menstrual History", type: "textarea", rows: 3, placeholder: "Enter menstrual history" },
-        { name: "obstetric_history", label: "Obstetric History", type: "textarea", rows: 3, placeholder: "Enter obstetric history" },
+        {
+          name: "menstrual_history",
+          label: "Menstrual History",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter menstrual history",
+        },
+        {
+          name: "obstetric_history",
+          label: "Obstetric History",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter obstetric history",
+        },
       ],
     },
     {
       title: "Examination",
       fields: [
-        { name: "gynecology_exam", label: "Gynecological Examination", type: "textarea", rows: 4, placeholder: "Describe gynecological exam",  },
-        { name: "breast_examination", label: "Breast Examination", type: "textarea", rows: 3, placeholder: "Describe breast examination" },
+        {
+          name: "gynecology_exam",
+          label: "Gynecological Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe gynecological exam",
+        },
+        {
+          name: "breast_examination",
+          label: "Breast Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe breast examination",
+        },
       ],
     },
     {
       title: "Management",
       fields: [
-        { name: "pap_smear", label: "Pap Smear", type: "textarea", rows: 3, placeholder: "Enter Pap smear results" },
-        { name: "contraceptive_counseling", label: "Contraceptive Counseling", type: "textarea", rows: 3, placeholder: "Enter contraceptive counseling details" },
+        {
+          name: "pap_smear",
+          label: "Pap Smear",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter Pap smear results",
+        },
+        {
+          name: "contraceptive_counseling",
+          label: "Contraceptive Counseling",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter contraceptive counseling details",
+        },
       ],
     },
   ],
@@ -410,22 +882,58 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "smoking_history", label: "Smoking History", type: "textarea", rows: 3, placeholder: "Enter smoking history" },
+        {
+          name: "smoking_history",
+          label: "Smoking History",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter smoking history",
+        },
       ],
     },
     {
       title: "Examination",
       fields: [
-        { name: "respiratory_examination", label: "Respiratory Examination", type: "textarea", rows: 4, placeholder: "Describe respiratory exam",  },
-        { name: "oxygen_saturation", label: "Oxygen Saturation", type: "textarea", rows: 2, placeholder: "Enter oxygen saturation" },
+        {
+          name: "respiratory_examination",
+          label: "Respiratory Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe respiratory exam",
+        },
+        {
+          name: "oxygen_saturation",
+          label: "Oxygen Saturation",
+          type: "textarea",
+          rows: 2,
+          placeholder: "Enter oxygen saturation",
+        },
       ],
     },
     {
       title: "Previous Investigations",
       fields: [
-        { name: "spirometry", label: "Spirometry", type: "textarea", rows: 3, placeholder: "Enter spirometry results" },
-        { name: "chest_imaging", label: "Chest Imaging", type: "textarea", rows: 3, placeholder: "Enter chest imaging findings" },
-        { name: "dyspnea_assessment", label: "Dyspnea Assessment", type: "textarea", rows: 3, placeholder: "Describe dyspnea assessment" },
+        {
+          name: "spirometry",
+          label: "Spirometry",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter spirometry results",
+        },
+        {
+          name: "chest_imaging",
+          label: "Chest Imaging",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter chest imaging findings",
+        },
+        {
+          name: "dyspnea_assessment",
+          label: "Dyspnea Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe dyspnea assessment",
+        },
       ],
     },
   ],
@@ -433,17 +941,53 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "History",
       fields: [
-        { name: "dental_history", label: "Past Dental History", type: "textarea", rows: 3, placeholder: "Enter past dental history" },
+        {
+          name: "dental_history",
+          label: "Past Dental History",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter past dental history",
+        },
       ],
     },
     {
       title: "Examination",
       fields: [
-        { name: "oral_hygiene_status", label: "Oral Hygiene Status", type: "textarea", rows: 2, placeholder: "Enter oral hygiene status" },
-        { name: "extraoral_examination", label: "Extraoral Examination", type: "textarea", rows: 3, placeholder: "Describe extraoral examination" },
-        { name: "intraoral_examination", label: "Intraoral Examination", type: "textarea", rows: 4, placeholder: "Describe intraoral examination" },
-        { name: "tooth_charting", label: "Tooth Charting", type: "textarea", rows: 6, placeholder: "Enter tooth charting details" },
-        { name: "radiographic_findings", label: "Radiographic Findings", type: "textarea", rows: 4, placeholder: "Enter radiographic findings" },
+        {
+          name: "oral_hygiene_status",
+          label: "Oral Hygiene Status",
+          type: "textarea",
+          rows: 2,
+          placeholder: "Enter oral hygiene status",
+        },
+        {
+          name: "extraoral_examination",
+          label: "Extraoral Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe extraoral examination",
+        },
+        {
+          name: "intraoral_examination",
+          label: "Intraoral Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe intraoral examination",
+        },
+        {
+          name: "tooth_charting",
+          label: "Tooth Charting",
+          type: "textarea",
+          rows: 6,
+          placeholder: "Enter tooth charting details",
+        },
+        {
+          name: "radiographic_findings",
+          label: "Radiographic Findings",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Enter radiographic findings",
+        },
       ],
     },
   ],
@@ -451,17 +995,53 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "urological_exam", label: "Urological Examination", type: "textarea", rows: 4, placeholder: "Describe urological exam",  },
-        { name: "prostate_examination", label: "Prostate Examination", type: "textarea", rows: 3, placeholder: "Describe prostate examination" },
-        { name: "bladder_function", label: "Bladder Function", type: "textarea", rows: 3, placeholder: "Enter bladder function details" },
+        {
+          name: "urological_exam",
+          label: "Urological Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe urological exam",
+        },
+        {
+          name: "prostate_examination",
+          label: "Prostate Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe prostate examination",
+        },
+        {
+          name: "bladder_function",
+          label: "Bladder Function",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter bladder function details",
+        },
       ],
     },
     {
       title: "Previous Investigations",
       fields: [
-        { name: "uroflowmetry", label: "Uroflowmetry", type: "textarea", rows: 3, placeholder: "Enter uroflowmetry results" },
-        { name: "urinalysis", label: "Urinalysis", type: "textarea", rows: 3, placeholder: "Enter urinalysis results" },
-        { name: "imaging_findings", label: "Imaging Findings", type: "textarea", rows: 3, placeholder: "Enter imaging findings" },
+        {
+          name: "uroflowmetry",
+          label: "Uroflowmetry",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter uroflowmetry results",
+        },
+        {
+          name: "urinalysis",
+          label: "Urinalysis",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter urinalysis results",
+        },
+        {
+          name: "imaging_findings",
+          label: "Imaging Findings",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter imaging findings",
+        },
       ],
     },
   ],
@@ -469,17 +1049,53 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "endocrine_exam", label: "Endocrine Examination", type: "textarea", rows: 4, placeholder: "Describe endocrine exam",  },
-        { name: "thyroid_examination", label: "Thyroid Examination", type: "textarea", rows: 3, placeholder: "Describe thyroid examination" },
+        {
+          name: "endocrine_exam",
+          label: "Endocrine Examination",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe endocrine exam",
+        },
+        {
+          name: "thyroid_examination",
+          label: "Thyroid Examination",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe thyroid examination",
+        },
       ],
     },
     {
       title: "Previous Investigations",
       fields: [
-        { name: "glucose_monitoring", label: "Glucose Monitoring", type: "textarea", rows: 3, placeholder: "Enter glucose monitoring results" },
-        { name: "hormone_levels", label: "Hormone Levels", type: "textarea", rows: 3, placeholder: "Enter hormone level results" },
-        { name: "metabolic_assessment", label: "Metabolic Assessment", type: "textarea", rows: 3, placeholder: "Describe metabolic assessment" },
-        { name: "bone_health", label: "Bone Health", type: "textarea", rows: 3, placeholder: "Enter bone health assessment" },
+        {
+          name: "glucose_monitoring",
+          label: "Glucose Monitoring",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter glucose monitoring results",
+        },
+        {
+          name: "hormone_levels",
+          label: "Hormone Levels",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter hormone level results",
+        },
+        {
+          name: "metabolic_assessment",
+          label: "Metabolic Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe metabolic assessment",
+        },
+        {
+          name: "bone_health",
+          label: "Bone Health",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter bone health assessment",
+        },
       ],
     },
   ],
@@ -487,51 +1103,95 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        { name: "triage_assessment", label: "Triage Assessment", type: "textarea", rows: 3, placeholder: "Enter triage assessment",  },
-        { name: "vital_signs", label: "Vital Signs", type: "textarea", rows: 3, placeholder: "Enter vital signs",  },
-        { name: "trauma_assessment", label: "Trauma Assessment", type: "textarea", rows: 4, placeholder: "Describe trauma assessment" },
+        {
+          name: "triage_assessment",
+          label: "Triage Assessment",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter triage assessment",
+        },
+        {
+          name: "vital_signs",
+          label: "Vital Signs",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter vital signs",
+        },
+        {
+          name: "trauma_assessment",
+          label: "Trauma Assessment",
+          type: "textarea",
+          rows: 4,
+          placeholder: "Describe trauma assessment",
+        },
       ],
     },
     {
       title: "Previous Investigations",
       fields: [
-        { name: "diagnostic_imaging", label: "Diagnostic Imaging", type: "textarea", rows: 3, placeholder: "Enter diagnostic imaging results" },
-        { name: "acute_interventions", label: "Acute Interventions", type: "textarea", rows: 3, placeholder: "Describe acute interventions" },
+        {
+          name: "diagnostic_imaging",
+          label: "Diagnostic Imaging",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter diagnostic imaging results",
+        },
+        {
+          name: "acute_interventions",
+          label: "Acute Interventions",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Describe acute interventions",
+        },
       ],
     },
     {
       title: "Management",
       fields: [
-        { name: "resuscitation_status", label: "Resuscitation Status", type: "textarea", rows: 3, placeholder: "Enter resuscitation status" },
+        {
+          name: "resuscitation_status",
+          label: "Resuscitation Status",
+          type: "textarea",
+          rows: 3,
+          placeholder: "Enter resuscitation status",
+        },
       ],
     },
   ],
 };
 
 // Merge base and specialty-specific fields
-const mergeFieldSections = (specialtyFields: FieldSection[]): FieldSection[] => {
+const mergeFieldSections = (
+  specialtyFields: FieldSection[]
+): FieldSection[] => {
   const mergedSections: Record<string, FieldSection> = {};
   baseFieldSections.forEach((baseSection) => {
-    mergedSections[baseSection.title] = { title: baseSection.title, fields: [...baseSection.fields] };
+    mergedSections[baseSection.title] = {
+      title: baseSection.title,
+      fields: [...baseSection.fields],
+    };
   });
   specialtyFields.forEach((specialtySection) => {
     if (mergedSections[specialtySection.title]) {
-      mergedSections[specialtySection.title].fields.push(...specialtySection.fields);
+      mergedSections[specialtySection.title].fields.push(
+        ...specialtySection.fields
+      );
     } else {
-      mergedSections[specialtySection.title] = { title: specialtySection.title, fields: [...specialtySection.fields] };
+      mergedSections[specialtySection.title] = {
+        title: specialtySection.title,
+        fields: [...specialtySection.fields],
+      };
     }
   });
   return Object.values(mergedSections);
 };
 
 // Specialty field configurations
-export const specialtyFieldSections: Record<string, FieldSection[]> = Object.keys(specialtySpecificFields).reduce(
-  (acc, specialty) => {
+export const specialtyFieldSections: Record<string, FieldSection[]> =
+  Object.keys(specialtySpecificFields).reduce((acc, specialty) => {
     acc[specialty] = mergeFieldSections(specialtySpecificFields[specialty]);
     return acc;
-  },
-  {} as Record<string, FieldSection[]>
-);
+  }, {} as Record<string, FieldSection[]>);
 
 // Complete consultation schema
 export const consultationNotesSchema = z.object({
@@ -548,7 +1208,7 @@ export const consultationNotesSchema = z.object({
   previous_investigations: z.string().optional(),
   assessment: z.string().optional(),
   planned_investigations: z.string().optional(),
-  treatment_plan: z.string().optional(),
+  treatment: z.string().optional(),
   prescriptions: z.array(consultationMedicationSchema).optional(),
   prognosis: z.string().optional(),
   follow_up: z.string().optional(),
@@ -646,16 +1306,21 @@ export type ConsultationNotes = z.infer<typeof consultationNotesSchema>;
 
 // Helper function to get all fields for a specialty
 export const getSpecialtyFields = (departmentType: string): NoteFieldConfig[] =>
-  (specialtyFieldSections[departmentType] || specialtyFieldSections["General"]).flatMap((section) => section.fields);
+  (
+    specialtyFieldSections[departmentType] || specialtyFieldSections["General"]
+  ).flatMap((section) => section.fields);
 
 // Legacy field configs
-export const specialtyNoteFieldConfigs: Record<string, NoteFieldConfig[]> = Object.keys(specialtyFieldSections).reduce(
-  (acc, key) => ({ ...acc, [key]: getSpecialtyFields(key) }),
-  {} as Record<string, NoteFieldConfig[]>
-);
+export const specialtyNoteFieldConfigs: Record<string, NoteFieldConfig[]> =
+  Object.keys(specialtyFieldSections).reduce(
+    (acc, key) => ({ ...acc, [key]: getSpecialtyFields(key) }),
+    {} as Record<string, NoteFieldConfig[]>
+  );
 
 // Helper function to get mandatory fields
-export const getMandatoryFieldsForDepartment = (departmentType: string): string[] =>
+export const getMandatoryFieldsForDepartment = (
+  departmentType: string
+): string[] =>
   (specialtyFieldSections[departmentType] || specialtyFieldSections["General"])
     .flatMap((section) => section.fields)
     .filter((field) => field.mandatory)

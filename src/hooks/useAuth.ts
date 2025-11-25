@@ -25,31 +25,65 @@ export const useAuthFlow = () => {
     setLoading(true);
     try {
       console.log("Auth: Handling invite with token and email:", inviteToken, inviteEmail);
-      
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: inviteEmail || '',
-        token: inviteToken,
-        type: 'invite',
-      });
 
-      if (error) {
-        console.error("Auth: Invite verification error:", error);
-        toast.error(error.message || "Invalid or expired invite token.");
+      // For custom invitations, we need to verify the invitation token directly
+      // instead of using Supabase's OTP verification
+      const { data: invitationData, error: invitationError } = await supabase
+        .from('pending_invitations')
+        .select('*')
+        .eq('invitation_token', inviteToken)
+        .eq('email', inviteEmail?.toLowerCase() || '')
+        .is('accepted_at', null)
+        .gte('expires_at', new Date().toISOString())
+        .single();
+
+      if (invitationError) {
+        console.error("Auth: Invitation verification error:", invitationError);
+
+        // Check if it's an expired invitation
+        const { data: expiredInvitation } = await supabase
+          .from('pending_invitations')
+          .select('*')
+          .eq('invitation_token', inviteToken)
+          .eq('email', inviteEmail?.toLowerCase() || '')
+          .lt('expires_at', new Date().toISOString())
+          .single();
+
+        if (expiredInvitation) {
+          toast.error("This invitation has expired. Please ask for a new invitation.");
+        } else {
+          toast.error("Invalid or already used invitation token.");
+        }
+
         setAuthFlow("login");
         return;
       }
 
-      if (data.session && data.user) {
-        // Store the invitation token for PrivateRoute logic
-        sessionStorage.setItem('invitation_token', inviteToken);
-        console.log("Auth: Invite verified successfully, user logged in:", data.user.id);
-        console.log("Auth: Stored invitation token in sessionStorage:", inviteToken);
+      if (invitationData) {
+        console.log("Auth: Invitation verified successfully:", invitationData);
+
+        // Store the invitation data for PrivateRoute logic - use localStorage for persistence
+        console.log("Auth: Storing invitation data in localStorage:", {
+          token: inviteToken,
+          email: inviteEmail,
+          clinic_id: invitationData.clinic_id
+        });
+        localStorage.setItem('invitation_token', inviteToken);
+        localStorage.setItem('invitation_data', JSON.stringify(invitationData));
+
+        // Verify storage worked
+        const storedToken = localStorage.getItem('invitation_token');
+        const storedData = localStorage.getItem('invitation_data');
+        console.log("Auth: Verification - stored token:", storedToken);
+        console.log("Auth: Verification - stored data exists:", !!storedData);
+
+        // Set the auth flow to invite mode
         setAuthFlow("invite");
-        setEmail(inviteEmail || data.user.email || '');
+        setEmail(inviteEmail || '');
         toast.info("Welcome! Please set your password to complete your account setup.");
       } else {
-        console.error("Auth: Invite verification succeeded but no session created");
-        toast.error("Failed to create session after invite verification.");
+        console.error("Auth: No valid invitation found");
+        toast.error("No valid invitation found. Please ask for a new invitation.");
         setAuthFlow("login");
       }
     } catch (error: unknown) {

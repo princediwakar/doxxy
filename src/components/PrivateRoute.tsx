@@ -56,10 +56,27 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     return <Navigate to="/complete-profile" state={{ from: location }} replace />;
   }
 
-  // Priority 2: Clinic creation (only check this if profile is complete)
+  // Priority 2: Check if invitation is being processed before redirecting to clinic creation
   if (!needsProfileCompletion && !activeClinic && location.pathname !== '/create-clinic') {
-    console.log('PrivateRoute: No active clinic, redirecting to /create-clinic');
-    return <Navigate to="/create-clinic" state={{ from: location }} replace />;
+    // Check if there's an invitation being processed
+    const invitationToken = typeof localStorage !== 'undefined' ? localStorage.getItem('invitation_token') : null;
+
+    if (invitationToken) {
+      // Show loading state while invitation is being processed
+      console.log('PrivateRoute: Invitation being processed, showing loading state');
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Processing your invitation...</p>
+          </div>
+        </div>
+      );
+    } else {
+      // No invitation, redirect to clinic creation
+      console.log('PrivateRoute: No active clinic, redirecting to /create-clinic');
+      return <Navigate to="/create-clinic" state={{ from: location }} replace />;
+    }
   }
 
   // Allow /complete-profile page to render even without active clinic
