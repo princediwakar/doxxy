@@ -35,15 +35,21 @@ export const useConsultationData = (appointmentId: string | undefined) => {
     queryFn: async () => {
       if (!appointmentQuery.data?.patient?.id || !activeClinic?.clinic_id) return [];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('consultations')
         .select(`
           *,
           appointment:appointments(date, time)
         `)
         .eq('patient_id', appointmentQuery.data.patient.id)
-        .eq('clinic_id', activeClinic.clinic_id)
-        .neq('appointment_id', appointmentId) // Exclude current consultation
+        .eq('clinic_id', activeClinic.clinic_id);
+
+      // Only exclude current consultation if appointmentId is defined
+      if (appointmentId) {
+        query = query.neq('appointment_id', appointmentId);
+      }
+
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(5);
 
@@ -113,26 +119,26 @@ export const useConsultationData = (appointmentId: string | undefined) => {
   const existingConsultationQuery = useQuery({
     queryKey: ['consultation', appointmentId],
     queryFn: async () => {
-      if (!appointmentId || !activeClinic?.clinics?.id) return null;
+      if (!appointmentId || !activeClinic?.clinic_id) return null;
       
       const { data, error } = await supabase
         .from('consultations')
         .select('*')
         .eq('appointment_id', appointmentId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       return data;
     },
-    enabled: !!appointmentId && !!activeClinic?.clinics?.id,
+    enabled: !!appointmentId && !!activeClinic?.clinic_id,
   });
 
   // Fetch department information separately
   const departmentInfoQuery = useQuery({
-    queryKey: ['doctorDepartment', appointmentQuery.data?.doctor?.user_id, activeClinic?.clinics?.id],
+    queryKey: ['doctorDepartment', appointmentQuery.data?.doctor?.user_id, activeClinic?.clinic_id],
     queryFn: async () => {
-      if (!appointmentQuery.data?.doctor?.user_id || !activeClinic?.clinics?.id) return null;
-      
+      if (!appointmentQuery.data?.doctor?.user_id || !activeClinic?.clinic_id) return null;
+
       const { data, error } = await supabase
         .from('clinic_members')
         .select(`
@@ -142,7 +148,7 @@ export const useConsultationData = (appointmentId: string | undefined) => {
           )
         `)
         .eq('user_id', appointmentQuery.data.doctor.user_id)
-        .eq('clinic_id', activeClinic.clinics?.id)
+        .eq('clinic_id', activeClinic.clinic_id)
         .single();
 
       if (error) {
@@ -151,7 +157,7 @@ export const useConsultationData = (appointmentId: string | undefined) => {
       }
       return data;
     },
-    enabled: !!appointmentQuery.data?.doctor?.user_id && !!activeClinic?.clinics?.id,
+    enabled: !!appointmentQuery.data?.doctor?.user_id && !!activeClinic?.clinic_id,
   });
 
   return {
