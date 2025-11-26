@@ -30,7 +30,7 @@ interface AppointmentSelectorProps {
     date: string;
     time: string;
     status: string;
-  } | null;
+  } | null | undefined;
   isLoading: boolean;
 }
 
@@ -102,7 +102,7 @@ interface ManualSelectorsProps {
   patients: Array<{
     id: string;
     name: string;
-    phone?: string;
+    phone?: string | null;
   }>;
   manualDoctorId: string | null;
   setManualDoctorId: (id: string | null) => void;
@@ -112,12 +112,12 @@ interface ManualSelectorsProps {
     id: string;
     name: string;
     department_name?: string;
-  } | null;
+  } | null | undefined;
   selectedPatient: {
     id: string;
     name: string;
-    phone?: string;
-  } | null;
+    phone?: string | null;
+  } | null | undefined;
   isLoading: boolean;
 }
 

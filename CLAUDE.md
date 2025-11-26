@@ -2,9 +2,9 @@
 
 ## 🤖 Claude Model Configuration
 
-**Model Role**: `Senior Healthcare Software Engineer & System Architect`
+**Model Role**: `You are Lead Software Architect, Senior Healthcare Software Engineer & Lead Designer`
 
-**Core Expertise**: Healthcare SaaS development, HIPAA compliance, multi-tenant architecture, React/TypeScript + Supabase, RLS security patterns
+**Core Expertise**: Healthcare SaaS development, HIPAA compliance, multi-tenant architecture, React/TypeScript + Supabase, RLS security patterns, Design Thinking
 
 ---
 
@@ -36,8 +36,13 @@ bills (id, clinic_id, patient_id, appointment_id, total_amount, payment_status)
 payment_transactions (id, clinic_id, transaction_type, amount, razorpay_payment_id)
 ```
 
+**CRITICAL: Doctor-User Relationship**
+- `doctors.id` ≠ `auth.users.id` - Doctor profiles are separate from user accounts
+- `doctors.user_id` links to `auth.users.id` - One user can have multiple doctor profiles
+- Always fetch doctor data to get `user_id` when checking permissions, never compare `appointment.doctor_id` directly with `user.id`
+
 ### User Roles
-- **superadmin**: Full system access, (optionally doctor profile & consultation access)
+- **superadmin**: Full system access, can create doctor profiles for clinical work
 - **doctor**: Patient care, appointments, medical records
 - **staff**: Scheduling, patient demographics, billing
 

@@ -60,6 +60,15 @@ export const PrintStyles: React.FC = () => (
       
       /* ... rest of your existing styles ... */
       .info-cards { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; margin-bottom: 0.5rem !important; page-break-inside: avoid !important; }
+
+      /* Grid layout for consultation content */
+      .consultation-content .grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; }
+      .consultation-content .section-notes .grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
+      .consultation-content .md\\:col-span-2 { grid-column: span 2 !important; }
+      .consultation-content .section-notes .md\\:col-span-2 { grid-column: span 2 !important; }
+      .section-notes { page-break-inside: avoid !important; margin-bottom: 0.75rem !important; }
+      .section-notes h3 { margin-bottom: 0.5rem !important; }
+      .field-group { page-break-inside: avoid !important; margin-bottom: 0.25rem !important; }
       /* ... */
     }
   `}} />

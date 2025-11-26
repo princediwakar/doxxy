@@ -33,13 +33,22 @@ export const VitalSignsField = ({
   };
 
   const calculateBMI = () => {
-    if (value.height && value.weight) {
-      const heightInMeters = parseFloat(value.height) / 100; // Convert cm to meters
-      const weightInKg = parseFloat(value.weight);
-      if (heightInMeters > 0 && weightInKg > 0) {
-        const bmi = (weightInKg / (heightInMeters * heightInMeters)).toFixed(1);
-        handleFieldChange('bmi', bmi);
-      }
+    // Clear BMI if either height or weight is empty
+    if (!value.height || !value.weight) {
+      handleFieldChange('bmi', '');
+      return;
+    }
+
+    // Calculate BMI only if both height and weight have valid values
+    const heightInMeters = parseFloat(value.height) / 100; // Convert cm to meters
+    const weightInKg = parseFloat(value.weight);
+
+    if (heightInMeters > 0 && weightInKg > 0) {
+      const bmi = (weightInKg / (heightInMeters * heightInMeters)).toFixed(1);
+      handleFieldChange('bmi', bmi);
+    } else {
+      // Clear BMI if values are invalid
+      handleFieldChange('bmi', '');
     }
   };
 

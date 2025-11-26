@@ -41,8 +41,10 @@ export const ConsultationHeader = ({
   onComplete
 }: ConsultationHeaderProps) => {
   const canComplete = mandatoryFieldsStatus.isValid && !autoSaveMutation.isPending && !isConsultationCompleted;
+  const canEditCompleted = isConsultationCompleted && canEditConsultation;
 
   const getCompleteButtonTooltip = () => {
+    if (isConsultationCompleted && canEditConsultation) return "Edit consultation notes";
     if (isConsultationCompleted) return "Consultation already completed";
     if (autoSaveMutation.isPending) return "Please wait for auto-save to complete";
     if (!mandatoryFieldsStatus.isValid) {
@@ -133,16 +135,17 @@ export const ConsultationHeader = ({
                 <TooltipTrigger asChild>
                   <Button
                     onClick={onComplete}
-                    disabled={!canComplete}
+                    disabled={!canComplete && !canEditCompleted}
                     size="sm"
-                    className={`flex items-center gap-1 transition-all ${canComplete
+                    className={`flex items-center gap-1 transition-all ${(canComplete || canEditCompleted)
                         ? 'bg-green-600 hover:bg-green-700 text-secondary '
                         : 'opacity-60'
                       }`}
-                    variant={canComplete ? "default" : "secondary"}
+                    variant={(canComplete || canEditCompleted) ? "default" : "secondary"}
                   >
                     <CheckCircle className="h-4 w-4" />
-                    {isConsultationCompleted ? "Completed" : "Complete"}
+                    {isConsultationCompleted && canEditConsultation ? "Edit Notes" :
+                     isConsultationCompleted ? "Completed" : "Complete"}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>

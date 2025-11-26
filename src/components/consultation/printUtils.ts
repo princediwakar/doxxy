@@ -339,6 +339,34 @@ export const printConsultation = async (
           margin-bottom: 0.75rem !important;
         }
 
+        /* Enhanced grid layout for consultation content */
+        .consultation-content .grid {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr 1fr !important;
+          gap: 0.75rem !important;
+        }
+
+        .consultation-content .section-notes .grid {
+          display: grid !important;
+          grid-template-columns: 1fr 1fr 1fr !important;
+          gap: 0.5rem !important;
+        }
+
+        .consultation-content .md\\:col-span-2,
+        .consultation-content .print\\:col-span-2,
+        .consultation-content .section-notes .md\\:col-span-2,
+        .consultation-content .section-notes .print\\:col-span-2 {
+          grid-column: span 2 !important;
+        }
+
+        .consultation-content .lg\\:col-span-3,
+        .consultation-content .lg\\:print\\:col-span-3,
+        .consultation-content .section-notes .lg\\:col-span-3,
+        .consultation-content .section-notes .lg\\:print\\:col-span-3 {
+          grid-column: span 3 !important;
+        }
+
+
         /* Compact vital signs layout for print */
         .vital-signs-display .grid {
           display: grid !important;

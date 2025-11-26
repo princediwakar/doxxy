@@ -7,9 +7,8 @@ import { cn } from "@/lib/utils"
 const ContextMenu = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Root>
->(({ ...props }, ref) => (
+>(({ ...props }) => (
   <ContextMenuPrimitive.Root
-    ref={ref}
     modal={false}
     {...props}
   />

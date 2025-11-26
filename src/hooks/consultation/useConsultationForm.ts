@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
@@ -18,11 +18,33 @@ export const useConsultationForm = (
   onConsultationCompleted?: () => void,
   departmentType?: string
 ) => {
-  const { user, activeClinic } = useAuth();
+  const { user, activeClinic, hasDoctorProfile } = useAuth();
   const queryClient = useQueryClient();
   const supabase = getSupabase();
   const previousValuesRef = useRef<ConsultationFormValues>();
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Fetch the assigned doctor data to check if current user owns the doctor profile
+  const { data: assignedDoctor } = useQuery({
+    queryKey: ['assigned-doctor', appointment?.doctor_id],
+    queryFn: async () => {
+      if (!appointment?.doctor_id) return null;
+
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id, user_id, name, email')
+        .eq('id', appointment.doctor_id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching assigned doctor:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!appointment?.doctor_id,
+  });
   
   // Consultation completion state
   const [isConsultationCompleted, setIsConsultationCompleted] = useState(
@@ -32,16 +54,49 @@ export const useConsultationForm = (
   // Track if consultation was just completed (for redirect)
   const [justCompleted, setJustCompleted] = useState(false);
 
-  // Check if current user is the associated doctor
-  const isAssociatedDoctor = useMemo(() => {
-    return appointment?.doctor?.user_id && user?.id &&
-           appointment.doctor.user_id === user.id;
-  }, [appointment?.doctor?.user_id, user?.id]);
+  // Check if current user is the assigned doctor
+  const isAssignedDoctor = useMemo(() => {
+    // If appointment has no doctor assigned, return false
+    if (!appointment?.doctor_id || !user?.id) {
+      console.log('🔍 isAssignedDoctor debug: No doctor assigned or no user');
+      return false;
+    }
 
-  // Allow editing only if user is the associated doctor
+    // Check if the current user owns the doctor profile assigned to this appointment
+    const result = assignedDoctor?.user_id === user.id;
+
+    console.log('🔍 isAssignedDoctor debug:',
+      'appointmentDoctorId:', appointment?.doctor_id,
+      'currentUserId:', user?.id,
+      'assignedDoctorUserId:', assignedDoctor?.user_id,
+      'isAssignedDoctor:', result
+    );
+    return result;
+  }, [appointment?.doctor_id, user?.id, assignedDoctor?.user_id]);
+
+  // Allow editing if user is the assigned doctor OR
+  // if user is a superadmin with doctor profile in this clinic
   const canEditConsultation = useMemo(() => {
-    return isAssociatedDoctor;
-  }, [isAssociatedDoctor]);
+    // Always allow editing for assigned doctors
+    if (isAssignedDoctor) {
+      console.log('✅ canEditConsultation: true (isAssignedDoctor)');
+      return true;
+    }
+
+    // For superadmins, check if they have a doctor profile in this clinic
+    if (activeClinic?.role === 'superadmin' && hasDoctorProfile && user?.id) {
+      console.log('✅ canEditConsultation: true (superadmin with doctor profile)');
+      return true;
+    }
+
+    console.log('❌ canEditConsultation: false',
+      'isAssignedDoctor:', isAssignedDoctor,
+      'activeClinicRole:', activeClinic?.role,
+      'hasDoctorProfile:', hasDoctorProfile,
+      'userId:', user?.id
+    );
+    return false;
+  }, [isAssignedDoctor, activeClinic?.role, hasDoctorProfile, user?.id]);
   
   // Initialize form with existing data
   const defaultValues: ConsultationFormValues = useMemo(() => ({
@@ -87,6 +142,13 @@ export const useConsultationForm = (
       setJustCompleted(false);
     }
   }, [isConsultationCompleted, canEditConsultation, justCompleted]);
+
+  // Keep consultation completion state synchronized with appointment status
+  useEffect(() => {
+    if (appointment?.status) {
+      setIsConsultationCompleted(appointment.status === 'Completed');
+    }
+  }, [appointment?.status]);
 
   // Fixed auto-save mutation
   const autoSaveMutation = useMutation({
@@ -138,25 +200,25 @@ export const useConsultationForm = (
         // Only save if there are valid prescriptions
         if (validPrescriptions.length > 0) {
           const prescriptionsData = validPrescriptions.map((med: PrescriptionMedication) => ({
-          consultation_id: result.id,
-          patient_id: appointment?.patient_id || '',
-          doctor_id: appointment?.doctor_id || user?.id || '',
-          clinic_id: activeClinic.clinics?.id,
-          medications: [med] as unknown as Json,
-        }));
+            consultation_id: result.id,
+            patient_id: appointment?.patient_id || '',
+            doctor_id: appointment?.doctor_id || user?.id || '',
+            clinic_id: activeClinic.clinics?.id || '',
+            medications: [med] as unknown as Json,
+          }));
 
-        // Delete existing prescriptions for this consultation
-        await supabase
-          .from('prescriptions')
-          .delete()
-          .eq('consultation_id', result.id);
+          // Delete existing prescriptions for this consultation
+          await supabase
+            .from('prescriptions')
+            .delete()
+            .eq('consultation_id', result.id);
 
-        // Insert new prescriptions
-        const { error: prescError } = await supabase
-          .from('prescriptions')
-          .insert(prescriptionsData);
+          // Insert new prescriptions
+          const { error: prescError } = await supabase
+            .from('prescriptions')
+            .insert(prescriptionsData);
 
-        if (prescError) throw prescError;
+          if (prescError) throw prescError;
         } else {
           // If no valid prescriptions, just delete existing ones
           await supabase
@@ -291,6 +353,28 @@ export const useConsultationForm = (
 
   // Complete consultation with validation
   const handleCompleteConsultation = useCallback(async () => {
+    // If consultation is already completed and user can edit, allow saving changes
+    if (isConsultationCompleted && canEditConsultation) {
+      try {
+        const formValues = form.getValues();
+        await autoSaveMutation.mutateAsync(formValues);
+        toast({
+          title: 'Notes Updated',
+          description: 'Your consultation notes have been updated successfully.',
+        });
+        return;
+      } catch (error) {
+        console.error('Error updating consultation notes:', error);
+        toast({
+          title: 'Update Failed',
+          description: 'Could not update consultation notes. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
+    // If consultation is completed but user cannot edit, show error
     if (isConsultationCompleted) {
       toast({
         title: 'Already Completed',
@@ -346,13 +430,14 @@ export const useConsultationForm = (
        });
     }
   }, [
-    isConsultationCompleted, 
-    validateMandatoryFields, 
-    form, 
-    autoSaveMutation, 
-    appointmentId, 
-    supabase, 
-    queryClient, 
+    isConsultationCompleted,
+    canEditConsultation,
+    validateMandatoryFields,
+    form,
+    autoSaveMutation,
+    appointmentId,
+    supabase,
+    queryClient,
     onConsultationCompleted
   ]);
 

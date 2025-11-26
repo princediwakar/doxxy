@@ -12,7 +12,6 @@ interface BlogFrontmatter {
 }
 
 export type BlogPost = BlogFrontmatter & {
-  slug: string;
   content: string;
 };
 
@@ -25,12 +24,10 @@ interface FrontMatterResult {
 // Load all markdown files in this directory
 const files = import.meta.glob("./*.md", { query: '?raw', import: 'default', eager: true });
 
-export const blogPosts: BlogPost[] = Object.entries(files).map(([path, raw]) => {
-  const slug = path.split("/").pop()!.replace(".md", "");
+export const blogPosts: BlogPost[] = Object.entries(files).map(([, raw]) => {
   const { attributes: data, body: content } = fm(raw as string) as FrontMatterResult;
   return {
-    slug,
-    content,
     ...data,
+    content,
   } as BlogPost;
 }).sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime()); 
