@@ -7,7 +7,12 @@ import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
 import { BillingModal } from '@/components/billing/BillingModal';
 import { useAppointments, AppointmentWithDetails } from '@/hooks/useAppointments';
+import { Database } from '@/integrations/supabase/types';
+
+// Define types for modal props
+type AppointmentData = Database['public']['Tables']['appointments']['Row'];
 import { AppointmentsTabs } from '@/components/appointments/AppointmentsTabs';
+import { DoctorSelector } from '@/components/appointments/DoctorSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,6 +33,8 @@ const Appointments = () => {
     handleStartConsultation,
     refreshAppointments,
     cancelLoading,
+    selectedDoctorId,
+    setSelectedDoctorId,
   } = useAppointments();
 
   const { activeClinicRole } = useAuth();
@@ -123,16 +130,24 @@ const Appointments = () => {
             </Button>
       </div>
 
-          <div className="mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search appointments by patient name, doctor, or date..."
+                placeholder="Search appointments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
               />
             </div>
+
+            {/* Add doctor selector for doctors */}
+            {activeClinicRole === 'doctor' && (
+              <DoctorSelector
+                selectedDoctorId={selectedDoctorId}
+                onDoctorChange={setSelectedDoctorId}
+              />
+            )}
           </div>
 
           <AppointmentsTabs
@@ -156,7 +171,7 @@ const Appointments = () => {
       <AppointmentModal
         open={isAppointmentModalOpen}
         onOpenChange={handleModalClose}
-        appointment={selectedAppointment}
+        appointment={selectedAppointment as AppointmentData | null}
       />
 
       

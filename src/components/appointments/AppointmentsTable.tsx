@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, Calendar, Stethoscope, Eye, Receipt } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MoreHorizontal, Calendar, Eye, Receipt } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { formatTimeIST } from '@/lib/utils';
 import { AppointmentWithDetails } from '@/hooks/useAppointments';
@@ -93,7 +94,12 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <Stethoscope className="h-4 w-4 text-muted-foreground" />
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={appointment.doctor_avatar_url} />
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      {appointment.doctor_name?.[0]?.toUpperCase() || 'D'}
+                    </AvatarFallback>
+                  </Avatar>
                   <span>{appointment.doctor_name}</span>
                 </div>
                 {appointment.department_name && (
@@ -137,7 +143,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
               </TableCell>
               <TableCell onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2">
-                  {appointment.status === 'Scheduled' && appointment.doctor_user_id === user?.id && (
+                  {appointment.status === 'Scheduled' && appointment.user_id === user?.id && (
                     <Button
                       size="sm"
                       onClick={() => onStartConsultation(appointment)}
@@ -147,7 +153,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                     </Button>
                   )}
 
-                  {appointment.status === 'In Progress' && appointment.doctor_user_id === user?.id && (
+                  {appointment.status === 'In Progress' && appointment.user_id === user?.id && (
                     <Button
                       size="sm"
                       onClick={() => onStartConsultation(appointment)}
@@ -163,7 +169,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                       variant="outline"
                       onClick={() => {
                         // Associated doctors can edit completed consultations
-                        if (appointment.doctor_user_id === user?.id) {
+                        if (appointment.user_id === user?.id) {
                           // Navigate to consultation page for editing
                           navigate(`/consultation/${appointment.id}`);
                         } else {
@@ -171,9 +177,9 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                           onViewConsultation(appointment);
                         }
                       }}
-                      title={appointment.doctor_user_id === user?.id ? "Edit Notes" : "View Notes"}
+                      title={appointment.user_id === user?.id ? "Edit Notes" : "View Notes"}
                     >
-                      <span>{appointment.doctor_user_id === user?.id ? "Edit Notes" : "View Notes"}</span>
+                      <span>{appointment.user_id === user?.id ? "Edit Notes" : "View Notes"}</span>
                     </Button>
                   )}
 

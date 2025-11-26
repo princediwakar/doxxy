@@ -33,7 +33,7 @@ export interface PatientWithConsultations extends Patient {
 
 export interface AppointmentData {
   id: string;
-  clinic_id: string;
+  clinic_id?: string;
   patient_id: string;
   doctor_id: string;
   date: string;

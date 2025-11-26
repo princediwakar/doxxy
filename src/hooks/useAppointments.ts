@@ -100,7 +100,7 @@ const fetchAppointments = async (clinicId: string | undefined, searchTerm: strin
 };
 
 export const useAppointments = () => {
-  const { user, activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const { activeClinic, activeClinicRole, loading: authLoading } = useAuth();
   const { deductCreditsForAppointment } = usePayments();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -110,6 +110,7 @@ export const useAppointments = () => {
     upcoming: 1,
     past: 1
   });
+  const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
 
   const itemsPerPage = 10;
 
@@ -126,31 +127,14 @@ export const useAppointments = () => {
     [data]
   );
 
-  // Filter appointments for doctors if necessary
+  // Filter appointments based on selected doctor
   const getFilteredAppointments = useCallback((appointmentList: AppointmentWithDetails[]) => {
-    if (activeClinicRole === 'doctor') {
-      // For doctors, we need to filter appointments where the doctor's user_id matches the current user
-      // The appointment.doctor_id is the doctor record ID, not the user ID
-      // We need to check if the appointment's doctor has the same user_id as the current user
-      const filtered = appointmentList.filter(app => app.doctor_user_id === user?.id);
-
-      console.log('Doctor appointment filtering:', {
-        totalAppointments: appointmentList.length,
-        filteredAppointments: filtered.length,
-        currentUserId: user?.id,
-        sampleAppointments: appointmentList.slice(0, 3).map(app => ({
-          id: app.id,
-          doctor_id: app.doctor_id,
-          doctor_user_id: app.doctor_user_id,
-          patient_name: app.patient_name,
-          doctor_name: app.doctor_name
-        }))
-      });
-
-      return filtered;
+    // Apply doctor filter if selected
+    if (selectedDoctorId) {
+      return appointmentList.filter(app => app.doctor_id === selectedDoctorId);
     }
     return appointmentList;
-  }, [activeClinicRole, user?.id]);
+  }, [selectedDoctorId]);
 
   const filteredAppointments = useMemo(() => ({
     today: getFilteredAppointments(appointments.today),
@@ -328,25 +312,29 @@ export const useAppointments = () => {
     appointments: filteredAppointments,
     isLoading,
     error,
-    
+
     // Search and filtering
     searchTerm,
     setSearchTerm,
     activeTab,
     setActiveTab: handleTabChange,
-    
+
+    // Doctor selection
+    selectedDoctorId,
+    setSelectedDoctorId,
+
     // Pagination
     currentPage,
     handlePageChange,
     getPaginatedAppointments,
     getTotalPages,
     itemsPerPage,
-    
+
     // Actions
     handleCancelAppointment,
     handleStartConsultation,
     refreshAppointments,
-    
+
     // Loading states
     cancelLoading: cancelAppointmentMutation.isPending,
     updateStatusLoading: updateAppointmentStatusMutation.isPending,

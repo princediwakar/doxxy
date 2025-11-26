@@ -1179,9 +1179,9 @@ export type Database = {
           created_at: string
           date: string
           department_name: string
+          doctor_avatar_url: string
           doctor_id: string
           doctor_name: string
-          doctor_user_id: string
           id: string
           notes: string
           patient_id: string
@@ -1189,6 +1189,7 @@ export type Database = {
           status: Database["public"]["Enums"]["appointment_status"]
           time: string
           type: Database["public"]["Enums"]["appointment_type"]
+          user_id: string
         }[]
       }
       get_bills_by_clinic: {
@@ -1448,6 +1449,10 @@ export type Database = {
       handle_new_user_manual: {
         Args: { user_record: unknown }
         Returns: undefined
+      }
+      has_doctor_profile: {
+        Args: { clinic_id_param: string }
+        Returns: boolean
       }
       invite_user_by_email: {
         Args: {
