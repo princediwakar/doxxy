@@ -1,5 +1,6 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { useEffect } from 'react';
 
 interface VitalSignsValue {
   temperature?: string;
@@ -41,6 +42,11 @@ export const VitalSignsField = ({
       }
     }
   };
+
+  // Calculate BMI whenever height or weight changes
+  useEffect(() => {
+    calculateBMI();
+  }, [value.height, value.weight]);
 
 
   return (
@@ -87,7 +93,7 @@ export const VitalSignsField = ({
               placeholder="Systolic"
               value={value.blood_pressure_systolic || ''}
               onChange={(e) => handleFieldChange('blood_pressure_systolic', e.target.value)}
-              className="flex-1 text-sm h-8"
+              className="w-16 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
@@ -96,7 +102,7 @@ export const VitalSignsField = ({
               placeholder="Diastolic"
               value={value.blood_pressure_diastolic || ''}
               onChange={(e) => handleFieldChange('blood_pressure_diastolic', e.target.value)}
-              className="flex-1 text-sm h-8"
+              className="w-16 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
@@ -143,11 +149,7 @@ export const VitalSignsField = ({
             <Input
               placeholder="cm"
               value={value.height || ''}
-              onChange={(e) => {
-                handleFieldChange('height', e.target.value);
-                // Auto-calculate BMI when height changes
-                setTimeout(calculateBMI, 100);
-              }}
+              onChange={(e) => handleFieldChange('height', e.target.value)}
               className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}
@@ -163,11 +165,7 @@ export const VitalSignsField = ({
             <Input
               placeholder="kg"
               value={value.weight || ''}
-              onChange={(e) => {
-                handleFieldChange('weight', e.target.value);
-                // Auto-calculate BMI when weight changes
-                setTimeout(calculateBMI, 100);
-              }}
+              onChange={(e) => handleFieldChange('weight', e.target.value)}
               className="flex-1 text-sm h-8"
               readOnly={isReadOnly}
               disabled={isReadOnly}

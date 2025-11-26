@@ -764,9 +764,9 @@ export type Database = {
       patients: {
         Row: {
           address: string | null
+          age: number | null
           clinic_id: string
           created_at: string | null
-          date_of_birth: string | null
           email: string | null
           gender: string | null
           id: string
@@ -776,9 +776,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          age?: number | null
           clinic_id: string
           created_at?: string | null
-          date_of_birth?: string | null
           email?: string | null
           gender?: string | null
           id?: string
@@ -788,9 +788,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          age?: number | null
           clinic_id?: string
           created_at?: string | null
-          date_of_birth?: string | null
           email?: string | null
           gender?: string | null
           id?: string
@@ -1122,19 +1122,33 @@ export type Database = {
         }
         Returns: string
       }
-      create_patient: {
-        Args: {
-          p_address: string
-          p_clinic_id: string
-          p_date_of_birth: string
-          p_email: string
-          p_gender: string
-          p_medical_id: string
-          p_name: string
-          p_phone: string
-        }
-        Returns: string
-      }
+      create_patient:
+        | {
+            Args: {
+              p_address: string
+              p_clinic_id: string
+              p_date_of_birth: string
+              p_email: string
+              p_gender: string
+              p_medical_id: string
+              p_name: string
+              p_phone: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_address?: string
+              p_age?: number
+              p_clinic_id: string
+              p_email?: string
+              p_gender?: string
+              p_medical_id?: string
+              p_name: string
+              p_phone?: string
+            }
+            Returns: string
+          }
       debug_invitation_flow: { Args: { user_email: string }; Returns: Json }
       deduct_appointment_credit: {
         Args: {
@@ -1293,10 +1307,10 @@ export type Database = {
         Args: { p_patient_id: string }
         Returns: {
           address: string
+          age: number
           clinic_id: string
           consultations: Json
           created_at: string
-          date_of_birth: string
           email: string
           gender: string
           id: string
@@ -1309,9 +1323,9 @@ export type Database = {
         Args: { _clinic_id: string; _limit?: number; _offset?: number }
         Returns: {
           address: string
+          age: number
           clinic_id: string
           created_at: string
-          date_of_birth: string
           email: string
           gender: string
           id: string
@@ -1499,19 +1513,33 @@ export type Database = {
         }
         Returns: string
       }
-      update_patient: {
-        Args: {
-          p_address?: string
-          p_date_of_birth?: string
-          p_email?: string
-          p_gender?: string
-          p_medical_id?: string
-          p_name?: string
-          p_patient_id: string
-          p_phone?: string
-        }
-        Returns: string
-      }
+      update_patient:
+        | {
+            Args: {
+              p_address?: string
+              p_date_of_birth?: string
+              p_email?: string
+              p_gender?: string
+              p_medical_id?: string
+              p_name?: string
+              p_patient_id: string
+              p_phone?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_address?: string
+              p_age?: number
+              p_email?: string
+              p_gender?: string
+              p_medical_id?: string
+              p_name?: string
+              p_patient_id: string
+              p_phone?: string
+            }
+            Returns: string
+          }
       update_profile: {
         Args: {
           p_email: string

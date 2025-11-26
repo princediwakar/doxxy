@@ -33,7 +33,6 @@ import {
   PrescriptionMedication,
 } from "./types";
 import { Tables } from "@/integrations/supabase/types";
-import { getAge } from "@/lib/utils";
 
 type DepartmentInfo =
   | {
@@ -212,8 +211,7 @@ export const PatientSidebar = ({
                 {patient?.name || "Unknown Patient"}
               </p>
               <p className="text-sm text-gray-600">
-                {patient?.date_of_birth &&
-                  `${getAge(patient.date_of_birth, true)}`}
+                {patient?.age && `${patient.age} yrs`}
                 {patient?.gender && ` • ${patient.gender}`}
               </p>
             </div>

@@ -224,7 +224,7 @@ export const generatePrintContent = (
                 align-items: flex-start !important;
               }
 
-              .eye-field-display .min-w-\[40px\] {
+              .eye-field-display .min-w-40px {
                 min-width: 40px !important;
                 padding-top: 0.125rem !important;
               }
@@ -358,7 +358,7 @@ export const printConsultation = async (
           align-items: flex-start !important;
         }
 
-        .eye-field-display .min-w-\[40px\] {
+        .eye-field-display .min-w-40px {
           min-width: 40px !important;
           padding-top: 0.125rem !important;
         }

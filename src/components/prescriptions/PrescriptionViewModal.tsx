@@ -21,7 +21,6 @@ import {
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Tables } from "@/integrations/supabase/types";
-import { getAge } from '@/lib/utils';
 
 const supabase = getSupabase();
 
@@ -63,7 +62,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
         .from('prescriptions')
         .select(`
           *,
-          patients!inner(id, name, gender, date_of_birth, phone, email, medical_id),
+          patients!inner(id, name, gender, age, phone, email, medical_id),
           doctors!inner(id, name, user_id)
         `)
         .eq('id', prescription.id)
@@ -189,7 +188,7 @@ export function PrescriptionViewModal({ open, onOpenChange, prescription }: Pres
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {patient.gender} • {patient.date_of_birth ? `${getAge(patient.date_of_birth, true)} old` : 'Age unknown'}
+                        {patient.gender} • {patient.age ? `${patient.age} yrs old` : 'Age unknown'}
                       </div>
                       {patient.phone && (
                         <div className="text-sm">{patient.phone}</div>

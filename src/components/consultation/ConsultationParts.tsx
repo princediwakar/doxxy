@@ -1,6 +1,6 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { formatTimeIST, getAge } from '@/lib/utils';
+import { formatTimeIST } from '@/lib/utils';
 import { User, Calendar, Phone, Mail, MapPin, Globe } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tables } from '@/integrations/supabase/types';
@@ -175,7 +175,7 @@ export const PatientInfoCards: React.FC<{
             <div className="grid grid-cols-[120px,1fr] gap-2">
               <span className="text-gray-600">Age/Gender:</span>
               <span className="font-medium text-gray-900">
-                {patient?.date_of_birth && `${getAge(patient.date_of_birth)} • `}
+                {patient?.age && `${patient.age} yrs • `}
                 {patient?.gender}
               </span>
             </div>

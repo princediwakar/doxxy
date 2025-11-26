@@ -2,7 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-import { getAge } from "@/lib/utils";
 import { EnhancedPatientForDoctorList } from "@/types/dashboard";
 
 interface DoctorPatientsListProps {
@@ -75,8 +74,8 @@ export function DoctorPatientsList({
                     <span className="font-medium flex items-center gap-2">
                       {patient.name}
                     </span>
-                      {patient.date_of_birth && (
-                        <span className="text-xs text-muted-foreground">{getAge(patient.date_of_birth)}, {patient.gender}</span>
+                      {patient.age && (
+                        <span className="text-xs text-muted-foreground">{patient.age} yrs, {patient.gender}</span>
                       )}
                     {/* <p className="text-sm text-muted-foreground">ID: {patient.medical_id || 'N/A'}</p> */}
                   </div>

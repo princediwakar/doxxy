@@ -1,13 +1,12 @@
 // Dynamic PDF export functionality to reduce bundle size
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { getAge } from '@/lib/utils';
 
 interface PatientInfo {
   name: string;
   medical_id: string;
   gender: string;
-  date_of_birth: string | null;
+  age: number | null;
   phone?: string;
   email?: string;
 }
@@ -238,7 +237,7 @@ export class DynamicMedicalRecordPDFExporter {
       `Name: ${patient.name}`,
       `Medical ID: ${patient.medical_id}`,
       `Gender: ${patient.gender}`,
-      patient.date_of_birth ? `Age: ${getAge(patient.date_of_birth)} years` : '',
+      patient.age ? `Age: ${patient.age} years` : '',
       patient.phone ? `Phone: ${patient.phone}` : '',
       patient.email ? `Email: ${patient.email}` : ''
     ].filter(Boolean);

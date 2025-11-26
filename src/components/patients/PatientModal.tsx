@@ -2,7 +2,6 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { format } from "date-fns";
 import { getSupabase } from "@/integrations/supabase/client";
 import { UserIcon } from "lucide-react";
 
@@ -32,7 +31,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Database } from "@/integrations/supabase/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { DatePickerWithYear } from "@/components/ui/DatePickerWithYear";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 type PatientInsert = Database['public']['Tables']['patients']['Insert'];
@@ -49,7 +47,7 @@ const supabase = getSupabase();
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   gender: z.string().optional(),
-  date_of_birth: z.date().optional().nullable(),
+  age: z.number().int().min(0).max(150).optional().nullable(),
   phone: z.string().optional(),
   email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')), // Allow empty string or valid email
   address: z.string().optional(),
@@ -70,7 +68,7 @@ export const PatientModal = ({
     defaultValues: {
       name: patient?.name || "",
       gender: patient?.gender || "",
-      date_of_birth: patient?.date_of_birth ? new Date(patient.date_of_birth) : undefined,
+      age: patient?.age || undefined,
       phone: patient?.phone || "",
       email: patient?.email || "",
       address: patient?.address || "",
@@ -84,7 +82,7 @@ export const PatientModal = ({
       form.reset({
         name: patient?.name || "",
         gender: patient?.gender || "",
-        date_of_birth: patient?.date_of_birth ? new Date(patient.date_of_birth) : undefined,
+        age: patient?.age || undefined,
         phone: patient?.phone || "",
         email: patient?.email || "",
         address: patient?.address || "",
@@ -103,7 +101,7 @@ export const PatientModal = ({
         name: values.name,
         clinic_id: activeClinic.clinic_id,
         gender: values.gender || null,
-        date_of_birth: values.date_of_birth ? format(values.date_of_birth, "yyyy-MM-dd") : null,
+        age: values.age || null,
         phone: values.phone || null,
         email: values.email || null,
         address: values.address || null,
@@ -141,7 +139,7 @@ export const PatientModal = ({
       const patientData: Partial<Patient> = {
         name: values.name,
         gender: values.gender || null,
-        date_of_birth: values.date_of_birth ? format(values.date_of_birth, "yyyy-MM-dd") : null,
+        age: values.age || null,
         phone: values.phone || null,
         email: values.email || null,
         address: values.address || null,
@@ -239,15 +237,19 @@ export const PatientModal = ({
             />
             <FormField
               control={form.control}
-              name="date_of_birth"
+              name="age"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Date of Birth</FormLabel>
-                  <DatePickerWithYear
-                    date={field.value || undefined}
-                    setDate={field.onChange}
-                    disabled={field.disabled}
-                  />
+                <FormItem>
+                  <FormLabel>Age</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Age in years"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.value === '' ? null : parseInt(e.target.value))}
+                      value={field.value === null || field.value === undefined ? '' : field.value}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

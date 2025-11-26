@@ -40,7 +40,7 @@ export interface EnhancedPatientForDoctorList {
   address?: string;
   clinic_id?: string;
   created_at?: string | null;
-  date_of_birth?: string | null;
+  age?: number | null;
   email?: string;
   gender?: string;
   medical_id?: string;

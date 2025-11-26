@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Patient } from './types';
-import { getAge } from '@/lib/utils';
 
 interface AutoSaveMutation {
   isPending: boolean;
@@ -81,7 +80,7 @@ export const ConsultationHeader = ({
                   )}
                 </div>
                 <p className="text-sm text-gray-600">
-                  {patient?.date_of_birth && `${getAge(patient.date_of_birth, true)}`}
+                  {patient?.age && `${patient.age} yrs`}
                   {patient?.gender && ` • ${patient.gender}`}
                 </p>
               </div>

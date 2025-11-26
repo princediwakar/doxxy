@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getAge } from "@/lib/utils";
 import { User } from "lucide-react";
 import {  PatientWithConsultations } from "@/types/patients";
 
@@ -62,7 +61,7 @@ export const PatientList = ({
                       <div>
                         <h4 className="font-medium">{patient.name}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {patient.gender} • Age {getAge(patient.date_of_birth)}
+                          {patient.gender} • Age {patient.age || 'N/A'}
                         </p>
                         {patient.medical_id && (
                           <p className="text-xs text-muted-foreground">ID: {patient.medical_id}</p>

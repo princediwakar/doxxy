@@ -44,7 +44,7 @@ export interface AppointmentData {
   created_at: string;
   patient_name?: string;
   patient_gender?: string;
-  patient_date_of_birth?: string;
+  patient_age?: number;
   doctor_name?: string;
   department_name?: string;
 }

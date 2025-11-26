@@ -49,6 +49,7 @@ import { PatientModal } from "@/components/patients/PatientModal";
 type Appointment = Database['public']['Tables']['appointments']['Row'];
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Doctor = Database['public']['Functions']['get_doctors_by_clinic']['Returns'][0];
+type RpcPatient = Database['public']['Functions']['get_patients_by_clinic']['Returns'][0];
 
 // Using the Supabase enum types directly in the component
 
@@ -160,7 +161,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
 
   // Fetch patients using RPC instead of direct query
-  const { data: patients, isLoading: isLoadingPatients } = useQuery({
+  const { data: patients, isLoading: isLoadingPatients } = useQuery<RpcPatient[], Error>({
     queryKey: ['patients', activeClinic?.clinic_id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
@@ -176,7 +177,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   });
 
   // Filter patients by search
-  const filteredPatients = (patients || []).filter((p: Patient) =>
+  const filteredPatients = (patients || []).filter((p: RpcPatient) =>
     p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ?? false
   );
 
@@ -399,7 +400,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   }, [newlyCreatedPatient]);
 
   useEffect(() => {
-    if (pendingPatientId && patients?.some((p: Patient) => p.id === pendingPatientId)) {
+    if (pendingPatientId && patients?.some((p: RpcPatient) => p.id === pendingPatientId)) {
       form.setValue("patient_id", pendingPatientId);
       setPendingPatientId(null);
     }
@@ -457,7 +458,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                             className="mb-2"
                           />
                         </div>
-                        {filteredPatients.map((p: Patient) => (
+                        {filteredPatients.map((p: RpcPatient) => (
                           <SelectItem key={p.id} value={p.id}>
                             {p.name}
                           </SelectItem>

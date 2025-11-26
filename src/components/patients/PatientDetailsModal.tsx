@@ -17,7 +17,7 @@ import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentModal } from '../appointments/AppointmentModal';
 import { BillingModal } from '../billing/BillingModal';
-import { getAge, formatTimeIST } from "@/lib/utils";
+import { formatTimeIST } from "@/lib/utils";
 
 type Patient = Database['public']['Tables']['patients']['Row'];
 type Appointment = Database['public']['Tables']['appointments']['Row'];
@@ -123,9 +123,8 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
               <User className="h-5 w-5" />
               {patient.name}
               <span className="ml-2 flex items-center gap-2 text-base text-muted-foreground">
-                
-                {getAge(patient.date_of_birth) && (
-                  <span className="ml-1">{getAge(patient.date_of_birth)}, {patient.gender}</span>
+                {patient.age && (
+                  <span className="ml-1">{patient.age} yrs, {patient.gender}</span>
                 )}
               </span>
             </DialogTitle>
@@ -149,10 +148,7 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{patient.date_of_birth ? format(parseISO(patient.date_of_birth), 'PPP') : 'No DOB provided'}</span>
-                    {getAge(patient.date_of_birth) && (
-                      <span className="ml-2">({getAge(patient.date_of_birth)} yrs)</span>
-                    )}
+                    <span>{patient.age ? `${patient.age} years old` : 'Age not provided'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-muted-foreground" />

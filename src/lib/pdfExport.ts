@@ -1,13 +1,12 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format, parseISO } from 'date-fns';
-import { getAge } from '@/lib/utils';
 
 interface PatientInfo {
   name: string;
   medical_id: string;
   gender: string;
-  date_of_birth: string | null;
+  age: number | null;
   phone?: string;
   email?: string;
 }
@@ -119,8 +118,7 @@ export class MedicalRecordPDFExporter {
       ['Name:', patient.name],
       ['Medical ID:', patient.medical_id],
       ['Gender:', patient.gender],
-      ['Date of Birth:', patient.date_of_birth ? format(parseISO(patient.date_of_birth), 'PPP') : 'Unknown'],
-      ['Age:', patient.date_of_birth ? getAge(patient.date_of_birth, true) : 'Unknown'],
+      ['Age:', patient.age ? `${patient.age} years` : 'Unknown'],
     ];
 
     if (patient.phone) patientData.push(['Phone:', patient.phone]);

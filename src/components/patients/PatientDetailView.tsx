@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getAge } from "@/lib/utils";
 import { Calendar, CreditCard, Edit, Eye, FileText, History, Mail, MapPin, Phone, Pill, Stethoscope } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ConsultationWithAppointment, PatientWithConsultations, Prescription, Consultation } from "@/types/patients";
@@ -36,7 +35,7 @@ export const PatientDetailView = ({
                         <div>
                             <CardTitle className="text-xl ">{patient.name}</CardTitle>
                             <p className="text-muted-foreground">
-                                {patient.gender} • Age {getAge(patient.date_of_birth)} •
+                                {patient.gender} • Age {patient.age || 'N/A'} •
                                 Medical ID: {patient.medical_id || 'Not assigned'}
                             </p>
                         </div>
@@ -68,12 +67,6 @@ export const PatientDetailView = ({
                             <div className="flex items-center space-x-2">
                                 <Mail className="h-4 w-4 text-muted-foreground" />
                                 <span className="text-sm">{patient.email}</span>
-                            </div>
-                        )}
-                        {patient.date_of_birth && (
-                            <div className="flex items-center space-x-2">
-                                <Calendar className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm">{format(parseISO(patient.date_of_birth), 'PPP')}</span>
                             </div>
                         )}
                         {patient.address && (

@@ -218,7 +218,7 @@ const PatientRecords = () => {
       created_at: consultation.appointment.created_at || consultation.created_at || new Date().toISOString(),
       patient_name: selectedPatient?.name,
       patient_gender: selectedPatient?.gender,
-      patient_date_of_birth: selectedPatient?.date_of_birth,
+      patient_age: selectedPatient?.age,
       doctor_name: consultation.appointment.doctor_name,
       department_name: consultation.appointment.department_name,
     };
@@ -290,7 +290,7 @@ const PatientRecords = () => {
         name: selectedPatient.name,
         medical_id: selectedPatient.medical_id,
         gender: selectedPatient.gender,
-        date_of_birth: selectedPatient.date_of_birth,
+        age: selectedPatient.age,
         phone: selectedPatient.phone,
         email: selectedPatient.email,
       };

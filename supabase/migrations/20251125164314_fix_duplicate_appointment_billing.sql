@@ -94,7 +94,7 @@ $$;
 COMMENT ON FUNCTION public.deduct_appointment_credit IS 'Deducts credits for an appointment, handling duplicate billing records gracefully';
 
 -- Ensure the appointment_billing table has proper constraints
--- This constraint ensures one billing record per appointment
+-- This constraint ensures one billing record per consultation
 ALTER TABLE public.appointment_billing
 DROP CONSTRAINT IF EXISTS appointment_billing_appointment_id_key,
 ADD CONSTRAINT appointment_billing_appointment_id_key UNIQUE (appointment_id);

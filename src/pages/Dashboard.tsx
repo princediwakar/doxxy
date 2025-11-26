@@ -98,7 +98,7 @@ const Dashboard = () => {
               address: p.address ?? undefined,
               clinic_id: p.clinic_id ?? undefined,
               created_at: p.created_at ?? null,
-              date_of_birth: p.date_of_birth ?? null,
+              age: p.age ?? null,
               email: p.email ?? '',
               gender: p.gender ?? '',
               medical_id: p.medical_id ?? '',

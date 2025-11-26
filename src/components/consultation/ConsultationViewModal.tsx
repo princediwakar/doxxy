@@ -72,7 +72,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
       }
       return data;
     },
-    enabled: open && !!appointment?.patient_id && !!activeClinic?.clinic_id && (!appointment.patient_gender || !appointment.patient_date_of_birth),
+    enabled: open && !!appointment?.patient_id && !!activeClinic?.clinic_id && (!appointment.patient_gender || !appointment.patient_age),
   });
 
   // Fetch consultation data
@@ -180,7 +180,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
   const patient: Patient = patientData || {
     name: appointment?.patient_name || 'Unknown',
     gender: appointment?.patient_gender || 'Unknown',
-    date_of_birth: appointment?.patient_date_of_birth || null,
+    age: appointment?.patient_age || null,
     phone: '',
     email: '',
     address: '',
