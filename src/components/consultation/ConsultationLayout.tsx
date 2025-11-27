@@ -80,6 +80,12 @@ const isFieldFullWidth = (field: Field, value: FieldValue | undefined): boolean 
     return true;
   }
 
+  // Motor examination and reflexes can be side-by-side since they're compact
+  if (field.type === 'motor_examination' ||
+      field.type === 'reflex_examination') {
+    return false;
+  }
+
   return false;
 };
 
@@ -88,6 +94,14 @@ const isFieldFullWidth = (field: Field, value: FieldValue | undefined): boolean 
 const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
   // Start new group if field type changes significantly
   if (currentGroup.length > 0 && currentGroup[0].type !== field.type) {
+    // Allow motor examination and reflexes to be grouped together
+    const currentIsExam = currentGroup[0].type === 'motor_examination' || currentGroup[0].type === 'reflex_examination';
+    const newIsExam = field.type === 'motor_examination' || field.type === 'reflex_examination';
+
+    if (currentIsExam && newIsExam) {
+      return false; // Allow grouping of motor and reflex examinations
+    }
+
     return true;
   }
 
@@ -162,7 +176,7 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationForm
 
         if (isCompact) {
           return (
-            <div key={index} className="flex items-center gap-2">
+            <div key={index} className="gap-2">
               <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
                 {field.label}:
               </div>

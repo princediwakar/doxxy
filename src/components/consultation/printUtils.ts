@@ -162,19 +162,7 @@ export const generatePrintContent = (
               .mx-auto { margin-left: 0 !important; margin-right: 0 !important; }
               .no-print { display: none !important; }
               
-              /* Force two-column layouts to work in print */
-              .info-cards { 
-                display: grid !important; 
-                grid-template-columns: 1fr 1fr !important; 
-                gap: 1rem !important; 
-              }
               
-              /* Force letterhead grid to stay two-column */
-              .letterhead .grid { 
-                display: grid !important; 
-                grid-template-columns: 1fr 1fr !important; 
-                gap: 1rem !important; 
-              }
               
               /* Reduce letterhead padding for print */
               .letterhead { 
@@ -205,29 +193,11 @@ export const generatePrintContent = (
                 margin-bottom: 0.25rem !important;
               }
 
-              /* Compact vital signs layout for print */
-              .vital-signs-display .grid {
-                display: grid !important;
-                grid-template-columns: repeat(4, 1fr) !important;
-                gap: 0.5rem !important;
+              /* Force 3-column layout specifically for 3-field grids in print */
+              .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 {
+                grid-template-columns: 1fr 1fr 1fr !important;
               }
 
-              .vital-signs-display .grid > div {
-                font-size: 12px !important;
-                line-height: 1.3 !important;
-                padding: 0.125rem 0 !important;
-              }
-
-              /* Eye field alignment for print */
-              .eye-field-display .flex {
-                display: flex !important;
-                align-items: flex-start !important;
-              }
-
-              .eye-field-display .min-w-40px {
-                min-width: 40px !important;
-                padding-top: 0.125rem !important;
-              }
             }
 
       </style>
@@ -339,66 +309,17 @@ export const printConsultation = async (
           margin-bottom: 0.75rem !important;
         }
 
-        /* Enhanced grid layout for consultation content */
-        .consultation-content .grid {
-          display: grid !important;
+        /* Force 3-column layout specifically for 3-field grids in print */
+        .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 {
           grid-template-columns: 1fr 1fr 1fr !important;
-          gap: 0.75rem !important;
-        }
-
-        .consultation-content .grid.grid-cols-1 { grid-template-columns: 1fr !important; }
-        .consultation-content .grid.grid-cols-1\\/md\\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
-        .consultation-content .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
-
-        .consultation-content .section-notes .grid {
-          display: grid !important;
-          grid-template-columns: 1fr 1fr 1fr !important;
-          gap: 0.5rem !important;
-        }
-
-        .consultation-content .w-full {
-          width: 100% !important;
-          grid-column: 1 / -1 !important;
-        }
-
-        .consultation-content .md\\:col-span-2,
-        .consultation-content .print\\:col-span-2,
-        .consultation-content .section-notes .md\\:col-span-2,
-        .consultation-content .section-notes .print\\:col-span-2 {
-          grid-column: span 2 !important;
-        }
-
-        .consultation-content .lg\\:col-span-3,
-        .consultation-content .lg\\:print\\:col-span-3,
-        .consultation-content .section-notes .lg\\:col-span-3,
-        .consultation-content .section-notes .lg\\:print\\:col-span-3 {
-          grid-column: span 3 !important;
         }
 
 
-        /* Compact vital signs layout for print */
-        .vital-signs-display .grid {
-          display: grid !important;
-          grid-template-columns: repeat(4, 1fr) !important;
-          gap: 0.5rem !important;
-        }
 
-        .vital-signs-display .grid > div {
-          font-size: 12px !important;
-          line-height: 1.3 !important;
-          padding: 0.125rem 0 !important;
-        }
 
-        /* Eye field alignment for print */
-        .eye-field-display .flex {
-          display: flex !important;
-          align-items: flex-start !important;
-        }
 
-        .eye-field-display .min-w-40px {
-          min-width: 40px !important;
-          padding-top: 0.125rem !important;
-        }
+
+
       }
     `;
     printWindow.document.head.appendChild(additionalCSS);
