@@ -193,9 +193,24 @@ export const generatePrintContent = (
                 margin-bottom: 0.25rem !important;
               }
 
-              /* Force 3-column layout specifically for 3-field grids in print */
-              .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 {
-                grid-template-columns: 1fr 1fr 1fr !important;
+/* FORCE GRID LAYOUTS */
+              /* This ensures 3 columns appear as 3 columns regardless of "paper width" */
+              .print-grid-3-cols {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 0.5rem !important;
+              }
+
+              .print-grid-2-cols {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 0.5rem !important;
+              }
+              
+              /* Fallback for items inside the grid to ensure they don't overflow */
+              .print-grid-3-cols > div, 
+              .print-grid-2-cols > div {
+                min-width: 0; /* Prevents text overflow issues in grid */
               }
 
             }

@@ -296,7 +296,11 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
           {!isLoadingConsultation && consultationData && (
             <ConsultationLayout
               patient={patient}
-              appointment={{ ...appointment, notes: appointment.notes || '' }}
+              appointment={{
+                ...appointment,
+                clinic_id: appointment?.clinic_id || activeClinic?.clinic_id || '',
+                notes: appointment.notes || ''
+              }}
               clinicInfo={clinicInfo}
               doctorInfo={doctorInfo}
               consultationData={specialtyData}

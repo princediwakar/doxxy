@@ -163,16 +163,16 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationForm
     );
   }
 
-  // Multiple fields - responsive grid layout
-  const gridCols = fields.length === 2
-    ? 'grid-cols-1 md:grid-cols-2'
-    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
+// UPDATED: Multiple fields - responsive grid layout with specific print marker classes
+const gridClassConfig = fields.length === 2
+? 'grid-cols-1 md:grid-cols-2 print-grid-2-cols' // Added marker class
+: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 print-grid-3-cols'; // Added marker class
 
-  return (
-    <div className={`grid ${gridCols} gap-3 print:gap-2 print:grid-cols-2 lg:print:grid-cols-3`}>
-      {fields.map((field, index) => {
-        const value = consultationData?.[field.name as keyof typeof consultationData];
-        const isCompact = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
+return (
+<div className={`grid ${gridClassConfig} gap-3 print:gap-2`}>
+  {fields.map((field, index) => {
+    const value = consultationData?.[field.name as keyof typeof consultationData];
+    const isCompact = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
 
         if (isCompact) {
           return (
