@@ -170,8 +170,8 @@ export const VitalSignsDisplay: React.FC<{ data: VitalSignsData }> = ({
       <div key="bp" className="flex items-center gap-1">
         <span className="text-gray-700 font-medium text-sm">B.P.:</span>
         <span className="text-sm">
-          {data.blood_pressure_systolic || "-"}/
-          {data.blood_pressure_diastolic || "-"} mmHg
+          {data.blood_pressure_systolic}/
+          {data.blood_pressure_diastolic} mmHg
         </span>
       </div>
     );
@@ -399,6 +399,79 @@ const hasTabularData = (data: Record<string, unknown>): boolean => {
   });
 };
 
+// --- Type Guards for Clean Field Detection ---
+
+const isPrescriptionData = (value: unknown): value is PrescriptionMedication[] => {
+  return Array.isArray(value) &&
+         value.every(item =>
+           typeof item === 'object' &&
+           item !== null &&
+           'name' in item
+         );
+};
+
+const isVitalSignsData = (value: unknown): value is VitalSignsData => {
+  if (typeof value !== 'object' || value === null) return false;
+  const data = value as Record<string, unknown>;
+  return (
+    'temperature' in data ||
+    'pulse' in data ||
+    'blood_pressure_systolic' in data ||
+    'blood_pressure_diastolic' in data ||
+    'respiratory_rate' in data ||
+    'oxygen_saturation' in data ||
+    'height' in data ||
+    'weight' in data ||
+    'bmi' in data
+  );
+};
+
+const isEyeData = (value: unknown): value is EyeData => {
+  if (typeof value !== 'object' || value === null) return false;
+  const data = value as Record<string, unknown>;
+  // Eye data has simple left/right fields without side suffixes
+  return (
+    ('left' in data || 'right' in data) &&
+    !('shoulder_left' in data) &&
+    !('biceps_left' in data) &&
+    !('visual_acuity_left' in data)
+  );
+};
+
+const isMotorExamData = (value: unknown): value is MotorExamData => {
+  if (typeof value !== 'object' || value === null) return false;
+  const data = value as Record<string, unknown>;
+  return (
+    'shoulder_left' in data ||
+    'shoulder_right' in data ||
+    'muscle_tone' in data ||
+    'muscle_bulk' in data
+  );
+};
+
+const isReflexExamData = (value: unknown): value is ReflexExamData => {
+  if (typeof value !== 'object' || value === null) return false;
+  const data = value as Record<string, unknown>;
+  return (
+    'biceps_left' in data ||
+    'biceps_right' in data ||
+    'triceps_left' in data ||
+    'clonus' in data ||
+    'hoffmann' in data
+  );
+};
+
+const isTabularEyeData = (value: unknown): value is TabularEyeValue => {
+  if (typeof value !== 'object' || value === null) return false;
+  const data = value as Record<string, unknown>;
+  return (
+    'visual_acuity_left' in data ||
+    'visual_acuity_right' in data ||
+    'extraocular_movements_left' in data ||
+    'anterior_chamber_left' in data
+  );
+};
+
 // --- Main Switch Export ---
 
 export const FieldValueRenderer: React.FC<{
@@ -408,68 +481,39 @@ export const FieldValueRenderer: React.FC<{
   if (!value) return null;
 
   // Type Guard: Prescriptions
-  if (fieldName === "prescriptions" && Array.isArray(value)) {
+  if (fieldName === "prescriptions" && isPrescriptionData(value)) {
     const validPrescriptions = value.filter((med) => med.name && med.name.trim().length > 0);
     if (validPrescriptions.length === 0) return null;
-    return <PrescriptionList value={value as PrescriptionMedication[]} />;
+    return <PrescriptionList value={value} />;
   }
 
   // Type Guard: Objects
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-    // We cast to Unknown Record to check for existence of keys
-    const fieldData = value as Record<string, unknown>;
-
     // Check if object has any meaningful content before rendering
-    if (!hasMeaningfulContent(fieldData)) return null;
+    if (!hasMeaningfulContent(value as Record<string, unknown>)) return null;
 
-    // Type Logic: Vitals
-    if (
-      "temperature" in fieldData ||
-      "pulse" in fieldData ||
-      "blood_pressure_systolic" in fieldData
-    ) {
-      // Check if vital signs has any actual data
-      if (!hasTabularData(fieldData)) return null;
-      return <VitalSignsDisplay data={fieldData as VitalSignsData} />;
-    }
-    // Type Logic: Eye
-    if ("left" in fieldData || "right" in fieldData) {
-      const keys = Object.keys(fieldData);
-      const isEye = keys.some((k) => k === "left" || k === "right");
-      const isNeuro = keys.some(
-        (k) => k.includes("_left") || k.includes("_right")
-      );
-
-      if (isEye && !isNeuro) {
-        // Check if eye data has any actual content
-        if (!hasTabularData(fieldData)) return null;
-        return <EyeFieldDisplay data={fieldData as EyeData} />;
-      }
-    }
-    // Type Logic: Motor
-    if ("shoulder_left" in fieldData || "shoulder_right" in fieldData) {
-      // Check if motor examination has any actual data
-      if (!hasTabularData(fieldData)) return null;
-      return <MotorExaminationDisplay data={fieldData as MotorExamData} />;
-    }
-    // Type Logic: Reflex
-    if ("biceps_left" in fieldData || "biceps_right" in fieldData) {
-      // Check if reflexes have any actual data
-      if (!hasTabularData(fieldData)) return null;
-      return <ReflexExaminationDisplay data={fieldData as ReflexExamData} />;
-    }
-    // Type Logic: Tabular Eye
-    if (
-      "visual_acuity_left" in fieldData ||
-      "visual_acuity_right" in fieldData
-    ) {
-      // Check if tabular eye examination has any actual data
-      if (!hasTabularData(fieldData)) return null;
-      return (
-        <TabularEyeExaminationDisplay data={fieldData as TabularEyeValue} />
-      );
+    // Clean type detection using explicit type guards
+    if (isVitalSignsData(value) && hasTabularData(value as Record<string, unknown>)) {
+      return <VitalSignsDisplay data={value} />;
     }
 
+    if (isEyeData(value) && hasTabularData(value as Record<string, unknown>)) {
+      return <EyeFieldDisplay data={value} />;
+    }
+
+    if (isMotorExamData(value) && hasTabularData(value as Record<string, unknown>)) {
+      return <MotorExaminationDisplay data={value} />;
+    }
+
+    if (isReflexExamData(value) && hasTabularData(value as Record<string, unknown>)) {
+      return <ReflexExaminationDisplay data={value} />;
+    }
+
+    if (isTabularEyeData(value) && hasTabularData(value as Record<string, unknown>)) {
+      return <TabularEyeExaminationDisplay data={value} />;
+    }
+
+    // Fallback for unhandled object types
     try {
       const stringified = JSON.stringify(value);
       return stringified.length < 200 ? (

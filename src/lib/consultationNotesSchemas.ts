@@ -449,7 +449,7 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
       fields: [
         {
           name: "eye_examination",
-          label: "Eye Examination",
+          label: "Ocular Examination",
           type: "tabular_eye",
           placeholder: "Enter comprehensive eye examination findings",
         },
