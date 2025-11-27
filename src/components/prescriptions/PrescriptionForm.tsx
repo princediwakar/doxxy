@@ -303,6 +303,7 @@ export const MedicationFields: React.FC<MedicationFieldsProps> = ({
                     <SelectItem value="TDS">TDS (Three Times Daily)</SelectItem>
                     <SelectItem value="QID">QID (Four Times Daily)</SelectItem>
                     <SelectItem value="PRN">PRN (As Needed)</SelectItem>
+                    <SelectItem value="SOS">SOS (As Required)</SelectItem>
                     <SelectItem value="Q4H">Q4H (Every 4 Hours)</SelectItem>
                     <SelectItem value="Q6H">Q6H (Every 6 Hours)</SelectItem>
                     <SelectItem value="Q8H">Q8H (Every 8 Hours)</SelectItem>
