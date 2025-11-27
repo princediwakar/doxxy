@@ -39,6 +39,19 @@ export const MotorExaminationField = ({
 }: MotorExaminationFieldProps) => {
   const [showNotes, setShowNotes] = useState(!!value.notes);
 
+  // Get default value for muscle strength fields
+  const getMuscleStrengthValue = (muscle: string, side: 'left' | 'right') => {
+    const fieldName = `${muscle}_${side}` as keyof MotorExaminationValue;
+    const currentValue = value[fieldName];
+
+    // If value is explicitly set to empty string, return empty string
+    // Otherwise return current value or default "5"
+    if (currentValue === '') {
+      return '';
+    }
+    return currentValue || '5';
+  };
+
   const handleMuscleStrengthChange = (muscle: string, side: 'left' | 'right', newValue: string) => {
     const fieldName = `${muscle}_${side}` as keyof MotorExaminationValue;
     onChange({
@@ -118,7 +131,7 @@ export const MotorExaminationField = ({
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
-                        value={value[`${muscle.key}_left` as keyof MotorExaminationValue] || ''}
+                        value={getMuscleStrengthValue(muscle.key, 'left')}
                         onChange={(e) => handleMuscleStrengthChange(muscle.key, 'left', e.target.value)}
                         className="w-16 text-center"
                         readOnly={isReadOnly}
@@ -131,7 +144,7 @@ export const MotorExaminationField = ({
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
-                        value={value[`${muscle.key}_right` as keyof MotorExaminationValue] || ''}
+                        value={getMuscleStrengthValue(muscle.key, 'right')}
                         onChange={(e) => handleMuscleStrengthChange(muscle.key, 'right', e.target.value)}
                         className="w-16 text-center"
                         readOnly={isReadOnly}
