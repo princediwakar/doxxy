@@ -190,15 +190,15 @@ export const useConsultationForm = (
         throw new Error('Unexpected response from consultation update');
       }
 
-      // Save prescriptions separately if they exist
-      if (data.specialty_data.prescriptions && data.specialty_data.prescriptions.length > 0) {
+      // Always sync prescriptions using proper upsert pattern
+      if (data.specialty_data.prescriptions !== undefined) {
         // Filter out prescriptions with empty medication names
-        const validPrescriptions = data.specialty_data.prescriptions.filter((med: PrescriptionMedication) => 
+        const validPrescriptions = data.specialty_data.prescriptions.filter((med: PrescriptionMedication) =>
           med.name && med.name.trim().length > 0
         );
-        
-        // Only save if there are valid prescriptions
+
         if (validPrescriptions.length > 0) {
+          // Prepare prescriptions data for upsert
           const prescriptionsData = validPrescriptions.map((med: PrescriptionMedication) => ({
             consultation_id: result.id,
             patient_id: appointment?.patient_id || '',
@@ -207,24 +207,23 @@ export const useConsultationForm = (
             medications: [med] as unknown as Json,
           }));
 
-          // Delete existing prescriptions for this consultation
-          await supabase
-            .from('prescriptions')
-            .delete()
-            .eq('consultation_id', result.id);
-
-          // Insert new prescriptions
+          // Use upsert to handle both creation and updates atomically
           const { error: prescError } = await supabase
             .from('prescriptions')
-            .insert(prescriptionsData);
+            .upsert(prescriptionsData, {
+              onConflict: 'consultation_id,patient_id,doctor_id',
+              ignoreDuplicates: false
+            });
 
           if (prescError) throw prescError;
         } else {
-          // If no valid prescriptions, just delete existing ones
-          await supabase
+          // If no valid prescriptions, delete existing ones for this consultation
+          const { error: deleteError } = await supabase
             .from('prescriptions')
             .delete()
             .eq('consultation_id', result.id);
+
+          if (deleteError) throw deleteError;
         }
       }
 
