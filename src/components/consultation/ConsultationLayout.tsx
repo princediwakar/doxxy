@@ -12,7 +12,7 @@ interface Field {
   type?: string;
 }
 
-// Field grouping logic
+// Field grouping logic with improved side-by-side layout
 const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormValues['specialty_data']) => {
   const groups: Field[][] = [];
   let currentGroup: Field[] = [];
@@ -20,14 +20,14 @@ const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormV
   fields.forEach((field, index) => {
     const value = consultationData?.[field.name as keyof typeof consultationData];
 
-    // Determine field size
-    const isSmallField = isFieldSmall(field, value);
+    // Determine if field should be full-width
+    const isFullWidthField = isFieldFullWidth(field, value);
 
     // Start new group if:
-    // - Current group is full (2 small fields)
-    // - Field is large
-    // - Field type changes
-    if (currentGroup.length === 2 || !isSmallField || shouldStartNewGroup(field, currentGroup)) {
+    // - Current group is full (3 small fields max)
+    // - Field is full-width
+    // - Field type changes significantly
+    if (currentGroup.length === 3 || isFullWidthField || shouldStartNewGroup(field, currentGroup)) {
       if (currentGroup.length > 0) {
         groups.push([...currentGroup]);
         currentGroup = [];
@@ -35,7 +35,12 @@ const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormV
     }
 
     // Add field to current group
-    currentGroup.push(field);
+    if (!isFullWidthField) {
+      currentGroup.push(field);
+    } else {
+      // Full-width fields get their own group
+      groups.push([field]);
+    }
 
     // If this is the last field, add the current group
     if (index === fields.length - 1 && currentGroup.length > 0) {
@@ -46,33 +51,47 @@ const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormV
   return groups;
 };
 
-const isFieldSmall = (field: Field, value: FieldValue | undefined): boolean => {
-
-  // Reflex, motor, and eye examination fields
-  if (field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye') {
+// Determine if a field should take full width
+const isFieldFullWidth = (field: Field, value: FieldValue | undefined): boolean => {
+  // Core full-width fields as specified
+  if (field.name === 'chief_complaint' ||
+      field.name === 'history_of_present_illness' ||
+      field.name === 'diagnosis' ||
+      field.name === 'treatment') {
     return true;
   }
 
-  // Small text fields
-  if (typeof value === 'string' && value.length <= 50) {
+  // Additional full-width fields based on their nature
+  if (field.name === 'assessment' ||
+      field.name === 'physical_exam' ||
+      field.name === 'systemic_examination') {
+    return true;
+  }
+
+  // Large text fields
+  if (typeof value === 'string' && value.length > 150) {
+    return true;
+  }
+
+  // Complex field types that need full width
+  if (field.type === 'vital_signs' ||
+      field.type === 'prescription' ||
+      field.type === 'tabular_eye' ||
+      field.type === 'motor_examination' ||
+      field.type === 'reflex_examination') {
     return true;
   }
 
   return false;
 };
 
-const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
-  // Start new group for large fields
-  if (field.name === 'history_of_present_illness' ||
-      field.name === 'assessment' ||
-      field.name === 'treatment' ||
-      field.name === 'diagnosis' ||
-      field.name === 'physical_exam' ||
-      field.name === 'systemic_examination') {
-    return true;
-  }
+// Legacy function for backward compatibility
+const isFieldSmall = (field: Field, value: FieldValue | undefined): boolean => {
+  return !isFieldFullWidth(field, value);
+};
 
-  // Start new group if field type changes
+const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
+  // Start new group if field type changes significantly
   if (currentGroup.length > 0 && currentGroup[0].type !== field.type) {
     return true;
   }
@@ -89,28 +108,44 @@ const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
   return false;
 };
 
-// Field group component
+// Field group component with fresh implementation
 const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationFormValues['specialty_data'] }> = ({ fields, consultationData }) => {
-  if (fields.length === 1) {
-    const field = fields[0];
-    const value = consultationData?.[field.name as keyof typeof consultationData];
+  const isSingleField = fields.length === 1;
+  const field = fields[0];
+  const value = consultationData?.[field.name as keyof typeof consultationData];
 
-    // Determine if this single field should be full width
-    const isLargeField = field.name === 'history_of_present_illness' ||
-                        field.name === 'assessment' ||
-                        field.name === 'treatment' ||
-                        field.name === 'diagnosis' ||
-                        field.name === 'physical_exam' ||
-                        field.name === 'systemic_examination' ||
-                        (typeof value === 'string' && value.length > 150) ||
-                        field.type === 'vital_signs' ||
-                        field.type === 'prescription' ||
-                        field.type === 'tabular_eye' ||
-                        field.type === 'motor_examination' ||
-                        field.type === 'reflex_examination';
+  // Determine field layout
+  const isFullWidth = isSingleField && isFieldFullWidth(field, value);
+  const isCompactField = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
+
+  if (isSingleField) {
+    // Single field layout
+    if (isFullWidth) {
+      return (
+        <div className="w-full">
+          <div className="text-sm font-semibold text-gray-800">{field.label}</div>
+          <div className="text-sm text-gray-900">
+            <FieldValueRenderer fieldName={field.name} value={value} />
+          </div>
+        </div>
+      );
+    }
+
+    if (isCompactField) {
+      return (
+        <div className="flex items-center gap-2">
+          <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+            {field.label}:
+          </div>
+          <div className="text-sm text-gray-900">
+            <FieldValueRenderer fieldName={field.name} value={value} />
+          </div>
+        </div>
+      );
+    }
 
     return (
-      <div className={isLargeField ? 'w-full' : ''}>
+      <div>
         <div className="text-sm font-semibold text-gray-800">{field.label}</div>
         <div className="text-sm text-gray-900">
           <FieldValueRenderer fieldName={field.name} value={value} />
@@ -119,14 +154,18 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationForm
     );
   }
 
-  // Multiple small fields - display horizontally
+  // Multiple fields - responsive grid layout
+  const gridCols = fields.length === 2
+    ? 'grid-cols-1 md:grid-cols-2'
+    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 print:gap-2 print:grid-cols-2 lg:print:grid-cols-3">
+    <div className={`grid ${gridCols} gap-3 print:gap-2 print:grid-cols-2 lg:print:grid-cols-3`}>
       {fields.map((field, index) => {
         const value = consultationData?.[field.name as keyof typeof consultationData];
+        const isCompact = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
 
-        // Special compact layout for reflex, motor, and eye examination fields
-        if (field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye') {
+        if (isCompact) {
           return (
             <div key={index} className="flex items-center gap-2">
               <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">

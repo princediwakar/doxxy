@@ -2,7 +2,6 @@ import { ArrowLeft, Save, Eye, CheckCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Patient } from './types';
 
 interface AutoSaveMutation {
@@ -43,18 +42,9 @@ export const ConsultationHeader = ({
   const canComplete = mandatoryFieldsStatus.isValid && !autoSaveMutation.isPending && !isConsultationCompleted;
   const canEditCompleted = isConsultationCompleted && canEditConsultation;
 
-  const getCompleteButtonTooltip = () => {
-    if (isConsultationCompleted && canEditConsultation) return "Edit consultation notes";
-    if (isConsultationCompleted) return "Consultation already completed";
-    if (autoSaveMutation.isPending) return "Please wait for auto-save to complete";
-    if (!mandatoryFieldsStatus.isValid) {
-      return `Missing ${mandatoryFieldsStatus.missingFields} required field${mandatoryFieldsStatus.missingFields > 1 ? 's' : ''}: ${mandatoryFieldsStatus.errors.join(', ')}`;
-    }
-    return "Complete consultation";
-  };
+
 
   return (
-    <TooltipProvider>
       <div className="sticky top-0 z-50 bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between py-4">
@@ -131,31 +121,21 @@ export const ConsultationHeader = ({
                 <Eye className="h-4 w-4" />
                 Preview
               </Button>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
+              <Button
                     onClick={onComplete}
                     disabled={!canComplete && !canEditCompleted}
                     size="sm"
                     className={`flex items-center gap-1 transition-all ${(canComplete || canEditCompleted)
-                        ? 'bg-green-600 hover:bg-green-700 text-secondary '
+                        ? 'bg-blue-600 hover:bg-blue-700 text-secondary '
                         : 'opacity-60'
                       }`}
                     variant={(canComplete || canEditCompleted) ? "default" : "secondary"}
                   >
-                    <CheckCircle className="h-4 w-4" />
-                    {isConsultationCompleted && canEditConsultation ? "Edit Notes" :
-                     isConsultationCompleted ? "Completed" : "Complete"}
+                    End consultation
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-sm">{getCompleteButtonTooltip()}</p>
-                </TooltipContent>
-              </Tooltip>
             </div>
           </div>
         </div>
       </div>
-    </TooltipProvider>
   );
 }; 

@@ -62,10 +62,20 @@ export const PrintStyles: React.FC = () => (
       .info-cards { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; margin-bottom: 0.5rem !important; page-break-inside: avoid !important; }
 
       /* Grid layout for consultation content */
-      .consultation-content .grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; }
-      .consultation-content .section-notes .grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.5rem !important; }
-      .consultation-content .md\\:col-span-2 { grid-column: span 2 !important; }
-      .consultation-content .section-notes .md\\:col-span-2 { grid-column: span 2 !important; }
+      .consultation-content .grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+      }
+      .consultation-content .grid.grid-cols-1 { grid-template-columns: 1fr !important; }
+      .consultation-content .grid.grid-cols-1\\/md\\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+      .consultation-content .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
+      .consultation-content .section-notes .grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+      }
+      .consultation-content .w-full { width: 100% !important; grid-column: 1 / -1 !important; }
       .section-notes { page-break-inside: avoid !important; margin-bottom: 0.75rem !important; }
       .section-notes h3 { margin-bottom: 0.5rem !important; }
       .field-group { page-break-inside: avoid !important; margin-bottom: 0.25rem !important; }
