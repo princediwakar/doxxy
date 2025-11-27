@@ -123,13 +123,21 @@ export const ophthalmologyNotesSchema = baseNotesSchema.extend({
     refraction_right: z.string().optional(),
 
     // Anterior segment
-    // Reordered fields for clinical flow: EOM -> Pupils -> Lids -> Slit Lamp (Iris/Lens/etc) -> IOP
+    // Clinical flow: EOM -> Lids -> Conjunctiva -> Cornea -> Iris -> Pupil -> Lens -> IOP
     extraocular_movements_left: z.string().optional(),
-    extraocular_movies_right: z.string().optional(), // Corrected typo here to match 'movements'
+    extraocular_movements_right: z.string().optional(),
+    lids_left: z.string().optional(),
+    lids_right: z.string().optional(),
+    conjunctiva_left: z.string().optional(),
+    conjunctiva_right: z.string().optional(),
+    cornea_left: z.string().optional(),
+    cornea_right: z.string().optional(),
+    iris_left: z.string().optional(),
+    iris_right: z.string().optional(),
     pupil_examination_left: z.string().optional(),
     pupil_examination_right: z.string().optional(),
-    lids_left: z.string().optional(), // Added new field
-    lids_right: z.string().optional(), // Added new field
+    lens_left: z.string().optional(),
+    lens_right: z.string().optional(),
     intraocular_pressure_left: z.string().optional(),
     intraocular_pressure_right: z.string().optional(),
 

@@ -346,9 +346,11 @@ export const TabularEyeExaminationDisplay: React.FC<{
 
     // Anterior Segment Examination
     { key: "extraocular_movements", label: "Extraocular Movements" },
-    { key: "pupil_examination", label: "Pupil" },
     { key: "lids", label: "Lids" },
+    { key: "conjunctiva", label: "Conjunctiva" },
+    { key: "cornea", label: "Cornea" },
     { key: "iris", label: "Iris" },
+    { key: "pupil_examination", label: "Pupil" },
     { key: "lens", label: "Lens" },
     { key: "intraocular_pressure", label: "Intraocular Pressure" },
 

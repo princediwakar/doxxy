@@ -107,13 +107,21 @@ export interface TabularEyeValue {
   refraction_right?: string;
 
   // Anterior segment
-  // Reordered fields for clinical flow: EOM -> Pupils -> Lids -> Slit Lamp (Iris/Lens/etc) -> IOP
+  // Clinical flow: EOM -> Lids -> Conjunctiva -> Cornea -> Iris -> Pupil -> Lens -> IOP
   extraocular_movements_left?: string;
   extraocular_movements_right?: string;
+  lids_left?: string;
+  lids_right?: string;
+  conjunctiva_left?: string;
+  conjunctiva_right?: string;
+  cornea_left?: string;
+  cornea_right?: string;
+  iris_left?: string;
+  iris_right?: string;
   pupil_examination_left?: string;
   pupil_examination_right?: string;
-  lids_left?: string; // Added new field for Lids and Adnexa exam
-  lids_right?: string; // Added new field for Lids and Adnexa exam
+  lens_left?: string;
+  lens_right?: string;
   intraocular_pressure_left?: string;
   intraocular_pressure_right?: string;
 
