@@ -12,7 +12,7 @@ import { VitalSignsField } from './VitalSignsField';
 import { MotorExaminationField, MotorExaminationValue } from './MotorExaminationField';
 import { ReflexExaminationField, ReflexExaminationValue } from './ReflexExaminationField';
 import { FieldConfig, FieldValue } from './types';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface ConsultationFormFieldProps {
   fieldConfig: FieldConfig;
@@ -40,24 +40,12 @@ export const ConsultationFormField = ({
   const selectRef = useRef<HTMLButtonElement>(null);
   const initialRender = useRef(true);
 
-  // Auto-focus when field is expanded (but not on initial render)
+  // Mark initial render as complete
   useEffect(() => {
-    if (isExpanded && !isReadOnly && !initialRender.current) {
-      // Focus the appropriate input based on field type
-      if (fieldConfig.type === 'textarea' && textareaRef.current) {
-        textareaRef.current.focus();
-      } else if (fieldConfig.type === 'select' && selectRef.current) {
-        selectRef.current.focus();
-      } else if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }
-
-    // Mark initial render as complete
     if (initialRender.current) {
       initialRender.current = false;
     }
-  }, [isExpanded, isReadOnly, fieldConfig.type]);
+  }, []);
 
   const toggleField = () => {
     if (isReadOnly) return; // Don't allow expansion changes in read-only mode
@@ -380,6 +368,7 @@ export const ConsultationFormField = ({
                       ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200'
                       : 'focus:border-blue-500 focus:ring-blue-500/20'
                   } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}
+                  autoFocus={autoFocus}
                 >
                   <SelectValue placeholder={isReadOnly ? "No selection" : fieldConfig.placeholder} />
                 </SelectTrigger>
