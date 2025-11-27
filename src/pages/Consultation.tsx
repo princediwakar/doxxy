@@ -16,7 +16,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { CheckCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { FieldPath } from "react-hook-form";
 import { toast } from "sonner";
@@ -49,20 +48,17 @@ const Consultation = () => {
   // Collapsible sections state - organized by section
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
-  >({
-    History: true,
-    Examination: false,
-    Management: true,
-    Investigations: false,
-  });
+  >({});
 
-  // Individual field expansion state
+  // Individual field expansion state - keep first field of each section expanded by default
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(
     {
-      chief_complaint: true, // Always expanded
+      chief_complaint: true, // History section first field
+      vital_signs: true, // Examination section first field
+      previous_investigations: true, // Previous Investigations section first field
+      diagnosis: true, // Management section first field
       assessment: true, // Always expanded
       prescriptions: true, // Always expanded
-      previous_investigations: true
     }
   );
 
@@ -132,6 +128,7 @@ const Consultation = () => {
     return departmentMapping[departmentName || ""] || "General";
   }, [departmentInfo]);
 
+
   // Form management
   const {
     form,
@@ -141,7 +138,6 @@ const Consultation = () => {
     handleSave,
     handleCompleteConsultation,
     mandatoryFieldsStatus,
-    justCompleted,
   } = useConsultationForm(
     appointmentId,
     appointment,
@@ -176,13 +172,34 @@ const Consultation = () => {
 
   // Section rendering with improved UX
   const renderSection = (section: FieldSection, sectionIndex: number) => {
-    const isExpanded = expandedSections[section.title] ?? false;
+    const isExpanded = expandedSections[section.title] ?? true;
 
     const toggleSection = () => {
+      const willExpand = !expandedSections[section.title];
+
       setExpandedSections((prev) => ({
         ...prev,
-        [section.title]: !prev[section.title],
+        [section.title]: willExpand,
       }));
+
+      // When expanding a section, automatically expand and focus the first field
+      if (willExpand && section.fields.length > 0) {
+        const firstField = section.fields[0];
+        setExpandedFields((prev) => ({
+          ...prev,
+          [firstField.name]: true,
+        }));
+
+        // Use setTimeout to ensure the field is rendered before focusing
+        setTimeout(() => {
+          const firstFieldElement = document.querySelector(
+            `[data-field-name="${firstField.name}"] input, [data-field-name="${firstField.name}"] textarea, [data-field-name="${firstField.name}"] [role="combobox"]`
+          ) as HTMLElement;
+          if (firstFieldElement) {
+            firstFieldElement.focus();
+          }
+        }, 100);
+      }
     };
 
     const getSectionIcon = (title: string) => {
@@ -252,6 +269,8 @@ const Consultation = () => {
                   expandedFields={expandedFields}
                   setExpandedFields={setExpandedFields}
                   isReadOnly={!canEditConsultation}
+                  // Auto-focus only the very first field (chief_complaint) initially
+                  autoFocus={sectionIndex === 0 && fieldIndex === 0}
                 />
               ))}
             </CardContent>
@@ -359,29 +378,6 @@ const Consultation = () => {
                   renderSection(section, index)
                 )}
               </form>
-
-              {/* Completion Status */}
-              {isConsultationCompleted === true && (
-                <Card className="border-green-200 bg-green-50 mt-8">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle className="h-6 w-6 text-success" />
-                      <div>
-                        <h3 className="font-semibold text-green-800">
-                          Consultation Completed
-                        </h3>
-                        <p className="text-sm text-green-700">
-                          {justCompleted ? (
-                            "This consultation has been completed and saved. You will be redirected to the appointments page shortly."
-                          ) : (
-                            "This consultation has been completed. You can review and edit the notes as needed."
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
 

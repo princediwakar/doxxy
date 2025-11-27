@@ -178,7 +178,6 @@ const ConsultationPreviewModal = ({
 export const PatientSidebar = ({
   patient,
   appointment,
-  departmentInfo,
   previousConsultations,
   recentPrescriptions,
 }: PatientSidebarProps) => {
@@ -252,13 +251,6 @@ export const PatientSidebar = ({
             <span className="text-sm text-gray-600">Type</span>
             <Badge variant="outline" className="text-xs">
               {appointment?.type}
-            </Badge>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Department</span>
-            <Badge variant="secondary" className="text-xs">
-              {departmentInfo?.clinic_departments?.department_types?.name ||
-                "General"}
             </Badge>
           </div>
         </CardContent>

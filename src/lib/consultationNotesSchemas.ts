@@ -3,7 +3,7 @@ import * as z from "zod";
 
 // Medication schema for prescriptions
 const consultationMedicationSchema = z.object({
-  name: z.string().min(1, "Medication name is required"),
+  name: z.string().optional(),
   dosage: z.string().optional(),
   route: z
     .enum([
@@ -17,11 +17,10 @@ const consultationMedicationSchema = z.object({
     ])
     .optional(),
   frequency: z
-    .enum(["OD", "BD", "TDS", "QID", "PRN", "Q4H", "Q6H", "Q8H", "Q12H"])
+    .enum(["OD", "BD", "TDS", "QID", "PRN", "Q4H", "Q6H", "Q8H", "Q12H", "SOS"])
     .optional(),
   duration: z.string().optional(),
   instructions: z.string().optional(),
-  eye: z.enum(["Left", "Right", "Both", "N/A"]).default("N/A"),
 });
 
 // Vital signs schema for general examination
@@ -105,7 +104,6 @@ export const generalNotesSchema = baseNotesSchema;
 
 // Specialty-specific schemas
 export const neurologyNotesSchema = baseNotesSchema.extend({
-  neurological_exam_findings: z.string().optional(),
   cranial_nerves: z.string().optional(),
   motor_examination: motorExaminationSchema,
   sensory_examination: z.string().optional(),
@@ -115,16 +113,35 @@ export const neurologyNotesSchema = baseNotesSchema.extend({
   gait_coordination: z.string().optional(),
 });
 
+
 export const ophthalmologyNotesSchema = baseNotesSchema.extend({
-  visual_acuity: z.string().optional(),
-  refraction: z.string().optional(),
-  slit_lamp_exam: z.string().optional(),
-  fundus_exam: z.string().optional(),
-  intraocular_pressure: z.string().optional(),
-  visual_fields: z.string().optional(),
-  pupil_examination: z.string().optional(),
-  extraocular_movements: z.string().optional(),
+  eye_examination: z.object({
+    // Visual function tests
+    visual_acuity_left: z.string().optional(),
+    visual_acuity_right: z.string().optional(),
+    refraction_left: z.string().optional(),
+    refraction_right: z.string().optional(),
+
+    // Anterior segment
+    // Reordered fields for clinical flow: EOM -> Pupils -> Lids -> Slit Lamp (Iris/Lens/etc) -> IOP
+    extraocular_movements_left: z.string().optional(),
+    extraocular_movies_right: z.string().optional(), // Corrected typo here to match 'movements'
+    pupil_examination_left: z.string().optional(),
+    pupil_examination_right: z.string().optional(),
+    lids_left: z.string().optional(), // Added new field
+    lids_right: z.string().optional(), // Added new field
+    intraocular_pressure_left: z.string().optional(),
+    intraocular_pressure_right: z.string().optional(),
+
+    // Posterior segment
+    fundus_exam_left: z.string().optional(),
+    fundus_exam_right: z.string().optional(),
+
+    // Additional findings
+    notes: z.string().optional(),
+  }).optional(),
 });
+
 
 export const cardiologyNotesSchema = baseNotesSchema.extend({
   cardiac_examination: z.string().optional(),
@@ -351,7 +368,7 @@ const baseFieldSections: FieldSection[] = [
     fields: [
       {
         name: "previous_investigations",
-        label: "Previous Investigations",
+        label: "Investigations",
         type: "textarea",
         rows: 3,
         placeholder: "Enter investigation results",
@@ -421,52 +438,10 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
       title: "Examination",
       fields: [
         {
-          name: "visual_acuity",
-          label: "Visual Acuity",
+          name: "eye_examination",
+          label: "Eye Examination",
           type: "tabular_eye",
-          placeholder: "Enter visual acuity",
-        },
-        {
-          name: "refraction",
-          label: "Refraction",
-          type: "tabular_eye",
-          placeholder: "Enter refraction details",
-        },
-        {
-          name: "pupil_examination",
-          label: "Pupil Examination",
-          type: "tabular_eye",
-          placeholder: "Describe pupil examination",
-        },
-        {
-          name: "extraocular_movements",
-          label: "Extraocular Movements",
-          type: "tabular_eye",
-          placeholder: "Describe extraocular movements",
-        },
-        {
-          name: "slit_lamp_exam",
-          label: "Slit Lamp Examination",
-          type: "tabular_eye",
-          placeholder: "Enter slit lamp findings",
-        },
-        {
-          name: "intraocular_pressure",
-          label: "Intraocular Pressure",
-          type: "tabular_eye",
-          placeholder: "Enter intraocular pressure",
-        },
-        {
-          name: "fundus_exam",
-          label: "Fundus Examination",
-          type: "tabular_eye",
-          placeholder: "Describe fundus examination",
-        },
-        {
-          name: "visual_fields",
-          label: "Visual Fields",
-          type: "tabular_eye",
-          placeholder: "Enter visual field results",
+          placeholder: "Enter comprehensive eye examination findings",
         },
       ],
     },
@@ -475,13 +450,6 @@ const specialtySpecificFields: Record<string, FieldSection[]> = {
     {
       title: "Examination",
       fields: [
-        {
-          name: "neurological_exam_findings",
-          label: "Neurological Examination",
-          type: "textarea",
-          rows: 5,
-          placeholder: "Enter neurological exam findings",
-        },
         {
           name: "cranial_nerves",
           label: "Cranial Nerves",
@@ -1258,22 +1226,9 @@ export const consultationNotesSchema = z.object({
     right: z.string().optional(),
     notes: z.string().optional(),
   }).optional(),
-  slit_lamp_exam: z.object({
-    left: z.string().optional(),
-    right: z.string().optional(),
-    notes: z.string().optional(),
-  }).optional(),
-  fundus_exam: z.object({
-    left: z.string().optional(),
-    right: z.string().optional(),
-    notes: z.string().optional(),
-  }).optional(),
-  intraocular_pressure: z.object({
-    left: z.string().optional(),
-    right: z.string().optional(),
-    notes: z.string().optional(),
-  }).optional(),
-  visual_fields: z.object({
+
+  // Anterior segment exams (Ordered: EOM -> Pupils -> Lids -> IOP -> Slit Lamp/Other details)
+  extraocular_movements: z.object({
     left: z.string().optional(),
     right: z.string().optional(),
     notes: z.string().optional(),
@@ -1283,12 +1238,31 @@ export const consultationNotesSchema = z.object({
     right: z.string().optional(),
     notes: z.string().optional(),
   }).optional(),
-  extraocular_movements: z.object({
+  lids: z.object({ // Added the new Lids and Adnexa field
     left: z.string().optional(),
     right: z.string().optional(),
     notes: z.string().optional(),
   }).optional(),
-  neurological_exam_findings: z.string().optional(),
+  // Note: 'slit_lamp_exam' is often used as a summary field for Iris, Lens, Cornea, AC depth etc.
+  // I am assuming 'slit_lamp_exam' will contain details about iris and lens from your previous prompt
+  slit_lamp_exam: z.object({
+      left: z.string().optional(),
+      right: z.string().optional(),
+      notes: z.string().optional(),
+  }).optional(),
+  intraocular_pressure: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
+
+
+  // Posterior segment exam
+  fundus_exam: z.object({
+    left: z.string().optional(),
+    right: z.string().optional(),
+    notes: z.string().optional(),
+  }).optional(),
   cranial_nerves: z.string().optional(),
   motor_examination: motorExaminationSchema,
   sensory_examination: z.string().optional(),

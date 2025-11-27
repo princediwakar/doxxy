@@ -256,7 +256,7 @@ export const MedicationFields: React.FC<MedicationFieldsProps> = ({
             name={`medications.${index}.name`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Medicine Name *</FormLabel>
+                <FormLabel>Medicine Name</FormLabel>
                 <FormControl>
                   <MedicineCombobox
                     value={field.value}

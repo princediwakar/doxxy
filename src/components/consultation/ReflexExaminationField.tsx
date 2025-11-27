@@ -1,36 +1,12 @@
-import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ReflexExamData } from './types';
 
-export interface ReflexExaminationValue {
-  // Deep tendon reflexes (0-4+ scale)
-  biceps_left?: string;
-  biceps_right?: string;
-  triceps_left?: string;
-  triceps_right?: string;
-  supinator_left?: string;
-  supinator_right?: string;
-  knee_left?: string;
-  knee_right?: string;
-  ankle_left?: string;
-  ankle_right?: string;
-
-  // Superficial reflexes
-  plantar_left?: string;
-  plantar_right?: string;
-  abdominal_left?: string;
-  abdominal_right?: string;
-
-  // Additional findings
-  clonus?: string;
-  hoffmann?: string;
-  notes?: string;
-}
 
 interface ReflexExaminationFieldProps {
-  value: ReflexExaminationValue;
-  onChange: (value: ReflexExaminationValue) => void;
+  value: ReflexExamData;
+  onChange: (value: ReflexExamData) => void;
   isReadOnly?: boolean;
 }
 
@@ -39,17 +15,29 @@ export const ReflexExaminationField = ({
   onChange,
   isReadOnly = false
 }: ReflexExaminationFieldProps) => {
-  const [showNotes, setShowNotes] = useState(!!value.notes);
 
-  const handleReflexChange = (reflex: string, side: 'left' | 'right', newValue: string) => {
-    const fieldName = `${reflex}_${side}` as keyof ReflexExaminationValue;
+  // Get default value for deep tendon reflex fields
+  const getReflexValue = (reflex: string, side: 'left' | 'right') => {
+    const fieldName = `${reflex}_${side}` as keyof ReflexExamData;
+    const currentValue = value[fieldName];
+
+    // If value is explicitly set to empty string, return empty string
+    // Otherwise return current value or default "2" for deep tendon reflexes
+    if (currentValue === '') {
+      return '';
+    }
+    return currentValue || '2';
+  };
+
+  const handleReflexChange = (reflex: string, side: 'right' | 'left', newValue: string) => {
+    const fieldName = `${reflex}_${side}` as keyof ReflexExamData;
     onChange({
       ...value,
       [fieldName]: newValue
     });
   };
 
-  const handleAdditionalFieldChange = (field: keyof ReflexExaminationValue, newValue: string) => {
+  const handleAdditionalFieldChange = (field: keyof ReflexExamData, newValue: string) => {
     onChange({
       ...value,
       [field]: newValue
@@ -63,16 +51,6 @@ export const ReflexExaminationField = ({
     });
   };
 
-  const toggleNotes = () => {
-    if (isReadOnly) return;
-    setShowNotes(!showNotes);
-    if (showNotes && !value.notes) {
-      // If hiding notes and no notes exist, remove the notes field
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { notes, ...rest } = value;
-      onChange(rest);
-    }
-  };
 
   const deepTendonReflexes = [
     { key: 'biceps', label: 'Biceps (B)' },
@@ -106,10 +84,10 @@ export const ReflexExaminationField = ({
                   REFLEX
                 </th>
                 <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
-                  L
+                  R
                 </th>
                 <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
-                  R
+                  L
                 </th>
               </tr>
             </thead>
@@ -122,9 +100,9 @@ export const ReflexExaminationField = ({
                   <td className="py-2 px-3 border-b border-gray-200 w-1/4">
                     <div className="flex justify-center">
                       <Input
-                        placeholder="0-4+"
-                        value={value[`${reflex.key}_left` as keyof ReflexExaminationValue] || ''}
-                        onChange={(e) => handleReflexChange(reflex.key, 'left', e.target.value)}
+                        placeholder=""
+                        value={getReflexValue(reflex.key, 'right')}
+                        onChange={(e) => handleReflexChange(reflex.key, 'right', e.target.value)}
                         className="w-16 text-center"
                         readOnly={isReadOnly}
                         disabled={isReadOnly}
@@ -135,9 +113,9 @@ export const ReflexExaminationField = ({
                   <td className="py-2 px-3 border-b border-gray-200 w-1/4">
                     <div className="flex justify-center">
                       <Input
-                        placeholder="0-4+"
-                        value={value[`${reflex.key}_right` as keyof ReflexExaminationValue] || ''}
-                        onChange={(e) => handleReflexChange(reflex.key, 'right', e.target.value)}
+                        placeholder=""
+                        value={getReflexValue(reflex.key, 'left')}
+                        onChange={(e) => handleReflexChange(reflex.key, 'left', e.target.value)}
                         className="w-16 text-center"
                         readOnly={isReadOnly}
                         disabled={isReadOnly}
@@ -145,6 +123,7 @@ export const ReflexExaminationField = ({
                       />
                     </div>
                   </td>
+                  
                 </tr>
               ))}
             </tbody>
@@ -166,10 +145,10 @@ export const ReflexExaminationField = ({
                   REFLEX
                 </th>
                 <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
-                  L
+                  R
                 </th>
                 <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
-                  R
+                  L
                 </th>
               </tr>
             </thead>
@@ -179,12 +158,13 @@ export const ReflexExaminationField = ({
                   <td className="py-2 px-3 text-sm font-medium text-gray-700 border-b border-gray-200 w-1/2">
                     {reflex.label}
                   </td>
+                  
                   <td className="py-2 px-3 border-b border-gray-200 w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder="Present / Absent"
-                        value={value[`${reflex.key}_left` as keyof ReflexExaminationValue] || ''}
-                        onChange={(e) => handleReflexChange(reflex.key, 'left', e.target.value)}
+                        value={value[`${reflex.key}_right` as keyof ReflexExamData] || ''}
+                        onChange={(e) => handleReflexChange(reflex.key, 'right', e.target.value)}
                         className="w-20 text-center"
                         readOnly={isReadOnly}
                         disabled={isReadOnly}
@@ -195,8 +175,8 @@ export const ReflexExaminationField = ({
                     <div className="flex justify-center">
                       <Input
                         placeholder="Present / Absent"
-                        value={value[`${reflex.key}_right` as keyof ReflexExaminationValue] || ''}
-                        onChange={(e) => handleReflexChange(reflex.key, 'right', e.target.value)}
+                        value={value[`${reflex.key}_left` as keyof ReflexExamData] || ''}
+                        onChange={(e) => handleReflexChange(reflex.key, 'left', e.target.value)}
                         className="w-20 text-center"
                         readOnly={isReadOnly}
                         disabled={isReadOnly}
@@ -237,20 +217,7 @@ export const ReflexExaminationField = ({
 
       {/* Notes section */}
       <div className="space-y-2 pl-6 border-l-2 border-blue-200">
-        <button
-          type="button"
-          onClick={toggleNotes}
-          disabled={isReadOnly}
-          className={`text-sm font-medium transition-colors ${
-            isReadOnly
-              ? 'text-gray-400 cursor-not-allowed'
-              : 'text-blue-600 hover:text-blue-700 cursor-pointer'
-          }`}
-        >
-          {showNotes ? 'Hide Additional Notes' : '+ Add Additional Notes'}
-        </button>
-
-        {showNotes && (
+        
           <Textarea
             placeholder="Enter additional reflex examination findings..."
             value={value.notes || ''}
@@ -259,7 +226,6 @@ export const ReflexExaminationField = ({
             readOnly={isReadOnly}
             disabled={isReadOnly}
           />
-        )}
       </div>
     </div>
   );

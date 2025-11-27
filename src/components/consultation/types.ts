@@ -90,8 +90,8 @@ export interface ReflexExamData {
   knee_right?: string;
   ankle_left?: string;
   ankle_right?: string;
-  plantar_left?: string;
   plantar_right?: string;
+  plantar_left?: string;
   abdominal_left?: string;
   abdominal_right?: string;
   clonus?: string;
@@ -99,11 +99,39 @@ export interface ReflexExamData {
   notes?: string;
 }
 
+export interface TabularEyeValue {
+  // Visual function tests
+  visual_acuity_left?: string;
+  visual_acuity_right?: string;
+  refraction_left?: string;
+  refraction_right?: string;
+
+  // Anterior segment
+  // Reordered fields for clinical flow: EOM -> Pupils -> Lids -> Slit Lamp (Iris/Lens/etc) -> IOP
+  extraocular_movements_left?: string;
+  extraocular_movements_right?: string;
+  pupil_examination_left?: string;
+  pupil_examination_right?: string;
+  lids_left?: string; // Added new field for Lids and Adnexa exam
+  lids_right?: string; // Added new field for Lids and Adnexa exam
+  intraocular_pressure_left?: string;
+  intraocular_pressure_right?: string;
+
+  // Posterior segment
+  fundus_exam_left?: string;
+  fundus_exam_right?: string;
+
+  // Additional findings
+  notes?: string;
+}
+
+
 // Union type using the named interfaces
-export type FieldValue = 
-  | string 
-  | PrescriptionMedication[] 
-  | EyeData 
-  | VitalSignsData 
-  | MotorExamData 
-  | ReflexExamData;
+export type FieldValue =
+  | string
+  | PrescriptionMedication[]
+  | EyeData
+  | VitalSignsData
+  | MotorExamData
+  | ReflexExamData
+  | TabularEyeValue;

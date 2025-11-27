@@ -12,6 +12,7 @@ import { VitalSignsField } from './VitalSignsField';
 import { MotorExaminationField, MotorExaminationValue } from './MotorExaminationField';
 import { ReflexExaminationField, ReflexExaminationValue } from './ReflexExaminationField';
 import { FieldConfig, FieldValue } from './types';
+import { useEffect, useRef } from 'react';
 
 interface ConsultationFormFieldProps {
   fieldConfig: FieldConfig;
@@ -21,6 +22,7 @@ interface ConsultationFormFieldProps {
   expandedFields: Record<string, boolean>;
   setExpandedFields: (fields: Record<string, boolean>) => void;
   isReadOnly?: boolean;
+  autoFocus?: boolean;
 }
 
 export const ConsultationFormField = ({
@@ -30,10 +32,29 @@ export const ConsultationFormField = ({
   onChange,
   expandedFields,
   setExpandedFields,
-  isReadOnly = false
+  isReadOnly = false,
+  autoFocus = false
 }: ConsultationFormFieldProps) => {
   const isMandatory = fieldConfig.mandatory || false;
   const isExpanded = expandedFields[fieldConfig.name] ?? isMandatory;
+
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const selectRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-focus when field is expanded (either from autoFocus prop or from toggling)
+  useEffect(() => {
+    if (isExpanded && !isReadOnly) {
+      // Focus the appropriate input based on field type
+      if (fieldConfig.type === 'textarea' && textareaRef.current) {
+        textareaRef.current.focus();
+      } else if (fieldConfig.type === 'select' && selectRef.current) {
+        selectRef.current.focus();
+      } else if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
+  }, [isExpanded, isReadOnly, fieldConfig.type]);
   
   const toggleField = () => {
     if (isReadOnly) return; // Don't allow expansion changes in read-only mode
@@ -54,7 +75,7 @@ export const ConsultationFormField = ({
   // Special handling for prescriptions
   if (fieldConfig.name === 'prescriptions') {
     return (
-      <div key={fieldIndex} className="space-y-3">
+      <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
         <Collapsible open={isExpanded} onOpenChange={toggleField}>
           <CollapsibleTrigger asChild disabled={isReadOnly}>
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
@@ -92,15 +113,15 @@ export const ConsultationFormField = ({
   // Special handling for tabular eye fields
   if (fieldConfig.type === 'tabular_eye') {
     const eyeValue = typeof value === 'object' && value !== null && !Array.isArray(value)
-      ? value as { left?: string; right?: string; notes?: string }
-      : { left: '', right: '', notes: '' };
+      ? value as TabularEyeValue
+      : {};
 
-    const handleEyeFieldChange = (newValue: { left?: string; right?: string; notes?: string }) => {
+    const handleEyeFieldChange = (newValue: TabularEyeValue) => {
       onChange(newValue);
     };
 
     return (
-      <div key={fieldIndex} className="space-y-3">
+      <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
         <Collapsible open={isExpanded} onOpenChange={toggleField}>
           <CollapsibleTrigger asChild disabled={isReadOnly}>
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
@@ -122,8 +143,6 @@ export const ConsultationFormField = ({
               <TabularEyeField
                 value={eyeValue}
                 onChange={handleEyeFieldChange}
-                fieldType="textarea"
-                placeholder={fieldConfig.placeholder}
                 isReadOnly={isReadOnly}
               />
             </div>
@@ -164,7 +183,7 @@ export const ConsultationFormField = ({
     };
 
     return (
-      <div key={fieldIndex} className="space-y-3">
+      <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
         <Collapsible open={isExpanded} onOpenChange={toggleField}>
           <CollapsibleTrigger asChild disabled={isReadOnly}>
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
@@ -206,7 +225,7 @@ export const ConsultationFormField = ({
     };
 
     return (
-      <div key={fieldIndex} className="space-y-3">
+      <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
         <Collapsible open={isExpanded} onOpenChange={toggleField}>
           <CollapsibleTrigger asChild disabled={isReadOnly}>
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
@@ -248,7 +267,7 @@ export const ConsultationFormField = ({
     };
 
     return (
-      <div key={fieldIndex} className="space-y-3">
+      <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
         <Collapsible open={isExpanded} onOpenChange={toggleField}>
           <CollapsibleTrigger asChild disabled={isReadOnly}>
             <div className={`flex items-center justify-between p-3 rounded-lg transition-colors ${
@@ -285,7 +304,7 @@ export const ConsultationFormField = ({
   const characterLimit = getCharacterLimit();
   
   return (
-    <div key={fieldIndex} className="space-y-3">
+    <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
       <Collapsible open={isExpanded} onOpenChange={toggleField}>
         {!isMandatory && (
           <CollapsibleTrigger asChild disabled={isReadOnly}>
@@ -327,6 +346,7 @@ export const ConsultationFormField = ({
             
             {fieldConfig.type === 'textarea' ? (
               <Textarea
+                ref={textareaRef}
                 placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => {
@@ -338,8 +358,8 @@ export const ConsultationFormField = ({
                 }}
                 rows={fieldConfig.rows || 4}
                 className={`min-h-[100px] resize-none transition-colors ${
-                  isReadOnly 
-                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
+                  isReadOnly
+                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200'
                     : 'focus:border-blue-500 focus:ring-blue-500/20'
                 } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}
                 maxLength={characterLimit}
@@ -347,16 +367,19 @@ export const ConsultationFormField = ({
                 disabled={isReadOnly}
               />
             ) : fieldConfig.type === 'select' ? (
-              <Select 
-                value={typeof value === 'string' ? value : ''} 
+              <Select
+                value={typeof value === 'string' ? value : ''}
                 onValueChange={isReadOnly ? undefined : onChange}
                 disabled={isReadOnly}
               >
-                <SelectTrigger className={`transition-colors ${
-                  isReadOnly 
-                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
-                    : 'focus:border-blue-500 focus:ring-blue-500/20'
-                } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}>
+                <SelectTrigger
+                  ref={selectRef}
+                  className={`transition-colors ${
+                    isReadOnly
+                      ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200'
+                      : 'focus:border-blue-500 focus:ring-blue-500/20'
+                  } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}
+                >
                   <SelectValue placeholder={isReadOnly ? "No selection" : fieldConfig.placeholder} />
                 </SelectTrigger>
                 <SelectContent>
@@ -369,6 +392,7 @@ export const ConsultationFormField = ({
               </Select>
             ) : (
               <Input
+                ref={inputRef}
                 placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
                 value={typeof value === 'string' ? value : ''}
                 onChange={(e) => {
@@ -379,8 +403,8 @@ export const ConsultationFormField = ({
                   }
                 }}
                 className={`transition-colors ${
-                  isReadOnly 
-                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200' 
+                  isReadOnly
+                    ? 'bg-gray-50 cursor-not-allowed opacity-70 border-gray-200'
                     : 'focus:border-blue-500 focus:ring-blue-500/20'
                 } ${isMandatory && !hasValue && !isReadOnly ? 'border-amber-300 bg-amber-50/30' : ''}`}
                 maxLength={characterLimit}

@@ -110,7 +110,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
           {/* Medicine Name */}
           <div className="space-y-1.5">
             <Label className={`text-sm font-medium ${isReadOnly ? 'text-gray-500' : 'text-gray-700'}`}>
-              Medicine Name {!isReadOnly && <span className="text-destructive">*</span>}
+              Medicine Name
             </Label>
             {isReadOnly ? (
               <div className="text-sm text-gray-600 p-2 bg-background rounded border">

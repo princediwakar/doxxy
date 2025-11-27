@@ -1,47 +1,60 @@
-import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-
-export interface MotorExaminationValue {
-  // Muscle strength grading (0-5 scale)
-  shoulder_left?: string;
-  shoulder_right?: string;
-  elbow_left?: string;
-  elbow_right?: string;
-  wrist_left?: string;
-  wrist_right?: string;
-  hip_left?: string;
-  hip_right?: string;
-  knee_left?: string;
-  knee_right?: string;
-  ankle_left?: string;
-  ankle_right?: string;
-
-  // Additional findings
-  muscle_tone?: string;
-  muscle_bulk?: string;
-  involuntary_movements?: string;
-  coordination?: string;
-  notes?: string;
-}
+import { Chip } from '@/components/ui/chip';
+import { MotorExamData } from './types';
 
 interface MotorExaminationFieldProps {
-  value: MotorExaminationValue;
-  onChange: (value: MotorExaminationValue) => void;
+  value: MotorExamData;
+  onChange: (value: MotorExamData) => void;
   isReadOnly?: boolean;
 }
+
+const muscleToneOptions = [
+  'Normal',
+  'Increased',
+  'Decreased',
+  'Spastic',
+  'Rigid',
+  'Flaccid'
+];
+
+const muscleBulkOptions = [
+  'Normal',
+  'Atrophy',
+  'Hypertrophy',
+  'Wasting',
+  'Pseudohypertrophy'
+];
+
+const coordinationOptions = [
+  'Normal',
+  'Impaired',
+  'Ataxia',
+  'Dysmetria',
+  'Dysdiadochokinesia'
+];
+
+const involuntaryMovementsOptions = [
+  'None',
+  'Tremors',
+  'Fasciculations',
+  'Myoclonus',
+  'Chorea',
+  'Athetosis',
+  'Dystonia',
+  'Tics'
+];
 
 export const MotorExaminationField = ({
   value,
   onChange,
   isReadOnly = false
 }: MotorExaminationFieldProps) => {
-  const [showNotes, setShowNotes] = useState(!!value.notes);
 
   // Get default value for muscle strength fields
   const getMuscleStrengthValue = (muscle: string, side: 'left' | 'right') => {
-    const fieldName = `${muscle}_${side}` as keyof MotorExaminationValue;
+    const fieldName = `${muscle}_${side}` as keyof MotorExamData;
     const currentValue = value[fieldName];
 
     // If value is explicitly set to empty string, return empty string
@@ -53,19 +66,13 @@ export const MotorExaminationField = ({
   };
 
   const handleMuscleStrengthChange = (muscle: string, side: 'left' | 'right', newValue: string) => {
-    const fieldName = `${muscle}_${side}` as keyof MotorExaminationValue;
+    const fieldName = `${muscle}_${side}` as keyof MotorExamData;
     onChange({
       ...value,
       [fieldName]: newValue
     });
   };
 
-  const handleAdditionalFieldChange = (field: keyof MotorExaminationValue, newValue: string) => {
-    onChange({
-      ...value,
-      [field]: newValue
-    });
-  };
 
   const handleNotesChange = (newNotes: string) => {
     onChange({
@@ -74,15 +81,17 @@ export const MotorExaminationField = ({
     });
   };
 
-  const toggleNotes = () => {
+  const handleChipSelect = (field: keyof MotorExamData, option: string) => {
     if (isReadOnly) return;
-    setShowNotes(!showNotes);
-    if (showNotes && !value.notes) {
-      // If hiding notes and no notes exist, remove the notes field
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { notes, ...rest } = value;
-      onChange(rest);
-    }
+
+    // If the option is already selected, deselect it
+    const currentValue = value[field];
+    const newValue = currentValue === option ? '' : option;
+
+    onChange({
+      ...value,
+      [field]: newValue
+    });
   };
 
   const muscleGroups = [
@@ -114,10 +123,10 @@ export const MotorExaminationField = ({
                   POWER
                 </th>
                 <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
-                  L
+                  R
                 </th>
                 <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
-                  R
+                  L
                 </th>
               </tr>
             </thead>
@@ -127,12 +136,13 @@ export const MotorExaminationField = ({
                   <td className="py-2 px-3 text-sm font-medium text-gray-700 border-b border-gray-200 w-1/2">
                     {muscle.label}
                   </td>
+                  
                   <td className="py-2 px-3 border-b border-gray-200 w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
-                        value={getMuscleStrengthValue(muscle.key, 'left')}
-                        onChange={(e) => handleMuscleStrengthChange(muscle.key, 'left', e.target.value)}
+                        value={getMuscleStrengthValue(muscle.key, 'right')}
+                        onChange={(e) => handleMuscleStrengthChange(muscle.key, 'right', e.target.value)}
                         className="w-16 text-center"
                         readOnly={isReadOnly}
                         disabled={isReadOnly}
@@ -144,8 +154,8 @@ export const MotorExaminationField = ({
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
-                        value={getMuscleStrengthValue(muscle.key, 'right')}
-                        onChange={(e) => handleMuscleStrengthChange(muscle.key, 'right', e.target.value)}
+                        value={getMuscleStrengthValue(muscle.key, 'left')}
+                        onChange={(e) => handleMuscleStrengthChange(muscle.key, 'left', e.target.value)}
                         className="w-16 text-center"
                         readOnly={isReadOnly}
                         disabled={isReadOnly}
@@ -161,77 +171,83 @@ export const MotorExaminationField = ({
       </div>
 
       {/* Additional Findings */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-blue-200">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-blue-200">
+        <div className="space-y-3">
           <Label className="text-sm font-medium text-gray-700">Muscle Tone</Label>
-          <Input
-            placeholder="Normal / Increased / Decreased"
-            value={value.muscle_tone || ''}
-            onChange={(e) => handleAdditionalFieldChange('muscle_tone', e.target.value)}
-            readOnly={isReadOnly}
-            disabled={isReadOnly}
-          />
+          <div className="flex flex-wrap gap-2">
+            {muscleToneOptions.map((option) => (
+              <Chip
+                key={option}
+                selected={value.muscle_tone === option}
+                onClick={() => handleChipSelect('muscle_tone', option)}
+                disabled={isReadOnly}
+              >
+                {option}
+              </Chip>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label className="text-sm font-medium text-gray-700">Muscle Bulk</Label>
-          <Input
-            placeholder="Normal / Atrophy / Hypertrophy"
-            value={value.muscle_bulk || ''}
-            onChange={(e) => handleAdditionalFieldChange('muscle_bulk', e.target.value)}
-            readOnly={isReadOnly}
-            disabled={isReadOnly}
-          />
+          <div className="flex flex-wrap gap-2">
+            {muscleBulkOptions.map((option) => (
+              <Chip
+                key={option}
+                selected={value.muscle_bulk === option}
+                onClick={() => handleChipSelect('muscle_bulk', option)}
+                disabled={isReadOnly}
+              >
+                {option}
+              </Chip>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label className="text-sm font-medium text-gray-700">Involuntary Movements</Label>
-          <Input
-            placeholder="Tremors / Fasciculations / Myoclonus"
-            value={value.involuntary_movements || ''}
-            onChange={(e) => handleAdditionalFieldChange('involuntary_movements', e.target.value)}
-            readOnly={isReadOnly}
-            disabled={isReadOnly}
-          />
+          <div className="flex flex-wrap gap-2">
+            {involuntaryMovementsOptions.map((option) => (
+              <Chip
+                key={option}
+                selected={value.involuntary_movements === option}
+                onClick={() => handleChipSelect('involuntary_movements', option)}
+                disabled={isReadOnly}
+              >
+                {option}
+              </Chip>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           <Label className="text-sm font-medium text-gray-700">Coordination</Label>
-          <Input
-            placeholder="Normal / Impaired"
-            value={value.coordination || ''}
-            onChange={(e) => handleAdditionalFieldChange('coordination', e.target.value)}
-            readOnly={isReadOnly}
-            disabled={isReadOnly}
-          />
+          <div className="flex flex-wrap gap-2">
+            {coordinationOptions.map((option) => (
+              <Chip
+                key={option}
+                selected={value.coordination === option}
+                onClick={() => handleChipSelect('coordination', option)}
+                disabled={isReadOnly}
+              >
+                {option}
+              </Chip>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Notes section */}
       <div className="space-y-2 pl-6 border-l-2 border-blue-200">
-        <button
-          type="button"
-          onClick={toggleNotes}
+        <Label className="text-sm font-medium text-gray-700">Additional Notes</Label>
+        <Textarea
+          placeholder="Enter additional motor examination findings..."
+          value={value.notes || ''}
+          onChange={(e) => handleNotesChange(e.target.value)}
+          className="min-h-[60px] resize-none"
+          readOnly={isReadOnly}
           disabled={isReadOnly}
-          className={`text-sm font-medium transition-colors ${
-            isReadOnly
-              ? 'text-gray-400 cursor-not-allowed'
-              : 'text-blue-600 hover:text-blue-700 cursor-pointer'
-          }`}
-        >
-          {showNotes ? 'Hide Additional Notes' : '+ Add Additional Notes'}
-        </button>
-
-        {showNotes && (
-          <Textarea
-            placeholder="Enter additional motor examination findings..."
-            value={value.notes || ''}
-            onChange={(e) => handleNotesChange(e.target.value)}
-            className="min-h-[60px] resize-none"
-            readOnly={isReadOnly}
-            disabled={isReadOnly}
-          />
-        )}
+        />
       </div>
     </div>
   );

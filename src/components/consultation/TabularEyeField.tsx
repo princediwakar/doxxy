@@ -1,52 +1,36 @@
-import { useState } from 'react';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface EyeFieldValue {
-  left?: string;
-  right?: string;
-  notes?: string;
-}
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { TabularEyeValue } from "./types";
 
 interface TabularEyeFieldProps {
-  value: EyeFieldValue;
-  onChange: (value: EyeFieldValue) => void;
-  fieldType: 'input' | 'textarea' | 'select';
-  placeholder?: string;
-  options?: string[];
+  value: TabularEyeValue;
+  onChange: (value: TabularEyeValue) => void;
   isReadOnly?: boolean;
 }
 
 export const TabularEyeField = ({
   value,
   onChange,
-  fieldType,
-  placeholder = "Enter value",
-  options = [],
-  isReadOnly = false
+  isReadOnly = false,
 }: TabularEyeFieldProps) => {
   const [showNotes, setShowNotes] = useState(!!value.notes);
 
-  const handleLeftChange = (newValue: string) => {
+  const handleEyeChange = (
+    examination: string,
+    side: "left" | "right",
+    newValue: string
+  ) => {
+    const fieldName = `${examination}_${side}` as keyof TabularEyeValue;
     onChange({
       ...value,
-      left: newValue
-    });
-  };
-
-  const handleRightChange = (newValue: string) => {
-    onChange({
-      ...value,
-      right: newValue
+      [fieldName]: newValue,
     });
   };
 
   const handleNotesChange = (newNotes: string) => {
     onChange({
       ...value,
-      notes: newNotes
+      notes: newNotes,
     });
   };
 
@@ -61,69 +45,92 @@ export const TabularEyeField = ({
     }
   };
 
-  const renderField = (eye: 'left' | 'right', eyeValue: string | undefined, onEyeChange: (value: string) => void) => {
-    const eyeLabel = eye === 'left' ? 'Left' : 'Right';
+  const allEyeExaminations = [
+    // Visual Function Tests
+    { key: "visual_acuity", label: "Visual Acuity" },
+    { key: "refraction", label: "Refraction" },
 
-    if (fieldType === 'textarea') {
-      return (
-        <div className="flex items-start gap-3">
-          <Label className="text-sm font-medium text-gray-700 min-w-[60px] pt-2">{eyeLabel}</Label>
-          <Textarea
-            placeholder={placeholder}
-            value={eyeValue || ''}
-            onChange={(e) => onEyeChange(e.target.value)}
-            className="min-h-[80px] resize-none flex-1"
-            readOnly={isReadOnly}
-            disabled={isReadOnly}
-          />
-        </div>
-      );
-    }
+    // Anterior Segment Examination
+    { key: "extraocular_movements", label: "Extraocular Movements" },
+    { key: "pupil_examination", label: "Pupil" },
+    { key: "lids", label: "Lids" },
+    { key: "iris", label: "Iris" },
+    { key: "lens", label: "Lens" },
+    { key: "intraocular_pressure", label: "Intraocular Pressure" },
 
-    if (fieldType === 'select') {
-      return (
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">{eyeLabel}</Label>
-          <Select
-            value={eyeValue || ''}
-            onValueChange={onEyeChange}
-            disabled={isReadOnly}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={placeholder} />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      );
-    }
-
-    // Default to input
-    return (
-      <div className="space-y-2">
-        <Label className="text-sm font-medium text-gray-700">{eyeLabel}</Label>
-        <Input
-          placeholder={placeholder}
-          value={eyeValue || ''}
-          onChange={(e) => onEyeChange(e.target.value)}
-          readOnly={isReadOnly}
-          disabled={isReadOnly}
-        />
-      </div>
-    );
-  };
+    // Posterior Segment Examination
+    { key: "fundus_exam", label: "Fundus Examination" },
+  ];
 
   return (
     <div className="space-y-4">
-      <div className="space-y-4 pl-6 border-l-2 border-blue-200">
-        {renderField('left', value.left, handleLeftChange)}
-        {renderField('right', value.right, handleRightChange)}
+      {/* Single Flat Table for All Eye Examinations */}
+      <div className="pl-6 border-l-2 border-blue-200">
+
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/2">
+                  EXAMINATION
+                </th>
+                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                  RIGHT
+                </th>
+                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                  LEFT
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {allEyeExaminations.map((exam, index) => (
+                <tr
+                  key={exam.key}
+                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  <td className="py-2 px-3 text-sm font-medium text-gray-700 border-b border-gray-200 w-1/2">
+                    {exam.label}
+                  </td>
+                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                    <div className="flex justify-center">
+                      <Textarea
+                        placeholder="Enter findings"
+                        value={
+                          value[`${exam.key}_right` as keyof TabularEyeValue] ||
+                          ""
+                        }
+                        onChange={(e) =>
+                          handleEyeChange(exam.key, "right", e.target.value)
+                        }
+                        className="w-48 min-h-[80px] resize-none"
+                        readOnly={isReadOnly}
+                        disabled={isReadOnly}
+                      />
+                    </div>
+                  </td>
+                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                    <div className="flex justify-center">
+                      <Textarea
+                        placeholder="Enter findings"
+                        value={
+                          value[`${exam.key}_left` as keyof TabularEyeValue] ||
+                          ""
+                        }
+                        onChange={(e) =>
+                          handleEyeChange(exam.key, "left", e.target.value)
+                        }
+                        className="w-48 min-h-[80px] resize-none"
+                        readOnly={isReadOnly}
+                        disabled={isReadOnly}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Notes section */}
@@ -134,17 +141,17 @@ export const TabularEyeField = ({
           disabled={isReadOnly}
           className={`text-sm font-medium transition-colors ${
             isReadOnly
-              ? 'text-gray-400 cursor-not-allowed'
-              : 'text-blue-600 hover:text-blue-700 cursor-pointer'
+              ? "text-gray-400 cursor-not-allowed"
+              : "text-blue-600 hover:text-blue-700 cursor-pointer"
           }`}
         >
-          {showNotes ? 'Hide Additional Notes' : '+ Add Additional Notes'}
+          {showNotes ? "Hide Additional Notes" : "+ Add Additional Notes"}
         </button>
 
         {showNotes && (
           <Textarea
-            placeholder="Enter additional notes or observations..."
-            value={value.notes || ''}
+            placeholder="Enter additional eye examination findings..."
+            value={value.notes || ""}
             onChange={(e) => handleNotesChange(e.target.value)}
             className="min-h-[60px] resize-none"
             readOnly={isReadOnly}

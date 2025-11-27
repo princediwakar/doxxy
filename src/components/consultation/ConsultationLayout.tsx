@@ -47,13 +47,9 @@ const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormV
 };
 
 const isFieldSmall = (field: Field, value: FieldValue | undefined): boolean => {
-  // Ophthalmology small fields
-  if (['visual_acuity', 'refraction', 'pupil_examination', 'intraocular_pressure'].includes(field.name)) {
-    return true;
-  }
 
-  // Reflex and motor examination fields
-  if (field.type === 'reflex_examination' || field.type === 'motor_examination') {
+  // Reflex, motor, and eye examination fields
+  if (field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye') {
     return true;
   }
 
@@ -83,8 +79,8 @@ const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
 
   // Start new group if switching between compact and regular fields
   const currentIsCompact = currentGroup.length > 0 &&
-    (currentGroup[0].type === 'reflex_examination' || currentGroup[0].type === 'motor_examination');
-  const newIsCompact = field.type === 'reflex_examination' || field.type === 'motor_examination';
+    (currentGroup[0].type === 'reflex_examination' || currentGroup[0].type === 'motor_examination' || currentGroup[0].type === 'tabular_eye');
+  const newIsCompact = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
 
   if (currentIsCompact !== newIsCompact) {
     return true;
@@ -129,8 +125,8 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationForm
       {fields.map((field, index) => {
         const value = consultationData?.[field.name as keyof typeof consultationData];
 
-        // Special compact layout for reflex and motor examination fields
-        if (field.type === 'reflex_examination' || field.type === 'motor_examination') {
+        // Special compact layout for reflex, motor, and eye examination fields
+        if (field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye') {
           return (
             <div key={index} className="flex items-center gap-2">
               <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
