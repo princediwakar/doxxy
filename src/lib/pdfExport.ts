@@ -128,7 +128,9 @@ export class MedicalRecordPDFExporter {
       this.pdf.setFont(undefined, 'bold');
       this.pdf.text(label, this.margin, this.currentY);
       this.pdf.setFont(undefined, 'normal');
-      this.pdf.text(value, this.margin + 35, this.currentY);
+      // Ensure value is a valid string for jsPDF
+      const safeValue = value?.toString() || 'Unknown';
+      this.pdf.text(safeValue, this.margin + 35, this.currentY);
       this.currentY += 6;
     });
 
