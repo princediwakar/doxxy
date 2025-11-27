@@ -107,7 +107,7 @@ export interface TabularEyeValue {
   refraction_right?: string;
 
   // Anterior segment
-  // Clinical flow: EOM -> Lids -> Conjunctiva -> Cornea -> Iris -> Pupil -> Lens -> IOP
+  // Clinical flow: EOM -> Lids -> Conjunctiva -> Cornea -> Anterior Chamber -> Iris -> Pupil -> Lens -> IOP
   extraocular_movements_left?: string;
   extraocular_movements_right?: string;
   lids_left?: string;
@@ -116,6 +116,8 @@ export interface TabularEyeValue {
   conjunctiva_right?: string;
   cornea_left?: string;
   cornea_right?: string;
+  anterior_chamber_left?: string;
+  anterior_chamber_right?: string;
   iris_left?: string;
   iris_right?: string;
   pupil_examination_left?: string;

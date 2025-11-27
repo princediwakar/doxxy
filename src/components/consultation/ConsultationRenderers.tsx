@@ -349,6 +349,7 @@ export const TabularEyeExaminationDisplay: React.FC<{
     { key: "lids", label: "Lids" },
     { key: "conjunctiva", label: "Conjunctiva" },
     { key: "cornea", label: "Cornea" },
+    { key: "anterior_chamber", label: "Anterior Chamber" },
     { key: "iris", label: "Iris" },
     { key: "pupil_examination", label: "Pupil" },
     { key: "lens", label: "Lens" },

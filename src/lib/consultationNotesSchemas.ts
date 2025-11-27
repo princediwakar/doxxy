@@ -123,7 +123,7 @@ export const ophthalmologyNotesSchema = baseNotesSchema.extend({
     refraction_right: z.string().optional(),
 
     // Anterior segment
-    // Clinical flow: EOM -> Lids -> Conjunctiva -> Cornea -> Iris -> Pupil -> Lens -> IOP
+    // Clinical flow: EOM -> Lids -> Conjunctiva -> Cornea -> Anterior Chamber -> Iris -> Pupil -> Lens -> IOP
     extraocular_movements_left: z.string().optional(),
     extraocular_movements_right: z.string().optional(),
     lids_left: z.string().optional(),
@@ -132,6 +132,8 @@ export const ophthalmologyNotesSchema = baseNotesSchema.extend({
     conjunctiva_right: z.string().optional(),
     cornea_left: z.string().optional(),
     cornea_right: z.string().optional(),
+    anterior_chamber_left: z.string().optional(),
+    anterior_chamber_right: z.string().optional(),
     iris_left: z.string().optional(),
     iris_right: z.string().optional(),
     pupil_examination_left: z.string().optional(),

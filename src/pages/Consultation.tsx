@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   User,
@@ -61,6 +61,25 @@ const Consultation = () => {
       prescriptions: true, // Always expanded
     }
   );
+
+  // Track whether initial focus has been applied
+  const initialFocusApplied = useRef(false);
+
+  // Apply focus to chief complaint field after initial render
+  useEffect(() => {
+    if (!initialFocusApplied.current && !appointmentLoading && !existingConsultationLoading && !departmentInfoLoading) {
+      // Use setTimeout to ensure all fields are rendered
+      setTimeout(() => {
+        const chiefComplaintElement = document.querySelector(
+          '[data-field-name="chief_complaint"] input, [data-field-name="chief_complaint"] textarea'
+        ) as HTMLElement;
+        if (chiefComplaintElement) {
+          chiefComplaintElement.focus();
+          initialFocusApplied.current = true;
+        }
+      }, 200);
+    }
+  }, [appointmentLoading, existingConsultationLoading, departmentInfoLoading]);
 
   // Fetch all consultation data
   const {
@@ -269,8 +288,6 @@ const Consultation = () => {
                   expandedFields={expandedFields}
                   setExpandedFields={setExpandedFields}
                   isReadOnly={!canEditConsultation}
-                  // Auto-focus only the very first field (chief_complaint) initially
-                  autoFocus={sectionIndex === 0 && fieldIndex === 0}
                 />
               ))}
             </CardContent>

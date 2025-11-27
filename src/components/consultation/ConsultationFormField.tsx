@@ -22,7 +22,6 @@ interface ConsultationFormFieldProps {
   expandedFields: Record<string, boolean>;
   setExpandedFields: (fields: Record<string, boolean>) => void;
   isReadOnly?: boolean;
-  autoFocus?: boolean;
 }
 
 export const ConsultationFormField = ({
@@ -32,8 +31,7 @@ export const ConsultationFormField = ({
   onChange,
   expandedFields,
   setExpandedFields,
-  isReadOnly = false,
-  autoFocus = false
+  isReadOnly = false
 }: ConsultationFormFieldProps) => {
   const isMandatory = fieldConfig.mandatory || false;
   const isExpanded = expandedFields[fieldConfig.name] ?? isMandatory;
@@ -41,20 +39,6 @@ export const ConsultationFormField = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectRef = useRef<HTMLButtonElement>(null);
-
-  // Auto-focus when field is expanded (either from autoFocus prop or from toggling)
-  useEffect(() => {
-    if (isExpanded && !isReadOnly) {
-      // Focus the appropriate input based on field type
-      if (fieldConfig.type === 'textarea' && textareaRef.current) {
-        textareaRef.current.focus();
-      } else if (fieldConfig.type === 'select' && selectRef.current) {
-        selectRef.current.focus();
-      } else if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    }
-  }, [isExpanded, isReadOnly, fieldConfig.type]);
   
   const toggleField = () => {
     if (isReadOnly) return; // Don't allow expansion changes in read-only mode
