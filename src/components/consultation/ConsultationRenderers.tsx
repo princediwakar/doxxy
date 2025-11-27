@@ -18,6 +18,8 @@ interface ConsultationTableProps {
   rows: { key: string; label: string }[];
   // Accepts either motor or reflex data
   data: MotorExamData | ReflexExamData;
+  // Default value logic: 5 for motor, 2 for reflexes
+  defaultValue: string;
 }
 
 const ConsultationTable: React.FC<ConsultationTableProps> = ({
@@ -25,13 +27,28 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
   headers,
   rows,
   data,
+  defaultValue,
 }) => {
   // Cast to Record<string, string> to allow dynamic access (e.g., `${row.key}_left`)
   // This is safe because we know the structure matches the logic below
   const safeData = data as Record<string, string | undefined>;
 
+  // Helper function to get value with default
+  const getValueWithDefault = (value: string | undefined): string => {
+    // If value is explicitly set to empty string, return empty string
+    // Otherwise return current value or default value
+    if (value === '') {
+      return '';
+    }
+    return value || defaultValue;
+  };
+
   const hasData = rows.some(
-    (row) => safeData[`${row.key}_left`] || safeData[`${row.key}_right`]
+    (row) => {
+      const left = getValueWithDefault(safeData[`${row.key}_left`]);
+      const right = getValueWithDefault(safeData[`${row.key}_right`]);
+      return left !== '' || right !== '';
+    }
   );
 
   if (!hasData) return null;
@@ -56,10 +73,10 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
           </thead>
           <tbody>
             {rows.map((row, index) => {
-              const left = safeData[`${row.key}_left`];
-              const right = safeData[`${row.key}_right`];
+              const left = getValueWithDefault(safeData[`${row.key}_left`]);
+              const right = getValueWithDefault(safeData[`${row.key}_right`]);
 
-              if (!left && !right) return null;
+              if (left === '' && right === '') return null;
 
               return (
                 <tr
@@ -70,10 +87,10 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
                     {row.label}
                   </td>
                   <td className="py-0.5 px-1 border-b border-gray-200">
-                    {right || "-"}
+                    {right !== '' ? right : "-"}
                   </td>
                   <td className="py-0.5 px-1 border-b border-gray-200">
-                    {left || "-"}
+                    {left !== '' ? left : "-"}
                   </td>
                 </tr>
               );
@@ -235,6 +252,7 @@ export const MotorExaminationDisplay: React.FC<{ data: MotorExamData }> = ({
         headers={["POWER", "R", "L"]}
         rows={muscleGroups}
         data={data}
+        defaultValue="5"
       />
 
       <div className="space-y-2">
@@ -286,12 +304,14 @@ export const ReflexExaminationDisplay: React.FC<{ data: ReflexExamData }> = ({
         headers={["REFLEX", "R", "L"]}
         rows={deepTendon}
         data={data}
+        defaultValue="2"
       />
       <ConsultationTable
         title="Superficial Reflexes"
         headers={["REFLEX", "R", "L"]}
         rows={superficial}
         data={data}
+        defaultValue=""
       />
 
       <div className="space-y-2">
@@ -343,6 +363,7 @@ export const TabularEyeExaminationDisplay: React.FC<{
         headers={["EXAMINATION", "Right", "Left"]}
         rows={allEyeExaminations}
         data={data}
+        defaultValue=""
       />
 
       {data.notes && (

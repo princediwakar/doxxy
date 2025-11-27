@@ -76,19 +76,14 @@ const isFieldFullWidth = (field: Field, value: FieldValue | undefined): boolean 
   // Complex field types that need full width
   if (field.type === 'vital_signs' ||
       field.type === 'prescription' ||
-      field.type === 'tabular_eye' ||
-      field.type === 'motor_examination' ||
-      field.type === 'reflex_examination') {
+      field.type === 'tabular_eye') {
     return true;
   }
 
   return false;
 };
 
-// Legacy function for backward compatibility
-const isFieldSmall = (field: Field, value: FieldValue | undefined): boolean => {
-  return !isFieldFullWidth(field, value);
-};
+
 
 const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
   // Start new group if field type changes significantly
@@ -133,7 +128,7 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationForm
 
     if (isCompactField) {
       return (
-        <div className="flex items-center gap-2">
+        <div className="gap-2">
           <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
             {field.label}:
           </div>
