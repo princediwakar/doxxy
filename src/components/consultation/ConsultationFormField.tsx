@@ -12,16 +12,15 @@ import { VitalSignsField } from './VitalSignsField';
 import { MotorExaminationField, MotorExaminationValue } from './MotorExaminationField';
 import { ReflexExaminationField, ReflexExaminationValue } from './ReflexExaminationField';
 import { FieldConfig, FieldValue } from './types';
-import { useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 
 interface ConsultationFormFieldProps {
   fieldConfig: FieldConfig;
   fieldIndex: number;
   value: FieldValue;
   onChange: (value: FieldValue) => void;
-  expandedFields: Record<string, boolean>;
-  setExpandedFields: (fields: Record<string, boolean>) => void;
   isReadOnly?: boolean;
+  autoFocus?: boolean;
 }
 
 export const ConsultationFormField = ({
@@ -29,23 +28,40 @@ export const ConsultationFormField = ({
   fieldIndex,
   value,
   onChange,
-  expandedFields,
-  setExpandedFields,
-  isReadOnly = false
+  isReadOnly = false,
+  autoFocus = false
 }: ConsultationFormFieldProps) => {
   const isMandatory = fieldConfig.mandatory || false;
-  const isExpanded = expandedFields[fieldConfig.name] ?? isMandatory;
+  // First field of each section should be expanded by default
+  const [isExpanded, setIsExpanded] = useState(isMandatory || fieldIndex === 0);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectRef = useRef<HTMLButtonElement>(null);
-  
+  const initialRender = useRef(true);
+
+  // Auto-focus when field is expanded (but not on initial render)
+  useEffect(() => {
+    if (isExpanded && !isReadOnly && !initialRender.current) {
+      // Focus the appropriate input based on field type
+      if (fieldConfig.type === 'textarea' && textareaRef.current) {
+        textareaRef.current.focus();
+      } else if (fieldConfig.type === 'select' && selectRef.current) {
+        selectRef.current.focus();
+      } else if (inputRef.current) {
+        inputRef.current.focus();
+      }
+    }
+
+    // Mark initial render as complete
+    if (initialRender.current) {
+      initialRender.current = false;
+    }
+  }, [isExpanded, isReadOnly, fieldConfig.type]);
+
   const toggleField = () => {
     if (isReadOnly) return; // Don't allow expansion changes in read-only mode
-    setExpandedFields({
-      ...expandedFields,
-      [fieldConfig.name]: !expandedFields[fieldConfig.name]
-    });
+    setIsExpanded(!isExpanded);
   };
 
   // Get character limit for this field
@@ -349,6 +365,7 @@ export const ConsultationFormField = ({
                 maxLength={characterLimit}
                 readOnly={isReadOnly}
                 disabled={isReadOnly}
+                autoFocus={autoFocus}
               />
             ) : fieldConfig.type === 'select' ? (
               <Select
@@ -394,6 +411,7 @@ export const ConsultationFormField = ({
                 maxLength={characterLimit}
                 readOnly={isReadOnly}
                 disabled={isReadOnly}
+                autoFocus={autoFocus}
               />
             )}
           </div>

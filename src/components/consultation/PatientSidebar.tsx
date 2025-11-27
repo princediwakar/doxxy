@@ -1,9 +1,6 @@
 import { useState } from "react";
 import {
-  User,
   Calendar,
-  Phone,
-  Mail,
   History,
   Heart,
   AlertCircle,
@@ -13,7 +10,6 @@ import {
   FileText,
   ChevronRight,
 } from "lucide-react";
-import { formatTimeIST } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -176,7 +172,6 @@ const ConsultationPreviewModal = ({
 };
 
 export const PatientSidebar = ({
-  patient,
   appointment,
   previousConsultations,
   recentPrescriptions,
@@ -192,69 +187,6 @@ export const PatientSidebar = ({
 
   return (
     <div className="space-y-4">
-      {/* Patient Information */}
-      <Card className="bg-white">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-3 text-base">
-            <User className="h-5 w-5 text-primary" />
-            Patient Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-semibold">
-              {patient?.name?.charAt(0)?.toUpperCase() || "P"}
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">
-                {patient?.name || "Unknown Patient"}
-              </p>
-              <p className="text-sm text-gray-600">
-                {patient?.age && `${patient.age} yrs`}
-                {patient?.gender && ` • ${patient.gender}`}
-              </p>
-            </div>
-          </div>
-
-          {patient?.phone && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Phone className="h-4 w-4" />
-              {patient.phone}
-            </div>
-          )}
-
-          {patient?.email && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Mail className="h-4 w-4" />
-              {patient.email}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Appointment Details */}
-      <Card className="bg-white">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-3 text-base">
-            <Calendar className="h-5 w-5 text-success" />
-            Today's Appointment
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Time</span>
-            <span className="text-sm font-medium">
-              {appointment?.time ? formatTimeIST(appointment.time) : "N/A"}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">Type</span>
-            <Badge variant="outline" className="text-xs">
-              {appointment?.type}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Medical History - Enhanced with Preview */}
       {previousConsultations && previousConsultations.length > 0 && (

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   User,
@@ -50,36 +50,7 @@ const Consultation = () => {
     Record<string, boolean>
   >({});
 
-  // Individual field expansion state - keep first field of each section expanded by default
-  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>(
-    {
-      chief_complaint: true, // History section first field
-      vital_signs: true, // Examination section first field
-      previous_investigations: true, // Previous Investigations section first field
-      diagnosis: true, // Management section first field
-      assessment: true, // Always expanded
-      prescriptions: true, // Always expanded
-    }
-  );
 
-  // Track whether initial focus has been applied
-  const initialFocusApplied = useRef(false);
-
-  // Apply focus to chief complaint field after initial render
-  useEffect(() => {
-    if (!initialFocusApplied.current && !appointmentLoading && !existingConsultationLoading && !departmentInfoLoading) {
-      // Use setTimeout to ensure all fields are rendered
-      setTimeout(() => {
-        const chiefComplaintElement = document.querySelector(
-          '[data-field-name="chief_complaint"] input, [data-field-name="chief_complaint"] textarea'
-        ) as HTMLElement;
-        if (chiefComplaintElement) {
-          chiefComplaintElement.focus();
-          initialFocusApplied.current = true;
-        }
-      }, 200);
-    }
-  }, [appointmentLoading, existingConsultationLoading, departmentInfoLoading]);
 
   // Fetch all consultation data
   const {
@@ -194,31 +165,10 @@ const Consultation = () => {
     const isExpanded = expandedSections[section.title] ?? true;
 
     const toggleSection = () => {
-      const willExpand = !expandedSections[section.title];
-
       setExpandedSections((prev) => ({
         ...prev,
-        [section.title]: willExpand,
+        [section.title]: !expandedSections[section.title],
       }));
-
-      // When expanding a section, automatically expand and focus the first field
-      if (willExpand && section.fields.length > 0) {
-        const firstField = section.fields[0];
-        setExpandedFields((prev) => ({
-          ...prev,
-          [firstField.name]: true,
-        }));
-
-        // Use setTimeout to ensure the field is rendered before focusing
-        setTimeout(() => {
-          const firstFieldElement = document.querySelector(
-            `[data-field-name="${firstField.name}"] input, [data-field-name="${firstField.name}"] textarea, [data-field-name="${firstField.name}"] [role="combobox"]`
-          ) as HTMLElement;
-          if (firstFieldElement) {
-            firstFieldElement.focus();
-          }
-        }, 100);
-      }
     };
 
     const getSectionIcon = (title: string) => {
@@ -285,9 +235,9 @@ const Consultation = () => {
                       value as never
                     )
                   }
-                  expandedFields={expandedFields}
-                  setExpandedFields={setExpandedFields}
                   isReadOnly={!canEditConsultation}
+                  // Simple auto-focus only for the very first field
+                  autoFocus={sectionIndex === 0 && fieldIndex === 0}
                 />
               ))}
             </CardContent>
