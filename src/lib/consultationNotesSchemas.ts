@@ -83,10 +83,8 @@ const reflexExaminationSchema = z.object({
 export const baseNotesSchema = z.object({
   chief_complaint: z.string().optional(),
   history_of_present_illness: z.string().optional(),
-  review_of_systems: z.string().optional(),
   past_medical_history: z.string().optional(),
   family_history: z.string().optional(),
-  social_history: z.string().optional(),
   medications: z.string().optional(),
   allergies: z.string().optional(),
   physical_exam: z.string().optional(),
@@ -292,13 +290,6 @@ const baseFieldSections: FieldSection[] = [
         placeholder: "Describe history of present illness",
       },
       {
-        name: "review_of_systems",
-        label: "Review of Systems",
-        type: "textarea",
-        rows: 3,
-        placeholder: "Enter review of systems",
-      },
-      {
         name: "past_medical_history",
         label: "Past Medical History",
         type: "textarea",
@@ -311,13 +302,6 @@ const baseFieldSections: FieldSection[] = [
         type: "textarea",
         rows: 3,
         placeholder: "Enter family history",
-      },
-      {
-        name: "social_history",
-        label: "Social History",
-        type: "textarea",
-        rows: 3,
-        placeholder: "Describe social history",
       },
       {
         name: "medications",
@@ -1250,10 +1234,8 @@ export const specialtyFieldSections: Record<string, FieldSection[]> =
 export const consultationNotesSchema = z.object({
   chief_complaint: z.string().optional(),
   history_of_present_illness: z.string().optional(),
-  review_of_systems: z.string().optional(),
   past_medical_history: z.string().optional(),
   family_history: z.string().optional(),
-  social_history: z.string().optional(),
   medications: z.string().optional(),
   allergies: z.string().optional(),
   physical_exam: z.string().optional(),

@@ -159,6 +159,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
           name: editedName.trim(),
           phone: editedPhone.trim() || null,
           email: user?.email || null,
+          avatar_url: avatarUrl, // Sync avatar URL from user metadata
           created_at: new Date().toISOString(),
         });
         if (insertError) {
@@ -167,12 +168,15 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         }
       } else {
         const { error: profileError } = await supabase
-          .rpc('update_profile', {
-            p_user_id: user?.id || '',
-            p_name: editedName.trim(),
-            p_email: user?.email || '',
-            p_phone: editedPhone.trim() || ''
-          });
+          .from('profiles')
+          .update({
+            name: editedName.trim(),
+            phone: editedPhone.trim() || null,
+            email: user?.email || null,
+            avatar_url: avatarUrl, // Sync avatar URL from user metadata
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user?.id || '');
         if (profileError) {
           console.error('Profile update error:', profileError);
           throw profileError;

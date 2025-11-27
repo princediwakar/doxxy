@@ -141,13 +141,11 @@ const Appointments = () => {
               />
             </div>
 
-            {/* Add doctor selector for doctors */}
-            {activeClinicRole === 'doctor' && (
-              <DoctorSelector
-                selectedDoctorId={selectedDoctorId}
-                onDoctorChange={setSelectedDoctorId}
-              />
-            )}
+            {/* Add doctor selector for all users */}
+            <DoctorSelector
+              selectedDoctorId={selectedDoctorId}
+              onDoctorChange={setSelectedDoctorId}
+            />
           </div>
 
           <AppointmentsTabs

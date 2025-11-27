@@ -109,6 +109,7 @@ const CompleteProfile = () => {
         .update({
           name: form.name,
           phone: form.phone || null,
+          avatar_url: user.user_metadata?.avatar_url, // Sync avatar URL from user metadata
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
@@ -123,6 +124,7 @@ const CompleteProfile = () => {
             name: form.name,
             phone: form.phone || null,
             email: user.email,
+            avatar_url: user.user_metadata?.avatar_url, // Sync avatar URL from user metadata
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
