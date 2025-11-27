@@ -90,7 +90,7 @@ export const ConsultationFormField = ({
                 {fieldConfig.label}
                 {isMandatory && <span className="text-destructive">*</span>}
                 <span className="text-xs text-gray-500">
-                  ({Array.isArray(value) ? value.length : 0} medication{Array.isArray(value) && value.length !== 1 ? 's' : ''})
+                  ({Array.isArray(value) ? value.filter(med => med.name && med.name.trim().length > 0).length : 0} medication{Array.isArray(value) && value.filter(med => med.name && med.name.trim().length > 0).length !== 1 ? 's' : ''})
                 </span>
               </Label>
               {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
