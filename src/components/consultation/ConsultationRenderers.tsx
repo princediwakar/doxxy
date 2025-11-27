@@ -379,6 +379,26 @@ export const TabularEyeExaminationDisplay: React.FC<{
   );
 };
 
+// Helper function to check if an object has any meaningful content
+const hasMeaningfulContent = (obj: Record<string, unknown>): boolean => {
+  return Object.values(obj).some(val => {
+    if (typeof val === 'string') return val.trim().length > 0;
+    if (Array.isArray(val)) return val.length > 0;
+    if (typeof val === 'object' && val !== null) return hasMeaningfulContent(val as Record<string, unknown>);
+    return false;
+  });
+};
+
+// Helper function to check if tabular data has any content
+const hasTabularData = (data: Record<string, unknown>): boolean => {
+  return Object.entries(data).some(([key, value]) => {
+    // Skip notes field for content check
+    if (key === 'notes') return false;
+    if (typeof value === 'string') return value.trim().length > 0;
+    return false;
+  });
+};
+
 // --- Main Switch Export ---
 
 export const FieldValueRenderer: React.FC<{
@@ -389,6 +409,8 @@ export const FieldValueRenderer: React.FC<{
 
   // Type Guard: Prescriptions
   if (fieldName === "prescriptions" && Array.isArray(value)) {
+    const validPrescriptions = value.filter((med) => med.name && med.name.trim().length > 0);
+    if (validPrescriptions.length === 0) return null;
     return <PrescriptionList value={value as PrescriptionMedication[]} />;
   }
 
@@ -397,21 +419,21 @@ export const FieldValueRenderer: React.FC<{
     // We cast to Unknown Record to check for existence of keys
     const fieldData = value as Record<string, unknown>;
 
+    // Check if object has any meaningful content before rendering
+    if (!hasMeaningfulContent(fieldData)) return null;
+
     // Type Logic: Vitals
     if (
       "temperature" in fieldData ||
       "pulse" in fieldData ||
       "blood_pressure_systolic" in fieldData
     ) {
+      // Check if vital signs has any actual data
+      if (!hasTabularData(fieldData)) return null;
       return <VitalSignsDisplay data={fieldData as VitalSignsData} />;
     }
     // Type Logic: Eye
     if ("left" in fieldData || "right" in fieldData) {
-      // Small edge case: Motor/Reflex also have left/right keys.
-      // Vitals/Eye are distinct, but we should ensure we don't accidentally render Neuro data as Eye data
-      // if the data shapes overlap. However, based on schema, Eye data usually just has 'left', 'right', 'notes'.
-      // Motor has 'shoulder_left', etc.
-      // Better specific check:
       const keys = Object.keys(fieldData);
       const isEye = keys.some((k) => k === "left" || k === "right");
       const isNeuro = keys.some(
@@ -419,15 +441,21 @@ export const FieldValueRenderer: React.FC<{
       );
 
       if (isEye && !isNeuro) {
+        // Check if eye data has any actual content
+        if (!hasTabularData(fieldData)) return null;
         return <EyeFieldDisplay data={fieldData as EyeData} />;
       }
     }
     // Type Logic: Motor
     if ("shoulder_left" in fieldData || "shoulder_right" in fieldData) {
+      // Check if motor examination has any actual data
+      if (!hasTabularData(fieldData)) return null;
       return <MotorExaminationDisplay data={fieldData as MotorExamData} />;
     }
     // Type Logic: Reflex
     if ("biceps_left" in fieldData || "biceps_right" in fieldData) {
+      // Check if reflexes have any actual data
+      if (!hasTabularData(fieldData)) return null;
       return <ReflexExaminationDisplay data={fieldData as ReflexExamData} />;
     }
     // Type Logic: Tabular Eye
@@ -435,6 +463,8 @@ export const FieldValueRenderer: React.FC<{
       "visual_acuity_left" in fieldData ||
       "visual_acuity_right" in fieldData
     ) {
+      // Check if tabular eye examination has any actual data
+      if (!hasTabularData(fieldData)) return null;
       return (
         <TabularEyeExaminationDisplay data={fieldData as TabularEyeValue} />
       );
@@ -454,9 +484,12 @@ export const FieldValueRenderer: React.FC<{
 
   // Type Guard: String
   if (typeof value === "string") {
-    const lines = value.split("\n").filter((line) => line.trim());
+    const trimmedValue = value.trim();
+    if (!trimmedValue) return null;
+
+    const lines = trimmedValue.split("\n").filter((line) => line.trim());
     if (lines.length <= 1)
-      return <span className="text-gray-700">{value}</span>;
+      return <span className="text-gray-700">{trimmedValue}</span>;
     return (
       <div className="text-gray-700">
         {lines.map((line, index) => (

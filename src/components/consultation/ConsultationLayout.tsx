@@ -245,8 +245,25 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
           const fieldsWithContent = section.fields.filter(field => {
             const value = consultationData?.[field.name as keyof typeof consultationData] as FieldValue;
             if (!value) return false;
-            if (typeof value === 'string' && !value.trim()) return false;
-            if (Array.isArray(value) && value.length === 0) return false;
+
+            if (typeof value === 'string') return value.trim().length > 0;
+            if (Array.isArray(value)) return value.length > 0;
+
+            // For objects, check if they have any meaningful content
+            if (typeof value === 'object' && value !== null) {
+              const obj = value as Record<string, unknown>;
+              return Object.values(obj).some(val => {
+                if (typeof val === 'string') return val.trim().length > 0;
+                if (Array.isArray(val)) return val.length > 0;
+                if (typeof val === 'object' && val !== null) {
+                  return Object.values(val as Record<string, unknown>).some(
+                    nestedVal => typeof nestedVal === 'string' && nestedVal.trim().length > 0
+                  );
+                }
+                return false;
+              });
+            }
+
             return true;
           });
 

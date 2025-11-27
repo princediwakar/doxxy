@@ -176,6 +176,42 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     ? consultationData.specialty_data as Record<string, unknown>
     : {};
 
+  // Helper function to clean empty objects from specialty data
+  const cleanSpecialtyData = (data: Record<string, unknown>): Record<string, unknown> => {
+    const cleaned: Record<string, unknown> = {};
+
+    Object.entries(data).forEach(([key, value]) => {
+      if (!value) return;
+
+      if (typeof value === 'string' && value.trim().length > 0) {
+        cleaned[key] = value;
+      } else if (Array.isArray(value) && value.length > 0) {
+        cleaned[key] = value;
+      } else if (typeof value === 'object' && value !== null) {
+        const obj = value as Record<string, unknown>;
+        const hasContent = Object.values(obj).some(val => {
+          if (typeof val === 'string') return val.trim().length > 0;
+          if (Array.isArray(val)) return val.length > 0;
+          if (typeof val === 'object' && val !== null) {
+            return Object.values(val as Record<string, unknown>).some(
+              nestedVal => typeof nestedVal === 'string' && nestedVal.trim().length > 0
+            );
+          }
+          return false;
+        });
+
+        if (hasContent) {
+          cleaned[key] = value;
+        }
+      }
+    });
+
+    return cleaned;
+  };
+
+  // Clean the specialty data to remove empty objects
+  const cleanedSpecialtyData = cleanSpecialtyData(specialtyData);
+
   // Get patient info with fallback to fetched patient data
   const patient: Patient = patientData || {
     name: appointment?.patient_name || 'Unknown',
@@ -225,10 +261,10 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     try {
 
       await printConsultation(
-        specialtyData,
+        cleanedSpecialtyData,
         patient,
-        { 
-          ...appointment, 
+        {
+          ...appointment,
           clinic_id: appointment?.clinic_id || '',
           id: appointment?.id || '',
           patient_id: appointment?.patient_id || '',
@@ -303,7 +339,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
               }}
               clinicInfo={clinicInfo}
               doctorInfo={doctorInfo}
-              consultationData={specialtyData}
+              consultationData={cleanedSpecialtyData}
               specialtySections={sections}
               departmentType={departmentType}
               className="p-4"

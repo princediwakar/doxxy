@@ -100,10 +100,9 @@ export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, docto
         <div className="clinic-info max-w-[50%] space-y-3">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide leading-none">
-              {clinicInfo?.name || 'MEDICAL CLINIC'}
+              {clinicInfo?.name}
             </h1>
             {/* A single thin accent line for branding */}
-            <div className="w-12 h-[2px] bg-blue-700 mt-2 mb-2"></div>
           </div>
           
           <div className="text-xs text-slate-600 space-y-1 font-medium">
@@ -140,10 +139,10 @@ export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, docto
         <div className="doctor-info text-right max-w-[45%]">
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-slate-800">
-              {doctorInfo?.name || 'Doctor Name'}
+              {doctorInfo?.name}
             </h2>
             <div className="text-sm font-semibold text-blue-700 uppercase tracking-wider text-[10px]">
-              {doctorInfo?.specialization || 'General Practice'}
+              {doctorInfo?.specialization}
             </div>
           </div>
 
