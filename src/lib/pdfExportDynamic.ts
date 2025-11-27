@@ -1,4 +1,5 @@
 // Dynamic PDF export functionality to reduce bundle size
+// src/lib/pdfExportDynamic
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 
@@ -64,7 +65,7 @@ interface ExportOptions {
   };
 }
 
-// Dynamically load PDF libraries only when needed
+// 1. Update the loading function to strictly type the return
 const loadPDFLibraries = async () => {
   const [jsPDFModule, html2canvasModule] = await Promise.all([
     import('jspdf'),
@@ -73,17 +74,20 @@ const loadPDFLibraries = async () => {
   
   return {
     jsPDF: jsPDFModule.default,
+    // Note: Depending on your bundler (Vite vs Webpack), 
+    // html2canvas might be exported as 'default' or the module itself.
+    // The type definition we added in Step 2 ensures .default works for TS.
     html2canvas: html2canvasModule.default
   };
 };
 
-// Dynamic PDF exporter class
 export class DynamicMedicalRecordPDFExporter {
+  // 2. Fix the type definitions here
   private jsPDF: typeof import('jspdf').default | null = null;
-  private html2canvas: typeof import('html2canvas').default | null = null;
+  // Use the specific function signature from our type definition
+  private html2canvas: ((element: HTMLElement, options?: import('html2canvas').Html2CanvasOptions) => Promise<HTMLCanvasElement>) | null = null;
   private isLoaded = false;
 
-  // Initialize PDF libraries dynamically
   private async ensureLibrariesLoaded() {
     if (this.isLoaded) return;
     
@@ -97,7 +101,6 @@ export class DynamicMedicalRecordPDFExporter {
       throw new Error('PDF export functionality is not available');
     }
   }
-
   // Export consultation data as PDF
   async exportConsultation(
     patient: PatientInfo,

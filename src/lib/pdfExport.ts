@@ -1,3 +1,4 @@
+// src/lib/pdfExport.ts
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format, parseISO } from 'date-fns';
@@ -69,7 +70,6 @@ export class MedicalRecordPDFExporter {
   private currentY: number = 20;
   private pageHeight: number = 297; // A4 height in mm
   private margin: number = 20;
-  private lineHeight: number = 7;
 
   constructor() {
     this.pdf = new jsPDF('p', 'mm', 'a4');
@@ -85,12 +85,12 @@ export class MedicalRecordPDFExporter {
   private addHeader(clinicName: string = 'Medical Clinic'): void {
     // Clinic Header
     this.pdf.setFontSize(20);
-    this.pdf.setFont(undefined, 'bold');
+    this.pdf.setFont('helvetica', 'bold');
     this.pdf.text(clinicName, this.margin, this.currentY);
     
     this.currentY += 10;
     this.pdf.setFontSize(12);
-    this.pdf.setFont(undefined, 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     this.pdf.text('Medical Records Report', this.margin, this.currentY);
     
     this.currentY += 5;
@@ -107,12 +107,12 @@ export class MedicalRecordPDFExporter {
     this.checkPageBreak(30);
     
     this.pdf.setFontSize(16);
-    this.pdf.setFont(undefined, 'bold');
+    this.pdf.setFont('helvetica', 'bold');
     this.pdf.text('PATIENT INFORMATION', this.margin, this.currentY);
     this.currentY += 10;
 
     this.pdf.setFontSize(11);
-    this.pdf.setFont(undefined, 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     
     const patientData = [
       ['Name:', patient.name],
@@ -125,9 +125,9 @@ export class MedicalRecordPDFExporter {
     if (patient.email) patientData.push(['Email:', patient.email]);
 
     patientData.forEach(([label, value]) => {
-      this.pdf.setFont(undefined, 'bold');
+      this.pdf.setFont('helvetica', 'bold');
       this.pdf.text(label, this.margin, this.currentY);
-      this.pdf.setFont(undefined, 'normal');
+      this.pdf.setFont('helvetica', 'normal');
       // Ensure value is a valid string for jsPDF
       const safeValue = value?.toString() || 'Unknown';
       this.pdf.text(safeValue, this.margin + 35, this.currentY);
@@ -143,7 +143,7 @@ export class MedicalRecordPDFExporter {
     this.checkPageBreak(20);
     
     this.pdf.setFontSize(16);
-    this.pdf.setFont(undefined, 'bold');
+    this.pdf.setFont('helvetica', 'bold');
     this.pdf.text('CONSULTATION HISTORY', this.margin, this.currentY);
     this.currentY += 10;
 
@@ -152,14 +152,14 @@ export class MedicalRecordPDFExporter {
       
       // Consultation header
       this.pdf.setFontSize(12);
-      this.pdf.setFont(undefined, 'bold');
+      this.pdf.setFont('helvetica', 'bold');
       const consultationTitle = `Consultation #${index + 1}`;
       this.pdf.text(consultationTitle, this.margin, this.currentY);
       this.currentY += 8;
 
       // Basic info
       this.pdf.setFontSize(10);
-      this.pdf.setFont(undefined, 'normal');
+      this.pdf.setFont('helvetica', 'normal');
       
       const basicInfo = [
         `Date: ${consultation.appointment.date ? format(parseISO(consultation.appointment.date), 'PPP') : 'Unknown'}`,
@@ -226,7 +226,7 @@ export class MedicalRecordPDFExporter {
     this.checkPageBreak(20);
     
     this.pdf.setFontSize(16);
-    this.pdf.setFont(undefined, 'bold');
+    this.pdf.setFont('helvetica', 'bold');
     this.pdf.text('PRESCRIPTION HISTORY', this.margin, this.currentY);
     this.currentY += 10;
 
@@ -235,14 +235,14 @@ export class MedicalRecordPDFExporter {
       
       // Prescription header
       this.pdf.setFontSize(12);
-      this.pdf.setFont(undefined, 'bold');
+      this.pdf.setFont('helvetica', 'bold');
       const prescriptionTitle = `Prescription #${index + 1}`;
       this.pdf.text(prescriptionTitle, this.margin, this.currentY);
       this.currentY += 8;
 
       // Basic info
       this.pdf.setFontSize(10);
-      this.pdf.setFont(undefined, 'normal');
+      this.pdf.setFont('helvetica', 'normal');
       
       const basicInfo = [
         `Date: ${prescription.created_at ? format(parseISO(prescription.created_at), 'PPP') : 'Unknown'}`,
@@ -284,11 +284,11 @@ export class MedicalRecordPDFExporter {
   private addSection(title: string, content: string): void {
     this.checkPageBreak(15);
     
-    this.pdf.setFont(undefined, 'bold');
+    this.pdf.setFont('helvetica', 'bold');
     this.pdf.text(title, this.margin + 5, this.currentY);
     this.currentY += 6;
     
-    this.pdf.setFont(undefined, 'normal');
+    this.pdf.setFont('helvetica', 'normal');
     
     // Handle multi-line content
     const lines = this.pdf.splitTextToSize(content, 160);
@@ -302,12 +302,12 @@ export class MedicalRecordPDFExporter {
   }
 
   private addFooter(): void {
-    const pageCount = this.pdf.internal.getNumberOfPages();
-    
+    const pageCount = this.pdf.getNumberOfPages();
+
     for (let i = 1; i <= pageCount; i++) {
       this.pdf.setPage(i);
       this.pdf.setFontSize(8);
-      this.pdf.setFont(undefined, 'normal');
+      this.pdf.setFont('helvetica', 'normal');
       this.pdf.text(
         `Page ${i} of ${pageCount}`,
         210 - this.margin - 20,
