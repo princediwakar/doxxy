@@ -100,7 +100,7 @@ const fetchAppointments = async (clinicId: string | undefined, searchTerm: strin
 };
 
 export const useAppointments = () => {
-  const { activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const { activeClinic, activeClinicRole, user, hasDoctorProfile, loading: authLoading } = useAuth();
   const { deductCreditsForAppointment } = usePayments();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,6 +113,41 @@ export const useAppointments = () => {
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
 
   const itemsPerPage = 10;
+
+  // Fetch current user's doctor profile for auto-selection
+  const { data: currentUserDoctorProfile } = useQuery({
+    queryKey: ['currentUserDoctorProfile', activeClinic?.clinic_id, user?.id],
+    queryFn: async () => {
+      if (!user?.id || !activeClinic?.clinic_id) return null;
+
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('clinic_id', activeClinic.clinic_id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching current user doctor profile:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!user?.id && !!activeClinic?.clinic_id && (activeClinicRole === 'doctor' || (activeClinicRole === 'superadmin' && hasDoctorProfile)),
+  });
+
+  // Auto-select current user's doctor profile when appropriate
+  useEffect(() => {
+    // Only auto-select if:
+    // 1. User has a doctor profile (doctor role or superadmin with doctor profile)
+    // 2. We have the doctor profile data
+    // 3. No doctor is currently selected
+    if (currentUserDoctorProfile?.id && !selectedDoctorId) {
+      console.log('Auto-selecting current user doctor profile:', currentUserDoctorProfile.id);
+      setSelectedDoctorId(currentUserDoctorProfile.id);
+    }
+  }, [currentUserDoctorProfile, selectedDoctorId]);
 
   // Fetch appointments data
   const { data, isLoading, error } = useQuery({
