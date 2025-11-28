@@ -1,3 +1,4 @@
+// src/components/ExportOptionsModal.tsx
 import { useState } from 'react';
 import {
   Dialog,
@@ -25,14 +26,6 @@ import {
 } from "lucide-react";
 import { PatientWithConsultations } from '@/types/patients';
 
-interface ExportOptionsModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onExport: (options: ExportConfiguration) => void;
-  patient: PatientWithConsultations | null;
-  loading?: boolean;
-}
-
 export interface ExportConfiguration {
   includeConsultations: boolean;
   includePrescriptions: boolean;
@@ -41,6 +34,14 @@ export interface ExportConfiguration {
     to: Date;
   };
   customFilename?: string;
+}
+
+interface ExportOptionsModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onExport: (options: ExportConfiguration) => void;
+  patient: PatientWithConsultations | null;
+  loading?: boolean;
 }
 
 export function ExportOptionsModal({ 
@@ -85,7 +86,9 @@ export function ExportOptionsModal({
       const to = new Date(dateTo);
 
       consultationCount = patient.consultations.filter(consultation => {
-        const consultationDate = new Date(consultation.appointment?.date ?? consultation.created_at);
+        const dateStr = consultation.appointment?.date || consultation.created_at;
+        if (!dateStr) return false;
+        const consultationDate = new Date(dateStr);
         return consultationDate >= from && consultationDate <= to;
       }).length;
 
@@ -119,6 +122,8 @@ export function ExportOptionsModal({
       case 'year':
         from = format(subYears(today, 1), 'yyyy-MM-dd');
         break;
+      default:
+        from = to;
     }
 
     setDateFrom(from);
@@ -361,4 +366,4 @@ export function ExportOptionsModal({
       </DialogContent>
     </Dialog>
   );
-} 
+}

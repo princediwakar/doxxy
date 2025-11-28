@@ -1,7 +1,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { ReflexExamData } from './types';
+import type { ReflexExamData } from '@/types/consultation';
 
 
 interface ReflexExaminationFieldProps {

@@ -158,13 +158,28 @@ const faqs = [
 
 // --- REUSABLE COMPONENTS ---
 
-const Section = ({ children, className = "" }) => (
+interface SectionProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface SectionTitleProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface SectionSubtitleProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+const Section = ({ children, className = "" }: SectionProps) => (
   <section className={`py-24 md:py-32 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
   </section>
 );
 
-const SectionTitle = ({ children, className = "" }) => (
+const SectionTitle = ({ children, className = "" }: SectionTitleProps) => (
   <h2
     className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}
   >
@@ -172,7 +187,7 @@ const SectionTitle = ({ children, className = "" }) => (
   </h2>
 );
 
-const SectionSubtitle = ({ children, className = "" }) => (
+const SectionSubtitle = ({ children, className = "" }: SectionSubtitleProps) => (
   <p
     className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}
   >
@@ -297,7 +312,7 @@ const ComparisonTableSection = () => (
     </SectionSubtitle>
     <div className="max-w-4xl mx-auto mt-16">
       <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200/75 dark:border-gray-700/50">
-        {comparisons.map((item, index) => (
+        {comparisons.map((item, index: number) => (
           <div
             key={item.feature}
             className={`grid grid-cols-3 gap-4 p-4 ${

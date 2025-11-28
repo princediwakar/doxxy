@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { DbDepartmentType, DbClinicDepartment } from '@/types/core';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,10 +23,7 @@ import {
   Smile
 } from 'lucide-react';
 
-type DepartmentType = Database['public']['Tables']['department_types']['Row'];
-type ClinicDepartment = Database['public']['Tables']['clinic_departments']['Row'];
-
-interface DepartmentWithStatus extends DepartmentType {
+interface DepartmentWithStatus extends DbDepartmentType {
   isActive: boolean;
   clinicDepartmentId?: string;
 }
@@ -42,7 +39,7 @@ const ClinicDepartmentsManagement = () => {
   const isSuperadmin = activeClinicRole === 'superadmin';
 
   // Fetch all available department types
-  const { data: departmentTypes = [], isLoading: isLoadingDepartmentTypes } = useQuery<DepartmentType[]>({
+  const { data: departmentTypes = [], isLoading: isLoadingDepartmentTypes } = useQuery<DbDepartmentType[]>({
     queryKey: ['departmentTypes'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,7 +52,7 @@ const ClinicDepartmentsManagement = () => {
   });
 
   // Fetch clinic departments for the active clinic
-  const { data: clinicDepartments = [], isLoading: isLoadingClinicDepartments } = useQuery<ClinicDepartment[]>({
+  const { data: clinicDepartments = [], isLoading: isLoadingClinicDepartments } = useQuery<DbClinicDepartment[]>({
     queryKey: ['clinicDepartmentsForClinic', clinicId],
     queryFn: async () => {
       if (!clinicId) return [];

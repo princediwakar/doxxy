@@ -1,16 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from '@/integrations/supabase/client';
-import { 
+import { getSupabase } from "@/integrations/supabase/client";
+import {
   User,
   Shield,
-  Stethoscope, 
-  UserPlus, 
+  Stethoscope,
+  UserPlus,
   Building2,
   Edit,
   Phone,
@@ -22,8 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import { BasicProfileEditor } from "@/components/BasicProfileEditor";
 import { MedicalCredentialsModal } from "@/components/doctor/MedicalCredentialsModal";
 import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding";
-import { useQueryClient } from '@tanstack/react-query';
-
+import { useQueryClient } from "@tanstack/react-query";
 
 const Profile = () => {
   const { user, activeClinic, activeClinicRole, hasDoctorProfile } = useAuth();
@@ -32,48 +37,57 @@ const Profile = () => {
   const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
   const [showPostOnboarding, setShowPostOnboarding] = useState(false);
-  const [localHasDoctorProfile, setLocalHasDoctorProfile] = useState(hasDoctorProfile);
+  const [localHasDoctorProfile, setLocalHasDoctorProfile] =
+    useState(hasDoctorProfile);
 
   useEffect(() => {
     setLocalHasDoctorProfile(hasDoctorProfile);
   }, [hasDoctorProfile]);
-  const supabase = getSupabase()
+  const supabase = getSupabase();
   // Fetch doctor profile if user has one
-  const { data: doctorProfile, isLoading: isDoctorLoading, refetch: refetchDoctorProfile } = useQuery({
-    queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id],
+  const {
+    data: doctorProfile,
+    isLoading: isDoctorLoading,
+    refetch: refetchDoctorProfile,
+  } = useQuery({
+    queryKey: ["doctorProfile", user?.id, activeClinic?.clinics?.id],
     queryFn: async () => {
       if (!user?.id || !activeClinic?.clinics?.id) return null;
-      
+
       const { data, error } = await supabase
-        .from('doctors')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('clinic_id', activeClinic.clinics.id)
+        .from("doctors")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("clinic_id", activeClinic.clinics.id)
         .single();
-      
+
       if (error) {
-        if (error.code === 'PGRST116') {
+        if (error.code === "PGRST116") {
           return null;
         }
         throw error;
       }
-      
+
       const { data: memberData } = await supabase
-        .from('clinic_members')
-        .select(`
+        .from("clinic_members")
+        .select(
+          `
           department_id,
           clinic_departments(
             id,
             department_types(name)
           )
-        `)
-        .eq('user_id', user.id)
-        .eq('clinic_id', activeClinic.clinics.id)
+        `
+        )
+        .eq("user_id", user.id)
+        .eq("clinic_id", activeClinic.clinics.id)
         .single();
-      
+
       return {
         ...data,
-        department_name: memberData?.clinic_departments?.department_types?.name || 'No Department'
+        department_name:
+          memberData?.clinic_departments?.department_types?.name ||
+          "No Department",
       };
     },
     enabled: !!user?.id && !!activeClinic?.clinics?.id,
@@ -81,16 +95,16 @@ const Profile = () => {
 
   // Fetch user profile data from profiles table
   const { data: userProfile } = useQuery({
-    queryKey: ['userProfile', user?.id],
+    queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
         .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
+
+      if (error && error.code !== "PGRST116") throw error;
       return data;
     },
     enabled: !!user?.id,
@@ -101,41 +115,43 @@ const Profile = () => {
   };
 
   const getRoleDisplayConfig = () => {
-    const isDoctorRole = activeClinicRole === 'doctor' || doctorProfile;
-    const isHybridSuperadmin = activeClinicRole === 'superadmin' && doctorProfile;
+    const isDoctorRole = activeClinicRole === "doctor" || doctorProfile;
+    const isHybridSuperadmin =
+      activeClinicRole === "superadmin" && doctorProfile;
 
-    const displayName = userProfile?.name || user?.user_metadata?.name || 'User';
+    const displayName =
+      userProfile?.name || user?.user_metadata?.name || "User";
 
     if (isDoctorRole) {
-      
       return {
         title: displayName,
-        subtitle: doctorProfile?.primary_specialization || 'Medical Professional',
+        subtitle:
+          doctorProfile?.primary_specialization || "Medical Professional",
         icon: Stethoscope,
         iconClass: "",
         bgClass: "bg-muted",
-        badge: isHybridSuperadmin ? { text: 'Superadmin', icon: Shield } : null
+        badge: isHybridSuperadmin ? { text: "Superadmin", icon: Shield } : null,
       };
     }
 
-    if (activeClinicRole === 'superadmin') {
+    if (activeClinicRole === "superadmin") {
       return {
         title: displayName,
-        subtitle: 'Clinic Administrator',
+        subtitle: "Clinic Administrator",
         icon: Shield,
         iconClass: "text-slate-600",
         bgClass: "bg-slate-50",
-        badge: null
+        badge: null,
       };
     }
 
     return {
       title: displayName,
-      subtitle: 'Healthcare Team',
+      subtitle: "Healthcare Team",
       icon: User,
       iconClass: "text-success",
       bgClass: "bg-success/10",
-      badge: null
+      badge: null,
     };
   };
 
@@ -167,27 +183,37 @@ const Profile = () => {
             <div className="flex items-center gap-3">
               <CheckCircle2 className="w-6 h-6 text-success" />
               <div>
-                <h3 className="font-semibold text-foreground">Basic profile created!</h3>
-                <p className="text-sm text-muted-foreground">Continue to add your full credentials for verification.</p>
+                <h3 className="font-semibold text-foreground">
+                  Basic profile created!
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Continue to add your full credentials for verification.
+                </p>
               </div>
             </div>
-            <Button onClick={() => {
-              setIsMedicalModalOpen(true);
-            }}>
+            <Button
+              onClick={() => {
+                setIsMedicalModalOpen(true);
+              }}
+            >
               Complete Full Profile
             </Button>
           </CardContent>
         </Card>
       )}
-      
+
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-3">
-          <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${roleConfig.bgClass}`}>
+          <div
+            className={`flex items-center justify-center w-10 h-10 rounded-lg ${roleConfig.bgClass}`}
+          >
             <IconComponent className={`w-5 h-5 ${roleConfig.iconClass}`} />
           </div>
           <div>
             <h1 className="text-2xl font-bold ">Profile</h1>
-            <p className="text-muted-foreground">Manage your profile information and settings</p>
+            <p className="text-muted-foreground">
+              Manage your profile information and settings
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -197,28 +223,28 @@ const Profile = () => {
               {roleConfig.badge.text}
             </Badge>
           )}
-          <Button
-            onClick={() => setIsBasicModalOpen(true)}
-            variant="outline"
-          >
+          <Button onClick={() => setIsBasicModalOpen(true)} variant="outline">
             <Edit className="h-4 w-4 mr-2" />
             Edit Profile
           </Button>
         </div>
       </div>
-                  
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="">
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Avatar className="w-16 h-16 border-2 border-border">
-                  <AvatarImage 
-                    src={user?.user_metadata?.avatar_url} 
+                  <AvatarImage
+                    src={user?.user_metadata?.avatar_url}
                     className="object-cover"
                   />
                   <AvatarFallback className="text-lg font-semibold">
-                    {roleConfig.title.split(' ').map(n => n[0]).join('')}
+                    {roleConfig.title
+                      .split(" ")
+                      .map((n: string) => n[0])
+                      .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div>
@@ -268,7 +294,7 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {(activeClinicRole === 'doctor' || doctorProfile) && (
+        {(activeClinicRole === "doctor" || doctorProfile) && (
           <Card className="">
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
@@ -276,7 +302,7 @@ const Profile = () => {
                   <Stethoscope className="w-5 h-5" />
                   Medical Profile
                 </CardTitle>
-                <Button 
+                <Button
                   onClick={() => setIsMedicalModalOpen(true)}
                   size="sm"
                   variant="ghost"
@@ -284,33 +310,57 @@ const Profile = () => {
                   <Edit className="w-4 h-4" />
                 </Button>
               </div>
-              <CardDescription>Professional medical credentials and information</CardDescription>
+              <CardDescription>
+                Professional medical credentials and information
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {doctorProfile ? (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Specialization</label>
-                      <p className="text-sm">{doctorProfile.primary_specialization || 'Not specified'}</p>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Specialization
+                      </label>
+                      <p className="text-sm">
+                        {doctorProfile.primary_specialization ||
+                          "Not specified"}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Department</label>
-                      <p className="text-sm">{doctorProfile.department_name || 'Not assigned'}</p>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Department
+                      </label>
+                      <p className="text-sm">
+                        {doctorProfile.department_name || "Not assigned"}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Registration</label>
-                      <p className="text-sm">{doctorProfile.medical_registration_number || 'Not provided'}</p>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Registration
+                      </label>
+                      <p className="text-sm">
+                        {doctorProfile.medical_registration_number ||
+                          "Not provided"}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Experience</label>
-                      <p className="text-sm">{doctorProfile.years_of_experience ? `${doctorProfile.years_of_experience} years` : 'Not specified'}</p>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Experience
+                      </label>
+                      <p className="text-sm">
+                        {doctorProfile.years_of_experience
+                          ? `${doctorProfile.years_of_experience} years`
+                          : "Not specified"}
+                      </p>
                     </div>
                   </div>
-                  
+
                   {doctorProfile.medical_college && (
                     <div>
-                      <label className="text-xs font-medium text-muted-foreground">Medical College</label>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        Medical College
+                      </label>
                       <p className="text-sm">{doctorProfile.medical_college}</p>
                     </div>
                   )}
@@ -318,11 +368,13 @@ const Profile = () => {
               ) : (
                 <div className="text-center py-8">
                   <Stethoscope className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground mb-2">Medical profile not complete</p>
-                  <p className="text-xs text-muted-foreground mb-4">Set up your professional credentials to start practicing</p>
-                  <Button 
-                    onClick={() => setIsMedicalModalOpen(true)}
-                  >
+                  <p className="text-muted-foreground mb-2">
+                    Medical profile not complete
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Set up your professional credentials to start practicing
+                  </p>
+                  <Button onClick={() => setIsMedicalModalOpen(true)}>
                     <UserPlus className="w-4 h-4 mr-2" />
                     Complete Medical Profile
                   </Button>
@@ -336,34 +388,47 @@ const Profile = () => {
           <Card className="">
             <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
-                <roleConfig.icon className={`w-5 h-5 ${roleConfig.iconClass}`} />
+                <roleConfig.icon
+                  className={`w-5 h-5 ${roleConfig.iconClass}`}
+                />
                 Role Information
               </CardTitle>
-              <CardDescription>Your role and responsibilities in the clinic</CardDescription>
+              <CardDescription>
+                Your role and responsibilities in the clinic
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Current Role</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Current Role
+                </label>
                 <p className="text-sm font-medium">{roleConfig.subtitle}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Clinic</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Clinic
+                </label>
                 <p className="text-sm">{activeClinic?.clinics?.name}</p>
               </div>
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Permissions</label>
+                <label className="text-xs font-medium text-muted-foreground">
+                  Permissions
+                </label>
                 <p className="text-sm">
-                  {activeClinicRole === 'superadmin' ? 'Full clinic management access' : 'Standard healthcare team access'}
+                  {activeClinicRole === "superadmin"
+                    ? "Full clinic management access"
+                    : "Standard healthcare team access"}
                 </p>
               </div>
 
-              {activeClinicRole === 'superadmin' && (
+              {activeClinicRole === "superadmin" && (
                 <>
                   <Separator />
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Medical Practice</h4>
                     <p className="text-xs text-muted-foreground">
-                      As a clinic administrator, you can also set up a medical practice profile
+                      As a clinic administrator, you can also set up a medical
+                      practice profile
                     </p>
                     <Button
                       onClick={handleBecomeDoctorClick}
@@ -380,34 +445,39 @@ const Profile = () => {
           </Card>
         )}
       </div>
-                  
+
       {isBasicModalOpen && (
-        <BasicProfileEditor 
+        <BasicProfileEditor
           open={isBasicModalOpen}
           onClose={() => setIsBasicModalOpen(false)}
-          user={user} 
+          user={user!}
           onProfileUpdate={() => {
-            queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
-            queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id] });
-          }} 
-        />
-      )}
-
-      {isMedicalModalOpen && (activeClinicRole === 'doctor' || doctorProfile) && (
-        <MedicalCredentialsModal
-          open={isMedicalModalOpen}
-          onClose={() => setIsMedicalModalOpen(false)}
-          doctorProfile={doctorProfile || undefined}
-          onSuccess={() => {
-            setIsMedicalModalOpen(false);
-            setShowPostOnboarding(false);
-            refetchDoctorProfile();
+            queryClient.invalidateQueries({
+              queryKey: ["userProfile", user?.id],
+            });
+            queryClient.invalidateQueries({
+              queryKey: ["doctorProfile", user?.id, activeClinic?.clinics?.id],
+            });
           }}
         />
       )}
-      
+
+      {isMedicalModalOpen &&
+        (activeClinicRole === "doctor" || doctorProfile) && (
+          <MedicalCredentialsModal
+            open={isMedicalModalOpen}
+            onClose={() => setIsMedicalModalOpen(false)}
+            doctorProfile={doctorProfile || undefined}
+            onSuccess={() => {
+              setIsMedicalModalOpen(false);
+              setShowPostOnboarding(false);
+              refetchDoctorProfile();
+            }}
+          />
+        )}
+
       {isOnboardingModalOpen && (
-        <DoctorQuickOnboarding 
+        <DoctorQuickOnboarding
           open={isOnboardingModalOpen}
           onClose={() => setIsOnboardingModalOpen(false)}
           onSuccess={() => {

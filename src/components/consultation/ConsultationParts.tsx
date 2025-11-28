@@ -1,38 +1,19 @@
-import React from 'react';
-import { format } from 'date-fns';
-import { formatTimeIST } from '@/lib/utils';
-import { User, Calendar, Phone, Mail, MapPin, Globe } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Tables } from '@/integrations/supabase/types';
-import { Patient } from './types';
-
-// Define these here to avoid circular dependency issues if they aren't in 'types.ts' yet
-export interface ClinicInfo {
-  name?: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
-  logo?: string;
-}
-
-export interface DoctorInfo {
-  name?: string;
-  specialization?: string;
-  qualification?: string;
-  registration_number?: string;
-  phone?: string;
-  email?: string;
-  medical_registration_number?: string;
-  medical_qualifications?: string;
-  medical_specializations?: string;
-  years_of_experience?: number;
-  medical_council?: string;
-  consultation_fee?: number;
-}
+import React from "react";
+import { format } from "date-fns";
+import { formatTimeIST } from "@/lib/utils";
+import { User, Calendar, Phone, Mail, MapPin, Globe } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { DbAppointment } from "@/types/core";
+import {
+  PatientWithClinic,
+  ClinicInfo,
+  DoctorInfo,
+} from "@/types/consultation";
 
 export const PrintStyles: React.FC = () => (
-  <style dangerouslySetInnerHTML={{ __html: `
+  <style
+    dangerouslySetInnerHTML={{
+      __html: `
     @media print {
       @page { margin: 10mm; size: A4; }
       body { 
@@ -81,10 +62,15 @@ export const PrintStyles: React.FC = () => (
       .field-group { page-break-inside: avoid !important; margin-bottom: 0.25rem !important; }
       /* ... */
     }
-  `}} />
+  `,
+    }}
+  />
 );
 
-export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, doctorInfo: DoctorInfo | null }> = ({ clinicInfo, doctorInfo }) => {
+export const ConsultationHeader: React.FC<{
+  clinicInfo: ClinicInfo | null;
+  doctorInfo: DoctorInfo | null;
+}> = ({ clinicInfo, doctorInfo }) => {
   return (
     <div className="letterhead w-full mb-6 print:mb-4">
       {/* Design Philosophy:
@@ -93,9 +79,8 @@ export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, docto
         3. Subtle accent color (blue-700) for branding, but thin lines only.
         4. Bottom border separates header from content cleanly.
       */}
-      
+
       <div className="flex justify-between items-start border-b-[1px] border-slate-300 pb-4">
-        
         {/* LEFT: Clinic Details */}
         <div className="clinic-info max-w-[50%] space-y-3">
           <div>
@@ -104,7 +89,7 @@ export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, docto
             </h1>
             {/* A single thin accent line for branding */}
           </div>
-          
+
           <div className="text-xs text-slate-600 space-y-1 font-medium">
             {clinicInfo?.address && (
               <div className="flex items-start gap-2">
@@ -148,12 +133,16 @@ export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, docto
 
           <div className="mt-3 space-y-1 text-xs text-slate-500">
             {doctorInfo?.qualification && (
-              <div className="uppercase tracking-tight">{doctorInfo.qualification}</div>
+              <div className="uppercase tracking-tight">
+                {typeof doctorInfo.qualification === 'string' ? doctorInfo.qualification : String(doctorInfo.qualification)}
+              </div>
             )}
-            {doctorInfo?.registration_number && (
-              <div className="font-mono text-slate-400">Reg: {doctorInfo.registration_number}</div>
+            {typeof doctorInfo?.registration_number === 'string' && doctorInfo.registration_number && (
+              <div className="font-mono text-slate-400">
+                Reg: {doctorInfo.registration_number}
+              </div>
             )}
-            {doctorInfo?.email && (
+            {typeof doctorInfo?.email === 'string' && doctorInfo.email && (
               <div className="flex items-center justify-end gap-1.5 mt-1 text-slate-600">
                 <span>{doctorInfo.email}</span>
                 <Mail className="h-3 w-3 text-slate-400" />
@@ -162,7 +151,7 @@ export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, docto
           </div>
         </div>
       </div>
-      
+
       {/* Optional: Very subtle date printed automatically if you want
       <div className="text-[10px] text-slate-300 text-right mt-1 print:block hidden">
         Printed on {new Date().toLocaleDateString()}
@@ -172,10 +161,10 @@ export const ConsultationHeader: React.FC<{ clinicInfo: ClinicInfo | null, docto
   );
 };
 
-export const PatientInfoCards: React.FC<{ 
-  patient: Patient, 
-  appointment: Tables<'appointments'> | null,
-  departmentType: string 
+export const PatientInfoCards: React.FC<{
+  patient: PatientWithClinic;
+  appointment: DbAppointment | null;
+  departmentType: string;
 }> = ({ patient, appointment, departmentType }) => {
   return (
     <div className="info-cards grid grid-cols-2 gap-4 mb-4 print:gap-3 print:mb-2">
@@ -200,7 +189,9 @@ export const PatientInfoCards: React.FC<{
             {patient?.phone && (
               <div className="grid grid-cols-[120px,1fr] gap-2">
                 <span className="text-gray-600">Phone:</span>
-                <span className="font-medium text-gray-900">{patient.phone}</span>
+                <span className="font-medium text-gray-900">
+                  {patient.phone}
+                </span>
               </div>
             )}
           </div>
@@ -217,13 +208,16 @@ export const PatientInfoCards: React.FC<{
             <div className="grid grid-cols-[120px,1fr] gap-2">
               <span className="text-gray-600">Date/Time:</span>
               <span className="font-medium text-gray-900">
-                {appointment?.date && format(new Date(appointment.date), 'MMM d, yyyy')}
+                {appointment?.date &&
+                  format(new Date(appointment.date), "MMM d, yyyy")}
                 {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
               </span>
             </div>
             <div className="grid grid-cols-[120px,1fr] gap-2">
               <span className="text-gray-600">Department:</span>
-              <span className="font-medium text-gray-900">{departmentType}</span>
+              <span className="font-medium text-gray-900">
+                {departmentType}
+              </span>
             </div>
           </div>
         </CardContent>

@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { getSupabase } from '@/integrations/supabase/client';
-import { Tables } from '@/integrations/supabase/types';
+import { DbDoctor } from '@/types/core';
+import { Department } from '@/types/doctor';
 import {
   GraduationCap,
   Briefcase,
@@ -22,19 +23,11 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const supabase = getSupabase();
 
-type DoctorProfile = Tables<'doctors'>;
-
-type Department = {
-  id: string;
-  department_types: {
-    name: string;
-  } | null;
-};
 
 interface MedicalCredentialsModalProps {
   open: boolean;
   onClose: () => void;
-  doctorProfile?: DoctorProfile;
+  doctorProfile?: DbDoctor;
   onSuccess?: () => void;
 }
 

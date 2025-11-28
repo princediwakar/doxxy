@@ -9,27 +9,15 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { useBilling, BillingFormValues } from '@/hooks/useBilling';
 import { ServiceItemsSection } from './ServiceItemsSection';
-import { Database } from '@/integrations/supabase/types';
-
-type BillRow = Database['public']['Tables']['bills']['Row'];
-type Patient = Database['public']['Tables']['patients']['Row'];
-type Appointment = {
-  id: string;
-  patient_id: string;
-  doctor_id: string;
-  patient_name?: string;
-  doctor_name?: string;
-  date: string;
-  time: string;
-  department_name?: string;
-};
+import type { Bill, AppointmentForBilling } from '@/types/billing';
+import type { DbPatient } from '@/types/core';
 
 interface BillingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  bill?: BillRow | null;
-  patient?: Patient | null;
-  appointment?: Appointment | null;
+  bill?: Bill | null;
+  patient?: DbPatient | null;
+  appointment?: AppointmentForBilling | null;
   mode?: 'create' | 'view' | 'edit';
   onModeChange?: (mode: 'create' | 'view' | 'edit') => void;
 }

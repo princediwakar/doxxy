@@ -10,16 +10,11 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Pill, Save } from "lucide-react";
-import { usePrescription, Appointment } from "@/hooks/usePrescription";
+import { usePrescription } from "@/hooks/usePrescription";
 import { AppointmentSelector, ManualSelectors, MedicationFields, NotesField } from "./PrescriptionForm";
+import type { UsePrescriptionProps } from "@/types/prescriptions";
 
-interface PrescriptionModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  consultationId: string | null;
-  appointment: Appointment | null;
-  doctorId: string | null;
-  patientId: string | null;
+interface PrescriptionModalProps extends Omit<UsePrescriptionProps, 'clinicId'> {
   clinicId: string | null;
 }
 

@@ -254,9 +254,9 @@ const Contact = () => {
       const { data, error: rpcError } = await supabase.rpc('submit_contact_form', {
         name: formData.name,
         email: formData.email,
-        phone: formData.phone || null,
-        company: formData.company || null,
-        city: formData.city || null,
+        phone: formData.phone || undefined,
+        company: formData.company || undefined,
+        city: formData.city || undefined,
         message: formData.message
       });
       
@@ -378,7 +378,7 @@ const Contact = () => {
                 error={error}
               />
               <div className="space-y-8">
-                {contactInfo.map((info, index) => (
+                {contactInfo.map((info, index: number) => (
                   <ContactInfoCard key={index} {...info} />
                 ))}
                 {/* Quick Demo CTA */}
@@ -413,7 +413,7 @@ const Contact = () => {
             <SectionTitle>Frequently Asked Questions.</SectionTitle>
             <SectionSubtitle className="mt-4">Quick answers to common questions about Doxxy.</SectionSubtitle>
             <div className="max-w-3xl mx-auto mt-16 space-y-8">
-              {faqs.map((faq, index) => (
+              {faqs.map((faq, index: number) => (
                 <FAQItem key={index} {...faq} />
               ))}
             </div>

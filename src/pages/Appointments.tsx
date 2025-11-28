@@ -6,11 +6,8 @@ import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 
 import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
 import { BillingModal } from '@/components/billing/BillingModal';
-import { useAppointments, AppointmentWithDetails } from '@/hooks/useAppointments';
-import { Database } from '@/integrations/supabase/types';
-
-// Define types for modal props
-type AppointmentData = Database['public']['Tables']['appointments']['Row'];
+import { useAppointments } from '@/hooks/useAppointments';
+import type { AppointmentWithDetails } from '@/types/appointments';
 import { AppointmentsTabs } from '@/components/appointments/AppointmentsTabs';
 import { DoctorSelector } from '@/components/appointments/DoctorSelector';
 import { useAuth } from '@/contexts/AuthContext';
@@ -169,7 +166,7 @@ const Appointments = () => {
       <AppointmentModal
         open={isAppointmentModalOpen}
         onOpenChange={handleModalClose}
-        appointment={selectedAppointment as AppointmentData | null}
+        appointment={selectedAppointment}
       />
 
       

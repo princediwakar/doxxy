@@ -1,12 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
+import { UserRole, DbClinicDepartment, DbDepartmentType } from '@/types/core';
 import { toast } from 'sonner';
 
 // --- Types ---
-export type UserRole = Database['public']['Enums']['user_role'];
-export type ClinicDepartment = Database['public']['Tables']['clinic_departments']['Row'];
-export type DepartmentType = Database['public']['Tables']['department_types']['Row'];
+export type ClinicDepartment = DbClinicDepartment;
+export type DepartmentType = DbDepartmentType;
 
 // Update: department_types might be returned as an array or object by Supabase joins
 export type DepartmentWithDetails = ClinicDepartment & {

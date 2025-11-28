@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
-import { ConsultationFormValues, PrescriptionMedication } from '@/components/consultation/types';
+import { ConsultationFormValues, PrescriptionMedication } from '@/types/consultation';
 import { Tables, Json } from '@/integrations/supabase/types';
 import { consultationNotesSchema, getMandatoryFieldsForDepartment } from '@/lib/consultationNotesSchemas';
 import { isEqual } from 'lodash-es';
@@ -310,7 +310,7 @@ export const useConsultationForm = (
     
     // Check each mandatory field
     mandatoryFields.forEach(fieldName => {
-      const fieldValue = specialtyData?.[fieldName];
+      const fieldValue = specialtyData?.[fieldName as keyof typeof specialtyData];
       
       // For prescription fields, check if they have valid medications
       if (fieldName === 'prescriptions') {
@@ -337,15 +337,24 @@ export const useConsultationForm = (
   // Real-time validation state for UX feedback
   const getMandatoryFieldsStatus = useCallback(() => {
     const errors = validateMandatoryFields();
+    const currentDepartment = departmentType || 'General';
+    const mandatoryFields = getMandatoryFieldsForDepartment(currentDepartment);
+    const total = mandatoryFields.length;
+    const completed = total - errors.length;
+    const allCompleted = errors.length === 0;
+
     return {
-      isValid: errors.length === 0,
+      completed,
+      total,
+      allCompleted,
+      isValid: allCompleted,
       errors,
       missingFields: errors.length,
-      validationMessage: errors.length > 0 
+      validationMessage: errors.length > 0
         ? `Missing required fields: ${errors.join(', ')}`
         : 'All required fields completed'
     };
-  }, [validateMandatoryFields]);
+  }, [validateMandatoryFields, departmentType]);
 
   // Watch for real-time validation updates
   const mandatoryFieldsStatus = getMandatoryFieldsStatus();

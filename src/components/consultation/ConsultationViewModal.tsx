@@ -1,3 +1,4 @@
+// src/components/consultation/ConsultationViewModal.tsx
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -8,7 +9,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getSupabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Eye, Printer } from "lucide-react";
@@ -16,35 +16,17 @@ import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import { ConsultationLayout } from './ConsultationLayout';
 import { printConsultation } from './printUtils';
 import { AppointmentData, Patient } from '@/types/patients';
+import {
+  Consultation,
+  TransformedDoctorData,
+  ClinicInfo,
+  DoctorInfo,
+  ConsultationFormValues,
+  FieldValue
+} from '@/types/consultation';
 
 const supabase = getSupabase();
 
-// Types
-type Consultation = Database['public']['Tables']['consultations']['Row'];
-
-// Interface for transformed doctor data
-interface TransformedDoctorData {
-  id: string;
-  name: string;
-  department_name: string;
-  phone: string | null;
-  email: string | null;
-  bio: string | null;
-  user_id?: string; // Optional since we might not have it in transformed data
-}
-
-// Interfaces for nested clinic member data
-interface DepartmentType {
-  name: string;
-}
-
-interface ClinicDepartment {
-  department_types: DepartmentType;
-}
-
-interface ClinicMember {
-  clinic_departments: ClinicDepartment;
-}
 
 interface ConsultationViewModalProps {
   open: boolean;
@@ -89,7 +71,14 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
         toast.error(`Failed to fetch consultation: ${error.message}`);
         throw error;
       }
-      return data;
+      // Convert the raw database data to our typed Consultation
+      if (data) {
+        return {
+          ...data,
+          specialty_data: data.specialty_data as ConsultationFormValues['specialty_data']
+        } as Consultation;
+      }
+      return null;
     },
     enabled: open && !!appointment?.id,
   });
@@ -107,7 +96,7 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
 
       if (!rpcError && rpcData) {
         console.log('RPC function succeeded, returning data:', rpcData);
-        const doctor = rpcData?.find(d => d.id === appointment.doctor_id);
+        const doctor = rpcData?.find((d: TransformedDoctorData) => d.id === appointment.doctor_id);
         return doctor ? [{
           id: doctor.id,
           name: doctor.name,
@@ -144,29 +133,29 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
 
       const transformedData = fallbackData?.map((doctor) => {
         // Type-safe access to nested clinic_members data
-        const clinicMember = doctor.clinic_members?.[0] as unknown as ClinicMember | undefined;
+        const clinicMember = (doctor as any).clinic_members?.[0];
         const departmentType = clinicMember?.clinic_departments?.department_types;
 
         return {
           id: doctor.id,
           name: doctor.name,
           department_name: departmentType?.name ||
-                           doctor.primary_specialization ||
+                           (doctor as any).primary_specialization ||
                            'General Medicine',
           phone: doctor.phone,
           email: doctor.email,
           bio: doctor.bio
-        };
+        } as TransformedDoctorData;
       }) || [];
 
-      const doctor = transformedData?.find(d => d.id === appointment.doctor_id);
+      const doctor = transformedData?.find((d) => d.id === appointment.doctor_id);
       return doctor ? [doctor] : null;
     },
     enabled: open && !!appointment?.doctor_id && !!activeClinic?.clinic_id,
   });
 
   // Determine department and get field configs
-  const firstDoctor = doctorDetails && doctorDetails.length > 0 ? doctorDetails[0] : null;
+  const firstDoctor = doctorDetails && Array.isArray(doctorDetails) && doctorDetails.length > 0 ? doctorDetails[0] : null;
   const departmentType = firstDoctor?.department_name || 'General';
 
   // Get consultation specialty data
@@ -177,8 +166,8 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
     : {};
 
   // Helper function to clean empty objects from specialty data
-  const cleanSpecialtyData = (data: Record<string, unknown>): Record<string, unknown> => {
-    const cleaned: Record<string, unknown> = {};
+  const cleanSpecialtyData = (data: Record<string, unknown>): Record<string, FieldValue> => {
+    const cleaned: Record<string, FieldValue> = {};
 
     Object.entries(data).forEach(([key, value]) => {
       if (!value) return;
@@ -230,23 +219,19 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
   const clinicDetails = activeClinic?.clinics || null;
 
   // Prepare clinic info for layout display
-  const clinicInfo = clinicDetails ? {
+  const clinicInfo: ClinicInfo | null = clinicDetails ? {
     name: clinicDetails.name,
-    address: clinicDetails.address || undefined,
-    phone: clinicDetails.phone || undefined,
-    email: clinicDetails.email || undefined,
-    website: clinicDetails.website || undefined
+    address: clinicDetails.address || '',
+    phone: clinicDetails.phone || '',
+    email: clinicDetails.email || ''
   } : null;
 
   // Prepare doctor info
-  const doctorInfo = {
+  const doctorInfo: DoctorInfo = {
     name: firstDoctor?.name || appointment?.doctor_name || user?.user_metadata?.full_name || 'Doctor Name',
-    specialization: firstDoctor?.department_name || departmentType,
     qualification: '', // Default qualification
-    registration_number: '', // Not available in current database schema
-    phone: firstDoctor?.phone || '',
-    email: firstDoctor?.email || user?.email || '',
-    bio: firstDoctor?.bio || ''
+    specialization: firstDoctor?.department_name || departmentType,
+    registration_number: '' // Not available in current database schema
   };
 
   // Get field sections for the department

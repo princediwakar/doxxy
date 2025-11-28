@@ -8,34 +8,17 @@ import { useQuery } from "@tanstack/react-query"
 import { getSupabase } from "@/integrations/supabase/client"
 import { useDebounce } from "use-debounce"
 import { useAuth } from "@/contexts/AuthContext"
-
-interface Medicine {
-  id: number
-  name: string
-  price: number | null
-  is_discontinued: boolean | null
-  manufacturer_name: string | null
-  pack_size_label: string | null
-  pack_type: string | null
-  short_composition1: string | null
-  short_composition2: string | null
-}
+import { Medicine, MedicationAutoFillData } from "@/types/prescriptions"
 
 interface MedicineComboboxProps {
   value?: string
   onValueChange?: (value: string) => void
-  onMedicineSelect?: (medicine: Medicine, autoFillData: AutoFillData) => void
+  onMedicineSelect?: (medicine: Medicine, autoFillData: MedicationAutoFillData) => void
   placeholder?: string
   disabled?: boolean
   className?: string
   showClearButton?: boolean
   onClear?: () => void
-}
-
-interface AutoFillData {
-  dosage: string
-  route: string
-  suggestedFrequency?: string
 }
 
 // Smart extraction functions for auto-filling prescription fields
@@ -303,7 +286,7 @@ export function MedicineCombobox({
   }, [value, medicines, selectedMedicine])
 
   const handleSelect = (medicine: Medicine) => {
-    const autoFillData: AutoFillData = {
+    const autoFillData: MedicationAutoFillData = {
       dosage: extractDosageFromName(medicine.name, medicine.short_composition1),
       route: determineRouteFromName(medicine.name, medicine.pack_type, medicine.pack_size_label),
       suggestedFrequency: suggestFrequencyFromComposition(medicine.short_composition1)

@@ -1,8 +1,8 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { getSupabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { Database } from "@/integrations/supabase/types";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import type { DbClinic, UserRole } from "@/types/core";
 
 const supabase = getSupabase();
 
@@ -10,10 +10,10 @@ export type ClinicMemberWithClinic = {
   id: string;
   user_id: string;
   clinic_id: string;
-  role: Database['public']['Enums']['user_role'];
+  role: UserRole;
   department_id: string | null;
   created_at: string;
-  clinics: Database['public']['Tables']['clinics']['Row'] | null;
+  clinics: DbClinic | null;
   clinic_name?: string;
   joined_at?: string;
 };

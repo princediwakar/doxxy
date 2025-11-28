@@ -285,11 +285,6 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
         <div className="space-y-1">
           <div className="text-2xl font-bold text-blue-600">₹{pkg.amount}</div>
           <div className="text-sm text-muted-foreground">{pkg.description}</div>
-          {pkg.savings && (
-            <Badge variant="secondary" className="text-green-600 bg-green-50">
-              {pkg.savings}
-            </Badge>
-          )}
         </div>
       </CardHeader>
       

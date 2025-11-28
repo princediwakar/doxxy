@@ -29,12 +29,10 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { Database } from "@/integrations/supabase/types";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-
-type Patient = Database['public']['Tables']['patients']['Row'];
-type PatientInsert = Database['public']['Tables']['patients']['Insert'];
+import type { Patient } from "@/types/patients";
+import type { DbPatientInsert, DbPatientUpdate } from "@/types/core";
 
 interface PatientModalProps {
   open: boolean;
@@ -98,7 +96,7 @@ export const PatientModal = ({
         throw new Error("No active clinic selected.");
       }
 
-      const patientData: PatientInsert = {
+      const patientData: DbPatientInsert = {
         name: values.name,
         clinic_id: activeClinic.clinic_id,
         gender: values.gender || null,
@@ -137,7 +135,7 @@ export const PatientModal = ({
         throw new Error("Patient ID is missing for update.");
       }
 
-      const patientData: Partial<Patient> = {
+      const patientData: DbPatientUpdate = {
         name: values.name,
         gender: values.gender || null,
         age: values.age || null,

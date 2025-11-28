@@ -1,147 +1,76 @@
-// types.ts
-import { z } from 'zod';
-import { consultationNotesSchema } from '@/lib/consultationNotesSchemas';
-import { Tables } from '@/integrations/supabase/types';
+// Consultation component types
 
-// Use existing Supabase types
-export type Patient = Tables<'patients'>;
-export type Clinic = Tables<'clinics'>;
-export type Doctor = Tables<'doctors'>;
-export type Consultation = Tables<'consultations'>;
-export type Prescription = Tables<'prescriptions'>;
-
-export interface ConsultationFormValues {
-  specialty_data: z.infer<typeof consultationNotesSchema>;
-}
-
-export interface PrescriptionMedication {
-  name?: string;
-  dosage?: string;
-  frequency?: string;
-  duration?: string;
-  route?: string;
-  instructions?: string;
-}
-
-export interface PrescriptionFieldProps {
-  value: readonly PrescriptionMedication[];
-  onChange: (value: PrescriptionMedication[]) => void;
-  isReadOnly?: boolean;
-}
-
-export interface FieldConfig {
-  name: string;
-  label: string;
-  type: string;
-  placeholder?: string;
-  rows?: number;
-  options?: string[];
-  mandatory?: boolean;
-}
-
-// --- NEW NAMED INTERFACES ---
-
-export interface EyeData {
-  left?: string; 
-  right?: string; 
-  notes?: string; 
-}
-
-export interface VitalSignsData {
-  temperature?: string;
-  pulse?: string;
-  blood_pressure_systolic?: string;
-  blood_pressure_diastolic?: string;
-  respiratory_rate?: string;
-  oxygen_saturation?: string;
-  height?: string;
-  weight?: string;
-  bmi?: string;
-}
-
-export interface MotorExamData {
-  shoulder_left?: string;
-  shoulder_right?: string;
-  elbow_left?: string;
-  elbow_right?: string;
-  wrist_left?: string;
-  wrist_right?: string;
-  hip_left?: string;
-  hip_right?: string;
-  knee_left?: string;
-  knee_right?: string;
-  ankle_left?: string;
-  ankle_right?: string;
-  muscle_tone?: string;
-  muscle_bulk?: string;
-  involuntary_movements?: string;
-  coordination?: string;
-  notes?: string;
-}
-
-export interface ReflexExamData {
-  biceps_left?: string;
-  biceps_right?: string;
-  triceps_left?: string;
-  triceps_right?: string;
-  supinator_left?: string;
-  supinator_right?: string;
-  knee_left?: string;
-  knee_right?: string;
-  ankle_left?: string;
-  ankle_right?: string;
-  plantar_right?: string;
-  plantar_left?: string;
-  abdominal_left?: string;
-  abdominal_right?: string;
-  clonus?: string;
-  hoffmann?: string;
-  notes?: string;
-}
-
+/** Tabular eye examination value */
 export interface TabularEyeValue {
-  // Visual function tests
   visual_acuity_left?: string;
   visual_acuity_right?: string;
   refraction_left?: string;
   refraction_right?: string;
-
-  // Anterior segment
-  // Clinical flow: EOM -> Lids -> Conjunctiva -> Cornea -> Anterior Chamber -> Iris -> Pupil -> Lens -> IOP
-  extraocular_movements_left?: string;
-  extraocular_movements_right?: string;
-  lids_left?: string;
-  lids_right?: string;
-  conjunctiva_left?: string;
-  conjunctiva_right?: string;
-  cornea_left?: string;
-  cornea_right?: string;
-  anterior_chamber_left?: string;
-  anterior_chamber_right?: string;
-  iris_left?: string;
-  iris_right?: string;
-  pupil_examination_left?: string;
-  pupil_examination_right?: string;
-  lens_left?: string;
-  lens_right?: string;
   intraocular_pressure_left?: string;
   intraocular_pressure_right?: string;
-
-  // Posterior segment
-  fundus_exam_left?: string;
-  fundus_exam_right?: string;
-
-  // Additional findings
+  slit_lamp_left?: string;
+  slit_lamp_right?: string;
+  fundus_left?: string;
+  fundus_right?: string;
   notes?: string;
 }
 
+/** Motor examination value */
+export interface MotorExaminationValue {
+  muscle_tone?: string;
+  muscle_strength?: string;
+  coordination?: string;
+  gait?: string;
+  reflexes?: string;
+  notes?: string;
+}
 
-// Union type using the named interfaces
-export type FieldValue =
-  | string
-  | PrescriptionMedication[]
-  | EyeData
-  | VitalSignsData
-  | MotorExamData
-  | ReflexExamData
-  | TabularEyeValue;
+/** Reflex examination value */
+export interface ReflexExaminationValue {
+  biceps?: string;
+  triceps?: string;
+  brachioradialis?: string;
+  patellar?: string;
+  achilles?: string;
+  plantar?: string;
+  notes?: string;
+}
+
+/** Field configuration */
+export interface FieldConfig {
+  name: string;
+  label: string;
+  type: 'text' | 'textarea' | 'select' | 'number' | 'date' | 'checkbox' | 'radio' | 'prescription' | 'vital_signs' | 'motor_examination' | 'reflex_examination' | 'tabular_eye';
+  options?: string[];
+  placeholder?: string;
+  mandatory?: boolean;
+  section?: string;
+  rows?: number;
+  maxLength?: number;
+}
+
+/** Field value type */
+export type FieldValue = string | number | boolean | TabularEyeValue | MotorExaminationValue | ReflexExaminationValue | any[] | null | undefined;
+
+/** Clinic information */
+export interface ClinicInfo {
+  name: string;
+  address: string;
+  phone: string;
+  email: string;
+}
+
+/** Doctor information */
+export interface DoctorInfo {
+  name: string;
+  qualification: string;
+  registration_number: string;
+  signature?: string;
+}
+
+/** Field section */
+export interface FieldSection {
+  name: string;
+  label: string;
+  fields: FieldConfig[];
+}

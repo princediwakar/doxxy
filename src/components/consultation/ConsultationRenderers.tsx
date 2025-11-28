@@ -8,7 +8,7 @@ import {
   MotorExamData,
   ReflexExamData,
   TabularEyeValue,
-} from "./types";
+} from "@/types/consultation";
 
 // --- Helper: Neuro Table (Shared by Motor & Reflex) ---
 
@@ -43,15 +43,21 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
     return value || defaultValue;
   };
 
-  const hasData = rows.some(
-    (row) => {
-      const left = getValueWithDefault(safeData[`${row.key}_left`]);
-      const right = getValueWithDefault(safeData[`${row.key}_right`]);
-      return left !== '' || right !== '';
-    }
-  );
+  // Always show motor and reflex examination tables with default values
+  if (defaultValue === '5' || defaultValue === '2') {
+    // Force showing the table even if no explicit data
+  } else {
+    // For other tables, check if there's any data
+    const hasData = rows.some(
+      (row) => {
+        const left = getValueWithDefault(safeData[`${row.key}_left`]);
+        const right = getValueWithDefault(safeData[`${row.key}_right`]);
+        return left !== '' || right !== '';
+      }
+    );
 
-  if (!hasData) return null;
+    if (!hasData && defaultValue === '') return null;
+  }
 
   return (
     <div className="space-y-1">
@@ -379,25 +385,6 @@ export const TabularEyeExaminationDisplay: React.FC<{
   );
 };
 
-// Helper function to check if an object has any meaningful content
-const hasMeaningfulContent = (obj: Record<string, unknown>): boolean => {
-  return Object.values(obj).some(val => {
-    if (typeof val === 'string') return val.trim().length > 0;
-    if (Array.isArray(val)) return val.length > 0;
-    if (typeof val === 'object' && val !== null) return hasMeaningfulContent(val as Record<string, unknown>);
-    return false;
-  });
-};
-
-// Helper function to check if tabular data has any content
-const hasTabularData = (data: Record<string, unknown>): boolean => {
-  return Object.entries(data).some(([key, value]) => {
-    // Skip notes field for content check
-    if (key === 'notes') return false;
-    if (typeof value === 'string') return value.trim().length > 0;
-    return false;
-  });
-};
 
 // --- Type Guards for Clean Field Detection ---
 
@@ -489,27 +476,31 @@ export const FieldValueRenderer: React.FC<{
 
   // Type Guard: Objects
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-    // Check if object has any meaningful content before rendering
-    if (!hasMeaningfulContent(value as Record<string, unknown>)) return null;
+    const data = value as Record<string, unknown>;
+
+    // Simple check: if object has no properties at all, don't render
+    if (Object.keys(data).length === 0) return null;
 
     // Clean type detection using explicit type guards
-    if (isVitalSignsData(value) && hasTabularData(value as Record<string, unknown>)) {
+    if (isVitalSignsData(value)) {
       return <VitalSignsDisplay data={value} />;
     }
 
-    if (isEyeData(value) && hasTabularData(value as Record<string, unknown>)) {
+    if (isEyeData(value)) {
       return <EyeFieldDisplay data={value} />;
     }
 
-    if (isMotorExamData(value) && hasTabularData(value as Record<string, unknown>)) {
+    // Always show motor and reflex examination data (they have default values)
+    if (isMotorExamData(value)) {
       return <MotorExaminationDisplay data={value} />;
     }
 
-    if (isReflexExamData(value) && hasTabularData(value as Record<string, unknown>)) {
+    if (isReflexExamData(value)) {
       return <ReflexExaminationDisplay data={value} />;
     }
 
-    if (isTabularEyeData(value) && hasTabularData(value as Record<string, unknown>)) {
+
+    if (isTabularEyeData(value)) {
       return <TabularEyeExaminationDisplay data={value} />;
     }
 

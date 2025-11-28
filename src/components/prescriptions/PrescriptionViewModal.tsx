@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format, parseISO } from "date-fns";
-import { 
-  Pill, 
+import {
+  Pill,
   Calendar,
   User,
   FileText,
@@ -20,12 +20,12 @@ import {
 } from "lucide-react";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Tables } from "@/integrations/supabase/types";
+import type {
+  PrescriptionViewModalProps,
+  FormattedMedication
+} from "@/types/prescriptions";
 
 const supabase = getSupabase();
-
-// Define proper types
-type Prescription = Tables<"prescriptions">;
 
 interface Medication {
   name?: string;
@@ -35,17 +35,6 @@ interface Medication {
   duration?: string;
   eye?: string;
   instructions?: string;
-}
-
-interface FormattedMedication {
-  medication: string;
-  instructions: string | null;
-}
-
-interface PrescriptionViewModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  prescription: Prescription | null;
 }
 
 export function PrescriptionViewModal({ open, onOpenChange, prescription }: PrescriptionViewModalProps) {

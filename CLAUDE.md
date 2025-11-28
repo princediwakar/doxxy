@@ -1,202 +1,190 @@
+
+````markdown
 # Claude Code Guidelines - Doxxy Healthcare App
 
-## 🤖 Claude Model Configuration
+<system_role>
+**Model Role**: `Principal TypeScript Architect & Senior Healthcare Engineer`
+**Core Expertise**: Healthcare SaaS, Hub & Spoke Type Architecture, Zod Schema Engines, RLS Security, React/Supabase.
+</system_role>
 
-**Model Role**: `You are Lead Software Architect, Senior Healthcare Software Engineer & Lead Designer`
+---
 
-**Core Expertise**: Healthcare SaaS development, HIPAA compliance, multi-tenant architecture, React/TypeScript + Supabase, RLS security patterns, Design Thinking
+## 🏗️ CORE ARCHITECTURE: "Hub & Spoke" Type System (STRICT)
+
+<critical_laws>
+**CRITICAL INSTRUCTION**: The codebase has migrated to a strict Hub & Spoke architecture. You must adhere to these three laws:
+
+### 1. The "Single Source of Truth" Law
+- **NEVER** import `Database['public']` directly in components or hooks.
+- **ALWAYS** import standardized wrappers from `src/types/core.ts`.
+  - ❌ `import { Database } from '@/integrations/supabase/types'`
+  - ✅ `import { DbPatient, DbAppointment } from '@/types/core'`
+
+### 2. The "Zero Local Definitions" Law
+- **NEVER** define data interfaces (e.g., `interface PatientRow`) inside `.tsx` files.
+- **ALWAYS** create/use a dedicated file in `src/types/[module].ts`.
+  - Example: `src/types/consultation.ts` extends `DbConsultation` from `core.ts`.
+
+### 3. The "Schema Engine" Law (Metadata-Driven UI)
+- UI configuration (Labels, Placeholders, Rows, Sections) lives **inside the Zod Schema**, not in arrays.
+- **ALWAYS** use `src/lib/schemaUtils.ts` helpers:
+  - Use `zField(z.string(), { label: "Name", section: "History" })` to define fields.
+  - Use `createEyeField(...)` for ophthalmic data.
+  - **NEVER** create separate configuration arrays for forms; read metadata from the schema.
+</critical_laws>
+
+---
+
+## 📜 CLEAN CODE BIBLE (Strict Adherence)
+
+<coding_standards>
+1. **DRY & SRP**: No duplicated logic. Components must do one thing. Extract utility functions.
+2. **Naming Matters**: Variables must be descriptive (`isPatientActive` > `active`). No magic numbers.
+3. **KISS**: Readability > Cleverness. Code is read more often than written.
+4. **Boy Scout Rule**: Leave every file cleaner than you found it (fix types, remove unused imports).
+5. **Early Returns**: Reduce nesting levels by returning early.
+6. **Pure Functions**: Isolate side effects in hooks. Logic should be deterministic.
+7. **Explicit Types**: No explicit `any`. Infer where possible, define where necessary.
+</coding_standards>
 
 ---
 
 ## 🏥 Application Context
 
-**Doxxy** is a multi-tenant healthcare practice management system built with React/TypeScript + Supabase.
+**Doxxy**: Multi-tenant healthcare practice management (React + TypeScript + Supabase).
 
-### Core Architecture
-- **Frontend**: React + TypeScript + Vite + shadcn/ui + Tailwind
-- **Backend**: Supabase (PostgreSQL + Auth + RLS)
-- **Multi-Tenancy**: Clinic-based isolation via `clinic_id`
-- **Compliance**: HIPAA/HITECH requirements mandatory
+### Core Entities & Type mappings
+*Refer to `src/types/core.ts` for the authoritative list.*
 
-### Key Entities & Schema
-```sql
--- Core tenant structure
-clinics (id, name, address, phone, email, website, created_by, created_at, slug)
-clinic_members (id, user_id, clinic_id, role, department_id, created_at, updated_at)
-profiles (id, first_name, last_name, display_name, email, phone, user_metadata)
+| Table Name | Core Type Wrapper | Notes |
+| :--- | :--- | :--- |
+| `patients` | `DbPatient` | Tenant-isolated |
+| `appointments` | `DbAppointment` | Links Patient ↔ Doctor |
+| `consultations` | `DbConsultation` | **Special:** `specialty_data` is typed via Zod (Phase 2), not JSON |
+| `prescriptions` | `DbPrescription` | **Special:** `medications` is typed via Zod, not JSON |
+| `doctors` | `DbDoctor` | distinct from `auth.users` |
 
--- Patient & clinical data
-patients (id, clinic_id, name, email, phone, gender, date_of_birth, medical_id, address)
-doctors (id, user_id, clinic_id, name, email, phone, specialization, qualification)
-appointments (id, clinic_id, patient_id, doctor_id, appointment_date, status, notes)
-consultations (id, appointment_id, clinic_id, chief_complaint, assessment_diagnosis)
-
--- Billing & payments
-bills (id, clinic_id, patient_id, appointment_id, total_amount, payment_status)
-payment_transactions (id, clinic_id, transaction_type, amount, razorpay_payment_id)
-```
-
-**CRITICAL: Doctor-User Relationship**
-- `doctors.id` ≠ `auth.users.id` - Doctor profiles are separate from user accounts
-- `doctors.user_id` links to `auth.users.id` - One user can have multiple doctor profiles
-- Always fetch doctor data to get `user_id` when checking permissions, never compare `appointment.doctor_id` directly with `user.id`
-
-### User Roles
-- **superadmin**: Full system access, can create doctor profiles for clinical work
-- **doctor**: Patient care, appointments, medical records
-- **staff**: Scheduling, patient demographics, billing
-
----
-
-## 🧠 THINKING METHODOLOGY
-
-> **Before coding anything, you must think deeply and systematically.**
-
-### Required Analysis Process
-1. **UNDERSTAND** - What problem are we really solving? Why does it matter?
-2. **EXPLORE** - What are 3+ different approaches? What are the trade-offs?
-3. **DECIDE** - Which approach is best and why? What could go wrong?
-4. **PLAN** - What's the step-by-step implementation strategy?
-
----
-
-## 📝 MANDATORY LOGGING
-
-**Every development session MUST be logged in `development-log.md`**
-
-```
+**Security Context**:
+- **Multi-Tenancy**: Every query must filter by `clinic_id`.
+- **RLS**: Enabled on all tables.
+- **Doctor-User Split**: `doctors` table contains clinical profile; `auth.users` contains login. Link via `doctors.user_id`.
 
 ---
 
 ## 📁 Project Structure
 
-```
+```text
 src/
 ├── components/
-│   ├── ui/                    # shadcn/ui components
-│   ├── patients/              # Patient-specific components
-│   ├── appointments/          # Scheduling components
-│   ├── billing/              # Billing & payments
-│   ├── doctors/              # Doctor profiles & management
-│   └── shared/               # Reusable components
-├── hooks/                     # Custom React hooks
-├── lib/                      # Utilities & helpers
-├── types/                    # TypeScript definitions
-├── integrations/supabase/    # DB client & generated types
-└── pages/                    # Route components
+│   ├── ui/                    # shadcn/ui components (Visuals)
+│   ├── consultation/          # ⚠️ Complex Clinical Logic (High Risk)
+│   └── ...
+├── lib/
+│   ├── schemaUtils.ts         # ⚙️ THE SCHEMA ENGINE (zField, helpers)
+│   └── consultationNotesSchemas.ts # 🧠 The Brain: Zod schemas + UI Metadata
+├── types/
+│   ├── core.ts                # 👑 THE HUB: Sole consumer of Supabase types
+│   ├── consultation.ts        # Spoke: Extends core for consultation features
+│   ├── prescriptions.ts       # Spoke: Medication types
+│   └── ...
+├── integrations/supabase/     # Raw generated types (Do not touch directly)
+````
 
-supabase/
-├── migrations/               # Database schema changes
-├── functions/               # Edge functions
-└── config.toml             # Supabase configuration
+-----
 
-docs/                        # 📁 Organized project documentation
-├── README.md               # Documentation standards & organization
-├── architecture/           # System design, technical decisions
-├── migrations/             # Database migration documentation
-├── security/               # RLS policies, compliance docs
-├── workflows/              # Development & deployment guides
-└── troubleshooting/        # Debugging guides, common fixes
+## 🧠 DEVELOPMENT METHODOLOGY
 
-development-log.md           # ⚠️ MANDATORY session log - STAYS IN ROOT for easy access
-claude.md                   # This file - Claude Code guidelines
+\<workflow\>
+
+### Phase 0: Discovery (MANDATORY)
+
+Before writing code, you must:
+
+1.  **Map Dependencies**: Check imports. Are we using `core.ts` or raw types?
+2.  **Check the Schema**: Read `src/lib/consultationNotesSchemas.ts` to understand the data shape.
+3.  **Plan the Bridge**: How will the Zod schema map to the Database type?
+
+### Phase 1: Implementation
+
+1.  **Update Types First**: If data shape changes, update `core.ts` or the specific "Spoke" type file.
+2.  **Update Schema**: Modify Zod definitions using `zField`.
+3.  **Update Component**: Components should simply render what the type/schema dictates.
+
+### Phase 2: Verification
+
+  - **Browser Test**: `npm run dev` (Ensure no white-screen crashes).
+  - **Type Check**: Run `npx tsc --noEmit --noEmitOnError --project tsconfig.app.json` to ensure no property access violations.
+
+\</workflow\>
+
+-----
+
+## 📝 DEVELOPMENT LOGGING (Strict)
+
+**Every session must be logged in `development-log.md` located in the ROOT.**
+
+```markdown
+## [Date] - [Task Name]
+- **Focus**: [What are we building?]
+- **Type Changes**: [Did we modify core.ts? Did we add a new Spoke type?]
+- **Schema Changes**: [Did we modify Zod metadata?]
+- **Outcome**: [Status of the build]
 ```
 
----
+-----
 
+## ⚡ DATABASE & TYPE WORKFLOW
 
-### Database Operations & Migration Workflow
+**Supabase Project ID**: `chftygsapwhahqbqlfdx`
+
+### 1\. Database Migration
+
 ```bash
-# ESSENTIAL: Check system status before any work
-npx supabase status
+npx supabase migration new [name]
+npx supabase migration up --local
+```
 
-# 3. Generate TypeScript types after successful local migration
+### 2\. Type Generation (The Critical Path)
+
+After *any* database change, you must regenerate types so `core.ts` can consume them.
+
+```bash
+# Local Dev
 npx supabase gen types typescript --local > src/integrations/supabase/types.ts
+
+# Production Pull (If needed)
 npx supabase gen types typescript --project-id chftygsapwhahqbqlfdx --schema public > src/integrations/supabase/types.ts
-# PRODUCTION DEPLOYMENT
-# 4. Push to production (only after local testing)
-npx supabase db push
+```
 
----
+### 3\. Core Synchronization
 
-## ⚡ Implementation Standards
+*After generating types, check `src/types/core.ts`.*
 
-### Always Required
-- **Multi-tenant security**: Every query filtered by `clinic_id`
-- **Zero console errors**: Browser testing mandatory
-- **TypeScript strict**: No `any` types allowed
-- **shadcn/ui components**: Consistent design system
-- **Responsive design**: Mobile/tablet/desktop verified
-- **Performance**: <1s page loads, <500ms API responses
-- **React Query**: For server state management with proper cache config
+  - If a new table was added, export its `Db[Name]` wrapper in `core.ts`.
+  - If an enum changed, ensure the export in `core.ts` reflects it.
 
-### Database Changes - MANDATORY WORKFLOW
-1. **Check current state**: `npx supabase status && npx supabase migration list`
-2. **Create migration**: `npx supabase migration new [descriptive_name]`
-3. **Test locally FIRST**: `npx supabase migration up --local`
-4. **Generate types after local success**: `npx supabase gen types typescript --local > src/integrations/supabase/types.ts`
-5. **Deploy to production**: `npx supabase db push`
-6. **Verify production**: `npx supabase migration list --linked`
-7. **Browser validation**: Test all affected workflows
-8. **Update development log**: Document in `development-log.md`
+-----
 
-### Browser Testing Protocol
-```bash
-# Start services & verify
-npx supabase start
-npm run dev
-sleep 3 && curl -f http://localhost:8080 || echo "Frontend not ready"
+## 🔄 COMMIT STRATEGY
 
----
+**"Atomic & Descriptive"**
 
-## 🔄 COMMIT FREQUENCY GUIDELINES
+1.  **Type System Commits**: "feat(types): Update core.ts with new billing tables"
+2.  **Schema Commits**: "feat(schema): Add vitals to pediatric schema via zField"
+3.  **UI Commits**: "feat(ui): Refactor ConsultationModal to use DbConsultation"
 
-### MANDATORY: Commit Early, Commit Often
+**Never commit broken types.** If `core.ts` is broken, the whole app is broken.
 
-**Core Principle**: Create small, focused commits that represent logical, stable changes.
+-----
 
-### When to Commit:
-1. **After completing logical units** - When a feature, component, or fix is working
-2. **At stable checkpoints** - After testing confirms functionality works end-to-end
-3. **Before risky changes** - Before major refactors or AI-assisted file modifications
-4. **When something works** - After successful implementation before moving to related files
+## 🎯 QUALITY GATES
 
-### Commit Strategy:
-- **Group related changes** - Billing system, payment system, clinic management, etc.
-- **One logical change per commit** - Each commit should tell a clear story
-- **Test before committing** - Ensure the change works as expected
-- **Write descriptive messages** - Focus on "why" rather than "what"
+1.  **Strict Mode**: No `any` types. Use generic overrides in `core.ts` if flexible data is needed.
+2.  **Console Zero**: No console errors allowed.
+3.  **Mobile First**: Layouts must not break on mobile.
+4.  **Schema Validity**: All Zod schemas must successfully parse their corresponding `Db` type data (bridge check).
 
-### Examples of Logical Commit Units:
-- Component updates with related hooks
-- Database migrations with associated type generation
-- Feature implementations across multiple related files
-- Documentation updates as a cohesive set
-- Configuration changes that work together
+<!-- end list -->
 
-### Proactive Commit Behavior:
-- **Suggest commits** after completing significant work units
-- **Group changes logically** rather than by file count
-- **Follow project commit message style** from recent history
-- **Push regularly** to keep remote repository synchronized
-
----
-
-## 🎯 Success Criteria
-
-### Performance Targets
-- Page loads: <1 second
-- API responses: <500ms
-- Bundle size: <500KB
-- Zero cross-tenant data leakage
-
-### Development Quality
-- Complete analysis documented before coding
-- All quality gates passing
-- Browser testing completed
-- Comprehensive logging maintained
-
-
----
-
-**Core Philosophy**: Think first, code second, test everything, log comprehensively, leverage AI effectively.
+```
+```

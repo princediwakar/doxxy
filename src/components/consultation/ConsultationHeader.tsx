@@ -2,21 +2,10 @@ import { ArrowLeft, Save, Eye, CheckCircle, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Patient } from './types';
-
-interface AutoSaveMutation {
-  isPending: boolean;
-}
-
-interface MandatoryFieldsStatus {
-  isValid: boolean;
-  errors: string[];
-  missingFields: number;
-  validationMessage: string;
-}
+import { PatientWithClinic, AutoSaveMutation, MandatoryFieldsStatus } from '@/types/consultation';
 
 interface ConsultationHeaderProps {
-  patient: Patient | null;
+  patient: PatientWithClinic | null;
   isConsultationCompleted: boolean;
   canEditConsultation: boolean;
   autoSaveMutation: AutoSaveMutation;
@@ -39,7 +28,7 @@ export const ConsultationHeader = ({
   onPreview,
   onComplete
 }: ConsultationHeaderProps) => {
-  const canComplete = mandatoryFieldsStatus.isValid && !autoSaveMutation.isPending && !isConsultationCompleted;
+  const canComplete = mandatoryFieldsStatus.allCompleted && !autoSaveMutation.isPending && !isConsultationCompleted;
   const canEditCompleted = isConsultationCompleted && canEditConsultation;
 
 

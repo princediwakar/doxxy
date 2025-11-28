@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail, Stethoscope, Edit3, Trash2, Shield, UserCog, Users, Phone, Building2 } from 'lucide-react';
-import { InviteMemberData, CreateDoctorData, UserRole, MemberWithDetails, DepartmentWithDetails } from './useClinicMembers';
+import { InviteMemberData, CreateDoctorData, MemberWithDetails, DepartmentWithDetails } from './useClinicMembers';
+import { UserRole } from '@/types/core';
 
 // --- Helper Functions ---
 const getRoleIcon = (role: UserRole) => {

@@ -13,15 +13,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { AppointmentModal } from '../appointments/AppointmentModal';
 import { BillingModal } from '../billing/BillingModal';
 import { formatTimeIST } from "@/lib/utils";
-
-type Patient = Database['public']['Tables']['patients']['Row'];
-type Appointment = Database['public']['Tables']['appointments']['Row'];
-type Bill = Database['public']['Tables']['bills']['Row'];
+import type { Patient, Appointment } from "@/types/patients";
+import type { Bill } from "@/types/billing";
 
 interface PatientDetailsModalProps {
   open: boolean;

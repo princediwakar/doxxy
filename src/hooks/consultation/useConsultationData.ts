@@ -1,6 +1,8 @@
+// src/hooks/consultation/useConsultationData.ts
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
+import { ConsultationNotes } from '@/lib/consultationNotesSchemas';
 
 export const useConsultationData = (appointmentId: string | undefined) => {
   const { activeClinic } = useAuth();
@@ -54,7 +56,19 @@ export const useConsultationData = (appointmentId: string | undefined) => {
         .limit(5);
 
       if (error) throw error;
-      return data || [];
+
+      // Transform the data to match Consultation type
+      return (data || []).map(consultation => ({
+        ...consultation,
+        // Cast specialty_data to the expected type
+        specialty_data: consultation.specialty_data as ConsultationNotes | null,
+        appointment: consultation.appointment ? {
+          date: consultation.appointment.date,
+          time: consultation.appointment.time,
+          doctor_name: 'Previous Doctor', // Not available in this query
+          department_name: 'Previous Department' // Not available in this query
+        } : null
+      }));
     },
     enabled: !!appointmentQuery.data?.patient?.id && !!activeClinic?.clinic_id,
   });
@@ -155,7 +169,17 @@ export const useConsultationData = (appointmentId: string | undefined) => {
         console.log('No department found for doctor:', error);
         return null;
       }
-      return data;
+
+      // Transform the data to match DepartmentInfo type
+      if (data?.clinic_departments?.department_types) {
+        return {
+          name: data.clinic_departments.department_types.name,
+          description: undefined, // Not available in current query
+          clinic_departments: data.clinic_departments // Preserve the structure for type compatibility
+        };
+      }
+
+      return null;
     },
     enabled: !!appointmentQuery.data?.doctor?.user_id && !!activeClinic?.clinic_id,
   });

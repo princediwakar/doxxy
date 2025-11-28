@@ -9,9 +9,9 @@ import { CHARACTER_LIMITS } from './constants';
 import { PrescriptionField } from './PrescriptionField';
 import { TabularEyeField } from './TabularEyeField';
 import { VitalSignsField } from './VitalSignsField';
-import { MotorExaminationField, MotorExaminationValue } from './MotorExaminationField';
-import { ReflexExaminationField, ReflexExaminationValue } from './ReflexExaminationField';
-import { FieldConfig, FieldValue } from './types';
+import { MotorExaminationField } from './MotorExaminationField';
+import { ReflexExaminationField } from './ReflexExaminationField';
+import type { FieldConfig, FieldValue, TabularEyeValue, MotorExaminationValue, ReflexExaminationValue } from '@/types/consultation';
 import { useState, useRef, useEffect } from 'react';
 
 interface ConsultationFormFieldProps {

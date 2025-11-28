@@ -1,3 +1,4 @@
+// src/components/appointments/AppointmentsTable.tsx
 import React from 'react';
 import {
   Table,

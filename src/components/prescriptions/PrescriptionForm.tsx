@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { MedicineCombobox } from "@/components/ui/medicine-combobox";
 import { Plus, Trash2, Calendar, User, Stethoscope } from "lucide-react";
 import { formatTimeIST } from '@/lib/utils';
-import { PrescriptionFormValues } from "@/hooks/usePrescription";
+import { PrescriptionFormValues } from "@/types/prescriptions";
 
 interface AppointmentSelectorProps {
   appointmentsForSelect: Array<{

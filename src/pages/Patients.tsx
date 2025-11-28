@@ -1,48 +1,60 @@
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import {
-  Activity,
-  FileText,
-  User,
-} from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { getSupabase } from '@/integrations/supabase/client';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+//src/pages/Patients.tsx
+import { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Activity, FileText, User } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { getSupabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AppointmentData,
   ConsultationWithAppointment,
+  Consultation,
   Patient,
   PatientWithConsultations,
   Prescription,
   SpecialtyData,
-} from '@/types/patients';
-import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
-import { PrescriptionViewModal } from '@/components/prescriptions/PrescriptionViewModal';
-import { ExportOptionsModal } from '@/components/ExportOptionsModal';
-import { MedicalRecordPDFExporter } from '@/lib/pdfExport';
-import { AppointmentModal } from '@/components/appointments/AppointmentModal';
-import { PatientModal } from '@/components/patients/PatientModal';
-import { BillingModal } from '@/components/billing/BillingModal';
-import { toast } from 'sonner';
+  AppointmentStatus,
+  DoctorWithDepartmentInfo,
+} from "@/types/patients";
+import { ConsultationViewModal } from "@/components/consultation/ConsultationViewModal";
+import { PrescriptionViewModal } from "@/components/prescriptions/PrescriptionViewModal";
+import { ExportOptionsModal, ExportConfiguration } from "@/components/ExportOptionsModal";
+import { MedicalRecordPDFExporter } from "@/lib/pdfExport";
+import { AppointmentModal } from "@/components/appointments/AppointmentModal";
+import { PatientModal } from "@/components/patients/PatientModal";
+import { BillingModal } from "@/components/billing/BillingModal";
+import { toast } from "sonner";
 import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
 import { PatientSearch } from "@/components/patients/PatientSearch";
 import { PatientList } from "@/components/patients/PatientList";
 import { PatientDetailView } from "@/components/patients/PatientDetailView";
-import { formatTimeIST } from '@/lib/utils';
+import { formatTimeIST } from "@/lib/utils";
 
 const supabase = getSupabase();
 
-const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: string, currentPage: number, itemsPerPage: number): Promise<{ patients: PatientWithConsultations[], totalCount: number }> => {
-  console.log("fetchPatientsWithMedicalRecords: Fetching for clinic", clinicId, "search", searchTerm, "page", currentPage);
+const fetchPatientsWithMedicalRecords = async (
+  clinicId: string,
+  searchTerm: string,
+  currentPage: number,
+  itemsPerPage: number
+): Promise<{ patients: PatientWithConsultations[]; totalCount: number }> => {
+  console.log(
+    "fetchPatientsWithMedicalRecords: Fetching for clinic",
+    clinicId,
+    "search",
+    searchTerm,
+    "page",
+    currentPage
+  );
 
   // First get all patients for filtering and count
   let allPatientsQuery = supabase
-    .from('patients')
-    .select('*')
-    .eq('clinic_id', clinicId);
+    .from("patients")
+    .select("*")
+    .eq("clinic_id", clinicId);
 
   if (searchTerm.trim()) {
-    allPatientsQuery = allPatientsQuery.ilike('name', `%${searchTerm}%`);
+    allPatientsQuery = allPatientsQuery.ilike("name", `%${searchTerm}%`);
   }
 
   const { data: allPatients, error: patientsError } = await allPatientsQuery;
@@ -51,15 +63,17 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
   // Apply pagination
   const totalCount = allPatients?.length || 0;
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const patients = allPatients?.slice(startIndex, startIndex + itemsPerPage) || [];
+  const patients =
+    allPatients?.slice(startIndex, startIndex + itemsPerPage) || [];
 
   // For each patient, fetch their consultations and prescriptions with simpler queries
   const patientsWithRecords = await Promise.all(
     patients.map(async (patient) => {
       // Fetch consultations with basic appointment data
       const { data: consultations } = await supabase
-        .from('consultations')
-        .select(`
+        .from("consultations")
+        .select(
+          `
           *,
           appointments(
             id,
@@ -68,16 +82,17 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
             status,
             doctor_id
           )
-        `)
-        .eq('patient_id', patient.id)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .eq("patient_id", patient.id)
+        .order("created_at", { ascending: false });
 
       // Fetch prescriptions
       const { data: prescriptions } = await supabase
-        .from('prescriptions')
-        .select('*')
-        .eq('patient_id', patient.id)
-        .order('created_at', { ascending: false });
+        .from("prescriptions")
+        .select("*")
+        .eq("patient_id", patient.id)
+        .order("created_at", { ascending: false });
 
       // Get doctor names for each consultation using existing RPC
       const consultationsWithDoctors = await Promise.all(
@@ -88,26 +103,38 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
               appointment: {
                 ...consultation.appointments,
                 status: consultation.appointments?.status,
-                doctor_name: 'Unknown Doctor',
-                department_name: 'Unknown Department',
-              }
-            };
+                doctor_name: "Unknown Doctor",
+                department_name: "Unknown Department",
+                date: new Date().toISOString().split("T")[0],
+                time: "00:00:00",
+              },
+            } as ConsultationWithAppointment;
           }
 
           // Use the get_doctors_by_clinic RPC to get doctor details
-          let doctors = null;
-          const { data: rpcData, error: rpcError } = await supabase.rpc('get_doctors_by_clinic', {
-            clinic_id: clinicId,
-          });
+          type RpcDoctor = { id: string; name: string; department_name: string };
+          let doctors: RpcDoctor[] = [];
+          
+          const { data: rpcData, error: rpcError } = await supabase.rpc(
+            "get_doctors_by_clinic",
+            {
+              clinic_id: clinicId,
+            }
+          );
 
           if (!rpcError && rpcData) {
-            doctors = rpcData;
+            // We cast here because Supabase RPC return types are often ambiguous in the client gen
+            doctors = rpcData as unknown as RpcDoctor[];
           } else {
-            console.warn('RPC function failed, using fallback query:', rpcError?.message);
+            console.warn(
+              "RPC function failed, using fallback query:",
+              rpcError?.message
+            );
             // Fallback to direct query if RPC fails
             const { data: fallbackData } = await supabase
-              .from('doctors')
-              .select(`
+              .from("doctors")
+              .select(
+                `
                 id,
                 name,
                 primary_specialization,
@@ -118,71 +145,80 @@ const fetchPatientsWithMedicalRecords = async (clinicId: string, searchTerm: str
                     department_types!clinic_departments_department_type_id_fkey(name)
                   )
                 )
-              `)
-              .eq('clinic_id', clinicId)
-              .eq('is_active', true);
+              `
+              )
+              .eq("clinic_id", clinicId)
+              .eq("is_active", true);
 
-            doctors = fallbackData?.map((doctor: {
-              id: string;
-              name: string;
-              primary_specialization?: string;
-              clinic_members?: Array<{
-                clinic_departments?: {
-                  department_types?: {
-                    name?: string;
-                  };
-                };
-              }>;
-            }) => ({
-              id: doctor.id,
-              name: doctor.name,
-              department_name: doctor.clinic_members?.[0]?.clinic_departments?.department_types?.name ||
-                               doctor.primary_specialization ||
-                               'General Medicine'
-            })) || [];
+            // Cast the raw fallback data to our typed interface to avoid 'any'
+            const typedFallbackData = (fallbackData || []) as unknown as DoctorWithDepartmentInfo[];
+
+            doctors = typedFallbackData.map((doctor) => ({
+                id: doctor.id,
+                name: doctor.name,
+                department_name:
+                  doctor.clinic_members?.[0]?.clinic_departments
+                    ?.department_types?.name ||
+                  doctor.primary_specialization ||
+                  "General Medicine",
+              }));
           }
 
-          const doctor = doctors?.find(d => d.id === consultation.appointments?.doctor_id);
+          const doctor = doctors?.find(
+            (d) => d.id === consultation.appointments?.doctor_id
+          );
 
           return {
             ...consultation,
             appointment: {
               ...consultation.appointments,
-              status: consultation.appointments?.status,
-              doctor_name: doctor?.name || 'Unknown Doctor',
-              department_name: doctor?.department_name || 'Unknown Department',
-            }
-          };
+              status: (consultation.appointments?.status || undefined) as
+                | AppointmentStatus
+                | undefined,
+              doctor_name: doctor?.name || "Unknown Doctor",
+              department_name: doctor?.department_name || "Unknown Department",
+              date: String(
+                consultation.appointments?.date ||
+                  new Date().toISOString().split("T")[0]
+              ),
+              time: String(consultation.appointments?.time || "00:00:00"),
+            },
+          } as ConsultationWithAppointment;
         })
       );
 
       // Only include consultations whose associated appointment status is 'Completed'
-      const completedConsultations = consultationsWithDoctors.filter(c => (c.appointment?.status || '').toLowerCase() === 'completed');
+      const completedConsultations = consultationsWithDoctors.filter(
+        (c) => (c.appointment?.status || "").toLowerCase() === "completed"
+      );
 
       return {
         ...patient,
         consultations: completedConsultations,
         prescriptions: prescriptions || [],
-      };
+      } as PatientWithConsultations;
     })
   );
 
   return {
     patients: patientsWithRecords,
-    totalCount
+    totalCount,
   };
 };
 
 const PatientRecords = () => {
   const { activeClinic, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const [selectedPatient, setSelectedPatient] = useState<PatientWithConsultations | null>(null);
-  const [selectedConsultation, setSelectedConsultation] = useState<AppointmentData | null>(null);
+  const [selectedPatient, setSelectedPatient] =
+    useState<PatientWithConsultations | null>(null);
+  const [selectedConsultation, setSelectedConsultation] =
+    useState<AppointmentData | null>(null);
   const [isConsultationViewOpen, setIsConsultationViewOpen] = useState(false);
-  const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
+  const [selectedPrescription, setSelectedPrescription] =
+    useState<Prescription | null>(null);
   const [isPrescriptionViewOpen, setIsPrescriptionViewOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -194,8 +230,19 @@ const PatientRecords = () => {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['patientsWithMedicalRecords', activeClinic?.clinics?.id, searchTerm, currentPage],
-    queryFn: () => fetchPatientsWithMedicalRecords(activeClinic?.clinics?.id || '', searchTerm, currentPage, itemsPerPage),
+    queryKey: [
+      "patientsWithMedicalRecords",
+      activeClinic?.clinics?.id,
+      searchTerm,
+      currentPage,
+    ],
+    queryFn: () =>
+      fetchPatientsWithMedicalRecords(
+        activeClinic?.clinics?.id || "",
+        searchTerm,
+        currentPage,
+        itemsPerPage
+      ),
     enabled: !!activeClinic && !authLoading,
     retry: 1,
   });
@@ -204,23 +251,42 @@ const PatientRecords = () => {
   const totalCount = data?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  const handleViewConsultation = (consultation: ConsultationWithAppointment) => {
-    const appointmentData = {
-      id: consultation.appointment.id || '',
-      clinic_id: consultation.appointment.clinic_id || '',
-      patient_id: consultation.appointment.patient_id || '',
-      doctor_id: consultation.appointment.doctor_id || '',
-      date: consultation.appointment.date,
-      time: formatTimeIST(consultation.appointment.time),
-      type: (consultation.appointment.type as 'Walk-in' | 'Digital') || 'Walk-in',
-      status: (consultation.appointment.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled') || 'Completed',
-      notes: consultation.appointment.notes || '',
-      created_at: consultation.appointment.created_at || consultation.created_at || new Date().toISOString(),
+  const handleViewConsultation = (
+    consultation: ConsultationWithAppointment | Consultation
+  ) => {
+    // Cast to ConsultationWithAppointment as we know we're in the patient detail context
+    // where we always have the full appointment details
+    const fullConsultation = consultation as ConsultationWithAppointment;
+
+    // Guard clause if appointment is missing
+    if (!fullConsultation.appointment) return;
+
+    const appointmentData: AppointmentData = {
+      id: fullConsultation.appointment.id || "",
+      clinic_id: fullConsultation.appointment.clinic_id || "",
+      patient_id: fullConsultation.appointment.patient_id || "",
+      doctor_id: fullConsultation.appointment.doctor_id || "",
+      date: fullConsultation.appointment.date,
+      time: formatTimeIST(fullConsultation.appointment.time),
+      type:
+        (fullConsultation.appointment.type as "Walk-in" | "Digital") ||
+        "Walk-in",
+      status:
+        (fullConsultation.appointment.status as
+          | "Scheduled"
+          | "In Progress"
+          | "Completed"
+          | "Cancelled") || "Completed",
+      notes: fullConsultation.appointment.notes || "",
+      created_at:
+        fullConsultation.appointment.created_at ||
+        fullConsultation.created_at ||
+        new Date().toISOString(),
       patient_name: selectedPatient?.name,
-      patient_gender: selectedPatient?.gender,
-      patient_age: selectedPatient?.age,
-      doctor_name: consultation.appointment.doctor_name,
-      department_name: consultation.appointment.department_name,
+      patient_gender: selectedPatient?.gender || undefined,
+      patient_age: selectedPatient?.age || undefined,
+      doctor_name: fullConsultation.appointment.doctor_name,
+      department_name: fullConsultation.appointment.department_name,
     };
     setSelectedConsultation(appointmentData);
     setIsConsultationViewOpen(true);
@@ -255,44 +321,50 @@ const PatientRecords = () => {
     }
   };
 
-
-  const handleExport = async (options: { dateRange?: { from: Date; to: Date; }; includeConsultations?: boolean; includePrescriptions?: boolean; }) => {
+  const handleExport = async (options: ExportConfiguration) => {
     if (!selectedPatient || !activeClinic) return;
 
     setIsExporting(true);
-    const exportToast = toast.loading('Generating PDF...');
+    const exportToast = toast.loading("Generating PDF...");
 
     try {
       const exporter = new MedicalRecordPDFExporter();
 
       // Transform consultation data for PDF export
-      const consultationData = selectedPatient.consultations.map(consultation => ({
-        id: consultation.id,
-        created_at: consultation.created_at || consultation.appointment.date,
-        specialty_data: consultation.specialty_data as SpecialtyData | null,
-        appointment: {
-          date: consultation.appointment.date,
-          time: formatTimeIST(consultation.appointment.time),
-          doctor_name: consultation.appointment.doctor_name,
-          department_name: consultation.appointment.department_name,
-        }
-      }));
+      const consultationData = selectedPatient.consultations.map(
+        (consultation) => ({
+          id: consultation.id,
+          created_at: consultation.created_at || consultation.appointment.date,
+          specialty_data: consultation.specialty_data as SpecialtyData | null,
+          appointment: {
+            date: consultation.appointment.date,
+            time: formatTimeIST(consultation.appointment.time),
+            doctor_name: consultation.appointment.doctor_name,
+            department_name: consultation.appointment.department_name,
+          },
+        })
+      );
 
       // Transform prescription data for PDF export
-      const prescriptionData = selectedPatient.prescriptions.map(prescription => ({
-        ...prescription,
-        medications: (prescription.medications as unknown as object[]),
-        doctor_name: 'Unknown Doctor', // Simplified since we don't fetch doctor details
-      }));
+      const prescriptionData = selectedPatient.prescriptions.map(
+        (prescription) => ({
+          ...prescription,
+          created_at: prescription.created_at || new Date().toISOString(),
+          // Ensure medications is cast as object[] if that's what the exporter library strictly demands,
+          // otherwise rely on the types.
+          medications: (prescription.medications || []) as unknown as object[],
+          doctor_name: "Unknown Doctor", // Simplified since we don't fetch doctor details
+        })
+      );
 
       // Patient info for PDF
       const patientInfo = {
-        name: selectedPatient.name,
-        medical_id: selectedPatient.medical_id,
-        gender: selectedPatient.gender,
-        age: selectedPatient.age,
-        phone: selectedPatient.phone,
-        email: selectedPatient.email,
+        name: selectedPatient?.name || "",
+        medical_id: selectedPatient?.medical_id || "",
+        gender: selectedPatient?.gender || "",
+        age: selectedPatient?.age || null,
+        phone: selectedPatient?.phone || undefined,
+        email: selectedPatient?.email || undefined,
       };
 
       await exporter.exportMedicalRecord(
@@ -300,15 +372,15 @@ const PatientRecords = () => {
         consultationData,
         prescriptionData,
         activeClinic?.clinics?.name as string,
-        options,
+        options
       );
 
       toast.dismiss(exportToast);
-      toast.success('PDF exported successfully!');
+      toast.success("PDF exported successfully!");
     } catch (error) {
-      console.error('Export error:', error);
+      console.error("Export error:", error);
       toast.dismiss(exportToast);
-      toast.error('Failed to export PDF');
+      toast.error("Failed to export PDF");
     } finally {
       setIsExporting(false);
     }
@@ -320,7 +392,9 @@ const PatientRecords = () => {
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <FileText className="w-12 h-12 text-muted-foreground mx-auto" />
-            <p className="text-muted-foreground">Please select a clinic to view medical records.</p>
+            <p className="text-muted-foreground">
+              Please select a clinic to view medical records.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -382,11 +456,14 @@ const PatientRecords = () => {
               isLoading={isLoading}
             />
           ) : (
-                <div className="p-8 text-center text-muted-foreground">
-                  <User className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p>Select a patient to view their medical records</p>
-                  <p className="text-sm mt-2">Click on a patient from the list to see their complete medical history, consultations, and prescriptions.</p>
-                </div>
+            <div className="p-8 text-center text-muted-foreground">
+              <User className="h-12 w-12 mx-auto mb-3 opacity-50" />
+              <p>Select a patient to view their medical records</p>
+              <p className="text-sm mt-2">
+                Click on a patient from the list to see their complete medical
+                history, consultations, and prescriptions.
+              </p>
+            </div>
           )}
         </div>
       </div>
@@ -418,7 +495,9 @@ const PatientRecords = () => {
         patient={editingPatient}
         onPatientCreated={() => {
           setIsPatientModalOpen(false);
-          queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
+          queryClient.invalidateQueries({
+            queryKey: ["patients", activeClinic?.clinic_id],
+          });
         }}
       />
 
@@ -440,4 +519,4 @@ const PatientRecords = () => {
   );
 };
 
-export default PatientRecords; 
+export default PatientRecords;

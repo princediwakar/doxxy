@@ -2,7 +2,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Chip } from '@/components/ui/chip';
-import { MotorExamData } from './types';
+import type { MotorExamData } from '@/types/consultation';
 
 interface MotorExaminationFieldProps {
   value: MotorExamData;

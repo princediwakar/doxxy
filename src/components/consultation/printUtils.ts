@@ -1,5 +1,6 @@
 // src/components/consultation/printUtils.ts
-import { ConsultationFormValues, Patient } from './types';
+import { ConsultationFormValues } from '@/types/consultation';
+import { DbPatient } from '@/types/core';
 import { Tables } from '@/integrations/supabase/types';
 import { createRoot } from 'react-dom/client';
 import { ConsultationLayout } from './ConsultationLayout';
@@ -26,7 +27,7 @@ type SupabaseUser = {
 
 // Helper function to generate proper filename
 function generateConsultationFilename (
-  patient: Patient,
+  patient: DbPatient,
   appointment: AppointmentRow | null,
   departmentType: string
 ): string {
@@ -43,34 +44,17 @@ const PRINT_TOP_MARGIN = '45mm';
 
 export const generatePrintContent = (
   formData: ConsultationFormValues['specialty_data'],
-  patient: Patient,
+  patient: DbPatient,
   appointment: AppointmentRow | null,
-  clinicDetails: Clinic | null | undefined,
-  doctorDetails: DoctorInfo | null | undefined,
-  user: SupabaseUser | null,
+  _clinicDetails: Clinic | null | undefined,
+  _doctorDetails: DoctorInfo | null | undefined,
+  _user: SupabaseUser | null,
   departmentType: string = 'General'
 ) => {
   const filename = generateConsultationFilename(patient, appointment, departmentType);
   const container = document.createElement('div');
   const root = createRoot(container);
   
-  // // Prepare clinic info (unused in render, but good to keep for types)
-  // const clinicInfo = clinicDetails ? {
-  //   name: clinicDetails.name,
-  //   address: clinicDetails.address || undefined,
-  //   phone: clinicDetails.phone || undefined,
-  //   email: clinicDetails.email || undefined,
-  //   website: clinicDetails.website || undefined
-  // } : null;
-  
-  // // Prepare doctor info (unused in render)
-  // const doctorInfo = {
-  //   name: doctorDetails?.name || user?.user_metadata?.full_name || 'Doctor Name',
-  //   qualification: '',
-  //   registration_number: '',
-  //   specialization: departmentType,
-  //   email: doctorDetails?.email || user?.email || ''
-  // };
 
   root.render(
     React.createElement(ConsultationLayout, {
@@ -169,10 +153,27 @@ export const generatePrintContent = (
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 0.5rem !important;
               }
-              
-              .print-grid-3-cols > div, 
+
+              .print-grid-3-cols > div,
               .print-grid-2-cols > div {
                 min-width: 0;
+              }
+
+              /* Ensure compact fields display properly in print */
+              .flex {
+                display: flex !important;
+              }
+
+              .flex-1 {
+                flex: 1 !important;
+              }
+
+              .items-start {
+                align-items: flex-start !important;
+              }
+
+              .gap-2 {
+                gap: 0.5rem !important;
               }
             }
       </style>
@@ -190,11 +191,11 @@ export const generatePrintContent = (
 
 export const printConsultation = async (
   formData: ConsultationFormValues['specialty_data'],
-  patient: Patient,
+  patient: DbPatient,
   appointment: AppointmentRow | null,
-  clinicDetails: Clinic | null | undefined,
-  doctorDetails: DoctorInfo | null | undefined,
-  user: SupabaseUser | null,
+  _clinicDetails: Clinic | null | undefined,
+  _doctorDetails: DoctorInfo | null | undefined,
+  _user: SupabaseUser | null,
   departmentType: string = 'General'
 ) => {
   try {
@@ -202,9 +203,9 @@ export const printConsultation = async (
     formData,
     patient,
     appointment,
-    clinicDetails,
-    doctorDetails,
-    user,
+    _clinicDetails,
+    _doctorDetails,
+    _user,
     departmentType
     );
 
@@ -261,6 +262,23 @@ export const printConsultation = async (
 
         .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 {
           grid-template-columns: 1fr 1fr 1fr !important;
+        }
+
+        /* Ensure compact fields display properly in print */
+        .flex {
+          display: flex !important;
+        }
+
+        .flex-1 {
+          flex: 1 !important;
+        }
+
+        .items-start {
+          align-items: flex-start !important;
+        }
+
+        .gap-2 {
+          gap: 0.5rem !important;
         }
       }
     `;

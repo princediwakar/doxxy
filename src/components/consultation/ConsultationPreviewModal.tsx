@@ -2,10 +2,9 @@
 import { Eye, Printer } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { ConsultationFormValues, Patient } from './types';
+import type { DbPatient, DbAppointment } from '@/types/core';
 import { UseFormReturn } from 'react-hook-form';
-import { FieldSection } from '@/lib/consultationNotesSchemas';
-import { Tables } from '@/integrations/supabase/types';
+import type { ConsultationFormValues } from '@/types/consultation';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ConsultationLayout } from './ConsultationLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,13 +15,22 @@ import { getSupabase } from '@/integrations/supabase/client';
 
 const supabase = getSupabase();
 
+interface Section {
+  title: string;
+  fields: Array<{
+    name: string;
+    label: string;
+    type?: string;
+  }>;
+}
+
 interface ConsultationPreviewModalProps {
   showPreview: boolean;
   setShowPreview: (show: boolean) => void;
   form: UseFormReturn<ConsultationFormValues>;
-  patient: Patient;
-  appointment: Tables<'appointments'> | null;
-  specialtySections: FieldSection[];
+  patient: DbPatient;
+  appointment: DbAppointment | null;
+  specialtySections: Section[];
   departmentType?: string;
 }
 

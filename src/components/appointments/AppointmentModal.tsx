@@ -42,7 +42,6 @@ import { toast } from "sonner";
 
 import { PatientModal } from "@/components/patients/PatientModal";
 import {
-  Appointment,
   Patient,
   RpcPatient,
   appointmentFormSchema,
@@ -50,6 +49,7 @@ import {
   getNextTimeSlot,
   generateTimeSlots,
 } from "./appointment.utils";
+import type { AppointmentData } from "@/types/appointments";
 import {
   useAppointmentForm,
   useAppointmentMutation,
@@ -58,7 +58,7 @@ import {
 interface AppointmentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  appointment: Appointment | null;
+  appointment: AppointmentData | null;
   patient?: Patient | null;
 }
 

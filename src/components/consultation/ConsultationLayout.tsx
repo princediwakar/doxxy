@@ -1,16 +1,63 @@
 // src/components/consultation/ConsultationLayout.tsx
 import React from 'react';
-import { Tables } from '@/integrations/supabase/types';
-import { specialtyFieldSections, FieldSection } from '@/lib/consultationNotesSchemas';
-import { ConsultationFormValues, Patient, FieldValue} from './types';
+import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
+import type { FieldValue, ClinicInfo, DoctorInfo, ConsultationFormValues, MotorExamData, ReflexExamData } from '@/types/consultation';
 import { FieldValueRenderer } from './ConsultationRenderers';
-import { ConsultationHeader, PatientInfoCards, PrintStyles, ClinicInfo, DoctorInfo } from './ConsultationParts';
+import { ConsultationHeader, PatientInfoCards, PrintStyles } from './ConsultationParts';
+import type { DbAppointment, DbPatient } from '@/types/core';
 
 interface Field {
   name: string;
   label: string;
   type?: string;
 }
+
+interface Section {
+  title: string;
+  fields: Field[];
+}
+
+// Utility function to populate default values for motor and reflex examination data
+const populateDefaultValues = (fieldName: string, value: FieldValue | undefined): FieldValue | undefined => {
+  if (!value) {
+    // If value is undefined/null, create default data structure
+    if (fieldName === 'motor_examination') {
+      const defaultMotorData: MotorExamData = {
+        shoulder_left: '5',
+        shoulder_right: '5',
+        elbow_left: '5',
+        elbow_right: '5',
+        wrist_left: '5',
+        wrist_right: '5',
+        hip_left: '5',
+        hip_right: '5',
+        knee_left: '5',
+        knee_right: '5',
+        ankle_left: '5',
+        ankle_right: '5'
+      };
+      return defaultMotorData;
+    }
+
+    if (fieldName === 'reflexes') {
+      const defaultReflexData: ReflexExamData = {
+        biceps_left: '2',
+        biceps_right: '2',
+        triceps_left: '2',
+        triceps_right: '2',
+        supinator_left: '2',
+        supinator_right: '2',
+        knee_left: '2',
+        knee_right: '2',
+        ankle_left: '2',
+        ankle_right: '2'
+      };
+      return defaultReflexData;
+    }
+  }
+
+  return value;
+};
 
 // Field grouping logic with improved side-by-side layout
 const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormValues['specialty_data']) => {
@@ -53,23 +100,11 @@ const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormV
 
 // Determine if a field should take full width
 const isFieldFullWidth = (field: Field, value: FieldValue | undefined): boolean => {
-  // Core full-width fields as specified
+  // Core full-width fields that are always important and need full width
   if (field.name === 'chief_complaint' ||
       field.name === 'history_of_present_illness' ||
       field.name === 'diagnosis' ||
       field.name === 'treatment') {
-    return true;
-  }
-
-  // Additional full-width fields based on their nature
-  if (field.name === 'assessment' ||
-      field.name === 'physical_exam' ||
-      field.name === 'systemic_examination') {
-    return true;
-  }
-
-  // Large text fields
-  if (typeof value === 'string' && value.length > 150) {
     return true;
   }
 
@@ -78,6 +113,17 @@ const isFieldFullWidth = (field: Field, value: FieldValue | undefined): boolean 
       field.type === 'prescription' ||
       field.type === 'tabular_eye') {
     return true;
+  }
+
+  // Large text fields (only if they have substantial content)
+  if (typeof value === 'string' && value.length > 300) {
+    return true;
+  }
+
+  // Most textarea fields can be side-by-side if they're compact
+  // Allow fields like physical_exam, systemic_examination, cranial_nerves to be side-by-side
+  if (field.type === 'textarea' && typeof value === 'string' && value.length <= 150) {
+    return false;
   }
 
   // Motor examination and reflexes can be side-by-side since they're compact
@@ -92,8 +138,10 @@ const isFieldFullWidth = (field: Field, value: FieldValue | undefined): boolean 
 
 
 const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
+  if (currentGroup.length === 0) return false;
+
   // Start new group if field type changes significantly
-  if (currentGroup.length > 0 && currentGroup[0].type !== field.type) {
+  if (currentGroup[0].type !== field.type) {
     // Allow motor examination and reflexes to be grouped together
     const currentIsExam = currentGroup[0].type === 'motor_examination' || currentGroup[0].type === 'reflex_examination';
     const newIsExam = field.type === 'motor_examination' || field.type === 'reflex_examination';
@@ -102,13 +150,24 @@ const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
       return false; // Allow grouping of motor and reflex examinations
     }
 
+    // Allow textarea fields to be grouped together
+    const currentIsTextarea = currentGroup[0].type === 'textarea';
+    const newIsTextarea = field.type === 'textarea';
+
+    if (currentIsTextarea && newIsTextarea) {
+      return false; // Allow grouping of textarea fields
+    }
+
     return true;
   }
 
   // Start new group if switching between compact and regular fields
-  const currentIsCompact = currentGroup.length > 0 &&
-    (currentGroup[0].type === 'reflex_examination' || currentGroup[0].type === 'motor_examination' || currentGroup[0].type === 'tabular_eye');
-  const newIsCompact = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
+  const currentIsCompact = currentGroup[0].type === 'reflex_examination' ||
+                          currentGroup[0].type === 'motor_examination' ||
+                          currentGroup[0].type === 'tabular_eye';
+  const newIsCompact = field.type === 'reflex_examination' ||
+                      field.type === 'motor_examination' ||
+                      field.type === 'tabular_eye';
 
   if (currentIsCompact !== newIsCompact) {
     return true;
@@ -121,11 +180,12 @@ const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
 const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationFormValues['specialty_data'] }> = ({ fields, consultationData }) => {
   const isSingleField = fields.length === 1;
   const field = fields[0];
-  const value = consultationData?.[field.name as keyof typeof consultationData];
+  const rawValue = consultationData?.[field.name as keyof typeof consultationData];
+  const value = populateDefaultValues(field.name, rawValue);
 
   // Determine field layout
   const isFullWidth = isSingleField && isFieldFullWidth(field, value);
-  const isCompactField = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
+  const isCompactField = field.type === 'tabular_eye'; // Only tabular eye fields are compact now
 
   if (isSingleField) {
     // Single field layout
@@ -142,11 +202,11 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationForm
 
     if (isCompactField) {
       return (
-        <div className="gap-2">
+        <div className="flex gap-2 items-start">
           <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
             {field.label}:
           </div>
-          <div className="text-sm text-gray-900">
+          <div className="text-sm text-gray-900 flex-1">
             <FieldValueRenderer fieldName={field.name} value={value} />
           </div>
         </div>
@@ -171,16 +231,17 @@ const gridClassConfig = fields.length === 2
 return (
 <div className={`grid ${gridClassConfig} gap-3 print:gap-2`}>
   {fields.map((field, index) => {
-    const value = consultationData?.[field.name as keyof typeof consultationData];
-    const isCompact = field.type === 'reflex_examination' || field.type === 'motor_examination' || field.type === 'tabular_eye';
+    const rawValue = consultationData?.[field.name as keyof typeof consultationData];
+    const value = populateDefaultValues(field.name, rawValue);
+    const isCompact = field.type === 'tabular_eye'; // Only tabular eye fields are compact now
 
         if (isCompact) {
           return (
-            <div key={index} className="gap-2">
+            <div key={index} className="flex gap-2 items-start">
               <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
                 {field.label}:
               </div>
-              <div className="text-sm text-gray-900">
+              <div className="text-sm text-gray-900 flex-1">
                 <FieldValueRenderer fieldName={field.name} value={value} />
               </div>
             </div>
@@ -201,12 +262,12 @@ return (
 };
 
 interface ConsultationLayoutProps {
-  patient: Patient;
-  appointment: Tables<'appointments'> | null;
+  patient: DbPatient;
+  appointment: DbAppointment | null;
   clinicInfo: ClinicInfo | null;
   doctorInfo: DoctorInfo | null;
-  consultationData?: ConsultationFormValues['specialty_data'];
-  specialtySections?: FieldSection[];
+  consultationData?: Record<string, FieldValue>;
+  specialtySections?: Section[];
   departmentType?: string;
   showPrintStyles?: boolean;
   className?: string;
@@ -241,9 +302,16 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
 
       {/* Consultation Content */}
       <div className="space-y-4 print:space-y-3">
-        {sections.map((section, sectionIndex) => {
-          const fieldsWithContent = section.fields.filter(field => {
+        {sections.map((section: Section, sectionIndex: number) => {
+          const fieldsWithContent = section.fields.filter((field: Field) => {
             const value = consultationData?.[field.name as keyof typeof consultationData] as FieldValue;
+
+            // Always show motor and reflex examination fields (they have default values of 5 and 2)
+            if (field.type === 'motor_examination' || field.name === 'reflexes') {
+              return true;
+            }
+
+            // Hide other fields if they're empty
             if (!value) return false;
 
             if (typeof value === 'string') return value.trim().length > 0;

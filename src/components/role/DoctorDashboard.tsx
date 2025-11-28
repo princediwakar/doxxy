@@ -4,7 +4,7 @@ import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppoint
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { getSupabase } from '@/integrations/supabase/client';
-import { FormattedAppointment, DatabaseAppointment, DoctorDashboardData } from "@/types/dashboard";
+import { FormattedAppointment, DatabaseAppointment, DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
@@ -15,23 +15,7 @@ import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 
 const supabase = getSupabase();
 
-// Type guard to check if an object is a valid DatabaseAppointment
-function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
-  if (!obj || typeof obj !== 'object') return false;
-  const o = obj as Record<string, unknown>;
-  return (
-    typeof o.id === 'string' &&
-    typeof o.date === 'string' &&
-    typeof o.time === 'string' &&
-    typeof o.type === 'string' &&
-    typeof o.status === 'string' &&
-    typeof o.patient_id === 'string' &&
-    typeof o.patient_name === 'string' &&
-    typeof o.doctor_id === 'string' &&
-    typeof o.doctor_name === 'string' &&
-    typeof o.clinic_id === 'string'
-  );
-}
+// Type guard is now imported from @/types/dashboard
 
 export default function DoctorDashboard() {
   const { activeClinic, user, activeClinicRole, profileName } = useAuth();

@@ -321,7 +321,7 @@ const SupportCTA = () => (
           size="lg"
           className="w-full rounded-xl py-3 text-base font-semibold dark:text-gray-300 dark:border-gray-600"
         >
-          +1 (555) 123-4567
+          +91 73888-90554
         </Button>
       </div>
 

@@ -5,7 +5,7 @@ import { formatTimeIST } from '@/lib/utils';
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
-import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData } from "@/types/dashboard";
+import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
 import { AppointmentData } from "@/types/patients";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
@@ -20,23 +20,7 @@ import { ConsultationViewModal } from "@/components/consultation/ConsultationVie
 
 const supabase = getSupabase();
 
-// Type guard to check if an object is a valid DatabaseAppointment
-function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppointment {
-  if (!obj || typeof obj !== 'object') return false;
-  const o = obj as Record<string, unknown>;
-  return (
-    typeof o.id === 'string' &&
-    typeof o.date === 'string' &&
-    typeof o.time === 'string' &&
-    typeof o.type === 'string' &&
-    typeof o.status === 'string' &&
-    typeof o.patient_id === 'string' &&
-    typeof o.patient_name === 'string' &&
-    typeof o.doctor_id === 'string' &&
-    typeof o.doctor_name === 'string' &&
-    typeof o.clinic_id === 'string'
-  );
-}
+// Type guard is now imported from @/types/dashboard
 
 const Dashboard = () => {
   const { activeClinic, user, activeClinicRole, loading: authLoading, profileName } = useAuth();
@@ -253,7 +237,7 @@ const Dashboard = () => {
         doctor_name: appointment.doctor_name,
         department_name: '', // Not available here, but required for the modal
         created_at: new Date().toISOString(), // Not available, provide a placeholder
-        notes: null
+        notes: undefined
       };
       setSelectedAppointment(appointmentForModal);
       setIsConsultationViewModalOpen(true);

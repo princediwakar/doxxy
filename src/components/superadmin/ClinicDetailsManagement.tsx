@@ -298,7 +298,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     value={form.phone}
                     onChange={handleChange}
                     disabled={updateClinicMutation.isPending}
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="9000012345"
                     className={hasFieldError('phone') ? 'border-destructive flex items-center' : ''}
                   />
                   {hasFieldError('phone') && (

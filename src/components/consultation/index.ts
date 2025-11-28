@@ -5,5 +5,4 @@ export { ConsultationFormField } from './ConsultationFormField';
 export { ConsultationHeader } from './ConsultationHeader';
 export { ConsultationPreviewModal } from './ConsultationPreviewModal';
 export { printConsultation, generatePrintContent } from './printUtils';
-export { CHARACTER_LIMITS } from './constants';
-export * from './types'; 
+export { CHARACTER_LIMITS } from './constants'; 

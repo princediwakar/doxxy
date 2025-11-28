@@ -5,17 +5,15 @@ import * as z from 'zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
+import type {
+  ServiceItem,
+  BillingFormValues,
+  UseBillingProps
+} from '@/types/billing';
+import type { Json } from '@/types/core';
 
 const supabase = getSupabase();
-
-export interface ServiceItem {
-  description: string;
-  quantity: number;
-  rate: number;
-  amount: number;
-}
 
 const serviceItemSchema = z.object({
   description: z.string().min(1, 'Service description is required'),
@@ -36,28 +34,8 @@ const billingFormSchema = z.object({
   notes: z.string().optional(),
 });
 
-export type BillingFormValues = z.infer<typeof billingFormSchema>;
-
-type BillRow = Database['public']['Tables']['bills']['Row'];
-type Patient = Database['public']['Tables']['patients']['Row'];
-type Appointment = {
-  id: string;
-  patient_id: string;
-  doctor_id: string;
-  patient_name?: string;
-  doctor_name?: string;
-  date: string;
-  time: string;
-  department_name?: string;
-};
-
-interface UseBillingProps {
-  bill?: BillRow | null;
-  patient?: Patient | null;
-  appointment?: Appointment | null;
-  mode?: 'create' | 'view' | 'edit';
-  open: boolean;
-}
+// Export types for external use
+export type { BillingFormValues, ServiceItem };
 
 export const useBilling = ({ bill, patient, appointment, mode = 'create', open }: UseBillingProps) => {
   const queryClient = useQueryClient();
@@ -258,7 +236,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
         invoice_number: values.invoice_number,
         amount: calculateTotals.total,
         description: values.description,
-        service_items: values.service_items,
+        service_items: values.service_items as unknown as Json, // Convert to JSON for database
         discount_percentage: values.discount_percentage,
         tax_percentage: values.tax_percentage,
         notes: values.notes,

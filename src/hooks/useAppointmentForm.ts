@@ -5,11 +5,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import {
-  Appointment,
   AppointmentFormValues,
   RpcPatient,
   TransformedDoctor,
 } from "../components/appointments/appointment.utils";
+import type { AppointmentData } from "@/types/appointments";
 
 const supabase = getSupabase();
 
@@ -142,7 +142,7 @@ export const useAppointmentForm = (open: boolean) => {
 
 // --- Mutation Hook ---
 export const useAppointmentMutation = (
-  appointment: Appointment | null,
+  appointment: AppointmentData | null,
   onSuccessCallback: () => void
 ) => {
   const queryClient = useQueryClient();

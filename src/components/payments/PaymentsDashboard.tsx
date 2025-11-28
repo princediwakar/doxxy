@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { 
-  CreditCard, 
-  Plus, 
+// src/components/payments/PaymentsDashboard.tsx
+import React, { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  CreditCard,
+  Plus,
   IndianRupee,
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
-} from 'lucide-react';
-import { usePayments, PaymentTransaction } from '@/hooks/usePayments';
-import { CreditPurchaseModal } from './CreditPurchaseModal';
-import { format } from 'date-fns';
+  AlertCircle,
+} from "lucide-react";
+import { usePayments } from "@/hooks/usePayments";
+import { PaymentTransaction } from "@/types/billing";
+import { CreditPurchaseModal } from "./CreditPurchaseModal";
+import { format } from "date-fns";
 
 export const PaymentsDashboard: React.FC = () => {
   const {
@@ -27,11 +29,11 @@ export const PaymentsDashboard: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return <CheckCircle className="w-4 h-4 text-green-600" />;
-      case 'failed':
+      case "failed":
         return <XCircle className="w-4 h-4 text-red-600" />;
-      case 'pending':
+      case "pending":
         return <Clock className="w-4 h-4 text-yellow-600" />;
       default:
         return <AlertCircle className="w-4 h-4 text-gray-600" />;
@@ -40,14 +42,14 @@ export const PaymentsDashboard: React.FC = () => {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'default';
-      case 'failed':
-        return 'destructive';
-      case 'pending':
-        return 'secondary';
+      case "completed":
+        return "default";
+      case "failed":
+        return "destructive";
+      case "pending":
+        return "secondary";
       default:
-        return 'outline';
+        return "outline";
     }
   };
 
@@ -76,14 +78,15 @@ export const PaymentsDashboard: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
         <div>
           <h1 className="text-2xl font-bold">Billing & Credits</h1>
-          <p className="text-muted-foreground">Manage your appointment credits and payment history</p>
+          <p className="text-muted-foreground">
+            Manage your appointment credits and payment history
+          </p>
         </div>
         <Button onClick={() => setIsCreditModalOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Purchase Credits
         </Button>
       </div>
-
 
       {/* Usage Progress */}
       {billingSummary && billingSummary.total_credits_purchased > 0 && (
@@ -98,15 +101,24 @@ export const PaymentsDashboard: React.FC = () => {
                 <span>Remaining: {billingSummary.credit_balance}</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{
-                    width: `${(billingSummary.total_credits_used / billingSummary.total_credits_purchased) * 100}%`
+                    width: `${
+                      (billingSummary.total_credits_used /
+                        billingSummary.total_credits_purchased) *
+                      100
+                    }%`,
                   }}
                 />
               </div>
               <div className="text-xs text-muted-foreground">
-                {((billingSummary.total_credits_used / billingSummary.total_credits_purchased) * 100).toFixed(1)}% of purchased credits used
+                {(
+                  (billingSummary.total_credits_used /
+                    billingSummary.total_credits_purchased) *
+                  100
+                ).toFixed(1)}
+                % of purchased credits used
               </div>
             </div>
           </CardContent>
@@ -137,7 +149,9 @@ export const PaymentsDashboard: React.FC = () => {
           ) : transactions.length === 0 ? (
             <div className="text-center py-8">
               <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No transactions yet</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                No transactions yet
+              </h3>
               <p className="text-muted-foreground mb-4">
                 Purchase your first credit package to get started
               </p>
@@ -148,36 +162,48 @@ export const PaymentsDashboard: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {transactions.slice(0, 10).map((transaction: PaymentTransaction) => (
-                <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center space-x-4">
-                    {getStatusIcon(transaction.payment_status)}
-                    <div>
-                      <div className="font-medium">
-                        {transaction.transaction_type === 'credit_purchase' ? 'Credit Purchase' : 'Monthly Billing'}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {format(new Date(transaction.created_at || ''), 'MMM dd, yyyy • h:mm a')}
-                      </div>
-                      {transaction.credits_purchased && (
-                        <div className="text-sm text-blue-600">
-                          +{transaction.credits_purchased} credits
+              {transactions
+                .slice(0, 10)
+                .map((transaction: PaymentTransaction) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex items-center space-x-4">
+                      {getStatusIcon(transaction.status)}
+                      <div>
+                        <div className="font-medium">
+                          {transaction.transaction_type === "credit_purchase"
+                            ? "Credit Purchase"
+                            : "Monthly Billing"}
                         </div>
-                      )}
+                        <div className="text-sm text-muted-foreground">
+                          {format(
+                            new Date(transaction.created_at || ""),
+                            "MMM dd, yyyy • h:mm a"
+                          )}
+                        </div>
+                        {transaction.credits_purchased && (
+                          <div className="text-sm text-blue-600">
+                            +{transaction.credits_purchased} credits
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold flex items-center">
+                        <IndianRupee className="h-4 w-4" />
+                        {transaction.amount}
+                      </div>
+                      <Badge
+                        variant={getStatusBadgeVariant(transaction.status)}
+                      >
+                        {transaction.status}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold flex items-center">
-                      <IndianRupee className="h-4 w-4" />
-                      {transaction.amount}
-                    </div>
-                    <Badge variant={getStatusBadgeVariant(transaction.payment_status)}>
-                      {transaction.payment_status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-              
+                ))}
+
               {transactions.length > 10 && (
                 <div className="text-center pt-4">
                   <Button variant="outline" size="sm">
@@ -197,13 +223,16 @@ export const PaymentsDashboard: React.FC = () => {
             <div className="flex items-center space-x-4">
               <AlertCircle className="h-8 w-8 text-yellow-600" />
               <div className="flex-1">
-                <h3 className="font-semibold text-yellow-800">Low Credit Balance</h3>
+                <h3 className="font-semibold text-yellow-800">
+                  Low Credit Balance
+                </h3>
                 <p className="text-yellow-700">
-                  You have {billingSummary.credit_balance} credits remaining. 
-                  Consider purchasing more credits to avoid appointment booking interruptions.
+                  You have {billingSummary.credit_balance} credits remaining.
+                  Consider purchasing more credits to avoid appointment booking
+                  interruptions.
                 </p>
               </div>
-              <Button 
+              <Button
                 onClick={() => setIsCreditModalOpen(true)}
                 className="bg-yellow-600 hover:bg-yellow-700"
               >
@@ -221,4 +250,4 @@ export const PaymentsDashboard: React.FC = () => {
       />
     </div>
   );
-}; 
+};

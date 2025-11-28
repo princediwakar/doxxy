@@ -1,3 +1,4 @@
+// src/pages/Consultation.tsx
 import { useState, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -27,15 +28,16 @@ import {
   ConsultationFormField,
   ConsultationPreviewModal,
   printConsultation,
-  ConsultationFormValues,
-  Patient,
 } from "@/components/consultation";
+import { ConsultationFormValues, DepartmentInfo } from "@/types/consultation";
+import { DbPatient as Patient } from "@/types/core";
+import { Prescription } from "@/types/prescriptions";
 import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
 import {
   specialtyFieldSections,
-  type FieldSection,
 } from "@/lib/consultationNotesSchemas";
-import { FieldValue } from "@/components/consultation/types";
+import { type FieldSection, type NoteFieldConfig } from "@/lib/schemaUtils";
+import { FieldValue } from "@/types/consultation";
 
 const Consultation = () => {
   const navigate = useNavigate();
@@ -49,8 +51,6 @@ const Consultation = () => {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
-
-
 
   // Fetch all consultation data
   const {
@@ -117,7 +117,6 @@ const Consultation = () => {
     };
     return departmentMapping[departmentName || ""] || "General";
   }, [departmentInfo]);
-
 
   // Form management
   const {
@@ -186,7 +185,7 @@ const Consultation = () => {
       return <Activity className="h-5 w-5 text-muted-foreground" />;
     };
 
-    const completedFields = section.fields.filter((field) => {
+    const completedFields = section.fields.filter((field: NoteFieldConfig) => {
       const formValues = form.getValues();
       const value = (formValues.specialty_data as Record<string, unknown>)?.[
         field.name
@@ -219,7 +218,7 @@ const Consultation = () => {
           </CollapsibleTrigger>
           <CollapsibleContent>
             <CardContent className="p-6 space-y-4">
-              {section.fields.map((field, fieldIndex) => (
+              {section.fields.map((field: NoteFieldConfig, fieldIndex: number) => (
                 <ConsultationFormField
                   key={fieldIndex}
                   fieldConfig={field}
@@ -227,7 +226,7 @@ const Consultation = () => {
                   value={
                     form.watch(
                       `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>
-                    ) as FieldValue
+                    ) as unknown as FieldValue
                   }
                   onChange={(value) =>
                     form.setValue(
@@ -248,7 +247,11 @@ const Consultation = () => {
   };
 
   // Loading states
-  if (appointmentLoading || existingConsultationLoading || departmentInfoLoading) {
+  if (
+    appointmentLoading ||
+    existingConsultationLoading ||
+    departmentInfoLoading
+  ) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -302,7 +305,7 @@ const Consultation = () => {
                       </h2>
                       <p className="text-sm text-gray-600 mt-1">
                         {specialtySections.reduce((completed, section) => {
-                          const hasContent = section.fields.some((field) => {
+                          const hasContent = section.fields.some((field: NoteFieldConfig) => {
                             const formValues = form.getValues();
                             const value = (
                               formValues.specialty_data as Record<
@@ -353,9 +356,10 @@ const Consultation = () => {
             <PatientSidebar
               patient={patient}
               appointment={appointment}
-              departmentInfo={departmentInfo}
+              departmentInfo={departmentInfo as DepartmentInfo}
               previousConsultations={previousConsultations || []}
-              recentPrescriptions={recentPrescriptions || []}
+              // Cast the Database type (with JSON) to the UI type (with strict objects)
+              recentPrescriptions={(recentPrescriptions || []) as unknown as Prescription[]}
             />
           </div>
         </div>

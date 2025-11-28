@@ -19,7 +19,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useQuery } from "@tanstack/react-query";
-import { Database } from "@/integrations/supabase/types";
+import { DbDepartmentType } from "@/types/core";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
@@ -411,7 +411,7 @@ const CreateClinicPage = () => {
                       ) : departmentTypesError ? (
                         <div className="text-destructive">Error loading departments.</div>
                       ) : departmentTypes && departmentTypes.length > 0 ? (
-                        departmentTypes.map((dept: Database['public']['Tables']['department_types']['Row']) => (
+                        departmentTypes.map((dept: DbDepartmentType) => (
                           <div key={dept.id} className="flex items-center space-x-2">
                             <Checkbox
                               id={`department-${dept.id}`}

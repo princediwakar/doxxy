@@ -1,3 +1,4 @@
+// src/components/consultation/PatientSidebar.tsx
 import { useState } from "react";
 import {
   Calendar,
@@ -23,31 +24,21 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import {
-  Patient,
-  Prescription,
+  PatientWithClinic,
   Consultation,
-  PrescriptionMedication,
-} from "./types";
-import { Tables } from "@/integrations/supabase/types";
-
-type DepartmentInfo =
-  | {
-      department_id: string | null;
-      clinic_departments: {
-        department_types: {
-          name: string;
-        } | null;
-      } | null;
-    }
-  | null
-  | undefined;
+  DepartmentInfo,
+  ConsultationNotes
+} from "@/types/consultation";
+import { DbAppointment } from "@/types/core";
+// Fixed: Import Prescription type
+import { Prescription, PrescriptionMedication } from "@/types/prescriptions";
 
 interface PatientSidebarProps {
-  patient: Patient;
-  appointment: Tables<"appointments"> | null;
+  patient: PatientWithClinic;
+  appointment: DbAppointment | null;
   departmentInfo: DepartmentInfo | null | undefined;
   previousConsultations: Consultation[];
-  recentPrescriptions: Prescription[];
+  recentPrescriptions: Prescription[]; 
 }
 
 // Consultation Preview Modal Component
@@ -62,13 +53,14 @@ const ConsultationPreviewModal = ({
 }) => {
   if (!consultation) return null;
 
-  const getConsultationData = () => {
+  const getConsultationData = (): ConsultationNotes => {
     try {
-      return typeof consultation.specialty_data === "string"
-        ? JSON.parse(consultation.specialty_data)
-        : consultation.specialty_data || {};
+      if (typeof consultation.specialty_data === "string") {
+        return JSON.parse(consultation.specialty_data) as ConsultationNotes;
+      }
+      return (consultation.specialty_data || {}) as ConsultationNotes;
     } catch {
-      return {};
+      return {} as ConsultationNotes;
     }
   };
 
@@ -202,13 +194,14 @@ export const PatientSidebar = ({
               Recent Consultations
             </div>
             {previousConsultations.slice(0, 3).map((consultation) => {
-              const getConsultationData = () => {
+              const getConsultationData = (): ConsultationNotes => {
                 try {
-                  return typeof consultation.specialty_data === "string"
-                    ? JSON.parse(consultation.specialty_data)
-                    : consultation.specialty_data || {};
+                  if (typeof consultation.specialty_data === "string") {
+                    return JSON.parse(consultation.specialty_data) as ConsultationNotes;
+                  }
+                  return (consultation.specialty_data || {}) as ConsultationNotes;
                 } catch {
-                  return {};
+                  return {} as ConsultationNotes;
                 }
               };
 
@@ -311,8 +304,9 @@ export const PatientSidebar = ({
           <CardContent className="space-y-3">
             {recentPrescriptions.slice(0, 4).map((prescription) => {
               // Extract all medications from the prescription
+              // Cast to PrescriptionMedication[] to ensure type safety with the UI
               const medications = Array.isArray(prescription.medications)
-                ? (prescription.medications as PrescriptionMedication[])
+                ? (prescription.medications as unknown as PrescriptionMedication[])
                 : [];
 
               return (

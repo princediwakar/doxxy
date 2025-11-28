@@ -1,12 +1,38 @@
-import { Database, Json } from '@/integrations/supabase/types';
+// src/types/patients.ts
+import type {
+  DbPatient,
+  DbConsultation,
+  DbPrescription,
+  DbAppointment,
+  AppointmentStatus,
+  AppointmentType,
+  Json,
+} from './core';
 
-export type Patient = Database['public']['Tables']['patients']['Row'];
-export type Consultation = Database['public']['Tables']['consultations']['Row'];
-export type Prescription = Database['public']['Tables']['prescriptions']['Row'];
-export type Appointment = Database['public']['Tables']['appointments']['Row'];
+// If ConsultationMedication isn't exported from core, we define a fallback or import it
+// assuming it's available based on the usage in core.ts
+export interface ConsultationMedication {
+  name: string;
+  dosage: string;
+  frequency: string;
+  duration: string;
+  instructions?: string;
+}
 
+// ============================================================================
+// PATIENT TYPES
+// ============================================================================
+
+/** Base patient type */
+export type Patient = DbPatient;
+
+/** Base appointment type */
+export type Appointment = DbAppointment;
+
+/** Specialty data interface */
 export interface SpecialtyData {
-  [key: string]: Json;
+  [key: string]: Json | undefined;
+  chief_complaint?: string;
 }
 
 export interface ConsultationWithAppointment extends Consultation {
@@ -17,8 +43,8 @@ export interface ConsultationWithAppointment extends Consultation {
     doctor_id?: string;
     date: string;
     time: string;
-    type?: string;
-    status?: string;
+    type?: AppointmentType;
+    status?: AppointmentStatus;
     notes?: string;
     created_at?: string;
     doctor_name: string;
@@ -38,8 +64,8 @@ export interface AppointmentData {
   doctor_id: string;
   date: string;
   time: string;
-  type: 'Walk-in' | 'Digital';
-  status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
+  type: AppointmentType;
+  status: AppointmentStatus;
   notes?: string;
   created_at: string;
   patient_name?: string;
@@ -49,8 +75,47 @@ export interface AppointmentData {
   department_name?: string;
 }
 
+/** Consultation with appointment details for timeline display */
+export type Consultation = DbConsultation & {
+  appointment?: {
+    date: string;
+    time: string;
+    doctor_name: string;
+    department_name: string;
+    status?: string; // Added to support the loose typing in the fetch function
+    doctor_id?: string; // Added to support logic checks
+  } | null;
+};
+
+/** Prescription with doctor details for timeline display */
+export type Prescription = DbPrescription & {
+  doctor_name?: string;
+  // Ensure medications is typed strictly
+  medications?: ConsultationMedication[] | object[]; 
+};
+
 export interface ExportOptions {
   includeConsultations: boolean;
   includePrescriptions: boolean;
   dateRange: 'all' | '30days' | '90days' | '1year';
 }
+
+// Helper type for the Doctor Fallback Query in Patients.tsx
+export interface DoctorWithDepartmentInfo {
+  id: string;
+  name: string;
+  department_name?: string;
+  primary_specialization?: string | null;
+  clinic_members: {
+    department_id: string | null;
+    clinic_departments: {
+      department_type_id: string | null;
+      department_types: {
+        name: string;
+      } | null;
+    } | null;
+  }[];
+}
+
+// Re-export core types for convenience
+export type { AppointmentStatus, AppointmentType };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { TabularEyeValue } from "./types";
+import type { TabularEyeValue } from "@/types/consultation";
 
 interface TabularEyeFieldProps {
   value: TabularEyeValue;

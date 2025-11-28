@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { PrescriptionFieldProps } from './types';
+import { PrescriptionFieldProps, PrescriptionMedication } from '@/types/consultation';
 import { MedicineCombobox } from '@/components/ui/medicine-combobox';
 
 export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: PrescriptionFieldProps) => {
@@ -23,7 +23,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
 
   const removeMedication = (index: number) => {
     if (isReadOnly) return;
-    const newValue = value.filter((_, i) => i !== index);
+    const newValue = value.filter((_: PrescriptionMedication, i: number) => i !== index);
     onChange(newValue);
   };
 
@@ -61,8 +61,8 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
   };
 
   // Don't show medications with empty names in read-only mode unless there are no valid medications
-  const displayMedications = isReadOnly 
-    ? value.filter(med => med.name && med.name.trim().length > 0)
+  const displayMedications = isReadOnly
+    ? value.filter((med: PrescriptionMedication) => med.name && med.name.trim().length > 0)
     : value;
 
   if (isReadOnly && displayMedications.length === 0) {
@@ -76,7 +76,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
   return (
     <div className="space-y-4">
 
-      {displayMedications.map((medication, index) => (
+      {displayMedications.map((medication: PrescriptionMedication, index: number) => (
         <div key={index} className={`border rounded-lg p-4 space-y-4 transition-colors ${
           isReadOnly ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200 hover:border-gray-300'
         } ${!medication.name?.trim() && !isReadOnly ? 'border-red-200 bg-red-50' : ''}`}>

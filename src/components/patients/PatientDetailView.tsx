@@ -1,3 +1,4 @@
+// src/components/patients/PatientDetailView.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -209,11 +210,9 @@ export const PatientDetailView = ({
                                                         <div className="text-sm">
                                                             <strong>Medications:</strong>
                                                             <div className="mt-1 text-muted-foreground">
-                                                                {Array.isArray(prescription.medications)
+                                                                {prescription.medications && prescription.medications.length > 0
                                                                     ? `${prescription.medications.length} medication(s) prescribed`
-                                                                    : typeof prescription.medications === 'string'
-                                                                        ? prescription.medications.substring(0, 100) + (prescription.medications.length > 100 ? '...' : '')
-                                                                        : 'Medication details available'
+                                                                    : 'No medications prescribed'
                                                                 }
                                                             </div>
                                                         </div>

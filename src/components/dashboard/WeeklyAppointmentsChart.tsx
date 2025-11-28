@@ -5,16 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Activity, TrendingUp, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-interface Appointment {
-  date: string;
-  status?: string;
-  type?: string;
-}
-
-interface WeeklyAppointmentsChartProps {
-  appointments: Appointment[];
-  onBarClick?: (date: string) => void;
-}
+import { WeeklyAppointmentsChartProps } from "@/types/dashboard";
 
 function getWeekDays(start: Date) {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));

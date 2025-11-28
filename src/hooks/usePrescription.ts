@@ -4,18 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import type {
+  PrescriptionFormValues,
+  UsePrescriptionProps
+} from "@/types/prescriptions";
 
 const supabase = getSupabase();
-
-export type Appointment = Database['public']['Tables']['appointments']['Row'] & {
-  patient_name?: string;
-  doctor_name?: string;
-  date?: string;
-  time?: string;
-};
 
 // Enhanced prescription schema with better validation
 const medicationSchema = z.object({
@@ -40,18 +36,6 @@ const prescriptionFormSchema = z.object({
     ),
   notes: z.string().optional(),
 });
-
-export type PrescriptionFormValues = z.infer<typeof prescriptionFormSchema>;
-
-interface UsePrescriptionProps {
-  open: boolean;
-  consultationId: string | null;
-  appointment: Appointment | null;
-  doctorId: string | null;
-  patientId: string | null;
-  clinicId: string | null;
-  onOpenChange: (open: boolean) => void;
-}
 
 export const usePrescription = ({
   open,
@@ -179,8 +163,8 @@ export const usePrescription = ({
 
   // Handle medicine selection with auto-fill
   const handleMedicineSelect = useCallback((
-    index: number, 
-    medicine: { name: string }, 
+    index: number,
+    medicine: { name: string },
     autoFillData: { dosage: string; route: string; suggestedFrequency?: string }
   ) => {
     const medicationFieldName = `medications.${index}` as const;

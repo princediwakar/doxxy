@@ -14,28 +14,7 @@ import {
   Activity,
   Eye
 } from 'lucide-react';
-import { Tables } from "@/integrations/supabase/types";
-import { ConsultationWithAppointment } from "@/types/patients";
-
-// Define proper types
-type Consultation = Tables<"consultations"> & {
-  appointment?: {
-    date: string;
-    time: string;
-    doctor_name: string;
-    department_name: string;
-  } | null;
-};
-
-type Prescription = Tables<"prescriptions"> & {
-  doctor_name?: string;
-};
-
-type AppointmentData = Tables<"appointments"> & {
-  patient_name?: string;
-  doctor_name?: string;
-  department_name?: string;
-};
+import { ConsultationWithAppointment, Consultation, Prescription, AppointmentData } from "@/types/patients";
 
 interface TimelineEvent {
   id: string;
@@ -147,11 +126,13 @@ export function MedicalTimeline({
   };
 
   const getPrescriptionDescription = (prescription: Prescription): string => {
-    if (prescription.medications) {
-      if (typeof prescription.medications === 'string') {
-        return `Medications: ${prescription.medications.substring(0, 100)}${prescription.medications.length > 100 ? '...' : ''}`;
-      } else if (typeof prescription.medications === 'object') {
-        return 'Medication prescribed - view details';
+    if (prescription.medications && Array.isArray(prescription.medications)) {
+      if (prescription.medications.length > 0) {
+        const medicationNames = prescription.medications
+          .filter(med => med.name)
+          .map(med => med.name)
+          .join(', ');
+        return `Medications: ${medicationNames.substring(0, 100)}${medicationNames.length > 100 ? '...' : ''}`;
       }
     }
     return 'Prescription issued';
