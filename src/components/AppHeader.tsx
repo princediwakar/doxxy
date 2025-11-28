@@ -1,3 +1,4 @@
+// src/components/AppHeader.tsx
 import { memo } from "react";
 import { Link, useLocation, Outlet } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
