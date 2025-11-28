@@ -1,3 +1,4 @@
+// src/components/doctor/MedicalCredentialsModal.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { getSupabase } from '@/integrations/supabase/client';
@@ -14,15 +14,15 @@ import { Department } from '@/types/doctor';
 import {
   GraduationCap,
   Briefcase,
-  Stethoscope,
   Shield,
   Heart,
+  Stethoscope,
+  ScrollText,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 
 const supabase = getSupabase();
-
 
 interface MedicalCredentialsModalProps {
   open: boolean;
@@ -82,7 +82,6 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
         console.error('Error fetching departments:', error);
         return [];
       }
-      
       return data.map((d: Department) => ({ id: d.id, name: d.department_types?.name || 'Unnamed Department' }));
     },
     enabled: !!activeClinic?.clinics?.id,
@@ -92,19 +91,13 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
     queryKey: ['doctorDepartment', doctorProfile?.user_id, activeClinic?.clinics?.id],
     queryFn: async () => {
       if (!doctorProfile?.user_id || !activeClinic?.clinics?.id) return null;
-      
       const { data, error } = await supabase
         .from('clinic_members')
         .select('department_id')
         .eq('user_id', doctorProfile.user_id)
         .eq('clinic_id', activeClinic.clinics.id)
         .single();
-      
-      if (error) {
-        console.error('Error fetching current department:', error);
-        return null;
-      }
-      
+      if (error) return null;
       return data;
     },
     enabled: !!doctorProfile?.user_id && !!activeClinic?.clinics?.id,
@@ -169,9 +162,10 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
     }
   }, [doctorProfile, currentDepartment, open]);
 
-  const validateForm = (): boolean => {
+  const validateForm = () => {
     const errors: Record<string, string> = {};
-    // if (!formData.department_id) errors.department_id = 'Department is required';
+    if (!formData.medical_degree) errors.medical_degree = "Primary degree is required";
+    if (!formData.medical_registration_number) errors.medical_registration_number = "Registration number is required";
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -179,8 +173,9 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
   const updateCredentialsMutation = useMutation({
     mutationFn: async () => {
       if (!validateForm()) {
-        throw new Error('Please fix the validation errors');
+        throw new Error("Please check the form for errors.");
       }
+
       if (!doctorProfile?.user_id || !activeClinic?.clinic_id) {
         throw new Error('Doctor profile or active clinic not found');
       }
@@ -223,26 +218,17 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
         .eq('user_id', doctorProfile.user_id)
         .eq('clinic_id', activeClinic.clinic_id);
 
-      if (clinicMemberError) {
-        console.warn('Failed to update department in clinic_members:', clinicMemberError);
-      }
+      if (clinicMemberError) console.warn('Failed to update department', clinicMemberError);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });
       queryClient.invalidateQueries({ queryKey: ['clinicMembers'] });
-      toast({
-        title: "Success",
-        description: "Medical credentials updated successfully.",
-      });
+      toast({ title: "Success", description: "Medical credentials updated." });
       if (onSuccess) onSuccess();
       else onClose();
     },
     onError: (error: Error) => {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
     },
   });
 
@@ -254,233 +240,216 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
   const handleFieldChange = useCallback((field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (validationErrors[field]) {
-      setValidationErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            delete next[field];
+            return next;
+        });
     }
   }, [validationErrors]);
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Stethoscope className="h-5 w-5" />
-            Medical Credentials & Profile
+      {/* CHANGE 1: Removed h-[85vh], added max-h-[90vh] to allow shrinking */}
+      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
+        
+        <DialogHeader className="p-6 pb-4 border-b">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <Stethoscope className="h-5 w-5 text-primary" />
+            Medical Credentials
           </DialogTitle>
           <DialogDescription>
-            Update your medical credentials, qualifications, and professional information
+            Manage professional qualifications and registration details.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="border-b px-6">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="practice">Practice</TabsTrigger>
-              <TabsTrigger value="specialization">Specialization</TabsTrigger>
-              <TabsTrigger value="registration">Registration</TabsTrigger>
-              <TabsTrigger value="education">Education</TabsTrigger>
-            </TabsList>
-          </Tabs>
+        {/* CHANGE 2: Removed flex-1, added overflow-y-auto so scrolling happens only if needed */}
+        <div className="overflow-y-auto bg-muted/5">
+          <form id="credentials-form" onSubmit={handleSubmit} className="flex flex-col">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              
+              <div className="px-6 pt-4 bg-background border-b sticky top-0 z-10">
+                <TabsList className="grid w-full grid-cols-4 mb-4">
+                  <TabsTrigger value="practice">Practice</TabsTrigger>
+                  <TabsTrigger value="specialization">Specialty</TabsTrigger>
+                  <TabsTrigger value="registration">License</TabsTrigger>
+                  <TabsTrigger value="education">Education</TabsTrigger>
+                </TabsList>
+              </div>
+
+              {/* Practice Tab */}
+              <TabsContent value="practice" className="p-6 space-y-6 m-0 focus-visible:ring-0 outline-none animate-in fade-in-50">
+                  <div className="space-y-3">
+                    <Label htmlFor="professional_summary" className="text-base font-semibold flex items-center gap-2">
+                      <Briefcase className="w-4 h-4" /> Professional Summary
+                    </Label>
+                    <Textarea 
+                      id="professional_summary" 
+                      value={formData.professional_summary} 
+                      onChange={(e) => handleFieldChange('professional_summary', e.target.value)} 
+                      placeholder="Briefly describe your background, philosophy of care, and key areas of expertise." 
+                      className="min-h-[140px]" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="years_of_experience">Years of Experience</Label>
+                      <Input id="years_of_experience" type="number" value={formData.years_of_experience} onChange={(e) => handleFieldChange('years_of_experience', e.target.value)} placeholder="e.g., 10" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="consultation_fee">Consultation Fee (₹)</Label>
+                      <Input id="consultation_fee" type="number" value={formData.consultation_fee} onChange={(e) => handleFieldChange('consultation_fee', e.target.value)} placeholder="e.g., 500" />
+                    </div>
+                  </div>
+              </TabsContent>
+
+              {/* Specialization Tab */}
+              <TabsContent value="specialization" className="p-6 space-y-6 m-0 focus-visible:ring-0 outline-none animate-in fade-in-50">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Primary Specialization</Label>
+                      <Input value={formData.primary_specialization} onChange={(e) => handleFieldChange('primary_specialization', e.target.value)} placeholder="e.g., Cardiology" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Subspecialty</Label>
+                      <Input value={formData.subspecialty} onChange={(e) => handleFieldChange('subspecialty', e.target.value)} placeholder="e.g., Interventional" />
+                    </div>
+                    <div className="col-span-2 space-y-2">
+                      <Label>Additional Specializations</Label>
+                      <Input value={formData.medical_specializations} onChange={(e) => handleFieldChange('medical_specializations', e.target.value)} placeholder="Comma-separated list" />
+                    </div>
+                  </div>
+                  
+                  <div className="border-t pt-4 space-y-4">
+                    <h4 className="font-medium text-sm text-muted-foreground flex items-center gap-2">
+                      <Heart className="w-4 h-4" /> Fellowships & Boards
+                    </h4>
+                    <div className="space-y-2">
+                      <Label>Board Certifications</Label>
+                      <Input value={formData.board_certifications} onChange={(e) => handleFieldChange('board_certifications', e.target.value)} placeholder="Professional certifications" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Fellowship Details</Label>
+                      <Textarea value={formData.fellowship_details} onChange={(e) => handleFieldChange('fellowship_details', e.target.value)} placeholder="Fellowship program details" rows={2} />
+                    </div>
+                  </div>
+              </TabsContent>
+
+              {/* Registration Tab */}
+              <TabsContent value="registration" className="p-6 space-y-6 m-0 focus-visible:ring-0 outline-none animate-in fade-in-50">
+                   <div className="flex items-center gap-2 mb-4 p-3 bg-blue-50 text-blue-800 rounded-md">
+                      <Shield className="w-5 h-5" />
+                      <span className="text-sm font-medium">Please ensure license details match your official documents.</span>
+                   </div>
+
+                   <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Registration Number <span className="text-red-500">*</span></Label>
+                      <Input 
+                        value={formData.medical_registration_number} 
+                        onChange={(e) => handleFieldChange('medical_registration_number', e.target.value)} 
+                        placeholder="e.g., MCI-12345"
+                        className={validationErrors.medical_registration_number ? "border-red-500" : ""}
+                      />
+                      {validationErrors.medical_registration_number && (
+                          <p className="text-xs text-red-500">{validationErrors.medical_registration_number}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Medical Council</Label>
+                      <Select value={formData.medical_council} onValueChange={(value) => handleFieldChange('medical_council', value)}>
+                        <SelectTrigger><SelectValue placeholder="Select council" /></SelectTrigger>
+                        <SelectContent className="max-h-[200px]">{MEDICAL_COUNCILS.map((council) => (<SelectItem key={council} value={council}>{council}</SelectItem>))}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>License State</Label>
+                      <Select value={formData.medical_license_state} onValueChange={(value) => handleFieldChange('medical_license_state', value)}>
+                        <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
+                        <SelectContent className="max-h-[200px]">{INDIAN_STATES.map((state) => (<SelectItem key={state} value={state}>{state}</SelectItem>))}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>License Expiry</Label>
+                      <Input type="date" value={formData.medical_license_expiry} onChange={(e) => handleFieldChange('medical_license_expiry', e.target.value)} />
+                    </div>
+                  </div>
+              </TabsContent>
+
+              {/* Education Tab */}
+              <TabsContent value="education" className="p-6 space-y-8 m-0 focus-visible:ring-0 outline-none animate-in fade-in-50">
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2 border-b pb-2">
+                       <GraduationCap className="w-4 h-4" /> Undergraduate
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                         <Label>Degree <span className="text-red-500">*</span></Label>
+                         <Select value={formData.medical_degree} onValueChange={(v) => handleFieldChange('medical_degree', v)}>
+                          <SelectTrigger className={validationErrors.medical_degree ? "border-red-500" : ""}><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            {['MBBS', 'BDS', 'BAMS', 'BHMS', 'Other'].map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                          </SelectContent>
+                         </Select>
+                         {validationErrors.medical_degree && (
+                            <p className="text-xs text-red-500">{validationErrors.medical_degree}</p>
+                         )}
+                      </div>
+                      <div className="space-y-2">
+                         <Label>Graduation Year</Label>
+                         <Input type="number" value={formData.graduation_year} onChange={(e) => handleFieldChange('graduation_year', e.target.value)} />
+                      </div>
+                      <div className="col-span-2 space-y-2">
+                        <Label>College / University</Label>
+                        <Input value={formData.medical_college} onChange={(e) => handleFieldChange('medical_college', e.target.value)} placeholder="College Name" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2 border-b pb-2">
+                       <ScrollText className="w-4 h-4" /> Postgraduate (Optional)
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                         <Label>PG Degree</Label>
+                         <Select value={formData.postgraduate_degree} onValueChange={(v) => handleFieldChange('postgraduate_degree', v)}>
+                          <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            {['MD', 'MS', 'DNB', 'MCh', 'DM', 'Diploma'].map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                          </SelectContent>
+                         </Select>
+                      </div>
+                      <div className="space-y-2">
+                         <Label>Completion Year</Label>
+                         <Input type="number" value={formData.pg_completion_year} onChange={(e) => handleFieldChange('pg_completion_year', e.target.value)} />
+                      </div>
+                      <div className="col-span-2 space-y-2">
+                        <Label>Specialization & Institution</Label>
+                        <Input value={formData.pg_specialization} onChange={(e) => handleFieldChange('pg_specialization', e.target.value)} placeholder="Specialization (e.g. Pediatrics)" className="mb-2" />
+                        <Input value={formData.pg_institution} onChange={(e) => handleFieldChange('pg_institution', e.target.value)} placeholder="Institution Name" />
+                      </div>
+                    </div>
+                  </div>
+              </TabsContent>
+            </Tabs>
+          </form>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <form onSubmit={handleSubmit} className="h-full flex flex-col">
-            <div className="flex-grow p-6 space-y-6">
-
-            {activeTab === "practice" && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Briefcase className="w-5 h-5" />Practice Information</CardTitle></CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="professional_summary">Professional Summary</Label>
-                      <Textarea id="professional_summary" value={formData.professional_summary} onChange={(e) => handleFieldChange('professional_summary', e.target.value)} placeholder="Briefly describe your professional background and philosophy of care." rows={3} />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="years_of_experience">Years of Experience</Label>
-                        <Input id="years_of_experience" type="number" value={formData.years_of_experience} onChange={(e) => handleFieldChange('years_of_experience', e.target.value)} placeholder="e.g., 10" min="0" />
-                      </div>
-                      <div>
-                        <Label htmlFor="consultation_fee">Consultation Fee (₹)</Label>
-                        <Input id="consultation_fee" type="number" value={formData.consultation_fee} onChange={(e) => handleFieldChange('consultation_fee', e.target.value)} placeholder="e.g., 500" min="0" />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-
-{activeTab === "specialization" && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Heart className="w-5 h-5" />Specialization</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="primary_specialization">Primary Specialization</Label>
-                        <Input id="primary_specialization" value={formData.primary_specialization} onChange={(e) => handleFieldChange('primary_specialization', e.target.value)} placeholder="e.g., Cardiology" />
-                      </div>
-                      <div>
-                        <Label htmlFor="medical_specializations">Additional Specializations</Label>
-                        <Input id="medical_specializations" value={formData.medical_specializations} onChange={(e) => handleFieldChange('medical_specializations', e.target.value)} placeholder="Comma-separated list" />
-                      </div>
-                      <div>
-                        <Label htmlFor="subspecialty">Subspecialty</Label>
-                        <Input id="subspecialty" value={formData.subspecialty} onChange={(e) => handleFieldChange('subspecialty', e.target.value)} placeholder="e.g., Interventional Cardiology" />
-                      </div>
-                      <div>
-                        <Label htmlFor="board_certifications">Board Certifications</Label>
-                        <Input id="board_certifications" value={formData.board_certifications} onChange={(e) => handleFieldChange('board_certifications', e.target.value)} placeholder="Professional certifications" />
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="fellowship_details">Fellowship Details</Label>
-                      <Textarea id="fellowship_details" value={formData.fellowship_details} onChange={(e) => handleFieldChange('fellowship_details', e.target.value)} placeholder="Details of fellowship programs" rows={3} />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              {activeTab === "registration" && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><Shield className="w-5 h-5" />Medical Registration</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="medical_registration_number">Registration Number</Label>
-                        <Input id="medical_registration_number" value={formData.medical_registration_number} onChange={(e) => handleFieldChange('medical_registration_number', e.target.value)} placeholder="e.g., MCI-12345" />
-                      </div>
-                      <div>
-                        <Label htmlFor="medical_council">Medical Council</Label>
-                        <Select value={formData.medical_council} onValueChange={(value) => handleFieldChange('medical_council', value)}>
-                          <SelectTrigger><SelectValue placeholder="Select medical council" /></SelectTrigger>
-                          <SelectContent>{MEDICAL_COUNCILS.map((council) => (<SelectItem key={council} value={council}>{council}</SelectItem>))}</SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="medical_license_state">License State</Label>
-                        <Select value={formData.medical_license_state} onValueChange={(value) => handleFieldChange('medical_license_state', value)}>
-                          <SelectTrigger><SelectValue placeholder="Select state" /></SelectTrigger>
-                          <SelectContent>{INDIAN_STATES.map((state) => (<SelectItem key={state} value={state}>{state}</SelectItem>))}</SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="medical_license_expiry">License Expiry</Label>
-                        <Input id="medical_license_expiry" type="date" value={formData.medical_license_expiry} onChange={(e) => handleFieldChange('medical_license_expiry', e.target.value)} />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {activeTab === "education" && (
-                <Card>
-                  <CardHeader><CardTitle className="flex items-center gap-2"><GraduationCap className="w-5 h-5" />Education & Qualifications</CardTitle></CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Undergraduate Medical Education</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="medical_degree">Medical Degree</Label>
-                          <Select value={formData.medical_degree} onValueChange={(value) => handleFieldChange('medical_degree', value)}>
-                            <SelectTrigger><SelectValue placeholder="Select medical degree" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MBBS">MBBS</SelectItem>
-                              <SelectItem value="BDS">BDS</SelectItem>
-                              <SelectItem value="BAMS">BAMS</SelectItem>
-                              <SelectItem value="BHMS">BHMS</SelectItem>
-                              <SelectItem value="BUMS">BUMS</SelectItem>
-                              <SelectItem value="BNYS">BNYS</SelectItem>
-                              <SelectItem value="B.V.Sc">B.V.Sc</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {validationErrors.medical_degree && <p className="text-destructive text-sm mt-1">{validationErrors.medical_degree}</p>}
-                        </div>
-                        <div>
-                          <Label htmlFor="medical_college">Medical College</Label>
-                          <Input id="medical_college" value={formData.medical_college} onChange={(e) => handleFieldChange('medical_college', e.target.value)} placeholder="Name of medical college" />
-                          {validationErrors.medical_college && <p className="text-destructive text-sm mt-1">{validationErrors.medical_college}</p>}
-                        </div>
-                        <div>
-                          <Label htmlFor="medical_university">University/Board</Label>
-                          <Input id="medical_university" value={formData.medical_university} onChange={(e) => handleFieldChange('medical_university', e.target.value)} placeholder="e.g., Delhi University, RGUHS" />
-                        </div>
-                        <div>
-                          <Label htmlFor="graduation_year">Graduation Year</Label>
-                          <Input id="graduation_year" type="number" value={formData.graduation_year} onChange={(e) => handleFieldChange('graduation_year', e.target.value)} placeholder="e.g., 2015" min="1950" max={new Date().getFullYear()} />
-                          {validationErrors.graduation_year && <p className="text-destructive text-sm mt-1">{validationErrors.graduation_year}</p>}
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3">Postgraduate Training (Optional)</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="postgraduate_degree">Postgraduate Degree</Label>
-                          <Select value={formData.postgraduate_degree} onValueChange={(value) => handleFieldChange('postgraduate_degree', value)}>
-                            <SelectTrigger><SelectValue placeholder="Select PG degree" /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="MD">MD</SelectItem>
-                              <SelectItem value="MS">MS</SelectItem>
-                              <SelectItem value="MDS">MDS</SelectItem>
-                              <SelectItem value="Diploma">Diploma</SelectItem>
-                              <SelectItem value="DNB">DNB</SelectItem>
-                              <SelectItem value="MCh">MCh</SelectItem>
-                              <SelectItem value="DM">DM</SelectItem>
-                              <SelectItem value="Fellowship">Fellowship</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="pg_specialization">Specialization</Label>
-                          <Input id="pg_specialization" value={formData.pg_specialization} onChange={(e) => handleFieldChange('pg_specialization', e.target.value)} placeholder="e.g., General Medicine, Orthopedics" />
-                        </div>
-                        <div>
-                          <Label htmlFor="pg_institution">PG Institution</Label>
-                          <Input id="pg_institution" value={formData.pg_institution} onChange={(e) => handleFieldChange('pg_institution', e.target.value)} placeholder="PG college/hospital name" />
-                        </div>
-                        <div>
-                          <Label htmlFor="pg_completion_year">PG Completion Year</Label>
-                          <Input id="pg_completion_year" type="number" value={formData.pg_completion_year} onChange={(e) => handleFieldChange('pg_completion_year', e.target.value)} placeholder="e.g., 2018" min="1950" max={new Date().getFullYear() + 10} />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm text-muted-foreground mb-3">📜 Additional Qualifications (Optional)</h4>
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="additional_qualifications">Additional Qualifications</Label>
-                          <Textarea id="additional_qualifications" value={formData.additional_qualifications} onChange={(e) => handleFieldChange('additional_qualifications', e.target.value)} placeholder="e.g., DNB, Fellowship details, Certifications" rows={2} />
-                        </div>
-                        <div>
-                          <Label htmlFor="research_experience">Research Experience</Label>
-                          <Textarea id="research_experience" value={formData.research_experience} onChange={(e) => handleFieldChange('research_experience', e.target.value)} placeholder="Research background, publications, projects" rows={2} />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-
-              
-            </div>
-            
-            <div className="flex-shrink-0 flex justify-end gap-3 p-4 border-t bg-background sticky bottom-0">
+        <div className="p-4 border-t bg-background flex justify-between items-center shrink-0">
+            <p className="text-xs text-muted-foreground">
+              Fields marked with * are required.
+            </p>
+            <div className="flex gap-3">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={updateCredentialsMutation.isPending}>
-                {updateCredentialsMutation.isPending ? 'Saving...' : 'Save Credentials'}
+              <Button type="submit" form="credentials-form" disabled={updateCredentialsMutation.isPending}>
+                {updateCredentialsMutation.isPending ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
-          </form>
         </div>
+
       </DialogContent>
     </Dialog>
   );

@@ -5,7 +5,7 @@ export const chipVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 border-primary",
+        default: "bg-secondary text-secondary-foreground hover:bg-primary/20 border-secondary",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 border-secondary",
         outline: "border border-input hover:bg-accent hover:text-accent-foreground",
         selected: "bg-blue-600 text-white border-blue-600 hover:bg-blue-700",
