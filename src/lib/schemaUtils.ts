@@ -78,7 +78,7 @@ export const getSectionsFromSchema = (
   const sections: Record<string, FieldSection> = {};
 
   // Initialize sections from mapping if provided
-  Object.entries(sectionMapping).forEach(([sectionTitle, _fieldNames]) => {
+  Object.entries(sectionMapping).forEach(([sectionTitle]) => {
     sections[sectionTitle] = {
       title: sectionTitle,
       fields: [],

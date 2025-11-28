@@ -26,9 +26,12 @@ import {
   ConsultationHeader,
   PatientSidebar,
   ConsultationFormField,
-  ConsultationPreviewModal,
   printConsultation,
 } from "@/components/consultation";
+
+// Lazy load heavy modal components
+import { lazy, Suspense } from 'react';
+const ConsultationPreviewModal = lazy(() => import('@/components/consultation/ConsultationPreviewModal').then(module => ({ default: module.ConsultationPreviewModal })));
 import { ConsultationFormValues, DepartmentInfo } from "@/types/consultation";
 import { DbPatient as Patient } from "@/types/core";
 import { Prescription } from "@/types/prescriptions";
@@ -389,15 +392,17 @@ const Consultation = () => {
       </div>
 
       {/* Preview Modal */}
-      <ConsultationPreviewModal
-        showPreview={showPreview}
-        setShowPreview={setShowPreview}
-        form={form}
-        patient={patient}
-        appointment={appointment}
-        specialtySections={specialtySections}
-        departmentType={departmentType}
-      />
+      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+        <ConsultationPreviewModal
+          showPreview={showPreview}
+          setShowPreview={setShowPreview}
+          form={form}
+          patient={patient}
+          appointment={appointment}
+          specialtySections={specialtySections}
+          departmentType={departmentType}
+        />
+      </Suspense>
     </div>
   );
 };

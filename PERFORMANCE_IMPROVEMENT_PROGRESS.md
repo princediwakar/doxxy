@@ -81,11 +81,18 @@
 ## Phase 3: Bundle & Loading Optimization
 
 ### 3.1 Code Splitting Implementation
-- **Status**: Pending
+- **Status**: Completed ✅
 - **Components**: Consultation modal, PDF export, Admin components, Billing modules
-- **Progress**: 0%
+- **Progress**: 100%
 - **Blockers**: None
-- **Notes**: Lazy load non-critical components
+- **Notes**: Lazy load non-critical components implemented
+
+### 3.1.1 Consultation Data Persistence Fix
+- **Status**: Completed ✅
+- **Files**: `src/hooks/consultation/useConsultationForm.ts`
+- **Progress**: 100%
+- **Blockers**: None
+- **Notes**: Fixed query key mismatch preventing data persistence when navigating away and back to consultation page
 
 ### 3.2 Dependency Optimization
 - **Status**: Pending
@@ -101,7 +108,7 @@
 - **Blockers**: None
 - **Notes**: Integrate existing performance utilities
 
-**Phase 3 Completion**: 0%
+**Phase 3 Completion**: 33% (1 of 3 tasks completed)
 
 ---
 
@@ -159,7 +166,7 @@
 **Target**: Complete Phase 2 (66% overall)
 - [x] 2.1 Memoize forms
 - [x] 2.2 Optimize dashboard
-- [] 2.3 State management
+- [x] 2.3 State management
 
 ### Week 3 (Bundle & Loading)
 **Target**: Complete Phase 3 (100% overall)
@@ -216,6 +223,14 @@
 - ✅ TypeScript compilation verified
 - ✅ Build process validated
 - ✅ State management successfully decoupled from parent components
+
+### 2025-11-28 (Phase 3.1.1 Consultation Data Persistence Fix)
+- ✅ Identified query key mismatch causing data persistence issues
+- ✅ Fixed autosave query invalidation to match data fetching keys
+- ✅ Updated to invalidate both `['consultation-data', appointmentId, activeClinic?.clinic_id]` and `['consultation', appointmentId]`
+- ✅ TypeScript compilation verified
+- ✅ Development server tested successfully
+- ✅ Consultation data now persists correctly when navigating away and back
 
 ---
 

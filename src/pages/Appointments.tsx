@@ -4,8 +4,11 @@ import { Input } from '@/components/ui/input';
 import { Search, Plus, Calendar } from 'lucide-react';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 
-import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
-import { BillingModal } from '@/components/billing/BillingModal';
+import { Suspense, lazy } from 'react';
+
+// Lazy load heavy components
+const ConsultationViewModal = lazy(() => import('@/components/consultation/ConsultationViewModal').then(module => ({ default: module.ConsultationViewModal })));
+const BillingModal = lazy(() => import('@/components/billing/BillingModal').then(module => ({ default: module.BillingModal })));
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePrefetching } from '@/hooks/usePrefetching';
 import type { AppointmentWithDetails } from '@/types/appointments';
@@ -190,17 +193,21 @@ const Appointments = () => {
 
       
 
-      <ConsultationViewModal
-        open={isConsultationViewModalOpen}
-        onOpenChange={handleConsultationViewModalClose}
-        appointment={selectedAppointment}
-      />
+      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+        <ConsultationViewModal
+          open={isConsultationViewModalOpen}
+          onOpenChange={handleConsultationViewModalClose}
+          appointment={selectedAppointment}
+        />
+      </Suspense>
 
-      <BillingModal
-        open={isBillingModalOpen}
-        onOpenChange={handleBillingModalClose}
-        appointment={selectedAppointment}
-      />
+      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+        <BillingModal
+          open={isBillingModalOpen}
+          onOpenChange={handleBillingModalClose}
+          appointment={selectedAppointment}
+        />
+      </Suspense>
     </div>
   );
 };

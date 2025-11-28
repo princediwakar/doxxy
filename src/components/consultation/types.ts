@@ -50,7 +50,7 @@ export interface FieldConfig {
 }
 
 /** Field value type */
-export type FieldValue = string | number | boolean | TabularEyeValue | MotorExaminationValue | ReflexExaminationValue | any[] | null | undefined;
+export type FieldValue = string | number | boolean | TabularEyeValue | MotorExaminationValue | ReflexExaminationValue | unknown[] | null | undefined;
 
 /** Clinic information */
 export interface ClinicInfo {

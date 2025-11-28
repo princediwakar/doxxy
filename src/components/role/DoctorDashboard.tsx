@@ -4,7 +4,7 @@ import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppoint
 import { useAuth } from "@/contexts/AuthContext";
 import React, { useState, useMemo } from "react";
 import { getSupabase } from '@/integrations/supabase/client';
-import { DatabaseAppointment, DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
+import { DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
@@ -53,7 +53,10 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
   });
 
   // Prepare appointments and patients data - memoized
-  const allAppointments: DatabaseAppointment[] = doctorDashboardData?.upcoming_appointments ?? [];
+  const allAppointments = useMemo(() =>
+    doctorDashboardData?.upcoming_appointments ?? [],
+    [doctorDashboardData?.upcoming_appointments]
+  );
 
   const upcomingAppointments = useMemo(() => {
     console.log("DoctorDashboard: All upcoming appointments raw:", allAppointments, "Today:", today);

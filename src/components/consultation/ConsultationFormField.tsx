@@ -40,6 +40,10 @@ export const ConsultationFormField = memo(({
   const selectRef = useRef<HTMLButtonElement>(null);
   const initialRender = useRef(true);
 
+  // Memoized values for field display
+  const hasValue = useMemo(() => value && typeof value === 'string' && value.length > 0, [value]);
+  const characterCount = useMemo(() => typeof value === 'string' ? value.length : 0, [value]);
+
   // Mark initial render as complete
   useEffect(() => {
     if (initialRender.current) {
@@ -287,8 +291,6 @@ export const ConsultationFormField = memo(({
   }
 
   // For other field types
-  const hasValue = useMemo(() => value && typeof value === 'string' && value.length > 0, [value]);
-  const characterCount = useMemo(() => typeof value === 'string' ? value.length : 0, [value]);
   
   return (
     <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>

@@ -1,10 +1,13 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import ClinicDepartmentsManagement from "@/components/superadmin/ClinicDepartmentsManagement";
-import ClinicMembersManagement from "@/components/superadmin/ClinicMembersManagement";
-import ClinicDetailsManagement from "@/components/superadmin/ClinicDetailsManagement";
-import { PaymentsDashboard } from "@/components/payments/PaymentsDashboard";
+import { Suspense, lazy } from 'react';
+
+// Lazy load heavy admin components
+const ClinicDepartmentsManagement = lazy(() => import('@/components/superadmin/ClinicDepartmentsManagement'));
+const ClinicMembersManagement = lazy(() => import('@/components/superadmin/ClinicMembersManagement'));
+const ClinicDetailsManagement = lazy(() => import('@/components/superadmin/ClinicDetailsManagement'));
+const PaymentsDashboard = lazy(() => import('@/components/payments/PaymentsDashboard').then(module => ({ default: module.PaymentsDashboard })));
 import {
   Settings,
   Users,
@@ -108,18 +111,26 @@ const SettingsPage = () => {
         </TabsList>
 
         <TabsContent value="members" className="space-y-0">
-          <ClinicMembersManagement />
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+            <ClinicMembersManagement />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="departments" className="space-y-0">
-          <ClinicDepartmentsManagement />
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+            <ClinicDepartmentsManagement />
+          </Suspense>
         </TabsContent>
         <TabsContent value="details" className="space-y-0">
-          <ClinicDetailsManagement />
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+            <ClinicDetailsManagement />
+          </Suspense>
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-0">
-          <PaymentsDashboard />
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+            <PaymentsDashboard />
+          </Suspense>
         </TabsContent>
       </Tabs>
     </div>

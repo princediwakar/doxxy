@@ -1,6 +1,6 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 interface VitalSignsValue {
   temperature?: string;
@@ -25,14 +25,14 @@ export const VitalSignsField = ({
   onChange,
   isReadOnly = false
 }: VitalSignsFieldProps) => {
-  const handleFieldChange = (field: keyof VitalSignsValue, newValue: string) => {
+  const handleFieldChange = useCallback((field: keyof VitalSignsValue, newValue: string) => {
     onChange({
       ...value,
       [field]: newValue
     });
-  };
+  }, [value, onChange]);
 
-  const calculateBMI = () => {
+  const calculateBMI = useCallback(() => {
     // Clear BMI if either height or weight is empty
     if (!value.height || !value.weight) {
       handleFieldChange('bmi', '');
@@ -50,7 +50,7 @@ export const VitalSignsField = ({
       // Clear BMI if values are invalid
       handleFieldChange('bmi', '');
     }
-  };
+  }, [value.height, value.weight, handleFieldChange]);
 
   // Calculate BMI whenever height or weight changes
   useEffect(() => {

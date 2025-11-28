@@ -58,6 +58,8 @@ export const useConsultationForm = ({
   const supabase = getSupabase();
   const previousValuesRef = useRef<ConsultationFormValues>();
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
+  const isInitializingRef = useRef(true);
+  const hasFormInitializedRef = useRef(false);
 
   // Fetch the assigned doctor data to check if current user owns the doctor profile
   const { data: assignedDoctor } = useQuery({
@@ -146,14 +148,23 @@ export const useConsultationForm = ({
     defaultValues,
   });
 
-  // Store initial values
+  // Store initial values and enable autosave after first render
   useEffect(() => {
     previousValuesRef.current = defaultValues;
+
+    // Enable autosave after the first render cycle
+    setTimeout(() => {
+      hasFormInitializedRef.current = true;
+      isInitializingRef.current = false;
+    }, 100);
   }, [defaultValues]);
 
   // Reset form when existing consultation data becomes available
   useEffect(() => {
     if (existingConsultation?.specialty_data) {
+      // Prevent autosave during form reset
+      isInitializingRef.current = true;
+
       // Reset form with the loaded consultation data
       form.reset({
         specialty_data: existingConsultation.specialty_data as z.infer<typeof consultationNotesSchema>,
@@ -162,6 +173,11 @@ export const useConsultationForm = ({
       previousValuesRef.current = {
         specialty_data: existingConsultation.specialty_data as z.infer<typeof consultationNotesSchema>,
       };
+
+      // Re-enable autosave after a short delay
+      setTimeout(() => {
+        isInitializingRef.current = false;
+      }, 100);
     }
   }, [existingConsultation?.specialty_data, form]);
 
@@ -188,8 +204,17 @@ export const useConsultationForm = ({
   // Fixed auto-save mutation
   const autoSaveMutation = useMutation({
     mutationFn: async (data: ConsultationFormValues) => {
-      if (!appointmentId || !activeClinic?.clinics?.id || !appointment) throw new Error('Missing required data');
-      
+      console.log('🚀 Auto-save mutation started:', data);
+
+      if (!appointmentId || !activeClinic?.clinics?.id || !appointment) {
+        console.error('❌ Auto-save failed: Missing required data', {
+          appointmentId,
+          clinicId: activeClinic?.clinics?.id,
+          appointment
+        });
+        throw new Error('Missing required data');
+      }
+
       const consultationData = {
         appointment_id: appointmentId,
         patient_id: appointment?.patient_id || '',
@@ -198,6 +223,8 @@ export const useConsultationForm = ({
         specialty_data: data.specialty_data,
       };
 
+      console.log('📝 Auto-save consultation data:', consultationData);
+
       // Try to update existing consultation first
       const { data: updateResult, error: updateError } = await supabase
         .from('consultations')
@@ -205,23 +232,32 @@ export const useConsultationForm = ({
         .eq('appointment_id', appointmentId)
         .select();
 
+      console.log('🔄 Auto-save update result:', { updateResult, updateError });
+
       let result;
-      
+
       // If no rows were updated (consultation doesn't exist), insert new one
       if (!updateError && updateResult && updateResult.length === 0) {
+        console.log('➕ Auto-save: No existing consultation, inserting new one');
         const insertResult = await supabase
           .from('consultations')
           .insert(consultationData)
           .select()
           .single();
-        
-        if (insertResult.error) throw insertResult.error;
+
+        if (insertResult.error) {
+        console.error('❌ Auto-save insert error:', insertResult.error);
+        throw insertResult.error;
+      }
         result = insertResult.data;
       } else if (updateError) {
+        console.error('❌ Auto-save update error:', updateError);
         throw updateError;
       } else if (updateResult && updateResult.length > 0) {
+        console.log('✅ Auto-save: Existing consultation updated');
         result = updateResult[0];
       } else {
+        console.error('❌ Auto-save: Unexpected response from consultation update');
         throw new Error('Unexpected response from consultation update');
       }
 
@@ -233,6 +269,7 @@ export const useConsultationForm = ({
         );
 
         if (validPrescriptions.length > 0) {
+          console.log('💊 Auto-save: Syncing prescriptions:', validPrescriptions);
           // Prepare prescriptions data for upsert
           const prescriptionsData = validPrescriptions.map((med: PrescriptionMedication) => ({
             consultation_id: result.id,
@@ -250,21 +287,31 @@ export const useConsultationForm = ({
               ignoreDuplicates: false
             });
 
-          if (prescError) throw prescError;
+          if (prescError) {
+            console.error('❌ Auto-save prescription upsert error:', prescError);
+            throw prescError;
+          }
         } else {
+          console.log('🗑️ Auto-save: No valid prescriptions, deleting existing ones');
           // If no valid prescriptions, delete existing ones for this consultation
           const { error: deleteError } = await supabase
             .from('prescriptions')
             .delete()
             .eq('consultation_id', result.id);
 
-          if (deleteError) throw deleteError;
+          if (deleteError) {
+            console.error('❌ Auto-save prescription delete error:', deleteError);
+            throw deleteError;
+          }
         }
       }
 
+      console.log('✅ Auto-save mutation completed successfully');
       return result;
     },
     onSuccess: () => {
+      console.log('🎉 Auto-save onSuccess: Invalidating queries');
+      queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['consultation', appointmentId] });
       toast({
         title: 'Consultation saved',
@@ -272,7 +319,7 @@ export const useConsultationForm = ({
       });
     },
     onError: (error) => {
-      console.error('Auto-save error:', error);
+      console.error('❌ Auto-save error:', error);
       toast({
         title: 'Save failed',
         description: 'Could not save consultation notes. Please try again.',
@@ -283,29 +330,52 @@ export const useConsultationForm = ({
 
   // Auto-save with debounce and deep comparison
   useEffect(() => {
-    if (!canEditConsultation) return; // Don't auto-save if editing is not allowed
-    
+    console.log('🔍 Auto-save effect triggered:', {
+      canEditConsultation,
+      formValues,
+      previousValues: previousValuesRef.current,
+      isEqual: isEqual(previousValuesRef.current, formValues),
+      isInitializing: isInitializingRef.current,
+      hasFormInitialized: hasFormInitializedRef.current
+    });
+
+    if (!canEditConsultation) {
+      console.log('❌ Auto-save skipped: cannot edit consultation');
+      return; // Don't auto-save if editing is not allowed
+    }
+
+    // Skip if we're still initializing or form hasn't initialized
+    if (isInitializingRef.current || !hasFormInitializedRef.current) {
+      console.log('⏭️ Auto-save skipped: still initializing');
+      return;
+    }
+
+    // Skip if values haven't changed
+    if (isEqual(previousValuesRef.current, formValues)) {
+      console.log('⏭️ Auto-save skipped: values unchanged');
+      return;
+    }
+
     // Clear any existing timeout
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
     }
 
-    // Skip if values haven't changed
-    if (isEqual(previousValuesRef.current, formValues)) {
-      return;
-    }
-
+    console.log('⏰ Auto-save scheduled in 2 seconds');
     // Set new timeout for auto-save
     autoSaveTimeoutRef.current = setTimeout(() => {
       const currentValues = form.getValues();
-      
+
       // Only save if we have actual data and it's different from previous save
       if (
-        Object.keys(currentValues.specialty_data).length > 0 && 
+        Object.keys(currentValues.specialty_data).length > 0 &&
         !isEqual(previousValuesRef.current, currentValues)
       ) {
+        console.log('💾 Auto-save triggered with data:', currentValues);
         previousValuesRef.current = currentValues;
         autoSaveMutation.mutate(currentValues);
+      } else {
+        console.log('⏭️ Auto-save skipped: no data or unchanged');
       }
     }, 2000);
 
@@ -315,7 +385,7 @@ export const useConsultationForm = ({
         clearTimeout(autoSaveTimeoutRef.current);
       }
     };
-  }, [formValues, isConsultationCompleted, autoSaveMutation, form, canEditConsultation]);
+  }, [formValues, canEditConsultation]);
 
   // Manual save (only if editing is allowed)
   const handleSave = useCallback(() => {

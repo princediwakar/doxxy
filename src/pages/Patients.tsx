@@ -16,13 +16,15 @@ import {
   AppointmentStatus,
   DoctorWithDepartmentInfo,
 } from "@/types/patients";
-import { ConsultationViewModal } from "@/components/consultation/ConsultationViewModal";
+import { Suspense, lazy } from 'react';
 import { PrescriptionViewModal } from "@/components/prescriptions/PrescriptionViewModal";
 import { ExportOptionsModal, ExportConfiguration } from "@/components/ExportOptionsModal";
-import { MedicalRecordPDFExporter } from "@/lib/pdfExport";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 import { PatientModal } from "@/components/patients/PatientModal";
-import { BillingModal } from "@/components/billing/BillingModal";
+
+// Lazy load heavy components
+const ConsultationViewModal = lazy(() => import('@/components/consultation/ConsultationViewModal').then(module => ({ default: module.ConsultationViewModal })));
+const BillingModal = lazy(() => import('@/components/billing/BillingModal').then(module => ({ default: module.BillingModal })));
 import { toast } from "sonner";
 import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
 import { PatientSearch } from "@/components/patients/PatientSearch";
@@ -328,6 +330,8 @@ const PatientRecords = () => {
     const exportToast = toast.loading("Generating PDF...");
 
     try {
+      // Dynamically import PDF exporter to reduce bundle size
+      const { MedicalRecordPDFExporter } = await import('@/lib/pdfExport');
       const exporter = new MedicalRecordPDFExporter();
 
       // Transform consultation data for PDF export
@@ -469,11 +473,13 @@ const PatientRecords = () => {
       </div>
 
       {/* Modals */}
-      <ConsultationViewModal
-        open={isConsultationViewOpen}
-        onOpenChange={setIsConsultationViewOpen}
-        appointment={selectedConsultation || null}
-      />
+      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+        <ConsultationViewModal
+          open={isConsultationViewOpen}
+          onOpenChange={setIsConsultationViewOpen}
+          appointment={selectedConsultation || null}
+        />
+      </Suspense>
 
       <PrescriptionViewModal
         open={isPrescriptionViewOpen}
@@ -508,13 +514,15 @@ const PatientRecords = () => {
         patient={selectedPatient}
       />
 
-      <BillingModal
-        open={isBillingModalOpen}
-        onOpenChange={setIsBillingModalOpen}
-        bill={null}
-        patient={selectedPatient}
-        appointment={selectedConsultation || null}
-      />
+      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+        <BillingModal
+          open={isBillingModalOpen}
+          onOpenChange={setIsBillingModalOpen}
+          bill={null}
+          patient={selectedPatient}
+          appointment={selectedConsultation || null}
+        />
+      </Suspense>
     </div>
   );
 };

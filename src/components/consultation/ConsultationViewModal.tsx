@@ -34,6 +34,7 @@ interface ConsultationViewModalProps {
   appointment: AppointmentData | null;
 }
 
+
 export function ConsultationViewModal({ open, onOpenChange, appointment }: ConsultationViewModalProps) {
   const { activeClinic, user } = useAuth();
 
@@ -119,34 +120,19 @@ export function ConsultationViewModal({ open, onOpenChange, appointment }: Consu
           primary_specialization,
           phone,
           email,
-          bio,
-          clinic_members!clinic_members_user_id_fkey(
-            department_id,
-            clinic_departments!clinic_members_department_id_fkey(
-              department_type_id,
-              department_types!clinic_departments_department_type_id_fkey(name)
-            )
-          )
+          bio
         `)
         .eq('clinic_id', activeClinic.clinic_id)
         .eq('is_active', true);
 
-      const transformedData = fallbackData?.map((doctor) => {
-        // Type-safe access to nested clinic_members data
-        const clinicMember = (doctor as any).clinic_members?.[0];
-        const departmentType = clinicMember?.clinic_departments?.department_types;
-
-        return {
-          id: doctor.id,
-          name: doctor.name,
-          department_name: departmentType?.name ||
-                           (doctor as any).primary_specialization ||
-                           'General Medicine',
-          phone: doctor.phone,
-          email: doctor.email,
-          bio: doctor.bio
-        } as TransformedDoctorData;
-      }) || [];
+      const transformedData = fallbackData?.map((doctor) => ({
+        id: doctor.id,
+        name: doctor.name,
+        department_name: doctor.primary_specialization || 'General Medicine',
+        phone: doctor.phone,
+        email: doctor.email,
+        bio: doctor.bio
+      } as TransformedDoctorData)) || [];
 
       const doctor = transformedData?.find((d) => d.id === appointment.doctor_id);
       return doctor ? [doctor] : null;

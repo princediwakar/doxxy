@@ -19,8 +19,11 @@ import {
 } from "@/components/ui/pagination";
 import { Search, Plus, CreditCard, IndianRupee, Edit, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { BillingModal } from "@/components/billing/BillingModal";
 import { MonthSelector } from "@/components/ui/MonthSelector";
+import { Suspense, lazy } from 'react';
+
+// Lazy load heavy billing components
+const BillingModal = lazy(() => import('@/components/billing/BillingModal').then(module => ({ default: module.BillingModal })));
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -294,13 +297,15 @@ const Billing = () => {
       </div>
 
       {isModalOpen && (
-        <BillingModal
-          open={isModalOpen}
-          onOpenChange={handleModalClose}
-          bill={selectedBill}
-          mode={modalMode}
-          onModeChange={setModalMode}
-        />
+        <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+          <BillingModal
+            open={isModalOpen}
+            onOpenChange={handleModalClose}
+            bill={selectedBill}
+            mode={modalMode}
+            onModeChange={setModalMode}
+          />
+        </Suspense>
       )}
 
       <div className="flex items-center justify-center pt-4">
