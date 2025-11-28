@@ -5,14 +5,14 @@ import { formatTimeIST } from '@/lib/utils';
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
-import { FormattedAppointment, DatabaseAppointment, StaffDashboardData, DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
+import { DatabaseAppointment, StaffDashboardData, DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
 import { AppointmentData } from "@/types/patients";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Enums } from "@/integrations/supabase/types";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
@@ -22,7 +22,7 @@ const supabase = getSupabase();
 
 // Type guard is now imported from @/types/dashboard
 
-const Dashboard = () => {
+const Dashboard = React.memo(() => {
   const { activeClinic, user, activeClinicRole, loading: authLoading, profileName } = useAuth();
   const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
@@ -118,15 +118,17 @@ const Dashboard = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Greeting logic
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  };
-  const userName = profileName || user?.email || "there";
-  const greeting = `${getGreeting()}, ${userName}`;
+  // Greeting logic - memoized
+  const greeting = useMemo(() => {
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Good morning";
+      if (hour < 18) return "Good afternoon";
+      return "Good evening";
+    };
+    const userName = profileName || user?.email || "there";
+    return `${getGreeting()}, ${userName}`;
+  }, [profileName, user?.email]);
 
   // Guard: Only render dashboard when activeClinic and activeClinicRole are defined and not loading
   if (authLoading || !activeClinic || !activeClinicRole) {
@@ -185,35 +187,36 @@ const Dashboard = () => {
 
   // Enhanced logic for superadmins: show both clinic-wide and personal stats if applicable
   const isEnhancedSuperadmin = activeClinicRole === 'superadmin' && hasDoctorProfile && doctorDashboardData;
-  
-  // Prepare appointments data with proper fallbacks
+
+  // Prepare appointments data with proper fallbacks - memoized
   const allAppointments: DatabaseAppointment[] = dashboardData?.all_relevant_appointments ?? [];
   const doctorAppointments: DatabaseAppointment[] = doctorDashboardData?.upcoming_appointments ?? [];
-  
+
   // Use doctor appointments for chart if superadmin has doctor profile, otherwise use clinic-wide
   const chartAppointments = isEnhancedSuperadmin ? doctorAppointments : allAppointments;
-  
+
   // Use the same logic for upcoming appointments list
   const appointmentsForList = isEnhancedSuperadmin ? doctorAppointments : allAppointments;
-  
-  console.log('Dashboard appointments for chart:', chartAppointments);
 
+  const upcomingAppointments = useMemo(() => {
+    console.log('Dashboard appointments for chart:', chartAppointments);
 
-  const upcomingAppointments: FormattedAppointment[] = appointmentsForList
-    .filter(apt => apt.date >= today)
-    .sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
-      return a.time.localeCompare(b.time);
-    })
-    .map(apt => ({
-      id: apt.id,
-      patient: apt.patient_name,
-      doctor: apt.doctor_name,
-      time: apt.time,
-      date: apt.date,
-      status: apt.status as Enums<'appointment_status'>,
-      type: apt.type as Enums<'appointment_type'>,
-    }));
+    return appointmentsForList
+      .filter(apt => apt.date >= today)
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.time.localeCompare(b.time);
+      })
+      .map(apt => ({
+        id: apt.id,
+        patient: apt.patient_name,
+        doctor: apt.doctor_name,
+        time: apt.time,
+        date: apt.date,
+        status: apt.status as Enums<'appointment_status'>,
+        type: apt.type as Enums<'appointment_type'>,
+      }));
+  }, [appointmentsForList, today]);
 
   const totalUpcomingPages = Math.max(1, Math.ceil(upcomingAppointments.length / appointmentsPerPage));
 
@@ -422,6 +425,6 @@ const Dashboard = () => {
       />
     </div>
   );
-}
+});
 
 export default Dashboard;

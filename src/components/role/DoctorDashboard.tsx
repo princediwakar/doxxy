@@ -2,9 +2,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Users, Stethoscope, Activity, Clock, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { getSupabase } from '@/integrations/supabase/client';
-import { FormattedAppointment, DatabaseAppointment, DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
+import { DatabaseAppointment, DoctorDashboardData, isValidDatabaseAppointment } from "@/types/dashboard";
 import { useQuery } from "@tanstack/react-query";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
@@ -17,7 +17,7 @@ const supabase = getSupabase();
 
 // Type guard is now imported from @/types/dashboard
 
-export default function DoctorDashboard() {
+const DoctorDashboard = React.memo(function DoctorDashboard() {
   const { activeClinic, user, activeClinicRole, profileName } = useAuth();
   const navigate = useNavigate();
   const today = new Date().toISOString().split('T')[0];
@@ -52,40 +52,43 @@ export default function DoctorDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Prepare appointments and patients data
+  // Prepare appointments and patients data - memoized
   const allAppointments: DatabaseAppointment[] = doctorDashboardData?.upcoming_appointments ?? [];
 
+  const upcomingAppointments = useMemo(() => {
+    console.log("DoctorDashboard: All upcoming appointments raw:", allAppointments, "Today:", today);
 
-  console.log("DoctorDashboard: All upcoming appointments raw:", allAppointments, "Today:", today);
-
-  const upcomingAppointments: FormattedAppointment[] = allAppointments
-    .filter(apt => apt.date >= today)
-    .sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
-      return a.time.localeCompare(b.time);
-    })
-    .map(apt => ({
-      id: apt.id,
-      patient: apt.patient_name,
-      doctor: apt.doctor_name,
-      time: apt.time,
-      date: apt.date,
-      status: apt.status as Enums<'appointment_status'>,
-      type: apt.type as Enums<'appointment_type'>,
-    }));
+    return allAppointments
+      .filter(apt => apt.date >= today)
+      .sort((a, b) => {
+        if (a.date !== b.date) return a.date.localeCompare(b.date);
+        return a.time.localeCompare(b.time);
+      })
+      .map(apt => ({
+        id: apt.id,
+        patient: apt.patient_name,
+        doctor: apt.doctor_name,
+        time: apt.time,
+        date: apt.date,
+        status: apt.status as Enums<'appointment_status'>,
+        type: apt.type as Enums<'appointment_type'>,
+      }));
+  }, [allAppointments, today]);
 
   const totalUpcomingPages = Math.max(1, Math.ceil(upcomingAppointments.length / appointmentsPerPage));
 
 
-  // Greeting logic
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 18) return "Good afternoon";
-    return "Good evening";
-  };
-  const userName = profileName || user?.email || "there";
-  const greeting = `${getGreeting()}, ${userName}`;
+  // Greeting logic - memoized
+  const greeting = useMemo(() => {
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Good morning";
+      if (hour < 18) return "Good afternoon";
+      return "Good evening";
+    };
+    const userName = profileName || user?.email || "there";
+    return `${getGreeting()}, ${userName}`;
+  }, [profileName, user?.email]);
 
   // Card click handlers
   const handlePatientsCardClick = () => navigate('/patients');
@@ -98,10 +101,13 @@ export default function DoctorDashboard() {
     navigate(`/appointments?filter=date&date=${date}`);
   };
 
-  // Calculate some additional stats
-  const completionRate = doctorDashboardData?.total_appointments 
-    ? ((doctorDashboardData.completed_consultations / doctorDashboardData.total_appointments) * 100).toFixed(1)
-    : '0';
+  // Calculate some additional stats - memoized
+  const completionRate = useMemo(() =>
+    doctorDashboardData?.total_appointments
+      ? ((doctorDashboardData.completed_consultations / doctorDashboardData.total_appointments) * 100).toFixed(1)
+      : '0',
+    [doctorDashboardData?.total_appointments, doctorDashboardData?.completed_consultations]
+  );
 
   // Handle new appointment
   const handleNewAppointment = () => {
@@ -220,4 +226,6 @@ export default function DoctorDashboard() {
       />
     </div>
   );
-}
+});
+
+export default DoctorDashboard;

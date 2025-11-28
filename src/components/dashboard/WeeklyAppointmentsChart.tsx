@@ -1,6 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { format, startOfWeek, addDays, isSameDay, parseISO, isValid } from 'date-fns';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Activity, TrendingUp, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ interface TooltipProps {
   label?: string;
 }
 
-const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
+const CustomTooltip = React.memo(({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
@@ -47,17 +47,17 @@ const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
     );
   }
   return null;
-};
+});
 
-export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = ({ 
-  appointments, 
-  onBarClick 
+export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = React.memo(({
+  appointments,
+  onBarClick
 }) => {
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }); // Monday
-  const weekDays = getWeekDays(weekStart);
+  const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }), []); // Monday
+  const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
 
-  // Enhanced data processing with status breakdown
-  const data = weekDays.map((day) => {
+  // Enhanced data processing with status breakdown - memoized
+  const data = useMemo(() => weekDays.map((day) => {
     const dayAppointments = appointments.filter((apt) => {
       if (!apt.date) return false;
       try {
@@ -70,11 +70,11 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
     });
 
     const count = dayAppointments.length;
-    const completedCount = dayAppointments.filter(apt => 
+    const completedCount = dayAppointments.filter(apt =>
       apt.status?.toLowerCase() === 'completed'
     ).length;
-    const pendingCount = dayAppointments.filter(apt => 
-      apt.status?.toLowerCase() === 'scheduled' || 
+    const pendingCount = dayAppointments.filter(apt =>
+      apt.status?.toLowerCase() === 'scheduled' ||
       apt.status?.toLowerCase() === 'in progress'
     ).length;
 
@@ -87,12 +87,16 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
       pendingCount,
       isToday: isSameDay(day, new Date()),
     };
-  });
+  }), [weekDays, appointments]);
 
-  const totalAppointments = data.reduce((sum, day) => sum + day.count, 0);
-  const totalCompleted = data.reduce((sum, day) => sum + day.completedCount, 0);
-  const completionRate = totalAppointments > 0 ? (totalCompleted / totalAppointments * 100).toFixed(1) : '0';
-  const busyDay = data.reduce((prev, current) => (prev.count > current.count) ? prev : current);
+  const { totalAppointments, completionRate, busyDay } = useMemo(() => {
+    const totalAppointments = data.reduce((sum, day) => sum + day.count, 0);
+    const totalCompleted = data.reduce((sum, day) => sum + day.completedCount, 0);
+    const completionRate = totalAppointments > 0 ? (totalCompleted / totalAppointments * 100).toFixed(1) : '0';
+    const busyDay = data.reduce((prev, current) => (prev.count > current.count) ? prev : current);
+
+    return { totalAppointments, completionRate, busyDay };
+  }, [data]);
 
   const handleBarClick = (data: { date: string }) => {
     if (onBarClick) {
@@ -163,4 +167,6 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = (
       </CardContent>
     </Card>
   );
-}; 
+});
+
+WeeklyAppointmentsChart.displayName = 'WeeklyAppointmentsChart'; 
