@@ -1,4 +1,3 @@
-// src/components/patients/PatientModal.tsx
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,7 +25,6 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
-
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -39,16 +37,35 @@ interface PatientModalProps {
   onOpenChange: (open: boolean) => void;
   patient: Patient | null; // For editing existing patient
   onPatientCreated: (patient: Patient) => void; // Callback after creation
+  initialName?: string; // New prop to pre-fill name
 }
 
 const supabase = getSupabase();
-
+// Helper function for smart title casing
+const toTitleCase = (str: string) => {
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  );
+};
 const formSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  name: z
+    .string()
+    .min(2, { message: "Name must be at least 2 characters." })
+    // TRANSFORM: This cleans the name automatically on submit
+    .transform((val) => {
+      // If the user typed ALL LOWERCASE or ALL CAPS, fix it completely to Title Case
+      if (val === val.toLowerCase() || val === val.toUpperCase()) {
+        return toTitleCase(val);
+      }
+      // Otherwise, respect their specific capitalization (e.g. McDonald) 
+      // but ensure the very first letter is uppercase.
+      return val.charAt(0).toUpperCase() + val.slice(1);
+    }),
   gender: z.string().optional(),
   age: z.number().int().min(0).max(150).optional().nullable(),
   phone: z.string().optional(),
-  email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')), // Allow empty string or valid email
+  email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
   address: z.string().optional(),
   medical_id: z.string().optional(),
 });
@@ -58,6 +75,7 @@ export const PatientModal = ({
   onOpenChange,
   patient,
   onPatientCreated,
+  initialName = "",
 }: PatientModalProps) => {
   const { activeClinic } = useAuth();
   const queryClient = useQueryClient();
@@ -65,7 +83,7 @@ export const PatientModal = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: patient?.name || "",
+      name: patient?.name || initialName || "", // Use initialName here
       gender: patient?.gender || "",
       age: patient?.age || undefined,
       phone: patient?.phone || "",
@@ -79,7 +97,7 @@ export const PatientModal = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        name: patient?.name || "",
+        name: patient?.name || initialName || "", // Use initialName here on reset
         gender: patient?.gender || "",
         age: patient?.age || undefined,
         phone: patient?.phone || "",
@@ -88,7 +106,7 @@ export const PatientModal = ({
         medical_id: patient?.medical_id || "",
       });
     }
-  }, [open, patient, form]);
+  }, [open, patient, initialName, form]);
 
   const createPatientMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
@@ -118,7 +136,6 @@ export const PatientModal = ({
     },
     onSuccess: (newPatient) => {
       toast.success("Patient created successfully.");
-      // Invalidate patients query to refetch the list
       queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
       onPatientCreated(newPatient);
       form.reset();
@@ -159,9 +176,8 @@ export const PatientModal = ({
     },
     onSuccess: () => {
       toast.success("Patient updated successfully.");
-      // Invalidate patients query to refetch the list
       queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
-      onOpenChange(false); // Close modal on success
+      onOpenChange(false);
     },
     onError: (error) => {
       console.error("Error updating patient:", error);
@@ -200,7 +216,7 @@ export const PatientModal = ({
                 <FormItem className="md:col-span-2">
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Patient Name" {...field} />
+                    <Input placeholder="Patient Name" {...field} className="capitalize" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -243,7 +259,7 @@ export const PatientModal = ({
                   <FormControl>
                     <Input
                       type="number"
-                      placeholder="Age in years"
+                      placeholder="Age"
                       {...field}
                       onChange={(e) => field.onChange(e.target.value === '' ? null : parseInt(e.target.value))}
                       value={field.value === null || field.value === undefined ? '' : field.value}
@@ -260,7 +276,7 @@ export const PatientModal = ({
                 <FormItem>
                   <FormLabel>Phone</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., +1 123 456 7890" {...field} />
+                    <Input placeholder="9876543210" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -1,7 +1,6 @@
-// src/components/appointments/AppointmentModal.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Plus } from "lucide-react";
+import { CalendarIcon, Plus, Check, Phone, Hash } from "lucide-react";
 import { useForm, ControllerRenderProps } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -24,7 +23,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -38,12 +36,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandGroup,
+} from "@/components/ui/command";
 import { toast } from "sonner";
 
 import { PatientModal } from "@/components/patients/PatientModal";
 import {
   Patient,
-  RpcPatient,
   appointmentFormSchema,
   AppointmentFormValues,
   getNextTimeSlot,
@@ -54,6 +58,14 @@ import {
   useAppointmentForm,
   useAppointmentMutation,
 } from "../../hooks/useAppointmentForm";
+
+// Helper to format Age/Gender compactly: "25/M" or "M" or "25"
+const formatDemographics = (age?: number | null, gender?: string | null) => {
+  const parts = [];
+  if (age !== null && age !== undefined) parts.push(age);
+  if (gender) parts.push(gender.charAt(0).toUpperCase()); // Take first letter 'M'/'F'
+  return parts.length > 0 ? parts.join("/") : null;
+};
 
 interface AppointmentModalProps {
   open: boolean;
@@ -76,16 +88,20 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     isLoadingDoctors,
     activeClinic,
   } = useAppointmentForm(open);
+  
   const mutation = useAppointmentMutation(appointment, () =>
     onOpenChange(false)
   );
 
   // 2. Local UI State
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-  const [patientSearch, setPatientSearch] = useState("");
-  const [newlyCreatedPatient, setNewlyCreatedPatient] =
-    useState<Patient | null>(null);
+  const [newlyCreatedPatient, setNewlyCreatedPatient] = useState<Patient | null>(null);
   const [pendingPatientId, setPendingPatientId] = useState<string | null>(null);
+
+  // State for the Autocomplete/Typeahead
+  const [inputQuery, setInputQuery] = useState("");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const commandRef = useRef<HTMLDivElement>(null);
 
   // 3. Form Setup
   const form = useForm<AppointmentFormValues>({
@@ -102,6 +118,18 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   });
 
   // 4. Effects
+  
+  // Close dropdown if clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (commandRef.current && !commandRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
@@ -117,10 +145,13 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
         status: appointment?.status || "Scheduled",
         notes: appointment?.notes || "",
       });
+
+      setInputQuery("");
+      setIsDropdownOpen(false);
     }
   }, [open, appointment, patient, form, activeClinic?.clinic_id]);
 
-  // Handle auto-selecting doctor if appointment exists
+  // Handle auto-selecting doctor
   useEffect(() => {
     if (open && appointment?.doctor_id && doctors && doctors.length > 0) {
       const doctorExists = doctors.some((d) => d.id === appointment.doctor_id);
@@ -134,6 +165,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
   useEffect(() => {
     if (newlyCreatedPatient) {
       form.setValue("patient_id", newlyCreatedPatient.id);
+      setInputQuery(newlyCreatedPatient.name); 
       setNewlyCreatedPatient(null);
     }
   }, [newlyCreatedPatient, form]);
@@ -145,11 +177,18 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
     }
   }, [pendingPatientId, patients, form]);
 
-  // 5. Handlers
-  const filteredPatients = (patients || []).filter(
-    (p) => p.name?.toLowerCase().includes(patientSearch.toLowerCase()) ?? false
-  );
+  // Sync Input Text with Form ID
+  useEffect(() => {
+    const currentId = form.getValues("patient_id");
+    if (currentId && patients) {
+      const selected = patients.find((p) => p.id === currentId);
+      if (selected && selected.name !== inputQuery) {
+        setInputQuery(selected.name);
+      }
+    }
+  }, [form, inputQuery, patients]); 
 
+  // 5. Handlers
   const onSubmit = (values: AppointmentFormValues) => {
     if (mutation.isPending) return;
 
@@ -165,7 +204,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] z-[50]">
+      <DialogContent className="sm:max-w-[425px] z-[50] overflow-visible">
         <DialogHeader>
           <DialogTitle>
             <div className="flex items-center gap-2">
@@ -184,63 +223,136 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
             onSubmit={form.handleSubmit(onSubmit)}
             className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4"
           >
-            {/* Patient Select */}
+            {/* Patient Autocomplete Input */}
             <FormField
               control={form.control}
               name="patient_id"
-              render={({
-                field,
-              }: {
-                field: ControllerRenderProps<
-                  AppointmentFormValues,
-                  "patient_id"
-                >;
-              }) => (
-                <FormItem className="md:col-span-2">
-                  <div className="flex justify-between mb-1">
-                    <FormLabel>Patient</FormLabel>
-                    <button
-                      type="button"
-                      className="text-xs text-primary hover:underline flex items-center"
-                      onClick={() => setIsPatientModalOpen(true)}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      Add Patient
-                    </button>
-                  </div>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                    disabled={isLoadingPatients || !!patient}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={
-                            isLoadingPatients
-                              ? "Loading..."
-                              : "Select a patient"
-                          }
+              render={({ field }) => (
+                <FormItem className="md:col-span-2 flex flex-col">
+                  <FormLabel>Patient</FormLabel>
+                  <FormControl>
+                    <div className="relative" ref={commandRef}>
+                      <Command 
+                        shouldFilter={false}
+                        className="rounded-lg border shadow-sm overflow-visible bg-background"
+                      >
+                        <CommandInput
+                          placeholder="Type name to search..."
+                          value={inputQuery}
+                          onValueChange={(val) => {
+                            setInputQuery(val);
+                            setIsDropdownOpen(!!val); 
+                            if (!val) field.onChange("");
+                          }}
+                          onFocus={() => {
+                             if (inputQuery) setIsDropdownOpen(true);
+                          }}
+                          className="border-none focus:ring-0 capitalize"
+                          // FIX: Removed isLoadingPatients from disabled, Added autoFocus
+                          disabled={!!patient}
+                          autoFocus={!patient && !appointment}
                         />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <div className="px-2 py-1">
-                        <Input
-                          type="text"
-                          placeholder="Search..."
-                          value={patientSearch}
-                          onChange={(e) => setPatientSearch(e.target.value)}
-                          className="mb-2"
-                        />
-                      </div>
-                      {filteredPatients.map((p: RpcPatient) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        
+                        {/* Dropdown Container */}
+                        <div className={cn(
+                          "absolute top-full left-0 w-full bg-popover text-popover-foreground shadow-lg rounded-md border mt-1 z-[60] flex flex-col",
+                          !isDropdownOpen && "hidden" 
+                        )}>
+                          
+                          {/* 1. Results Area (Scrollable) */}
+                          <div className="max-h-[220px] overflow-y-auto overflow-x-hidden">
+                            <CommandList>
+                              {isLoadingPatients ? (
+                                <div className="p-2 text-xs text-muted-foreground text-center">Loading...</div>
+                              ) : (
+                                <CommandGroup>
+                                  {patients
+                                    ?.filter((p) =>
+                                      p.name?.toLowerCase().includes(inputQuery.toLowerCase())
+                                    )
+                                    .map((p) => {
+                                      const demographics = formatDemographics(p.age, p.gender);
+
+                                      return (
+                                        <CommandItem
+                                          key={p.id}
+                                          value={p.name + p.id} 
+                                          onSelect={() => {
+                                            field.onChange(p.id);
+                                            setInputQuery(p.name);
+                                            setIsDropdownOpen(false);
+                                          }}
+                                          className="cursor-pointer"
+                                        >
+                                          {/* Selection Checkmark */}
+                                          <Check
+                                            className={cn(
+                                              "mr-2 h-4 w-4 shrink-0",
+                                              field.value === p.id
+                                                ? "opacity-100"
+                                                : "opacity-0"
+                                            )}
+                                          />
+                                          
+                                          {/* Rich Item Content */}
+                                          <div className="flex flex-col gap-0.5 w-full">
+                                            {/* Line 1: Name + Demographics Badge */}
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-medium">{p.name}</span>
+                                              {demographics && (
+                                                <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm uppercase tracking-wide font-medium">
+                                                  {demographics}
+                                                </span>
+                                              )}
+                                            </div>
+
+                                            {/* Line 2: Secondary Info (Phone & Med ID) */}
+                                            <div className="flex items-center gap-3 text-xs text-muted-foreground truncate">
+                                              {p.phone && (
+                                                <div className="flex items-center gap-1">
+                                                  <Phone className="h-3 w-3 opacity-70" />
+                                                  <span>{p.phone}</span>
+                                                </div>
+                                              )}
+                                              {/* Only show separator if both exist */}
+                                              {p.phone && p.medical_id && <span>•</span>}
+                                              
+                                              {p.medical_id && (
+                                                <div className="flex items-center gap-1">
+                                                  <Hash className="h-3 w-3 opacity-70" />
+                                                  <span>{p.medical_id}</span>
+                                                </div>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </CommandItem>
+                                      );
+                                    })}
+                                </CommandGroup>
+                              )}
+                            </CommandList>
+                          </div>
+
+                          {/* 2. Sticky Footer (Create Button) */}
+                          {inputQuery.length > 0 && (
+                             <div className="border-t p-1 bg-accent/5 backdrop-blur-sm"> 
+                                <button
+                                  type="button"
+                                  className="flex w-full items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none hover:bg-accent hover:text-accent-foreground text-primary font-medium transition-colors"
+                                  onClick={() => {
+                                    setIsDropdownOpen(false);
+                                    setIsPatientModalOpen(true);
+                                  }}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                  Create "{inputQuery}"
+                                </button>
+                             </div>
+                          )}
+                        </div>
+                      </Command>
+                    </div>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -441,33 +553,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
                 Cancel
               </Button>
               <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? (
-                  <span className="flex items-center">
-                    <svg
-                      className="animate-spin h-5 w-5 mr-2"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8h8a8 8 0 01-8 8v-8H4z"
-                      />
-                    </svg>
-                    {appointment ? "Saving..." : "Creating..."}
-                  </span>
-                ) : appointment ? (
-                  "Save Changes"
-                ) : (
-                  "Create Appointment"
-                )}
+                {mutation.isPending ? "Saving..." : appointment ? "Save Changes" : "Create Appointment"}
               </Button>
             </DialogFooter>
           </form>
@@ -478,6 +564,7 @@ const AppointmentModal: React.FC<AppointmentModalProps> = ({
           open={isPatientModalOpen}
           onOpenChange={setIsPatientModalOpen}
           patient={null}
+          initialName={inputQuery} 
           onPatientCreated={(newPatient: Patient) => {
             setNewlyCreatedPatient(newPatient);
             setPendingPatientId(newPatient.id);

@@ -37,7 +37,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     name: '',
     selectedDepartment: '',
     primarySpecialization: '',
-    phone: '',
     consultation_fee: '',
   });
 
@@ -51,11 +50,11 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
       if (!user?.id) return null;
       const { data, error } = await supabase
         .from('profiles')
-        .select('name, phone')
+        .select('name')
         .eq('id', user.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" error
+      if (error && error.code !== 'PGRST116') throw error; 
       return data;
     },
     enabled: !!user?.id && open,
@@ -85,7 +84,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
       setFormData(prev => ({
         ...prev,
         name: profileData.name || user?.user_metadata?.name || '',
-        phone: profileData.phone || prev.phone,
       }));
     }
     if (existingDoctorProfile) {
@@ -93,7 +91,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         ...prev,
         name: profileData?.name || existingDoctorProfile.name || user?.user_metadata?.name || '',
         primarySpecialization: existingDoctorProfile.primary_specialization || '',
-        phone: profileData?.phone || existingDoctorProfile.phone || '',
         consultation_fee: existingDoctorProfile.consultation_fee?.toString() || '',
       }));
     }
@@ -118,19 +115,27 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     mutationFn: async () => {
       if (!user || !activeClinic) throw new Error('User or clinic not found');
 
-      // Validate form
+      // --- VALIDATION LOGIC ---
       const errors: Record<string, string> = {};
+      
+      // 1. Name is Mandatory
       if (!formData.name.trim()) {
-        errors.name = 'Name is required';
+        errors.name = 'Full Name is required';
       }
+
+      // 2. Department is Mandatory
       if (!formData.selectedDepartment) {
-        errors.selectedDepartment = 'Please select a department';
+        errors.selectedDepartment = 'Department selection is required';
       }
-      if (formData.phone && !/^\+?[0-9]{10,15}$/.test(formData.phone)) {
-        errors.phone = 'Please enter a valid phone number';
+
+      // 3. Specialization is Mandatory
+      if (!formData.primarySpecialization.trim()) {
+        errors.primarySpecialization = 'Specialization is required';
       }
-      if (formData.consultation_fee && isNaN(parseInt(formData.consultation_fee))) {
-        errors.consultation_fee = 'Please enter a valid consultation fee';
+
+      // 4. Consultation Fee is Mandatory
+      if (!formData.consultation_fee || isNaN(parseInt(formData.consultation_fee))) {
+        errors.consultation_fee = 'Please set a base fee (enter 0 if free)';
       }
       
       if (Object.keys(errors).length > 0) {
@@ -138,10 +143,12 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         throw new Error('Validation failed');
       }
 
-      // Create profiles record if it doesn't exist
+      // --- DATABASE OPERATIONS ---
+
+      // 1. Upsert Profile (Name only)
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id')
+        .select('id, phone')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -149,61 +156,55 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         await supabase.from('profiles').insert({
           id: user.id,
           name: formData.name.trim(),
-          phone: formData.phone.trim() || null,
           email: user.email,
           created_at: new Date().toISOString(),
         });
       } else {
-        // Update profiles table
-        const { error: profileError } = await supabase.rpc('update_profile', {
-          p_user_id: user.id,
-          p_name: formData.name.trim(),
-          p_phone: formData.phone.trim() || '',
-          p_email: user.email || ''
-        });
+        // We only update name here, keeping existing phone if it exists in DB
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ name: formData.name.trim() })
+          .eq('id', user.id);
+          
         if (profileError) throw profileError;
       }
 
-      // Update auth user metadata
+      // 2. Update Auth Metadata
       const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          name: formData.name.trim(),
-        }
+        data: { name: formData.name.trim() }
       });
       if (authError) throw authError;
 
-      // Create or update doctor profile
+      // 3. Upsert Doctor Record
+      const doctorData = {
+        name: formData.name.trim(),
+        email: user.email || '',
+        // Use existing profile phone, or auth phone, or empty string
+        phone: existingProfile?.phone || user.phone || '', 
+        primary_specialization: formData.primarySpecialization,
+        consultation_fee: parseInt(formData.consultation_fee),
+        bio: `Medical professional specializing in ${formData.primarySpecialization}`,
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      };
+
       if (existingDoctorProfile) {
         const { error: doctorError } = await supabase
           .from('doctors')
-          .update({
-            name: formData.name.trim(),
-            email: user.email || '',
-            phone: formData.phone || user.phone || '',
-            primary_specialization: formData.primarySpecialization || null,
-            consultation_fee: parseInt(formData.consultation_fee) || null,
-            bio: `Medical professional specializing in ${formData.primarySpecialization || 'Medicine'}`,
-            updated_at: new Date().toISOString(),
-          })
+          .update(doctorData)
           .eq('user_id', user.id)
           .eq('clinic_id', activeClinic.clinic_id);
         if (doctorError) throw doctorError;
       } else {
         const { error: doctorError } = await supabase.from('doctors').insert({
+          ...doctorData,
           user_id: user.id,
           clinic_id: activeClinic.clinic_id,
-          name: formData.name.trim(),
-          email: user.email || '',
-          phone: formData.phone || user.phone || '',
-          primary_specialization: formData.primarySpecialization || null,
-          consultation_fee: parseInt(formData.consultation_fee) || null,
-          is_active: true,
-          bio: `Medical professional specializing in ${formData.primarySpecialization || 'Medicine'}`,
         });
         if (doctorError) throw doctorError;
       }
 
-      // Update department assignment in clinic_members table
+      // 4. Update Clinic Member Department
       const { error: deptError } = await supabase
         .from('clinic_members')
         .update({ department_id: formData.selectedDepartment })
@@ -217,14 +218,13 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
       queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinic_id] });
       toast({ 
         title: "Success",
-        description: "Medical profile created or updated successfully! You can now see patients and manage appointments.",
+        description: "Medical profile ready! You can now start accepting appointments.",
       });
       markProfileComplete();
       onSuccess();
       onClose();
     },
     onError: (error: Error) => {
-      console.error('Error creating or updating doctor profile:', error);
       if (error.message !== 'Validation failed') {
         toast({ 
           title: "Error",
@@ -333,44 +333,29 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
           {/* Specialization */}
           <div className="space-y-2">
             <Label htmlFor="specialization" className="text-sm font-medium">
-              Medical Specialization <span className="text-muted-foreground">(Optional)</span>
+              Medical Specialization <span className="text-destructive">*</span>
             </Label>
             <Input
               id="specialization"
               value={formData.primarySpecialization}
-              onChange={(e) => setFormData(prev => ({ ...prev, primarySpecialization: e.target.value }))}
-              placeholder="e.g., Cardiology, Neurology, General Medicine"
-            />
-            <p className="text-xs text-muted-foreground">Your area of medical expertise</p>
-          </div>
-
-          {/* Phone */}
-          <div className="space-y-2">
-            <Label htmlFor="phone" className="text-sm font-medium">
-              Professional Phone <span className="text-muted-foreground">(Optional)</span>
-            </Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
               onChange={(e) => {
-                setFormData(prev => ({ ...prev, phone: e.target.value }));
-                if (formErrors.phone) {
-                  setFormErrors(prev => ({ ...prev, phone: '' }));
+                setFormData(prev => ({ ...prev, primarySpecialization: e.target.value }));
+                if (formErrors.primarySpecialization) {
+                  setFormErrors(prev => ({ ...prev, primarySpecialization: '' }));
                 }
               }}
-              placeholder="+91 98765 43210"
+              placeholder="e.g., Cardiology, Neurology, General Medicine"
             />
-            {formErrors.phone && (
-              <p className="text-destructive text-sm">{formErrors.phone}</p>
+             {formErrors.primarySpecialization && (
+              <p className="text-destructive text-sm">{formErrors.primarySpecialization}</p>
             )}
-            <p className="text-xs text-muted-foreground">For patient contact and appointments</p>
+            <p className="text-xs text-muted-foreground">Your area of medical expertise</p>
           </div>
 
           {/* Consultation Fee */}
           <div className="space-y-2">
             <Label htmlFor="fee" className="text-sm font-medium">
-              Consultation Fee <span className="text-muted-foreground">(₹)</span>
+              Consultation Fee <span className="text-destructive">*</span>
             </Label>
             <Input
               id="fee"
