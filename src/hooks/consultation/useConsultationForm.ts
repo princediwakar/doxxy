@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, UseMutationResult } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
@@ -11,13 +11,48 @@ import { Tables, Json } from '@/integrations/supabase/types';
 import { consultationNotesSchema, getMandatoryFieldsForDepartment } from '@/lib/consultationNotesSchemas';
 import { isEqual } from 'lodash-es';
 
-export const useConsultationForm = (
-  appointmentId: string | undefined,
-  appointment: Tables<'appointments'> | null | undefined,
-  existingConsultation: Tables<'consultations'> | null | undefined,
-  onConsultationCompleted?: () => void,
-  departmentType?: string
-) => {
+export interface UseConsultationFormParams {
+  appointmentId: string | undefined;
+  appointment: Tables<'appointments'> | null | undefined;
+  existingConsultation: Tables<'consultations'> | null | undefined;
+  departmentType?: string;
+}
+
+export interface UseConsultationFormReturn {
+  form: ReturnType<typeof useForm<ConsultationFormValues>>;
+  isConsultationCompleted: boolean;
+  canEditConsultation: boolean;
+  autoSaveMutation: UseMutationResult<Tables<'consultations'>, Error, ConsultationFormValues, unknown>;
+  handleSave: () => void;
+  handleCompleteConsultation: () => Promise<void>;
+  validateMandatoryFields: () => string[];
+  getMandatoryFieldsStatus: () => {
+    completed: number;
+    total: number;
+    allCompleted: boolean;
+    isValid: boolean;
+    errors: string[];
+    missingFields: number;
+    validationMessage: string;
+  };
+  mandatoryFieldsStatus: {
+    completed: number;
+    total: number;
+    allCompleted: boolean;
+    isValid: boolean;
+    errors: string[];
+    missingFields: number;
+    validationMessage: string;
+  };
+  justCompleted: boolean;
+}
+
+export const useConsultationForm = ({
+  appointmentId,
+  appointment,
+  existingConsultation,
+  departmentType
+}: UseConsultationFormParams): UseConsultationFormReturn => {
   const { user, activeClinic, hasDoctorProfile } = useAuth();
   const queryClient = useQueryClient();
   const supabase = getSupabase();
@@ -423,12 +458,7 @@ export const useConsultationForm = (
       description: 'The consultation has been marked as complete.',
     });
 
-    // Set timeout for redirect
-    setTimeout(() => {
-      if (onConsultationCompleted) {
-        onConsultationCompleted();
-      }
-    }, 3000);
+    // Just set the completion flag - parent component handles navigation
     } catch (error) {
        console.error('Error completing consultation:', error);
        toast({
@@ -445,8 +475,7 @@ export const useConsultationForm = (
     autoSaveMutation,
     appointmentId,
     supabase,
-    queryClient,
-    onConsultationCompleted
+    queryClient
   ]);
 
   return {

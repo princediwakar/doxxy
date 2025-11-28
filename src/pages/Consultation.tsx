@@ -130,7 +130,7 @@ const Consultation = () => {
     return departmentMapping[departmentName || ""] || "General";
   }, [departmentInfo]);
 
-  // Form management
+  // Form management - decoupled state management
   const {
     form,
     isConsultationCompleted,
@@ -139,13 +139,24 @@ const Consultation = () => {
     handleSave,
     handleCompleteConsultation,
     mandatoryFieldsStatus,
-  } = useConsultationForm(
+    justCompleted,
+  } = useConsultationForm({
     appointmentId,
     appointment,
     existingConsultation,
-    () => navigate("/appointments"), // Redirect callback
-    departmentType // Pass department type for validation
-  );
+    departmentType
+  });
+
+  // Handle consultation completion with navigation
+  useEffect(() => {
+    if (justCompleted) {
+      // Set timeout for redirect
+      const timer = setTimeout(() => {
+        navigate("/appointments");
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [justCompleted, navigate]);
 
   // Enhanced print functionality
   const handlePrint = useCallback(async () => {
