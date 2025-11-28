@@ -168,11 +168,18 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
+                      onClick={async () => {
                         // Associated doctors can edit completed consultations
                         if (appointment.user_id === user?.id) {
-                          // Navigate to consultation page for editing
-                          navigate(`/consultation/${appointment.id}`);
+                          // Prefetch consultation data before navigation
+                          try {
+                            // We'll need to pass the prefetch function from parent
+                            // For now, navigate directly and let the consultation page handle prefetching
+                            navigate(`/consultation/${appointment.id}`);
+                          } catch (error) {
+                            console.error('Error prefetching consultation data:', error);
+                            navigate(`/consultation/${appointment.id}`);
+                          }
                         } else {
                           // Staff and other doctors can only view
                           onViewConsultation(appointment);

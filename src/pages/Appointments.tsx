@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Calendar } from 'lucide-react';
@@ -7,6 +7,7 @@ import { AppointmentModal } from '@/components/appointments/AppointmentModal';
 import { ConsultationViewModal } from '@/components/consultation/ConsultationViewModal';
 import { BillingModal } from '@/components/billing/BillingModal';
 import { useAppointments } from '@/hooks/useAppointments';
+import { usePrefetching } from '@/hooks/usePrefetching';
 import type { AppointmentWithDetails } from '@/types/appointments';
 import { AppointmentsTabs } from '@/components/appointments/AppointmentsTabs';
 import { DoctorSelector } from '@/components/appointments/DoctorSelector';
@@ -35,6 +36,21 @@ const Appointments = () => {
   } = useAppointments();
 
   const { activeClinicRole } = useAuth();
+
+  // Prefetching hook
+  const { prefetchPatients, prefetchDoctors, prefetchConsultationData } = usePrefetching();
+
+  // Prefetch essential data when appointments are loaded
+  useEffect(() => {
+    if (!isLoading) {
+      // Prefetch patients and doctors in background
+      Promise.all([
+        prefetchPatients(),
+        prefetchDoctors(),
+      ]).catch(console.error);
+    }
+  }, [isLoading, prefetchPatients, prefetchDoctors]);
+
   // Modal states
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
@@ -64,6 +80,9 @@ const Appointments = () => {
 
   const handleStartConsultationClick = async (appointment: AppointmentWithDetails) => {
     try {
+      // Prefetch consultation data before starting the consultation process
+      await prefetchConsultationData(appointment.id);
+
       await handleStartConsultation(appointment.id);
       navigate(`/consultation/${appointment.id}`);
     } catch (error) {

@@ -1,5 +1,5 @@
 // src/pages/Consultation.tsx
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   User,
@@ -33,6 +33,7 @@ import { ConsultationFormValues, DepartmentInfo } from "@/types/consultation";
 import { DbPatient as Patient } from "@/types/core";
 import { Prescription } from "@/types/prescriptions";
 import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
+import { usePrefetching } from "@/hooks/usePrefetching";
 import {
   specialtyFieldSections,
 } from "@/lib/consultationNotesSchemas";
@@ -65,6 +66,17 @@ const Consultation = () => {
     existingConsultationLoading,
     departmentInfoLoading,
   } = useConsultationData(appointmentId);
+
+  // Prefetching hook
+  const { prefetchAllEssentialData } = usePrefetching();
+
+  // Prefetch essential data when consultation data is loaded
+  useEffect(() => {
+    if (!appointmentLoading && appointment) {
+      // Prefetch in background to prepare for navigation
+      prefetchAllEssentialData().catch(console.error);
+    }
+  }, [appointmentLoading, appointment, prefetchAllEssentialData]);
 
   // Get specialty sections based on department
   const specialtySections = useMemo(() => {
