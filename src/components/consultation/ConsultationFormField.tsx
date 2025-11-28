@@ -51,6 +51,26 @@ export const ConsultationFormField = memo(({
     }
   }, []);
 
+  // Auto-focus the input when field is expanded
+  useEffect(() => {
+    if (isExpanded && !isReadOnly) {
+      // Focus the appropriate input element based on field type
+      const focusElement = () => {
+        if (fieldConfig.type === 'textarea' && textareaRef.current) {
+          textareaRef.current.focus();
+        } else if (fieldConfig.type === 'select' && selectRef.current) {
+          selectRef.current.focus();
+        } else if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      };
+
+      // Small delay to ensure the element is rendered and ready
+      const timer = setTimeout(focusElement, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [isExpanded, isReadOnly, fieldConfig.type]);
+
   const toggleField = () => {
     if (isReadOnly) return; // Don't allow expansion changes in read-only mode
     setIsExpanded(!isExpanded);

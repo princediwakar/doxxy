@@ -95,11 +95,15 @@
 - **Notes**: Fixed query key mismatch preventing data persistence when navigating away and back to consultation page
 
 ### 3.2 Dependency Optimization
-- **Status**: Pending
+- **Status**: Completed ✅
 - **Dependencies**: `lodash-es`, `html2canvas`, `jspdf`
-- **Progress**: 0%
+- **Progress**: 100%
 - **Blockers**: None
-- **Notes**: Reduce bundle size by ~775KB
+- **Notes**: Successfully optimized dependencies:
+  - **lodash-es**: Replaced with custom `isDeepEqual` function, completely eliminated dependency
+  - **html2canvas & jspdf**: Converted to dynamic imports and removed from manual vendor chunks
+  - **Bundle impact**: PDF dependencies (559.51 kB) now lazy-loaded instead of bundled in main chunk
+  - **TypeScript compilation verified**, **Build process validated**
 
 ### 3.3 Performance Monitoring Integration
 - **Status**: Pending
@@ -108,18 +112,21 @@
 - **Blockers**: None
 - **Notes**: Integrate existing performance utilities
 
-**Phase 3 Completion**: 33% (1 of 3 tasks completed)
+**Phase 3 Completion**: 66% (2 of 3 tasks completed)
 
 ---
 
 ## Phase 4: Database & Query Optimization
 
 ### 4.1 Query Pattern Analysis
-- **Status**: Pending
-- **Files**: `src/hooks/useClinicData.ts`
-- **Progress**: 0%
+- **Status**: Completed ✅
+- **Files**: `src/hooks/useClinicData.ts`, `src/hooks/useAppointments.ts`
+- **Progress**: 100%
 - **Blockers**: None
-- **Notes**: Fix N+1 query patterns
+- **Notes**: Successfully identified and fixed N+1 query patterns:
+  - **useClinicData.ts**: Converted sequential clinic queries to single batch query using `.in()` operator
+  - **useAppointments.ts**: Fixed sequential patient_id/doctor_id queries in consultation creation
+  - **TypeScript compilation verified**, **Development server tested successfully**
 
 ### 4.2 Patient List Virtualization
 - **Status**: Pending
@@ -128,7 +135,7 @@
 - **Blockers**: None
 - **Notes**: Implement virtual scrolling for large lists
 
-**Phase 4 Completion**: 0%
+**Phase 4 Completion**: 50% (1 of 2 tasks completed)
 
 ---
 
@@ -231,6 +238,25 @@
 - ✅ TypeScript compilation verified
 - ✅ Development server tested successfully
 - ✅ Consultation data now persists correctly when navigating away and back
+
+### 2025-11-28 (Phase 4.1 Query Pattern Analysis)
+- ✅ Analyzed current query patterns in useClinicData.ts and useAppointments.ts
+- ✅ Identified N+1 query patterns causing performance bottlenecks
+- ✅ Fixed sequential clinic queries in useClinicData.ts with single batch query using `.in()` operator
+- ✅ Fixed sequential patient_id/doctor_id queries in useAppointments.ts consultation creation
+- ✅ TypeScript compilation verified
+- ✅ Development server tested successfully
+- ✅ Query performance optimizations completed
+
+### 2025-11-28 (Phase 3.2 Dependency Optimization)
+- ✅ Analyzed current bundle size and dependency usage
+- ✅ Replaced lodash-es `isEqual` with custom `isDeepEqual` function, completely eliminating lodash-es dependency
+- ✅ Converted html2canvas and jspdf to dynamic imports in pdfExport.ts
+- ✅ Removed PDF dependencies from manual vendor chunks in vite.config.ts
+- ✅ TypeScript compilation verified
+- ✅ Build process validated
+- ✅ PDF dependencies (559.51 kB) now lazy-loaded instead of bundled in main chunk
+- ✅ Bundle size optimization completed successfully
 
 ---
 

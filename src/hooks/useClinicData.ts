@@ -142,15 +142,28 @@ export const useClinicData = () => {
         return;
       }
 
-      const clinicPromises = memberData.map(async (member) => {
-        const { data: clinicData, error: clinicError } = await supabase
-          .from('clinics')
-          .select('*')
-          .eq('id', member.clinic_id)
-          .single();
+      // Get all clinic IDs to fetch in a single query
+      const clinicIds = memberData.map(member => member.clinic_id);
 
-        if (clinicError) {
-          console.error(`Error fetching clinic ${member.clinic_id} details:`, clinicError);
+      // Fetch all clinics in a single query
+      const { data: allClinics, error: clinicsError } = await supabase
+        .from('clinics')
+        .select('*')
+        .in('id', clinicIds);
+
+      if (clinicsError) {
+        console.error("Error fetching clinic details:", clinicsError);
+        throw new Error(`Clinics fetch error: ${clinicsError.message}`);
+      }
+
+      // Create a map for quick lookup
+      const clinicMap = new Map(allClinics?.map(clinic => [clinic.id, clinic]) || []);
+
+      // Build the clinic memberships with clinic data
+      fetchedClinics = memberData.map(member => {
+        const clinicData = clinicMap.get(member.clinic_id);
+        if (!clinicData) {
+          console.error(`Clinic data not found for clinic ID: ${member.clinic_id}`);
           return null;
         }
 
@@ -160,9 +173,7 @@ export const useClinicData = () => {
           clinic_name: clinicData.name,
           joined_at: member.joined_at
         } as ClinicMemberWithClinic;
-      });
-
-      fetchedClinics = (await Promise.all(clinicPromises)).filter((clinic): clinic is ClinicMemberWithClinic => clinic !== null);
+      }).filter((clinic): clinic is ClinicMemberWithClinic => clinic !== null);
 
       if (fetchedClinics.length === 0) {
         console.warn("No valid clinics found after filtering.");

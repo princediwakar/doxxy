@@ -86,7 +86,6 @@ export default defineConfig(({ mode }) => ({
             'lodash.isequal',
           ],
           'vendor-charts': ['recharts'],
-          'vendor-pdf': ['jspdf', 'html2canvas'],
           'vendor-calendar': ['react-day-picker'],
           'vendor-misc': [
             'embla-carousel-react',

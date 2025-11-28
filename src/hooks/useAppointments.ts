@@ -247,15 +247,29 @@ export const useAppointments = () => {
       }
 
       // 3. Create consultation record
-      // Note: We do NOT explicitly deduct credit here. 
+      // Note: We do NOT explicitly deduct credit here.
       // The status change to "In Progress" in step 4 will automatically count as usage.
+
+      // Fetch appointment details in a single query to avoid N+1
+      const { data: appointmentData, error: appointmentError } = await supabase
+        .from('appointments')
+        .select('patient_id, doctor_id')
+        .eq('id', appointmentId)
+        .single();
+
+      if (appointmentError) {
+        console.error('Failed to fetch appointment details:', appointmentError);
+        toast.error('Failed to fetch appointment details');
+        return;
+      }
+
       const { error: createConsultationError } = await supabase
         .from('consultations')
         .insert({
           appointment_id: appointmentId,
           clinic_id: activeClinic?.clinic_id || '',
-          patient_id: (await supabase.from('appointments').select('patient_id').eq('id', appointmentId).single()).data?.patient_id || '',
-          doctor_id: (await supabase.from('appointments').select('doctor_id').eq('id', appointmentId).single()).data?.doctor_id || null,
+          patient_id: appointmentData?.patient_id || '',
+          doctor_id: appointmentData?.doctor_id || null,
           specialty_data: {},
           clinical_notes: {}
         });
