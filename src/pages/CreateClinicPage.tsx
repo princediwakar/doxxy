@@ -73,7 +73,7 @@ const doctorProfileSchema = z.object({
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
 const CreateClinicPage = () => {
-  const { user, fetchUserAndClinicData } = useAuth();
+  const { user, fetchUserAndClinicData, setActiveClinicId } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
@@ -181,7 +181,7 @@ const CreateClinicPage = () => {
 
       if (clinicError) throw clinicError;
       if (!clinicResult) throw new Error("Clinic creation failed - no result returned.");
-      
+
       const createdClinicId = (clinicResult as { clinic_id: string }).clinic_id;
 
       // Update additional clinic details (address, email, phone, website)
@@ -271,18 +271,21 @@ const CreateClinicPage = () => {
         if (adminMemberError) throw adminMemberError;
       }
 
-      // Update auth context
+      // Update auth context - ensure clinic data is refreshed
       await fetchUserAndClinicData(user);
-      
+
+      // Now that clinic data is refreshed, set the new clinic as active
+      setActiveClinicId(createdClinicId);
+
       const selectedDepartmentNames = departmentTypes?.filter(dt => departments.includes(dt.id)).map(dt => dt.name).join(", ") || "None";
       const doctorStatus = data.isDoctor === 'yes' ? "You will also appear in doctor lists for appointments." : "You will manage the clinic as an administrator only.";
-      
+
       toast({
         title: "Success",
         description: `Clinic "${clinicDetails.name}" created successfully.\nDepartments: ${selectedDepartmentNames}\n${doctorStatus}`,
       });
-      
-      // Navigate to dashboard
+
+      // Navigate to dashboard - the new clinic should now be active
       navigate("/dashboard", { replace: true });
     } catch (error: unknown) {
       console.error("Error creating clinic:", error);
