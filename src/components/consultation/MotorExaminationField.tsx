@@ -3,6 +3,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Chip } from '@/components/ui/chip';
 import type { MotorExamData } from '@/types/consultation';
+import { useMemo, memo } from 'react';
 
 interface MotorExaminationFieldProps {
   value: MotorExamData;
@@ -46,7 +47,7 @@ const involuntaryMovementsOptions = [
   'Tics'
 ];
 
-export const MotorExaminationField = ({
+export const MotorExaminationField = memo(({
   value,
   onChange,
   isReadOnly = false
@@ -94,14 +95,14 @@ export const MotorExaminationField = ({
     });
   };
 
-  const muscleGroups = [
+  const muscleGroups = useMemo(() => [
     { key: 'shoulder', label: 'Shoulder' },
     { key: 'elbow', label: 'Elbow' },
     { key: 'wrist', label: 'Wrist' },
     { key: 'hip', label: 'Hip' },
     { key: 'knee', label: 'Knee' },
     { key: 'ankle', label: 'Ankle' }
-  ];
+  ], []);
 
   return (
     <div className="space-y-4">
@@ -251,4 +252,4 @@ export const MotorExaminationField = ({
       </div>
     </div>
   );
-};
+});

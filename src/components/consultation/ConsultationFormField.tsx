@@ -12,7 +12,7 @@ import { VitalSignsField } from './VitalSignsField';
 import { MotorExaminationField } from './MotorExaminationField';
 import { ReflexExaminationField } from './ReflexExaminationField';
 import type { FieldConfig, FieldValue, TabularEyeValue, MotorExaminationValue, ReflexExaminationValue } from '@/types/consultation';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo, memo } from 'react';
 
 interface ConsultationFormFieldProps {
   fieldConfig: FieldConfig;
@@ -23,7 +23,7 @@ interface ConsultationFormFieldProps {
   autoFocus?: boolean;
 }
 
-export const ConsultationFormField = ({
+export const ConsultationFormField = memo(({
   fieldConfig,
   fieldIndex,
   value,
@@ -53,12 +53,12 @@ export const ConsultationFormField = ({
   };
 
   // Get character limit for this field
-  const getCharacterLimit = () => {
+  const characterLimit = useMemo(() => {
     if (fieldConfig.type === 'textarea') {
       return CHARACTER_LIMITS.textarea.default;
     }
     return CHARACTER_LIMITS.input.default;
-  };
+  }, [fieldConfig.type]);
 
   // Special handling for prescriptions
   if (fieldConfig.name === 'prescriptions') {
@@ -287,9 +287,8 @@ export const ConsultationFormField = ({
   }
 
   // For other field types
-  const hasValue = value && typeof value === 'string' && value.length > 0;
-  const characterCount = typeof value === 'string' ? value.length : 0;
-  const characterLimit = getCharacterLimit();
+  const hasValue = useMemo(() => value && typeof value === 'string' && value.length > 0, [value]);
+  const characterCount = useMemo(() => typeof value === 'string' ? value.length : 0, [value]);
   
   return (
     <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
@@ -408,4 +407,4 @@ export const ConsultationFormField = ({
       </Collapsible>
     </div>
   );
-}; 
+}); 
