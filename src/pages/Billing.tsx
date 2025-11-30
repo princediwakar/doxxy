@@ -17,13 +17,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Plus, CreditCard, IndianRupee, Edit, Eye } from "lucide-react";
+import { Search, Plus, CreditCard, IndianRupee, Edit, Eye, Printer } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MonthSelector } from "@/components/ui/MonthSelector";
 import { Suspense, lazy } from 'react';
 
 // Lazy load heavy billing components
 const BillingModal = lazy(() => import('@/components/billing/BillingModal').then(module => ({ default: module.BillingModal })));
+import { printBill } from '@/components/billing/printUtils';
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
@@ -120,6 +121,10 @@ const Billing = () => {
     setSelectedBill(bill);
     setModalMode('edit');
     setIsModalOpen(true);
+  };
+
+  const handlePrintBill = async (bill: BillWithDetails) => {
+    await printBill(bill, { name: bill.patient_name } as any);
   };
 
   const handleNewBill = () => {
@@ -237,7 +242,7 @@ const Billing = () => {
               <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
               <TableHead className="w-[40%]">Description</TableHead>
-              <TableHead className="w-[120px]">Actions</TableHead>
+              <TableHead className="w-[140px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -277,6 +282,15 @@ const Billing = () => {
                         title="View Bill"
                       >
                         <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handlePrintBill(bill)}
+                        className="h-8 w-8 p-0"
+                        title="Print Bill"
+                      >
+                        <Printer className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
