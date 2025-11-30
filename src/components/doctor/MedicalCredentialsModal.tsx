@@ -164,8 +164,6 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
-    if (!formData.medical_degree) errors.medical_degree = "Primary degree is required";
-    if (!formData.medical_registration_number) errors.medical_registration_number = "Registration number is required";
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -344,7 +342,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
 
                    <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label>Registration Number <span className="text-red-500">*</span></Label>
+                      <Label>Registration Number</Label>
                       <Input 
                         value={formData.medical_registration_number} 
                         onChange={(e) => handleFieldChange('medical_registration_number', e.target.value)} 

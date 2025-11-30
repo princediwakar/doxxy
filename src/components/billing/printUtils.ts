@@ -1,6 +1,6 @@
 // src/components/billing/printUtils.ts
 import { DbPatient } from '@/types/core';
-import { Bill } from '@/types/billing';
+import { Bill, ServiceItem } from '@/types/billing';
 
 // Helper function to generate proper filename
 function generateBillFilename(bill: Bill, patient: DbPatient | null): string {
@@ -113,14 +113,16 @@ export const generateBillPrintContent = (
             </tr>
           </thead>
           <tbody>
-            ${(Array.isArray(billData.service_items) ? billData.service_items : []).map((item: any) => `
+            ${(Array.isArray(billData.service_items) ? billData.service_items : []).map((item: unknown) => {
+              const serviceItem = item as ServiceItem;
+              return `
               <tr>
-                <td style="padding: 10px; border: 1px solid #ddd;">${item.description}</td>
-                <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${item.quantity}</td>
-                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">₹${Number(item.rate).toFixed(2)}</td>
-                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">₹${Number(item.amount).toFixed(2)}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${serviceItem.description}</td>
+                <td style="padding: 10px; text-align: center; border: 1px solid #ddd;">${serviceItem.quantity}</td>
+                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">₹${Number(serviceItem.rate).toFixed(2)}</td>
+                <td style="padding: 10px; text-align: right; border: 1px solid #ddd;">₹${Number(serviceItem.amount).toFixed(2)}</td>
               </tr>
-            `).join('')}
+            `}).join('')}
           </tbody>
         </table>
 

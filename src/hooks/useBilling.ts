@@ -1,3 +1,4 @@
+// src/hooks/useBilling.ts
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -164,9 +165,10 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
   const discountPercentage = form.watch('discount_percentage') || 0;
   const taxPercentage = form.watch('tax_percentage') || 0;
 
-  const calculateTotals = useMemo(() => {
-    const serviceItems = form.watch('service_items') || [];
+  // Watch service items separately to trigger recalculations
+  const serviceItems = form.watch('service_items') || [];
 
+  const calculateTotals = useMemo(() => {
     // In view mode, use the stored bill amount as fallback
     let subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
 
@@ -187,7 +189,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
       taxAmount,
       total,
     };
-  }, [form, discountPercentage, taxPercentage, mode, bill]);
+  }, [serviceItems, discountPercentage, taxPercentage, mode, bill]);
 
   // Service item management
   const addServiceItem = () => {
@@ -209,13 +211,16 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     const currentItems = form.getValues('service_items') || [];
     const updatedItems = [...currentItems];
 
+    // Get the current item before updating
+    const currentItem = updatedItems[index];
+
     // Update the field with the new value
-    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    updatedItems[index] = { ...currentItem, [field]: value };
 
     // Auto-calculate amount when quantity or rate changes
     if (field === 'quantity' || field === 'rate') {
-      const quantity = field === 'quantity' ? Number(value) : Number(updatedItems[index].quantity);
-      const rate = field === 'rate' ? Number(value) : Number(updatedItems[index].rate);
+      const quantity = field === 'quantity' ? Number(value) : Number(currentItem.quantity);
+      const rate = field === 'rate' ? Number(value) : Number(currentItem.rate);
       updatedItems[index].amount = quantity * rate;
     }
 

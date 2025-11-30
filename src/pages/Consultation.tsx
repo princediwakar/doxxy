@@ -134,6 +134,13 @@ const Consultation = () => {
   }, [departmentInfo]);
 
   // Form management - decoupled state management
+  console.log('Consultation page - appointmentId from params:', appointmentId);
+  console.log('Consultation page - appointment data:', {
+    id: appointment?.id,
+    status: appointment?.status,
+    patient_name: (appointment?.patient as any)?.name
+  });
+
   const {
     form,
     isConsultationCompleted,
@@ -152,12 +159,26 @@ const Consultation = () => {
 
   // Handle consultation completion with navigation
   useEffect(() => {
+    console.log('🔄 Navigation effect triggered, justCompleted:', justCompleted);
+    console.log('🔄 Navigation effect dependencies - justCompleted:', justCompleted, 'navigate function:', !!navigate);
+
     if (justCompleted) {
+      console.log('✅ Starting 3-second countdown to navigate to appointments...');
       // Set timeout for redirect
       const timer = setTimeout(() => {
+        console.log('🚀 Navigating to appointments page...');
         navigate("/appointments");
       }, 3000);
-      return () => clearTimeout(timer);
+
+      // Show countdown toast
+      toast.success('Consultation completed! Redirecting to appointments in 3 seconds...');
+
+      return () => {
+        console.log('🔄 Clearing navigation timer');
+        clearTimeout(timer);
+      };
+    } else {
+      console.log('❌ Navigation effect: justCompleted is false, no redirect');
     }
   }, [justCompleted, navigate]);
 

@@ -1,3 +1,4 @@
+// src/components/billing/BillingModal.tsx
 import React from 'react';
 import { FileText, Edit, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -91,6 +92,46 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        {/* Top Actions - Positioned left of the Close X */}
+        <div className="absolute right-12 top-4 flex items-center gap-2 z-50">
+          {bill && (
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              onClick={handlePrint}
+              className="flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Print
+            </Button>
+          )}
+
+          {mode === 'view' && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onModeChange?.('edit')}
+              className="flex items-center gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+          )}
+
+          {(mode === 'create' || mode === 'edit') && (
+            <Button
+              type="button"
+              size="sm"
+              onClick={form.handleSubmit(onSubmit)}
+              disabled={isSubmitting || calculateTotals.total <= 0}
+            >
+              {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update' : 'Create'}
+            </Button>
+          )}
+        </div>
+
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -105,7 +146,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
         
         <ScrollArea className="max-h-[80vh] overflow-y-auto">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-1">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-1 pb-4">
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -180,7 +221,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                             placeholder={isLoadingInvoiceNumber ? "Generating invoice number..." : "Invoice number"}
                             disabled={mode === 'view' || isLoadingInvoiceNumber}
                           />
-                          {mode === 'create' && !field.value && !isLoadingInvoiceNumber && (
+                          {mode === 'create' && !isLoadingInvoiceNumber && (
                             <Button
                               type="button"
                               variant="outline"
@@ -321,73 +362,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                   <span>Total:</span>
                   <span>₹{calculateTotals.total.toFixed(2)}</span>
                 </div>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="flex justify-end gap-3 pt-4">
-                {mode === 'view' ? (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handlePrint}
-                      className="flex items-center gap-2"
-                    >
-                      <Printer className="h-4 w-4" />
-                      Print
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => onOpenChange(false)}
-                    >
-                      Close
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={() => onModeChange?.('edit')}
-                      className="flex items-center gap-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit Bill
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    {bill && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handlePrint}
-                        className="flex items-center gap-2"
-                        disabled={isSubmitting}
-                      >
-                        <Printer className="h-4 w-4" />
-                        Print
-                      </Button>
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        if (mode === 'edit' && bill) {
-                          onModeChange?.('view');
-                        } else {
-                          onOpenChange(false);
-                        }
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      {mode === 'edit' ? 'Cancel' : 'Cancel'}
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmitting || calculateTotals.total <= 0}
-                    >
-                      {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update Bill' : 'Create Bill'}
-                    </Button>
-                  </>
-                )}
               </div>
             </form>
           </Form>

@@ -128,9 +128,9 @@ export const useAppointments = () => {
   }, [currentUserDoctorProfile, selectedDoctorId, hasAutoSelected]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['appointments', activeClinic?.clinics?.id, searchTerm],
-    queryFn: () => fetchAppointments(activeClinic?.clinics?.id || '', searchTerm),
-    enabled: !!activeClinic?.clinics?.id && !authLoading,
+    queryKey: ['appointments', activeClinic?.clinic_id, searchTerm],
+    queryFn: () => fetchAppointments(activeClinic?.clinic_id || '', searchTerm),
+    enabled: !!activeClinic?.clinic_id && !authLoading,
     retry: 1,
   });
 
@@ -180,7 +180,7 @@ export const useAppointments = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinics?.id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
       // Invalidate billing summary too, as a cancellation might increase the available balance
       queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
       toast.success('Appointment cancelled successfully');
@@ -200,7 +200,7 @@ export const useAppointments = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinics?.id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
       // Invalidate billing summary as status changes affect balance
       queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
       toast.success('Appointment status updated successfully');
@@ -216,7 +216,15 @@ export const useAppointments = () => {
 
   const handleStartConsultation = async (appointmentId: string) => {
     try {
+      // Validate appointment ID
+      if (!appointmentId || appointmentId.trim() === '') {
+        console.error('Invalid appointment ID:', appointmentId);
+        toast.error('Invalid appointment ID');
+        return;
+      }
+
       console.log('handleStartConsultation called with role:', activeClinicRole);
+      console.log('Updating appointment status to "In Progress" for appointment ID:', appointmentId);
 
       // 1. Check if consultation already exists
       const { data: existingConsultation, error: consultationError } = await supabase
@@ -226,10 +234,17 @@ export const useAppointments = () => {
         .maybeSingle();
 
       if (existingConsultation && !consultationError) {
-        await supabase
+        console.log('Found existing consultation, updating appointment status only');
+        const { error: statusError } = await supabase
           .from('appointments')
           .update({ status: 'In Progress' })
           .eq('id', appointmentId);
+
+        if (statusError) {
+          console.error('Error updating appointment status:', statusError);
+          throw statusError;
+        }
+        console.log('Successfully updated appointment status to "In Progress"');
         return;
       }
 
@@ -282,15 +297,25 @@ export const useAppointments = () => {
 
       // 4. Update status to "In Progress"
       // This is what effectively "Deducts" the credit in our calculated system
-      const { error: statusError } = await supabase
+      console.log('Creating new consultation and updating appointment status to "In Progress"');
+      console.log('SQL Query: UPDATE appointments SET status = \'In Progress\' WHERE id =', appointmentId);
+
+      const { data: updateResult, error: statusError } = await supabase
         .from('appointments')
         .update({ status: 'In Progress' })
-        .eq('id', appointmentId);
+        .eq('id', appointmentId)
+        .select();
 
-      if (statusError) throw statusError;
+      if (statusError) {
+        console.error('Error updating appointment status after creating consultation:', statusError);
+        throw statusError;
+      }
+
+      console.log('Update result:', updateResult);
+      console.log('Successfully created consultation and updated appointment status to "In Progress"');
 
       // Force refresh of both lists and billing to show updated balance immediately
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinics?.id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
 
     } catch (error) {
@@ -302,7 +327,7 @@ export const useAppointments = () => {
   };
 
   const refreshAppointments = () => {
-    queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinics?.id] });
+    queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
   };
 
   return {

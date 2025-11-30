@@ -17,7 +17,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Plus, CreditCard, IndianRupee, Edit, Eye, Printer } from "lucide-react";
+import { Search, Plus, CreditCard, IndianRupee } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MonthSelector } from "@/components/ui/MonthSelector";
 import { Suspense, lazy } from 'react';
@@ -241,8 +241,8 @@ const Billing = () => {
                 <TableHead>Patient</TableHead>
               <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
-              <TableHead className="w-[40%]">Description</TableHead>
-              <TableHead className="w-[140px]">Actions</TableHead>
+              <TableHead className="w-[30%]">Description</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -256,7 +256,11 @@ const Billing = () => {
               </TableRow>
             ) : (
               filteredBills.map((bill) => (
-                <TableRow key={bill.id} className="hover:bg-muted/50">
+                <TableRow 
+                  key={bill.id} 
+                  className="hover:bg-muted/50 cursor-pointer"
+                  onClick={() => handleBillClick(bill)}
+                >
                   <TableCell className="font-medium">
                     {bill.invoice_number}
                   </TableCell>
@@ -273,33 +277,28 @@ const Billing = () => {
                     {bill.description}
                   </TableCell>
                   <TableCell>
-                    <div className="flex gap-1">
+                    <div className="flex justify-end gap-2">
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleBillClick(bill)}
-                        className="h-8 w-8 p-0"
-                        title="View Bill"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handlePrintBill(bill)}
-                        className="h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePrintBill(bill);
+                        }}
                         title="Print Bill"
                       >
-                        <Printer className="h-4 w-4" />
+                        Print
                       </Button>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleEditBill(bill)}
-                        className="h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditBill(bill);
+                        }}
                         title="Edit Bill"
                       >
-                        <Edit className="h-4 w-4" />
+                        Edit
                       </Button>
                     </div>
                   </TableCell>
@@ -365,5 +364,3 @@ const Billing = () => {
 };
 
 export default Billing;
-
-

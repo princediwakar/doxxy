@@ -83,6 +83,11 @@ const Appointments = () => {
 
   const handleStartConsultationClick = async (appointment: AppointmentWithDetails) => {
     try {
+      console.log('handleStartConsultationClick called for appointment:', {
+        id: appointment.id,
+        patient_name: appointment.patient_name,
+        status: appointment.status
+      });
       // Prefetch consultation data before starting the consultation process
       await prefetchConsultationData(appointment.id);
 

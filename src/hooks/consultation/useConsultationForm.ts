@@ -10,7 +10,7 @@ import { ConsultationFormValues, PrescriptionMedication } from '@/types/consulta
 import { Tables, Json } from '@/integrations/supabase/types';
 import { consultationNotesSchema, getMandatoryFieldsForDepartment } from '@/lib/consultationNotesSchemas';
 // Custom deep comparison function to replace lodash-es isEqual
-const isDeepEqual = (a: any, b: any): boolean => {
+const isDeepEqual = <T>(a: T, b: T): boolean => {
   if (a === b) return true;
 
   if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
@@ -23,7 +23,7 @@ const isDeepEqual = (a: any, b: any): boolean => {
   if (keysA.length !== keysB.length) return false;
 
   for (const key of keysA) {
-    if (!keysB.includes(key) || !isDeepEqual(a[key], b[key])) {
+    if (!keysB.includes(key) || !isDeepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])) {
       return false;
     }
   }
@@ -110,6 +110,8 @@ export const useConsultationForm = ({
 
   // Track if consultation was just completed (for redirect)
   const [justCompleted, setJustCompleted] = useState(false);
+  const isCompletingRef = useRef(false);
+  const isEditingCompletedRef = useRef(false);
 
   // Check if current user is the assigned doctor
   const isAssignedDoctor = useMemo(() => {
@@ -200,12 +202,38 @@ export const useConsultationForm = ({
   });
 
   // Reset justCompleted state when user starts editing a completed consultation
+  // Only reset if the consultation was already completed before this session
   useEffect(() => {
-    if (isConsultationCompleted && canEditConsultation && justCompleted) {
-      // User is editing a completed consultation - reset the redirect state
-      setJustCompleted(false);
+    console.log('🔄 Reset effect - isConsultationCompleted:', isConsultationCompleted, 'canEditConsultation:', canEditConsultation, 'justCompleted:', justCompleted, 'isCompletingRef:', isCompletingRef.current, 'isEditingCompletedRef:', isEditingCompletedRef.current);
+
+    // Don't reset if we're currently editing a completed consultation and want to redirect
+    if (isConsultationCompleted && canEditConsultation && justCompleted && !isCompletingRef.current && !isEditingCompletedRef.current) {
+      // Check if this consultation was already completed when we loaded the page
+      // If appointment was already 'Completed' on load, then this is an edit session
+      const wasAlreadyCompleted = appointment?.status === 'Completed';
+      console.log('🔄 Reset effect - wasAlreadyCompleted:', wasAlreadyCompleted);
+      if (wasAlreadyCompleted) {
+        console.log('🔄 Resetting justCompleted - editing existing completed consultation');
+        setJustCompleted(false);
+      }
     }
-  }, [isConsultationCompleted, canEditConsultation, justCompleted]);
+    // Reset the completion flag after the effect runs
+    if (isCompletingRef.current) {
+      console.log('🔄 Reset effect - isCompletingRef is true, will reset in 1 second');
+      setTimeout(() => {
+        console.log('🔄 Reset effect - setting isCompletingRef to false');
+        isCompletingRef.current = false;
+      }, 1000);
+    }
+    // Reset the editing completed flag after navigation
+    if (isEditingCompletedRef.current) {
+      console.log('🔄 Reset effect - isEditingCompletedRef is true, will reset in 3 seconds');
+      setTimeout(() => {
+        console.log('🔄 Reset effect - setting isEditingCompletedRef to false');
+        isEditingCompletedRef.current = false;
+      }, 3000);
+    }
+  }, [isConsultationCompleted, canEditConsultation, justCompleted, appointment?.status]);
 
   // Keep consultation completion state synchronized with appointment status
   useEffect(() => {
@@ -218,10 +246,10 @@ export const useConsultationForm = ({
   const autoSaveMutation = useMutation({
     mutationFn: async (data: ConsultationFormValues) => {
 
-      if (!appointmentId || !activeClinic?.clinics?.id || !appointment) {
+      if (!appointmentId || !activeClinic?.clinic_id || !appointment) {
         console.error('❌ Auto-save failed: Missing required data', {
           appointmentId,
-          clinicId: activeClinic?.clinics?.id,
+          clinicId: activeClinic?.clinic_id,
           appointment
         });
         throw new Error('Missing required data');
@@ -231,7 +259,7 @@ export const useConsultationForm = ({
         appointment_id: appointmentId,
         patient_id: appointment?.patient_id || '',
         doctor_id: appointment?.doctor_id || user?.id || '',
-        clinic_id: activeClinic.clinics?.id,
+        clinic_id: activeClinic.clinic_id,
         specialty_data: data.specialty_data,
       };
 
@@ -282,7 +310,7 @@ export const useConsultationForm = ({
             consultation_id: result.id,
             patient_id: appointment?.patient_id || '',
             doctor_id: appointment?.doctor_id || user?.id || '',
-            clinic_id: activeClinic.clinics?.id || '',
+            clinic_id: activeClinic.clinic_id || '',
             medications: [med] as unknown as Json,
           }));
 
@@ -455,11 +483,30 @@ export const useConsultationForm = ({
 
   // Complete consultation with validation
   const handleCompleteConsultation = useCallback(async () => {
-    // If consultation is already completed and user can edit, allow saving changes
+    // Validate appointment ID
+    if (!appointmentId || appointmentId.trim() === '') {
+      console.error('Invalid appointment ID in handleCompleteConsultation:', appointmentId);
+      toast({
+        title: 'Invalid Appointment',
+        description: 'Cannot complete consultation with invalid appointment ID.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // If consultation is already completed and user can edit, allow saving changes and redirect
     if (isConsultationCompleted && canEditConsultation) {
       try {
+        console.log('🔄 Editing completed consultation - saving changes and setting up redirect');
         const formValues = form.getValues();
         await autoSaveMutation.mutateAsync(formValues);
+
+        // Set flags to prevent reset and trigger redirect
+        isEditingCompletedRef.current = true;
+        console.log('🔄 Setting justCompleted to true for editing completed consultation');
+        setJustCompleted(true);
+        console.log('✅ Editing completed consultation - justCompleted set to true for redirect');
+
         toast({
           title: 'Notes Updated',
           description: 'Your consultation notes have been updated successfully.',
@@ -467,6 +514,7 @@ export const useConsultationForm = ({
         return;
       } catch (error) {
         console.error('Error updating consultation notes:', error);
+        isEditingCompletedRef.current = false;
         toast({
           title: 'Update Failed',
           description: 'Could not update consultation notes. Please try again.',
@@ -498,28 +546,45 @@ export const useConsultationForm = ({
     }
 
     try {
-    const formValues = form.getValues();
-    await autoSaveMutation.mutateAsync(formValues);
-    
-    // Update appointment status to completed
-    const { error } = await supabase
-      .from('appointments')
-      .update({ status: 'Completed' })
-      .eq('id', appointmentId as string);
+      isCompletingRef.current = true;
+      const formValues = form.getValues();
+      await autoSaveMutation.mutateAsync(formValues);
 
-    if (error) throw error;
-    
-    setIsConsultationCompleted(true);
-    setJustCompleted(true);
-    queryClient.invalidateQueries({ queryKey: ['appointments'] });
-    toast({
-      title: 'Consultation Completed',
-      description: 'The consultation has been marked as complete.',
-    });
+      // Update appointment status to completed
+      console.log('handleCompleteConsultation: Updating appointment status to "Completed" for appointment ID:', appointmentId);
+      console.log('SQL Query: UPDATE appointments SET status = \'Completed\' WHERE id =', appointmentId);
 
-    // Just set the completion flag - parent component handles navigation
+      const { data: updateResult, error: appointmentError } = await supabase
+        .from('appointments')
+        .update({ status: 'Completed' })
+        .eq('id', appointmentId as string)
+        .select();
+
+      if (appointmentError) {
+        console.error('Error updating appointment status to "Completed":', appointmentError);
+        throw appointmentError;
+      }
+
+      console.log('Update result:', updateResult);
+      console.log('Successfully updated appointment status to "Completed"');
+
+
+      setIsConsultationCompleted(true);
+      setJustCompleted(true);
+      console.log('✅ Consultation completed - justCompleted set to true');
+      console.log('✅ Appointment status updated to "Completed"');
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
+
+      toast({
+        title: 'Consultation Completed',
+        description: 'The consultation has been marked as complete.',
+      });
+
+      // Just set the completion flag - parent component handles navigation
     } catch (error) {
        console.error('Error completing consultation:', error);
+       isCompletingRef.current = false;
        toast({
         title: 'Completion Failed',
         description: 'Could not complete the consultation. Please try again.',
