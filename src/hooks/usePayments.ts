@@ -304,31 +304,52 @@ export const usePayments = () => {
   // This replaces the need for a separate 'deduct' function.
   // We check before we change status.
   const canBookAppointment = async (creditsRequired: number = 1): Promise<boolean> => {
-    if (!activeClinic?.clinic_id) return false;
+    if (!activeClinic?.clinic_id) {
+      console.error("No active clinic ID for credit check");
+      return false;
+    }
 
     try {
       // Get Total Purchased
-      const { data: transactions } = await supabase
+      const { data: transactions, error: transactionsError } = await supabase
         .from("payment_transactions")
         .select("credits_purchased")
         .eq("clinic_id", activeClinic.clinic_id)
         .eq("transaction_type", "credit_purchase")
         .eq("payment_status", "completed");
-      
+
+      if (transactionsError) {
+        console.error("Error fetching payment transactions:", transactionsError);
+        // Don't return false immediately - check if it's an RLS policy error
+        if (transactionsError.code === '42501' || transactionsError.message?.includes('permission denied')) {
+          console.error("RLS POLICY ERROR: Doctor cannot read payment_transactions table");
+          console.error("Please ensure the RLS policy 'payment_transactions_read_for_clinic_members' exists and includes 'doctor' role");
+        }
+        return false;
+      }
+
       const totalPurchased = transactions?.reduce((sum, t) => sum + (t.credits_purchased || 0), 0) || 0;
 
       // Get Total Used (In Progress + Completed)
-      const { count: totalUsed } = await supabase
+      const { count: totalUsed, error: appointmentsError } = await supabase
         .from("appointments")
         .select("id", { count: "exact", head: true })
         .eq("clinic_id", activeClinic.clinic_id)
         .in("status", ["In Progress", "Completed"]);
 
+      if (appointmentsError) {
+        console.error("Error fetching appointments count:", appointmentsError);
+        return false;
+      }
+
       const balance = totalPurchased - (totalUsed || 0);
-      
+
+      // Debug logging
+      console.debug(`Credit check: purchased=${totalPurchased}, used=${totalUsed || 0}, balance=${balance}, required=${creditsRequired}`);
+
       return balance >= creditsRequired;
     } catch (error) {
-      console.error("Error checking credits:", error);
+      console.error("Unexpected error checking credits:", error);
       return false;
     }
   };
