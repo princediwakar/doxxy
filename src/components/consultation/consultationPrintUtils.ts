@@ -1,4 +1,4 @@
-// src/components/consultation/printUtils.ts
+// src/components/consultation/consultationPrintUtils.ts
 import { ConsultationFormValues } from '@/types/consultation';
 import { DbPatient } from '@/types/core';
 import { Tables } from '@/integrations/supabase/types';
@@ -40,6 +40,8 @@ function generateConsultationFilename (
 // --- CONFIGURATION ---
 // Adjust this value to match the height of your physical paper's letterhead.
 const PRINT_TOP_MARGIN = '45mm'; 
+// Adjust this to prevent content from hitting the bottom edge or physical footer.
+const PRINT_BOTTOM_MARGIN = '20mm'; 
 // ---------------------
 
 export const generatePrintContent = (
@@ -72,6 +74,7 @@ export const generatePrintContent = (
 
   return new Promise<string>((resolve) => {
     setTimeout(() => {
+      // CSS explanation: margin: TOP RIGHT BOTTOM LEFT
       const html = `
     <!DOCTYPE html>
     <html>
@@ -103,13 +106,15 @@ export const generatePrintContent = (
             
             @media print {
               @page { 
-                margin: ${PRINT_TOP_MARGIN} 8mm 8mm 8mm; 
+                /* UPDATED: Added PRINT_BOTTOM_MARGIN */
+                margin: ${PRINT_TOP_MARGIN} 8mm ${PRINT_BOTTOM_MARGIN} 8mm; 
                 size: A4; 
               }
             }
             
             @page { 
-              margin: ${PRINT_TOP_MARGIN} 8mm 8mm 8mm !important; 
+              /* UPDATED: Added PRINT_BOTTOM_MARGIN */
+              margin: ${PRINT_TOP_MARGIN} 8mm ${PRINT_BOTTOM_MARGIN} 8mm !important; 
               size: A4 !important;
               @top-left { content: "" !important; }
               @top-center { content: "" !important; }
@@ -220,7 +225,7 @@ export const printConsultation = async (
     try {
       printWindow.history.replaceState({}, '', '');
     } catch {
-      // Ignore history replace errors in print window; variable removed to fix linting
+      // Ignore history replace errors
     }
     
     printWindow.document.write(printContent);
@@ -228,9 +233,10 @@ export const printConsultation = async (
     printWindow.focus();
     
     const additionalCSS = printWindow.document.createElement('style');
+    // UPDATED: Added PRINT_BOTTOM_MARGIN here
     additionalCSS.textContent = `
       @page {
-        margin: ${PRINT_TOP_MARGIN} 15mm 10mm 15mm !important;
+        margin: ${PRINT_TOP_MARGIN} 15mm ${PRINT_BOTTOM_MARGIN} 15mm !important;
         size: A4 !important;
         @top-left { content: "" !important; }
         @top-center { content: "" !important; }
@@ -241,7 +247,7 @@ export const printConsultation = async (
       }
       @media print {
         @page {
-          margin: ${PRINT_TOP_MARGIN} 8mm 8mm 8mm !important;
+          margin: ${PRINT_TOP_MARGIN} 8mm ${PRINT_BOTTOM_MARGIN} 8mm !important;
           size: A4 !important;
           @top-left { content: "" !important; }
           @top-center { content: "" !important; }
@@ -285,13 +291,14 @@ export const printConsultation = async (
     printWindow.document.head.appendChild(additionalCSS);
     
     const script = printWindow.document.createElement('script');
+    // UPDATED: Added PRINT_BOTTOM_MARGIN in the beforeprint script
     script.textContent = `
       window.addEventListener('beforeprint', function() {
         document.title = '${filename}';
         const extraStyle = document.createElement('style');
         extraStyle.textContent = \`
           @page {
-            margin: ${PRINT_TOP_MARGIN} 8mm 8mm 8mm !important;
+            margin: ${PRINT_TOP_MARGIN} 8mm ${PRINT_BOTTOM_MARGIN} 8mm !important;
             size: A4 !important;
             @top-left { content: "" !important; }
             @top-center { content: "" !important; }

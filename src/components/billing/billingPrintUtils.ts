@@ -50,10 +50,18 @@ export const generateBillPrintContent = (
       ? new Date(dateString).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) 
       : new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
+  // --- CALCULATIONS (Fixed Logic) ---
   const subtotal = Number(billData.amount || 0);
   const discountPct = Number(billData.discount_percentage || 0);
   const taxPct = Number(billData.tax_percentage || 0);
+
+  const discountAmount = subtotal * (discountPct / 100);
+  const taxAmount = subtotal * (taxPct / 100);
   
+  // Calculate final total
+  const finalTotal = subtotal - discountAmount + taxAmount;
+  // ----------------------------------
+
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -68,26 +76,29 @@ export const generateBillPrintContent = (
         * { box-sizing: border-box; }
 
         @page {
-          size: auto;
-          margin: 5mm; 
+          size: A4;
+          margin: 0; /* We handle margins via padding in the body/container */
         }
 
-        html, body {
+        body {
           margin: 0;
           padding: 0;
           background: white;
           font-family: 'Inter', sans-serif;
           color: #1e293b;
-          height: auto;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
 
         .print-container {
-          padding: 10mm; 
+          /* Standard A4 safe printing area */
+          padding: 15mm 15mm; 
           width: 100%;
+          max-width: 210mm; /* A4 Width */
+          margin: 0 auto;
         }
 
         .no-print { display: none !important; }
-        ::-webkit-scrollbar { display: none; }
       </style>
     </head>
     <body>
@@ -112,24 +123,24 @@ export const generateBillPrintContent = (
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-2 gap-8 mb-8">
           <div>
-            <h3 class="text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">Bill From</h3>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">From</h3>
             <div class="text-slate-800 text-sm">
-              <p class="font-semibold text-base">${clinic?.name || 'Clinic Name'}</p>
-              ${clinic?.address ? `<p class="text-slate-500 mt-1 whitespace-pre-line">${clinic.address}</p>` : ''}
-              ${clinic?.phone ? `<p class="mt-1">${clinic.phone}</p>` : ''}
-              ${clinic?.email ? `<p>${clinic.email}</p>` : ''}
+              <p class="font-bold text-base text-slate-900">${clinic?.name || 'Clinic Name'}</p>
+              ${clinic?.address ? `<p class="text-slate-600 mt-1 whitespace-pre-line">${clinic.address}</p>` : ''}
+              ${clinic?.phone ? `<p class="text-slate-600 mt-1">Tel: ${clinic.phone}</p>` : ''}
+              ${clinic?.email ? `<p class="text-slate-600">${clinic.email}</p>` : ''}
             </div>
           </div>
 
           <div>
-            <h3 class="text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">Bill To</h3>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Bill To</h3>
             <div class="text-slate-800 text-sm">
-              <p class="font-semibold text-base">${patientName}</p>
-              <p class="mt-1">${patient?.phone || ''}</p>
-              <p>${patient?.email || ''}</p>
-              <p class="text-slate-500 mt-1 whitespace-pre-line">${patient?.address || ''}</p>
+              <p class="font-bold text-base text-slate-900">${patientName}</p>
+              ${patient?.phone ? `<p class="text-slate-600 mt-1">${patient.phone}</p>` : ''}
+              ${patient?.email ? `<p class="text-slate-600">${patient.email}</p>` : ''}
+              ${patient?.address ? `<p class="text-slate-600 mt-1 whitespace-pre-line">${patient.address}</p>` : ''}
             </div>
           </div>
         </div>
@@ -137,11 +148,11 @@ export const generateBillPrintContent = (
         <div class="mb-8">
           <table class="w-full text-left border-collapse">
             <thead>
-              <tr class="border-b border-slate-200 bg-slate-50">
-                <th class="py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wider w-1/2">Service / Description</th>
-                <th class="py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center">Qty</th>
-                <th class="py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Rate</th>
-                <th class="py-2 px-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-right">Amount</th>
+              <tr class="border-b-2 border-slate-200">
+                <th class="py-3 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider w-1/2">Service Description</th>
+                <th class="py-3 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-center">Qty</th>
+                <th class="py-3 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Rate</th>
+                <th class="py-3 px-2 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Amount</th>
               </tr>
             </thead>
             <tbody class="text-sm">
@@ -149,10 +160,10 @@ export const generateBillPrintContent = (
                 const serviceItem = item as ServiceItem;
                 return `
                 <tr class="border-b border-slate-100 last:border-0">
-                  <td class="py-3 px-3 font-medium text-slate-700">${serviceItem.description}</td>
-                  <td class="py-3 px-3 text-center text-slate-600">${serviceItem.quantity}</td>
-                  <td class="py-3 px-3 text-right text-slate-600">₹${Number(serviceItem.rate).toFixed(2)}</td>
-                  <td class="py-3 px-3 text-right font-semibold text-slate-800">₹${Number(serviceItem.amount).toFixed(2)}</td>
+                  <td class="py-3 px-2 font-medium text-slate-700">${serviceItem.description}</td>
+                  <td class="py-3 px-2 text-center text-slate-600">${serviceItem.quantity}</td>
+                  <td class="py-3 px-2 text-right text-slate-600">₹${Number(serviceItem.rate).toFixed(2)}</td>
+                  <td class="py-3 px-2 text-right font-semibold text-slate-800">₹${Number(serviceItem.amount).toFixed(2)}</td>
                 </tr>
               `}).join('')}
             </tbody>
@@ -160,7 +171,7 @@ export const generateBillPrintContent = (
         </div>
 
         <div class="flex flex-col items-end border-t border-slate-200 pt-4">
-          <div class="w-64 space-y-2">
+          <div class="w-72 space-y-2">
             <div class="flex justify-between text-sm text-slate-600">
               <span>Subtotal</span>
               <span class="font-medium">₹${subtotal.toFixed(2)}</span>
@@ -169,46 +180,45 @@ export const generateBillPrintContent = (
             ${discountPct > 0 ? `
               <div class="flex justify-between text-sm text-red-600">
                 <span>Discount (${discountPct}%)</span>
-                <span>-₹${(subtotal * (discountPct / 100)).toFixed(2)}</span>
+                <span>-₹${discountAmount.toFixed(2)}</span>
               </div>
             ` : ''}
 
             ${taxPct > 0 ? `
               <div class="flex justify-between text-sm text-slate-600">
                 <span>Tax (${taxPct}%)</span>
-                <span>₹${(subtotal * (taxPct / 100)).toFixed(2)}</span>
+                <span>+₹${taxAmount.toFixed(2)}</span>
               </div>
             ` : ''}
 
             <div class="flex justify-between items-center border-t border-slate-200 pt-3 mt-3">
               <span class="text-base font-bold text-slate-800">Total</span>
-              <span class="text-xl font-bold text-slate-900">₹${subtotal.toFixed(2)}</span>
+              <span class="text-xl font-bold text-slate-900">₹${finalTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
         ${billData.notes ? `
-          <div class="mt-8 pt-6 border-t border-slate-100">
-            <h4 class="text-xs font-medium text-slate-600 uppercase tracking-wider mb-2">Notes & Instructions</h4>
-            <p class="text-sm text-slate-500 bg-slate-50 p-3 rounded-md">${billData.notes}</p>
+          <div class="mt-8 pt-6 border-t border-slate-100 break-inside-avoid">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Notes</h4>
+            <p class="text-sm text-slate-600 bg-slate-50 p-4 rounded-md whitespace-pre-wrap">${billData.notes}</p>
           </div>
         ` : ''}
         
-        <div class="mt-10 text-center text-xs text-slate-500">
-          <p>This is a computer-generated invoice and needs no signature.</p>
+        <div class="fixed bottom-0 left-0 right-0 p-8 text-center text-[10px] text-slate-400 print:block hidden">
+          <p>This is a computer-generated invoice.</p>
         </div>
       </div>
       
       <script>
-        // 1. Detect when printing is finished (works in Chrome, Safari, Firefox)
         window.onafterprint = function() {
           window.close();
         };
 
-        // 2. Trigger print after load
         window.onload = function() {
+           // Small delay to ensure styles are loaded
            setTimeout(function() {
-             window.focus(); // Ensure window has focus for print dialog
+             window.focus(); 
              window.print();
            }, 500);
         };
@@ -227,7 +237,8 @@ export const printBill = async (
     const printContent = generateBillPrintContent(billData, patient, clinic);
     const filename = generateBillFilename(billData, patient);
 
-    const printWindow = window.open('', '_blank', 'width=800,height=800');
+    // Standard A4 dimensions for popup preview (optional)
+    const printWindow = window.open('', '_blank', 'width=900,height=1200');
     if (!printWindow) {
       console.error("Popup blocked");
       return;
@@ -235,9 +246,7 @@ export const printBill = async (
 
     printWindow.document.write(printContent);
     printWindow.document.title = filename;
-    printWindow.document.close(); 
-    // We do NOT call printWindow.print() here anymore.
-    // The internal script handles printing and closing.
+    printWindow.document.close();
     printWindow.focus();
     
   } catch (error) {

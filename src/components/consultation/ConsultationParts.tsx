@@ -1,8 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { formatTimeIST } from "@/lib/utils";
-import { User, Calendar, Phone, Mail, MapPin, Globe } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Phone, Mail, MapPin, Globe } from "lucide-react";
 import { DbAppointment } from "@/types/core";
 import {
   PatientWithClinic,
@@ -40,7 +39,6 @@ export const PrintStyles: React.FC = () => (
       .max-w-4xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
       
       /* ... rest of your existing styles ... */
-      .info-cards { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 0.75rem !important; margin-bottom: 0.5rem !important; page-break-inside: avoid !important; }
 
       /* Grid layout for consultation content */
       .consultation-content .grid {
@@ -161,67 +159,35 @@ export const ConsultationHeader: React.FC<{
   );
 };
 
-export const PatientInfoCards: React.FC<{
+
+export const ConcisePatientInfo: React.FC<{
   patient: PatientWithClinic;
   appointment: DbAppointment | null;
-  departmentType: string;
-}> = ({ patient, appointment, departmentType }) => {
+}> = ({ patient, appointment }) => {
   return (
-    <div className="info-cards grid grid-cols-2 gap-4 mb-4 print:gap-3 print:mb-2">
-      <Card className="bg-white">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <User className="h-5 w-5 text-primary" />
-            <h3 className="font-semibold text-gray-900">Patient Information</h3>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="grid grid-cols-[120px,1fr] gap-2">
-              <span className="text-gray-600">Name:</span>
-              <span className="font-medium text-gray-900">{patient?.name}</span>
-            </div>
-            <div className="grid grid-cols-[120px,1fr] gap-2">
-              <span className="text-gray-600">Age/Gender:</span>
-              <span className="font-medium text-gray-900">
-                {patient?.age && `${patient.age} yrs • `}
-                {patient?.gender}
-              </span>
-            </div>
-            {patient?.phone && (
-              <div className="grid grid-cols-[120px,1fr] gap-2">
-                <span className="text-gray-600">Phone:</span>
-                <span className="font-medium text-gray-900">
-                  {patient.phone}
-                </span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+    <div className="concise-patient-info text-sm text-gray-900 mb-3 print:mb-2">
+      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <div className="font-semibold text-gray-800">Patient:</div>
+        <div>
+          {patient?.name}
+          {patient?.age && `, ${patient.age} yrs`}
+          {patient?.gender && `, ${patient.gender}`}
+        </div>
 
-      <Card className="bg-white">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <Calendar className="h-5 w-5 text-success" />
-            <h3 className="font-semibold text-gray-900">Appointment Details</h3>
-          </div>
-          <div className="space-y-2 text-sm">
-            <div className="grid grid-cols-[120px,1fr] gap-2">
-              <span className="text-gray-600">Date/Time:</span>
-              <span className="font-medium text-gray-900">
-                {appointment?.date &&
-                  format(new Date(appointment.date), "MMM d, yyyy")}
-                {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
-              </span>
-            </div>
-            <div className="grid grid-cols-[120px,1fr] gap-2">
-              <span className="text-gray-600">Department:</span>
-              <span className="font-medium text-gray-900">
-                {departmentType}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="font-semibold text-gray-800">Appointment:</div>
+        <div>
+          {appointment?.date &&
+            format(new Date(appointment.date), "MMM d, yyyy")}
+          {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
+        </div>
+
+        {patient?.phone && (
+          <>
+            <div className="font-semibold text-gray-800">Phone:</div>
+            <div>{patient.phone}</div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

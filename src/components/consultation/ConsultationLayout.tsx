@@ -3,7 +3,7 @@ import React from 'react';
 import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
 import type { FieldValue, ClinicInfo, DoctorInfo, ConsultationFormValues, MotorExamData, ReflexExamData } from '@/types/consultation';
 import { FieldValueRenderer } from './ConsultationRenderers';
-import { ConsultationHeader, PatientInfoCards, PrintStyles } from './ConsultationParts';
+import { ConsultationHeader, ConcisePatientInfo, PrintStyles } from './ConsultationParts';
 import type { DbAppointment, DbPatient } from '@/types/core';
 
 interface Field {
@@ -293,11 +293,10 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
       {/* Header */}
       <ConsultationHeader clinicInfo={clinicInfo} doctorInfo={doctorInfo} />
 
-      {/* Patient Info */}
-      <PatientInfoCards
+      {/* Patient Info - Always show concise version */}
+      <ConcisePatientInfo
         patient={patient}
         appointment={appointment}
-        departmentType={departmentType}
       />
 
       {/* Consultation Content */}
