@@ -3,122 +3,143 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { parseISO, isToday, isFuture, isPast } from 'date-fns';
+import { parseISO, isToday, isFuture, isPast, format } from 'date-fns';
 import { toast } from 'sonner';
 import { usePayments } from './usePayments';
-import type {
-  AppointmentWithDetails,
-  AppointmentFilter,
-  AppointmentStatusUpdate
+import { 
+  AppointmentWithDetails, 
+  AppointmentFilter, 
+  APPOINTMENT_STATUS,
+  UseAppointmentsReturn
 } from "@/types/appointments";
 
 const supabase = getSupabase();
+const ITEMS_PER_PAGE = 10;
 
-// Enhanced sorting function to prioritize appointments properly
-const sortAppointments = (appointments: AppointmentWithDetails[], filter: AppointmentFilter) => {
-  return appointments.sort((a, b) => {
-    const aDate = parseISO(a.date);
-    const bDate = parseISO(b.date);
-    
+const getTimestamp = (dateStr: string) => new Date(dateStr).getTime();
+
+const sortList = (list: AppointmentWithDetails[], filter: AppointmentFilter): AppointmentWithDetails[] => {
+  return [...list].sort((a, b) => {
+    const timeA = getTimestamp(a.date);
+    const timeB = getTimestamp(b.date);
+
+    // Today: Urgency first
     if (filter === 'today') {
-      const urgencyOrder = { 'Scheduled': 0, 'In Progress': 1, 'Completed': 2, 'Cancelled': 3 };
-      const aUrgency = urgencyOrder[a.status] ?? 999;
-      const bUrgency = urgencyOrder[b.status] ?? 999;
+      const urgencyOrder: Record<string, number> = { 
+        [APPOINTMENT_STATUS.SCHEDULED]: 0, 
+        [APPOINTMENT_STATUS.IN_PROGRESS]: 1, 
+        [APPOINTMENT_STATUS.COMPLETED]: 2, 
+        [APPOINTMENT_STATUS.CANCELLED]: 3 
+      };
       
-      if (aUrgency !== bUrgency) {
-        return aUrgency - bUrgency;
-      }
+      const urgencyA = urgencyOrder[a.status] ?? 99;
+      const urgencyB = urgencyOrder[b.status] ?? 99;
+      
+      if (urgencyA !== urgencyB) return urgencyA - urgencyB;
       return a.time.localeCompare(b.time);
-    } else if (filter === 'upcoming') {
-      if (aDate.getTime() !== bDate.getTime()) {
-        return aDate.getTime() - bDate.getTime();
-      }
+    } 
+    
+    // Upcoming: Soonest first
+    if (filter === 'upcoming') {
+      if (timeA !== timeB) return timeA - timeB;
       return a.time.localeCompare(b.time);
-    } else {
-      if (aDate.getTime() !== bDate.getTime()) {
-        return bDate.getTime() - aDate.getTime();
-      }
+    } 
+    
+    // Past: Recent first
+    if (filter === 'past') {
+      if (timeA !== timeB) return timeB - timeA;
       return b.time.localeCompare(a.time);
     }
+
+    // All/Default: Recent first (Good for search results)
+    if (timeA !== timeB) return timeB - timeA;
+    return b.time.localeCompare(a.time);
   });
 };
 
 const fetchAppointments = async (clinicId: string | undefined, searchTerm: string) => {
-  if (!clinicId) {
-    console.warn("No clinicId provided to fetchAppointments.");
-    return { all: [], today: [], upcoming: [], past: [], totalCount: 0 };
-  }
+  if (!clinicId) return { all: [], today: [], upcoming: [], past: [], totalCount: 0 };
+
   const { data, error } = await supabase
     .rpc('get_appointments_with_details_by_clinic', { clinic_id: clinicId });
 
-  if (error) {
-    console.error("Error fetching appointments:", error);
-    throw error;
-  }
+  if (error) throw error;
 
   let filteredData = data || [];
 
   if (searchTerm.trim()) {
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    filteredData = filteredData.filter(app =>
-      app.patient_name.toLowerCase().includes(lowerSearchTerm) ||
-      app.doctor_name.toLowerCase().includes(lowerSearchTerm) ||
-      app.date.includes(lowerSearchTerm)
-    );
+    const lowerTerm = searchTerm.toLowerCase();
+    filteredData = filteredData.filter(app => {
+      const readableDate = format(parseISO(app.date), 'yyyy-MM-dd').toLowerCase();
+      
+      return (
+        app.patient_name.toLowerCase().includes(lowerTerm) ||
+        app.doctor_name.toLowerCase().includes(lowerTerm) ||
+        readableDate.includes(lowerTerm)
+      );
+    });
   }
 
-  const todayAppointments = filteredData.filter(app => isToday(parseISO(app.date)));
-  const upcomingAppointments = filteredData.filter(app => isFuture(parseISO(app.date)));
-  const pastAppointments = filteredData.filter(app => isPast(parseISO(app.date)) && !isToday(parseISO(app.date)));
+  const today: AppointmentWithDetails[] = [];
+  const upcoming: AppointmentWithDetails[] = [];
+  const past: AppointmentWithDetails[] = [];
+
+  filteredData.forEach(app => {
+    const dateObj = parseISO(app.date);
+    if (isToday(dateObj)) today.push(app);
+    else if (isFuture(dateObj)) upcoming.push(app);
+    else if (isPast(dateObj)) past.push(app);
+  });
 
   return {
-    all: filteredData,
-    today: sortAppointments(todayAppointments, 'today'),
-    upcoming: sortAppointments(upcomingAppointments, 'upcoming'),
-    past: sortAppointments(pastAppointments, 'past'),
+    // Sort 'all' so search results look organized (Newest first)
+    all: sortList(filteredData, 'all'), 
+    today: sortList(today, 'today'),
+    upcoming: sortList(upcoming, 'upcoming'),
+    past: sortList(past, 'past'),
     totalCount: filteredData.length
   };
 };
 
-export type { AppointmentWithDetails, AppointmentFilter };
-
-export const useAppointments = () => {
+export const useAppointments = (): UseAppointmentsReturn => {
   const { activeClinic, activeClinicRole, user, hasDoctorProfile, loading: authLoading } = useAuth();
-  
-  // Changed: We only need canBookAppointment now
   const { canBookAppointment } = usePayments();
-  
   const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500); 
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const [activeTab, setActiveTab] = useState<AppointmentFilter>('today');
+  // Initialize 'all' for search pagination
   const [currentPage, setCurrentPage] = useState<Record<AppointmentFilter, number>>({
-    today: 1,
-    upcoming: 1,
-    past: 1
+    today: 1, upcoming: 1, past: 1, all: 1
   });
   const [selectedDoctorId, setSelectedDoctorId] = useState<string | null>(null);
-
-  const itemsPerPage = 10;
+  const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
   const { data: currentUserDoctorProfile } = useQuery({
     queryKey: ['currentUserDoctorProfile', activeClinic?.clinic_id, user?.id],
     queryFn: async () => {
       if (!user?.id || !activeClinic?.clinic_id) return null;
-
       const { data, error } = await supabase
         .from('doctors')
         .select('id')
         .eq('user_id', user.id)
         .eq('clinic_id', activeClinic.clinic_id)
         .maybeSingle();
-
-      if (error) return null;
+      if (error) throw error;
       return data;
     },
     enabled: !!user?.id && !!activeClinic?.clinic_id && (activeClinicRole === 'doctor' || (activeClinicRole === 'superadmin' && hasDoctorProfile)),
   });
-
-  const [hasAutoSelected, setHasAutoSelected] = useState(false);
 
   useEffect(() => {
     if (currentUserDoctorProfile?.id && !selectedDoctorId && !hasAutoSelected) {
@@ -128,212 +149,132 @@ export const useAppointments = () => {
   }, [currentUserDoctorProfile, selectedDoctorId, hasAutoSelected]);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['appointments', activeClinic?.clinic_id, searchTerm],
-    queryFn: () => fetchAppointments(activeClinic?.clinic_id || '', searchTerm),
+    queryKey: ['appointments', activeClinic?.clinic_id, debouncedSearch],
+    queryFn: () => fetchAppointments(activeClinic?.clinic_id, debouncedSearch),
     enabled: !!activeClinic?.clinic_id && !authLoading,
-    retry: 1,
+    placeholderData: (previousData) => previousData,
   });
 
-  const appointments = useMemo(() => 
+  const rawAppointments = useMemo(() => 
     data || { all: [], today: [], upcoming: [], past: [], totalCount: 0 }, 
     [data]
   );
 
-  const getFilteredAppointments = useCallback((appointmentList: AppointmentWithDetails[]) => {
-    if (selectedDoctorId) {
-      return appointmentList.filter(app => app.doctor_id === selectedDoctorId);
-    }
-    return appointmentList;
+  const filterByDoctor = useCallback((list: AppointmentWithDetails[]) => {
+    if (!selectedDoctorId) return list;
+    return list.filter(app => app.doctor_id === selectedDoctorId);
   }, [selectedDoctorId]);
 
   const filteredAppointments = useMemo(() => ({
-    today: getFilteredAppointments(appointments.today),
-    upcoming: getFilteredAppointments(appointments.upcoming),
-    past: getFilteredAppointments(appointments.past),
-    all: getFilteredAppointments(appointments.all)
-  }), [appointments, getFilteredAppointments]);
+    today: filterByDoctor(rawAppointments.today),
+    upcoming: filterByDoctor(rawAppointments.upcoming),
+    past: filterByDoctor(rawAppointments.past),
+    all: filterByDoctor(rawAppointments.all),
+    totalCount: rawAppointments.totalCount
+  }), [rawAppointments, filterByDoctor]);
 
-  const getPaginatedAppointments = (appointmentList: AppointmentWithDetails[], page: number) => {
-    const startIndex = (page - 1) * itemsPerPage;
-    return appointmentList.slice(startIndex, startIndex + itemsPerPage);
+  const getPaginatedAppointments = (list: AppointmentWithDetails[], page: number) => {
+    const startIndex = (page - 1) * ITEMS_PER_PAGE;
+    return list.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   };
 
-  const getTotalPages = (appointmentList: AppointmentWithDetails[]) => {
-    return Math.ceil(appointmentList.length / itemsPerPage);
-  };
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab as AppointmentFilter);
-  };
+  const getTotalPages = (list: AppointmentWithDetails[]) => Math.ceil(list.length / ITEMS_PER_PAGE);
 
   const handlePageChange = (tab: AppointmentFilter, page: number) => {
     setCurrentPage(prev => ({ ...prev, [tab]: page }));
   };
 
+  const handleTabChange = (tab: AppointmentFilter) => setActiveTab(tab);
+
   const cancelAppointmentMutation = useMutation({
     mutationFn: async (appointmentId: string) => {
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'Cancelled' })
+        .update({ status: APPOINTMENT_STATUS.CANCELLED })
         .eq('id', appointmentId);
-
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
-      // Invalidate billing summary too, as a cancellation might increase the available balance
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
-      toast.success('Appointment cancelled successfully');
+      toast.success('Appointment cancelled');
     },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to cancel appointment');
-    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
-  const updateAppointmentStatusMutation = useMutation({
-    mutationFn: async ({ appointmentId, status }: AppointmentStatusUpdate) => {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status })
-        .eq('id', appointmentId);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
-      // Invalidate billing summary as status changes affect balance
-      queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
-      toast.success('Appointment status updated successfully');
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Failed to update appointment status');
-    },
-  });
-
-  const handleCancelAppointment = (appointmentId: string) => {
-    cancelAppointmentMutation.mutate(appointmentId);
-  };
-
-  const handleStartConsultation = async (appointmentId: string) => {
+  const handleStartConsultation = async (appointmentId: string): Promise<boolean> => {
     try {
-      // Validate appointment ID
-      if (!appointmentId || appointmentId.trim() === '') {
-        console.error('Invalid appointment ID:', appointmentId);
-        toast.error('Invalid appointment ID');
-        return;
-      }
+      if (!appointmentId) throw new Error('Invalid appointment ID');
+      if (!activeClinic?.clinic_id) throw new Error('Clinic ID not found');
 
-      console.log('handleStartConsultation called with role:', activeClinicRole);
-      console.log('Updating appointment status to "In Progress" for appointment ID:', appointmentId);
-
-      // 1. Check if consultation already exists
-      const { data: existingConsultation, error: consultationError } = await supabase
+      const { data: existing, error: checkError } = await supabase
         .from('consultations')
         .select('id')
         .eq('appointment_id', appointmentId)
         .maybeSingle();
 
-      if (existingConsultation && !consultationError) {
-        console.log('Found existing consultation, updating appointment status only');
-        const { error: statusError } = await supabase
-          .from('appointments')
-          .update({ status: 'In Progress' })
-          .eq('id', appointmentId);
+      if (checkError) throw checkError;
 
-        if (statusError) {
-          console.error('Error updating appointment status:', statusError);
-          throw statusError;
-        }
-        console.log('Successfully updated appointment status to "In Progress"');
-        return;
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from('appointments')
+          .update({ status: APPOINTMENT_STATUS.IN_PROGRESS })
+          .eq('id', appointmentId);
+        if (updateError) throw updateError;
+        return true;
       }
 
-      // 2. Perform Credit Check
-      // Only non-superadmins are restricted by credits
       if (activeClinicRole !== 'superadmin') {
         const hasCredits = await canBookAppointment(1);
-        
         if (!hasCredits) {
-          toast.error("Insufficient credits", {
-            description: "You don't have enough credits to start this consultation. Please purchase more credits."
-          });
-          return;
+          throw new Error("Insufficient credits. Please purchase more.");
         }
       }
 
-      // 3. Create consultation record
-      // Note: We do NOT explicitly deduct credit here.
-      // The status change to "In Progress" in step 4 will automatically count as usage.
-
-      // Fetch appointment details in a single query to avoid N+1
-      const { data: appointmentData, error: appointmentError } = await supabase
+      const { data: appData, error: appError } = await supabase
         .from('appointments')
         .select('patient_id, doctor_id')
         .eq('id', appointmentId)
         .single();
 
-      if (appointmentError) {
-        console.error('Failed to fetch appointment details:', appointmentError);
-        toast.error('Failed to fetch appointment details');
-        return;
-      }
+      if (appError) throw appError;
 
-      const { error: createConsultationError } = await supabase
+      const { error: insertError } = await supabase
         .from('consultations')
         .insert({
           appointment_id: appointmentId,
-          clinic_id: activeClinic?.clinic_id || '',
-          patient_id: appointmentData?.patient_id || '',
-          doctor_id: appointmentData?.doctor_id || null,
+          clinic_id: activeClinic.clinic_id,
+          patient_id: appData.patient_id,
+          doctor_id: appData.doctor_id,
           specialty_data: {},
           clinical_notes: {}
         });
 
-      if (createConsultationError) {
-        console.error('Failed to create consultation record:', createConsultationError);
-        toast.error('Failed to create consultation record');
-        return;
-      }
+      if (insertError) throw insertError;
 
-      // 4. Update status to "In Progress"
-      // This is what effectively "Deducts" the credit in our calculated system
-      console.log('Creating new consultation and updating appointment status to "In Progress"');
-      console.log('SQL Query: UPDATE appointments SET status = \'In Progress\' WHERE id =', appointmentId);
-
-      const { data: updateResult, error: statusError } = await supabase
+      const { error: statusError } = await supabase
         .from('appointments')
-        .update({ status: 'In Progress' })
-        .eq('id', appointmentId)
-        .select();
+        .update({ status: APPOINTMENT_STATUS.IN_PROGRESS })
+        .eq('id', appointmentId);
 
-      if (statusError) {
-        console.error('Error updating appointment status after creating consultation:', statusError);
-        throw statusError;
-      }
+      if (statusError) throw statusError;
 
-      console.log('Update result:', updateResult);
-      console.log('Successfully created consultation and updated appointment status to "In Progress"');
-
-      // Force refresh of both lists and billing to show updated balance immediately
-      queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
+      return true;
 
-    } catch (error) {
-      console.error('Failed to start consultation:', error);
-      toast.error('Failed to start consultation', {
-        description: 'Please try again or contact support if the issue persists.'
-      });
+    } catch (err: unknown) {
+      console.error('Consultation Start Failed:', err);
+      const message = err instanceof Error ? err.message : 'Failed to start consultation';
+      toast.error(message);
+      throw err;
     }
-  };
-
-  const refreshAppointments = () => {
-    queryClient.invalidateQueries({ queryKey: ['appointments', activeClinic?.clinic_id] });
   };
 
   return {
     appointments: filteredAppointments,
     isLoading,
-    error,
+    error: error as Error | null,
     searchTerm,
     setSearchTerm,
     activeTab,
@@ -344,12 +285,12 @@ export const useAppointments = () => {
     handlePageChange,
     getPaginatedAppointments,
     getTotalPages,
-    itemsPerPage,
-    handleCancelAppointment,
+    itemsPerPage: ITEMS_PER_PAGE,
+    handleCancelAppointment: (id) => cancelAppointmentMutation.mutate(id),
     handleStartConsultation,
-    refreshAppointments,
+    refreshAppointments: () => queryClient.invalidateQueries({ queryKey: ['appointments'] }),
     cancelLoading: cancelAppointmentMutation.isPending,
-    updateStatusLoading: updateAppointmentStatusMutation.isPending,
+    updateStatusLoading: false,
     hasAutoSelected,
   };
 };

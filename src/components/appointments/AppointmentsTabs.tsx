@@ -1,3 +1,4 @@
+// src/components/appointments/AppointmentsTabs.tsx
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -9,20 +10,22 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { AppointmentsTable } from './AppointmentsTable';
-import { AppointmentWithDetails, AppointmentFilter } from '@/hooks/useAppointments';
+import { AppointmentWithDetails, AppointmentFilter } from '@/types/appointments';
+import { Search } from 'lucide-react';
 
 interface AppointmentsTabsProps {
   appointments: {
     today: AppointmentWithDetails[];
     upcoming: AppointmentWithDetails[];
     past: AppointmentWithDetails[];
+    all: AppointmentWithDetails[]; // Added 'all' to props
   };
   activeTab: AppointmentFilter;
-  onTabChange: (tab: string) => void;
+  onTabChange: (tab: AppointmentFilter) => void;
   currentPage: Record<AppointmentFilter, number>;
   onPageChange: (tab: AppointmentFilter, page: number) => void;
-  getPaginatedAppointments: (appointments: AppointmentWithDetails[], page: number) => AppointmentWithDetails[];
-  getTotalPages: (appointments: AppointmentWithDetails[]) => number;
+  getPaginatedAppointments: (list: AppointmentWithDetails[], page: number) => AppointmentWithDetails[];
+  getTotalPages: (list: AppointmentWithDetails[]) => number;
   onAppointmentClick: (appointment: AppointmentWithDetails) => void;
   onCancelAppointment: (appointmentId: string) => void;
   onStartConsultation: (appointment: AppointmentWithDetails) => void;
@@ -30,6 +33,7 @@ interface AppointmentsTabsProps {
   onCreateBill: (appointment: AppointmentWithDetails) => void;
   activeClinicRole: string | null;
   cancelLoading?: boolean;
+  isSearching: boolean; // NEW PROP
 }
 
 export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
@@ -47,10 +51,19 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
   onCreateBill,
   activeClinicRole,
   cancelLoading,
+  isSearching,
 }) => {
   const renderTabContent = (appointmentList: AppointmentWithDetails[], filter: AppointmentFilter) => {
     const paginatedAppointments = getPaginatedAppointments(appointmentList, currentPage[filter]);
     const totalPages = getTotalPages(appointmentList);
+
+    if (appointmentList.length === 0) {
+        return (
+            <div className="text-center py-12 text-muted-foreground border rounded-lg bg-muted/5">
+                {isSearching ? 'No appointments found matching your search.' : 'No appointments found.'}
+            </div>
+        );
+    }
 
     return (
       <div className="space-y-4">
@@ -81,20 +94,27 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
                 />
               </PaginationItem>
               
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onPageChange(filter, page);
-                    }}
-                    isActive={currentPage[filter] === page}
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                 if (totalPages > 10 && Math.abs(page - currentPage[filter]) > 2 && page !== 1 && page !== totalPages) {
+                    if (Math.abs(page - currentPage[filter]) === 3) return <PaginationItem key={page}>...</PaginationItem>;
+                    return null;
+                 }
+                 
+                 return (
+                    <PaginationItem key={page}>
+                    <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                        e.preventDefault();
+                        onPageChange(filter, page);
+                        }}
+                        isActive={currentPage[filter] === page}
+                    >
+                        {page}
+                    </PaginationLink>
+                    </PaginationItem>
+                 );
+              })}
               
               <PaginationItem>
                 <PaginationNext 
@@ -115,24 +135,39 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
     );
   };
 
+  // If Searching, return a single view with ALL results (ignoring tabs)
+  if (isSearching) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 p-3 rounded-md border border-muted/50">
+          <Search className="h-4 w-4" />
+          <span>Showing <strong>{appointments.all.length}</strong> results</span>
+        </div>
+        {/* We use 'all' as the filter key for pagination state */}
+        {renderTabContent(appointments.all, 'all')}
+      </div>
+    );
+  }
+
+  // Otherwise, return standard Tabs
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-6">
+    <Tabs value={activeTab} onValueChange={(val) => onTabChange(val as AppointmentFilter)} className="space-y-6">
       <TabsList className="grid w-full grid-cols-3">
-        <TabsTrigger value="today" className="flex items-center gap-2 ">
+        <TabsTrigger value="today" className="flex items-center gap-2">
           Today
-          <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
+          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
             {appointments.today.length}
           </span>
         </TabsTrigger>
         <TabsTrigger value="upcoming" className="flex items-center gap-2">
           Upcoming
-          <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
+          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
             {appointments.upcoming.length}
           </span>
         </TabsTrigger>
         <TabsTrigger value="past" className="flex items-center gap-2">
           Past
-          <span className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs">
+          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
             {appointments.past.length}
           </span>
         </TabsTrigger>
@@ -151,4 +186,4 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
       </TabsContent>
     </Tabs>
   );
-}; 
+};
