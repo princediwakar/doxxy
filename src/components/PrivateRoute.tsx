@@ -1,6 +1,7 @@
 // File: src/components/PrivateRoute.tsx
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { Spinner } from "@/components/ui/loading";
 
 // src/components/PrivateRoute.tsx
 const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
@@ -27,7 +28,7 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     console.log('PrivateRoute: Waiting for initial or clinic loading');
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -67,7 +68,7 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <Spinner size="lg" className="mx-auto mb-4" />
             <p className="text-muted-foreground">Processing your invitation...</p>
           </div>
         </div>

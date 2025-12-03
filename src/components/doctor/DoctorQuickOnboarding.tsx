@@ -8,17 +8,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { getSupabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Stethoscope, 
+import {
+  Stethoscope,
   X,
-  Loader2,
 } from "lucide-react";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ButtonLoader } from '@/components/ui/loading';
 
 const supabase = getSupabase();
 
@@ -387,7 +387,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isSubmitting && <ButtonLoader className="mr-2" />}
               {existingDoctorProfile ? 'Update Medical Profile' : 'Create Medical Profile'}
             </Button>
           </div>

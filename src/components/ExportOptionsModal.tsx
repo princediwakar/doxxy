@@ -14,17 +14,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format, subDays, subMonths, subYears } from "date-fns";
-import { 
-  FileDown, 
+import {
+  FileDown,
   Calendar,
   Settings,
   User,
   Stethoscope,
   Pill,
-  Clock,
   FileText
 } from "lucide-react";
 import { PatientWithConsultations } from '@/types/patients';
+import { ButtonLoader } from '@/components/ui/loading';
 
 export interface ExportConfiguration {
   includeConsultations: boolean;
@@ -352,7 +352,7 @@ export function ExportOptionsModal({
           >
             {loading ? (
               <>
-                <Clock className="h-4 w-4 mr-2 animate-spin" />
+                <ButtonLoader icon="clock" size="sm" className="mr-2" />
                 Generating...
               </>
             ) : (

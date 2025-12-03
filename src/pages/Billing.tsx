@@ -22,6 +22,7 @@ import { Search, Plus, CreditCard, IndianRupee } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MonthSelector } from "@/components/ui/MonthSelector";
 import { Suspense, lazy } from "react";
+import { Spinner } from "@/components/ui/loading";
 
 // Lazy load heavy billing components
 const BillingModal = lazy(() =>
@@ -388,7 +389,7 @@ const Billing = () => {
         <Suspense
           fallback={
             <div className="flex items-center justify-center p-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+              <Spinner size="sm" />
             </div>
           }
         >

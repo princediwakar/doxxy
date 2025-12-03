@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Calendar } from 'lucide-react';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
+import { SkeletonLoader } from '@/components/ui/loading';
 
 import { Suspense, lazy } from 'react';
 
@@ -125,10 +126,55 @@ const Appointments = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading appointments...</p>
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Appointments</h1>
+                <p className="text-muted-foreground">Manage and track all clinic appointments</p>
+              </div>
+            </div>
+          </div>
+          <Button disabled>
+            <Plus className="mr-2 h-4 w-4" />
+            New Appointment
+          </Button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              disabled
+              placeholder="Search appointments..."
+              className="pl-9"
+            />
+          </div>
+          <div className="w-48">
+            <SkeletonLoader count={1} itemClassName="h-10 bg-muted/50 rounded-md" />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="border-b">
+            <div className="flex space-x-4">
+              {['Today', 'Upcoming', 'Past'].map((tab) => (
+                <button
+                  key={tab}
+                  disabled
+                  className="px-3 py-2 text-sm font-medium text-muted-foreground border-b-2 border-transparent"
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <SkeletonLoader count={5} itemClassName="h-16 bg-muted/50 rounded-md" />
         </div>
       </div>
     );
@@ -198,7 +244,7 @@ const Appointments = () => {
 
       
 
-      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+      <Suspense fallback={null}>
         <ConsultationViewModal
           open={isConsultationViewModalOpen}
           onOpenChange={handleConsultationViewModalClose}
@@ -206,7 +252,7 @@ const Appointments = () => {
         />
       </Suspense>
 
-      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+      <Suspense fallback={null}>
         <BillingModal
           open={isBillingModalOpen}
           onOpenChange={handleBillingModalClose}

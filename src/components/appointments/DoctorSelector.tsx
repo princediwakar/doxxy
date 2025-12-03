@@ -16,12 +16,15 @@ export const DoctorSelector: React.FC<DoctorSelectorProps> = ({
 
   if (isLoading) {
     return (
-      <div className="w-48">
-        <Select disabled>
-          <SelectTrigger>
-            <SelectValue placeholder="Loading doctors..." />
-          </SelectTrigger>
-        </Select>
+      <div className="flex items-center gap-2">
+        <User className="h-4 w-4 text-muted-foreground" />
+        <div className="w-48">
+          <Select disabled>
+            <SelectTrigger>
+              <SelectValue placeholder="Select Doctor" />
+            </SelectTrigger>
+          </Select>
+        </div>
       </div>
     );
   }

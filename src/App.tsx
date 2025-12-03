@@ -9,6 +9,7 @@ import Layout from "./components/Layout";
 import PrivateRoute from "./components/PrivateRoute";
 import { AppHeader } from "./components/AppHeader";
 import { Suspense, lazy } from "react";
+import { PageLoader } from "@/components/ui/loading";
 
 // Lazy load page components for better code splitting
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -53,12 +54,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Loading component for Suspense fallback
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-[400px]">
-    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-  </div>
-);
 
 
 const AppContent = () => {
