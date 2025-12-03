@@ -9,6 +9,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+import { SkeletonLoader } from '@/components/ui/loading';
 import { AppointmentsTable } from './AppointmentsTable';
 import { AppointmentWithDetails, AppointmentFilter } from '@/types/appointments';
 import { Search } from 'lucide-react';
@@ -18,8 +19,9 @@ interface AppointmentsTabsProps {
     today: AppointmentWithDetails[];
     upcoming: AppointmentWithDetails[];
     past: AppointmentWithDetails[];
-    all: AppointmentWithDetails[]; // Added 'all' to props
+    all: AppointmentWithDetails[];
   };
+  isLoading: boolean; // NEW PROP
   activeTab: AppointmentFilter;
   onTabChange: (tab: AppointmentFilter) => void;
   currentPage: Record<AppointmentFilter, number>;
@@ -33,11 +35,12 @@ interface AppointmentsTabsProps {
   onCreateBill: (appointment: AppointmentWithDetails) => void;
   activeClinicRole: string | null;
   cancelLoading?: boolean;
-  isSearching: boolean; // NEW PROP
+  isSearching: boolean;
 }
 
 export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
   appointments,
+  isLoading,
   activeTab,
   onTabChange,
   currentPage,
@@ -53,10 +56,29 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
   cancelLoading,
   isSearching,
 }) => {
-  const renderTabContent = (appointmentList: AppointmentWithDetails[], filter: AppointmentFilter) => {
-    const paginatedAppointments = getPaginatedAppointments(appointmentList, currentPage[filter]);
-    const totalPages = getTotalPages(appointmentList);
 
+  // Helper to render content: either Skeleton, Empty State, or Real Table
+  const renderTabContent = (appointmentList: AppointmentWithDetails[], filter: AppointmentFilter) => {
+    
+    // 1. LOADING STATE
+    if (isLoading) {
+      return (
+        <div className="space-y-4">
+           {/* Render 5 skeleton rows to simulate the table */}
+           <div className="rounded-md border bg-card">
+              <div className="p-4 space-y-4">
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div key={i} className="flex items-center space-x-4">
+                      <SkeletonLoader count={1} className="h-12 w-full bg-muted/30" />
+                    </div>
+                  ))}
+              </div>
+           </div>
+        </div>
+      );
+    }
+
+    // 2. EMPTY STATE
     if (appointmentList.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground border rounded-lg bg-muted/5">
@@ -64,6 +86,10 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
             </div>
         );
     }
+
+    // 3. REAL DATA STATE
+    const paginatedAppointments = getPaginatedAppointments(appointmentList, currentPage[filter]);
+    const totalPages = getTotalPages(appointmentList);
 
     return (
       <div className="space-y-4">
@@ -135,41 +161,49 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
     );
   };
 
-  // If Searching, return a single view with ALL results (ignoring tabs)
+  // If Searching, return a single view (ignores tabs visually, uses 'all' logic)
   if (isSearching) {
     return (
       <div className="space-y-6">
         <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/20 p-3 rounded-md border border-muted/50">
           <Search className="h-4 w-4" />
-          <span>Showing <strong>{appointments.all.length}</strong> results</span>
+          <span>
+             {isLoading ? 'Searching...' : <>Showing <strong>{appointments.all.length}</strong> results</>}
+          </span>
         </div>
-        {/* We use 'all' as the filter key for pagination state */}
         {renderTabContent(appointments.all, 'all')}
       </div>
     );
   }
 
-  // Otherwise, return standard Tabs
+  // Standard Tabs
   return (
     <Tabs value={activeTab} onValueChange={(val) => onTabChange(val as AppointmentFilter)} className="space-y-6">
       <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="today" className="flex items-center gap-2">
           Today
-          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
-            {appointments.today.length}
-          </span>
+          {/* Hide counts during loading to prevent '0' flickering */}
+          {!isLoading && (
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
+              {appointments.today.length}
+            </span>
+          )}
         </TabsTrigger>
         <TabsTrigger value="upcoming" className="flex items-center gap-2">
           Upcoming
-          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
-            {appointments.upcoming.length}
-          </span>
+          {!isLoading && (
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
+              {appointments.upcoming.length}
+            </span>
+          )}
         </TabsTrigger>
         <TabsTrigger value="past" className="flex items-center gap-2">
           Past
-          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
-            {appointments.past.length}
-          </span>
+          {!isLoading && (
+            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs font-medium">
+              {appointments.past.length}
+            </span>
+          )}
         </TabsTrigger>
       </TabsList>
 

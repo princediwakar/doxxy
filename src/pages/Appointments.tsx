@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Calendar } from 'lucide-react';
 import { AppointmentModal } from '@/components/appointments/AppointmentModal';
-import { SkeletonLoader } from '@/components/ui/loading';
 import { useAppointments } from '@/hooks/useAppointments';
 import { usePrefetching } from '@/hooks/usePrefetching';
 import { AppointmentsTabs } from '@/components/appointments/AppointmentsTabs';
@@ -99,31 +98,8 @@ const Appointments = () => {
     }
   };
 
-  // Only show full page skeleton on INITIAL load
-  const showSkeleton = isLoading && (!appointments.all || appointments.all.length === 0);
-
-  if (showSkeleton) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
-          <div className="space-y-2">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">Appointments</h1>
-                <p className="text-muted-foreground">Loading appointments...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-4">
-           <SkeletonLoader count={3} className="h-16 bg-muted/50 rounded-md" />
-        </div>
-      </div>
-    );
-  }
+  // REMOVED: The entire "if (showSkeleton)" block.
+  // The layout below is now PERMANENT. Loading is handled inside the components.
 
   return (
     <div className="space-y-6">
@@ -164,6 +140,7 @@ const Appointments = () => {
 
       <AppointmentsTabs
         appointments={appointments}
+        isLoading={isLoading} // PASSED isLoading PROP
         activeTab={activeTab}
         onTabChange={(t) => setActiveTab(t as AppointmentFilter)}
         currentPage={currentPage}
@@ -177,7 +154,6 @@ const Appointments = () => {
         onCreateBill={handleCreateBill}
         activeClinicRole={activeClinicRole}
         cancelLoading={cancelLoading}
-        // Fix: Pass boolean derived from string
         isSearching={!!searchTerm} 
       />
 
