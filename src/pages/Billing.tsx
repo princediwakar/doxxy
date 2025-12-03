@@ -1,3 +1,4 @@
+// src/pages/Billing.tsx
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,19 +21,22 @@ import {
 import { Search, Plus, CreditCard, IndianRupee } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MonthSelector } from "@/components/ui/MonthSelector";
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy } from "react";
 
 // Lazy load heavy billing components
-const BillingModal = lazy(() => import('@/components/billing/BillingModal').then(module => ({ default: module.BillingModal })));
-import { printBill } from '@/components/billing/printUtils';
-import { getSupabase } from '@/integrations/supabase/client';
+const BillingModal = lazy(() =>
+  import("@/components/billing/BillingModal").then((module) => ({
+    default: module.BillingModal,
+  }))
+);
+import { printBill } from "@/components/billing/billingPrintUtils";
+import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { DbPatient } from "@/types/core";
 import { Bill, ServiceItem } from "@/types/billing";
 
 const supabase = getSupabase();
-
 
 interface BillWithDetails extends Bill {
   patient_name?: string;
@@ -49,32 +53,43 @@ const Billing = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
   });
   const itemsPerPage = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(null);
-  const [modalMode, setModalMode] = useState<'create' | 'view' | 'edit'>('create');
-  
-  const { data: bills = [], isLoading: isLoadingBills, refetch: refetchBills } = useQuery({
-    queryKey: ['bills', activeClinic?.clinic_id, selectedMonth],
+  const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(
+    null
+  );
+  const [modalMode, setModalMode] = useState<"create" | "view" | "edit">(
+    "create"
+  );
+
+  const {
+    data: bills = [],
+    isLoading: isLoadingBills,
+    refetch: refetchBills,
+  } = useQuery({
+    queryKey: ["bills", activeClinic?.clinic_id, selectedMonth],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
 
-      const [year, month] = selectedMonth.split('-').map(Number);
+      const [year, month] = selectedMonth.split("-").map(Number);
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0, 23, 59, 59);
 
       const { data, error } = await supabase
-        .from('bills')
+        .from("bills")
         .select(`*, patients(name)`)
-        .eq('clinic_id', activeClinic.clinic_id)
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString())
-        .order('created_at', { ascending: false });
+        .eq("clinic_id", activeClinic.clinic_id)
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString())
+        .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
 
-      return (data || []).map(b => {
+      return (data || []).map((b) => {
         const { patients, ...billData } = b;
         // Convert service_items from Json to ServiceItem[] with proper type checking
         let serviceItems: ServiceItem[] | null = null;
@@ -83,17 +98,19 @@ const Billing = () => {
           // Basic validation that items have the expected shape
           const items: ServiceItem[] = [];
           for (const item of jsonData) {
-            if (typeof item === 'object' && item !== null) {
+            if (typeof item === "object" && item !== null) {
               const obj = item as Record<string, unknown>;
-              if (typeof obj.description === 'string' &&
-                  typeof obj.quantity === 'number' &&
-                  typeof obj.rate === 'number' &&
-                  typeof obj.amount === 'number') {
+              if (
+                typeof obj.description === "string" &&
+                typeof obj.quantity === "number" &&
+                typeof obj.rate === "number" &&
+                typeof obj.amount === "number"
+              ) {
                 items.push({
                   description: obj.description,
                   quantity: obj.quantity,
                   rate: obj.rate,
-                  amount: obj.amount
+                  amount: obj.amount,
                 });
               }
             }
@@ -110,68 +127,73 @@ const Billing = () => {
         } as BillWithDetails;
       });
     },
-    enabled: !!activeClinic?.clinic_id
+    enabled: !!activeClinic?.clinic_id,
   });
 
   const { data: stats, refetch: refetchStats } = useQuery<BillingStats, Error>({
-    queryKey: ['billingStats', activeClinic?.clinic_id, selectedMonth],
+    queryKey: ["billingStats", activeClinic?.clinic_id, selectedMonth],
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return { totalRevenue: 0, totalBills: 0 };
 
-      const [year, month] = selectedMonth.split('-').map(Number);
+      const [year, month] = selectedMonth.split("-").map(Number);
       const startDate = new Date(year, month - 1, 1);
       const endDate = new Date(year, month, 0, 23, 59, 59);
 
       const { data, error } = await supabase
-        .from('bills')
-        .select('amount')
-        .eq('clinic_id', activeClinic.clinic_id)
-        .gte('created_at', startDate.toISOString())
-        .lte('created_at', endDate.toISOString());
+        .from("bills")
+        .select("amount")
+        .eq("clinic_id", activeClinic.clinic_id)
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", endDate.toISOString());
 
       if (error) throw new Error(error.message);
 
-      const totalRevenue = data.reduce((sum, bill) => sum + Number(bill.amount), 0);
+      const totalRevenue = data.reduce(
+        (sum, bill) => sum + Number(bill.amount),
+        0
+      );
       const totalBills = data.length;
 
       return { totalRevenue, totalBills };
     },
-    enabled: !!activeClinic?.clinic_id
+    enabled: !!activeClinic?.clinic_id,
   });
 
   const handleBillClick = (bill: BillWithDetails) => {
     setSelectedBill(bill);
-    setModalMode('view');
+    setModalMode("view");
     setIsModalOpen(true);
   };
 
   const handleEditBill = (bill: BillWithDetails) => {
     setSelectedBill(bill);
-    setModalMode('edit');
+    setModalMode("edit");
     setIsModalOpen(true);
   };
 
   const handlePrintBill = async (bill: BillWithDetails) => {
     // Create a minimal patient object for printing
-    const patientForPrint: DbPatient | null = bill.patient_name ? {
-      id: bill.patient_id || '',
-      clinic_id: bill.clinic_id || '',
-      name: bill.patient_name,
-      medical_id: null,
-      phone: null,
-      email: null,
-      age: null,
-      gender: null,
-      address: null,
-      created_at: bill.created_at || new Date().toISOString(),
-    } : null;
+    const patientForPrint: DbPatient | null = bill.patient_name
+      ? {
+          id: bill.patient_id || "",
+          clinic_id: bill.clinic_id || "",
+          name: bill.patient_name,
+          medical_id: null,
+          phone: null,
+          email: null,
+          age: null,
+          gender: null,
+          address: null,
+          created_at: bill.created_at || new Date().toISOString(),
+        }
+      : null;
 
-    await printBill(bill, patientForPrint);
+    await printBill(bill, patientForPrint, activeClinic?.clinics || null);
   };
 
   const handleNewBill = () => {
     setSelectedBill(null);
-    setModalMode('create');
+    setModalMode("create");
     setIsModalOpen(true);
   };
 
@@ -182,10 +204,11 @@ const Billing = () => {
   };
 
   const { filteredBills, totalPages } = useMemo(() => {
-    const filtered = bills.filter((bill) =>
-      bill.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bill.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bill.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = bills.filter(
+      (bill) =>
+        bill.patient_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.invoice_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.description?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -201,7 +224,9 @@ const Billing = () => {
         <CardContent className="flex items-center justify-center py-12">
           <div className="text-center space-y-2">
             <CreditCard className="w-12 h-12 text-muted-foreground mx-auto" />
-            <p className="text-muted-foreground">Please select a clinic to view billing.</p>
+            <p className="text-muted-foreground">
+              Please select a clinic to view billing.
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -218,11 +243,16 @@ const Billing = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Billing</h1>
-              <p className="text-muted-foreground">Manage patient bills and payments</p>
+              <p className="text-muted-foreground">
+                Manage patient bills and payments
+              </p>
             </div>
           </div>
         </div>
-        <Button onClick={handleNewBill} className="bg-primary text-primary-foreground hover:bg-primary/90">
+        <Button
+          onClick={handleNewBill}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
           <Plus size={18} className="mr-2" />
           Create Bill
         </Button>
@@ -234,7 +264,9 @@ const Billing = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold text-success">₹{stats?.totalRevenue.toFixed(2) || '0.00'}</p>
+                <p className="text-2xl font-bold text-success">
+                  ₹{stats?.totalRevenue.toFixed(2) || "0.00"}
+                </p>
               </div>
               <div className="bg-success/10 p-3 rounded-lg">
                 <IndianRupee className="w-6 h-6 text-success" />
@@ -247,7 +279,9 @@ const Billing = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Bills</p>
-                <p className="text-2xl font-bold text-primary">{stats?.totalBills || 0}</p>
+                <p className="text-2xl font-bold text-primary">
+                  {stats?.totalBills || 0}
+                </p>
               </div>
               <div className="bg-primary/10 p-3 rounded-lg">
                 <CreditCard className="w-6 h-6 text-primary" />
@@ -269,52 +303,51 @@ const Billing = () => {
           />
         </div>
 
-        <MonthSelector
-          value={selectedMonth}
-          onChange={setSelectedMonth}
-        />
+        <MonthSelector value={selectedMonth} onChange={setSelectedMonth} />
       </div>
 
       <div className="border rounded-lg overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
+        <Table>
+          <TableHeader>
+            <TableRow>
               <TableHead>Invoice #</TableHead>
-                <TableHead>Patient</TableHead>
+              <TableHead>Patient</TableHead>
               <TableHead>Date</TableHead>
-                <TableHead>Amount</TableHead>
+              <TableHead>Amount</TableHead>
               <TableHead className="w-[30%]">Description</TableHead>
               <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {isLoadingBills ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">Loading bills...</TableCell>
+                <TableCell colSpan={6} className="text-center">
+                  Loading bills...
+                </TableCell>
               </TableRow>
             ) : filteredBills.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">No bills found.</TableCell>
+                <TableCell colSpan={6} className="text-center">
+                  No bills found.
+                </TableCell>
               </TableRow>
             ) : (
               filteredBills.map((bill) => (
-                <TableRow 
-                  key={bill.id} 
+                <TableRow
+                  key={bill.id}
                   className="hover:bg-muted/50 cursor-pointer"
                   onClick={() => handleBillClick(bill)}
                 >
                   <TableCell className="font-medium">
                     {bill.invoice_number}
                   </TableCell>
+                  <TableCell>{bill.patient_name || "N/A"}</TableCell>
                   <TableCell>
-                    {bill.patient_name || 'N/A'}
+                    {bill.created_at
+                      ? new Date(bill.created_at).toLocaleDateString()
+                      : "N/A"}
                   </TableCell>
-                  <TableCell>
-                    {bill.created_at ? new Date(bill.created_at).toLocaleDateString() : 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    ₹{Number(bill.amount).toFixed(2)}
-                  </TableCell>
+                  <TableCell>₹{Number(bill.amount).toFixed(2)}</TableCell>
                   <TableCell className="truncate max-w-xs">
                     {bill.description}
                   </TableCell>
@@ -346,13 +379,19 @@ const Billing = () => {
                   </TableCell>
                 </TableRow>
               ))
-              )}
-            </TableBody>
-          </Table>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {isModalOpen && (
-        <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center p-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            </div>
+          }
+        >
           <BillingModal
             open={isModalOpen}
             onOpenChange={handleModalClose}
@@ -364,43 +403,43 @@ const Billing = () => {
       )}
 
       <div className="flex items-center justify-center pt-4">
-              <Pagination>
-                <PaginationContent>
+        <Pagination>
+          <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                href="#" 
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  setCurrentPage(p => Math.max(p - 1, 1)); 
-                }} 
+              <PaginationPrevious
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((p) => Math.max(p - 1, 1));
+                }}
               />
             </PaginationItem>
             {[...Array(totalPages)].map((_, i) => (
-                        <PaginationItem key={i}>
-                <PaginationLink 
-                  href="#" 
-                  isActive={currentPage === i + 1} 
-                  onClick={(e) => { 
-                    e.preventDefault(); 
-                    setCurrentPage(i + 1); 
+              <PaginationItem key={i}>
+                <PaginationLink
+                  href="#"
+                  isActive={currentPage === i + 1}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setCurrentPage(i + 1);
                   }}
                 >
                   {i + 1}
-                          </PaginationLink>
-                        </PaginationItem>
+                </PaginationLink>
+              </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext 
-                href="#" 
-                onClick={(e) => { 
-                  e.preventDefault(); 
-                  setCurrentPage(p => Math.min(p + 1, totalPages)); 
-                }} 
+              <PaginationNext
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentPage((p) => Math.min(p + 1, totalPages));
+                }}
               />
             </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </div>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 };

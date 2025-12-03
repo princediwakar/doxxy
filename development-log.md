@@ -61,3 +61,52 @@ if (appointmentLoading || existingConsultationLoading || departmentInfoLoading) 
 -  Build process: Successful
 -  Code structure: Maintained existing patterns
 -  Performance: No negative impact on auto-save functionality
+
+## 2025-12-03 - Fix Clinic Details in Billing Print
+
+### Problem
+User reported "nowhere on bill is clinic details coming in print" - clinic details were completely missing from printed bills.
+
+### Root Cause Analysis
+After investigating the billing print architecture:
+1. **Missing Data Flow**: `billingPrintUtils.ts` functions only accepted `billData` and `patient` parameters, no clinic data
+2. **Missing Template Section**: HTML print template only had "Bill To" (patient) section, no "Bill From" (clinic) section
+3. **Missing Data Passing**: Calling components (`Billing.tsx`, `BillingModal.tsx`) didn't pass clinic data to print functions
+
+### Solution Implemented
+
+#### 1. Updated Print Utility (`billingPrintUtils.ts`)
+- Added `DbClinic` import and `clinic` parameter to `generateBillPrintContent()` and `printBill()` functions
+- Added "Bill From" section in HTML template showing:
+  - Clinic name
+  - Clinic address
+  - Clinic phone/email
+  - Clinic website
+  - Clinic license number
+
+#### 2. Updated Billing Page (`Billing.tsx`)
+- Pass `activeClinic?.clinics || null` to `printBill()` call in `handlePrintBill()`
+
+#### 3. Updated Billing Modal (`BillingModal.tsx`)
+- Added `useAuth()` import and `activeClinic` access
+- Pass `activeClinic?.clinics || null` to `printBill()` call in `handlePrint()`
+
+### Technical Details
+- **Files Modified**:
+  - `src/components/billing/billingPrintUtils.ts` - Added clinic parameter and 'Bill From' section
+  - `src/pages/Billing.tsx` - Pass `activeClinic?.clinics` to `printBill()`
+  - `src/components/billing/BillingModal.tsx` - Added `useAuth()` and pass clinic data to `printBill()`
+- **Type Safety**: Used `DbClinic` type from `core.ts` (Hub & Spoke architecture compliant)
+- **Build Status**: Successful compilation and build
+
+### Expected Behavior After Fix
+1. **Printed Bills**: Now show "Bill From" section with clinic details
+2. **Print Layout**: Two-column layout with clinic (Bill From) and patient (Bill To) information
+3. **Data Consistency**: Clinic details match what's shown elsewhere in the application
+4. **Professional Appearance**: Bills now have proper letterhead with clinic information
+
+### Quality Assurance
+- ✅ TypeScript compilation: No errors after fixing `license_number` field (was `registration_number`)
+- ✅ Build process: Successful production build
+- ✅ Code structure: Maintained Hub & Spoke architecture patterns
+- ✅ Data flow: Clinic data now properly flows from AuthContext to print output

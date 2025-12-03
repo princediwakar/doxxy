@@ -1,17 +1,23 @@
 // src/components/consultation/ConsultationPreviewModal.tsx
-import { Eye, Printer } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import type { DbPatient, DbAppointment } from '@/types/core';
-import { UseFormReturn } from 'react-hook-form';
-import type { ConsultationFormValues } from '@/types/consultation';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ConsultationLayout } from './ConsultationLayout';
-import { useAuth } from '@/contexts/AuthContext';
-import { printConsultation } from './printUtils';
-import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
-import { getSupabase } from '@/integrations/supabase/client';
+import { Eye, Printer } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import type { DbPatient, DbAppointment } from "@/types/core";
+import { UseFormReturn } from "react-hook-form";
+import type { ConsultationFormValues } from "@/types/consultation";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { ConsultationLayout } from "./ConsultationLayout";
+import { useAuth } from "@/contexts/AuthContext";
+import { printConsultation } from "./consultationPrintUtils";
+import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { getSupabase } from "@/integrations/supabase/client";
 
 const supabase = getSupabase();
 
@@ -41,48 +47,50 @@ export const ConsultationPreviewModal = ({
   patient,
   appointment,
   specialtySections,
-  departmentType = 'General'
+  departmentType = "General",
 }: ConsultationPreviewModalProps) => {
   const { activeClinic, user } = useAuth();
-  
+
   // Get consultation data from form
-  const consultationData = form.watch('specialty_data');
-  
+  const consultationData = form.watch("specialty_data");
+
   // Get the full clinic object for printing
   const clinicDetails = activeClinic?.clinics || null;
-  
+
   // Prepare clinic info for layout display
-  const clinicInfo = clinicDetails ? {
-    name: clinicDetails.name,
-    address: clinicDetails.address || undefined,
-    phone: clinicDetails.phone || undefined,
-    email: clinicDetails.email || undefined,
-    website: clinicDetails.website || undefined
-  } : null;
-  
+  const clinicInfo = clinicDetails
+    ? {
+        name: clinicDetails.name,
+        address: clinicDetails.address || undefined,
+        phone: clinicDetails.phone || undefined,
+        email: clinicDetails.email || undefined,
+        website: clinicDetails.website || undefined,
+      }
+    : null;
+
   // Fetch doctor details for current user
   const { data: doctorDetails } = useQuery({
-    queryKey: ['currentDoctorDetails', activeClinic?.clinic_id, user?.id],
+    queryKey: ["currentDoctorDetails", activeClinic?.clinic_id, user?.id],
     queryFn: async () => {
       if (!activeClinic?.clinic_id || !user?.id) return null;
-          const { data, error } = await supabase.rpc('get_doctors_by_clinic', {
-      clinic_id: activeClinic.clinic_id,
-    });
+      const { data, error } = await supabase.rpc("get_doctors_by_clinic", {
+        clinic_id: activeClinic.clinic_id,
+      });
       if (error) throw error;
-      return data?.find(d => d.user_id === user.id) || null;
+      return data?.find((d) => d.user_id === user.id) || null;
     },
     enabled: !!activeClinic?.clinic_id && !!user?.id,
   });
 
-    // Prepare doctor info
+  // Prepare doctor info
   const doctorInfo = {
-    name: doctorDetails?.name || user?.user_metadata?.full_name || '',
+    name: doctorDetails?.name || user?.user_metadata?.full_name || "",
     specialization: doctorDetails?.department_name || departmentType,
-    qualification: '', // Default qualification
-    registration_number: '', // Not available in current database schema
-    phone: doctorDetails?.phone || user?.phone || '',
-    email: doctorDetails?.email || user?.email || '',
-    bio: doctorDetails?.bio || ''
+    qualification: "", // Default qualification
+    registration_number: "", // Not available in current database schema
+    phone: doctorDetails?.phone || user?.phone || "",
+    email: doctorDetails?.email || user?.email || "",
+    bio: doctorDetails?.bio || "",
   };
 
   const handlePrint = async () => {
@@ -96,10 +104,10 @@ export const ConsultationPreviewModal = ({
         user,
         departmentType
       );
-      toast.success('Print dialog opened successfully');
+      toast.success("Print dialog opened successfully");
     } catch (error) {
-      console.error('Error printing consultation:', error);
-      toast.error('Failed to open print dialog');
+      console.error("Error printing consultation:", error);
+      toast.error("Failed to open print dialog");
     }
   };
 
@@ -115,10 +123,7 @@ export const ConsultationPreviewModal = ({
             <DialogDescription>
               Review your consultation notes before saving or printing
             </DialogDescription>
-            <Button
-              size="sm"
-              onClick={handlePrint}
-            >
+            <Button size="sm" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
@@ -139,4 +144,4 @@ export const ConsultationPreviewModal = ({
       </DialogContent>
     </Dialog>
   );
-}; 
+};

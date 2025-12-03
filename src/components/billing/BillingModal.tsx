@@ -1,18 +1,38 @@
 // src/components/billing/BillingModal.tsx
-import React from 'react';
-import { FileText, Edit, Printer } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Textarea } from '@/components/ui/textarea';
-import { useBilling, BillingFormValues } from '@/hooks/useBilling';
-import { ServiceItemsSection } from './ServiceItemsSection';
-import { printBill } from './printUtils';
-import type { Bill, AppointmentForBilling } from '@/types/billing';
-import type { DbPatient } from '@/types/core';
+import React from "react";
+import { FileText, Edit, Printer } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  DialogHeader,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import { useBilling, BillingFormValues } from "@/hooks/useBilling";
+import { ServiceItemsSection } from "./ServiceItemsSection";
+import { printBill } from "./billingPrintUtils";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Bill, AppointmentForBilling } from "@/types/billing";
+import type { DbPatient } from "@/types/core";
 
 interface BillingModalProps {
   open: boolean;
@@ -20,8 +40,8 @@ interface BillingModalProps {
   bill?: Bill | null;
   patient?: DbPatient | null;
   appointment?: AppointmentForBilling | null;
-  mode?: 'create' | 'view' | 'edit';
-  onModeChange?: (mode: 'create' | 'view' | 'edit') => void;
+  mode?: "create" | "view" | "edit";
+  onModeChange?: (mode: "create" | "view" | "edit") => void;
 }
 
 export const BillingModal: React.FC<BillingModalProps> = ({
@@ -30,7 +50,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   bill,
   patient,
   appointment,
-  mode = 'create',
+  mode = "create",
   onModeChange,
 }) => {
   const {
@@ -47,11 +67,13 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     refetchInvoiceNumber,
   } = useBilling({ bill, patient, appointment, mode, open });
 
+  const { activeClinic } = useAuth();
+
   const onSubmit = (values: BillingFormValues) => {
     saveBillMutation.mutate(values, {
       onSuccess: () => {
-        if (mode === 'edit') {
-          onModeChange?.('view');
+        if (mode === "edit") {
+          onModeChange?.("view");
         } else {
           onOpenChange(false);
         }
@@ -63,23 +85,29 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     if (!bill) return;
 
     // Prepare bill data for printing
-    const formServiceItems = form.watch('service_items');
+    const formServiceItems = form.watch("service_items");
     const billData: Bill = {
       ...bill,
-      service_items: formServiceItems && formServiceItems.length > 0 ? formServiceItems : null,
-      discount_percentage: form.watch('discount_percentage'),
-      tax_percentage: form.watch('tax_percentage'),
-      notes: form.watch('notes') || null
+      service_items:
+        formServiceItems && formServiceItems.length > 0
+          ? formServiceItems
+          : null,
+      discount_percentage: form.watch("discount_percentage"),
+      tax_percentage: form.watch("tax_percentage"),
+      notes: form.watch("notes") || null,
     };
 
-    await printBill(billData, patient || null);
+    await printBill(billData, patient || null, activeClinic?.clinics || null);
   };
 
   const getModalTitle = () => {
     switch (mode) {
-      case 'view': return 'View Bill';
-      case 'edit': return 'Edit Bill';
-      default: return 'Create Bill';
+      case "view":
+        return "View Bill";
+      case "edit":
+        return "Edit Bill";
+      default:
+        return "Create Bill";
     }
   };
 
@@ -108,12 +136,12 @@ export const BillingModal: React.FC<BillingModalProps> = ({
             </Button>
           )}
 
-          {mode === 'view' && (
+          {mode === "view" && (
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => onModeChange?.('edit')}
+              onClick={() => onModeChange?.("edit")}
               className="flex items-center gap-2"
             >
               <Edit className="h-4 w-4" />
@@ -121,14 +149,18 @@ export const BillingModal: React.FC<BillingModalProps> = ({
             </Button>
           )}
 
-          {(mode === 'create' || mode === 'edit') && (
+          {(mode === "create" || mode === "edit") && (
             <Button
               type="button"
               size="sm"
               onClick={form.handleSubmit(onSubmit)}
               disabled={isSubmitting || calculateTotals.total <= 0}
             >
-              {isSubmitting ? 'Saving...' : mode === 'edit' ? 'Update' : 'Create'}
+              {isSubmitting
+                ? "Saving..."
+                : mode === "edit"
+                ? "Update"
+                : "Create"}
             </Button>
           )}
         </div>
@@ -139,15 +171,20 @@ export const BillingModal: React.FC<BillingModalProps> = ({
             {getModalTitle()}
           </DialogTitle>
           <DialogDescription>
-            {mode === 'view' ? 'View billing details and invoice information' : 
-             mode === 'edit' ? 'Edit billing information and service items' : 
-             'Create a new bill for the selected patient and appointment'}
+            {mode === "view"
+              ? "View billing details and invoice information"
+              : mode === "edit"
+              ? "Edit billing information and service items"
+              : "Create a new bill for the selected patient and appointment"}
           </DialogDescription>
         </DialogHeader>
-        
+
         <ScrollArea className="max-h-[80vh] overflow-y-auto">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-1 pb-4">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6 p-1 pb-4"
+            >
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
@@ -159,7 +196,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
-                        disabled={mode === 'view' || !!appointment}
+                        disabled={mode === "view" || !!appointment}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -188,7 +225,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                       <Select
                         onValueChange={field.onChange}
                         value={field.value || ""}
-                        disabled={mode === 'view' || !!appointment}
+                        disabled={mode === "view" || !!appointment}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -219,10 +256,14 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                         <div className="flex gap-2">
                           <Input
                             {...field}
-                            placeholder={isLoadingInvoiceNumber ? "Generating invoice number..." : "Invoice number"}
-                            disabled={mode === 'view' || isLoadingInvoiceNumber}
+                            placeholder={
+                              isLoadingInvoiceNumber
+                                ? "Generating invoice number..."
+                                : "Invoice number"
+                            }
+                            disabled={mode === "view" || isLoadingInvoiceNumber}
                           />
-                          {mode === 'create' && !isLoadingInvoiceNumber && (
+                          {mode === "create" && !isLoadingInvoiceNumber && (
                             <Button
                               type="button"
                               variant="outline"
@@ -249,9 +290,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                       <FormControl>
                         <Input
                           {...field}
-                          value={field.value || ''}
+                          value={field.value || ""}
                           placeholder="Bill description"
-                          disabled={mode === 'view'}
+                          disabled={mode === "view"}
                         />
                       </FormControl>
                       <FormMessage />
@@ -262,7 +303,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
               {/* Service Items */}
               <ServiceItemsSection
-                serviceItems={form.watch('service_items') || []}
+                serviceItems={form.watch("service_items") || []}
                 onUpdateItem={updateServiceItem}
                 onAddItem={addServiceItem}
                 onRemoveItem={removeServiceItem}
@@ -284,8 +325,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                           max="100"
                           step="0.01"
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          disabled={mode === 'view'}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
+                          disabled={mode === "view"}
                         />
                       </FormControl>
                       <FormMessage />
@@ -306,8 +349,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                           max="100"
                           step="0.01"
                           {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          disabled={mode === 'view'}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
+                          disabled={mode === "view"}
                         />
                       </FormControl>
                       <FormMessage />
@@ -326,9 +371,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                     <FormControl>
                       <Textarea
                         {...field}
-                        value={field.value || ''}
+                        value={field.value || ""}
                         placeholder="Additional notes"
-                        disabled={mode === 'view'}
+                        disabled={mode === "view"}
                         rows={3}
                       />
                     </FormControl>
@@ -345,17 +390,21 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 </div>
                 {calculateTotals.discountAmount > 0 && (
                   <div className="flex justify-between text-sm text-red-600">
-                    <span>Discount ({form.watch('discount_percentage')}%):</span>
+                    <span>
+                      Discount ({form.watch("discount_percentage")}%):
+                    </span>
                     <span>-₹{calculateTotals.discountAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm">
                   <span>Subtotal after discount:</span>
-                  <span>₹{calculateTotals.subtotalAfterDiscount.toFixed(2)}</span>
+                  <span>
+                    ₹{calculateTotals.subtotalAfterDiscount.toFixed(2)}
+                  </span>
                 </div>
                 {calculateTotals.taxAmount > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span>Tax ({form.watch('tax_percentage')}%):</span>
+                    <span>Tax ({form.watch("tax_percentage")}%):</span>
                     <span>₹{calculateTotals.taxAmount.toFixed(2)}</span>
                   </div>
                 )}
