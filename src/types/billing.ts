@@ -10,7 +10,9 @@ import type { UseMutationResult } from "@tanstack/react-query";
 // ============================================================================
 
 /** Base bill type */
-export type Bill = DbBill;
+export type Bill = Omit<DbBill, 'service_items'> & {
+  service_items?: ServiceItem[] | null;
+};
 
 /** Service item in a bill */
 export interface ServiceItem {

@@ -63,9 +63,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     if (!bill) return;
 
     // Prepare bill data for printing
+    const formServiceItems = form.watch('service_items');
     const billData: Bill = {
       ...bill,
-      service_items: form.watch('service_items') || [] as any,
+      service_items: formServiceItems && formServiceItems.length > 0 ? formServiceItems : null,
       discount_percentage: form.watch('discount_percentage'),
       tax_percentage: form.watch('tax_percentage'),
       notes: form.watch('notes') || null

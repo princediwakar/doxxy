@@ -28,13 +28,13 @@ import { printBill } from '@/components/billing/printUtils';
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
-import { Database } from "@/integrations/supabase/types";
+import { DbPatient } from "@/types/core";
+import { Bill, ServiceItem } from "@/types/billing";
 
 const supabase = getSupabase();
 
-type BillRow = Database["public"]["Tables"]["bills"]["Row"];
 
-interface BillWithDetails extends BillRow {
+interface BillWithDetails extends Bill {
   patient_name?: string;
 }
 
@@ -76,11 +76,39 @@ const Billing = () => {
 
       return (data || []).map(b => {
         const { patients, ...billData } = b;
+        // Convert service_items from Json to ServiceItem[] with proper type checking
+        let serviceItems: ServiceItem[] | null = null;
+        const jsonData = billData.service_items;
+        if (jsonData && Array.isArray(jsonData)) {
+          // Basic validation that items have the expected shape
+          const items: ServiceItem[] = [];
+          for (const item of jsonData) {
+            if (typeof item === 'object' && item !== null) {
+              const obj = item as Record<string, unknown>;
+              if (typeof obj.description === 'string' &&
+                  typeof obj.quantity === 'number' &&
+                  typeof obj.rate === 'number' &&
+                  typeof obj.amount === 'number') {
+                items.push({
+                  description: obj.description,
+                  quantity: obj.quantity,
+                  rate: obj.rate,
+                  amount: obj.amount
+                });
+              }
+            }
+          }
+          if (items.length > 0) {
+            serviceItems = items;
+          }
+        }
+
         return {
           ...billData,
+          service_items: serviceItems,
           patient_name: patients?.name,
-        };
-      }) as BillWithDetails[];
+        } as BillWithDetails;
+      });
     },
     enabled: !!activeClinic?.clinic_id
   });
@@ -124,7 +152,21 @@ const Billing = () => {
   };
 
   const handlePrintBill = async (bill: BillWithDetails) => {
-    await printBill(bill, { name: bill.patient_name } as any);
+    // Create a minimal patient object for printing
+    const patientForPrint: DbPatient | null = bill.patient_name ? {
+      id: bill.patient_id || '',
+      clinic_id: bill.clinic_id || '',
+      name: bill.patient_name,
+      medical_id: null,
+      phone: null,
+      email: null,
+      age: null,
+      gender: null,
+      address: null,
+      created_at: bill.created_at || new Date().toISOString(),
+    } : null;
+
+    await printBill(bill, patientForPrint);
   };
 
   const handleNewBill = () => {

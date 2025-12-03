@@ -138,7 +138,7 @@ const Consultation = () => {
   console.log('Consultation page - appointment data:', {
     id: appointment?.id,
     status: appointment?.status,
-    patient_name: (appointment?.patient as any)?.name
+    patient_name: (appointment?.patient as Patient)?.name
   });
 
   const {
