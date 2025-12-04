@@ -26,13 +26,11 @@ const corsHeaders = {
 }
 
 serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Create admin client for user invitations
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -44,7 +42,6 @@ serve(async (req: Request) => {
       }
     )
 
-    // Regular client for other operations
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -57,251 +54,158 @@ serve(async (req: Request) => {
 
     const { memberData }: { memberData: InviteMemberData } = await req.json()
 
-    console.log('Received invitation request:', memberData)
-
-    // Validate email format before proceeding
+    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(memberData.email)) {
       throw new Error(`Invalid email format: ${memberData.email}`)
     }
 
-    // Get current user - handle both JWT and service role authentication
+    // Verify Authentication (User or Service Role)
     let user: { id: string; email?: string } | null = null;
-    try {
-      const { data: { user: authUser }, error: userError } = await supabaseClient.auth.getUser()
-      if (authUser && !userError) {
-        user = authUser;
+    const authHeader = req.headers.get('Authorization');
+    
+    if (authHeader) {
+      try {
+        const { data: { user: authUser }, error } = await supabaseClient.auth.getUser()
+        if (!error && authUser) user = authUser;
+      } catch (e) {
+        console.log('JWT verification failed, checking permissions...');
       }
-    } catch (err) {
-      console.log('JWT auth failed, checking if service role:', err instanceof Error ? err.message : String(err));
     }
 
-    // If no user from JWT, check if this is a service role request
-    if (!user) {
-      const authHeader = req.headers.get('Authorization');
-      console.log('Auth header:', authHeader ? 'Present' : 'Missing');
-
-      // For service role, we'll just proceed - the admin client will handle auth
-      if (!authHeader) {
-        throw new Error('Not authenticated - requires user authentication or service role')
-      }
-      console.log('Using service role authentication for admin invite')
-    } else {
-      console.log('Using user authentication:', user.id)
+    if (!user && !authHeader) {
+      throw new Error('Not authenticated')
     }
 
-    // Generate invitation token
+    // Generate token
     const invitationToken = crypto.randomUUID()
 
-    // Try to create pending invitation record (fallback if table doesn't exist)
+    // 1. Create Pending Invitation Record
     let invitation: InvitationRecord
-    try {
-      const { data, error: inviteError } = await supabaseClient
-        .from('pending_invitations')
-        .insert({
-          email: memberData.email.toLowerCase(),
-          name: memberData.name,
-          phone: memberData.phone || null,
-          clinic_id: memberData.clinic_id,
-          role: memberData.role,
-          department_id: memberData.department_id || null,
-          invited_by: user?.id || null,
-          invitation_token: invitationToken,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-        })
-        .select()
-        .single()
+    const { data: inviteData, error: inviteError } = await supabaseClient
+      .from('pending_invitations')
+      .insert({
+        email: memberData.email.toLowerCase(),
+        name: memberData.name,
+        phone: memberData.phone || null,
+        clinic_id: memberData.clinic_id,
+        role: memberData.role,
+        department_id: memberData.department_id || null,
+        invited_by: user?.id || null,
+        invitation_token: invitationToken,
+        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      })
+      .select()
+      .single()
 
-      if (inviteError) {
-        console.error('Database insert failed:', inviteError)
-        throw new Error(`Failed to create invitation record: ${inviteError.message}`)
-      } else {
-        invitation = data as InvitationRecord
-        console.log('Invitation created in database:', invitation)
-      }
-    } catch (error) {
-      console.error('Database operation failed:', error)
-      throw new Error(`Database operation failed: ${error instanceof Error ? error.message : String(error)}`)
-    }
+    if (inviteError) throw new Error(`Failed to create invitation record: ${inviteError.message}`)
+    invitation = inviteData as InvitationRecord
 
-    // Get clinic information for the email
+    // Get clinic info
     const { data: clinic, error: clinicError } = await supabaseClient
       .from('clinics')
       .select('name')
       .eq('id', memberData.clinic_id)
       .single()
 
-    if (clinicError) {
-      console.error('Failed to get clinic info:', clinicError)
-      throw new Error('Failed to get clinic information')
+    if (clinicError) throw new Error('Failed to get clinic information')
+
+    // Check if user exists (Admin level check)
+    let existingUser = null
+    const { data: userList } = await supabaseAdmin.auth.admin.listUsers()
+    if (userList?.users) {
+      existingUser = userList.users.find(u => u.email?.toLowerCase() === memberData.email.toLowerCase())
     }
 
-    // Check if user already exists in Supabase Auth - MULTI-TENANT FIX
-    console.log('Checking if user already exists in auth system...')
-    let existingUser: { id: string; email?: string } | null | undefined = null
+    // --- FIX 1: Robust Site URL ---
+    // Make sure you set 'FRONTEND_URL' in your Supabase Edge Function secrets
+    // e.g. supabase secrets set FRONTEND_URL="http://localhost:3000" (or your production URL)
+    const siteUrl = Deno.env.get('FRONTEND_URL') || Deno.env.get('SITE_URL') || 'http://localhost:3000';
+    
+    // We add the token to the URL so the frontend can capture it in localStorage
+    const redirectUrl = `${siteUrl}/auth?token=${invitation.invitation_token}&type=invite`
 
-    try {
-      const { data: existingUsers, error: userLookupError } = await supabaseAdmin.auth.admin.listUsers()
+    // --- SCENARIO A: Existing User ---
+    if (existingUser) {
+      console.log('Processing existing user...')
+      
+      // Check if already member
+      const { data: existingMembership } = await supabaseClient
+        .from('clinic_members')
+        .select('id')
+        .eq('user_id', existingUser.id)
+        .eq('clinic_id', memberData.clinic_id)
+        .single()
 
-      if (userLookupError) {
-        console.error('Failed to lookup existing users, proceeding as new user:', userLookupError)
-        existingUser = null
-      } else {
-        existingUser = existingUsers.users.find((u: { id: string; email?: string }) => u.email?.toLowerCase() === memberData.email.toLowerCase())
-        console.log('Existing user found via listUsers:', existingUser ? `Yes (${existingUser.id})` : 'No')
-      }
-    } catch (lookupError) {
-      console.error('Error during user lookup, proceeding as new user:', lookupError)
-      existingUser = null
-    }
-
-    // Get site URL for redirect
-    const siteUrl = Deno.env.get('SITE_URL') ||
-                    Deno.env.get('SUPABASE_URL')?.replace('/v1', '')
-    const redirectUrl = `${siteUrl}/auth?token=${invitation.invitation_token}&email=${encodeURIComponent(memberData.email)}&action=invite`
-
-    console.log('Using site URL:', siteUrl)
-    console.log('Generated redirect URL:', redirectUrl)
-
-    try {
-      if (existingUser) {
-        // User exists - handle multi-tenant invitation for existing user
-        console.log('Handling invitation for EXISTING user...')
-
-        // Check if user is already a member of this clinic
-        const { data: existingMembership, error: membershipError } = await supabaseClient
-          .from('clinic_members')
-          .select('*')
-          .eq('user_id', existingUser.id)
-          .eq('clinic_id', memberData.clinic_id)
-          .single()
-
-        if (membershipError && membershipError.code !== 'PGRST116') { // PGRST116 = not found
-          console.error('Error checking existing membership:', membershipError)
-          throw new Error('Failed to check existing clinic membership')
-        }
-
-        if (existingMembership) {
-          console.log('User is already a member of this clinic')
-          return new Response(
-            JSON.stringify({
-              success: false,
-              error: 'User is already a member of this clinic',
-              existingMembership: existingMembership
-            }),
-            {
-              status: 400,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          )
-        }
-
-        // Create clinic membership for existing user
-        console.log('Creating clinic membership for existing user...')
-        const { data: newMembership, error: membershipCreateError } = await supabaseClient
-          .from('clinic_members')
-          .insert({
-            user_id: existingUser.id,
-            clinic_id: memberData.clinic_id,
-            role: memberData.role,
-            department_id: memberData.department_id || null
-          })
-          .select()
-          .single()
-
-        if (membershipCreateError) {
-          console.error('Failed to create clinic membership:', membershipCreateError)
-          throw new Error('Failed to create clinic membership')
-        }
-
-        console.log('Clinic membership created successfully:', newMembership)
-
+      if (existingMembership) {
         return new Response(
-          JSON.stringify({
-            success: true,
-            invitation: invitation,
-            emailSent: false, // Custom email sending would go here
-            existingUser: true,
-            supabaseUserId: existingUser.id,
-            membershipCreated: true,
-            databaseSaved: invitation.id !== invitationToken,
-            message: 'Existing user added to clinic successfully! 🎉'
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
-
-      } else {
-        // User doesn't exist - use standard Supabase invitation flow
-        console.log('Sending invitation to NEW user via Supabase admin...')
-        const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-          memberData.email,
-          {
-            redirectTo: redirectUrl,
-            data: {
-              name: memberData.name,
-              clinic_id: memberData.clinic_id,
-              clinic_name: clinic.name,
-              role: memberData.role,
-              invitation_token: invitation.invitation_token
-            }
-          }
-        )
-
-        if (inviteError) {
-          console.error('Failed to send Supabase invitation:', inviteError)
-          console.error('Full error object:', JSON.stringify(inviteError, null, 2))
-          throw new Error(`Supabase invitation failed: ${inviteError.message}`)
-        }
-
-        console.log('Supabase invitation sent successfully:', inviteData)
-
-        return new Response(
-          JSON.stringify({
-            success: true,
-            invitation: invitation,
-            emailSent: true,
-            existingUser: false,
-            supabaseUserId: inviteData.user?.id,
-            databaseSaved: invitation.id !== invitationToken,
-            message: 'Invitation sent successfully via Supabase'
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
+          JSON.stringify({ success: false, error: 'User is already a member of this clinic' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
-    } catch (emailError) {
-      console.error('Failed to send invitation:', emailError)
+
+      // Add to clinic directly
+      const { error: membershipError } = await supabaseClient
+        .from('clinic_members')
+        .insert({
+          user_id: existingUser.id,
+          clinic_id: memberData.clinic_id,
+          role: memberData.role,
+          department_id: memberData.department_id || null
+        })
+
+      if (membershipError) throw new Error('Failed to create clinic membership')
+
+      // --- FIX 2: Mark invitation as accepted immediately ---
+      // Since we auto-added them, we close the invitation loop so it doesn't stay "pending"
+      await supabaseClient
+        .from('pending_invitations')
+        .update({ accepted_at: new Date().toISOString() })
+        .eq('id', invitation.id)
 
       return new Response(
         JSON.stringify({
           success: true,
-          invitation: invitation,
-          emailSent: false,
-          message: `Invitation record created but email failed: ${emailError instanceof Error ? emailError.message : String(emailError)}`
+          message: 'Existing user added to clinic. No email sent (not implemented).',
+          existingUser: true
         }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-  } catch (error) {
-    console.error('Error in invite-member function:', error)
+    // --- SCENARIO B: New User ---
+    // --- FIX 3: Pass Phone and Token in Metadata ---
+    const { data: inviteAuthData, error: authInviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+      memberData.email,
+      {
+        redirectTo: redirectUrl,
+        data: {
+          name: memberData.name,
+          phone: memberData.phone, // Pass phone so it prefills in profile
+          clinic_id: memberData.clinic_id,
+          clinic_name: clinic.name,
+          role: memberData.role,
+          invitation_token: invitation.invitation_token // Redundancy
+        }
+      }
+    )
+
+    if (authInviteError) throw new Error(`Supabase invitation failed: ${authInviteError.message}`)
+
     return new Response(
       JSON.stringify({
-        error: 'Failed to send invitation',
-        details: error instanceof Error ? error.message : String(error)
+        success: true,
+        message: 'Invitation sent successfully via Supabase',
+        existingUser: false
       }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
+  } catch (error) {
+    console.error('Error:', error)
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
