@@ -928,13 +928,6 @@ export type Database = {
             referencedRelation: "clinic_departments"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "pending_invitations_invited_by_fkey"
-            columns: ["invited_by"]
-            isOneToOne: false
-            referencedRelation: "user_profile_debug"
-            referencedColumns: ["id"]
-          },
         ]
       }
       prescriptions: {
@@ -1047,20 +1040,7 @@ export type Database = {
       }
     }
     Views: {
-      user_profile_debug: {
-        Row: {
-          auth_phone: string | null
-          email: string | null
-          id: string | null
-          profile_created: string | null
-          profile_email: string | null
-          profile_name: string | null
-          profile_phone: string | null
-          profile_updated: string | null
-          raw_user_meta_data: Json | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       add_clinic_credits:

@@ -169,8 +169,6 @@ export type UserRole = Database['public']['Enums']['user_role'];
 // DATABASE VIEWS
 // ============================================================================
 
-/** Wrapper type for user_profile_debug view */
-export type DbUserProfileDebug = Database['public']['Views']['user_profile_debug']['Row'];
 
 // ============================================================================
 // DATABASE FUNCTIONS (Key Functions Only)
