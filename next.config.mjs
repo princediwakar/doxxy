@@ -1,0 +1,31 @@
+/** @type {import('next').NextConfig} */
+
+import withBundleAnalyzer from '@next/bundle-analyzer'
+
+const bundleAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+})
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // Image Optimization
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+    ],
+  },
+
+  // TypeScript Configuration
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
+  // Trailing Slash for better compatibility
+  trailingSlash: true,
+}
+
+export default bundleAnalyzer(nextConfig)
