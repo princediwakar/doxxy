@@ -46,7 +46,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   const [photoPreview, setPhotoPreview] = useState(user?.user_metadata?.avatar_url || '');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Fetch profile data from profiles table
   const { data: profileData, isLoading: profileLoading } = useQuery({
     queryKey: ['userProfile', user?.id],
     queryFn: async () => {
@@ -57,13 +56,12 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         .eq('id', user.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') throw error; // Ignore "not found" error
+      if (error && error.code !== 'PGRST116') throw error;
       return data;
     },
     enabled: !!user?.id && open,
   });
 
-  // Initialize phone and name from profile data
   React.useEffect(() => {
     if (profileData?.name) {
       setEditedName(profileData.name);
@@ -102,13 +100,18 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
 
   const updateBasicProfileMutation = useMutation({
     mutationFn: async () => {
+      if (!user?.id) throw new Error("User ID is missing");
+
       // Validate
       const errors: Record<string, string> = {};
       if (!editedName.trim()) {
         errors.name = 'Name is required';
       }
-      if (editedPhone && !/^\+?[0-9]{10,15}$/.test(editedPhone)) {
-        errors.phone = 'Please enter a valid phone number';
+      
+      // Fix: Sanitize phone before regex check (allow spaces/dashes in input, strip for check)
+      const cleanPhone = editedPhone ? editedPhone.replace(/[\s-]/g, '') : '';
+      if (cleanPhone && !/^\+?[0-9]{10,15}$/.test(cleanPhone)) {
+        errors.phone = 'Please enter a valid phone number (e.g. +919999999999)';
       }
       
       if (Object.keys(errors).length > 0) {
@@ -121,7 +124,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       // Upload photo if selected
       if (profilePhoto) {
         const fileExt = profilePhoto.name?.split('.').pop() || 'jpg';
-        const fileName = `${user?.id}_${Date.now()}.${fileExt}`;
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`; // Safe user.id usage
         
         const { error: uploadError } = await supabase.storage
           .from('avatars')
@@ -136,75 +139,72 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         avatarUrl = urlData.publicUrl;
       }
 
-      // Update auth user metadata
+      // 1. Update auth user metadata first
       const { error: authError } = await supabase.auth.updateUser({
         data: {
           name: editedName.trim(),
           avatar_url: avatarUrl,
         }
       });
-      if (authError) {
-        throw authError;
-      }
+      if (authError) throw authError;
 
-      // Create or update profiles table
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', user?.id || '')
-        .maybeSingle();
+      // 2. Run Database Updates in Parallel to minimize consistency windows
+      const updates = [];
 
-      if (!existingProfile) {
-        const { error: insertError } = await supabase.from('profiles').insert({
-          id: user?.id || '',
-          name: editedName.trim(),
-          phone: editedPhone.trim() || null,
-          email: user?.email || null,
-          avatar_url: avatarUrl, // Sync avatar URL from user metadata
-          created_at: new Date().toISOString(),
-        });
-        if (insertError) {
-          console.error('Profile insert error:', insertError);
-          throw insertError;
-        }
-      } else {
-        const { error: profileError } = await supabase
+      // A: Profiles Table
+      const profilePromise = (async () => {
+        const { data: existingProfile } = await supabase
           .from('profiles')
-          .update({
-            name: editedName.trim(),
-            phone: editedPhone.trim() || null,
-            email: user?.email || null,
-            avatar_url: avatarUrl, // Sync avatar URL from user metadata
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', user?.id || '');
-        if (profileError) {
-          console.error('Profile update error:', profileError);
-          throw profileError;
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        const profileData = {
+          name: editedName.trim(),
+          phone: cleanPhone || null, // Use sanitized phone
+          email: user?.email || null,
+          avatar_url: avatarUrl,
+          updated_at: new Date().toISOString()
+        };
+
+        if (!existingProfile) {
+          const { error } = await supabase.from('profiles').insert({
+            id: user.id,
+            created_at: new Date().toISOString(),
+            ...profileData
+          });
+          if (error) throw error;
+        } else {
+          const { error } = await supabase.from('profiles').update(profileData).eq('id', user.id);
+          if (error) throw error;
         }
-      }
+      })();
+      updates.push(profilePromise);
 
-      // Update doctors table if user has a doctor profile
-      const { data: doctorProfile } = await supabase
-        .from('doctors')
-        .select('id')
-        .eq('user_id', user?.id || '')
-        .maybeSingle();
-
-      if (doctorProfile) {
-        const { error: doctorError } = await supabase
+      // B: Doctor Profile (if exists)
+      const doctorPromise = (async () => {
+        const { data: doctorProfile } = await supabase
           .from('doctors')
-          .update({
-            name: editedName.trim(),
-            phone: editedPhone.trim() || null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('user_id', user?.id || '');
-        if (doctorError) {
-          console.error('Doctor update error:', doctorError);
-          throw doctorError;
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (doctorProfile) {
+          const { error } = await supabase
+            .from('doctors')
+            .update({
+              name: editedName.trim(),
+              phone: cleanPhone || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('user_id', user.id);
+          if (error) throw error;
         }
-      }
+      })();
+      updates.push(doctorPromise);
+
+      // Wait for DB updates
+      await Promise.all(updates);
     },
     onSuccess: () => {
       setFormErrors({});
@@ -228,9 +228,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
           variant: 'destructive' 
         });
       }
-    },
-    onSettled: () => {
-    },
+    }
   });
 
   const handleSaveChanges = () => {

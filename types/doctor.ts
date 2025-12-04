@@ -1,6 +1,4 @@
 // src/types/doctor.ts
-// Doctor Module Type Definitions - Hub & Spoke Architecture
-
 import { DbDoctor, DbClinicDepartment, DbDepartmentType } from './core';
 
 // ============================================================================
@@ -31,14 +29,14 @@ export type Department = {
 
 /** Medical credentials modal props */
 export interface MedicalCredentialsModalProps {
-  isOpen: boolean;
+  open: boolean;           // Fixed: Changed from isOpen to match component
   onClose: () => void;
-  doctor: DbDoctor;
+  doctorProfile?: DbDoctor; // Fixed: Changed from doctor to match component & made optional
+  onSuccess?: () => void;  // Fixed: Added missing prop
 }
 
 // ============================================================================
 // EXPORTS
 // ============================================================================
 
-// Export all types as namespace for easy access
 export * as DoctorTypes from './doctor';

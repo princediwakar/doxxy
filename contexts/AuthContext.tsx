@@ -1,7 +1,7 @@
 /* eslint-disable react-refresh/only-export-components */
-// src/contexts/AuthContext.tsx
+// File: contexts/AuthContext.tsx
 "use client";
-import { createContext, useContext, useEffect, useState, ReactNode, useCallback, useMemo } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback, useMemo, ReactNode } from "react";
 import { getSupabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
@@ -80,6 +80,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await clinicData.fetchUserAndClinicData(userFromSession, profileCompletion.checkProfileCompletion);
   }, [clinicData, profileCompletion]);
 
+  // ------------------------------------------------------------------
+  // STALE CLOSURE FIX:
+  // We use a ref to hold the latest version of fetchUserAndClinicData.
+  // This ensures the auth listener always calls the most recent function
+  // without needing to be removed/re-added constantly.
+  // ------------------------------------------------------------------
+  const fetchUserAndClinicDataRef = useRef(fetchUserAndClinicData);
+  useEffect(() => {
+    fetchUserAndClinicDataRef.current = fetchUserAndClinicData;
+  }, [fetchUserAndClinicData]);
+
   const markProfileComplete = useCallback(async () => {
     const updatedUser = await profileCompletion.markProfileComplete(user);
     if (updatedUser) {
@@ -153,7 +164,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
 
           if (mounted) {
-            await fetchUserAndClinicData(session.user);
+            // FIX: Use the ref here
+            await fetchUserAndClinicDataRef.current(session.user);
           }
         } else {
           if (mounted) {
@@ -216,11 +228,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.log("AuthContext: Invitation data stored in localStorage");
           }
 
-          // Only refetch data if the user changed or we don't have clinic data
+          // FIX: Check user change and use the REF to get the latest function
           if (newSession?.user && (newSession.user.id !== currentUserId || clinicData.userClinics.length === 0)) {
             console.log("AuthContext: User changed or no clinic data, fetching data");
             currentUserId = newSession.user.id;
-            await fetchUserAndClinicData(newSession.user);
+            // Use .current() here
+            await fetchUserAndClinicDataRef.current(newSession.user);
           }
         }
         
@@ -239,7 +252,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (session?.user && session.user.id !== currentUserId) {
             console.log("AuthContext: User changed after page visibility, refetching data");
             currentUserId = session.user.id;
-            fetchUserAndClinicData(session.user);
+            // FIX: Use the ref here
+            fetchUserAndClinicDataRef.current(session.user);
           }
         });
       }
@@ -253,7 +267,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       authListener.subscription.unsubscribe();
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- Intentionally empty to prevent infinite loops
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Memoized context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({

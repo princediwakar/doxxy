@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { getSupabase } from '@/integrations/supabase/client';
 import { DbDoctor } from '@/types/core';
-import { Department } from '@/types/doctor';
+import { Department, MedicalCredentialsModalProps } from '@/types/doctor';
 import {
   GraduationCap,
   Briefcase,
@@ -25,13 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const supabase = getSupabase();
 
-interface MedicalCredentialsModalProps {
-  open: boolean;
-  onClose: () => void;
-  doctorProfile?: DbDoctor;
-  onSuccess?: () => void;
-}
-
+// Moved constants outside component to avoid recreation
 const MEDICAL_COUNCILS = [
   'Medical Council of India (MCI)',
   'National Medical Commission (NMC)',
@@ -83,7 +77,10 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
         console.error('Error fetching departments:', error);
         return [];
       }
-      return data.map((d: Department) => ({ id: d.id, name: d.department_types?.name || 'Unnamed Department' }));
+      return data.map((d: any) => ({ 
+        id: d.id, 
+        name: d.department_types?.name || 'Unnamed Department' 
+      }));
     },
     enabled: !!activeClinic?.clinics?.id,
   });
@@ -165,8 +162,22 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
+    
+    // Add specific validation logic here if needed
+    // Example: if (!formData.medical_degree) errors.medical_degree = "Required";
+
     setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
+
+    // FIX: Auto-switch tab on error
+    if (Object.keys(errors).length > 0) {
+      if (errors.medical_degree || errors.graduation_year || errors.medical_college) {
+        setActiveTab("education");
+      } else if (errors.medical_registration_number || errors.medical_council) {
+        setActiveTab("registration");
+      }
+      return false;
+    }
+    return true;
   };
 
   const updateCredentialsMutation = useMutation({
@@ -249,7 +260,6 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
 
   return (
     <Dialog open={open} onOpenChange={() => onClose()}>
-      {/* CHANGE 1: Removed h-[85vh], added max-h-[90vh] to allow shrinking */}
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0">
         
         <DialogHeader className="p-6 pb-4 border-b">
@@ -262,7 +272,6 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
           </DialogDescription>
         </DialogHeader>
 
-        {/* CHANGE 2: Removed flex-1, added overflow-y-auto so scrolling happens only if needed */}
         <div className="overflow-y-auto bg-muted/5">
           <form id="credentials-form" onSubmit={handleSubmit} className="flex flex-col">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -383,7 +392,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                     </h4>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                         <Label>Degree <span className="text-red-500">*</span></Label>
+                         <Label>Degree</Label>
                          <Select value={formData.medical_degree} onValueChange={(v) => handleFieldChange('medical_degree', v)}>
                           <SelectTrigger className={validationErrors.medical_degree ? "border-red-500" : ""}><SelectValue placeholder="Select" /></SelectTrigger>
                           <SelectContent>
