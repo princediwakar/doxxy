@@ -1,4 +1,4 @@
-// src/components/consultation/ConsultationLayout.tsx
+// File: components/consultation/ConsultationLayout.tsx
 import React from 'react';
 import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
 import type { FieldValue, ClinicInfo, DoctorInfo, ConsultationFormValues, MotorExamData, ReflexExamData } from '@/types/consultation';

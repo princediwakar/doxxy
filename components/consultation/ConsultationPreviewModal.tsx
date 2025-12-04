@@ -1,4 +1,4 @@
-// src/components/consultation/ConsultationPreviewModal.tsx
+// File: components/consultation/ConsultationPreviewModal.tsx
 "use client";
 import { Eye, Printer } from "lucide-react";
 import {
