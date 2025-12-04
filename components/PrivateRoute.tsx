@@ -1,10 +1,10 @@
 // File: src/components/PrivateRoute.tsx
-// Updated for Next.js - uses Next.js navigation instead of React Router
 "use client";
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/loading";
-import { useEffect } from "react";
+import { useEffect } from "react"; 
+import Layout from "@/components/Layout";
 
 const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   const {
@@ -17,34 +17,44 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Handle redirects with useEffect to avoid rendering issues
   useEffect(() => {
+    // 1. Wait for loading to finish
     if (initialLoading || clinicLoading) return;
 
+    // 2. No user -> Auth
     if (!user) {
-      console.log('PrivateRoute: No user, redirecting to /auth');
       router.replace('/auth');
       return;
     }
 
-    // Profile incomplete - redirect to complete profile
-    if (needsProfileCompletion && pathname !== '/complete-profile') {
-      console.log('PrivateRoute: Profile incomplete, redirecting to /complete-profile');
+    // 3. Profile Incomplete -> Complete Profile
+    if (needsProfileCompletion && !pathname.startsWith('/complete-profile')) {
       router.replace('/complete-profile');
       return;
     }
 
-    // Profile complete but no active clinic - redirect to create clinic
-    if (!needsProfileCompletion && !activeClinic && pathname !== '/create-clinic') {
+    // 4. Logic Fix: Check for invitation token BEFORE redirecting to create-clinic
+    // This protects against page refreshes or race conditions
+    const invitationToken = typeof localStorage !== 'undefined' ? localStorage.getItem('invitation_token') : null;
+
+    if (!needsProfileCompletion && !activeClinic && !pathname.startsWith('/create-clinic')) {
+      // If we have a token, DO NOT redirect to create-clinic yet.
+      // The loading state below will catch this and show a spinner.
+      if (invitationToken) {
+        console.log('PrivateRoute: Invitation token found, holding redirect.');
+        return; 
+      }
+      
       console.log('PrivateRoute: No active clinic, redirecting to /create-clinic');
       router.replace('/create-clinic');
       return;
     }
   }, [user, initialLoading, clinicLoading, needsProfileCompletion, activeClinic, pathname, router]);
 
-  // Wait for both initial session and clinic data to load
+  // --- RENDER STATES ---
+
+  // 1. Loading
   if (initialLoading || clinicLoading) {
-    console.log('PrivateRoute: Waiting for initial or clinic loading');
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />
@@ -52,45 +62,27 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     );
   }
 
-  // If no user, show nothing (redirect handled by useEffect)
-  if (!user) {
-    return null;
-  }
+  // 2. No User (will redirect via useEffect)
+  if (!user) return null;
 
-  // Clean up invitation tokens if user has active clinic
-  if (activeClinic) {
-    const shouldCleanup =
-      sessionStorage.getItem('invitation_token') ||
-      sessionStorage.getItem('invitation_start_time');
-
-    if (shouldCleanup) {
-      console.log('PrivateRoute: User has active clinic, cleaning up invitation tokens');
-      sessionStorage.removeItem('invitation_token');
-      sessionStorage.removeItem('invitation_start_time');
-    }
-  }
-
-  // Check if invitation is being processed
-  if (!needsProfileCompletion && !activeClinic && pathname !== '/create-clinic') {
-    const invitationToken = typeof localStorage !== 'undefined' ? localStorage.getItem('invitation_token') : null;
-
-    if (invitationToken) {
-      // Show loading state while invitation is being processed
-      console.log('PrivateRoute: Invitation being processed, showing loading state');
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="text-center">
-            <Spinner size="lg" className="mx-auto mb-4" />
-            <p className="text-muted-foreground">Processing your invitation...</p>
+  // 3. Invitation Processing State
+  // If we aren't on create-clinic/profile, but have no clinic AND have a token, show loading
+  if (!activeClinic && !pathname.startsWith('/create-clinic') && !pathname.startsWith('/complete-profile')) {
+     const invitationToken = typeof localStorage !== 'undefined' ? localStorage.getItem('invitation_token') : null;
+     if (invitationToken) {
+        return (
+          <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="text-center">
+              <Spinner size="lg" className="mx-auto mb-4" />
+              <p className="text-muted-foreground">Setting up your clinic access...</p>
+            </div>
           </div>
-        </div>
-      );
-    }
+        );
+     }
   }
 
-  // Allow /complete-profile page to render even without active clinic
-  if (pathname === '/complete-profile') {
-    console.log('PrivateRoute: Rendering /complete-profile page');
+  // 4. Allow /complete-profile
+  if (pathname.startsWith('/complete-profile')) {
     return (
       <div className="min-h-screen">
         <main className="p-4 md:p-8 max-w-4xl mx-auto bg-white min-h-screen">
@@ -100,9 +92,8 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     );
   }
 
-  // Allow /create-clinic page to render
-  if (pathname === '/create-clinic') {
-    console.log('PrivateRoute: Rendering /create-clinic page');
+  // 5. Allow /create-clinic
+  if (pathname.startsWith('/create-clinic')) {
     return (
       <div className="min-h-screen">
         <main className="p-4 md:p-8 max-w-4xl mx-auto bg-white min-h-screen">
@@ -112,18 +103,8 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
     );
   }
 
-  // Clear invitation tokens if we have an active clinic (invitation was processed successfully)
-  if (activeClinic) {
-    const invitationToken = sessionStorage.getItem('invitation_token');
-    if (invitationToken) {
-      console.log('PrivateRoute: Invitation processed successfully, clearing tokens');
-      sessionStorage.removeItem('invitation_token');
-      sessionStorage.removeItem('invitation_start_time');
-    }
-  }
-
-  console.log('PrivateRoute: Rendering protected content');
-  return <>{children}</>;
+  // 6. Standard Protected Route
+  return <Layout>{children}</Layout>;
 };
 
 export default PrivateRoute;

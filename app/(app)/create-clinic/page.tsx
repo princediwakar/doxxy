@@ -1,3 +1,4 @@
+// File: app/(app)/create-clinic/page.tsx
 "use client";
 
 import * as React from "react";

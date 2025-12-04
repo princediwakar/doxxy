@@ -1,4 +1,3 @@
-import Layout from '@/components/Layout';
 import PrivateRoute from '@/components/PrivateRoute';
 
 export default function AppLayout({
@@ -6,9 +5,5 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <PrivateRoute>
-      <Layout>{children}</Layout>
-    </PrivateRoute>
-  );
+  return <PrivateRoute>{children}</PrivateRoute>;
 }

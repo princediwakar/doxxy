@@ -1,3 +1,4 @@
+// File: lib/invitation-utils.ts
 import { getSupabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 

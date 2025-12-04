@@ -1,12 +1,14 @@
+// File: app/(app)/complete-profile/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, usePathname } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext";
 import { getSupabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/loading"; // Added missing import
 import { z } from "zod";
 import { toast } from "sonner";
 import { processInvitationsOnProfileComplete } from "@/lib/invitation-utils";
@@ -28,44 +30,23 @@ type ProfileForm = z.infer<typeof profileSchema>;
 const CompleteProfile = () => {
   const { user, signOut, markProfileComplete, fetchUserAndClinicData } = useAuth();
   const router = useRouter();
-  const location = usePathname();
   const [form, setForm] = useState<ProfileForm>({ name: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [processingMessage, setProcessingMessage] = useState<string>("");
   const [email, setEmail] = useState("");
-  const [retryCount, setRetryCount] = useState(0);
-  const MAX_RETRIES = 3;
 
   useEffect(() => {
     if (!user) return;
-
-    // Check for invitation data in sessionStorage (invite flow)
     const invitationDataStr = sessionStorage.getItem('invitation_data');
     const invitationData = invitationDataStr ? JSON.parse(invitationDataStr) : null;
-
-    // Prefill from invitation data, location state, user object, or profile
     const prefillName = invitationData?.name || user.user_metadata?.name || "";
     const prefillEmail = invitationData?.email || user.email || "";
     setEmail(prefillEmail);
 
-    // Fetch profile from Supabase
-    supabase
-      .from("profiles")
-      .select("name, phone")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (!error && data) {
-          setForm({
-            name: data.name || prefillName,
-            phone: data.phone || "",
-          });
-        } else {
-          setForm({
-            name: prefillName,
-            phone: "",
-          });
-        }
+    supabase.from("profiles").select("name, phone").eq("id", user.id).maybeSingle()
+      .then(({ data }) => {
+        if (data) setForm({ name: data.name || prefillName, phone: data.phone || "" });
+        else setForm({ name: prefillName, phone: "" });
       });
   }, [user]);
 
@@ -73,10 +54,7 @@ const CompleteProfile = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // For phone, strip all non-digit characters
-    const sanitizedValue = name === 'phone' 
-      ? value.replace(/[^\d]/g, '')
-      : value;
+    const sanitizedValue = name === 'phone' ? value.replace(/[^\d]/g, '') : value;
     setForm({ ...form, [name]: sanitizedValue });
   };
 
@@ -87,128 +65,91 @@ const CompleteProfile = () => {
       toast.error(parsed.error.errors[0].message);
       return;
     }
+    
     setLoading(true);
     setProcessingMessage("Saving your profile...");
     
     try {
-      // First update auth.users if phone is provided
+      // 1. Update Auth User
       if (form.phone) {
-        const { error: authUpdateError } = await supabase.auth.updateUser({
-          data: {
-            phone: form.phone
-          }
-        });
-        
-        if (authUpdateError) {
-          console.warn("CompleteProfile: Could not update auth.users phone:", authUpdateError.message);
-          // Don't fail the whole operation for this
-        }
+        await supabase.auth.updateUser({ data: { phone: form.phone } });
       }
 
-      // Update the profiles table - try UPDATE first, then INSERT if it doesn't exist
+      // 2. Update/Insert Profile in DB
       let { error } = await supabase
         .from('profiles')
         .update({
           name: form.name,
           phone: form.phone || null,
-          avatar_url: user.user_metadata?.avatar_url, // Sync avatar URL from user metadata
+          avatar_url: user.user_metadata?.avatar_url,
           updated_at: new Date().toISOString()
         })
         .eq('id', user.id);
 
-      // If update failed because profile doesn't exist, try to insert
       if (error && error.code === 'PGRST116') {
-        console.log("CompleteProfile: Profile doesn't exist, creating new one");
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: user.id,
-            name: form.name,
-            phone: form.phone || null,
-            email: user.email,
-            avatar_url: user.user_metadata?.avatar_url, // Sync avatar URL from user metadata
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
+        const { error: insertError } = await supabase.from('profiles').insert({
+          id: user.id,
+          name: form.name,
+          phone: form.phone || null,
+          email: user.email,
+          avatar_url: user.user_metadata?.avatar_url,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
         error = insertError;
       }
       
-      if (error) {
-        console.error("CompleteProfile: Error updating profile:", error);
-        
-        // Handle specific error cases
-        if (error.code === '23505' && error.message.includes('unique_email')) {
-          console.warn("CompleteProfile: Email conflict detected, but continuing as profile may exist");
-          // Don't fail for email conflicts - the profile might already exist with this email
-        } else if (retryCount < MAX_RETRIES && (error.message.includes('profile not found') || error.code === 'PGRST116')) {
-          setRetryCount(prev => prev + 1);
-          // Wait briefly before retry
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          handleSubmit(e);
-          return;
-        } else {
-          toast.error("Failed to save profile: " + error.message);
-          return;
-        }
-      }
+      if (error) throw error;
 
-      // Mark profile as complete in auth context
-      await markProfileComplete();
+      // ------------------------------------------------------------------
+      // CRITICAL STEP: Process Invitation BEFORE marking profile complete
+      // ------------------------------------------------------------------
       
-      console.log("CompleteProfile: Profile completed successfully, processing invitations");
+      setProcessingMessage("Checking for invitations...");
       
-      // Process any pending invitations explicitly
-      setProcessingMessage("Processing your invitation...");
-      console.log("CompleteProfile: Calling processInvitationsOnProfileComplete with user:", user.id, user.email);
-      console.log("CompleteProfile: Checking localStorage for invitation data...");
-      const invitationToken = typeof localStorage !== 'undefined' ? localStorage.getItem('invitation_token') : null;
-      console.log("CompleteProfile: localStorage invitation_token:", invitationToken);
-
+      // Use strictly undefined if phone is empty string to match TS types
       const invitationResult = await processInvitationsOnProfileComplete(
         user,
         form.name,
         form.phone || undefined
       );
 
-      console.log("CompleteProfile: Invitation processing result:", invitationResult);
-      
-      if (invitationResult.shouldNavigateToDashboard) {
-        setProcessingMessage("Loading your clinic data...");
-        // Clear invitation token immediately to prevent loading state
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem('invitation_token');
-          localStorage.removeItem('invitation_data');
-        }
+      // 3. If invitation was processed successfully, REFRESH CLINIC DATA immediately
+      if (invitationResult.hasClinics || invitationResult.shouldNavigateToDashboard) {
+        setProcessingMessage("Setting up your dashboard...");
+        // This ensures 'activeClinic' becomes true inside AuthContext
         await fetchUserAndClinicData(user);
-        toast.success(invitationResult.message || "Profile completed!");
-        router.replace("/dashboard");
-      } else if (invitationResult.shouldNavigateToCreateClinic) {
-        // Clear any leftover invitation data
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem('invitation_token');
-          localStorage.removeItem('invitation_data');
-        }
-        toast.success("Profile completed! Let's set up your clinic.");
+      }
+
+      // 4. NOW mark profile as complete.
+      // Because we fetched clinic data in step 3, activeClinic is likely true now.
+      // PrivateRoute will see: (!needsProfileCompletion && activeClinic) -> Dashboard
+      await markProfileComplete();
+
+      // Clear tokens
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('invitation_token');
+        localStorage.removeItem('invitation_data');
+      }
+
+      // 5. Navigate
+      if (invitationResult.shouldNavigateToCreateClinic) {
+        toast.success("Profile updated! Let's set up your clinic.");
         router.replace("/create-clinic");
       } else {
-        // This shouldn't happen with the new explicit processing, but just in case
-        setProcessingMessage("Loading your clinic data...");
-        // Clear any leftover invitation data
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem('invitation_token');
-          localStorage.removeItem('invitation_data');
-        }
-        await fetchUserAndClinicData(user);
-        toast.success("Profile completed!");
+        toast.success(invitationResult.message || "Welcome!");
         router.replace("/dashboard");
       }
       
-    } catch (error) {
-      console.error("CompleteProfile: Exception during profile update:", error);
-      toast.error("An error occurred while updating your profile.");
+    } catch (error: any) {
+      console.error("Profile Error:", error);
+      toast.error("Error: " + (error.message || "Something went wrong"));
+      // Even on error, if we saved profile, we allow them to proceed
+      // But we still mark complete so they aren't stuck loop
+      await markProfileComplete();
+      router.replace("/create-clinic");
     } finally {
       setLoading(false);
-      setProcessingMessage("");
     }
   };
 
@@ -222,25 +163,11 @@ const CompleteProfile = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
               <label className="block mb-1 font-medium">Full Name</label>
-              <Input 
-                name="name" 
-                value={form.name} 
-                onChange={handleChange} 
-                disabled={loading} 
-                required 
-                placeholder="Enter your full name"
-              />
+              <Input name="name" value={form.name} onChange={handleChange} disabled={loading} required />
             </div>
             <div>
               <label className="block mb-1 font-medium">Phone</label>
-              <Input 
-                name="phone" 
-                value={form.phone || ''} 
-                onChange={handleChange} 
-                disabled={loading} 
-                placeholder="9876543210"
-              />
-              
+              <Input name="phone" value={form.phone || ''} onChange={handleChange} disabled={loading} placeholder="9876543210" />
             </div>
             {email && (
               <div>
@@ -249,21 +176,21 @@ const CompleteProfile = () => {
               </div>
             )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (processingMessage || "Saving...") : "Save & Continue"}
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Spinner size="sm" className="text-white" /> 
+                  {processingMessage}
+                </span>
+              ) : "Save & Continue"}
             </Button>
-            {processingMessage && (
-              <div className="mt-2 text-center text-sm text-muted-foreground">
-                {processingMessage}
-              </div>
-            )}
           </form>
         </CardContent>
-        <CardFooter className="flex-col">
-          <Button variant="ghost" onClick={signOut} className="w-full mt-2">Logout</Button>
+        <CardFooter>
+          <Button variant="ghost" onClick={signOut} className="w-full">Logout</Button>
         </CardFooter>
       </Card>
     </div>
   );
 };
 
-export default CompleteProfile; 
+export default CompleteProfile;
