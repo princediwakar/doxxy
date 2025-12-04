@@ -125,7 +125,7 @@ export const generateBillPrintContent = (
 
         <div class="grid grid-cols-2 gap-8 mb-8">
           <div>
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">From</h3>
+            <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">From</h3>
             <div class="text-slate-800 text-sm">
               <p class="font-bold text-base text-slate-900">${clinic?.name || 'Clinic Name'}</p>
               ${clinic?.address ? `<p class="text-slate-600 mt-1 whitespace-pre-line">${clinic.address}</p>` : ''}
@@ -135,7 +135,7 @@ export const generateBillPrintContent = (
           </div>
 
           <div>
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Bill To</h3>
+            <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Bill To</h3>
             <div class="text-slate-800 text-sm">
               <p class="font-bold text-base text-slate-900">${patientName}</p>
               ${patient?.phone ? `<p class="text-slate-600 mt-1">${patient.phone}</p>` : ''}
@@ -200,12 +200,12 @@ export const generateBillPrintContent = (
 
         ${billData.notes ? `
           <div class="mt-8 pt-6 border-t border-slate-100 break-inside-avoid">
-            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Notes</h4>
+            <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Notes</h4>
             <p class="text-sm text-slate-600 bg-slate-50 p-4 rounded-md whitespace-pre-wrap">${billData.notes}</p>
           </div>
         ` : ''}
         
-        <div class="fixed bottom-0 left-0 right-0 p-8 text-center text-[10px] text-slate-400 print:block hidden">
+        <div class="fixed bottom-0 left-0 right-0 p-8 text-center text-[10px] text-slate-600 print:block hidden">
           <p>This is a computer-generated invoice.</p>
         </div>
       </div>
