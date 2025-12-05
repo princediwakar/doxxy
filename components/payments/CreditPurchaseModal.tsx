@@ -8,21 +8,13 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreditCard, Check, Star, Zap, IndianRupee } from 'lucide-react';
+import { Check, Star, Zap, IndianRupee, Loader2 } from 'lucide-react';
 import { usePayments, CreditPackage } from '@/hooks/usePayments';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
-import { getSupabase } from '@/integrations/supabase/client';
 
-const supabase = getSupabase();
-
-interface CreditPurchaseModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
+// Type definitions for Razorpay global object
 declare global {
   interface Window {
     Razorpay: new (options: RazorpayOptions) => RazorpayInstance;
@@ -35,19 +27,19 @@ interface RazorpayOptions {
   currency: string;
   name: string;
   description: string;
-  image: string;
+  image?: string;
   order_id: string;
   handler: (response: RazorpayResponse) => void;
-  prefill: {
-    name: string;
-    email: string;
+  prefill?: {
+    name?: string;
+    email?: string;
     contact?: string;
   };
-  notes: Record<string, string>;
-  theme: {
+  notes?: Record<string, string>;
+  theme?: {
     color: string;
   };
-  modal: {
+  modal?: {
     ondismiss: () => void;
   };
 }
@@ -60,6 +52,11 @@ interface RazorpayResponse {
 
 interface RazorpayInstance {
   open: () => void;
+}
+
+interface CreditPurchaseModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
@@ -78,273 +75,116 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
 
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
   const [customAmount, setCustomAmount] = useState<string>('');
-  const [isCustomAmountSelected, setIsCustomAmountSelected] = useState(false);
-  const [, setIsRazorpayLoaded] = useState(false);
+  const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
 
-  // Set Senior pack as default selected package
+  // Load Razorpay Script dynamically
   useEffect(() => {
-    if (creditPackages.length > 0 && !selectedPackage) {
-      const seniorPackage = creditPackages.find(pkg => pkg.id === 'Senior');
-      if (seniorPackage) {
-        setSelectedPackage(seniorPackage);
-      }
+    if (typeof window === 'undefined') return;
+
+    if (window.Razorpay) {
+      setIsRazorpayLoaded(true);
+      return;
     }
-  }, [creditPackages, selectedPackage]);
 
-  // Fetch user profile data to get phone number
-  const { data: userProfile } = useQuery({
-    queryKey: ['user-profile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('name, phone')
-        .eq('id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
-      }
-      
-      return data;
-    },
-    enabled: !!user?.id,
-  });
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    script.onload = () => setIsRazorpayLoaded(true);
+    script.onerror = () => toast.error('Failed to load payment gateway');
+    document.body.appendChild(script);
+  }, []);
 
-  // Load Razorpay script
+  // Pre-select popular package
   useEffect(() => {
-    const loadRazorpay = () => {
-      if (window.Razorpay) {
-        setIsRazorpayLoaded(true);
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.onload = () => setIsRazorpayLoaded(true);
-      script.onerror = () => {
-        toast.error('Failed to load payment gateway');
-      };
-      document.body.appendChild(script);
-    };
-
-    if (open) {
-      loadRazorpay();
+    if (open && !selectedPackage && creditPackages.length > 0) {
+      const popular = creditPackages.find(p => p.popular) || creditPackages[0];
+      setSelectedPackage(popular);
     }
-  }, [open]);
+  }, [open, creditPackages, selectedPackage]);
 
-  const handlePurchase = async (creditPackage?: CreditPackage) => {
+  const handlePurchase = async () => {
+    if (!activeClinic) return;
     setIsProcessingPayment(true);
 
-    let packageId: string;
-    let amount: number;
-    let credits: number;
+    let amount = 0;
+    let credits = 0;
+    let packageId = 'custom';
+    let description = '';
 
-    if (creditPackage) {
-      // Purchase from predefined package
-      setSelectedPackage(creditPackage);
-      packageId = creditPackage.id;
-      amount = creditPackage.amount;
-      credits = creditPackage.credits;
+    // Logic to determine amount/credits
+    if (selectedPackage) {
+      amount = selectedPackage.amount;
+      credits = selectedPackage.credits;
+      packageId = selectedPackage.id;
+      description = selectedPackage.name;
     } else {
-      // Purchase custom amount
-      const customAmountNum = parseInt(customAmount);
-      if (!customAmountNum || customAmountNum < 100) {
-        toast.error('Invalid amount', {
-          description: 'Please enter a valid amount (minimum ₹100)'
-        });
+      const rawAmount = parseInt(customAmount);
+      if (isNaN(rawAmount) || rawAmount < 100) {
+        toast.error("Invalid amount", { description: "Minimum purchase is ₹100" });
         setIsProcessingPayment(false);
         return;
       }
-
-      packageId = 'custom';
-      amount = customAmountNum;
-      // Calculate credits based on the Professional package rate (₹10 per credit)
-      credits = Math.floor(amount / 10);
+      amount = rawAmount;
+      credits = Math.floor(rawAmount / 10); // ₹10 per credit for custom
+      description = `Custom Amount (${credits} credits)`;
     }
 
     try {
+      // 1. Create Order via Edge Function
       const { transaction, order } = await createRazorpayOrder.mutateAsync({
         packageId,
         amount,
-        credits,
+        credits
       });
 
-      // Initialize Razorpay payment
       const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
-      if (!razorpayKey) {
-        throw new Error('RazorPay key is not configured');
-      }
+      if (!razorpayKey) throw new Error("Razorpay key missing");
 
-      const options = {
+      // 2. Open Razorpay Modal
+      const options: RazorpayOptions = {
         key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
-        name: 'Doxxy Healthcare',
-        description: creditPackage
-          ? `${creditPackage.name} - ${creditPackage.credits} appointment credits`
-          : `Custom amount - ${credits} appointment credits`,
-        image: 'https://doxxy.neurovisionhospital.com/logo.svg', // Use absolute HTTPS URL instead of relative path
+        name: activeClinic.clinics?.name || activeClinic.clinic_name || 'Clinic Credits',
+        description: description,
         order_id: order.id,
-        handler: async (response: RazorpayResponse) => {
+        handler: async (response) => {
           try {
             await processPaymentSuccess.mutateAsync({
               transactionId: transaction.id,
               paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-              credits,
+              signature: response.razorpay_signature
             });
-
-            toast.success('Payment successful!', {
-              description: `${credits} credits have been added to your account.`,
-            });
-
-            onOpenChange(false);
-          } catch (error) {
-            console.error('Payment verification failed:', error);
-            toast.error('Payment verification failed', {
-              description: 'Please contact support if the amount was deducted.',
-            });
+            onOpenChange(false); // Close modal on success
+          } catch (e) {
+            console.error(e);
+          } finally {
+            setIsProcessingPayment(false);
           }
         },
         prefill: {
-          name: userProfile?.name || user?.user_metadata?.full_name || '',
+          name: user?.user_metadata?.full_name || '',
           email: user?.email || '',
-          contact: userProfile?.phone || '',
-        },
-        notes: {
-          clinic_id: activeClinic?.clinic_id || '',
-          package_id: packageId,
         },
         theme: {
-          color: '#3B82F6',
+          color: '#2563EB'
         },
         modal: {
           ondismiss: () => {
             setIsProcessingPayment(false);
-            setSelectedPackage(null);
-            setIsCustomAmountSelected(false);
-            // Restore our modal when Razorpay is dismissed
-            onOpenChange(true);
-            toast('Payment cancelled', {
-              description: 'You can try again anytime.',
-            });
-          },
-        },
+            toast.info("Payment cancelled");
+          }
+        }
       };
 
-      // Hide our modal temporarily to avoid z-index conflicts
-      onOpenChange(false);
-      
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-      
-    } catch (error: unknown) {
-      console.error('Order creation error:', error);
-      
-      // Check if this is a setup error
-      if (error instanceof Error && 'response' in error) {
-        const errorResponse = error as { response?: { data?: { setup_required?: boolean } } };
-        if (errorResponse.response?.data?.setup_required) {
-          toast.error('Razorpay setup required', {
-            description: 'Please configure Razorpay credentials in Supabase Dashboard to enable payments.',
-          });
-        } else {
-          toast.error('Order creation failed', {
-            description: 'Please try again or contact support.',
-          });
-        }
-      } else {
-        toast.error('Order creation failed', {
-          description: 'Please try again or contact support.',
-        });
-      }
-      
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+    } catch (error) {
       setIsProcessingPayment(false);
-      setSelectedPackage(null);
-      setIsCustomAmountSelected(false);
+      // Toast is handled in mutation onError
     }
   };
-
-  const PackageCard: React.FC<{ package: CreditPackage }> = ({ package: pkg }) => (
-    <Card
-      className={cn(
-        'relative cursor-pointer transition-all duration-200 hover:shadow-lg',
-        selectedPackage?.id === pkg.id && 'ring-2 ring-blue-500'
-      )}
-      onClick={() => {
-        setSelectedPackage(pkg);
-        setIsCustomAmountSelected(false);
-        setCustomAmount('');
-      }}
-    >
-      {pkg.popular && (
-        <Badge className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white">
-          <Star className="w-3 h-3 mr-1" />
-          Most Popular
-        </Badge>
-      )}
-      
-      <CardHeader className="text-center pb-4">
-        <CardTitle className="text-lg font-semibold">{pkg.name}</CardTitle>
-        <div className="space-y-1">
-          <div className="text-2xl font-bold text-blue-600">₹{pkg.amount}</div>
-          <div className="text-sm text-muted-foreground">{pkg.description}</div>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pt-0">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Credits</span>
-            <span className="font-semibold">{pkg.credits}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm">Per consultation</span>
-            <span className="font-semibold">₹{Math.ceil((pkg.amount / pkg.credits))}</span>
-          </div>
-          <Separator />
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-green-600">
-              <Check className="w-4 h-4 mr-2" />
-              No expiry
-            </div>
-            <div className="flex items-center text-sm text-green-600">
-              <Check className="w-4 h-4 mr-2" />
-              All payment methods
-            </div>
-            <div className="flex items-center text-sm text-green-600">
-              <Check className="w-4 h-4 mr-2" />
-              Instant activation
-            </div>
-          </div>
-        </div>
-        
-        <Button
-          className="w-full mt-6"
-          onClick={() => {
-            handlePurchase(pkg);
-          }}
-          disabled={isProcessingPayment}
-          variant={selectedPackage?.id === pkg.id ? 'default' : 'outline'}
-        >
-          {isProcessingPayment && selectedPackage?.id === pkg.id ? (
-            <>
-              <Zap className="w-4 h-4 mr-2 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            <>
-              <CreditCard className="w-4 h-4 mr-2" />
-              Purchase Credits
-            </>
-          )}
-        </Button>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -354,103 +194,104 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             Purchase Appointment Credits
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            Choose a credit package to continue booking appointments
+            Select a package to continue using the platform.
           </DialogDescription>
         </DialogHeader>
 
-
-        {/* Credit Packages */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {creditPackages.map((pkg) => (
-            <PackageCard key={pkg.id} package={pkg} />
+            <Card
+              key={pkg.id}
+              onClick={() => {
+                setSelectedPackage(pkg);
+                setCustomAmount('');
+              }}
+              className={cn(
+                'relative cursor-pointer transition-all border-2 hover:shadow-md',
+                selectedPackage?.id === pkg.id 
+                  ? 'border-blue-600 bg-blue-50/50' 
+                  : 'border-transparent hover:border-gray-200'
+              )}
+            >
+              {pkg.popular && (
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600">
+                  <Star className="w-3 h-3 mr-1 fill-current" /> Popular
+                </Badge>
+              )}
+              <CardHeader className="text-center pb-2 pt-6">
+                <CardTitle className="text-lg">{pkg.name}</CardTitle>
+                <div className="text-2xl font-bold text-blue-700">₹{pkg.amount}</div>
+              </CardHeader>
+              <CardContent className="text-center space-y-2">
+                <div className="font-semibold text-gray-900">{pkg.credits} Credits</div>
+                <div className="text-xs text-muted-foreground">
+                  ₹{Math.round(pkg.amount / pkg.credits)} / appointment
+                </div>
+                <Separator className="my-2" />
+                <div className="text-xs text-green-700 flex items-center justify-center gap-1">
+                  <Check className="w-3 h-3" /> No Expiry
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
-        {/* Custom Amount Option */}
-        <div className="mt-6">
-          <Separator className="mb-6" />
-          <div className="text-center mb-4">
-            <h3 className="text-lg font-semibold mb-2">Or Enter Custom Amount</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Purchase any amount of credits (minimum ₹100)
-            </p>
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center gap-4">
+            <Separator className="flex-1" />
+            <span className="text-xs font-medium uppercase text-muted-foreground">Or Custom Amount</span>
+            <Separator className="flex-1" />
           </div>
 
-          <div className="max-w-md mx-auto space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="custom-amount" className="text-sm font-medium">
-                Enter Amount (₹)
-              </Label>
+          <div className="flex justify-center">
+            <div className="w-full max-w-sm space-y-2">
+              <Label>Enter Amount (Min ₹100)</Label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  id="custom-amount"
+                <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <Input 
                   type="number"
-                  placeholder="500"
-                  min="100"
-                  step="100"
+                  placeholder="e.g. 500"
+                  className="pl-9"
                   value={customAmount}
                   onChange={(e) => {
                     setCustomAmount(e.target.value);
-                    setIsCustomAmountSelected(!!e.target.value);
                     setSelectedPackage(null);
                   }}
-                  className="pl-10"
                 />
               </div>
-              {customAmount && (
-                <div className="text-sm text-muted-foreground">
-                  You'll receive {Math.ceil(parseInt(customAmount) / 10)} credits
-                </div>
+              {customAmount && !isNaN(parseInt(customAmount)) && (
+                <p className="text-xs text-muted-foreground text-right">
+                  Will convert to <strong>{Math.floor(parseInt(customAmount) / 10)}</strong> credits
+                </p>
               )}
-            </div>
-
-            <Button
-              className="w-full"
-              onClick={() => handlePurchase()}
-              disabled={isProcessingPayment || !customAmount || parseInt(customAmount) < 100}
-              variant="outline"
-            >
-              {isProcessingPayment && isCustomAmountSelected ? (
-                <>
-                  <Zap className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Purchase Custom Amount
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Payment Info */}
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h4 className="font-semibold mb-2">Payment Information</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2 text-green-600" />
-              Secure payment via Razorpay
-            </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2 text-green-600" />
-              Instant credit activation
-            </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 mr-2 text-green-600" />
-              No hidden charges
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="text-center text-xs text-muted-foreground mt-4">
-          By purchasing credits, you agree to our terms of service. 
-          Credits are non-refundable and have no expiry date.
+        <div className="mt-6">
+          <Button
+            className="w-full h-12 text-lg font-medium"
+            disabled={isProcessingPayment || !isRazorpayLoaded || (!selectedPackage && !customAmount)}
+            onClick={handlePurchase}
+          >
+            {isProcessingPayment ? (
+              <>
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                Processing Secure Payment...
+              </>
+            ) : (
+              <>
+                <Zap className="w-5 h-5 mr-2 fill-current" />
+                Pay ₹{selectedPackage ? selectedPackage.amount : customAmount || '0'}
+              </>
+            )}
+          </Button>
+          {!isRazorpayLoaded && (
+            <p className="text-xs text-center text-red-500 mt-2">Loading payment gateway...</p>
+          )}
         </div>
+
       </DialogContent>
     </Dialog>
   );
-}; 
+};

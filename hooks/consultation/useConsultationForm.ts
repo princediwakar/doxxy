@@ -570,6 +570,42 @@ export const useConsultationForm = ({
       console.log('Update result:', updateResult);
       console.log('Successfully updated appointment status to "Completed"');
 
+      // Deduct credit for the consultation
+      if (activeClinic?.clinic_id) {
+        console.log('Deducting credit for consultation via deduct_appointment_credit RPC');
+        const { data: deductResult, error: deductError } = await supabase
+          .rpc('deduct_appointment_credit', {
+            appointment_id_param: appointmentId,
+            clinic_id_param: activeClinic.clinic_id,
+            credits_to_deduct: 1
+          });
+
+        if (deductError) {
+          console.error('Error deducting appointment credit:', deductError);
+          // Don't throw - we still want to mark consultation as completed
+          // but log the billing error
+          toast({
+            title: 'Consultation Completed',
+            description: 'Consultation marked as complete, but credit deduction failed. Please check billing.',
+            variant: 'default',
+          });
+        } else {
+          console.log('Credit deduction result:', deductResult);
+          if (deductResult === true) {
+            console.log('✅ Credit successfully deducted for consultation');
+          } else {
+            console.warn('⚠️ Credit deduction returned false - clinic may not have sufficient credits');
+            toast({
+              title: 'Consultation Completed',
+              description: 'Consultation marked as complete, but clinic has insufficient credits for billing.',
+              variant: 'default',
+            });
+          }
+        }
+      } else {
+        console.warn('Cannot deduct credits: No active clinic found');
+      }
+
 
       setIsConsultationCompleted(true);
       setJustCompleted(true);
@@ -577,6 +613,9 @@ export const useConsultationForm = ({
       console.log('✅ Appointment status updated to "Completed"');
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
+      // Also invalidate billing summary to show updated credit usage
+      queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['clinic-credits', activeClinic?.clinic_id] });
 
       toast({
         title: 'Consultation Completed',
@@ -601,7 +640,8 @@ export const useConsultationForm = ({
     autoSaveMutation,
     appointmentId,
     supabase,
-    queryClient
+    queryClient,
+    activeClinic
   ]);
 
   return {

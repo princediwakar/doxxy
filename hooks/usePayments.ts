@@ -1,11 +1,12 @@
-// src/hooks/usePayments.ts
 "use client";
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { PaymentTransaction } from "@/types/billing";
+import type { DbPaymentTransactionInsert } from "@/types/core";
 
 const supabase = getSupabase();
 
@@ -13,9 +14,7 @@ export interface BillingSummary {
   credit_balance: number;
   total_credits_purchased: number;
   total_credits_used: number;
-  current_month_appointments: number;
-  current_month_amount: number;
-  pending_payments: number;
+  pending_payments_count: number;
 }
 
 export interface CreditPackage {
@@ -57,81 +56,39 @@ export const usePayments = () => {
   const queryClient = useQueryClient();
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // 1. Fetch clinic billing summary - DYNAMICALLY CALCULATED
+  // 1. Fetch Clinic Billing Summary
   const { data: billingSummary, isLoading: isLoadingSummary } =
     useQuery<BillingSummary>({
       queryKey: ["clinic-billing-summary", activeClinic?.clinic_id],
       queryFn: async () => {
         if (!activeClinic?.clinic_id) throw new Error("No active clinic");
 
-        // A. Total Purchased
-        const { data: completedTransactions, error: transactionsError } =
-          await supabase
-            .from("payment_transactions")
-            .select("credits_purchased")
-            .eq("clinic_id", activeClinic.clinic_id)
-            .eq("transaction_type", "credit_purchase")
-            .eq("payment_status", "completed");
+        // Fetch clinic credits data
+        const { data: clinicCredits, error: clinicError } = await supabase
+          .from("clinic_credits")
+          .select("*")
+          .eq("clinic_id", activeClinic.clinic_id)
+          .single();
 
-        if (transactionsError) throw transactionsError;
+        if (clinicError) throw clinicError;
 
-        const totalCreditsPurchased =
-          completedTransactions?.reduce(
-            (sum, t) => sum + (t.credits_purchased || 0),
-            0
-          ) || 0;
-
-        // B. Total Used (Based on Status)
-        const { count: totalCreditsUsed, error: appointmentsError } =
-          await supabase
-            .from("appointments")
-            .select("id", { count: "exact", head: true })
-            .eq("clinic_id", activeClinic.clinic_id)
-            .in("status", ["In Progress", "Completed"]);
-
-        if (appointmentsError) throw appointmentsError;
-
-        const safeTotalUsed = totalCreditsUsed || 0;
-        const creditBalance = totalCreditsPurchased - safeTotalUsed;
-
-        // C. Pending Payments
-        const { count: pendingPayments, error: pendingError } = await supabase
+        const { count: pendingCount } = await supabase
           .from("payment_transactions")
-          .select("id", { count: "exact", head: true })
+          .select("*", { count: "exact", head: true })
           .eq("clinic_id", activeClinic.clinic_id)
           .eq("payment_status", "pending");
 
-        if (pendingError) throw pendingError;
-
-        // D. Current Month Stats
-        const currentMonthStart = new Date();
-        currentMonthStart.setDate(1);
-        currentMonthStart.setHours(0, 0, 0, 0);
-
-        const { count: currentMonthAppointments, error: currentMonthError } =
-          await supabase
-            .from("appointments")
-            .select("id", { count: "exact", head: true })
-            .eq("clinic_id", activeClinic.clinic_id)
-            .in("status", ["In Progress", "Completed"])
-            .gte("created_at", currentMonthStart.toISOString());
-
-        if (currentMonthError) throw currentMonthError;
-
         return {
-          credit_balance: creditBalance,
-          total_credits_purchased: totalCreditsPurchased,
-          total_credits_used: safeTotalUsed,
-          current_month_appointments: currentMonthAppointments || 0,
-          current_month_amount: currentMonthAppointments || 0,
-          pending_payments: pendingPayments || 0,
+          credit_balance: clinicCredits?.credit_balance || 0,
+          total_credits_purchased: clinicCredits?.total_credits_purchased || 0,
+          total_credits_used: clinicCredits?.total_credits_used || 0,
+          pending_payments_count: pendingCount || 0,
         };
       },
       enabled: !!activeClinic?.clinic_id,
-      staleTime: 5000, 
     });
 
-  // 2. Fetch payment transactions
+  // 2. Fetch Transactions
   const { data: transactions = [], isLoading: isLoadingTransactions } =
     useQuery<PaymentTransaction[]>({
       queryKey: ["payment-transactions", activeClinic?.clinic_id],
@@ -142,221 +99,103 @@ export const usePayments = () => {
           .from("payment_transactions")
           .select("*")
           .eq("clinic_id", activeClinic.clinic_id)
-          .order("created_at", { ascending: false });
+          .order("created_at", { ascending: false })
+          .limit(20);
 
         if (error) throw error;
         
-        return (data || []).map((transaction) => ({
-          id: transaction.id,
-          clinic_id: transaction.clinic_id,
-          amount: transaction.amount,
-          payment_method: transaction.payment_method || "",
-          status: transaction.payment_status as "pending" | "completed" | "failed" | "refunded",
-          transaction_type: (transaction.transaction_type as "credit_purchase" | "bill_payment") || undefined,
-          credits_purchased: transaction.credits_purchased || undefined,
-          razorpay_payment_id: transaction.razorpay_payment_id || undefined,
-          created_at: transaction.created_at || "",
-          updated_at: transaction.updated_at || "",
-        }));
+        return data as PaymentTransaction[];
       },
       enabled: !!activeClinic?.clinic_id,
     });
 
-  // 3. Create Razorpay order
+  // 3. Create Order Mutation
   const createRazorpayOrder = useMutation({
     mutationFn: async ({ packageId, amount, credits }: { packageId: string; amount: number; credits: number; }) => {
       if (!activeClinic?.clinic_id) throw new Error("No active clinic");
 
-      const { data: transaction, error: transactionError } = await supabase
+      // Insert Pending Transaction
+      const transactionData: DbPaymentTransactionInsert = {
+        clinic_id: activeClinic.clinic_id,
+        transaction_type: "credit_purchase",
+        amount,
+        currency: "INR",
+        credits_purchased: credits,
+        payment_status: "pending",
+        metadata: { package_id: packageId },
+      };
+
+      const { data: transaction, error: txError } = await supabase
         .from("payment_transactions")
-        .insert({
-          clinic_id: activeClinic.clinic_id,
-          transaction_type: "credit_purchase",
-          amount,
-          currency: "INR",
-          credits_purchased: credits,
-          payment_status: "pending",
-          metadata: { package_id: packageId },
-        })
+        .insert(transactionData)
         .select()
         .single();
 
-      if (transactionError) throw transactionError;
+      if (txError) throw txError;
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-razorpay-order`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            amount: amount,
-            currency: "INR",
-            receipt: `cr_${transaction.id.substring(0, 32)}`,
-            notes: {
-              clinic_id: activeClinic.clinic_id,
-              transaction_id: transaction.id,
-              credits: credits,
-              package_id: packageId,
-            },
-          }),
+      // Invoke Edge Function
+      const { data: orderResponse, error: fnError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          amount,
+          currency: "INR",
+          receipt: `rcpt_${transaction.id.slice(0, 8)}`,
+          notes: {
+            clinic_id: activeClinic.clinic_id,
+            transaction_id: transaction.id,
+            credits: credits.toString()
+          }
         }
-      );
+      });
 
-      if (!response.ok) {
-        let errorMessage = "Failed to create Razorpay order";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.error || errorData.message || errorMessage;
-        } catch (e) { console.error(e) }
-        throw new Error(errorMessage);
+      if (fnError || !orderResponse?.order) {
+        throw new Error(fnError?.message || "Failed to init payment gateway");
       }
 
-      const orderData = await response.json();
-
-      const { error: updateError } = await supabase
+      // Update transaction with Order ID
+      await supabase
         .from("payment_transactions")
-        .update({ razorpay_order_id: orderData.order.id })
+        .update({ razorpay_order_id: orderResponse.order.id })
         .eq("id", transaction.id);
 
-      if (updateError) throw updateError;
-
-      return { transaction, order: orderData.order };
+      return { transaction, order: orderResponse.order };
     },
     onError: (error) => {
-      toast.error("Failed to create payment order", { description: error.message });
+      console.error(error);
+      toast.error("Failed to create order", { description: error.message });
     },
   });
 
-  // 4. Process payment success
+  // 4. Verification Mutation
   const processPaymentSuccess = useMutation({
-    mutationFn: async ({ transactionId, paymentId, signature, credits }: { transactionId: string; paymentId: string; signature: string; credits: number; }) => {
-      if (!activeClinic?.clinic_id) throw new Error("No active clinic");
-
-      const verifyResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/verify-razorpay-payment`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({
-            razorpay_payment_id: paymentId,
-            razorpay_signature: signature,
-            transaction_id: transactionId,
-          }),
-        }
-      );
-
-      if (!verifyResponse.ok) throw new Error("Payment verification failed");
-
-      // Update transaction status
-      const { error: updateError } = await supabase
-        .from("payment_transactions")
-        .update({
-          payment_status: "completed",
+    mutationFn: async ({ transactionId, paymentId, signature }: { transactionId: string; paymentId: string; signature: string }) => {
+      const { data, error } = await supabase.functions.invoke('verify-razorpay-payment', {
+        body: {
+          transaction_id: transactionId,
           razorpay_payment_id: paymentId,
-          razorpay_signature: signature,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", transactionId);
-
-      if (updateError) throw updateError;
-
-      // Keep legacy table sync if needed, but UI relies on calculation
-      await supabase.rpc("add_clinic_credits", {
-        clinic_id_param: activeClinic.clinic_id,
-        credits_to_add: credits,
-        transaction_id_param: transactionId,
+          razorpay_signature: signature
+        }
       });
 
-      return { success: true };
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clinic-billing-summary"] });
       queryClient.invalidateQueries({ queryKey: ["payment-transactions"] });
-      toast.success("Payment successful! Credits added to your account.");
+      toast.success("Payment Successful", { description: "Credits have been added to your account." });
     },
     onError: (error) => {
-      toast.error("Payment processing failed", { description: error.message });
+      toast.error("Payment Verification Failed", { 
+        description: "If money was deducted, please contact support with your Payment ID." 
+      });
+      console.error("Verification error:", error);
     },
   });
 
-  // 5. Process payment failure
-  const processPaymentFailure = useMutation({
-    mutationFn: async ({ transactionId, error }: { transactionId: string; error: string }) => {
-      const { error: updateError } = await supabase
-        .from("payment_transactions")
-        .update({
-          payment_status: "failed",
-          metadata: { error },
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", transactionId);
-
-      if (updateError) throw updateError;
-    },
-  });
-
-  // 6. Check if appointment can be booked (sufficient credits)
-  // This replaces the need for a separate 'deduct' function.
-  // We check before we change status.
-  const canBookAppointment = async (creditsRequired: number = 1): Promise<boolean> => {
-    if (!activeClinic?.clinic_id) {
-      console.error("No active clinic ID for credit check");
-      return false;
-    }
-
-    try {
-      // Get Total Purchased
-      const { data: transactions, error: transactionsError } = await supabase
-        .from("payment_transactions")
-        .select("credits_purchased")
-        .eq("clinic_id", activeClinic.clinic_id)
-        .eq("transaction_type", "credit_purchase")
-        .eq("payment_status", "completed");
-
-      if (transactionsError) {
-        console.error("Error fetching payment transactions:", transactionsError);
-        // Don't return false immediately - check if it's an RLS policy error
-        if (transactionsError.code === '42501' || transactionsError.message?.includes('permission denied')) {
-          console.error("RLS POLICY ERROR: Doctor cannot read payment_transactions table");
-          console.error("Please ensure the RLS policy 'payment_transactions_read_for_clinic_members' exists and includes 'doctor' role");
-        }
-        return false;
-      }
-
-      const totalPurchased = transactions?.reduce((sum, t) => sum + (t.credits_purchased || 0), 0) || 0;
-
-      // Get Total Used (In Progress + Completed)
-      const { count: totalUsed, error: appointmentsError } = await supabase
-        .from("appointments")
-        .select("id", { count: "exact", head: true })
-        .eq("clinic_id", activeClinic.clinic_id)
-        .in("status", ["In Progress", "Completed"]);
-
-      if (appointmentsError) {
-        console.error("Error fetching appointments count:", appointmentsError);
-        return false;
-      }
-
-      const balance = totalPurchased - (totalUsed || 0);
-
-      // Debug logging
-      console.debug(`Credit check: purchased=${totalPurchased}, used=${totalUsed || 0}, balance=${balance}, required=${creditsRequired}`);
-
-      return balance >= creditsRequired;
-    } catch (error) {
-      console.error("Unexpected error checking credits:", error);
-      return false;
-    }
-  };
-
-  const getCreditBalance = (): number => {
-    return billingSummary?.credit_balance || 0;
+  const canBookAppointment = (requiredCredits = 1): boolean => {
+    return (billingSummary?.credit_balance || 0) >= requiredCredits;
   };
 
   return {
@@ -366,12 +205,9 @@ export const usePayments = () => {
     isLoadingSummary,
     isLoadingTransactions,
     isProcessingPayment,
+    setIsProcessingPayment,
     createRazorpayOrder,
     processPaymentSuccess,
-    processPaymentFailure,
-    // Removed: deductCreditsForAppointment
     canBookAppointment,
-    getCreditBalance,
-    setIsProcessingPayment,
   };
 };

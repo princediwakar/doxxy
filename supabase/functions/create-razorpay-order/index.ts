@@ -1,25 +1,11 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-// Define interfaces for type safety
-interface OrderRequest {
+// Define types for strict type checking
+interface CreateOrderRequest {
   amount: number;
   currency: string;
   receipt: string;
   notes?: Record<string, string>;
-}
-
-interface RazorpayOrderResponse {
-  id: string;
-  entity: string;
-  amount: number;
-  amount_paid: number;
-  amount_due: number;
-  currency: string;
-  receipt: string;
-  status: string;
-  attempts: number;
-  notes: Record<string, string>;
-  created_at: number;
 }
 
 const corsHeaders = {
@@ -27,14 +13,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
+serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // 1. Validate Environment Variables
+    // 1. Environment Validation
     const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID')
     const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')
 
@@ -43,94 +29,75 @@ Deno.serve(async (req: Request) => {
       throw new Error('Server misconfiguration: Credentials missing')
     }
 
-    // 2. Parse and Validate Request Body
-    let body: OrderRequest;
+    // 2. Request Validation
+    let body: CreateOrderRequest;
     try {
       body = await req.json()
-    } catch {
-      return new Response(JSON.stringify({ error: 'Invalid JSON body' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON body', details: e instanceof Error ? e.message : 'Unknown' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     const { amount, currency, receipt, notes } = body
 
-    // Strict input validation
-    if (typeof amount !== 'number' || amount <= 0) {
-      return new Response(JSON.stringify({ error: 'Amount must be a positive number' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      throw new Error('Invalid amount: must be a positive number')
     }
-
     if (!currency || typeof currency !== 'string') {
-      return new Response(JSON.stringify({ error: 'Currency is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error('Invalid currency')
     }
-
     if (!receipt || typeof receipt !== 'string') {
-      return new Response(JSON.stringify({ error: 'Receipt ID is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error('Invalid receipt ID')
     }
 
-    // 3. Prepare Razorpay Payload
-    // CRITICAL: Math.round prevents floating point errors (e.g. 19.99 * 100 = 1998.99999)
+    // 3. Razorpay API Logic
+    // Convert to minor units (paise) safely to avoid floating point errors
     const amountInPaise = Math.round(amount * 100)
-    
-    const razorpayOrderPayload = {
+
+    const payload = {
       amount: amountInPaise,
       currency: currency.toUpperCase(),
       receipt,
-      notes: notes || {}
+      notes: notes || {},
+      payment_capture: 1 // Auto-capture payments
     }
 
-    console.log(`Creating order for ${amount} ${currency} (Receipt: ${receipt})`)
-
-    // 4. Call Razorpay API
     const auth = btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)
-    
-    const razorpayRes = await fetch('https://api.razorpay.com/v1/orders', {
+
+    const razorpayResponse = await fetch('https://api.razorpay.com/v1/orders', {
       method: 'POST',
       headers: {
         'Authorization': `Basic ${auth}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(razorpayOrderPayload),
+      body: JSON.stringify(payload),
     })
 
-    if (!razorpayRes.ok) {
-      const errorData = await razorpayRes.text()
+    if (!razorpayResponse.ok) {
+      const errorData = await razorpayResponse.text()
       console.error('Razorpay API Error:', errorData)
-      return new Response(JSON.stringify({ 
-        error: 'Failed to create order with payment provider',
-        details: errorData 
-      }), {
-        status: 502, // Bad Gateway (upstream error)
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
+      throw new Error(`Razorpay API Error: ${razorpayResponse.statusText}`)
     }
 
-    const orderData: RazorpayOrderResponse = await razorpayRes.json()
+    const orderData = await razorpayResponse.json()
 
-    // 5. Success Response
     return new Response(JSON.stringify({ order: orderData }), {
-      status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
     })
 
   } catch (error) {
-    console.error('Unexpected error in create-razorpay-order:', error)
-    
-    const message = error instanceof Error ? error.message : 'Internal Server Error'
-    
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    console.error('Error in create-razorpay-order:', error)
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Internal Server Error' 
+      }),
+      {
+        status: 400, // Returning 400 so client knows it's a logic/config error
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
   }
 })

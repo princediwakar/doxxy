@@ -1,7 +1,7 @@
 // src/types/billing.ts
 // Billing Module - Hub & Spoke Type Architecture
 
-import type { DbBill, DbPatient, BillStatus, Json } from "./core";
+import type { DbBill, DbPatient, DbPaymentTransaction, BillStatus, Json } from "./core";
 import type { UseFormReturn } from "react-hook-form";
 import type { UseMutationResult } from "@tanstack/react-query";
 
@@ -102,20 +102,11 @@ export interface UseBillingReturn {
 // PAYMENT TYPES
 // ============================================================================
 
-/** Payment transaction type */
-export interface PaymentTransaction {
-  id: string;
-  clinic_id: string;
-  bill_id?: string;
-  amount: number;
-  payment_method: string;
-  status: "pending" | "completed" | "failed" | "refunded";
+/** Payment transaction type - extends core DbPaymentTransaction with stricter types */
+export type PaymentTransaction = Omit<DbPaymentTransaction, 'payment_status' | 'transaction_type'> & {
+  payment_status: "pending" | "completed" | "failed" | "refunded";
   transaction_type?: "credit_purchase" | "bill_payment";
-  credits_purchased?: number;
-  razorpay_payment_id?: string;
-  created_at: string;
-  updated_at: string;
-}
+};
 
 /** Payment form values */
 export interface PaymentFormValues {

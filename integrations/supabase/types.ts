@@ -1573,6 +1573,25 @@ export type Database = {
         }
       }
       user_clinic_ids: { Args: never; Returns: string[] }
+      verify_and_process_payment:
+        | {
+            Args: {
+              p_clinic_id: string
+              p_credits_purchased: number
+              p_razorpay_payment_id: string
+              p_razorpay_signature: string
+              p_transaction_id: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_razorpay_payment_id: string
+              p_razorpay_signature: string
+              p_transaction_id: string
+            }
+            Returns: Json
+          }
     }
     Enums: {
       appointment_status:
