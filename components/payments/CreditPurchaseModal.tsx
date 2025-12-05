@@ -1,3 +1,4 @@
+// File: components/payments/CreditPurchaseModal.tsx
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-// Type definitions for Razorpay global object
+// --- Type Definitions ---
 declare global {
   interface Window {
     Razorpay: new (options: RazorpayOptions) => RazorpayInstance;
@@ -77,7 +78,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   const [customAmount, setCustomAmount] = useState<string>('');
   const [isRazorpayLoaded, setIsRazorpayLoaded] = useState(false);
 
-  // Load Razorpay Script dynamically
+  // 1. Load Razorpay Script dynamically
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -94,13 +95,16 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     document.body.appendChild(script);
   }, []);
 
-  // Pre-select popular package
+  // 2. Pre-select popular package ONLY when modal opens
+  // FIXED: Removed 'selectedPackage' from dependency array to prevent auto-reselection 
+  // when user clears package to type custom amount.
   useEffect(() => {
-    if (open && !selectedPackage && creditPackages.length > 0) {
+    if (open && creditPackages.length > 0) {
+      setCustomAmount(''); // Reset custom amount on open
       const popular = creditPackages.find(p => p.popular) || creditPackages[0];
       setSelectedPackage(popular);
     }
-  }, [open, creditPackages, selectedPackage]);
+  }, [open, creditPackages]);
 
   const handlePurchase = async () => {
     if (!activeClinic) return;
@@ -130,7 +134,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     }
 
     try {
-      // 1. Create Order via Edge Function
+      // Step A: Create Order via Edge Function
       const { transaction, order } = await createRazorpayOrder.mutateAsync({
         packageId,
         amount,
@@ -140,12 +144,12 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
       const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       if (!razorpayKey) throw new Error("Razorpay key missing");
 
-      // 2. Open Razorpay Modal
+      // Step B: Open Razorpay Modal
       const options: RazorpayOptions = {
         key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
-        name: activeClinic.clinics?.name || activeClinic.clinic_name || 'Clinic Credits',
+        name: activeClinic.clinic_name || 'Clinic Credits',
         description: description,
         order_id: order.id,
         handler: async (response) => {
@@ -198,13 +202,14 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
+        {/* Package Selection Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
           {creditPackages.map((pkg) => (
             <Card
               key={pkg.id}
               onClick={() => {
                 setSelectedPackage(pkg);
-                setCustomAmount('');
+                setCustomAmount(''); // Clear custom amount if selecting a package
               }}
               className={cn(
                 'relative cursor-pointer transition-all border-2 hover:shadow-md',
@@ -236,6 +241,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
           ))}
         </div>
 
+        {/* Custom Amount Section */}
         <div className="mt-8 space-y-4">
           <div className="flex items-center gap-4">
             <Separator className="flex-1" />
@@ -255,7 +261,8 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                   value={customAmount}
                   onChange={(e) => {
                     setCustomAmount(e.target.value);
-                    setSelectedPackage(null);
+                    // CRITICAL: Deselect package so button logic switches to custom amount
+                    setSelectedPackage(null); 
                   }}
                 />
               </div>
@@ -268,6 +275,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
           </div>
         </div>
 
+        {/* Action Button */}
         <div className="mt-6">
           <Button
             className="w-full h-12 text-lg font-medium"

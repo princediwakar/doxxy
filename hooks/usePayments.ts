@@ -1,3 +1,4 @@
+// File: hooks/usePayments.ts
 "use client";
 
 import { useState } from "react";
@@ -6,7 +7,17 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { PaymentTransaction } from "@/types/billing";
-import type { DbPaymentTransactionInsert } from "@/types/core";
+
+// Define strict type locally to ensure no import errors
+interface DbPaymentTransactionInsert {
+  clinic_id: string;
+  transaction_type: string;
+  amount: number;
+  currency: string;
+  credits_purchased: number;
+  payment_status: string;
+  metadata?: any;
+}
 
 const supabase = getSupabase();
 
@@ -64,13 +75,18 @@ export const usePayments = () => {
         if (!activeClinic?.clinic_id) throw new Error("No active clinic");
 
         // Fetch clinic credits data
+        // PRODUCTION FIX: Used .maybeSingle() instead of .single()
+        // This prevents the app from crashing for new users who don't have a row in 'clinic_credits' yet.
         const { data: clinicCredits, error: clinicError } = await supabase
           .from("clinic_credits")
           .select("*")
           .eq("clinic_id", activeClinic.clinic_id)
-          .single();
+          .maybeSingle(); 
 
-        if (clinicError) throw clinicError;
+        if (clinicError) {
+          console.error("Error fetching credits:", clinicError);
+          throw clinicError;
+        }
 
         const { count: pendingCount } = await supabase
           .from("payment_transactions")
@@ -182,6 +198,7 @@ export const usePayments = () => {
       return data;
     },
     onSuccess: () => {
+      // Invalidate the summary query to force a re-fetch of the new balance
       queryClient.invalidateQueries({ queryKey: ["clinic-billing-summary"] });
       queryClient.invalidateQueries({ queryKey: ["payment-transactions"] });
       toast.success("Payment Successful", { description: "Credits have been added to your account." });
