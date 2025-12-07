@@ -1,4 +1,6 @@
 import fm from "front-matter";
+import fs from "fs/promises";
+import path from "path";
 
 interface BlogFrontmatter {
   slug: string;
@@ -21,17 +23,47 @@ interface FrontMatterResult {
   body: string;
 }
 
-// Load all markdown files in this directory
-// TODO: Update for Next.js - import.meta.glob is Vite-specific
-// const files = import.meta.glob("./*.md", { query: '?raw', import: 'default', eager: true });
+// Load all markdown files in this directory for Next.js
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  const blogDir = path.join(process.cwd(), "content/blog");
+  const files = await fs.readdir(blogDir);
+  const markdownFiles = files.filter(file => file.endsWith(".md"));
 
-// export const blogPosts: BlogPost[] = Object.entries(files).map(([, raw]) => {
-//   const { attributes: data, body: content } = fm(raw as string) as FrontMatterResult;
-//   return {
-//     ...data,
-//     content,
-//   } as BlogPost;
-// }).sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+  const posts: BlogPost[] = [];
 
-// Temporary empty array for migration
+  for (const file of markdownFiles) {
+    const filePath = path.join(blogDir, file);
+    const rawContent = await fs.readFile(filePath, "utf-8");
+    const { attributes: data, body: content } = fm(rawContent) as FrontMatterResult;
+
+    posts.push({
+      ...data,
+      content,
+    } as BlogPost);
+  }
+
+  // Sort by publish date (newest first)
+  return posts.sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+}
+
+// Get a single blog post by slug
+export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  const blogDir = path.join(process.cwd(), "content/blog");
+  const filePath = path.join(blogDir, `${slug}.md`);
+
+  try {
+    const rawContent = await fs.readFile(filePath, "utf-8");
+    const { attributes: data, body: content } = fm(rawContent) as FrontMatterResult;
+
+    return {
+      ...data,
+      content,
+    } as BlogPost;
+  } catch (error) {
+    console.error(`Error loading blog post ${slug}:`, error);
+    return null;
+  }
+}
+
+// For backward compatibility - returns empty array (use getBlogPosts() instead)
 export const blogPosts: BlogPost[] = []; 

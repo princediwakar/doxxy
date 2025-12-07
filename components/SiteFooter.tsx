@@ -50,6 +50,9 @@ const SiteFooter = () => {
                 <Link href="/contact" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   Contact Us
                 </Link>
+                <Link href="/faq" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  FAQ
+                </Link>
               </div>
             </div>
 

@@ -4,14 +4,15 @@ import { memo } from "react";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Menu,
   X,
   Home,
   Zap,
   CreditCard,
   Phone,
-  BarChart3
+  BarChart3,
+  BookOpen
 } from "lucide-react";
 import { useState } from "react";
 
@@ -56,6 +57,7 @@ export const AppHeader = memo(() => {
     { href: "/features", label: "Features", icon: Zap },
     { href: "/pricing", label: "Pricing", icon: CreditCard },
     { href: "/comparisons", label: "Comparisons", icon: BarChart3 },
+    { href: "/blog", label: "Blog", icon: BookOpen },
     { href: "/contact", label: "Contact", icon: Phone },
   ];
 

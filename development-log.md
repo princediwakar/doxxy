@@ -1,3 +1,43 @@
+## 2025-12-07 - Dynamic Sitemap Implementation
+
+### Focus
+Make the sitemap fully dynamic by restructuring public routes configuration and adding robots.txt.
+
+### Type Changes
+- No changes to core types (`src/types/core.ts`)
+- No new spoke types added
+
+### Schema Changes
+- No changes to Zod schemas
+
+### Changes Made
+
+#### 1. Enhanced Sitemap Configuration
+- **sitemap.ts**: Restructured public routes into `PUBLIC_ROUTES_CONFIG` array for better maintainability
+- Each route now has `path`, `priority`, and `changeFrequency` properties
+- Routes are dynamically generated from configuration, making it easier to add/update routes
+- Blog posts remain dynamically fetched from `content/blog` directory
+
+#### 2. Added Dynamic Robots.txt
+- **robots.ts**: Created dynamic robots.txt file that:
+  - Allows all user agents to crawl public pages
+  - Disallows authenticated app routes (`/dashboard`, `/patients`, `/appointments`, etc.)
+  - References the sitemap at `https://doxxy.com/sitemap.xml`
+- Removed static `public/robots.txt` file to use dynamic version
+
+#### 3. SEO Improvements
+- Sitemap now includes all 7 blog posts dynamically
+- Each blog post gets appropriate metadata (yearly change frequency, 0.6 priority)
+- Public routes have appropriate priorities (homepage: 1.0, features/pricing: 0.9, etc.)
+
+### Outcome
+- ✅ Sitemap generates correctly with all public routes and blog posts
+- ✅ Robots.txt properly blocks authenticated routes and references sitemap
+- ✅ Dev server runs without errors
+- ✅ All endpoints return 200 OK status
+
+---
+
 ## 2025-12-04 - Fix DropdownMenu forwardRef Error
 
 ### Focus
@@ -234,3 +274,9 @@ Fix Next.js build errors and restore proper layout structure after Vite to Next.
 - **Page Updates**: Updated profile and create-clinic pages with better error handling
 - **Outcome**: Build successful, error handling system ready for use (imports temporarily commented due to path resolution issue)
 
+
+## [2025-12-07] - Blog Pages Implementation
+- **Focus**: Implement blog listing and individual post pages with markdown support
+- **Type Changes**: Updated content/blog/index.ts with Next.js file system APIs (getBlogPosts, getBlogPost)
+- **Schema Changes**: N/A (Using existing markdown frontmatter structure)
+- **Outcome**: Blog pages are now accessible at /blog and /blog/[slug]. Navigation updated in AppHeader.tsx. Dev server running successfully.
