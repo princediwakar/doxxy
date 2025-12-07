@@ -22,7 +22,7 @@ Make the sitemap fully dynamic by restructuring public routes configuration and 
 - **robots.ts**: Created dynamic robots.txt file that:
   - Allows all user agents to crawl public pages
   - Disallows authenticated app routes (`/dashboard`, `/patients`, `/appointments`, etc.)
-  - References the sitemap at `https://doxxy.com/sitemap.xml`
+  - References the sitemap at `https://doxxy.neurovisionhospital.com/sitemap.xml`
 - Removed static `public/robots.txt` file to use dynamic version
 
 #### 3. SEO Improvements
