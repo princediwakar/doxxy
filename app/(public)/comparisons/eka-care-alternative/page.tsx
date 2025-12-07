@@ -11,7 +11,7 @@ import {
   Building2,
   MessageSquare,
 } from "lucide-react";
-import Link from "next/link"
+import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 
@@ -21,7 +21,7 @@ const EkaCareAlternative = () => {
       icon: <Coins className="h-12 w-12 text-primary" />,
       title: "Pay-Per-Appointment Pricing",
       description:
-        "Unlike Eka Care's fixed monthly fees, Doxxy charges only for the appointments you actually complete. Start with 100 free appointments and then pay just ₹10 per consultation.",
+        "Unlike Eka Care's fixed monthly fees, Doxxy charges only for the appointments you actually complete. Start with 100 free consultations and then pay just ₹10 per consultation.",
     },
     {
       icon: <Users className="h-12 w-12 text-success" />,
@@ -153,7 +153,7 @@ const EkaCareAlternative = () => {
     {
       question: "Can I try Doxxy before fully committing?",
       answer:
-        "Yes! Our Practice Essentials plan gives you 100 free appointments to fully test the system. You can even run Doxxy alongside Eka Care during your evaluation period.",
+        "Yes! Our Practice Essentials plan gives you 100 free consultations to fully test the system. You can even run Doxxy alongside Eka Care during your evaluation period.",
     },
   ];
 

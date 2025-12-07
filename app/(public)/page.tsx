@@ -242,7 +242,7 @@ const HeroSection = () => (
         </div>
         <div className="flex items-center gap-2">
           <CheckCircle className="h-4 w-4 text-blue-500" />
-          <span>100 free appointments</span>
+          <span>100 free consultations</span>
         </div>
       </div>
     </div>

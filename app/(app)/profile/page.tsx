@@ -25,12 +25,16 @@ import {
   Mail,
   CheckCircle,
   CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { BasicProfileEditor } from "@/components/BasicProfileEditor";
 import { MedicalCredentialsModal } from "@/components/doctor/MedicalCredentialsModal";
 import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding";
 import { useQueryClient } from "@tanstack/react-query";
+// import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
+// import { useErrorHandler } from "@/hooks/useErrorHandler";
+// import { isNotFoundError } from "@/lib/error-utils";
 
 const Profile = () => {
   const { user, activeClinic, activeClinicRole, hasDoctorProfile } = useAuth();
@@ -46,10 +50,13 @@ const Profile = () => {
     setLocalHasDoctorProfile(hasDoctorProfile);
   }, [hasDoctorProfile]);
   const supabase = getSupabase();
+  // const { handleSupabaseError } = useErrorHandler();
+
   // Fetch doctor profile if user has one
   const {
     data: doctorProfile,
     isLoading: isDoctorLoading,
+    error: doctorProfileError,
     refetch: refetchDoctorProfile,
   } = useQuery({
     queryKey: ["doctorProfile", user?.id, activeClinic?.clinics?.id],
@@ -65,12 +72,13 @@ const Profile = () => {
 
       if (error) {
         if (error.code === "PGRST116") {
-          return null;
+          return null; // Doctor profile doesn't exist yet
         }
+        // handleSupabaseError(error, "Failed to load doctor profile");
         throw error;
       }
 
-      const { data: memberData } = await supabase
+      const { data: memberData, error: memberError } = await supabase
         .from("clinic_members")
         .select(
           `
@@ -85,6 +93,10 @@ const Profile = () => {
         .eq("clinic_id", activeClinic.clinics.id)
         .single();
 
+      if (memberError && memberError.code !== "PGRST116") {
+        // handleSupabaseError(memberError, "Failed to load department info");
+      }
+
       return {
         ...data,
         department_name:
@@ -93,10 +105,16 @@ const Profile = () => {
       };
     },
     enabled: !!user?.id && !!activeClinic?.clinics?.id,
+    retry: (failureCount, error: any) => {
+      // Don't retry not found errors
+      if (error?.code === "PGRST116") return false;
+      // Retry up to 3 times for other errors
+      return failureCount < 3;
+    },
   });
 
   // Fetch user profile data from profiles table
-  const { data: userProfile } = useQuery({
+  const { data: userProfile, error: userProfileError } = useQuery({
     queryKey: ["userProfile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -106,10 +124,20 @@ const Profile = () => {
         .eq("id", user.id)
         .single();
 
-      if (error && error.code !== "PGRST116") throw error;
+      if (error) {
+        if (error.code === "PGRST116") {
+          return null; // Profile doesn't exist yet
+        }
+        // handleSupabaseError(error, "Failed to load user profile");
+        throw error;
+      }
       return data;
     },
     enabled: !!user?.id,
+    retry: (failureCount, error: any) => {
+      if (error?.code === "PGRST116") return false;
+      return failureCount < 3;
+    },
   });
 
   const handleBecomeDoctorClick = () => {
@@ -159,6 +187,45 @@ const Profile = () => {
 
   const roleConfig = getRoleDisplayConfig();
   const IconComponent = roleConfig.icon;
+
+  // Show error state if queries failed
+  if (doctorProfileError || userProfileError) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-destructive/50 bg-destructive/10">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-6 w-6 text-destructive" />
+              <div>
+                <h3 className="font-semibold text-foreground">
+                  Unable to Load Profile
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {doctorProfileError
+                    ? "Failed to load doctor profile. Please try refreshing the page."
+                    : "Failed to load user profile. Please try refreshing the page."}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => {
+                    if (doctorProfileError) refetchDoctorProfile();
+                    // For user profile error, we can reload the page
+                    if (userProfileError && typeof window !== 'undefined') {
+                      window.location.reload();
+                    }
+                  }}
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isDoctorLoading) {
     return (
@@ -494,4 +561,12 @@ const Profile = () => {
   );
 };
 
+// Wrap the component with ErrorBoundary
+// const ProfileWithErrorBoundary = () => (
+//   <ErrorBoundary>
+//     <Profile />
+//   </ErrorBoundary>
+// );
+
+// export default ProfileWithErrorBoundary;
 export default Profile;

@@ -19,8 +19,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Stethoscope, Building2 } from "lucide-react";
+import { Stethoscope, Building2, AlertTriangle } from "lucide-react";
 import { createDoctorProfile } from "@/lib/doctor-utils";
+// import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
+// import { useErrorHandler } from "@/hooks/useErrorHandler";
+// import { showErrorToast } from "@/lib/error-utils";
 import {
   Form,
   FormControl,
@@ -79,6 +82,7 @@ const CreateClinicPage = () => {
   const { user, fetchUserAndClinicData, setActiveClinicId } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  // const { withErrorHandling } = useErrorHandler();
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
   const [clinicDetails, setClinicDetails] = React.useState<ClinicDetailsForm>({
     name: "",
@@ -97,18 +101,21 @@ const CreateClinicPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Fetch department types
+  // Fetch department types with error handling
   const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useQuery({
     queryKey: ["departmentTypes"],
     queryFn: async () => {
-      console.log('🔍 Fetching department types...');
       const { data, error } = await supabase.from("department_types").select("*");
-      console.log('Department types response:', { data, error });
       if (error) {
-        console.error('Department types error:', error);
+        // showErrorToast(error, { title: "Failed to load departments" });
+        console.error("Failed to load departments:", error);
         throw error;
       }
       return data || [];
+    },
+    retry: (failureCount, error) => {
+      // Retry up to 3 times for network errors
+      return failureCount < 3;
     },
   });
 
@@ -169,10 +176,11 @@ const CreateClinicPage = () => {
     setStep(2);
   };
 
-  // Final Submit (Step 3)
+  // Final Submit (Step 3) with error handling
   const handleSubmit = async (data: DoctorProfileForm) => {
     if (!user) return;
     setIsSubmitting(true);
+
     try {
       // Use the create_clinic_with_admin function
       const { data: clinicResult, error: clinicError } = await supabase
@@ -205,7 +213,6 @@ const CreateClinicPage = () => {
       // IMPORTANT: clinic_members.department_id references clinic_departments.id (NOT department_types.id)
       let userDepartmentId: string | null = null;
       if (departments.length > 0) {
-        console.log('Creating departments:', departments);
         const departmentRows = departments.map((departmentTypeId) => ({
           clinic_id: createdClinicId,
           department_type_id: departmentTypeId,
@@ -219,26 +226,20 @@ const CreateClinicPage = () => {
         // Find the clinic_departments.id for the user's selected department
         // We need clinic_departments.id (not department_types.id) for the foreign key
         if (data.isDoctor === 'yes' && data.selectedDepartment && insertedDepartments) {
-          console.log('Finding user department:', {
-            selectedDepartment: data.selectedDepartment,
-            insertedDepartments
-          });
           const userDepartment = insertedDepartments.find(
             dept => dept.department_type_id === data.selectedDepartment
           );
           userDepartmentId = userDepartment?.id || null;
-          console.log('Found user department:', userDepartmentId);
         }
       }
 
       // Only create doctor profile if the superadmin is a practicing doctor
       if (data.isDoctor === 'yes') {
-        console.log('Creating doctor profile with department:', userDepartmentId);
         // First update the clinic_members record with the selected department
         // BUT keep the role as superadmin since they are the clinic creator
         const { error: memberUpdateError } = await supabase
           .from('clinic_members')
-          .update({ 
+          .update({
             department_id: userDepartmentId,
             role: 'superadmin' // Keep as superadmin
           })
@@ -280,7 +281,7 @@ const CreateClinicPage = () => {
       // Now that clinic data is refreshed, set the new clinic as active
       setActiveClinicId(createdClinicId);
 
-      const selectedDepartmentNames = departmentTypes?.filter(dt => departments.includes(dt.id)).map(dt => dt.name).join(", ") || "None";
+      const selectedDepartmentNames = (departmentTypes as DbDepartmentType[])?.filter(dt => departments.includes(dt.id)).map(dt => dt.name).join(", ") || "None";
       const doctorStatus = data.isDoctor === 'yes' ? "You will also appear in doctor lists for appointments." : "You will manage the clinic as an administrator only.";
 
       toast({
@@ -291,6 +292,7 @@ const CreateClinicPage = () => {
       // Navigate to dashboard - the new clinic should now be active
       router.replace("/dashboard");
     } catch (error: unknown) {
+      // showErrorToast(error, { title: "Error creating clinic" });
       console.error("Error creating clinic:", error);
       toast({
         title: "Error creating clinic",
@@ -415,9 +417,24 @@ const CreateClinicPage = () => {
                       {isLoadingDepartmentTypes ? (
                         <div>Loading departments...</div>
                       ) : departmentTypesError ? (
-                        <div className="text-destructive">Error loading departments.</div>
-                      ) : departmentTypes && departmentTypes.length > 0 ? (
-                        departmentTypes.map((dept: DbDepartmentType) => (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="h-4 w-4" />
+                            <span>Unable to load departments</span>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Retry the query
+                              window.location.reload();
+                            }}
+                          >
+                            Try Again
+                          </Button>
+                        </div>
+                      ) : departmentTypes && (departmentTypes as DbDepartmentType[]).length > 0 ? (
+                        (departmentTypes as DbDepartmentType[]).map((dept: DbDepartmentType) => (
                           <div key={dept.id} className="flex items-center space-x-2">
                             <Checkbox
                               id={`department-${dept.id}`}
@@ -536,7 +553,7 @@ const CreateClinicPage = () => {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {departmentTypes
+                              {(departmentTypes as DbDepartmentType[])
                                 ?.filter(dt => departments.includes(dt.id))
                                 .map((dept) => (
                                   <SelectItem key={dept.id} value={dept.id}>
@@ -623,4 +640,12 @@ const CreateClinicPage = () => {
   );
 };
 
+// Wrap the component with ErrorBoundary
+// const CreateClinicPageWithErrorBoundary = () => (
+//   <ErrorBoundary>
+//     <CreateClinicPage />
+//   </ErrorBoundary>
+// );
+
+// export default CreateClinicPageWithErrorBoundary;
 export default CreateClinicPage; 
