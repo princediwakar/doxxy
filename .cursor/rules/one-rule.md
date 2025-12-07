@@ -90,7 +90,7 @@ className={cn('w-full px-3 py-2 border rounded-lg', 'focus:ring-2 focus:ring-blu
    ```bash
    pkill -f "vite"
    # USER starts: npm run dev
-   sleep 3 && curl localhost:8080
+   sleep 3 && curl localhost:3000
 
    npx playwright test --headed --project=chromium
    npx playwright show-report
@@ -178,7 +178,7 @@ supabase inspect db tables
 ```javascript
 // tests/feature.spec.ts
 test('Feature flow', async ({ page }) => {
-  await page.goto('http://localhost:8080');
+  await page.goto('http://localhost:3000');
   await page.click('[data-testid="main-feature"]');
   await page.fill('input[name="test-field"]', 'test-value');
   await page.click('[data-testid="submit"]');
@@ -188,7 +188,7 @@ test('Feature flow', async ({ page }) => {
 
 // tests/clinic-switcher.spec.ts
 test('Multi-tenant isolation', async ({ page }) => {
-  await page.goto('http://localhost:8080');
+  await page.goto('http://localhost:3000');
   await page.click('[data-testid="clinic-switcher"]');
   await page.click('[data-testid="different-clinic"]');
   await expect(page.locator('[data-testid="data-isolated"]')).toBeVisible();

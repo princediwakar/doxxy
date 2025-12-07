@@ -146,10 +146,9 @@ serve(async (req: Request) => {
     }
 
     // 9. Determine Redirect URL
-    // Priority: FRONTEND_URL env var -> SITE_URL env var -> Construct from Supabase URL (fallback)
-    const siteUrl = Deno.env.get('FRONTEND_URL') || 
-                    Deno.env.get('SITE_URL') || 
-                    Deno.env.get('SUPABASE_URL')?.replace('/v1', '') || 
+    // Priority: FRONTEND_URL env var -> Construct from Supabase URL (fallback)
+    const siteUrl = Deno.env.get('FRONTEND_URL') ||
+                    Deno.env.get('SUPABASE_URL')?.replace('/v1', '') ||
                     'http://localhost:3000';
     
     // We append params so the frontend can auto-detect the invite
