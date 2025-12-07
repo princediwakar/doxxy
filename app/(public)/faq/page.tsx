@@ -1,6 +1,8 @@
-/* eslint-disable react-refresh/only-export-components */
 "use client";
+
+/* eslint-disable react-refresh/only-export-components */
 import { useState } from "react";
+import Script from 'next/script';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,6 +21,7 @@ import {
 import Link from "next/link"
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
+
 
 // --- DATA ---
 const categories = [
@@ -123,6 +126,19 @@ const faqs = [
       "Yes, we integrate with popular accounting software including QuickBooks, Xero, and FreshBooks. This allows for seamless financial reporting and reconciliation between your practice management and accounting systems.",
   },
 ];
+
+const faqStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer.replace(/\n/g, ' ')
+    }
+  }))
+};
 
 // --- REUSABLE COMPONENTS ---
 
@@ -350,7 +366,7 @@ const SupportCTA = () => (
 
 // --- MAIN PAGE COMPONENT ---
 
-const FAQ = () => {
+const FAQClient = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [openItems, setOpenItems] = useState<number[]>([]);
 
@@ -399,8 +415,17 @@ const FAQ = () => {
 
       <SignupCTA />
       <SiteFooter />
+      <Script
+        id="faq-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
     </div>
   );
+};
+
+const FAQ = () => {
+  return <FAQClient />;
 };
 
 export default FAQ;

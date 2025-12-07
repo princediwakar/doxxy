@@ -1,8 +1,10 @@
+
 "use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import Script from 'next/script';
 import {
   Calendar,
   Users,
@@ -22,6 +24,17 @@ import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
+
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "MedicalOrganization",
+  "name": "Doxxy",
+  "description": "Modern clinic management software for healthcare providers",
+  "url": process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com",
+  "logo": "/doxxy.png",
+  "medicalSpecialty": "Healthcare Software",
+}
 
 // --- DATA ---
 const painPoints = [
@@ -770,7 +783,7 @@ const TestimonialsSection = ({ testimonials }: TestimonialsSectionProps) => (
 
 // --- MAIN LANDING PAGE ---
 
-const LandingPage = () => {
+const LandingPageClient = () => {
   const {
     user,
     loading: initialLoading,
@@ -856,8 +869,17 @@ const LandingPage = () => {
       <TestimonialsSection testimonials={testimonials} />
       <SignupCTA />
       <SiteFooter />
+      <Script
+        id="structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
     </div>
   );
+};
+
+const LandingPage = () => {
+  return <LandingPageClient />;
 };
 
 export default LandingPage;

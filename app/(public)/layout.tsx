@@ -1,5 +1,27 @@
 import { AppHeader } from '@/components/AppHeader'
 import Script from 'next/script'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Doxxy - Modern Clinic Management Software for Healthcare Providers',
+  description: 'Doxxy streamlines clinic operations with smart scheduling, patient records, billing, and telehealth. Reduce admin work by 3+ hours daily. Start free.',
+  alternates: {
+    canonical: '/',
+  },
+  openGraph: {
+    title: 'Doxxy - Modern Clinic Management Software for Healthcare Providers',
+    description: 'Streamline clinic operations with smart scheduling, patient records, billing, and telehealth',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy - Clinic Management Software',
+      },
+    ],
+  },
+  keywords: ['clinic management software', 'healthcare software', 'medical practice management', 'patient scheduling', 'electronic health records', 'telehealth'],
+}
 
 export default function PublicLayout({
   children,

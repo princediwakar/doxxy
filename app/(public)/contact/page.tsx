@@ -4,15 +4,16 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Mail, 
-  Phone, 
+import {
+  Mail,
+  Phone,
   Calendar,
   CheckCircle
 } from 'lucide-react';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
 import { getSupabase } from "@/integrations/supabase/client";
+
 
 // --- REUSABLE COMPONENTS ---
 
@@ -230,7 +231,7 @@ const FAQItem = ({ question, answer }: FAQItemProps) => (
 
 // --- MAIN PAGE COMPONENT ---
 
-const Contact = () => {
+const ContactClient = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -426,6 +427,10 @@ const Contact = () => {
       <SiteFooter />
     </div>
   );
+};
+
+const Contact = () => {
+  return <ContactClient />;
 };
 
 export default Contact;
