@@ -1,4 +1,26 @@
 // src/pages/Privacy.tsx
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Doxxy Privacy Policy - Clinic Management Software Data Protection',
+  description: 'Doxxy privacy policy outlines how we collect, use, and protect your data. We are committed to transparency and safeguarding patient health information.',
+  alternates: {
+    canonical: '/privacy',
+  },
+  openGraph: {
+    title: 'Doxxy Privacy Policy - Clinic Management Software Data Protection',
+    description: 'How we collect, use, and protect your data',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy Privacy Policy - Clinic Management Software',
+      },
+    ],
+  },
+  keywords: ['doxxy privacy policy', 'clinic management software privacy', 'healthcare data protection', 'medical practice privacy policy'],
+}
 
 // Helper component for consistent section styling
 interface SectionContainerProps {

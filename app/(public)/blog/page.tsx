@@ -4,6 +4,28 @@ import { Calendar, User, Clock, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Doxxy Blog - Healthcare Practice Management Insights & Best Practices',
+  description: 'Read insights, best practices, and thought leadership on healthcare practice management, telemedicine, revenue cycle optimization, and digital health.',
+  alternates: {
+    canonical: '/blog',
+  },
+  openGraph: {
+    title: 'Doxxy Blog - Healthcare Practice Management Insights',
+    description: 'Insights and best practices for healthcare practice management',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy Blog - Healthcare Practice Management',
+      },
+    ],
+  },
+  keywords: ['doxxy blog', 'healthcare practice management blog', 'medical practice insights', 'telemedicine best practices'],
+}
 
 export default async function BlogPage() {
   const posts = await getBlogPosts();

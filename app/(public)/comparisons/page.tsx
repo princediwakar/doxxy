@@ -1,4 +1,5 @@
 import React from 'react';
+import type { Metadata } from 'next';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { 
@@ -14,6 +15,28 @@ import {
 import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from '@/components/SignupCTA';
+
+export const metadata: Metadata = {
+  title: 'Doxxy Comparisons - Clinic Management Software vs Competitors',
+  description: 'Compare Doxxy with Practo, Eka Care, ClinicPlus, Lybrate, and MFine. See feature-by-feature comparisons and pricing analysis.',
+  alternates: {
+    canonical: '/comparisons',
+  },
+  openGraph: {
+    title: 'Doxxy Comparisons - Clinic Management Software vs Competitors',
+    description: 'Compare Doxxy with other clinic management software platforms to make an informed decision for your practice.',
+    type: 'website',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy Comparisons',
+      },
+    ],
+  },
+  keywords: ['doxxy comparisons', 'clinic software comparison', 'practo vs doxxy', 'eka care alternative', 'healthcare software comparisons'],
+}
 
 // --- DATA ---
 const comparisons = [

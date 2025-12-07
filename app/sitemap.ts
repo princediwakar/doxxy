@@ -4,7 +4,7 @@ import { getBlogPosts } from "@/content/blog";
 // Base URL - should match your production domain
 // You can also make this configurable via environment variables
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://doxxy.neurovisionhospital.com";
+  process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com";
 
 // Configuration for public routes with their metadata
 // This makes it easier to maintain and update
@@ -35,24 +35,19 @@ const PUBLIC_ROUTES_CONFIG = [
     changeFrequency: "monthly" as const,
   },
   {
+    path: "/blog",
+    priority: 0.8,
+    changeFrequency: "weekly" as const,
+  },
+  {
     path: "/faq",
     priority: 0.7,
     changeFrequency: "monthly" as const,
   },
   {
-    path: "/security",
-    priority: 0.8,
+    path: "/auth",
+    priority: 0.7,
     changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/privacy",
-    priority: 0.5,
-    changeFrequency: "yearly" as const,
-  },
-  {
-    path: "/terms",
-    priority: 0.5,
-    changeFrequency: "yearly" as const,
   },
   {
     path: "/comparisons",
@@ -89,10 +84,21 @@ const PUBLIC_ROUTES_CONFIG = [
     priority: 0.7,
     changeFrequency: "monthly" as const,
   },
+
   {
-    path: "/blog",
+    path: "/security",
     priority: 0.8,
-    changeFrequency: "weekly" as const,
+    changeFrequency: "monthly" as const,
+  },
+  {
+    path: "/privacy",
+    priority: 0.5,
+    changeFrequency: "yearly" as const,
+  },
+  {
+    path: "/terms",
+    priority: 0.5,
+    changeFrequency: "yearly" as const,
   },
 ] as const;
 

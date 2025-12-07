@@ -21,6 +21,28 @@ import {
 import Link from 'next/link';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Doxxy Security - HIPAA Compliant Clinic Management Software',
+  description: 'Learn about Doxxy\'s security measures, including encryption, access controls, and HIPAA compliance for protecting patient health information.',
+  alternates: {
+    canonical: '/security',
+  },
+  openGraph: {
+    title: 'Doxxy Security - HIPAA Compliant Clinic Management Software',
+    description: 'Security measures for protecting patient health information',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy Security - HIPAA Compliant Clinic Management Software',
+      },
+    ],
+  },
+  keywords: ['doxxy security', 'HIPAA compliant clinic software', 'healthcare data security', 'medical practice security'],
+}
 
 // --- DATA ---
 const certifications = [

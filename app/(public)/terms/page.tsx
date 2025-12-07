@@ -1,4 +1,26 @@
 // src/pages/Terms.tsx
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Doxxy Terms of Service - Clinic Management Software Agreement',
+  description: 'Doxxy terms of service outline the agreement between users and our clinic management software platform. Please read carefully before using our services.',
+  alternates: {
+    canonical: '/terms',
+  },
+  openGraph: {
+    title: 'Doxxy Terms of Service - Clinic Management Software Agreement',
+    description: 'Agreement between users and our clinic management software platform',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy Terms of Service - Clinic Management Software',
+      },
+    ],
+  },
+  keywords: ['doxxy terms of service', 'clinic management software agreement', 'healthcare software terms', 'medical practice terms'],
+}
 
 // Helper component for consistent section styling
 interface SectionContainerProps {

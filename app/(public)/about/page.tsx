@@ -14,6 +14,28 @@ import {
 import Link from 'next/link';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'About Doxxy - Modern Clinic Management Software Company',
+  description: 'Learn about Doxxy\'s mission to simplify healthcare management. Founded by healthcare professionals, we build intuitive software for clinics worldwide.',
+  alternates: {
+    canonical: '/about',
+  },
+  openGraph: {
+    title: 'About Doxxy - Clinic Management Software Company',
+    description: 'Our mission to simplify healthcare management',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'About Doxxy - Modern Clinic Management Software',
+      },
+    ],
+  },
+  keywords: ['about doxxy', 'clinic management software company', 'healthcare software mission', 'medical practice management company'],
+}
 
 // --- DATA ---
 const stats = [

@@ -2,7 +2,7 @@ import { MetadataRoute } from "next";
 
 // Base URL - should match your production domain
 const BASE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://doxxy.neurovisionhospital.com";
+  process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com";
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -18,7 +18,6 @@ export default function robots(): MetadataRoute.Robots {
         "/settings",
         "/profile",
         "/billing",
-        "/auth",
       ],
     },
     sitemap: `${BASE_URL}/sitemap.xml`,

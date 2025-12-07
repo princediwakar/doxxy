@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   title: 'Doxxy - Clinic Management',
   description: 'Modern clinic management software for healthcare providers',
+  themeColor: '#3b82f6',
+  verification: { google: '6XTorYQy4TdZB9Z3EF6fNyU4BcWaTma53piGhXir-Tc' },
   openGraph: {
     title: 'Doxxy - Clinic Management',
     description: 'Modern clinic management software for healthcare providers',
@@ -34,6 +36,11 @@ export const metadata: Metadata = {
       },
     ],
   },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1.0,
 }
 
 export default function RootLayout({

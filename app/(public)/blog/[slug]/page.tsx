@@ -1,3 +1,5 @@
+import type { Metadata } from 'next'
+import Script from 'next/script';
 import { getBlogPost, getBlogPosts } from "@/content/blog";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -18,13 +20,75 @@ export async function generateStaticParams() {
   }));
 }
 
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getBlogPost(slug);
 
   if (!post) {
+    return {
+      title: 'Blog Post Not Found',
+      description: 'The requested blog post could not be found.',
+    };
+  }
+
+  // Create description from content (first 160 chars)
+  const contentPreview = post.content.replace(/[\n#*`]/g, ' ').substring(0, 160).trim() + '...';
+
+  return {
+    title: `${post.title} - Doxxy Blog`,
+    description: contentPreview,
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+    },
+    openGraph: {
+      title: post.title,
+      description: contentPreview,
+      type: 'article',
+      publishedTime: post.publishDate,
+      authors: [post.author],
+      images: post.heroImage ? [
+        {
+          url: post.heroImage,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ] : [],
+    },
+    keywords: [post.category || 'healthcare', 'healthcare', 'clinic management', 'blog'].filter(Boolean),
+  };
+}
+
+export default async function BlogPostPage({ params }: BlogPostPageProps) {
+  const { slug } = await params;
+  const post = await getBlogPost(slug);
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://doxxy.neurovisionhospital.com';
+
+  if (!post) {
     notFound();
   }
+
+  const articleStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": post.title,
+    "description": post.content.replace(/[\n#*`]/g, ' ').substring(0, 160).trim() + '...',
+    "image": post.heroImage ? [post.heroImage as string] : [],
+    "datePublished": post.publishDate,
+    "dateModified": post.publishDate,
+    "author": {
+      "@type": "Person",
+      "name": post.author
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Doxxy",
+      "logo": {
+        "@type": "ImageObject",
+        "url": `${baseUrl}/doxxy.png`
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
@@ -160,6 +224,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Footer */}
       <SiteFooter />
+      <Script
+        id="article-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleStructuredData) }}
+      />
     </div>
   );
 }

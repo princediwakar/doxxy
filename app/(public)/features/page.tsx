@@ -20,6 +20,28 @@ import {
 import Link from 'next/link';
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Doxxy Features - Clinic Management Software for Healthcare',
+  description: 'Explore Doxxy\'s features: appointment management, patient records, billing, telehealth, and analytics for modern healthcare clinics.',
+  alternates: {
+    canonical: '/features',
+  },
+  openGraph: {
+    title: 'Doxxy Features - Clinic Management Software',
+    description: 'Explore Doxxy\'s features for modern healthcare practices',
+    images: [
+      {
+        url: '/doxxy-features.png', // Consider creating feature-specific image
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy Features Overview',
+      },
+    ],
+  },
+  keywords: ['clinic management software', 'healthcare software', 'medical practice management', 'patient records software'],
+}
 
 // --- DATA ---
 const coreFeatures = [

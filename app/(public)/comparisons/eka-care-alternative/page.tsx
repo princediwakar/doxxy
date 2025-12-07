@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,28 @@ import {
 import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+
+export const metadata: Metadata = {
+  title: 'Eka Care Alternative - Doxxy Clinic Management Software',
+  description: 'Looking for an Eka Care alternative? Doxxy offers pay-per-appointment pricing, unlimited doctors, and comprehensive clinic management features.',
+  alternates: {
+    canonical: '/comparisons/eka-care-alternative',
+  },
+  openGraph: {
+    title: 'Eka Care Alternative - Doxxy Clinic Management Software',
+    description: 'Doxxy is a modern alternative to Eka Care with transparent pricing and unlimited doctors for healthcare clinics.',
+    type: 'website',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Eka Care Alternative - Doxxy',
+      },
+    ],
+  },
+  keywords: ['eka care alternative', 'eka care competitor', 'clinic management software', 'pay per appointment pricing', 'healthcare software alternative'],
+}
 
 const EkaCareAlternative = () => {
   const keyFeatures = [

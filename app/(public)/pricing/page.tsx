@@ -14,6 +14,28 @@ import {
 import Link from "next/link"
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Doxxy Pricing - Transparent Clinic Management Software Pricing',
+  description: 'Fair and transparent pricing for clinic management software. Pay per consultation with no hidden fees. First 100 appointments free.',
+  alternates: {
+    canonical: '/pricing',
+  },
+  openGraph: {
+    title: 'Doxxy Pricing - Clinic Management Software',
+    description: 'Transparent pricing for modern healthcare practices',
+    images: [
+      {
+        url: '/doxxy.png',
+        width: 1200,
+        height: 630,
+        alt: 'Doxxy Pricing Overview',
+      },
+    ],
+  },
+  keywords: ['clinic management software pricing', 'medical practice software cost', 'healthcare software pricing', 'pay per consultation'],
+}
 
 // --- DATA ---
 const plans = [
