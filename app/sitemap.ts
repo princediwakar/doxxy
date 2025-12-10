@@ -1,3 +1,4 @@
+// app/sitemap.ts
 import { MetadataRoute } from "next";
 import { getBlogPosts } from "@/content/blog";
 
@@ -41,11 +42,6 @@ const PUBLIC_ROUTES_CONFIG = [
   },
   {
     path: "/faq",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/auth",
     priority: 0.7,
     changeFrequency: "monthly" as const,
   },

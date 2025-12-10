@@ -1,3 +1,4 @@
+// app/robots.tsx
 import { MetadataRoute } from "next";
 
 // Base URL - should match your production domain

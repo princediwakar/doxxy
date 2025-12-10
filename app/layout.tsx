@@ -1,3 +1,4 @@
+// app/layout.tsx
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Script from 'next/script'
@@ -8,10 +9,9 @@ import { AppHeader } from '@/components/AppHeader'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com"),
   title: 'Doxxy - Clinic Management',
   description: 'Modern clinic management software for healthcare providers',
-  themeColor: '#3b82f6',
   verification: { google: '6XTorYQy4TdZB9Z3EF6fNyU4BcWaTma53piGhXir-Tc' },
   openGraph: {
     title: 'Doxxy - Clinic Management',
@@ -41,6 +41,7 @@ export const metadata: Metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1.0,
+  themeColor: '#3b82f6',
 }
 
 export default function RootLayout({
