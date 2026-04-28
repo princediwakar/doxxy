@@ -357,9 +357,9 @@ const Consultation = () => {
       />
 
       <div className="max-w-7xl mx-auto  py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Main Consultation Form with Sections */}
-          <div className="lg:col-span-3">
+          <div className="md:col-span-2 lg:col-span-3">
             <div className="space-y-6">
               {/* Progress Overview */}
               <Card className="bg-white">
@@ -420,7 +420,7 @@ const Consultation = () => {
           </div>
 
           {/* Patient Information Sidebar */}
-          <div className="lg:col-span-1">
+          <div className="hidden lg:block lg:col-span-1">
             <PatientSidebar
               patient={patient}
               appointment={appointment}

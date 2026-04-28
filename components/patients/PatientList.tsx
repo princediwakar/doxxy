@@ -37,7 +37,7 @@ export const PatientList = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <ScrollArea className="h-[600px]">
+        <ScrollArea className="h-auto sm:h-[600px]">
           {isLoading ? (
             <div className="p-4 space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -87,7 +87,7 @@ export const PatientList = ({
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer min-h-[44px] min-w-[44px]"}
                   />
                 </PaginationItem>
                 {Array.from({ length: Math.min(totalPages, 5) }).map((_, i) => {
@@ -98,7 +98,7 @@ export const PatientList = ({
                         <PaginationLink
                           onClick={() => setCurrentPage(pageNum)}
                           isActive={currentPage === pageNum}
-                          className="cursor-pointer"
+                          className="cursor-pointer min-h-[44px] min-w-[44px]"
                         >
                           {pageNum}
                         </PaginationLink>
@@ -110,7 +110,7 @@ export const PatientList = ({
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => setCurrentPage(Math.min(currentPage + 1, totalPages))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer min-h-[44px] min-w-[44px]"}
                   />
                 </PaginationItem>
               </PaginationContent>

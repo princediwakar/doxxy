@@ -19,12 +19,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MoreHorizontal, Calendar, Eye, Receipt } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MoreHorizontal, Calendar, Eye, Receipt, User, Clock } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { formatTimeIST } from '@/lib/utils';
 import { AppointmentWithDetails } from '@/types/appointments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 interface AppointmentsTableProps {
   appointments: AppointmentWithDetails[];
@@ -58,7 +60,6 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
     }
   };
 
-
   if (appointments.length === 0) {
     return (
       <div className="text-center py-8">
@@ -71,8 +72,153 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
     );
   }
 
+  const AppointmentCard: React.FC<{
+    appointment: AppointmentWithDetails;
+    index: number;
+  }> = ({ appointment, index }) => (
+    <Card
+      className="cursor-pointer hover:bg-muted/50 touch-manipulation"
+      onClick={() => onAppointmentClick(appointment)}
+    >
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <User className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h4 className="font-medium">{appointment.patient_name}</h4>
+              <p className="text-sm text-muted-foreground">
+                {format(parseISO(appointment.date), 'MMM dd, yyyy')} at {formatTimeIST(appointment.time)}
+              </p>
+            </div>
+          </div>
+          <Badge
+            variant="outline"
+            className={cn(getStatusColor(appointment.status), "text-xs")}
+          >
+            {appointment.status}
+          </Badge>
+        </div>
+
+        <div className="flex items-center gap-2 mb-3">
+          <Avatar className="h-5 w-5">
+            <AvatarImage src={appointment.doctor_avatar_url} />
+            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+              {appointment.doctor_name?.[0]?.toUpperCase() || 'D'}
+            </AvatarFallback>
+          </Avatar>
+          <span className="text-sm">{appointment.doctor_name}</span>
+          {appointment.department_name && (
+            <span className="text-xs text-muted-foreground">• {appointment.department_name}</span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Badge
+            variant={appointment.billing_status === 'Paid' ? 'default' : 'secondary'}
+            className={cn(
+              appointment.billing_status === 'Paid'
+                ? 'bg-green-100 text-green-800'
+                : appointment.billing_status === 'Pending'
+                  ? 'bg-orange-100 text-orange-800'
+                  : 'bg-gray-100 text-gray-800',
+              "text-xs"
+            )}
+          >
+            {appointment.billing_status || 'Unbilled'}
+          </Badge>
+          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+            {appointment.status === 'Scheduled' && appointment.user_id === user?.id && (
+              <Button
+                size="sm"
+                className="h-9 min-w-[70px]"
+                onClick={() => onStartConsultation(appointment)}
+              >
+                Start
+              </Button>
+            )}
+            {appointment.status === 'In Progress' && appointment.user_id === user?.id && (
+              <Button
+                size="sm"
+                className="h-9 min-w-[70px]"
+                onClick={() => onStartConsultation(appointment)}
+              >
+                Continue
+              </Button>
+            )}
+            {appointment.status === 'Completed' && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 min-w-[70px]"
+                onClick={async () => {
+                  if (appointment.user_id === user?.id) {
+                    router.push(`/consultation/${appointment.id}`);
+                  } else {
+                    onViewConsultation(appointment);
+                  }
+                }}
+              >
+                {appointment.user_id === user?.id ? "Edit" : "View"}
+              </Button>
+            )}
+            {appointment.status !== 'Cancelled' && 
+             (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 min-w-[70px]"
+                onClick={() => onCreateBill(appointment)}
+              >
+                <Receipt className="h-3 w-3 mr-1" />
+                Bill
+              </Button>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => onAppointmentClick(appointment)}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  View/Edit
+                </DropdownMenuItem>
+                {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
+                  <DropdownMenuItem
+                    onClick={() => onCancelAppointment(appointment.id)}
+                    className="text-destructive"
+                    disabled={cancelLoading}
+                  >
+                    Cancel
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="rounded-md border">
+    <>
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {appointments.map((appointment, index) => (
+          <AppointmentCard
+            key={`${appointment.id}-${index}`}
+            appointment={appointment}
+            index={index}
+          />
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -232,7 +378,8 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
             </TableRow>
           ))}
         </TableBody>
-      </Table>
-    </div>
+        </Table>
+      </div>
+    </>
   );
 }; 

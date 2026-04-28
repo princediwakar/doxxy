@@ -1,6 +1,6 @@
 # Mobile Optimization Plan - Doxxy
 
-> **Status**: Phase 1 In Progress  
+> **Status**: Phase 2 Complete
 > **Last Updated**: 2026-04-28
 
 ---
@@ -79,12 +79,14 @@ Mobile (<1024px): Hidden sidebar, hamburger icon in header, drawer navigation
 
 ### 2.1 Tables → Cards
 
+**Status**: ✅ Complete
+
 **Files:**
-- `components/appointments/AppointmentsTable.tsx`
-- `components/billing/page.tsx`
+- `components/appointments/AppointmentsTable.tsx` - **Updated**
+- `app/(app)/billing/page.tsx` - **Updated**
 
 **Strategy:**
-```tsx
+```
 // Desktop: Full table
 // Mobile: Card list view
 <div className="hidden md:block">
@@ -97,18 +99,25 @@ Mobile (<1024px): Hidden sidebar, hamburger icon in header, drawer navigation
 
 ### 2.2 Patient List Stack
 
+**Status**: ✅ Complete
+
 **Files:**
-- `components/patients/PatientList.tsx` (line 40: fixed `h-[600px]`)
+- `components/patients/PatientList.tsx` (line 40: fixed `h-[600px]`) - **Updated**
 
 **Changes:**
 - Remove fixed height: `h-[600px]` → `h-auto sm:h-[600px]`
 - Auto-height scroll area for mobile
+- Larger touch targets in pagination: `min-h-[44px] min-w-[44px]`
 
 ### 2.3 Touch Targets
 
+**Status**: ✅ Complete
+
 **Files:**
-- All modal components
-- `components/ui/button.tsx`
+- `components/ui/button.tsx` - **Updated**
+- `components/ui/input.tsx` - **Updated**
+- `components/ui/textarea.tsx` - **Updated**
+- `components/ui/select.tsx` - **Updated**
 
 **Minimum targets:**
 - Buttons: `44px × 44px` minimum
@@ -170,10 +179,10 @@ Create simplified "Doctor Dashboard Mobile" and "Staff Dashboard Mobile":
 - [ ] PWA manifest review
 
 ### Sprint 2: Core Mobile Views
-- [ ] Appointments mobile cards
-- [ ] Patient list responsive height
-- [ ] Touch target fixes
-- [ ] Button sizes
+- [x] Appointments mobile cards
+- [x] Patient list responsive height
+- [x] Touch target fixes
+- [x] Button sizes
 
 ### Sprint 3: Mobile Optimizations
 - [ ] Consultation collapsible sections

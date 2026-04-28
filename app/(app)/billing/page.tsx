@@ -19,7 +19,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Plus, CreditCard, IndianRupee } from "lucide-react";
+import { Search, Plus, CreditCard, IndianRupee, FileText, Printer, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MonthSelector } from "@/components/ui/MonthSelector";
 import { Suspense, lazy } from "react";
@@ -308,7 +308,88 @@ const Billing = () => {
         <MonthSelector value={selectedMonth} onChange={setSelectedMonth} />
       </div>
 
-      <div className="border rounded-lg overflow-x-auto">
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {isLoadingBills ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Card key={i} className="p-4">
+                <div className="h-20 bg-muted/50 rounded-md animate-pulse" />
+              </Card>
+            ))}
+          </div>
+        ) : filteredBills.length === 0 ? (
+          <Card className="p-6">
+            <CardContent className="text-center">
+              <FileText className="h-10 w-10 mx-auto text-muted-foreground mb-2" />
+              <p className="text-muted-foreground">No bills found.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredBills.map((bill) => (
+            <Card
+              key={bill.id}
+              className="cursor-pointer hover:bg-muted/50 touch-manipulation"
+              onClick={() => handleBillClick(bill)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h4 className="font-medium">{bill.invoice_number}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {bill.patient_name || "N/A"}
+                    </p>
+                  </div>
+                  <p className="font-semibold text-lg">
+                    ₹{Number(bill.amount).toFixed(2)}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+                  <span>
+                    {bill.created_at
+                      ? new Date(bill.created_at).toLocaleDateString()
+                      : "N/A"}
+                  </span>
+                </div>
+                {bill.description && (
+                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                    {bill.description}
+                  </p>
+                )}
+                <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 flex-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePrintBill(bill);
+                    }}
+                  >
+                    <Printer className="h-4 w-4 mr-1" />
+                    Print
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 flex-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditBill(bill);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Edit
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block border rounded-lg overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
