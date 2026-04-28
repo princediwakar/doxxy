@@ -33,6 +33,11 @@ export const procurementItemSchema = z.object({
     placeholder: '0.00',
     section: 'Bill Items',
   }),
+  mrp: zField(z.coerce.number().min(0, 'MRP >= 0'), {
+    label: 'M.R.P',
+    placeholder: '0.00',
+    section: 'Bill Items',
+  }),
   total_price: zField(z.coerce.number().min(0, 'Total >= 0'), {
     label: 'Total Price',
     placeholder: '0.00',
@@ -99,8 +104,8 @@ export const inventoryItemSchema = z.object({
     label: 'Cost Price',
     section: 'Pricing',
   }),
-  selling_price: zField(z.coerce.number().min(0, 'Price >= 0'), {
-    label: 'Selling Price',
+  mrp: zField(z.coerce.number().min(0, 'MRP >= 0'), {
+    label: 'MRP',
     section: 'Pricing',
   }),
 });

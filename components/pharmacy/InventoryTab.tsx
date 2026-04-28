@@ -114,13 +114,15 @@ export function InventoryTab() {
                 <TableHead>Packet No.</TableHead>
                 <TableHead>Expiry</TableHead>
                 <TableHead>Stock</TableHead>
+                <TableHead>Cost (₹)</TableHead>
+                <TableHead>MRP (₹)</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {inventory?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                     No stock records found. Start by adding a purchase order.
                   </TableCell>
                 </TableRow>
@@ -137,33 +139,39 @@ export function InventoryTab() {
                         {(item.medicines as any)?.name || "Unknown"}
                       </TableCell>
                       <TableCell>{item.batch_number}</TableCell>
-                      <TableCell>
-                        <span className={isExpired ? "text-destructive font-bold" : ""}>
-                          {item.expiry_date}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {canEditStock ? (
-                          <div className="flex items-center gap-2">
+<TableCell>
+                          <span className={isExpired ? "text-destructive font-bold" : ""}>
+                            {item.expiry_date}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {canEditStock ? (
+                            <div className="flex items-center gap-2">
+                              <span className={isLowStock ? "text-destructive font-bold" : ""}>
+                                {item.current_stock}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleEditClick(item)}
+                              >
+                                <Pencil className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ) : (
                             <span className={isLowStock ? "text-destructive font-bold" : ""}>
                               {item.current_stock}
                             </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => handleEditClick(item)}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className={isLowStock ? "text-destructive font-bold" : ""}>
-                            {item.current_stock}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="flex gap-2">
+                          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {item.unit_cost_price?.toFixed(2) ?? "0.00"}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {item.mrp?.toFixed(2) ?? "0.00"}
+                        </TableCell>
+                        <TableCell className="flex gap-2">
                         {isExpired && <Badge variant="destructive">Expired</Badge>}
                         {isExpiringSoon && <Badge variant="secondary" className="bg-yellow-500 text-white">Expiring Soon</Badge>}
                         {isLowStock && <Badge variant="outline" className="text-red-500 border-red-500"><AlertTriangle className="w-3 h-3 mr-1" /> Low Stock</Badge>}

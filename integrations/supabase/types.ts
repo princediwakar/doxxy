@@ -678,7 +678,7 @@ export type Database = {
           id: string
           medicine_id: number
           reorder_level: number
-          selling_price: number
+          mrp: number
           unit_cost_price: number
           updated_at: string
         }
@@ -689,9 +689,22 @@ export type Database = {
           current_stock?: number
           expiry_date: string
           id?: string
+medicine_id: number
+          reorder_level?: number
+          mrp?: number
+          unit_cost_price?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string
+          clinic_id?: string
+          created_at?: string
+          current_stock?: number
+          expiry_date?: string
+          id?: string
           medicine_id: number
           reorder_level?: number
-          selling_price?: number
+          mrp?: number
           unit_cost_price?: number
           updated_at?: string
         }

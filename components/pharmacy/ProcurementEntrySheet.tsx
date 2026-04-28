@@ -45,6 +45,7 @@ interface ExtractedItem {
   expiry_date: string;
   quantity: number;
   unit_price: number;
+  mrp: number;
   total_price: number;
   medicine_id?: number | null;
   extracted_name?: string;
@@ -161,6 +162,7 @@ const extractData = async (imageUrl: string) => {
         expiry_date: item.expiry_date ?? "",
         quantity: item.quantity ?? 1,
         unit_price: item.unit_price ?? 0,
+        mrp: item.mrp ?? 0,
         total_price: item.total_price ?? 0,
       })),
     });
@@ -244,7 +246,7 @@ const extractData = async (imageUrl: string) => {
 
       // Phase 3: Insert procurement_items + upsert inventory_items for ALL items
       const itemInserts: { procurement_id: string; medicine_id: number | null; extracted_name: string; batch_number: string; expiry_date: string | null; quantity: number; unit_price: number; total_price: number }[] = [];
-      const inventoryUpserts: { clinic_id: string; medicine_id: number; batch_number: string; expiry_date: string | null; current_stock: number; unit_cost_price: number; selling_price: number }[] = [];
+      const inventoryUpserts: { clinic_id: string; medicine_id: number; batch_number: string; expiry_date: string | null; current_stock: number; unit_cost_price: number; mrp: number }[] = [];
 
       for (const item of data.items) {
         const medicineId = item.medicine_id ?? nameToIdMap.get(item.extracted_name ?? "") ?? null;
@@ -268,7 +270,7 @@ const extractData = async (imageUrl: string) => {
             expiry_date: item.expiry_date || null,
             current_stock: item.quantity,
             unit_cost_price: item.unit_price,
-            selling_price: Math.round(item.unit_price * 1.2 * 100) / 100,
+            mrp: item.mrp ?? 0,
           });
         }
       }
@@ -538,6 +540,7 @@ const extractData = async (imageUrl: string) => {
                         expiry_date: "",
                         quantity: 1,
                         unit_price: 0,
+                        mrp: 0,
                         total_price: 0,
                       })
                     }
@@ -555,6 +558,7 @@ const extractData = async (imageUrl: string) => {
                         <th className="px-4 py-3 w-[150px]">Expiry Date</th>
                         <th className="px-4 py-3 w-[100px]">Qty</th>
                         <th className="px-4 py-3 w-[130px]">Unit Price (₹)</th>
+                        <th className="px-4 py-3 w-[130px]">M.R.P (₹)</th>
                         <th className="px-4 py-3 w-[130px]">Total (₹)</th>
                         <th className="px-4 py-3 w-[50px]"></th>
                       </tr>
@@ -645,6 +649,19 @@ const extractData = async (imageUrl: string) => {
                               {...form.register(`items.${index}.unit_price`, {
                                 valueAsNumber: true,
                                 onChange: () => recalcTotal(index),
+                              })}
+                              className="h-8 border-0 shadow-none bg-transparent focus-visible:ring-1 focus-visible:bg-background"
+                            />
+                          </td>
+
+                          {/* M.R.P */}
+                          <td className="px-4 py-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              {...form.register(`items.${index}.mrp`, {
+                                valueAsNumber: true,
                               })}
                               className="h-8 border-0 shadow-none bg-transparent focus-visible:ring-1 focus-visible:bg-background"
                             />

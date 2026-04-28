@@ -13,6 +13,7 @@ interface ExtractedItem {
   expiry_date: string;
   quantity: number;
   unit_price: number;
+  mrp: number;
   total_price: number;
   medicine_id?: number | null;
   extracted_name?: string;
@@ -160,6 +161,14 @@ const EXTRACTION_PROMPT = `You are an expert OCR and data extraction assistant f
 
 Extract all procurement bill details from the image.
 
+For each line item, extract these fields EXACTLY as shown on the invoice:
+- batch_number = Batch/Lot No. column
+- expiry_date = Exp. Date column
+- quantity = Qty/Free column (use the quantity before the slash)
+- unit_price = Rate column (your procurement cost per unit)
+- mrp = M.R.P column (maximum retail price - this is the selling price)
+- total_price = Total column
+
 For each line item produce TWO name fields:
 
 1. raw_extracted_name — copy the product name EXACTLY as printed on the invoice.
@@ -197,6 +206,7 @@ Return valid JSON matching this exact schema:
       "expiry_date": "YYYY-MM-DD or empty string",
       "quantity": number,
       "unit_price": number,
+      "mrp": number,
       "total_price": number
     }
   ]
