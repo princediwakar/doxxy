@@ -307,9 +307,14 @@ const extractData = async (imageUrl: string) => {
       setExtractionStats(null);
       onOpenChange(false);
     } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Unknown error";
+      const msg =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null
+          ? JSON.stringify(error)
+          : String(error);
       console.error("Save error:", msg);
-      toast.error("Failed to save procurement.");
+      toast.error(msg === "Unknown error" ? "Failed to save procurement." : msg);
     } finally {
       setIsSaving(false);
     }
@@ -317,8 +322,9 @@ const extractData = async (imageUrl: string) => {
 
   // ── Medicine selection from combobox ────────────────────────────────────────
 
-  const fetchWithAuth = (url: string, body: unknown) => {
-    const token = (window as unknown as { __supabaseAuthToken?: string }).__supabaseAuthToken;
+  const fetchWithAuth = async (url: string, body: unknown) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
     return fetch(url, {
       method: "POST",
       headers: {

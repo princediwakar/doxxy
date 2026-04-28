@@ -17,15 +17,8 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization') ?? '';
 
     const supabase = createClient(supabaseUrl, supabaseKey, {
-      global: authHeader ? { headers: { Authorization: `Bearer ${authHeader}` } } : undefined,
+      global: { headers: { Authorization: authHeader } },
     });
-
-    if (authHeader) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-    }
 
     // Batch mode: create all unique unmapped names
     if (batchNames.length > 0) {
