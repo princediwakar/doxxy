@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { MedicineCombobox } from "@/components/ui/medicine-combobox";
+import { Medicine, MedicationAutoFillData } from "@/types/prescriptions";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQueryClient } from "@tanstack/react-query";
@@ -192,7 +193,7 @@ const extractData = async (imageUrl: string) => {
     try {
       setIsSaving(true);
 
-      // 1. Insert procurement header
+      // Phase 1: Create procurement header
       const { data: procurement, error: procError } = await supabase
         .from("procurements")
         .insert({
@@ -209,57 +210,97 @@ const extractData = async (imageUrl: string) => {
 
       if (procError) throw procError;
 
-      // 2. Insert items + update inventory
-      if (data.items && data.items.length > 0) {
-        for (const item of data.items) {
-          // Insert procurement item regardless of mapping status
-          const { error: itemError } = await supabase.from("procurement_items").insert({
-            procurement_id: procurement.id,
-            medicine_id: item.medicine_id ?? null,
-            extracted_name: item.extracted_name,
-            batch_number: item.batch_number,
-            expiry_date: item.expiry_date || null,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-          });
+      if (!data.items || data.items.length === 0) {
+        toast.success("Procurement saved.");
+        queryClient.invalidateQueries({ queryKey: ["pharmacy_inventory"] });
+        queryClient.invalidateQueries({ queryKey: ["pharmacy_procurements"] });
+        form.reset();
+        setExtractionStats(null);
+        onOpenChange(false);
+        return;
+      }
 
-          if (itemError) {
-            console.error("Item insert error:", itemError.message);
-            continue;
-          }
+      // Phase 2: Quick-add any unmapped medicines in one batch call
+      const unmappedNames = data.items
+        .filter((item) => !item.medicine_id && item.extracted_name?.trim())
+        .map((item) => item.extracted_name!.trim());
 
-          // Only update inventory for fully-mapped items
-          if (item.medicine_id) {
-            const { data: existing } = await supabase
-              .from("inventory_items")
-              .select("id, current_stock")
-              .eq("clinic_id", activeClinic.clinic_id)
-              .eq("medicine_id", item.medicine_id)
-              .eq("batch_number", item.batch_number)
-              .maybeSingle();
+      const uniqueUnmapped = [...new Set(unmappedNames)];
+      const nameToIdMap = new Map<string, number>();
 
-            if (existing) {
-              await supabase
-                .from("inventory_items")
-                .update({ current_stock: existing.current_stock + item.quantity })
-                .eq("id", existing.id);
-            } else {
-              await supabase.from("inventory_items").insert({
-                clinic_id: activeClinic.clinic_id,
-                medicine_id: item.medicine_id,
-                batch_number: item.batch_number,
-                expiry_date: item.expiry_date || null,
-                current_stock: item.quantity,
-                unit_cost_price: item.unit_price,
-                selling_price: Math.round(item.unit_price * 1.2 * 100) / 100,
-              });
-            }
-          }
+      if (uniqueUnmapped.length > 0) {
+        const res = await fetchWithAuth("/api/medicines", { names: uniqueUnmapped });
+
+        if (!res.ok) {
+          const json = await res.json().catch(() => ({}));
+          throw new Error(json.error || "Failed to create unmapped medicines");
+        }
+
+        const created: { name: string; id: number }[] = await res.json();
+        for (const med of created) {
+          nameToIdMap.set(med.name, med.id);
         }
       }
 
-      toast.success("Procurement saved and inventory updated!");
+      // Phase 3: Insert procurement_items + upsert inventory_items for ALL items
+      const itemInserts: { procurement_id: string; medicine_id: number | null; extracted_name: string; batch_number: string; expiry_date: string | null; quantity: number; unit_price: number; total_price: number }[] = [];
+      const inventoryUpserts: { clinic_id: string; medicine_id: number; batch_number: string; expiry_date: string | null; current_stock: number; unit_cost_price: number; selling_price: number }[] = [];
+
+      for (const item of data.items) {
+        const medicineId = item.medicine_id ?? nameToIdMap.get(item.extracted_name ?? "") ?? null;
+
+        itemInserts.push({
+          procurement_id: procurement.id,
+          medicine_id: medicineId,
+          extracted_name: item.extracted_name ?? "",
+          batch_number: item.batch_number ?? "",
+          expiry_date: item.expiry_date || null,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+        });
+
+        if (medicineId) {
+          inventoryUpserts.push({
+            clinic_id: activeClinic.clinic_id,
+            medicine_id: medicineId,
+            batch_number: item.batch_number ?? "",
+            expiry_date: item.expiry_date || null,
+            current_stock: item.quantity,
+            unit_cost_price: item.unit_price,
+            selling_price: Math.round(item.unit_price * 1.2 * 100) / 100,
+          });
+        }
+      }
+
+      await supabase.from("procurement_items").insert(itemInserts);
+
+      for (const inv of inventoryUpserts) {
+        const { data: existing } = await supabase
+          .from("inventory_items")
+          .select("id, current_stock")
+          .eq("clinic_id", activeClinic.clinic_id)
+          .eq("medicine_id", inv.medicine_id)
+          .eq("batch_number", inv.batch_number)
+          .maybeSingle();
+
+        if (existing) {
+          await supabase
+            .from("inventory_items")
+            .update({ current_stock: existing.current_stock + inv.current_stock })
+            .eq("id", existing.id);
+        } else {
+          await supabase.from("inventory_items").insert(inv);
+        }
+      }
+
+      const createdCount = nameToIdMap.size;
+      toast.success(
+        createdCount > 0
+          ? `Procurement saved! ${createdCount} new medicine(ies) created and added to inventory.`
+          : "Procurement saved and inventory updated!"
+      );
+
       queryClient.invalidateQueries({ queryKey: ["pharmacy_inventory"] });
       queryClient.invalidateQueries({ queryKey: ["pharmacy_procurements"] });
       form.reset();
@@ -276,7 +317,38 @@ const extractData = async (imageUrl: string) => {
 
   // ── Medicine selection from combobox ────────────────────────────────────────
 
-  const handleMedicineSelect = (index: number, medicine: { id: number; name: string }) => {
+  const fetchWithAuth = (url: string, body: unknown) => {
+    const token = (window as unknown as { __supabaseAuthToken?: string }).__supabaseAuthToken;
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+  };
+
+  const handleCreateMedicine = async (index: number, name: string) => {
+    try {
+      const res = await fetchWithAuth("/api/medicines", { name });
+
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(json.error || "Failed to create medicine");
+        return;
+      }
+
+      form.setValue(`items.${index}.medicine_id`, json.id);
+      form.setValue(`items.${index}.extracted_name`, json.name);
+      toast.success(`Medicine "${json.name}" created and linked!`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Failed to create medicine: ${msg}`);
+    }
+  };
+
+  const handleMedicineSelect = (index: number, medicine: Medicine, _autoFill: MedicationAutoFillData) => {
     form.setValue(`items.${index}.extracted_name`, medicine.name);
     form.setValue(`items.${index}.medicine_id`, medicine.id);
   };
@@ -372,11 +444,10 @@ const extractData = async (imageUrl: string) => {
 
             {/* Unmapped warning banner */}
             {unmappedCount > 0 && fields.length > 0 && !isExtracting && (
-              <div className="mt-2 flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="mt-2 flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                <Sparkles className="w-4 h-4 shrink-0" />
                 <span>
-                  <strong>{unmappedCount}</strong> item{unmappedCount !== 1 ? "s" : ""} need manual
-                  mapping before inventory is updated.
+                  <strong>{unmappedCount}</strong> item{unmappedCount !== 1 ? "s" : ""} will be auto-created in the medicines catalog when saved.
                 </span>
               </div>
             )}
@@ -495,15 +566,16 @@ const extractData = async (imageUrl: string) => {
                               control={form.control}
                               render={({ field: nameField }) => (
                                 <div className="flex flex-col gap-0.5">
-                                  <MedicineCombobox
-                                    value={nameField.value}
-                                    onValueChange={nameField.onChange}
-                                    onMedicineSelect={(medicine) =>
-                                      handleMedicineSelect(index, medicine)
-                                    }
-                                    placeholder="Select or type..."
-                                    className="border-0 shadow-none bg-transparent h-8 px-2"
-                                  />
+<MedicineCombobox
+                                        value={nameField.value}
+                                        onValueChange={nameField.onChange}
+                                        onMedicineSelect={(medicine, autoFill) =>
+                                          handleMedicineSelect(index, medicine, autoFill)
+                                        }
+                                        onCreateMedicine={(name) => handleCreateMedicine(index, name)}
+                                        placeholder="Select or type..."
+                                        className="border-0 shadow-none bg-transparent h-8 px-2"
+                                      />
                                   <Controller
                                     name={`items.${index}.medicine_id`}
                                     control={form.control}

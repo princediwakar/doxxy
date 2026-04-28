@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react"
-import { Pill, X } from "lucide-react"
+import { Pill, X, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -17,6 +17,7 @@ interface MedicineComboboxProps {
   value?: string
   onValueChange?: (value: string) => void
   onMedicineSelect?: (medicine: Medicine, autoFillData: MedicationAutoFillData) => void
+  onCreateMedicine?: (name: string) => void // NEW: Handler for inline creation
   placeholder?: string
   disabled?: boolean
   className?: string
@@ -197,6 +198,7 @@ export function MedicineCombobox({
   value,
   onValueChange,
   onMedicineSelect,
+  onCreateMedicine,
   placeholder = "Search medicines by name...",
   disabled = false,
   className,
@@ -309,6 +311,13 @@ export function MedicineCombobox({
     onClear?.()
   }
 
+  const handleCreateNew = () => {
+    if (!searchQuery.trim()) return;
+    onCreateMedicine?.(searchQuery.trim());
+    setOpen(false);
+    setSearchQuery("");
+  };
+
 
   const formatComposition = (comp1: string | null, comp2: string | null) => {
     if (!comp1) return "Composition N/A"
@@ -382,6 +391,16 @@ export function MedicineCombobox({
                   <p className="text-sm text-muted-foreground mt-1">
                     Try searching by medicine brand name or composition
                   </p>
+                  {onCreateMedicine && (
+                    <button
+                      type="button"
+                      onClick={handleCreateNew}
+                      className="mt-3 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-dashed border-indigo-300 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Create "{debouncedSearchQuery}"
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="py-6 text-center text-sm text-muted-foreground">
