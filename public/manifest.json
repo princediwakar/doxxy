@@ -8,14 +8,13 @@
   "theme_color": "#3b82f6",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/doxxy.png",
       "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "apple_mobile_web_app_capable": true,
+  "apple_mobile_web_app_status_bar_style": "default",
+  "apple_touch_icon": "/doxxy.png"
 }

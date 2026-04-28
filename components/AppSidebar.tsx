@@ -48,8 +48,8 @@ export function AppSidebar() {
   
 
   return (
-    // Clean sidebar design without background colors or borders
-    <div className="flex flex-col h-screen sticky top-0 left-0 w-64 lg:w-72 flex-shrink-0">
+    // Clean sidebar design without background colors or borders - desktop only
+    <div className="flex flex-col h-screen sticky top-0 left-0 w-72 flex-shrink-0">
       {/* Header with Medical Logo and Clinic Switcher */}
       <div className="flex items-center gap-3 p-3 h-14">
           <img src="/logo.svg" alt="Doxxy" className="h-10" />
