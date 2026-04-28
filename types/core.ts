@@ -117,6 +117,27 @@ export type DbMedicineInsert = Database['public']['Tables']['medicines']['Insert
 /** Update type for medicines table */
 export type DbMedicineUpdate = Database['public']['Tables']['medicines']['Update'];
 
+/** Wrapper type for inventory_items table */
+export type DbInventoryItem = Database['public']['Tables']['inventory_items']['Row'];
+/** Insert type for inventory_items table */
+export type DbInventoryItemInsert = Database['public']['Tables']['inventory_items']['Insert'];
+/** Update type for inventory_items table */
+export type DbInventoryItemUpdate = Database['public']['Tables']['inventory_items']['Update'];
+
+/** Wrapper type for procurements table */
+export type DbProcurement = Database['public']['Tables']['procurements']['Row'];
+/** Insert type for procurements table */
+export type DbProcurementInsert = Database['public']['Tables']['procurements']['Insert'];
+/** Update type for procurements table */
+export type DbProcurementUpdate = Database['public']['Tables']['procurements']['Update'];
+
+/** Wrapper type for procurement_items table */
+export type DbProcurementItem = Database['public']['Tables']['procurement_items']['Row'];
+/** Insert type for procurement_items table */
+export type DbProcurementItemInsert = Database['public']['Tables']['procurement_items']['Insert'];
+/** Update type for procurement_items table */
+export type DbProcurementItemUpdate = Database['public']['Tables']['procurement_items']['Update'];
+
 /** Wrapper type for monthly_billing_cycles table */
 export type DbMonthlyBillingCycle = Database['public']['Tables']['monthly_billing_cycles']['Row'];
 /** Insert type for monthly_billing_cycles table */
@@ -162,6 +183,8 @@ export type AppointmentStatus = Database['public']['Enums']['appointment_status'
 export type AppointmentType = Database['public']['Enums']['appointment_type'];
 /** Bill status enum */
 export type BillStatus = Database['public']['Enums']['bill_status'];
+/** Procurement status enum */
+export type ProcurementStatus = Database['public']['Enums']['procurement_status'];
 /** User role enum */
 export type UserRole = Database['public']['Enums']['user_role'];
 

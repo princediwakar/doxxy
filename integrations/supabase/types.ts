@@ -668,6 +668,63 @@ export type Database = {
           },
         ]
       }
+      inventory_items: {
+        Row: {
+          batch_number: string
+          clinic_id: string
+          created_at: string
+          current_stock: number
+          expiry_date: string
+          id: string
+          medicine_id: number
+          reorder_level: number
+          selling_price: number
+          unit_cost_price: number
+          updated_at: string
+        }
+        Insert: {
+          batch_number: string
+          clinic_id: string
+          created_at?: string
+          current_stock?: number
+          expiry_date: string
+          id?: string
+          medicine_id: number
+          reorder_level?: number
+          selling_price?: number
+          unit_cost_price?: number
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string
+          clinic_id?: string
+          created_at?: string
+          current_stock?: number
+          expiry_date?: string
+          id?: string
+          medicine_id?: number
+          reorder_level?: number
+          selling_price?: number
+          unit_cost_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_items_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       medicines: {
         Row: {
           created_at: string | null
@@ -999,6 +1056,110 @@ export type Database = {
           },
         ]
       }
+      procurement_items: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          expiry_date: string | null
+          extracted_name: string | null
+          id: string
+          medicine_id: number | null
+          procurement_id: string
+          quantity: number
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          extracted_name?: string | null
+          id?: string
+          medicine_id?: number | null
+          procurement_id: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          extracted_name?: string | null
+          id?: string
+          medicine_id?: number | null
+          procurement_id?: string
+          quantity?: number
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurement_items_medicine_id_fkey"
+            columns: ["medicine_id"]
+            isOneToOne: false
+            referencedRelation: "medicines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procurement_items_procurement_id_fkey"
+            columns: ["procurement_id"]
+            isOneToOne: false
+            referencedRelation: "procurements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      procurements: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          invoice_date: string
+          invoice_number: string
+          status: Database["public"]["Enums"]["procurement_status"]
+          supplier_name: string
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          invoice_date: string
+          invoice_number: string
+          status?: Database["public"]["Enums"]["procurement_status"]
+          supplier_name: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          invoice_date?: string
+          invoice_number?: string
+          status?: Database["public"]["Enums"]["procurement_status"]
+          supplier_name?: string
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "procurements_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1046,20 +1207,20 @@ export type Database = {
       add_clinic_credits:
         | {
             Args: {
+              clinic_id_param: string
+              credits_to_add: number
+              transaction_id_param?: string
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
               p_clinic_id: string
               p_credits: number
               p_order_id?: string
               p_payment_id?: string
             }
             Returns: Json
-          }
-        | {
-            Args: {
-              clinic_id_param: string
-              credits_to_add: number
-              transaction_id_param?: string
-            }
-            Returns: boolean
           }
       add_clinic_member: {
         Args: {
@@ -1069,6 +1230,16 @@ export type Database = {
           target_clinic_id: string
         }
         Returns: Json
+      }
+      calculate_clinic_credit_usage: {
+        Args: { clinic_id_param: string }
+        Returns: {
+          appointments_count: number
+          clinic_id: string
+          completed_count: number
+          credits_used: number
+          in_progress_count: number
+        }[]
       }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
@@ -1105,19 +1276,6 @@ export type Database = {
       create_patient:
         | {
             Args: {
-              p_address: string
-              p_clinic_id: string
-              p_date_of_birth: string
-              p_email: string
-              p_gender: string
-              p_medical_id: string
-              p_name: string
-              p_phone: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
               p_address?: string
               p_age?: number
               p_clinic_id: string
@@ -1126,6 +1284,19 @@ export type Database = {
               p_medical_id?: string
               p_name: string
               p_phone?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_address: string
+              p_clinic_id: string
+              p_date_of_birth: string
+              p_email: string
+              p_gender: string
+              p_medical_id: string
+              p_name: string
+              p_phone: string
             }
             Returns: string
           }
@@ -1463,6 +1634,7 @@ export type Database = {
           price: number
           short_composition1: string
           short_composition2: string
+          similarity_score: number
         }[]
       }
       submit_contact_form: {
@@ -1476,6 +1648,18 @@ export type Database = {
         }
         Returns: string
       }
+      sync_all_clinic_credits: {
+        Args: never
+        Returns: {
+          credit_balance: number
+          new_credits_used: number
+          old_credits_used: number
+          result_clinic_id: string
+          total_credits_purchased: number
+          updated: boolean
+        }[]
+      }
+      sync_credits_one_time: { Args: never; Returns: undefined }
       update_clinic_member_details: {
         Args: {
           member_user_id: string
@@ -1502,7 +1686,7 @@ export type Database = {
         | {
             Args: {
               p_address?: string
-              p_date_of_birth?: string
+              p_age?: number
               p_email?: string
               p_gender?: string
               p_medical_id?: string
@@ -1515,7 +1699,7 @@ export type Database = {
         | {
             Args: {
               p_address?: string
-              p_age?: number
+              p_date_of_birth?: string
               p_email?: string
               p_gender?: string
               p_medical_id?: string
@@ -1576,8 +1760,6 @@ export type Database = {
       verify_and_process_payment:
         | {
             Args: {
-              p_clinic_id: string
-              p_credits_purchased: number
               p_razorpay_payment_id: string
               p_razorpay_signature: string
               p_transaction_id: string
@@ -1586,6 +1768,8 @@ export type Database = {
           }
         | {
             Args: {
+              p_clinic_id: string
+              p_credits_purchased: number
               p_razorpay_payment_id: string
               p_razorpay_signature: string
               p_transaction_id: string
@@ -1601,6 +1785,7 @@ export type Database = {
         | "Cancelled"
       appointment_type: "Walk-in" | "Digital"
       bill_status: "Paid" | "Pending" | "Overdue"
+      procurement_status: "Draft" | "Verified" | "Completed"
       user_role: "staff" | "doctor" | "superadmin"
     }
     CompositeTypes: {
@@ -1737,6 +1922,7 @@ export const Constants = {
       ],
       appointment_type: ["Walk-in", "Digital"],
       bill_status: ["Paid", "Pending", "Overdue"],
+      procurement_status: ["Draft", "Verified", "Completed"],
       user_role: ["staff", "doctor", "superadmin"],
     },
   },

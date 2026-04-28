@@ -2,7 +2,7 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Users, CalendarPlus, CreditCard, Home, LogOut, Settings, User2 } from "lucide-react";
+import { Users, CalendarPlus, CreditCard, Home, LogOut, Settings, User2, Pill } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,6 +18,7 @@ const navItems = [
   { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ['staff', 'doctor', 'superadmin'] },
   { icon: Users, label: "Patients", path: "/patients", roles: ['staff', 'doctor', 'superadmin'] },
   { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'doctor','superadmin'] },
+  { icon: Pill, label: "Pharmacy", path: "/pharmacy", roles: ['staff', 'superadmin'] },
   { icon: User2, label: "Profile", path: "/profile", roles: ['superadmin', 'staff', 'doctor'] },
   { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
 ];

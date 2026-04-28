@@ -1,3 +1,4 @@
+// components/ui/medicine-combobox.tsx
 "use client";
 
 import * as React from "react"
@@ -248,7 +249,7 @@ export function MedicineCombobox({
   })
 
   // Separate query to get the selected medicine details if we have a value but no selectedMedicine
-  const { data: selectedMedicineData } = useQuery({
+  const { data: selectedMedicineData, isFetching: isFetchingSelected } = useQuery({
     queryKey: ['selected-medicine', value, session?.access_token],
     queryFn: async () => {
       if (!session?.access_token || !value || selectedMedicine?.name === value) {
@@ -260,7 +261,7 @@ export function MedicineCombobox({
         .rpc('search_medicines', { search_term: value, limit_count: 1 })
 
       if (error) {
-        console.error('Error fetching selected medicine:', error)
+        console.error('Error fetching selected medicine:', error.message || error)
         return null
       }
       return data?.[0] || null
@@ -336,7 +337,7 @@ export function MedicineCombobox({
             ) : value ? (
               <div className="flex flex-col gap-1 flex-1">
                 <span className="font-medium">{value}</span>
-                <span className="text-xs text-muted-foreground">Loading details...</span>
+                {isFetchingSelected && <span className="text-xs text-muted-foreground">Loading details...</span>}
               </div>
             ) : initialLoading ? (
               <span className="text-muted-foreground">Loading medicines...</span>
