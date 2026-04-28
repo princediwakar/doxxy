@@ -250,23 +250,3 @@ GRANT EXECUTE ON FUNCTION normalize_medicine_term(TEXT)     TO authenticated;
 GRANT EXECUTE ON FUNCTION match_invoice_items_bulk(TEXT[])  TO authenticated;
 GRANT EXECUTE ON FUNCTION match_invoice_item_single(TEXT)   TO authenticated;
 
--- ============================================================
--- WHAT CHANGED vs previous version:
---
--- 1. form_canonical stored column on medicines table
---    Each medicine now has a pre-computed form type (TAB/CAP/INJ/SYR/…)
---    stored and indexed — O(1) lookup, not regex at query time.
---
--- 2. Two-pass matching
---    Pass 1: candidates must share the same form type as the search term.
---            ONDEM INJ only matches Ondem Injection, not Ondem Syrup.
---    Pass 2: if no form match found (or form unknown), fall back to
---            name-only. Catches generics, combos, edge cases.
---
--- 3. Helper SQL functions normalize_medicine_term + extract_form_canonical
---    Used in both bulk and single RPCs — single source of truth.
---
--- 4. Threshold lowered to 0.30
---    With form filtering reducing false positives we can afford a lower
---    name-similarity floor. Catches brands with slight spelling variants.
--- ============================================================

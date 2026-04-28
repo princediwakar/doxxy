@@ -30,4 +30,6 @@ out
 .env*.local
 .gemini
 .mcp.json
+next-env.d.ts
+tsconfig.tsbuildinfo
 
