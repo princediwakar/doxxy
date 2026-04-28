@@ -103,7 +103,7 @@ export function InventoryTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <PackageSearch className="w-5 h-5 text-primary" />
-            Current Stock
+            Medicine Stock
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -111,7 +111,7 @@ export function InventoryTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Medicine</TableHead>
-                <TableHead>Batch No.</TableHead>
+                <TableHead>Packet No.</TableHead>
                 <TableHead>Expiry</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
@@ -121,7 +121,7 @@ export function InventoryTab() {
               {inventory?.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No inventory records found. Start by adding a procurement bill.
+                    No stock records found. Start by adding a purchase order.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -165,9 +165,9 @@ export function InventoryTab() {
                       </TableCell>
                       <TableCell className="flex gap-2">
                         {isExpired && <Badge variant="destructive">Expired</Badge>}
-                        {isExpiringSoon && <Badge variant="secondary" className="bg-yellow-500 text-white">Expiring</Badge>}
-                        {isLowStock && <Badge variant="outline" className="text-red-500 border-red-500"><AlertTriangle className="w-3 h-3 mr-1" /> Low</Badge>}
-                        {!isExpired && !isExpiringSoon && !isLowStock && <Badge variant="default" className="bg-green-500">Healthy</Badge>}
+                        {isExpiringSoon && <Badge variant="secondary" className="bg-yellow-500 text-white">Expiring Soon</Badge>}
+                        {isLowStock && <Badge variant="outline" className="text-red-500 border-red-500"><AlertTriangle className="w-3 h-3 mr-1" /> Low Stock</Badge>}
+                        {!isExpired && !isExpiringSoon && !isLowStock && <Badge variant="default" className="bg-green-500">In Stock</Badge>}
                       </TableCell>
                     </TableRow>
                   );
@@ -180,7 +180,7 @@ export function InventoryTab() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit Stock Quantity</DialogTitle>
+            <DialogTitle>Update Stock</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -188,7 +188,7 @@ export function InventoryTab() {
               <p className="text-sm font-medium">{(editingItem?.medicines as any)?.name || "Unknown"}</p>
             </div>
             <div className="space-y-2">
-              <Label>Batch Number</Label>
+              <Label>Packet No.</Label>
               <p className="text-sm text-muted-foreground">{editingItem?.batch_number}</p>
             </div>
             <div className="space-y-2">

@@ -43,28 +43,28 @@ export function ProcurementsHistoryTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Receipt className="w-5 h-5 text-primary" />
-          Procurement History
-        </CardTitle>
+<CardTitle className="flex items-center gap-2">
+            <Receipt className="w-5 h-5 text-primary" />
+            Purchase Records
+          </CardTitle>
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Invoice Date</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Invoice No.</TableHead>
-              <TableHead>Total Amount</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
+<TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Dealer</TableHead>
+                <TableHead>Bill No.</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
           <TableBody>
             {procurements?.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                  No procurements found.
-                </TableCell>
+<TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No purchase records found.
+                  </TableCell>
               </TableRow>
             ) : (
               procurements?.map((proc) => (

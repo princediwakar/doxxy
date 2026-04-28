@@ -169,10 +169,10 @@ const extractData = async (imageUrl: string) => {
 
     const unmapped = items.length - matchedCount;
     if (unmapped === 0) {
-      toast.success(`All ${items.length} items extracted and matched!`);
+      toast.success(`All ${items.length} items added to stock!`);
     } else {
       toast.success(
-        `Extracted ${items.length} items — ${matchedCount} matched, ${unmapped} need manual mapping.`
+        `Added ${items.length} items — ${matchedCount} found in catalog, ${unmapped} are new.`
       );
     }
   } catch (error: unknown) {
@@ -211,7 +211,7 @@ const extractData = async (imageUrl: string) => {
       if (procError) throw procError;
 
       if (!data.items || data.items.length === 0) {
-        toast.success("Procurement saved.");
+        toast.success("Purchase order saved.");
         queryClient.invalidateQueries({ queryKey: ["pharmacy_inventory"] });
         queryClient.invalidateQueries({ queryKey: ["pharmacy_procurements"] });
         form.reset();
@@ -297,8 +297,8 @@ const extractData = async (imageUrl: string) => {
       const createdCount = nameToIdMap.size;
       toast.success(
         createdCount > 0
-          ? `Procurement saved! ${createdCount} new medicine(ies) created and added to inventory.`
-          : "Procurement saved and inventory updated!"
+          ? `Saved! ${createdCount} new medicine(s) added to your stock catalog.`
+          : "Saved! Stock has been updated."
       );
 
       queryClient.invalidateQueries({ queryKey: ["pharmacy_inventory"] });
@@ -314,7 +314,7 @@ const extractData = async (imageUrl: string) => {
           ? JSON.stringify(error)
           : String(error);
       console.error("Save error:", msg);
-      toast.error(msg === "Unknown error" ? "Failed to save procurement." : msg);
+      toast.error(msg === "Unknown error" ? "Failed to save stock." : msg);
     } finally {
       setIsSaving(false);
     }
@@ -385,13 +385,13 @@ const extractData = async (imageUrl: string) => {
             <div className="flex justify-between items-center">
               <div>
                 <SheetTitle className="text-xl flex items-center gap-2">
-                  New Procurement Entry
+                  Add New Stock
                   {isExtracting && (
                     <Badge
                       variant="secondary"
                       className="animate-pulse bg-blue-100 text-blue-700 hover:bg-blue-100 ml-2 border-0"
                     >
-                      <Sparkles className="w-3 h-3 mr-1" /> AI Extracting...
+                      <Sparkles className="w-3 h-3 mr-1" /> Scanning...
                     </Badge>
                   )}
                   {extractionStats && !isExtracting && (
@@ -408,7 +408,7 @@ const extractData = async (imageUrl: string) => {
                   )}
                 </SheetTitle>
                 <SheetDescription>
-                  Enter supplier details and item list. Use AI scanner to auto-fill from a bill.
+                  Add new medicines to your stock. Upload a bill image to auto-fill details.
                 </SheetDescription>
               </div>
               <div className="flex items-center gap-3">
@@ -424,7 +424,7 @@ const extractData = async (imageUrl: string) => {
                   ) : (
                     <UploadCloud className="w-4 h-4 mr-2" />
                   )}
-                  Scan Bill with AI
+                  Scan Bill
                 </Button>
                 <Input
                   ref={fileInputRef}
@@ -443,7 +443,7 @@ const extractData = async (imageUrl: string) => {
                   ) : (
                     <Save className="w-4 h-4 mr-2" />
                   )}
-                  Save to Inventory
+                  Save to Stock
                 </Button>
               </div>
             </div>
@@ -469,7 +469,7 @@ const extractData = async (imageUrl: string) => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border rounded-xl bg-card shadow-sm">
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-muted-foreground">
-                    Supplier Name
+                    Supplier / Dealer
                   </Label>
                   <Input
                     {...form.register("supplier_name")}
@@ -484,11 +484,11 @@ const extractData = async (imageUrl: string) => {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-muted-foreground">
-                    Invoice Number
+                    Bill Number
                   </Label>
                   <Input
                     {...form.register("invoice_number")}
-                    placeholder="INV-12345"
+                    placeholder="e.g. INV-12345"
                     className="bg-background"
                   />
                   {form.formState.errors.invoice_number && (
@@ -499,7 +499,7 @@ const extractData = async (imageUrl: string) => {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-sm font-semibold text-muted-foreground">
-                    Invoice Date
+                    Bill Date
                   </Label>
                   <Input type="date" {...form.register("invoice_date")} className="bg-background" />
                 </div>
@@ -520,7 +520,7 @@ const extractData = async (imageUrl: string) => {
               <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
                 <div className="flex justify-between items-center p-4 border-b bg-muted/30">
                   <h3 className="font-semibold">
-                    Line Items
+                    Items List
                     {fields.length > 0 && (
                       <span className="ml-2 text-xs text-muted-foreground font-normal">
                         ({fields.length} items)
@@ -550,9 +550,9 @@ const extractData = async (imageUrl: string) => {
                   <table className="w-full text-sm text-left">
                     <thead className="bg-muted/50 text-muted-foreground uppercase text-xs font-semibold">
                       <tr>
-                        <th className="px-4 py-3 w-[300px]">Medicine Name</th>
-                        <th className="px-4 py-3 w-[150px]">Batch No.</th>
-                        <th className="px-4 py-3 w-[150px]">Expiry</th>
+                        <th className="px-4 py-3 w-[300px]">Medicine</th>
+                        <th className="px-4 py-3 w-[150px]">Packet No.</th>
+                        <th className="px-4 py-3 w-[150px]">Expiry Date</th>
                         <th className="px-4 py-3 w-[100px]">Qty</th>
                         <th className="px-4 py-3 w-[130px]">Unit Price (₹)</th>
                         <th className="px-4 py-3 w-[130px]">Total (₹)</th>
@@ -590,12 +590,12 @@ const extractData = async (imageUrl: string) => {
                                       idField.value ? (
                                         <span className="text-[10px] text-green-600 px-2 flex items-center gap-1">
                                           <CheckCircle className="w-2.5 h-2.5" />
-                                          Verified match
+                                          In catalog
                                         </span>
                                       ) : (
                                         <span className="text-[10px] text-amber-600 px-2 flex items-center gap-1 font-medium">
                                           <AlertCircle className="w-2.5 h-2.5" />
-                                          Requires manual mapping
+                                          New - add to catalog
                                         </span>
                                       )
                                     }
@@ -607,11 +607,11 @@ const extractData = async (imageUrl: string) => {
 
                           {/* Batch */}
                           <td className="px-4 py-2">
-                            <Input
-                              {...form.register(`items.${index}.batch_number`)}
-                              className="h-8 border-0 shadow-none bg-transparent focus-visible:ring-1 focus-visible:bg-background"
-                              placeholder="Batch..."
-                            />
+<Input
+                            {...form.register(`items.${index}.batch_number`)}
+                            className="h-8 border-0 shadow-none bg-transparent focus-visible:ring-1 focus-visible:bg-background"
+                            placeholder="Packet number..."
+                          />
                           </td>
 
                           {/* Expiry */}
