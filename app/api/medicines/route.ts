@@ -7,6 +7,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const singleName = typeof body.name === 'string' ? body.name.trim() : null;
     const batchNames = Array.isArray(body.names) ? body.names.map((n: unknown) => String(n).trim()).filter(Boolean) : [];
+    const isAutoCreated = body.is_auto_created === true;
 
     if (!singleName && batchNames.length === 0) {
       return NextResponse.json({ error: 'Medicine name(s) required' }, { status: 400 });
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
         } else {
           const { data: created, error: insertError } = await supabase
             .from('medicines')
-            .insert({ name, is_discontinued: false })
+            .insert({ name, is_discontinued: false, is_auto_created: isAutoCreated })
             .select('id, name')
             .single();
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ id: existing.id, name: existing.name, created: false });
     }
 
-    const insertData: Record<string, unknown> = { name: singleName, is_discontinued: false };
+    const insertData: Record<string, unknown> = { name: singleName, is_discontinued: false, is_auto_created: isAutoCreated };
     if (body.category) insertData.pack_type = body.category;
 
     const { data: created, error: insertError } = await supabase

@@ -17,12 +17,13 @@ interface MedicineComboboxProps {
   value?: string
   onValueChange?: (value: string) => void
   onMedicineSelect?: (medicine: Medicine, autoFillData: MedicationAutoFillData) => void
-  onCreateMedicine?: (name: string) => void // NEW: Handler for inline creation
+  onCreateMedicine?: (name: string) => void
   placeholder?: string
   disabled?: boolean
   className?: string
   showClearButton?: boolean
   onClear?: () => void
+  showCreateButton?: boolean // Control whether create button appears in empty state
 }
 
 // Smart extraction functions for auto-filling prescription fields
@@ -203,13 +204,21 @@ export function MedicineCombobox({
   disabled = false,
   className,
   showClearButton = true,
-  onClear
+  onClear,
+  showCreateButton = true,
 }: MedicineComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [searchQuery, setSearchQuery] = React.useState("")
+  const [searchQuery, setSearchQuery] = React.useState(value || "")
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const [selectedMedicine, setSelectedMedicine] = React.useState<Medicine | null>(null)
   const { session, initialLoading } = useAuth()
+
+  // Sync searchQuery with external value changes
+  React.useEffect(() => {
+    if (value && value !== searchQuery) {
+      setSearchQuery(value)
+    }
+  }, [value])
 
   // Fetch medicines with name-only search for better relevance
   const { data: medicines = [], isLoading } = useQuery({
@@ -386,20 +395,32 @@ export function MedicineCombobox({
                 </div>
               ) : medicines.length === 0 && debouncedSearchQuery ? (
                 <div className="py-6 text-center">
-                  <Pill className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                  <p>No medicines found for "{debouncedSearchQuery}"</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Try searching by medicine brand name or composition
-                  </p>
-                  {onCreateMedicine && (
-                    <button
-                      type="button"
-                      onClick={handleCreateNew}
-                      className="mt-3 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-dashed border-indigo-300 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 transition-colors"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Create "{debouncedSearchQuery}"
-                    </button>
+                  {showCreateButton ? (
+                    <>
+                      <Pill className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p>No medicines found for "{debouncedSearchQuery}"</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Try searching by medicine brand name or composition
+                      </p>
+                      {onCreateMedicine && (
+                        <button
+                          type="button"
+                          onClick={handleCreateNew}
+                          className="mt-3 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-dashed border-indigo-300 text-indigo-700 hover:bg-indigo-50 hover:border-indigo-400 transition-colors"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Create "{debouncedSearchQuery}"
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Pill className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                      <p>No medicines found</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        "{debouncedSearchQuery}" will be saved as-is to inventory
+                      </p>
+                    </>
                   )}
                 </div>
               ) : (

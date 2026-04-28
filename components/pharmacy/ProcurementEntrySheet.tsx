@@ -229,7 +229,7 @@ const extractData = async (imageUrl: string) => {
       const nameToIdMap = new Map<string, number>();
 
       if (uniqueUnmapped.length > 0) {
-        const res = await fetchWithAuth("/api/medicines", { names: uniqueUnmapped });
+        const res = await fetchWithAuth("/api/medicines", { names: uniqueUnmapped, is_auto_created: true });
 
         if (!res.ok) {
           const json = await res.json().catch(() => ({}));
@@ -581,6 +581,7 @@ const extractData = async (imageUrl: string) => {
                                         onCreateMedicine={(name) => handleCreateMedicine(index, name)}
                                         placeholder="Select or type..."
                                         className="border-0 shadow-none bg-transparent h-8 px-2"
+                                        showCreateButton={false}
                                       />
                                   <Controller
                                     name={`items.${index}.medicine_id`}
