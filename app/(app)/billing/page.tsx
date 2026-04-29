@@ -33,22 +33,14 @@ const BillingModal = lazy(() =>
   }))
 );
 import { printBill } from "@/components/billing/billingPrintUtils";
-import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFABAction } from "@/hooks/useFABAction";
-import { useQuery } from "@tanstack/react-query";
+import { useBillingData } from "@/hooks/useBillingData";
 import { DbPatient } from "@/types/core";
-import { Bill, ServiceItem } from "@/types/billing";
-
-const supabase = getSupabase();
+import { Bill } from "@/types/billing";
 
 interface BillWithDetails extends Bill {
   patient_name?: string;
-}
-
-interface BillingStats {
-  totalRevenue: number;
-  totalBills: number;
 }
 
 const Billing = () => {
@@ -79,96 +71,12 @@ const Billing = () => {
   });
 
   const {
-    data: bills = [],
-    isLoading: isLoadingBills,
-    refetch: refetchBills,
-  } = useQuery({
-    queryKey: ["bills", activeClinic?.clinic_id, selectedMonth],
-    queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
-
-      const [year, month] = selectedMonth.split("-").map(Number);
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0, 23, 59, 59);
-
-      const { data, error } = await supabase
-        .from("bills")
-        .select(`*, patients(name)`)
-        .eq("clinic_id", activeClinic.clinic_id)
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString())
-        .order("created_at", { ascending: false });
-      if (error) throw new Error(error.message);
-
-      return (data || []).map((b) => {
-        const { patients, ...billData } = b;
-        // Convert service_items from Json to ServiceItem[] with proper type checking
-        let serviceItems: ServiceItem[] | null = null;
-        const jsonData = billData.service_items;
-        if (jsonData && Array.isArray(jsonData)) {
-          // Basic validation that items have the expected shape
-          const items: ServiceItem[] = [];
-          for (const item of jsonData) {
-            if (typeof item === "object" && item !== null) {
-              const obj = item as Record<string, unknown>;
-              if (
-                typeof obj.description === "string" &&
-                typeof obj.quantity === "number" &&
-                typeof obj.rate === "number" &&
-                typeof obj.amount === "number"
-              ) {
-                items.push({
-                  description: obj.description,
-                  quantity: obj.quantity,
-                  rate: obj.rate,
-                  amount: obj.amount,
-                });
-              }
-            }
-          }
-          if (items.length > 0) {
-            serviceItems = items;
-          }
-        }
-
-        return {
-          ...billData,
-          service_items: serviceItems,
-          patient_name: patients?.name,
-        } as BillWithDetails;
-      });
-    },
-    enabled: !!activeClinic?.clinic_id,
-  });
-
-  const { data: stats, refetch: refetchStats } = useQuery<BillingStats, Error>({
-    queryKey: ["billingStats", activeClinic?.clinic_id, selectedMonth],
-    queryFn: async () => {
-      if (!activeClinic?.clinic_id) return { totalRevenue: 0, totalBills: 0 };
-
-      const [year, month] = selectedMonth.split("-").map(Number);
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0, 23, 59, 59);
-
-      const { data, error } = await supabase
-        .from("bills")
-        .select("amount")
-        .eq("clinic_id", activeClinic.clinic_id)
-        .gte("created_at", startDate.toISOString())
-        .lte("created_at", endDate.toISOString());
-
-      if (error) throw new Error(error.message);
-
-      const totalRevenue = data.reduce(
-        (sum, bill) => sum + Number(bill.amount),
-        0
-      );
-      const totalBills = data.length;
-
-      return { totalRevenue, totalBills };
-    },
-    enabled: !!activeClinic?.clinic_id,
-  });
+    bills,
+    isLoadingBills,
+    refetchBills,
+    stats,
+    refetchStats,
+  } = useBillingData(activeClinic?.clinic_id, selectedMonth);
 
   const handleBillClick = (bill: BillWithDetails) => {
     setSelectedBill(bill);

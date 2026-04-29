@@ -7,12 +7,12 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Mail,
   Phone,
-  CheckCircle
+  CheckCircle,
   Calendar,
 } from 'lucide-react';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
-import { getSupabase } from "@/integrations/supabase/client";
+import { useSubmitContactForm } from "@/hooks/useSubmitContactForm";
 import { logger } from "@/lib/logger";
 
 
@@ -243,61 +243,18 @@ const ContactClient = () => {
   });
 
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const submitContactForm = useSubmitContactForm();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setError(null);
-    
+
     try {
-      const supabase = getSupabase();
-      
-      // Call the RPC function to submit the contact form
-      const { data, error: rpcError } = await supabase.rpc('submit_contact_form', {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone || undefined,
-        company: formData.company || undefined,
-        city: formData.city || undefined,
-        message: formData.message
-      });
-      
-      if (rpcError) {
-        throw new Error(rpcError.message || 'Failed to submit form');
-      }
-      
+      const data = await submitContactForm.mutateAsync(formData);
       logger.log('Contact form submitted successfully with ID:', data);
-      
-      // Send email notification via Edge Function
-      try {
-        const emailResponse = await supabase.functions.invoke('send-contact-email', {
-          body: {
-            record: {
-              id: data,
-              name: formData.name,
-              email: formData.email,
-              phone: formData.phone,
-              company: formData.company,
-              city: formData.city,
-              message: formData.message,
-              created_at: new Date().toISOString()
-            }
-          }
-        });
-        
-        if (emailResponse.error) {
-          logger.error('Failed to send email notification:', emailResponse.error);
-          // Don't throw error here - form submission was successful, email is just a bonus
-        } else {
-          logger.log('Email notification sent successfully:', emailResponse.data);
-        }
-      } catch (emailError) {
-        logger.error('Error sending email notification:', emailError);
-        // Don't throw error here - form submission was successful, email is just a bonus
-      }
-      
+
       setIsSubmitted(true);
       setFormData({
         name: '',
@@ -310,8 +267,6 @@ const ContactClient = () => {
     } catch (err) {
       logger.error('Contact form error:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -378,7 +333,7 @@ const ContactClient = () => {
                 formData={formData}
                 handleChange={handleChange}
                 handleSubmit={handleSubmit}
-                isSubmitting={isSubmitting}
+                isSubmitting={submitContactForm.isPending}
                 error={error}
               />
               <div className="space-y-8">

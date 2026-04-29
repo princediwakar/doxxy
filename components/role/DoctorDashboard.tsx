@@ -6,22 +6,13 @@ import { Users, Stethoscope, Activity, Clock, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { useAuth } from "@/contexts/AuthContext";
 import React, { useState, useMemo } from "react";
-import { getSupabase } from "@/integrations/supabase/client";
-import {
-  DoctorDashboardData,
-  isValidDatabaseAppointment,
-} from "@/types/dashboard";
-import { useQuery } from "@tanstack/react-query";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { useRouter } from "next/navigation";
-import { Enums } from "@/integrations/supabase/types";
+import { AppointmentStatus, AppointmentType } from "@/types/core";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
-
-const supabase = getSupabase();
-
-// Type guard is now imported from @/types/dashboard
+import { useDoctorDashboardData } from "@/hooks/useDoctorDashboardData";
 
 const DoctorDashboard = React.memo(function DoctorDashboard() {
   const { activeClinic, user, activeClinicRole, profileName } = useAuth();
@@ -33,43 +24,11 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
   const [currentUpcomingPage, setCurrentUpcomingPage] = useState(1);
   const appointmentsPerPage = 5;
 
-  // Doctor-specific dashboard query
   const {
     data: doctorDashboardData,
     isLoading,
     error,
-  } = useQuery<DoctorDashboardData | null>({
-    queryKey: ["doctorDashboardData", activeClinic?.clinic_id, user?.id],
-    queryFn: async () => {
-      if (
-        !activeClinic?.clinic_id ||
-        !user?.id ||
-        (activeClinicRole !== "doctor" && activeClinicRole !== "superadmin")
-      )
-        return null;
-      const { data, error } = await supabase.rpc("get_doctor_dashboard_data", {
-        _clinic_id: activeClinic.clinic_id,
-        _user_id: user.id,
-      });
-      if (error) throw error;
-      const result = (data?.[0] ??
-        null) as unknown as DoctorDashboardData | null;
-      if (result) {
-        // Ensure JSON fields are arrays, fallback to empty arrays if invalid
-        result.upcoming_appointments = Array.isArray(
-          result.upcoming_appointments
-        )
-          ? result.upcoming_appointments.filter(isValidDatabaseAppointment)
-          : [];
-      }
-      return result;
-    },
-    enabled:
-      !!activeClinic?.clinic_id &&
-      !!user?.id &&
-      (activeClinicRole === "doctor" || activeClinicRole === "superadmin"),
-    staleTime: 5 * 60 * 1000,
-  });
+  } = useDoctorDashboardData();
 
   // Prepare appointments and patients data - memoized
   const allAppointments = useMemo(
@@ -97,8 +56,8 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
         doctor: apt.doctor_name,
         time: apt.time,
         date: apt.date,
-        status: apt.status as Enums<"appointment_status">,
-        type: apt.type as Enums<"appointment_type">,
+        status: apt.status as AppointmentStatus,
+        type: apt.type as AppointmentType,
       }));
   }, [allAppointments, today]);
 

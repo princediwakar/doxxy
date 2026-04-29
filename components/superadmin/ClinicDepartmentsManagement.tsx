@@ -1,17 +1,14 @@
 // components/superadmin/ClinicDepartmentsManagement.tsx
 "use client";
-import { logger } from "@/lib/logger";
 
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getSupabase } from '@/integrations/supabase/client';
-import { DbDepartmentType, DbClinicDepartment } from '@/types/core';
+import { DbDepartmentType } from '@/types/core';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClinicDepartmentManagement } from '@/hooks/useClinicDepartmentManagement';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
 import { 
   Search, 
   Plus, 
@@ -32,107 +29,20 @@ interface DepartmentWithStatus extends DbDepartmentType {
   clinicDepartmentId?: string;
 }
 
-const supabase = getSupabase();
-
 const ClinicDepartmentsManagement = () => {
   const { activeClinic, activeClinicRole } = useAuth();
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
 
   const clinicId = activeClinic?.clinic_id;
   const isSuperadmin = activeClinicRole === 'superadmin';
 
-  // Fetch all available department types
-  const { data: departmentTypes = [], isLoading: isLoadingDepartmentTypes } = useQuery<DbDepartmentType[]>({
-    queryKey: ['departmentTypes'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('department_types')
-        .select('*')
-        .order('name');
-      if (error) throw error;
-      return data || [];
-    },
-  });
-
-  // Fetch clinic departments for the active clinic
-  const { data: clinicDepartments = [], isLoading: isLoadingClinicDepartments } = useQuery<DbClinicDepartment[]>({
-    queryKey: ['clinicDepartmentsForClinic', clinicId],
-    queryFn: async () => {
-      if (!clinicId) return [];
-      const { data, error } = await supabase
-        .from('clinic_departments')
-        .select('*')
-        .eq('clinic_id', clinicId);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!clinicId,
-  });
-
-  // Add department mutation
-  const addDepartmentMutation = useMutation({
-    mutationFn: async (departmentTypeId: string) => {
-      if (!clinicId) throw new Error('Active clinic not found.');
-      const { error } = await supabase
-        .from('clinic_departments')
-        .insert({
-          clinic_id: clinicId,
-          department_type_id: departmentTypeId,
-        });
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clinicDepartmentsForClinic', clinicId] });
-      queryClient.invalidateQueries({ queryKey: ['clinicDepartments', clinicId] }); // Also invalidate for members component
-      toast.success('Department added successfully');
-    },
-    onError: (error: Error) => {
-      logger.error('Error adding department:', error);
-      toast.error('Failed to add department: ' + error.message);
-    },
-  });
-
-  // Remove department mutation
-  const removeDepartmentMutation = useMutation({
-    mutationFn: async (clinicDepartmentId: string) => {
-      if (!clinicId) throw new Error('Active clinic not found.');
-
-      const { count, error: countError } = await supabase
-        .from('clinic_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('department_id', clinicDepartmentId)
-
-      if (countError) {
-        throw new Error(`Failed to check for department members: ${countError.message}`);
-      }
-
-      if (count && count > 0) {
-        throw new Error(`Cannot remove department: ${count} member(s) are still assigned.`);
-      }
-
-      const { error } = await supabase
-        .from('clinic_departments')
-        .delete()
-        .eq('id', clinicDepartmentId);
-
-      if (error) {
-        if (error.message.includes('violates foreign key constraint')) {
-          throw new Error("This department is in use and cannot be removed.");
-        }
-        throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['clinicDepartmentsForClinic', clinicId] });
-      queryClient.invalidateQueries({ queryKey: ['clinicDepartments', clinicId] });
-      toast.success('Department removed successfully');
-    },
-    onError: (error: Error) => {
-      logger.error('Error removing department:', error);
-      toast.error(error.message || 'Failed to remove department.');
-    },
-  });
+  const {
+    departmentTypes,
+    clinicDepartments,
+    isLoading,
+    addDepartment,
+    removeDepartment,
+  } = useClinicDepartmentManagement(clinicId);
 
   // Combine department types with their active status
   const departmentsWithStatus: DepartmentWithStatus[] = departmentTypes.map(dept => {
@@ -155,9 +65,9 @@ const ClinicDepartmentsManagement = () => {
 
   const handleToggleDepartment = (department: DepartmentWithStatus) => {
     if (department.isActive && department.clinicDepartmentId) {
-      removeDepartmentMutation.mutate(department.clinicDepartmentId);
+      removeDepartment(department.clinicDepartmentId);
     } else {
-      addDepartmentMutation.mutate(department.id);
+      addDepartment(department.id);
     }
   };
 
@@ -171,8 +81,6 @@ const ClinicDepartmentsManagement = () => {
     return <Activity className="h-5 w-5" />;
   };
 
-  const isLoading = isLoadingDepartmentTypes || isLoadingClinicDepartments || 
-                    addDepartmentMutation.isPending || removeDepartmentMutation.isPending;
 
   // Early return for access control after all hooks
   if (!isSuperadmin) {

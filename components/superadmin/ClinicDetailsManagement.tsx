@@ -2,16 +2,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from '@/integrations/supabase/client';
-import { Tables } from "@/integrations/supabase/types";
-import { z } from "zod";
+import { useClinicDetails } from "@/hooks/useClinicDetails";
 import { toast } from "sonner";
+import { DbClinic } from "@/types/core";
+import { z } from "zod";
 import { 
   Building, 
   Mail, 
@@ -23,8 +22,6 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
-
-const supabase = getSupabase();
 
 const clinicDetailsSchema = z.object({
   name: z.string().min(1, "Clinic name is required").max(100, "Name too long"),
@@ -51,8 +48,8 @@ interface ValidationError {
 
 const ClinicDetailsManagement = () => {
   const { activeClinic, activeClinicRole } = useAuth();
-  const queryClient = useQueryClient();
-  const clinic = activeClinic?.clinics as Tables<'clinics'> | null;
+  const clinic = activeClinic?.clinics as DbClinic | null;
+  const { clinicData, isLoading: isLoadingClinic, updateClinic, isUpdating } = useClinicDetails(clinic?.id);
   
   const [form, setForm] = useState<ClinicDetailsForm>({
     name: "",
@@ -63,26 +60,7 @@ const ClinicDetailsManagement = () => {
   });
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-// Fetch clinic details with React Query
-const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
-  queryKey: ['clinic', clinic?.id],
-  queryFn: async () => {
-    if (!clinic?.id) return null;
-    const { data, error } = await supabase
-      .from('clinics')
-      .select('*')
-      .eq('id', clinic.id)
-      .single();
-    if (error) throw error;
-    return data;
-  },
-  enabled: !!clinic?.id,
-  // Add these options to ensure data is always fresh
-  staleTime: 0, // Data is considered stale immediately
-  gcTime: 0, // Don't cache the data
-  refetchOnMount: true, // Always refetch on mount
-  refetchOnWindowFocus: true, // Refetch when window regains focus
-});
+
   // Initialize form with clinic data
   useEffect(() => {
     if (clinicData) {
@@ -101,37 +79,6 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
   const isSuperadmin = activeClinicRole === 'superadmin';
 
   
-
-  // Update clinic mutation
-  const updateClinicMutation = useMutation({
-    mutationFn: async (formData: ClinicDetailsForm) => {
-      if (!clinic?.id) throw new Error('No clinic found');
-      
-      const { name, address, email, phone, website } = formData;
-      const { error } = await supabase
-        .from("clinics")
-        .update({ 
-          name, 
-          address, 
-          email, 
-          phone, 
-          website: website || null 
-        })
-        .eq("id", clinic.id);
-      
-      if (error) throw error;
-      return formData;
-    },
-    onSuccess: () => {
-      toast.success("Clinic details updated successfully");
-      setHasUnsavedChanges(false);
-      setValidationErrors([]);
-      queryClient.invalidateQueries({ queryKey: ['clinic', clinic?.id] });
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to update clinic details: " + error.message);
-    },
-  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -164,7 +111,12 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
       return;
     }
     
-    updateClinicMutation.mutate(form);
+    updateClinic(form, {
+      onSuccess: () => {
+        setHasUnsavedChanges(false);
+        setValidationErrors([]);
+      },
+    });
   };
 
   const getFieldError = (field: keyof ClinicDetailsForm) => {
@@ -221,7 +173,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
               <span className="hidden sm:inline">Unsaved</span>
             </Badge>
           )}
-          {!hasUnsavedChanges && !updateClinicMutation.isPending && (
+          {!hasUnsavedChanges && !isUpdating && (
             <Badge variant="outline" className="text-success border-success/20">
               <CheckCircle className="h-3 w-3 mr-1" />
               <span className="hidden sm:inline">Saved</span>
@@ -254,7 +206,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     name="name"
                     value={form.name}
                     onChange={handleChange}
-                    disabled={updateClinicMutation.isPending}
+                    disabled={isUpdating}
                     placeholder="Enter clinic name"
                     className={hasFieldError('name') ? 'border-destructive flex items-center' : ''}
                   />
@@ -277,7 +229,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     type="email"
                     value={form.email}
                     onChange={handleChange}
-                    disabled={updateClinicMutation.isPending}
+                    disabled={isUpdating}
                     placeholder="contact@clinic.com"
                     className={hasFieldError('email') ? 'border-destructive flex items-center' : ''}
                   />
@@ -300,7 +252,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     type="tel"
                     value={form.phone}
                     onChange={handleChange}
-                    disabled={updateClinicMutation.isPending}
+                    disabled={isUpdating}
                     placeholder="9000012345"
                     className={hasFieldError('phone') ? 'border-destructive flex items-center' : ''}
                   />
@@ -323,7 +275,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                     type="text"
                     value={form.website}
                     onChange={handleChange}
-                    disabled={updateClinicMutation.isPending}
+                    disabled={isUpdating}
                     placeholder="www.clinic.com"
                     className={hasFieldError('website') ? 'border-destructive flex items-center' : ''}
                   />
@@ -346,7 +298,7 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
                   name="address"
                   value={form.address}
                   onChange={handleChange}
-                  disabled={updateClinicMutation.isPending}
+                  disabled={isUpdating}
                   placeholder="123 Medical Center Drive, City, State 12345"
                   className={hasFieldError('address') ? 'border-destructive flex items-center' : ''}
                 />
@@ -364,12 +316,12 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
               <div className="flex justify-end">
                 <Button
                   type="submit"
-                  disabled={updateClinicMutation.isPending || !hasUnsavedChanges}
+                  disabled={isUpdating || !hasUnsavedChanges}
                   className="flex items-center space-x-2"
                 >
                   <Save className="h-4 w-4" />
                   <span>
-                    {updateClinicMutation.isPending ? "Saving..." : "Save Changes"}
+                    {isUpdating ? "Saving..." : "Save Changes"}
                   </span>
                 </Button>
               </div>

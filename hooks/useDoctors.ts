@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { queryKeys } from '@/lib/query-keys';
 
 const supabase = getSupabase();
 
@@ -17,7 +18,7 @@ export const useDoctors = () => {
   const { activeClinic } = useAuth();
 
   const { data: doctors = [], isLoading, error } = useQuery({
-    queryKey: ['doctors', activeClinic?.clinics?.id],
+    queryKey: queryKeys.doctors.byClinic(activeClinic?.clinics?.id ?? ""),
     queryFn: async () => {
       if (!activeClinic?.clinics?.id) return [];
 

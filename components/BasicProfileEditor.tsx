@@ -1,6 +1,5 @@
 // src/components/BasicProfileEditor.tsx
 "use client";
-import { logger } from "@/lib/logger";
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,19 +8,16 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSupabase } from '@/integrations/supabase/client';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useToast } from '@/hooks/use-toast';
-import { 
-  User as UserIcon, 
-  Save, 
-  X, 
+import { useProfileEditor } from '@/hooks/useProfileEditor';
+import { toast } from 'sonner';
+import {
+  User as UserIcon,
+  Save,
+  X,
   Upload
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-
-const supabase = getSupabase();
 
 interface BasicProfileEditorProps {
   open: boolean;
@@ -36,31 +32,27 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   user, 
   onProfileUpdate 
 }) => {
-  const { toast } = useToast();
   const { markProfileComplete, activeClinic } = useAuth();
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [editedName, setEditedName] = useState(user?.user_metadata?.name || '');
   const [editedPhone, setEditedPhone] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState(user?.user_metadata?.avatar_url || '');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const { data: profileData, isLoading: profileLoading } = useQuery({
-    queryKey: ['userProfile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+  const { profileData, profileLoading, updateProfile, isUpdating } = useProfileEditor({
+    userId: user?.id,
+    enabled: open,
+    activeClinicId: activeClinic?.clinics?.id,
+    onSuccess: () => {
+      toast.success('Profile updated successfully!', {
+        description: 'Your changes have been saved.',
+      });
+      markProfileComplete();
+      onProfileUpdate?.();
+      onClose();
     },
-    enabled: !!user?.id && open,
   });
 
   React.useEffect(() => {
@@ -99,141 +91,29 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
     }
   };
 
-  const updateBasicProfileMutation = useMutation({
-    mutationFn: async () => {
-      if (!user?.id) throw new Error("User ID is missing");
-
-      // Validate
-      const errors: Record<string, string> = {};
-      if (!editedName.trim()) {
-        errors.name = 'Name is required';
-      }
-      
-      // Fix: Sanitize phone before regex check (allow spaces/dashes in input, strip for check)
-      const cleanPhone = editedPhone ? editedPhone.replace(/[\s-]/g, '') : '';
-      if (cleanPhone && !/^\+?[0-9]{10,15}$/.test(cleanPhone)) {
-        errors.phone = 'Please enter a valid phone number (e.g. +919999999999)';
-      }
-      
-      if (Object.keys(errors).length > 0) {
-        setFormErrors(errors);
-        throw new Error('Validation failed');
-      }
-
-      let avatarUrl = user?.user_metadata?.avatar_url;
-
-      // Upload photo if selected
-      if (profilePhoto) {
-        const fileExt = profilePhoto.name?.split('.').pop() || 'jpg';
-        const fileName = `${user.id}_${Date.now()}.${fileExt}`; // Safe user.id usage
-        
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, profilePhoto);
-
-        if (uploadError) throw uploadError;
-
-        const { data: urlData } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-        
-        avatarUrl = urlData.publicUrl;
-      }
-
-      // 1. Update auth user metadata first
-      const { error: authError } = await supabase.auth.updateUser({
-        data: {
-          name: editedName.trim(),
-          avatar_url: avatarUrl,
-        }
-      });
-      if (authError) throw authError;
-
-      // 2. Run Database Updates in Parallel to minimize consistency windows
-      const updates = [];
-
-      // A: Profiles Table
-      const profilePromise = (async () => {
-        const { data: existingProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .maybeSingle();
-
-        const profileData = {
-          name: editedName.trim(),
-          phone: cleanPhone || null, // Use sanitized phone
-          email: user?.email || null,
-          avatar_url: avatarUrl,
-          updated_at: new Date().toISOString()
-        };
-
-        if (!existingProfile) {
-          const { error } = await supabase.from('profiles').insert({
-            id: user.id,
-            created_at: new Date().toISOString(),
-            ...profileData
-          });
-          if (error) throw error;
-        } else {
-          const { error } = await supabase.from('profiles').update(profileData).eq('id', user.id);
-          if (error) throw error;
-        }
-      })();
-      updates.push(profilePromise);
-
-      // B: Doctor Profile (if exists)
-      const doctorPromise = (async () => {
-        const { data: doctorProfile } = await supabase
-          .from('doctors')
-          .select('id')
-          .eq('user_id', user.id)
-          .maybeSingle();
-
-        if (doctorProfile) {
-          const { error } = await supabase
-            .from('doctors')
-            .update({
-              name: editedName.trim(),
-              phone: cleanPhone || null,
-              updated_at: new Date().toISOString(),
-            })
-            .eq('user_id', user.id);
-          if (error) throw error;
-        }
-      })();
-      updates.push(doctorPromise);
-
-      // Wait for DB updates
-      await Promise.all(updates);
-    },
-    onSuccess: () => {
-      setFormErrors({});
-      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinics?.id] });
-      toast({ 
-        title: 'Profile updated successfully!', 
-        description: 'Your changes have been saved.',
-        variant: 'default'
-      });
-      markProfileComplete();
-      onProfileUpdate?.();
-      onClose();
-    },
-    onError: (error: Error) => {
-      logger.error('Profile update failed:', error);
-      if (error.message !== 'Validation failed') {
-        toast({ 
-          title: 'Error updating profile', 
-          description: error.message, 
-          variant: 'destructive' 
-        });
-      }
-    }
-  });
-
   const handleSaveChanges = () => {
-    updateBasicProfileMutation.mutate();
+    const errors: Record<string, string> = {};
+    if (!editedName.trim()) {
+      errors.name = 'Name is required';
+    }
+
+    const cleanPhone = editedPhone ? editedPhone.replace(/[\s-]/g, '') : '';
+    if (cleanPhone && !/^\+?[0-9]{10,15}$/.test(cleanPhone)) {
+      errors.phone = 'Please enter a valid phone number (e.g. +919999999999)';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    updateProfile({
+      name: editedName.trim(),
+      phone: cleanPhone,
+      profilePhoto,
+      currentAvatarUrl: user?.user_metadata?.avatar_url,
+      userEmail: user?.email,
+    });
   };
 
   const handleCancel = () => {
@@ -385,17 +265,17 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
             <Button
               variant="outline"
               onClick={handleCancel}
-              disabled={updateBasicProfileMutation.isPending}
+              disabled={isUpdating}
             >
               <X className="w-4 h-4 mr-2" />
               Cancel
             </Button>
             <Button
               onClick={handleSaveChanges}
-              disabled={updateBasicProfileMutation.isPending}
+              disabled={isUpdating}
               className="bg-primary hover:bg-primary/90"
             >
-              {updateBasicProfileMutation.isPending ? (
+              {isUpdating ? (
                 <>
                   <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
                   Saving...

@@ -1,7 +1,5 @@
 // components/pharmacy/ProcurementHistoryTab.tsx
-import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { getSupabase } from "@/integrations/supabase/client";
+import { useProcurements } from "@/hooks/useProcurements";
 import {
   Table,
   TableBody,
@@ -14,27 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
-const supabase = getSupabase();
-
 export function ProcurementsHistoryTab() {
-  const { activeClinic } = useAuth();
-
-  const { data: procurements, isLoading } = useQuery({
-    queryKey: ["pharmacy_procurements", activeClinic?.clinic_id],
-    queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
-      
-      const { data, error } = await supabase
-        .from("procurements")
-        .select("*")
-        .eq("clinic_id", activeClinic.clinic_id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!activeClinic?.clinic_id,
-  });
+  const { data: procurements, isLoading } = useProcurements();
 
   if (isLoading) {
     return <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;

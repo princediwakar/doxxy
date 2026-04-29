@@ -1,7 +1,5 @@
-// src/components/consultation/ConsultationViewModal.tsx
 "use client";
-import { logger } from "@/lib/logger";
-import { useQuery } from "@tanstack/react-query";
+
 import {
   Dialog,
   DialogContent,
@@ -10,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
 import { Eye, Printer } from "lucide-react";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import { ConsultationLayout } from "./ConsultationLayout";
@@ -26,8 +24,7 @@ import {
   ConsultationFormValues,
   FieldValue,
 } from "@/types/consultation";
-
-const supabase = getSupabase();
+import { useConsultationViewData } from "@/hooks/useConsultationViewData";
 
 interface ConsultationViewModalProps {
   open: boolean;
@@ -42,138 +39,12 @@ export function ConsultationViewModal({
 }: ConsultationViewModalProps) {
   const { activeClinic, user } = useAuth();
 
-  // Fetch patient data if not available in appointment object
-  const { data: patientData } = useQuery<Patient | null>({
-    queryKey: ["patient", appointment?.patient_id],
-    queryFn: async () => {
-      if (!appointment?.patient_id || !activeClinic?.clinic_id) return null;
-      const { data, error } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("id", appointment.patient_id)
-        .eq("clinic_id", activeClinic.clinic_id)
-        .single();
-      if (error) {
-        logger.error("Failed to fetch patient data:", error);
-        return null;
-      }
-      return data;
-    },
-    enabled:
-      open &&
-      !!appointment?.patient_id &&
-      !!activeClinic?.clinic_id &&
-      (!appointment.patient_gender || !appointment.patient_age),
-  });
-
-  // Fetch consultation data
-  const { data: consultationData, isLoading: isLoadingConsultation } =
-    useQuery<Consultation | null>({
-      queryKey: ["consultation", appointment?.id],
-      queryFn: async () => {
-        if (!appointment?.id) return null;
-        const { data, error } = await supabase
-          .from("consultations")
-          .select("*")
-          .eq("appointment_id", appointment.id)
-          .single();
-        if (error && error.code !== "PGRST116") {
-          toast.error(`Failed to fetch consultation: ${error.message}`);
-          throw error;
-        }
-        // Convert the raw database data to our typed Consultation
-        if (data) {
-          return {
-            ...data,
-            specialty_data:
-              data.specialty_data as ConsultationFormValues["specialty_data"],
-          } as Consultation;
-        }
-        return null;
-      },
-      enabled: open && !!appointment?.id,
-    });
-
-  // Fetch doctor details to determine specialty
-  const { data: doctorDetails } = useQuery<TransformedDoctorData[] | null>({
-    queryKey: [
-      "doctorDetails",
-      appointment?.doctor_id,
-      activeClinic?.clinic_id,
-    ],
-    queryFn: async () => {
-      if (!appointment?.doctor_id || !activeClinic?.clinic_id) return null;
-
-      // Try RPC function first
-      const { data: rpcData, error: rpcError } = await supabase.rpc(
-        "get_doctors_by_clinic",
-        {
-          clinic_id: activeClinic.clinic_id,
-        }
-      );
-
-      if (!rpcError && rpcData) {
-        logger.log("RPC function succeeded, returning data:", rpcData);
-        const doctor = rpcData?.find(
-          (d: TransformedDoctorData) => d.id === appointment.doctor_id
-        );
-        return doctor
-          ? [
-              {
-                id: doctor.id,
-                name: doctor.name,
-                department_name: doctor.department_name,
-                phone: doctor.phone,
-                email: doctor.email,
-                bio: doctor.bio,
-                user_id: doctor.user_id,
-              },
-            ]
-          : null;
-      }
-
-      logger.warn(
-        "RPC function failed, using fallback query:",
-        rpcError?.message
-      );
-
-      // Fallback to direct query if RPC fails
-      const { data: fallbackData } = await supabase
-        .from("doctors")
-        .select(
-          `
-          id,
-          name,
-          primary_specialization,
-          phone,
-          email,
-          bio
-        `
-        )
-        .eq("clinic_id", activeClinic.clinic_id)
-        .eq("is_active", true);
-
-      const transformedData =
-        fallbackData?.map(
-          (doctor) =>
-            ({
-              id: doctor.id,
-              name: doctor.name,
-              department_name:
-                doctor.primary_specialization || "General Medicine",
-              phone: doctor.phone,
-              email: doctor.email,
-              bio: doctor.bio,
-            } as TransformedDoctorData)
-        ) || [];
-
-      const doctor = transformedData?.find(
-        (d) => d.id === appointment.doctor_id
-      );
-      return doctor ? [doctor] : null;
-    },
-    enabled: open && !!appointment?.doctor_id && !!activeClinic?.clinic_id,
-  });
+  const {
+    patientData,
+    consultationData,
+    isLoadingConsultation,
+    doctorDetails,
+  } = useConsultationViewData(appointment, open);
 
   // Determine department and get field configs
   const firstDoctor =

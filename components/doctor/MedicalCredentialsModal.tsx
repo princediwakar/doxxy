@@ -1,6 +1,5 @@
 // src/components/doctor/MedicalCredentialsModal.tsx
 "use client";
-import { logger } from "@/lib/logger";
 import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
-import { getSupabase } from '@/integrations/supabase/client';
 import { DbDoctor } from '@/types/core';
-import { Department, MedicalCredentialsModalProps } from '@/types/doctor';
+import { MedicalCredentialsModalProps } from '@/types/doctor';
+import { useMedicalCredentials } from '@/hooks/useMedicalCredentials';
+import { toast } from "sonner";
 import {
   GraduationCap,
   Briefcase,
@@ -23,8 +21,6 @@ import {
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-
-const supabase = getSupabase();
 
 // Moved constants outside component to avoid recreation
 const MEDICAL_COUNCILS = [
@@ -60,47 +56,19 @@ const INDIAN_STATES = [
 ];
 
 export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSuccess }: MedicalCredentialsModalProps) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
   const { activeClinic } = useAuth();
   const [activeTab, setActiveTab] = useState("practice");
 
-  useQuery({
-    queryKey: ['clinicDepartments', activeClinic?.clinics?.id],
-    queryFn: async () => {
-      if (!activeClinic?.clinics?.id) return [];
-      const { data, error } = await supabase
-        .from('clinic_departments')
-        .select('id, department_types(name)')
-        .eq('clinic_id', activeClinic.clinics.id);
-      
-      if (error) {
-        logger.error('Error fetching departments:', error);
-        return [];
-      }
-      return data.map((d: any) => ({ 
-        id: d.id, 
-        name: d.department_types?.name || 'Unnamed Department' 
-      }));
-    },
-    enabled: !!activeClinic?.clinics?.id,
-  });
-
-  const { data: currentDepartment } = useQuery({
-    queryKey: ['doctorDepartment', doctorProfile?.user_id, activeClinic?.clinics?.id],
-    queryFn: async () => {
-      if (!doctorProfile?.user_id || !activeClinic?.clinics?.id) return null;
-      const { data, error } = await supabase
-        .from('clinic_members')
-        .select('department_id')
-        .eq('user_id', doctorProfile.user_id)
-        .eq('clinic_id', activeClinic.clinics.id)
-        .single();
-      if (error) return null;
-      return data;
-    },
-    enabled: !!doctorProfile?.user_id && !!activeClinic?.clinics?.id,
-  });
+  const {
+    departments,
+    currentDepartment,
+    updateCredentials,
+    isUpdating,
+  } = useMedicalCredentials(
+    activeClinic?.clinic_id,
+    doctorProfile?.user_id,
+    () => { if (onSuccess) onSuccess(); else onClose(); }
+  );
 
   const [formData, setFormData] = useState({
     medical_registration_number: '',
@@ -181,71 +149,13 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
     return true;
   };
 
-  const updateCredentialsMutation = useMutation({
-    mutationFn: async () => {
-      if (!validateForm()) {
-        throw new Error("Please check the form for errors.");
-      }
-
-      if (!doctorProfile?.user_id || !activeClinic?.clinic_id) {
-        throw new Error('Doctor profile or active clinic not found');
-      }
-
-      const updateData = {
-        medical_registration_number: formData.medical_registration_number || null,
-        medical_council: formData.medical_council || null,
-        medical_license_state: formData.medical_license_state || null,
-        medical_license_expiry: formData.medical_license_expiry || null,
-        primary_specialization: formData.primary_specialization || null,
-        medical_specializations: formData.medical_specializations ? formData.medical_specializations.split(',').map(s => s.trim()) : null,
-        subspecialty: formData.subspecialty ? formData.subspecialty.split(',').map(s => s.trim()) : null,
-        board_certifications: formData.board_certifications ? formData.board_certifications.split(',').map(s => s.trim()) : null,
-        fellowship_details: formData.fellowship_details || null,
-        professional_summary: formData.professional_summary || null,
-        years_of_experience: formData.years_of_experience ? parseInt(formData.years_of_experience) : null,
-        consultation_fee: formData.consultation_fee ? parseFloat(formData.consultation_fee) : null,
-        medical_degree: formData.medical_degree || null,
-        medical_college: formData.medical_college || null,
-        graduation_year: formData.graduation_year ? parseInt(formData.graduation_year) : null,
-        medical_university: formData.medical_university || null,
-        postgraduate_degree: formData.postgraduate_degree || null,
-        pg_specialization: formData.pg_specialization || null,
-        pg_institution: formData.pg_institution || null,
-        pg_completion_year: formData.pg_completion_year ? parseInt(formData.pg_completion_year) : null,
-        additional_qualifications: formData.additional_qualifications || null,
-        research_experience: formData.research_experience || null,
-      };
-
-      const { error: doctorError } = await supabase
-        .from('doctors')
-        .update(updateData)
-        .eq('user_id', doctorProfile.user_id);
-
-      if (doctorError) throw doctorError;
-      
-      const { error: clinicMemberError } = await supabase
-        .from('clinic_members')
-        .update({ department_id: formData.department_id || null })
-        .eq('user_id', doctorProfile.user_id)
-        .eq('clinic_id', activeClinic.clinic_id);
-
-      if (clinicMemberError) logger.warn('Failed to update department', clinicMemberError);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['clinicMembers'] });
-      toast({ title: "Success", description: "Medical credentials updated." });
-      if (onSuccess) onSuccess();
-      else onClose();
-    },
-    onError: (error: Error) => {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateCredentialsMutation.mutate();
+    if (!validateForm()) {
+      toast.error("Please check the form for errors.");
+      return;
+    }
+    updateCredentials(formData);
   };
 
   const handleFieldChange = useCallback((field: string, value: string) => {
@@ -453,8 +363,8 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
-              <Button type="submit" form="credentials-form" disabled={updateCredentialsMutation.isPending}>
-                {updateCredentialsMutation.isPending ? 'Saving...' : 'Save Changes'}
+              <Button type="submit" form="credentials-form" disabled={isUpdating}>
+                {isUpdating ? 'Saving...' : 'Save Changes'}
               </Button>
             </div>
         </div>

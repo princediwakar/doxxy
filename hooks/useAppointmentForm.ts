@@ -6,6 +6,7 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { queryKeys } from "@/lib/query-keys";
 import {
   AppointmentFormValues,
   RpcPatient,
@@ -23,7 +24,7 @@ export const useAppointmentForm = (open: boolean) => {
     RpcPatient[],
     Error
   >({
-    queryKey: ["patients", activeClinic?.clinic_id],
+    queryKey: queryKeys.patients.byClinic(activeClinic?.clinic_id ?? ""),
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
       const { data, error } = await supabase.rpc("get_patients_by_clinic", {
@@ -42,7 +43,7 @@ export const useAppointmentForm = (open: boolean) => {
     TransformedDoctor[],
     Error
   >({
-    queryKey: ["doctorsForAppointment", activeClinic?.clinic_id],
+    queryKey: queryKeys.doctors.forAppointment(activeClinic?.clinic_id ?? ""),
     queryFn: async () => {
       if (!activeClinic?.clinic_id) return [];
 
@@ -183,12 +184,12 @@ export const useAppointmentMutation = (
         appointment ? "Appointment updated!" : "Appointment created!"
       );
       queryClient.invalidateQueries({
-        queryKey: ["appointments", activeClinic?.clinic_id],
+        queryKey: queryKeys.appointments.byClinic(activeClinic?.clinic_id ?? ""),
       });
       queryClient.invalidateQueries({
-        queryKey: ["dashboardData", activeClinic?.clinic_id],
+        queryKey: queryKeys.dashboard.data(activeClinic?.clinic_id ?? ""),
       });
-      queryClient.invalidateQueries({ queryKey: ["patientAppointments"] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
       onSuccessCallback();
     },
     onError: (error: Error) => {

@@ -1,6 +1,5 @@
 // components/ui/medicine-combobox.tsx
 "use client";
-import { logger } from "@/lib/logger";
 
 import * as React from "react"
 import { Pill, X, Plus } from "lucide-react"
@@ -8,10 +7,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { useQuery } from "@tanstack/react-query"
-import { getSupabase } from "@/integrations/supabase/client"
 import { useDebounce } from "use-debounce"
-import { useAuth } from "@/contexts/AuthContext"
+import { useMedicineSearch } from "@/hooks/useMedicineSearch"
 import { Medicine, MedicationAutoFillData } from "@/types/prescriptions"
 
 interface MedicineComboboxProps {
@@ -212,7 +209,6 @@ export function MedicineCombobox({
   const [searchQuery, setSearchQuery] = React.useState(value || "")
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300)
   const [selectedMedicine, setSelectedMedicine] = React.useState<Medicine | null>(null)
-  const { session, initialLoading } = useAuth()
 
   // Sync searchQuery with external value changes
   React.useEffect(() => {
@@ -221,65 +217,10 @@ export function MedicineCombobox({
     }
   }, [value])
 
-  // Fetch medicines with name-only search for better relevance
-  const { data: medicines = [], isLoading } = useQuery({
-    queryKey: ['medicines', debouncedSearchQuery, session?.access_token],
-    queryFn: async () => {
-      if (!session?.access_token) {
-        return []
-      }
-
-      const supabase = getSupabase()
-      
-      if (!debouncedSearchQuery.trim()) {
-        // If no search term, return popular medicines first
-        const { data, error } = await supabase
-          .rpc('search_medicines', { search_term: '', limit_count: 50 })
-        
-        if (error) {
-          logger.error('Error fetching medicines:', error)
-          return []
-        }
-        return data || []
-      }
-
-      // Search using the search_medicines function
-      const { data, error } = await supabase
-        .rpc('search_medicines', {
-          search_term: debouncedSearchQuery.toLowerCase(),
-          limit_count: 50
-        })
-
-      if (error) {
-        logger.error('Error searching medicines:', error)
-        return []
-      }
-
-      return data || []
-    },
-    enabled: !!session?.access_token && !initialLoading,
-  })
-
-  // Separate query to get the selected medicine details if we have a value but no selectedMedicine
-  const { data: selectedMedicineData, isFetching: isFetchingSelected } = useQuery({
-    queryKey: ['selected-medicine', value, session?.access_token],
-    queryFn: async () => {
-      if (!session?.access_token || !value || selectedMedicine?.name === value) {
-        return null
-      }
-      
-      const supabase = getSupabase()
-      const { data, error } = await supabase
-        .rpc('search_medicines', { search_term: value, limit_count: 1 })
-
-      if (error) {
-        logger.error('Error fetching selected medicine:', error.message || error)
-        return null
-      }
-      return data?.[0] || null
-    },
-    enabled: !!value && !!session?.access_token && !initialLoading && selectedMedicine?.name !== value,
-  })
+  const { medicines, isLoading, initialLoading, selectedMedicine: selectedMedicineData, isFetchingSelected } = useMedicineSearch(
+    debouncedSearchQuery,
+    selectedMedicine?.name === value ? undefined : value
+  )
 
   // Update selectedMedicine when we get the data
   React.useEffect(() => {

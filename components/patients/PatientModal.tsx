@@ -1,11 +1,9 @@
 // src/components/patients/PatientModal.tsx
 "use client";
-import { logger } from "@/lib/logger";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { getSupabase } from "@/integrations/supabase/client";
 import { UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -28,12 +26,9 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
-import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePatientMutations } from "@/hooks/usePatientMutations";
 import { cn } from "@/lib/utils";
 import type { Patient } from "@/types/patients";
-import type { DbPatientInsert, DbPatientUpdate } from "@/types/core";
 
 interface PatientModalProps {
   open: boolean;
@@ -43,7 +38,6 @@ interface PatientModalProps {
   initialName?: string; // New prop to pre-fill name
 }
 
-const supabase = getSupabase();
 // Helper function for smart title casing
 const toTitleCase = (str: string) => {
   return str.replace(
@@ -80,8 +74,7 @@ export const PatientModal = ({
   onPatientCreated,
   initialName = "",
 }: PatientModalProps) => {
-  const { activeClinic } = useAuth();
-  const queryClient = useQueryClient();
+  const { createPatient, updatePatient } = usePatientMutations();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -111,94 +104,23 @@ export const PatientModal = ({
     }
   }, [open, patient, initialName, form]);
 
-  const createPatientMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!activeClinic?.clinic_id) {
-        throw new Error("No active clinic selected.");
-      }
-
-      const patientData: DbPatientInsert = {
-        name: values.name,
-        clinic_id: activeClinic.clinic_id,
-        gender: values.gender || null,
-        age: values.age || null,
-        phone: values.phone || null,
-        email: values.email || null,
-        address: values.address || null,
-        medical_id: values.medical_id || null,
-      };
-
-      const { data, error } = await supabase
-        .from("patients")
-        .insert(patientData)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: (newPatient) => {
-      toast.success("Patient created successfully.");
-      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
-      onPatientCreated(newPatient);
-      form.reset();
-    },
-    onError: (error) => {
-      logger.error("Error creating patient:", error);
-      toast.error(`Failed to create patient: ${error.message}`);
-    },
-  });
-
-  const updatePatientMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!patient?.id) {
-        throw new Error("Patient ID is missing for update.");
-      }
-
-      const patientData: DbPatientUpdate = {
-        name: values.name,
-        gender: values.gender || null,
-        age: values.age || null,
-        phone: values.phone || null,
-        email: values.email || null,
-        address: values.address || null,
-        medical_id: values.medical_id || null,
-      };
-
-      const { data, error } = await supabase
-        .from('patients')
-        .update(patientData)
-        .eq('id', patient.id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Patient updated successfully.");
-      queryClient.invalidateQueries({ queryKey: ['patients', activeClinic?.clinic_id] });
-      queryClient.invalidateQueries({ queryKey: ['dashboardData', activeClinic?.clinic_id] });
-      onOpenChange(false);
-    },
-    onError: (error) => {
-      logger.error("Error updating patient:", error);
-      toast.error(`Failed to update patient: ${error.message}`);
-    },
-  });
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     if (patient) {
-      updatePatientMutation.mutate(values);
+      updatePatient.mutate(
+        { id: patient.id, ...values },
+        { onSuccess: () => onOpenChange(false) }
+      );
     } else {
-      createPatientMutation.mutate(values);
+      createPatient.mutate(values, {
+        onSuccess: (newPatient) => {
+          onPatientCreated(newPatient);
+          form.reset();
+        },
+      });
     }
   };
 
-  const isSubmitting = createPatientMutation.isPending || updatePatientMutation.isPending;
+  const isSubmitting = createPatient.isPending || updatePatient.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

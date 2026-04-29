@@ -18,10 +18,7 @@ import { ConsultationLayout } from "./ConsultationLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { printConsultation } from "./consultationPrintUtils";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { getSupabase } from "@/integrations/supabase/client";
-
-const supabase = getSupabase();
+import { useCurrentDoctorDetails } from "@/hooks/useCurrentDoctorDetails";
 
 interface Section {
   title: string;
@@ -70,19 +67,7 @@ export const ConsultationPreviewModal = ({
       }
     : null;
 
-  // Fetch doctor details for current user
-  const { data: doctorDetails } = useQuery({
-    queryKey: ["currentDoctorDetails", activeClinic?.clinic_id, user?.id],
-    queryFn: async () => {
-      if (!activeClinic?.clinic_id || !user?.id) return null;
-      const { data, error } = await supabase.rpc("get_doctors_by_clinic", {
-        clinic_id: activeClinic.clinic_id,
-      });
-      if (error) throw error;
-      return data?.find((d) => d.user_id === user.id) || null;
-    },
-    enabled: !!activeClinic?.clinic_id && !!user?.id,
-  });
+  const { data: doctorDetails } = useCurrentDoctorDetails();
 
   // Prepare doctor info
   const doctorInfo = {

@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from "@/integrations/supabase/client";
+import { useDoctorProfile } from "@/hooks/useDoctorProfile";
+import { useUserProfile } from "@/hooks/useUserProfile";
 import {
   User,
   Shield,
@@ -27,7 +28,6 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { BasicProfileEditor } from "@/components/BasicProfileEditor";
 import { MedicalCredentialsModal } from "@/components/doctor/MedicalCredentialsModal";
 import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding";
@@ -47,7 +47,6 @@ const Profile = () => {
   useEffect(() => {
     setLocalHasDoctorProfile(hasDoctorProfile);
   }, [hasDoctorProfile]);
-  const supabase = getSupabase();
   // const { handleSupabaseError } = useErrorHandler();
 
   // Fetch doctor profile if user has one
@@ -56,87 +55,9 @@ const Profile = () => {
     isLoading: isDoctorLoading,
     error: doctorProfileError,
     refetch: refetchDoctorProfile,
-  } = useQuery({
-    queryKey: ["doctorProfile", user?.id, activeClinic?.clinics?.id],
-    queryFn: async () => {
-      if (!user?.id || !activeClinic?.clinics?.id) return null;
+  } = useDoctorProfile(user?.id, activeClinic?.clinics?.id);
 
-      const { data, error } = await supabase
-        .from("doctors")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("clinic_id", activeClinic.clinics.id)
-        .single();
-
-      if (error) {
-        if (error.code === "PGRST116") {
-          return null; // Doctor profile doesn't exist yet
-        }
-        // handleSupabaseError(error, "Failed to load doctor profile");
-        throw error;
-      }
-
-      const { data: memberData, error: memberError } = await supabase
-        .from("clinic_members")
-        .select(
-          `
-          department_id,
-          clinic_departments(
-            id,
-            department_types(name)
-          )
-        `
-        )
-        .eq("user_id", user.id)
-        .eq("clinic_id", activeClinic.clinics.id)
-        .single();
-
-      if (memberError && memberError.code !== "PGRST116") {
-        // handleSupabaseError(memberError, "Failed to load department info");
-      }
-
-      return {
-        ...data,
-        department_name:
-          memberData?.clinic_departments?.department_types?.name ||
-          "No Department",
-      };
-    },
-    enabled: !!user?.id && !!activeClinic?.clinics?.id,
-    retry: (failureCount, error: any) => {
-      // Don't retry not found errors
-      if (error?.code === "PGRST116") return false;
-      // Retry up to 3 times for other errors
-      return failureCount < 3;
-    },
-  });
-
-  // Fetch user profile data from profiles table
-  const { data: userProfile, error: userProfileError } = useQuery({
-    queryKey: ["userProfile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) {
-        if (error.code === "PGRST116") {
-          return null; // Profile doesn't exist yet
-        }
-        // handleSupabaseError(error, "Failed to load user profile");
-        throw error;
-      }
-      return data;
-    },
-    enabled: !!user?.id,
-    retry: (failureCount, error: any) => {
-      if (error?.code === "PGRST116") return false;
-      return failureCount < 3;
-    },
-  });
+  const { data: userProfile, error: userProfileError } = useUserProfile(user?.id);
 
   const handleBecomeDoctorClick = () => {
     setIsOnboardingModalOpen(true);

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Search, Plus, Settings } from 'lucide-react';
 
-import { useClinicMembers, MemberWithDetails, InviteMemberData, CreateDoctorData } from './useClinicMembers';
+import { useClinicMembers, MemberWithDetails, InviteMemberData, CreateDoctorData } from '@/hooks/useClinicMembers';
 import { UserRole } from '@/types/core';
 import { ClinicMembersList, InviteMemberDialog, CreateDoctorDialog, EditMemberDialog } from './ClinicMemberComponents';
 

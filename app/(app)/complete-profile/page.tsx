@@ -5,7 +5,6 @@ import { logger } from "@/lib/logger";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -13,8 +12,8 @@ import { Spinner } from "@/components/ui/loading"; // Added missing import
 import { z } from "zod";
 import { toast } from "sonner";
 import { processInvitationsOnProfileComplete } from "@/lib/invitation-utils";
-
-const supabase = getSupabase();
+import { useCompleteProfile } from "@/hooks/useCompleteProfile";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -35,6 +34,9 @@ const CompleteProfile = () => {
   const [loading, setLoading] = useState(false);
   const [processingMessage, setProcessingMessage] = useState<string>("");
   const [email, setEmail] = useState("");
+  const completeProfile = useCompleteProfile();
+
+  const { data: profileData } = useUserProfile(user?.id);
 
   useEffect(() => {
     if (!user) return;
@@ -44,12 +46,12 @@ const CompleteProfile = () => {
     const prefillEmail = invitationData?.email || user.email || "";
     setEmail(prefillEmail);
 
-    supabase.from("profiles").select("name, phone").eq("id", user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data) setForm({ name: data.name || prefillName, phone: data.phone || "" });
-        else setForm({ name: prefillName, phone: "" });
-      });
-  }, [user]);
+    if (profileData) {
+      setForm({ name: profileData.name || prefillName, phone: profileData.phone || "" });
+    } else {
+      setForm({ name: prefillName, phone: "" });
+    }
+  }, [user, profileData]);
 
   if (!user) return null;
 
@@ -71,36 +73,13 @@ const CompleteProfile = () => {
     setProcessingMessage("Saving your profile...");
     
     try {
-      // 1. Update Auth User
-      if (form.phone) {
-        await supabase.auth.updateUser({ data: { phone: form.phone } });
-      }
-
-      // 2. Update/Insert Profile in DB
-      let { error } = await supabase
-        .from('profiles')
-        .update({
-          name: form.name,
-          phone: form.phone || null,
-          avatar_url: user.user_metadata?.avatar_url,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-
-      if (error && error.code === 'PGRST116') {
-        const { error: insertError } = await supabase.from('profiles').insert({
-          id: user.id,
-          name: form.name,
-          phone: form.phone || null,
-          email: user.email,
-          avatar_url: user.user_metadata?.avatar_url,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        });
-        error = insertError;
-      }
-      
-      if (error) throw error;
+      await completeProfile.mutateAsync({
+        userId: user.id,
+        name: form.name,
+        phone: form.phone || null,
+        avatarUrl: user.user_metadata?.avatar_url,
+        email: user.email,
+      });
 
       // ------------------------------------------------------------------
       // CRITICAL STEP: Process Invitation BEFORE marking profile complete

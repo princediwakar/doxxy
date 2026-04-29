@@ -13,30 +13,18 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useQuery } from '@tanstack/react-query';
-import { getSupabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePatientAppointments } from '@/hooks/usePatientAppointments';
 import { AppointmentModal } from '../appointments/AppointmentModal';
 import { BillingModal } from '../billing/BillingModal';
 import { formatTimeIST } from "@/lib/utils";
-import type { Patient, Appointment } from "@/types/patients";
-import type { Bill } from "@/types/billing";
+import type { Patient } from "@/types/patients";
 
 interface PatientDetailsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   patient: Patient | null;
 }
-
-interface AppointmentWithDetails extends Appointment {
-  doctor_name: string;
-}
-
-interface BillWithDetails extends Bill {
-  appointment_date?: string;
-}
-
-const supabase = getSupabase();
 
 const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   open,
@@ -47,57 +35,9 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
 
-  // Fetch patient appointments
-  const { data: appointments, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ['patientAppointments', patient?.id, activeClinic?.clinic_id],
-    queryFn: async () => {
-      if (!patient?.id || !activeClinic?.clinic_id) return [];
-      
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          *,
-          doctors!inner(name)
-        `)
-        .eq('patient_id', patient.id)
-        .eq('clinic_id', activeClinic.clinic_id)
-        .order('date', { ascending: false });
-      
-      if (error) throw error;
-      
-      return (data || []).map(apt => ({
-        ...apt,
-        doctor_name: apt.doctors?.name || 'Unknown Doctor'
-      })) as AppointmentWithDetails[];
-    },
-    enabled: open && !!patient?.id && !!activeClinic?.clinic_id,
-  });
-
-  // Fetch patient bills
-  useQuery({
-    queryKey: ['patientBills', patient?.id, activeClinic?.clinic_id],
-    queryFn: async () => {
-      if (!patient?.id || !activeClinic?.clinic_id) return [];
-      
-      const { data, error } = await supabase
-        .from('bills')
-        .select(`
-          *,
-          appointments(date)
-        `)
-        .eq('patient_id', patient.id)
-        .eq('clinic_id', activeClinic.clinic_id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      
-      return (data || []).map(bill => ({
-        ...bill,
-        appointment_date: bill.appointments?.date
-      })) as BillWithDetails[];
-    },
-    enabled: open && !!patient?.id && !!activeClinic?.clinic_id,
-  });
+  const { data: appointments, isLoading: appointmentsLoading } = usePatientAppointments(
+    open ? patient?.id : undefined
+  );
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {

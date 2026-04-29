@@ -3,6 +3,7 @@ import { logger } from "@/lib/logger";
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
+import { queryKeys } from '@/lib/query-keys';
 import { UserRole, DbClinicDepartment, DbDepartmentType } from '@/types/core';
 import { toast } from 'sonner';
 
@@ -63,7 +64,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
 
   // Fetch Members
   const { data: members = [], isLoading: isLoadingMembers, error: membersError } = useQuery<MemberWithDetails[]>({
-    queryKey: ['clinicMembers', clinicId],
+    queryKey: queryKeys.clinicMembers.byClinic(clinicId ?? ""),
     queryFn: async () => {
       if (!clinicId) return [];
       
@@ -117,7 +118,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
 
   // Fetch Departments for Dropdowns
   const { data: departments = [] } = useQuery<DepartmentWithDetails[]>({
-    queryKey: ['clinicDepartments', clinicId],
+    queryKey: queryKeys.clinicDepartments.forMembers(clinicId ?? ""),
     queryFn: async () => {
       if (!clinicId) return [];
       const { data, error } = await supabase
@@ -173,8 +174,8 @@ export const useClinicMembers = (clinicId: string | undefined) => {
     },
     onSuccess: (data) => {
       toast.success(data?.message || 'Member invited successfully!');
-      queryClient.invalidateQueries({ queryKey: ['clinicMembers', clinicId] });
-      queryClient.invalidateQueries({ queryKey: ['pendingInvitations', clinicId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.clinicMembers.byClinic(clinicId ?? "") });
+      queryClient.invalidateQueries({ queryKey: queryKeys.clinicMembers.pendingInvitations(clinicId ?? "") });
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to invite member'),
   });
@@ -191,7 +192,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success('Member updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['clinicMembers', clinicId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.clinicMembers.byClinic(clinicId ?? "") });
     },
     onError: (err: Error) => toast.error('Failed to update member: ' + err.message),
   });
@@ -212,7 +213,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success('Doctor profile created successfully');
-      queryClient.invalidateQueries({ queryKey: ['clinicMembers', clinicId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.clinicMembers.byClinic(clinicId ?? "") });
     },
     onError: (err: Error) => toast.error('Failed to create doctor profile: ' + err.message),
   });
@@ -224,7 +225,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
     },
     onSuccess: () => {
       toast.success('Member removed successfully');
-      queryClient.invalidateQueries({ queryKey: ['clinicMembers', clinicId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.clinicMembers.byClinic(clinicId ?? "") });
     },
     onError: (err: Error) => toast.error('Failed to remove member: ' + err.message),
   });

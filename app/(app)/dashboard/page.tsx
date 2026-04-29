@@ -15,13 +15,8 @@ import {
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
 import { formatTimeIST } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery } from "@tanstack/react-query";
-import { getSupabase } from "@/integrations/supabase/client";
 import {
   DatabaseAppointment,
-  StaffDashboardData,
-  DoctorDashboardData,
-  isValidDatabaseAppointment,
 } from "@/types/dashboard";
 import { AppointmentData } from "@/types/patients";
 import DoctorDashboard from "@/components/role/DoctorDashboard";
@@ -30,10 +25,13 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import React, { useState, useMemo } from "react";
-import { Enums } from "@/integrations/supabase/types";
+import { AppointmentStatus, AppointmentType } from "@/types/core";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 import { Suspense, lazy } from "react";
+import { useHasDoctorProfile } from "@/hooks/useHasDoctorProfile";
+import { useDoctorDashboardData } from "@/hooks/useDoctorDashboardData";
+import { useDashboardData } from "@/hooks/useDashboardData";
 
 // Lazy load heavy components
 const ConsultationViewModal = lazy(() =>
@@ -41,10 +39,6 @@ const ConsultationViewModal = lazy(() =>
     default: module.ConsultationViewModal,
   }))
 );
-
-const supabase = getSupabase();
-
-// Type guard is now imported from @/types/dashboard
 
 const Dashboard = React.memo(() => {
   const {
@@ -70,116 +64,20 @@ const Dashboard = React.memo(() => {
   const [selectedAppointment, setSelectedAppointment] =
     useState<AppointmentData | null>(null);
 
-  // Query: Does the current user have a doctor profile for this clinic?
   const { data: hasDoctorProfile, isLoading: isDoctorProfileLoading } =
-    useQuery({
-      queryKey: ["hasDoctorProfile", user?.id, activeClinic?.clinic_id],
-      queryFn: async () => {
-        if (!user?.id || !activeClinic?.clinic_id) return false;
-        const { data, error } = await supabase
-          .from("doctors")
-          .select("id")
-          .eq("id", user.id)
-          .eq("clinic_id", activeClinic.clinic_id)
-          .maybeSingle();
-        if (error) throw error;
-        return !!data;
-      },
-      enabled:
-        !!user?.id &&
-        !!activeClinic?.clinic_id &&
-        activeClinicRole === "superadmin",
-      staleTime: 60 * 1000,
-    });
+    useHasDoctorProfile();
 
-  // Doctor-specific dashboard query for superadmins who have doctor profiles
   const {
     data: doctorDashboardData,
     isLoading: isDoctorLoading,
     error: doctorError,
-  } = useQuery<DoctorDashboardData | null>({
-    queryKey: ["doctorDashboardData", activeClinic?.clinic_id, user?.id],
-    queryFn: async () => {
-      if (
-        !activeClinic?.clinic_id ||
-        !user?.id ||
-        (activeClinicRole !== "doctor" && activeClinicRole !== "superadmin")
-      )
-        return null;
-      if (activeClinicRole === "superadmin" && !hasDoctorProfile) return null;
+  } = useDoctorDashboardData(hasDoctorProfile !== false);
 
-      const { data, error } = await supabase.rpc("get_doctor_dashboard_data", {
-        _clinic_id: activeClinic.clinic_id,
-        _user_id: user.id,
-      });
-      if (error) throw error;
-      const result = (data?.[0] ??
-        null) as unknown as DoctorDashboardData | null;
-      if (result) {
-        // Ensure JSON fields are arrays, fallback to empty arrays if invalid
-        result.upcoming_appointments = Array.isArray(
-          result.upcoming_appointments
-        )
-          ? result.upcoming_appointments.filter(isValidDatabaseAppointment)
-          : [];
-        result.my_patients = Array.isArray(result.my_patients)
-          ? result.my_patients.map((p) => ({
-              id: p.id ?? "",
-              name: p.name ?? "",
-              last_visit: p.last_visit ?? undefined,
-              address: p.address ?? undefined,
-              clinic_id: p.clinic_id ?? undefined,
-              created_at: p.created_at ?? null,
-              age: p.age ?? null,
-              email: p.email ?? "",
-              gender: p.gender ?? "",
-              medical_id: p.medical_id ?? "",
-              phone: p.phone ?? "",
-            }))
-          : [];
-      }
-      return result;
-    },
-    enabled:
-      !!activeClinic?.clinic_id &&
-      !!user?.id &&
-      (activeClinicRole === "doctor" ||
-        (activeClinicRole === "superadmin" && hasDoctorProfile !== undefined)),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // Clinic-wide dashboard query
   const {
     data: dashboardData,
     isLoading,
     error,
-  } = useQuery<StaffDashboardData | null>({
-    queryKey: ["dashboardData", activeClinic?.clinic_id],
-    queryFn: async () => {
-      if (!activeClinic?.clinic_id || activeClinicRole === "doctor")
-        return null;
-      const { data, error } = await supabase.rpc("get_dashboard_data", {
-        _clinic_id: activeClinic.clinic_id,
-      });
-      if (error) throw error;
-      const result = (data?.[0] ??
-        null) as unknown as StaffDashboardData | null;
-      if (result) {
-        // Ensure all_relevant_appointments is an array of valid appointments
-        result.all_relevant_appointments = Array.isArray(
-          result.all_relevant_appointments
-        )
-          ? result.all_relevant_appointments.filter(isValidDatabaseAppointment)
-          : [];
-      }
-      return result;
-    },
-    enabled:
-      !!activeClinic?.clinic_id &&
-      activeClinicRole !== "doctor" &&
-      !authLoading,
-    staleTime: 5 * 60 * 1000,
-  });
+  } = useDashboardData();
 
   // Greeting logic - memoized
   const greeting = useMemo(() => {
@@ -230,8 +128,8 @@ const Dashboard = React.memo(() => {
         doctor: apt.doctor_name,
         time: apt.time,
         date: apt.date,
-        status: apt.status as Enums<"appointment_status">,
-        type: apt.type as Enums<"appointment_type">,
+        status: apt.status as AppointmentStatus,
+        type: apt.type as AppointmentType,
       }));
   }, [appointmentsForList, today, chartAppointments]);
 

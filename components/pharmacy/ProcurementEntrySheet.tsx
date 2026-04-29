@@ -4,7 +4,8 @@ import { logger } from "@/lib/logger";
 
 import React, { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from "@/integrations/supabase/client";
+import { useCreateProcurement, useAuthToken } from "@/hooks/useProcurements";
+import { useProcurementStorage } from "@/hooks/useProcurementStorage";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { procurementSchema, ProcurementFormValues } from "@/types/pharmacy";
@@ -34,10 +35,6 @@ import { MedicineCombobox } from "@/components/ui/medicine-combobox";
 import { Medicine, MedicationAutoFillData } from "@/types/prescriptions";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQueryClient } from "@tanstack/react-query";
-
-const supabase = getSupabase();
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ExtractedItem {
@@ -61,11 +58,11 @@ interface ProcurementEntrySheetProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySheetProps) {
-  const { activeClinic, user } = useAuth();
-  const queryClient = useQueryClient();
-  const [isUploading, setIsUploading] = useState(false);
+  const { activeClinic } = useAuth();
+  const createProcurement = useCreateProcurement();
+  const { uploadBillImage, isUploading } = useProcurementStorage();
+  const { getToken } = useAuthToken();
   const [isExtracting, setIsExtracting] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [extractionStats, setExtractionStats] = useState<{ total: number; matched: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,27 +89,13 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
     if (!file || !activeClinic?.clinic_id) return;
 
     try {
-      setIsUploading(true);
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${activeClinic.clinic_id}/${Date.now()}.${fileExt}`;
-
-      const { error } = await supabase.storage
-        .from("procurement_bills")
-        .upload(fileName, file);
-
-      if (error) throw error;
-
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from("procurement_bills").getPublicUrl(fileName);
-
+      const publicUrl = await uploadBillImage(file, activeClinic.clinic_id);
       await extractData(publicUrl);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error";
       logger.error("Upload error:", msg);
       toast.error("Failed to upload bill image");
     } finally {
-      setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
@@ -194,162 +177,29 @@ const extractData = async (imageUrl: string) => {
 
   // ── Save ────────────────────────────────────────────────────────────────────
 
-  const onSubmit = async (data: ProcurementFormValues) => {
-    if (!activeClinic?.clinic_id || !user?.id) return;
-
-    try {
-      setIsSaving(true);
-
-      // Phase 1: Create procurement header
-      const { data: procurement, error: procError } = await supabase
-        .from("procurements")
-        .insert({
-          clinic_id: activeClinic.clinic_id,
-          supplier_name: data.supplier_name,
-          invoice_number: data.invoice_number,
-          invoice_date: data.invoice_date,
-          total_amount: data.total_amount,
-          status: "Completed",
-          created_by: user.id,
-        })
-        .select()
-        .single();
-
-      if (procError) throw procError;
-
-      if (!data.items || data.items.length === 0) {
-        toast.success("Purchase order saved.");
-        queryClient.invalidateQueries({ queryKey: ["pharmacy_inventory"] });
-        queryClient.invalidateQueries({ queryKey: ["pharmacy_procurements"] });
+  const onSubmit = (data: ProcurementFormValues) => {
+    createProcurement.mutate(data, {
+      onSuccess: () => {
         form.reset();
         setExtractionStats(null);
         onOpenChange(false);
-        return;
-      }
-
-      // Phase 2: Quick-add any unmapped medicines in one batch call
-      const unmappedNames = data.items
-        .filter((item) => !item.medicine_id && item.extracted_name?.trim())
-        .map((item) => item.extracted_name!.trim());
-
-      const uniqueUnmapped = [...new Set(unmappedNames)];
-      const nameToIdMap = new Map<string, number>();
-
-      if (uniqueUnmapped.length > 0) {
-        const res = await fetchWithAuth("/api/medicines", { names: uniqueUnmapped, is_auto_created: true });
-
-        if (!res.ok) {
-          let json: any = {};
-          try {
-            json = await res.json();
-          } catch {
-            // body unparseable — throw with status
-          }
-          throw new Error(json.error || "Failed to create unmapped medicines");
-        }
-
-        const created: { name: string; id: number }[] = await res.json();
-        for (const med of created) {
-          nameToIdMap.set(med.name, med.id);
-        }
-      }
-
-      // Phase 3: Insert procurement_items + upsert inventory_items for ALL items
-      const itemInserts: { procurement_id: string; medicine_id: number | null; extracted_name: string; batch_number: string; expiry_date: string | null; quantity: number; unit_price: number; total_price: number }[] = [];
-      const inventoryUpserts: { clinic_id: string; medicine_id: number; batch_number: string; expiry_date: string | null; current_stock: number; unit_cost_price: number; mrp: number }[] = [];
-
-      for (const item of data.items) {
-        const medicineId = item.medicine_id ?? nameToIdMap.get(item.extracted_name ?? "") ?? null;
-
-        itemInserts.push({
-          procurement_id: procurement.id,
-          medicine_id: medicineId,
-          extracted_name: item.extracted_name ?? "",
-          batch_number: item.batch_number ?? "",
-          expiry_date: item.expiry_date || null,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-        });
-
-        if (medicineId) {
-          inventoryUpserts.push({
-            clinic_id: activeClinic.clinic_id,
-            medicine_id: medicineId,
-            batch_number: item.batch_number ?? "",
-            expiry_date: item.expiry_date || null,
-            current_stock: item.quantity,
-            unit_cost_price: item.unit_price,
-            mrp: item.mrp ?? 0,
-          });
-        }
-      }
-
-      await supabase.from("procurement_items").insert(itemInserts);
-
-      for (const inv of inventoryUpserts) {
-        const { data: existing } = await supabase
-          .from("inventory_items")
-          .select("id, current_stock")
-          .eq("clinic_id", activeClinic.clinic_id)
-          .eq("medicine_id", inv.medicine_id)
-          .eq("batch_number", inv.batch_number)
-          .maybeSingle();
-
-        if (existing) {
-          await supabase
-            .from("inventory_items")
-            .update({ current_stock: existing.current_stock + inv.current_stock })
-            .eq("id", existing.id);
-        } else {
-          await supabase.from("inventory_items").insert(inv);
-        }
-      }
-
-      const createdCount = nameToIdMap.size;
-      toast.success(
-        createdCount > 0
-          ? `Saved! ${createdCount} new medicine(s) added to your stock catalog.`
-          : "Saved! Stock has been updated."
-      );
-
-      queryClient.invalidateQueries({ queryKey: ["pharmacy_inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["pharmacy_procurements"] });
-      form.reset();
-      setExtractionStats(null);
-      onOpenChange(false);
-    } catch (error: unknown) {
-      const msg =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null
-          ? JSON.stringify(error)
-          : String(error);
-      logger.error("Save error:", msg);
-      toast.error(msg === "Unknown error" ? "Failed to save stock." : msg);
-    } finally {
-      setIsSaving(false);
-    }
+      },
+    });
   };
 
   // ── Medicine selection from combobox ────────────────────────────────────────
 
-  const fetchWithAuth = async (url: string, body: unknown) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    return fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(body),
-    });
-  };
-
   const handleCreateMedicine = async (index: number, name: string) => {
     try {
-      const res = await fetchWithAuth("/api/medicines", { name });
+      const token = await getToken();
+      const res = await fetch("/api/medicines", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ name }),
+      });
 
       let json: any = {};
       try {
@@ -452,10 +302,10 @@ const extractData = async (imageUrl: string) => {
                 />
                 <Button
                   onClick={form.handleSubmit(onSubmit)}
-                  disabled={isSaving || isExtracting || isUploading}
+                  disabled={createProcurement.isPending || isExtracting || isUploading}
                   className="min-w-[140px]"
                 >
-                  {isSaving ? (
+                  {createProcurement.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4 mr-2" />

@@ -1,6 +1,5 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -20,14 +19,12 @@ import {
   Stethoscope,
   Building2,
 } from "lucide-react";
-import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type {
   PrescriptionViewModalProps,
   FormattedMedication
 } from "@/types/prescriptions";
-
-const supabase = getSupabase();
+import { usePrescriptionDetails } from "@/hooks/usePrescriptionDetails";
 
 interface Medication {
   name?: string;
@@ -42,52 +39,11 @@ interface Medication {
 export function PrescriptionViewModal({ open, onOpenChange, prescription }: PrescriptionViewModalProps) {
   const { activeClinic } = useAuth();
 
-  // Fetch enhanced prescription data with patient and doctor details
-  const { data: enhancedPrescription, isLoading } = useQuery({
-    queryKey: ['prescriptionDetails', prescription?.id],
-    queryFn: async () => {
-      if (!prescription?.id) return null;
-      
-      // Fetch prescription with patient and doctor details
-      const { data: prescriptionData, error: prescriptionError } = await supabase
-        .from('prescriptions')
-        .select(`
-          *,
-          patients!inner(id, name, gender, age, phone, email, medical_id),
-          doctors!inner(id, name, user_id)
-        `)
-        .eq('id', prescription.id)
-        .single();
-
-      if (prescriptionError) throw prescriptionError;
-
-      // Get doctor's profile information
-      const { data: doctorProfile } = await supabase
-        .from('profiles')
-        .select('name, email')
-        .eq('id', prescriptionData.doctors.user_id)
-        .single();
-
-      // Get doctor's department information
-      const { data: doctorDepartment } = await supabase
-        .from('clinic_members')
-        .select(`
-          clinic_departments(
-            department_types(name)
-          )
-        `)
-        .eq('user_id', prescriptionData.doctors.user_id || '')
-        .eq('clinic_id', activeClinic?.clinic_id || '')
-        .single();
-
-      return {
-        ...prescriptionData,
-        doctor_profile: doctorProfile,
-        doctor_department: doctorDepartment?.clinic_departments?.department_types?.name
-      };
-    },
-    enabled: open && !!prescription?.id && !!activeClinic?.clinic_id,
-  });
+  const { data: enhancedPrescription, isLoading } = usePrescriptionDetails(
+    prescription?.id,
+    activeClinic?.clinic_id,
+    open && !!prescription?.id && !!activeClinic?.clinic_id
+  );
 
   if (!prescription) return null;
 

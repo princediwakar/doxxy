@@ -1,8 +1,7 @@
 // components/pharmacy/InventoryTab.tsx
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getSupabase } from "@/integrations/supabase/client";
+import { useInventory } from "@/hooks/useInventory";
 import {
   Table,
   TableBody,
@@ -26,54 +25,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const supabase = getSupabase();
-
 export function InventoryTab() {
-  const { activeClinic, activeClinicRole } = useAuth();
-  const queryClient = useQueryClient();
+  const { activeClinicRole } = useAuth();
+  const { inventory, isLoading, updateStock } = useInventory();
   const [editingItem, setEditingItem] = useState<any>(null);
   const [newStock, setNewStock] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const canEditStock = activeClinicRole === "superadmin" || activeClinicRole === "staff";
-
-  const { data: inventory, isLoading } = useQuery({
-    queryKey: ["pharmacy_inventory", activeClinic?.clinic_id],
-    queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
-
-      const { data, error } = await supabase
-        .from("inventory_items")
-        .select(`
-          *,
-          medicines:medicine_id (name, manufacturer_name)
-        `)
-        .eq("clinic_id", activeClinic.clinic_id)
-        .order("expiry_date", { ascending: true });
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!activeClinic?.clinic_id,
-  });
-
-  const updateStockMutation = useMutation({
-    mutationFn: async ({ itemId, newStock }: { itemId: string; newStock: number }) => {
-      const { error } = await supabase
-        .from("inventory_items")
-        .update({ current_stock: newStock } as any)
-        .eq("id", itemId);
-
-      if (error) throw error;
-      return true;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["pharmacy_inventory"] });
-      setIsDialogOpen(false);
-      setEditingItem(null);
-      setNewStock("");
-    },
-  });
 
   const handleEditClick = (item: any) => {
     setEditingItem(item);
@@ -86,7 +45,16 @@ export function InventoryTab() {
     const stockValue = parseInt(newStock, 10);
     if (isNaN(stockValue) || stockValue < 0) return;
 
-    updateStockMutation.mutate({ itemId: editingItem.id, newStock: stockValue });
+    updateStock.mutate(
+      { itemId: editingItem.id, newStock: stockValue },
+      {
+        onSuccess: () => {
+          setIsDialogOpen(false);
+          setEditingItem(null);
+          setNewStock("");
+        },
+      }
+    );
   };
 
   if (isLoading) {
@@ -289,9 +257,9 @@ export function InventoryTab() {
               </Button>
               <Button
                 onClick={handleSaveStock}
-                disabled={updateStockMutation.isPending}
+                disabled={updateStock.isPending}
               >
-                {updateStockMutation.isPending ? "Saving..." : "Save Changes"}
+                {updateStock.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </DialogContent>

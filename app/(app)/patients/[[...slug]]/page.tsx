@@ -5,8 +5,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, FileText, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { usePatientsWithRecords } from "@/hooks/usePatientsWithRecords";
 import {
   AppointmentData,
   ConsultationWithAppointment,
@@ -15,8 +14,6 @@ import {
   PatientWithConsultations,
   Prescription,
   SpecialtyData,
-  AppointmentStatus,
-  DoctorWithDepartmentInfo,
 } from "@/types/patients";
 import { Suspense, lazy } from 'react';
 import { PrescriptionViewModal } from "@/components/prescriptions/PrescriptionViewModal";
@@ -35,172 +32,8 @@ import { PatientDetailView } from "@/components/patients/PatientDetailView";
 import { useFABAction } from "@/hooks/useFABAction";
 import { formatTimeIST } from "@/lib/utils";
 
-const supabase = getSupabase();
-
-const fetchPatientsWithMedicalRecords = async (
-  clinicId: string,
-  searchTerm: string,
-  currentPage: number,
-  itemsPerPage: number
-): Promise<{ patients: PatientWithConsultations[]; totalCount: number }> => {
-  logger.log(
-    "fetchPatientsWithMedicalRecords: Fetching for clinic",
-    clinicId,
-    "search",
-    searchTerm,
-    "page",
-    currentPage
-  );
-
-  // First get all patients for filtering and count
-  let allPatientsQuery = supabase
-    .from("patients")
-    .select("*")
-    .eq("clinic_id", clinicId);
-
-  if (searchTerm.trim()) {
-    allPatientsQuery = allPatientsQuery.ilike("name", `%${searchTerm}%`);
-  }
-
-  const { data: allPatients, error: patientsError } = await allPatientsQuery;
-  if (patientsError) throw patientsError;
-
-  // Apply pagination
-  const totalCount = allPatients?.length || 0;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const patients =
-    allPatients?.slice(startIndex, startIndex + itemsPerPage) || [];
-
-  // Fetch doctors once — avoids N+1 per-consultation RPC calls
-  type RpcDoctor = { id: string; name: string; department_name: string };
-  let doctors: RpcDoctor[] = [];
-
-  const { data: rpcData, error: rpcError } = await supabase.rpc(
-    "get_doctors_by_clinic",
-    { clinic_id: clinicId }
-  );
-
-  if (!rpcError && rpcData) {
-    doctors = rpcData as unknown as RpcDoctor[];
-  } else {
-    const { data: fallbackData } = await supabase
-      .from("doctors")
-      .select(
-        `
-        id,
-        name,
-        primary_specialization,
-        clinic_members!clinic_members_user_id_fkey(
-          department_id,
-          clinic_departments!clinic_members_department_id_fkey(
-            department_type_id,
-            department_types!clinic_departments_department_type_id_fkey(name)
-          )
-        )
-      `
-      )
-      .eq("clinic_id", clinicId)
-      .eq("is_active", true);
-
-    const typedFallbackData = (fallbackData || []) as unknown as DoctorWithDepartmentInfo[];
-
-    doctors = typedFallbackData.map((doctor) => ({
-      id: doctor.id,
-      name: doctor.name,
-      department_name:
-        doctor.clinic_members?.[0]?.clinic_departments
-          ?.department_types?.name ||
-        doctor.primary_specialization ||
-        "General Medicine",
-    }));
-  }
-
-  // For each patient, fetch consultations and prescriptions, then enrich with pre-fetched doctor data
-  const patientsWithRecords = await Promise.all(
-    patients.map(async (patient) => {
-      const { data: consultations } = await supabase
-        .from("consultations")
-        .select(
-          `
-          *,
-          appointments(
-            id,
-            date,
-            time,
-            status,
-            doctor_id
-          )
-        `
-        )
-        .eq("patient_id", patient.id)
-        .order("created_at", { ascending: false });
-
-      const { data: prescriptions } = await supabase
-        .from("prescriptions")
-        .select("*")
-        .eq("patient_id", patient.id)
-        .order("created_at", { ascending: false });
-
-      // Filter to completed first, then enrich with doctor data
-      const completedConsultations = (consultations || [])
-        .filter(
-          (c) =>
-            (c.appointments?.status || "").toLowerCase() === "completed"
-        )
-        .map((consultation) => {
-          if (!consultation.appointments?.doctor_id) {
-            return {
-              ...consultation,
-              appointment: {
-                ...consultation.appointments,
-                status: consultation.appointments?.status,
-                doctor_name: "Unknown Doctor",
-                department_name: "Unknown Department",
-                date: new Date().toISOString().split("T")[0],
-                time: "00:00:00",
-              },
-            } as ConsultationWithAppointment;
-          }
-
-          const doctor = doctors.find(
-            (d) => d.id === consultation.appointments?.doctor_id
-          );
-
-          return {
-            ...consultation,
-            appointment: {
-              ...consultation.appointments,
-              status: (consultation.appointments?.status || undefined) as
-                | AppointmentStatus
-                | undefined,
-              doctor_name: doctor?.name || "Unknown Doctor",
-              department_name: doctor?.department_name || "Unknown Department",
-              date: String(
-                consultation.appointments?.date ||
-                  new Date().toISOString().split("T")[0]
-              ),
-              time: String(consultation.appointments?.time || "00:00:00"),
-            },
-          } as ConsultationWithAppointment;
-        });
-
-      return {
-        ...patient,
-        consultations: completedConsultations,
-        prescriptions: prescriptions || [],
-      } as PatientWithConsultations;
-    })
-  );
-
-  return {
-    patients: patientsWithRecords,
-    totalCount,
-  };
-};
-
 const PatientRecords = () => {
   const { activeClinic, loading: authLoading } = useAuth();
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -227,23 +60,13 @@ const PatientRecords = () => {
     setIsPatientModalOpen(true);
   });
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: [
-      "patientsWithMedicalRecords",
-      activeClinic?.clinics?.id,
-      searchTerm,
-      currentPage,
-    ],
-    queryFn: () =>
-      fetchPatientsWithMedicalRecords(
-        activeClinic?.clinics?.id || "",
-        searchTerm,
-        currentPage,
-        itemsPerPage
-      ),
-    enabled: !!activeClinic && !authLoading,
-    retry: 1,
-  });
+  const { data, isLoading, error } = usePatientsWithRecords(
+    activeClinic?.clinics?.id ?? "",
+    searchTerm,
+    currentPage,
+    itemsPerPage,
+    !!activeClinic && !authLoading
+  );
 
   const patientsWithRecords = data?.patients || [];
   const totalCount = data?.totalCount || 0;
@@ -497,9 +320,6 @@ const PatientRecords = () => {
         patient={editingPatient}
         onPatientCreated={() => {
           setIsPatientModalOpen(false);
-          queryClient.invalidateQueries({
-            queryKey: ["patients", activeClinic?.clinic_id],
-          });
         }}
       />
 
