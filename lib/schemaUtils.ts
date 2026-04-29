@@ -4,7 +4,7 @@ import * as z from "zod";
 export type NoteFieldConfig = {
   name: string;
   label: string;
-  type: "input" | "textarea" | "prescription" | "vital_signs" | "tabular_eye" | "motor_examination" | "reflex_examination";
+  type?: "input" | "textarea" | "prescription" | "vital_signs" | "tabular_eye" | "motor_examination" | "reflex_examination";
   rows?: number;
   placeholder?: string;
   mandatory?: boolean;

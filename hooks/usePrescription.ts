@@ -204,9 +204,9 @@ export const usePrescription = ({
         patient_id: finalPatientId,
         consultation_id: finalConsultationId,
         medications: formData.medications
-          .filter(med => med.name.trim())
+          .filter(med => med.name?.trim())
           .map(med => ({
-            name: med.name.trim(),
+            name: med.name!.trim(),
             dosage: med.dosage || null,
             frequency: med.frequency || null,
             duration: med.duration || null,

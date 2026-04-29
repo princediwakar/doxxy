@@ -164,7 +164,7 @@ export const ConsultationFormField = memo(({
   }
 
   // Group other complex objects that default to {}
-  if (['tabular_eye', 'vital_signs', 'motor_examination', 'reflex_examination'].includes(fieldConfig.type)) {
+  if (['tabular_eye', 'vital_signs', 'motor_examination', 'reflex_examination'].includes(fieldConfig.type ?? '')) {
      const safeObjectValue = (typeof value === 'object' && value !== null && !Array.isArray(value)) ? value : {};
 
      return (

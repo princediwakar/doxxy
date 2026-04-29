@@ -8,6 +8,7 @@ import type {
   DbDoctor,
   DbAppointmentWithDetails,
   DbProfile,
+  PrescriptionMedication,
 } from "./core";
 import type { ConsultationMedication } from "@/lib/consultationNotesSchemas";
 
@@ -35,15 +36,6 @@ export type PrescriptionWithDetails = Prescription & {
 export interface PrescriptionFormValues {
   medications: PrescriptionMedication[];
   notes?: string;
-}
-
-/** Individual medication in a prescription */
-export interface PrescriptionMedication {
-  name: string;
-  dosage?: string;
-  frequency?: MedicationFrequency;
-  duration?: string;
-  instructions?: string;
 }
 
 /** Medication frequency options */
@@ -136,4 +128,4 @@ export interface MedicineSelectHandlerParams {
 // EXPORTS
 // ============================================================================
 
-export { type ConsultationMedication };
+export { type ConsultationMedication, type PrescriptionMedication };

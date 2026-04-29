@@ -11,6 +11,8 @@ import {
   DbDepartmentType,
   DbAppointment,
   ClinicDepartmentWithType,
+  Consultation,
+  PrescriptionMedication,
 } from "./core";
 import {
   ConsultationNotes,
@@ -20,18 +22,6 @@ import {
 // ============================================================================
 // ENHANCED DATABASE TYPES WITH RELATIONSHIPS
 // ============================================================================
-
-/** Consultation with enhanced specialty_data type */
-// Fixed: Use Omit to strictly override specialty_data with null support
-export type Consultation = Omit<DbConsultation, 'specialty_data'> & {
-  specialty_data?: ConsultationNotes | null;
-  appointment?: {
-    date: string;
-    time: string;
-    doctor_name: string;
-    department_name: string;
-  } | null;
-};
 
 /** Patient with clinic relationship */
 export type PatientWithClinic = DbPatient & {
@@ -62,16 +52,6 @@ export interface ConsultationFormValues {
   specialty_data: ConsultationNotes;
 }
 
-/** Prescription medication interface */
-export interface PrescriptionMedication {
-  name?: string;
-  dosage?: string;
-  frequency?: string;
-  duration?: string;
-  route?: string;
-  instructions?: string;
-}
-
 /** Prescription field component props */
 export interface PrescriptionFieldProps {
   value: readonly PrescriptionMedication[];
@@ -83,7 +63,7 @@ export interface PrescriptionFieldProps {
 export interface FieldConfig {
   name: string;
   label: string;
-  type: string;
+  type?: string;
   placeholder?: string;
   rows?: number;
   options?: string[];
@@ -357,6 +337,8 @@ export interface TransformedDoctorData {
 // EXPORTS
 // ============================================================================
 
+// Re-export core types for convenience
+export type { Consultation, PrescriptionMedication };
 // Re-export Zod types for convenience
 export type { ConsultationNotes, ConsultationMedication };
 

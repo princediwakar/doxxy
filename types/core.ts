@@ -83,6 +83,28 @@ export type DbConsultation = Omit<DbConsultationBase, 'specialty_data'> & {
   specialty_data?: ConsultationNotes | null; // Fixed: Allow null
 };
 
+/** Prescription medication — canonical definition used by both consultation forms and prescription records */
+export interface PrescriptionMedication {
+  name?: string;
+  dosage?: string;
+  frequency?: string;
+  duration?: string;
+  route?: string;
+  instructions?: string;
+}
+
+/** Consultation with appointment relationship — canonical definition */
+export type Consultation = DbConsultation & {
+  appointment?: {
+    date: string;
+    time: string;
+    doctor_name: string;
+    department_name: string;
+    status?: string;
+    doctor_id?: string;
+  } | null;
+};
+
 /** Enhanced prescription type with medications override */
 export type DbPrescription = Omit<DbPrescriptionBase, 'medications'> & {
   medications?: ConsultationMedication[] | null; // Fixed: Allow null

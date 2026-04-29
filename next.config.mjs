@@ -21,7 +21,7 @@ const nextConfig = {
 
   // TypeScript Configuration
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Trailing Slash for better compatibility

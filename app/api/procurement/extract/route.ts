@@ -1,6 +1,6 @@
 // app/api/procurement/extract/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
@@ -250,7 +250,7 @@ Return ONLY a JSON array, one object per term, same order as input:
 function sleep(ms: number) { return new Promise((r) => setTimeout(r, ms)); }
 
 async function matchTermsBulk(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, string, any>,
   terms: string[]
 ): Promise<MatchResult[]> {
   const { data, error } = await supabase.rpc('match_invoice_items_bulk', { search_terms: terms });
@@ -259,7 +259,7 @@ async function matchTermsBulk(
 }
 
 async function matchTermSingle(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, string, any>,
   term: string
 ): Promise<MatchResult> {
   const { data, error } = await supabase.rpc('match_invoice_item_single', { search_term: term });
@@ -268,7 +268,7 @@ async function matchTermSingle(
 }
 
 async function dbMatch(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, string, any>,
   terms: string[]
 ): Promise<Map<string, { matched_id: number | null; matched_name: string | null }>> {
   const BATCH = 10;
@@ -296,7 +296,7 @@ async function dbMatch(
 
 async function aiMatch(
   unmatchedTerms: string[],
-  supabase: ReturnType<typeof createClient>
+  supabase: SupabaseClient<any, string, any>
 ): Promise<Map<string, { matched_id: number | null; matched_name: string | null }>> {
   const result = new Map<string, { matched_id: number | null; matched_name: string | null }>();
   if (unmatchedTerms.length === 0) return result;
@@ -331,7 +331,7 @@ async function aiMatch(
       }
     }
 
-    const resolved = [...result.values()].filter((v) => v.matched_id).length;
+    const resolved = Array.from(result.values()).filter((v) => v.matched_id).length;
     logger.log(`AI matching: ${resolved}/${unmatchedTerms.length} resolved`);
   } catch (err) {
     logger.error('AI matching failed:', err instanceof Error ? err.message : err);
@@ -387,7 +387,7 @@ export async function POST(request: Request) {
       const terms = extractedData.items.map(
         (item) => item.normalized_search_name?.trim() || item.raw_extracted_name?.trim() || ''
       );
-      const uniqueTerms = [...new Set(terms.filter(Boolean))];
+      const uniqueTerms = Array.from(new Set(terms.filter(Boolean)));
 
       const dbMatchMap = await dbMatch(supabase, uniqueTerms);
 

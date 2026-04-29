@@ -7,6 +7,7 @@ import type {
   AppointmentStatus,
   AppointmentType,
   Json,
+  Consultation,
 } from './core';
 
 // If ConsultationMedication isn't exported from core, we define a fallback or import it
@@ -75,18 +76,6 @@ export interface AppointmentData {
   department_name?: string;
 }
 
-/** Consultation with appointment details for timeline display */
-export type Consultation = DbConsultation & {
-  appointment?: {
-    date: string;
-    time: string;
-    doctor_name: string;
-    department_name: string;
-    status?: string; // Added to support the loose typing in the fetch function
-    doctor_id?: string; // Added to support logic checks
-  } | null;
-};
-
 /** Prescription with doctor details for timeline display */
 export type Prescription = DbPrescription & {
   doctor_name?: string;
@@ -118,4 +107,4 @@ export interface DoctorWithDepartmentInfo {
 }
 
 // Re-export core types for convenience
-export type { AppointmentStatus, AppointmentType };
+export type { AppointmentStatus, AppointmentType, Consultation };

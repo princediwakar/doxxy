@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     // Batch mode: create all unique unmapped names
     if (batchNames.length > 0) {
-      const uniqueNames = [...new Set(batchNames)];
+      const uniqueNames = Array.from(new Set<string>(batchNames));
       const results: { name: string; id: number }[] = [];
 
       for (const name of uniqueNames) {
