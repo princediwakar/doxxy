@@ -1,8 +1,7 @@
 // src/types/dashboard.ts - Dashboard Module Types
 // Hub & Spoke Type Architecture - Dashboard Spoke
 
-import type { Enums } from '@/integrations/supabase/types';
-import type { DbAppointment } from './core';
+import type { DbAppointment, AppointmentStatus, AppointmentType } from './core';
 
 // ============================================================================
 // DASHBOARD-SPECIFIC TYPES
@@ -15,8 +14,8 @@ export interface FormattedAppointment {
   doctor: string;
   time: string;
   date: string;
-  status: Enums<'appointment_status'>;
-  type: Enums<'appointment_type'>;
+  status: AppointmentStatus;
+  type: AppointmentType;
 }
 
 /** Database appointment structure for dashboard queries */
@@ -24,8 +23,8 @@ export interface DatabaseAppointment {
   id: string;
   date: string;
   time: string;
-  type: Enums<'appointment_type'>;
-  status: Enums<'appointment_status'>;
+  type: AppointmentType;
+  status: AppointmentStatus;
   patient_id: string;
   patient_name: string;
   doctor_id: string;
@@ -155,8 +154,8 @@ export function isValidDatabaseAppointment(obj: unknown): obj is DatabaseAppoint
 /** Convert DatabaseAppointment to FormattedAppointment */
 export function convertToFormattedAppointment(
   apt: DatabaseAppointment,
-  status: Enums<'appointment_status'>,
-  type: Enums<'appointment_type'>
+  status: AppointmentStatus,
+  type: AppointmentType
 ): FormattedAppointment {
   return {
     id: apt.id,

@@ -210,11 +210,23 @@ export type DbDashboardData = Database['public']['Functions']['get_dashboard_dat
 export type DbDoctorDashboardData = Database['public']['Functions']['get_doctor_dashboard_data']['Returns'][0];
 
 // ============================================================================
+// ENHANCED RELATIONSHIP TYPES (shared across spokes)
+// ============================================================================
+
+/** Clinic department with department type relationship */
+export type ClinicDepartmentWithType = DbClinicDepartment & {
+  department_type?: DbDepartmentType;
+};
+
+// ============================================================================
 // UTILITY TYPES
 // ============================================================================
 
 /** Generic JSON type for flexible data */
 export type Json = Database['public']['Tables']['clinics']['Row']['operating_hours'];
+
+/** General-purpose JSON type for database jsonb columns — matches Supabase's Json */
+export type { Json as DbJson } from '@/integrations/supabase/types';
 
 /** Type for table relationships */
 export type TableRelationship = Database['public']['Tables']['appointments']['Relationships'][0];

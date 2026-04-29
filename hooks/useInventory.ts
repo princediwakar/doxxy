@@ -5,8 +5,13 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { showErrorToast } from "@/lib/error-utils";
 import { queryKeys } from "@/lib/query-keys";
+import { DbInventoryItem, DbInventoryItemUpdate, DbMedicine } from "@/types/core";
 
 const supabase = getSupabase();
+
+export type InventoryItemWithMedicine = DbInventoryItem & {
+  medicines: Pick<DbMedicine, 'name' | 'manufacturer_name'> | null;
+};
 
 export function useInventory() {
   const { activeClinic } = useAuth();
@@ -36,7 +41,7 @@ export function useInventory() {
     mutationFn: async ({ itemId, newStock }: { itemId: string; newStock: number }) => {
       const { error } = await supabase
         .from("inventory_items")
-        .update({ current_stock: newStock } as any)
+        .update({ current_stock: newStock } as unknown as DbInventoryItemUpdate)
         .eq("id", itemId);
 
       if (error) throw error;

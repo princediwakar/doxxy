@@ -1,7 +1,7 @@
 // components/pharmacy/InventoryTab.tsx
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useInventory } from "@/hooks/useInventory";
+import { useInventory, InventoryItemWithMedicine } from "@/hooks/useInventory";
 import {
   Table,
   TableBody,
@@ -28,13 +28,13 @@ import { Label } from "@/components/ui/label";
 export function InventoryTab() {
   const { activeClinicRole } = useAuth();
   const { inventory, isLoading, updateStock } = useInventory();
-  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<InventoryItemWithMedicine | null>(null);
   const [newStock, setNewStock] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const canEditStock = activeClinicRole === "superadmin" || activeClinicRole === "staff";
 
-  const handleEditClick = (item: any) => {
+  const handleEditClick = (item: InventoryItemWithMedicine) => {
     setEditingItem(item);
     setNewStock(item.current_stock.toString());
     setIsDialogOpen(true);
@@ -87,7 +87,7 @@ export function InventoryTab() {
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-base">
-                      {(item.medicines as any)?.name || "Unknown"}
+                      {item.medicines?.name || "Unknown"}
                     </CardTitle>
                     <div className="flex gap-1 flex-wrap justify-end">
                       {isExpired && <Badge variant="destructive">Expired</Badge>}
@@ -175,7 +175,7 @@ export function InventoryTab() {
                       return (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">
-                            {(item.medicines as any)?.name || "Unknown"}
+                            {item.medicines?.name || "Unknown"}
                           </TableCell>
                           <TableCell>{item.batch_number}</TableCell>
                           <TableCell>
@@ -234,7 +234,7 @@ export function InventoryTab() {
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Medicine</Label>
-                <p className="text-sm font-medium">{(editingItem?.medicines as any)?.name || "Unknown"}</p>
+                <p className="text-sm font-medium">{editingItem?.medicines?.name || "Unknown"}</p>
               </div>
               <div className="space-y-2">
                 <Label>Packet No.</Label>

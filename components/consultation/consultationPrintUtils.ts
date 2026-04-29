@@ -1,8 +1,7 @@
 // File: components/consultation/consultationPrintUtils.ts
 import { logger } from "@/lib/logger";
 import { ConsultationFormValues } from '@/types/consultation';
-import { DbPatient } from '@/types/core';
-import { Tables } from '@/integrations/supabase/types';
+import { DbPatient, DbAppointment, DbClinic } from '@/types/core';
 import { createRoot } from 'react-dom/client';
 import { ConsultationLayout } from './ConsultationLayout';
 import React from 'react';
@@ -18,8 +17,8 @@ type DoctorInfo = {
   [key: string]: unknown;
 };
 
-type AppointmentRow = Tables<'appointments'>;
-type Clinic = Tables<'clinics'>;
+type AppointmentRow = DbAppointment;
+type Clinic = DbClinic;
 type SupabaseUser = {
   id: string;
   email?: string;

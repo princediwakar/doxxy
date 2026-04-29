@@ -1,5 +1,5 @@
 // src/types/doctor.ts
-import { DbDoctor, DbClinicDepartment, DbDepartmentType } from './core';
+import { DbDoctor, DbClinicDepartment, DbDepartmentType, ClinicDepartmentWithType } from './core';
 
 // ============================================================================
 // ENHANCED DATABASE TYPES WITH RELATIONSHIPS
@@ -8,11 +8,6 @@ import { DbDoctor, DbClinicDepartment, DbDepartmentType } from './core';
 /** Doctor with department relationship */
 export type DoctorWithDepartment = DbDoctor & {
   clinic_department?: ClinicDepartmentWithType;
-};
-
-/** Clinic department with type relationship */
-export type ClinicDepartmentWithType = DbClinicDepartment & {
-  department_type?: DbDepartmentType;
 };
 
 /** Department information for medical credentials */

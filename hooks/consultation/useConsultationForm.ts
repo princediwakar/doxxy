@@ -8,9 +8,9 @@ import { useMutation, useQuery, useQueryClient, UseMutationResult } from '@tanst
 import { z } from 'zod';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { ConsultationFormValues, PrescriptionMedication } from '@/types/consultation';
-import { Tables, Json } from '@/integrations/supabase/types';
+import { DbAppointment, DbConsultationBase, DbJson } from '@/types/core';
 import { consultationNotesSchema, getMandatoryFieldsForDepartment } from '@/lib/consultationNotesSchemas';
 // Custom deep comparison function to replace lodash-es isEqual
 const isDeepEqual = <T>(a: T, b: T): boolean => {
@@ -36,8 +36,8 @@ const isDeepEqual = <T>(a: T, b: T): boolean => {
 
 export interface UseConsultationFormParams {
   appointmentId: string | undefined;
-  appointment: Tables<'appointments'> | null | undefined;
-  existingConsultation: Tables<'consultations'> | null | undefined;
+  appointment: DbAppointment | null | undefined;
+  existingConsultation: DbConsultationBase | null | undefined;
   departmentType?: string;
 }
 
@@ -45,7 +45,7 @@ export interface UseConsultationFormReturn {
   form: ReturnType<typeof useForm<ConsultationFormValues>>;
   isConsultationCompleted: boolean;
   canEditConsultation: boolean;
-  autoSaveMutation: UseMutationResult<Tables<'consultations'>, Error, ConsultationFormValues, unknown>;
+  autoSaveMutation: UseMutationResult<DbConsultationBase, Error, ConsultationFormValues, unknown>;
   handleSave: () => void;
   handleCompleteConsultation: () => Promise<void>;
   validateMandatoryFields: () => string[];
@@ -317,7 +317,7 @@ export const useConsultationForm = ({
             patient_id: appointment?.patient_id || '',
             doctor_id: appointment?.doctor_id || user?.id || '',
             clinic_id: activeClinic.clinic_id || '',
-            medications: [med] as unknown as Json,
+            medications: [med] as unknown as DbJson,
           }));
 
           // Use upsert to handle both creation and updates atomically
@@ -351,17 +351,14 @@ export const useConsultationForm = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['consultation', appointmentId] });
-      toast({
-        title: 'Consultation saved',
+      toast.success('Consultation saved', {
         description: 'Your consultation notes have been saved successfully.',
       });
     },
     onError: (error) => {
       logger.error('❌ Auto-save error:', error);
-      toast({
-        title: 'Save failed',
+      toast.error('Save failed', {
         description: 'Could not save consultation notes. Please try again.',
-        variant: 'destructive',
       });
     },
   });
@@ -413,10 +410,8 @@ export const useConsultationForm = ({
   // Manual save (only if editing is allowed)
   const handleSave = useCallback(() => {
     if (!canEditConsultation) {
-      toast({
-        title: 'Cannot Save',
+      toast.error('Cannot Save', {
         description: 'You do not have permission to edit this consultation.',
-        variant: 'destructive',
       });
       return;
     }
@@ -492,10 +487,8 @@ export const useConsultationForm = ({
     // Validate appointment ID
     if (!appointmentId || appointmentId.trim() === '') {
       logger.error('Invalid appointment ID in handleCompleteConsultation:', appointmentId);
-      toast({
-        title: 'Invalid Appointment',
+      toast.error('Invalid Appointment', {
         description: 'Cannot complete consultation with invalid appointment ID.',
-        variant: 'destructive',
       });
       return;
     }
@@ -513,18 +506,15 @@ export const useConsultationForm = ({
         setJustCompleted(true);
         if (process.env.NODE_ENV === "development") logger.log('✅ Editing completed consultation - justCompleted set to true for redirect');
 
-        toast({
-          title: 'Notes Updated',
+        toast.success('Notes Updated', {
           description: 'Your consultation notes have been updated successfully.',
         });
         return;
       } catch (error) {
         logger.error('Error updating consultation notes:', error);
         isEditingCompletedRef.current = false;
-        toast({
-          title: 'Update Failed',
+        toast.error('Update Failed', {
           description: 'Could not update consultation notes. Please try again.',
-          variant: 'destructive',
         });
         return;
       }
@@ -532,10 +522,8 @@ export const useConsultationForm = ({
 
     // If consultation is completed but user cannot edit, show error
     if (isConsultationCompleted) {
-      toast({
-        title: 'Already Completed',
+      toast.error('Already Completed', {
         description: 'This consultation has already been completed.',
-        variant: 'destructive',
       });
       return;
     }
@@ -543,10 +531,8 @@ export const useConsultationForm = ({
     // Validate mandatory fields first
     const validationErrors = validateMandatoryFields();
     if (validationErrors.length > 0) {
-      toast({
-        title: 'Mandatory Fields Missing',
+      toast.error('Mandatory Fields Missing', {
         description: `Please complete the following required fields: ${validationErrors.join(', ')}`,
-        variant: 'destructive',
       });
       return;
     }
@@ -592,10 +578,8 @@ export const useConsultationForm = ({
           logger.error('Error deducting appointment credit:', deductError);
           // Don't throw - we still want to mark consultation as completed
           // but log the billing error
-          toast({
-            title: 'Consultation Completed',
+          toast('Consultation Completed', {
             description: 'Consultation marked as complete, but credit deduction failed. Please check billing.',
-            variant: 'default',
           });
         } else {
           if (process.env.NODE_ENV === "development") logger.log('Credit deduction result:', deductResult);
@@ -603,10 +587,8 @@ export const useConsultationForm = ({
             if (process.env.NODE_ENV === "development") logger.log('✅ Credit successfully deducted for consultation');
           } else {
             logger.warn('⚠️ Credit deduction returned false - clinic may not have sufficient credits');
-            toast({
-              title: 'Consultation Completed',
+            toast('Consultation Completed', {
               description: 'Consultation marked as complete, but clinic has insufficient credits for billing.',
-              variant: 'default',
             });
           }
         }
@@ -627,8 +609,7 @@ export const useConsultationForm = ({
       queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary', activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['clinic-credits', activeClinic?.clinic_id] });
 
-      toast({
-        title: 'Consultation Completed',
+      toast.success('Consultation Completed', {
         description: 'The consultation has been marked as complete.',
       });
 
@@ -636,10 +617,8 @@ export const useConsultationForm = ({
     } catch (error) {
        logger.error('Error completing consultation:', error);
        isCompletingRef.current = false;
-       toast({
-        title: 'Completion Failed',
+       toast.error('Completion Failed', {
         description: 'Could not complete the consultation. Please try again.',
-        variant: 'destructive',
        });
     }
   }, [

@@ -32,6 +32,21 @@ interface MedicineLookup {
   name: string;
 }
 
+interface GeminiResponse {
+  candidates?: {
+    finishReason?: string;
+    content?: {
+      parts?: { text?: string }[];
+    };
+  }[];
+}
+
+interface AIMatchResult {
+  term?: string;
+  matched_id?: number | null;
+  matched_name?: string | null;
+}
+
 // ─── Model fallback chain ─────────────────────────────────────────────────────
 // Tries each model in order until one works.
 // Add/remove model strings here as Gemini updates their API.
@@ -111,7 +126,7 @@ async function callGemini(
       continue;
     }
 
-    const candidate = (data as any)?.candidates?.[0];
+    const candidate = (data as GeminiResponse)?.candidates?.[0];
     const finishReason: string = candidate?.finishReason ?? 'UNKNOWN';
     const text: string | undefined = candidate?.content?.parts?.[0]?.text;
 
@@ -309,7 +324,7 @@ async function aiMatch(
     const matches = await callGemini(buildMatchingPrompt(taskLines.join('\n\n')));
 
     if (Array.isArray(matches)) {
-      for (const m of matches as any[]) {
+      for (const m of matches as AIMatchResult[]) {
         if (m?.term) {
           result.set(m.term, { matched_id: m.matched_id ?? null, matched_name: m.matched_name ?? null });
         }

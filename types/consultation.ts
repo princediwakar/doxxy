@@ -10,6 +10,7 @@ import {
   DbClinicMember,
   DbDepartmentType,
   DbAppointment,
+  ClinicDepartmentWithType,
 } from "./core";
 import {
   ConsultationNotes,
@@ -45,11 +46,6 @@ export type DoctorWithProfile = DbDoctor & {
     display_name?: string;
     email?: string;
   };
-};
-
-/** Clinic department with type relationship */
-export type ClinicDepartmentWithType = DbClinicDepartment & {
-  department_type?: DbDepartmentType;
 };
 
 /** Clinic member with department relationship */
