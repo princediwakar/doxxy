@@ -37,11 +37,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFABAction } from "@/hooks/useFABAction";
 import { useBillingData } from "@/hooks/useBillingData";
 import { DbPatient } from "@/types/core";
-import { Bill } from "@/types/billing";
-
-interface BillWithDetails extends Bill {
-  patient_name?: string;
-}
+import { Bill, BillWithDetails } from "@/types/billing";
 
 const Billing = () => {
   const { activeClinic } = useAuth();

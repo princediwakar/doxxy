@@ -14,6 +14,11 @@ export type Bill = Omit<DbBill, 'service_items'> & {
   service_items?: ServiceItem[] | null;
 };
 
+/** Bill with joined patient name */
+export interface BillWithDetails extends Bill {
+  patient_name?: string;
+}
+
 /** Service item in a bill */
 export interface ServiceItem {
   description: string;
@@ -83,6 +88,9 @@ export interface UseBillingReturn {
   isLoadingInvoiceNumber: boolean;
   isLoadingAppointments: boolean;
   isLoadingPatients: boolean;
+  appointmentsError: Error | null;
+  patientsError: Error | null;
+  doctorFeeError: Error | null;
   selectedAppointment: AppointmentForBilling | undefined;
   doctorFee: DoctorFeeInfo | null;
   calculateTotals: BillingTotals;

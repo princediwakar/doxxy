@@ -15,15 +15,7 @@ export function usePatientMutations() {
   const queryClient = useQueryClient();
 
   const createPatient = useMutation({
-    mutationFn: async (values: {
-      name: string;
-      gender?: string | null;
-      age?: number | null;
-      phone?: string | null;
-      email?: string | null;
-      address?: string | null;
-      medical_id?: string | null;
-    }) => {
+    mutationFn: async (values: Omit<DbPatientInsert, "clinic_id">) => {
       if (!activeClinic?.clinic_id) {
         throw new Error("No active clinic selected.");
       }
@@ -31,12 +23,12 @@ export function usePatientMutations() {
       const patientData: DbPatientInsert = {
         name: values.name,
         clinic_id: activeClinic.clinic_id,
-        gender: values.gender || null,
-        age: values.age || null,
-        phone: values.phone || null,
-        email: values.email || null,
-        address: values.address || null,
-        medical_id: values.medical_id || null,
+        gender: values.gender ?? null,
+        age: values.age ?? null,
+        phone: values.phone ?? null,
+        email: values.email ?? null,
+        address: values.address ?? null,
+        medical_id: values.medical_id ?? null,
       };
 
       const { data, error } = await supabase
@@ -63,26 +55,17 @@ export function usePatientMutations() {
   });
 
   const updatePatient = useMutation({
-    mutationFn: async (values: {
-      id: string;
-      name: string;
-      gender?: string | null;
-      age?: number | null;
-      phone?: string | null;
-      email?: string | null;
-      address?: string | null;
-      medical_id?: string | null;
-    }) => {
+    mutationFn: async (values: { id: string } & Omit<DbPatientInsert, "clinic_id">) => {
       const { id, ...rest } = values;
 
       const patientData: DbPatientUpdate = {
         name: rest.name,
-        gender: rest.gender || null,
-        age: rest.age || null,
-        phone: rest.phone || null,
-        email: rest.email || null,
-        address: rest.address || null,
-        medical_id: rest.medical_id || null,
+        gender: rest.gender ?? null,
+        age: rest.age ?? null,
+        phone: rest.phone ?? null,
+        email: rest.email ?? null,
+        address: rest.address ?? null,
+        medical_id: rest.medical_id ?? null,
       };
 
       const { data, error } = await supabase

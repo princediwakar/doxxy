@@ -20,22 +20,39 @@ async function fetchPatientsWithMedicalRecords(
   currentPage: number,
   itemsPerPage: number
 ): Promise<{ patients: PatientWithConsultations[]; totalCount: number }> {
-  let allPatientsQuery = supabase
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage - 1;
+
+  // Count query
+  let countQuery = supabase
     .from("patients")
-    .select("*")
+    .select("*", { count: "exact", head: true })
     .eq("clinic_id", clinicId);
 
   if (searchTerm.trim()) {
-    allPatientsQuery = allPatientsQuery.ilike("name", `%${searchTerm}%`);
+    countQuery = countQuery.ilike("name", `%${searchTerm}%`);
   }
 
-  const { data: allPatients, error: patientsError } = await allPatientsQuery;
-  if (patientsError) throw patientsError;
+  const { count: totalCount, error: countError } = await countQuery;
+  if (countError) throw countError;
 
-  const totalCount = allPatients?.length || 0;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const patients =
-    allPatients?.slice(startIndex, startIndex + itemsPerPage) || [];
+  if (!totalCount || totalCount === 0) {
+    return { patients: [], totalCount: 0 };
+  }
+
+  // Paginated fetch
+  let patientsQuery = supabase
+    .from("patients")
+    .select("*")
+    .eq("clinic_id", clinicId)
+    .range(startIndex, endIndex);
+
+  if (searchTerm.trim()) {
+    patientsQuery = patientsQuery.ilike("name", `%${searchTerm}%`);
+  }
+
+  const { data: patients, error: patientsError } = await patientsQuery;
+  if (patientsError) throw patientsError;
 
   let doctors: RpcDoctor[] = [];
 
@@ -80,7 +97,7 @@ async function fetchPatientsWithMedicalRecords(
   }
 
   const patientsWithRecords = await Promise.all(
-    patients.map(async (patient) => {
+    (patients || []).map(async (patient) => {
       const { data: consultations } = await supabase
         .from("consultations")
         .select(

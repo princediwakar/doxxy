@@ -3,13 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { queryKeys } from "@/lib/query-keys";
-import { Bill, ServiceItem } from "@/types/billing";
+import { Bill, ServiceItem, BillWithDetails } from "@/types/billing";
 
 const supabase = getSupabase();
-
-interface BillWithDetails extends Bill {
-  patient_name?: string;
-}
 
 interface BillingStats {
   totalRevenue: number;

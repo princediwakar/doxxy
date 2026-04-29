@@ -1,5 +1,6 @@
 // src/components/billing/billingPrintUtils.ts
 import { logger } from "@/lib/logger";
+import { toast } from "sonner";
 import { DbPatient, DbClinic } from '@/types/core';
 import { Bill, ServiceItem } from '@/types/billing';
 
@@ -57,10 +58,11 @@ export const generateBillPrintContent = (
   const taxPct = Number(billData.tax_percentage || 0);
 
   const discountAmount = subtotal * (discountPct / 100);
-  const taxAmount = subtotal * (taxPct / 100);
-  
+  const subtotalAfterDiscount = subtotal - discountAmount;
+  const taxAmount = subtotalAfterDiscount * (taxPct / 100);
+
   // Calculate final total
-  const finalTotal = subtotal - discountAmount + taxAmount;
+  const finalTotal = subtotalAfterDiscount + taxAmount;
   // ----------------------------------
 
   return `
@@ -241,7 +243,7 @@ export const printBill = async (
     // Standard A4 dimensions for popup preview (optional)
     const printWindow = window.open('', '_blank', 'width=900,height=1200');
     if (!printWindow) {
-      logger.error("Popup blocked");
+      logger.error("Popup blocked"); toast.error("Unable to open print window. Please allow popups for this site.");
       return;
     }
 
@@ -251,6 +253,6 @@ export const printBill = async (
     printWindow.focus();
     
   } catch (error) {
-    logger.error('Error generating print content:', error);
+    logger.error('Error generating print content:', error); toast.error("Failed to generate print content. Please try again.");
   }
 };

@@ -1,18 +1,15 @@
 // src/components/appointments/useAppointmentForm.ts
 "use client";
 import { logger } from "@/lib/logger";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { format } from "date-fns";
-import { toast } from "sonner";
 import { queryKeys } from "@/lib/query-keys";
 import {
-  AppointmentFormValues,
   RpcPatient,
   TransformedDoctor,
 } from "../components/appointments/appointment.utils";
-import type { AppointmentData } from "@/types/appointments";
+import type { DbDoctor } from "@/types/core";
 
 const supabase = getSupabase();
 
@@ -56,9 +53,24 @@ export const useAppointmentForm = (open: boolean) => {
       );
 
       if (!rpcError && rpcData) {
-        // We cast this to TransformedDoctor[] assuming the RPC returns a compatible structure
-        // or map it if necessary. Ideally RPC returns exact structure.
-        return rpcData as unknown as TransformedDoctor[];
+        return (rpcData as unknown[]).map((item) => {
+          const d = item as Record<string, unknown>;
+          return {
+            id: String(d.id ?? ""),
+            user_id: String(d.user_id ?? ""),
+            name: String(d.name ?? "Unknown Doctor"),
+            email: String(d.email ?? ""),
+            phone: String(d.phone ?? ""),
+            bio: (d.bio as string) ?? null,
+            created_at: String(d.created_at ?? ""),
+            role: "doctor",
+            department_name: String(d.department_name ?? "General Medicine"),
+            department_id: (d.department_id as string) ?? null,
+            is_active: (d.is_active as boolean) ?? null,
+            primary_specialization: (d.primary_specialization as string) ?? null,
+            consultation_fee: (d.consultation_fee as number) ?? null,
+          } as TransformedDoctor;
+        });
       }
 
       logger.warn(
@@ -86,7 +98,7 @@ export const useAppointmentForm = (open: boolean) => {
         .eq("clinic_id", activeClinic.clinic_id)
         .eq("is_active", true);
 
-      if (fallbackError) throw new Error("Failed to fetch doctors");
+      if (fallbackError) throw new Error(`Failed to fetch doctors: ${fallbackError.message}`);
 
       // 3. Transform Data
       return (fallbackData || []).map((doctor: unknown) => {
@@ -141,66 +153,4 @@ export const useAppointmentForm = (open: boolean) => {
     isLoadingDoctors,
     activeClinic,
   };
-};
-
-// --- Mutation Hook ---
-export const useAppointmentMutation = (
-  appointment: AppointmentData | null,
-  onSuccessCallback: () => void
-) => {
-  const queryClient = useQueryClient();
-  const { activeClinic } = useAuth();
-
-  return useMutation({
-    mutationFn: async (values: AppointmentFormValues) => {
-      if (!activeClinic?.clinic_id)
-        throw new Error("No active clinic selected.");
-
-      const baseAppointmentData = {
-        clinic_id: activeClinic.clinic_id,
-        date: format(values.date, "yyyy-MM-dd"),
-        time: values.time || "",
-        patient_id: values.patient_id,
-        doctor_id: values.doctor_id,
-        type: values.type,
-        status: values.status,
-        notes: values.notes || "",
-      };
-
-      const query = appointment
-        ? supabase
-            .from("appointments")
-            .update(baseAppointmentData)
-            .eq("id", appointment.id)
-        : supabase.from("appointments").insert(baseAppointmentData);
-
-      const { data, error } = await query.select().single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast.success(
-        appointment ? "Appointment updated!" : "Appointment created!"
-      );
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.appointments.byClinic(activeClinic?.clinic_id ?? ""),
-      });
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.dashboard.data(activeClinic?.clinic_id ?? ""),
-      });
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
-      onSuccessCallback();
-    },
-    onError: (error: Error) => {
-      toast.error(
-        appointment
-          ? "Failed to update appointment."
-          : "Failed to create appointment.",
-        {
-          description: error.message,
-        }
-      );
-    },
-  });
 };

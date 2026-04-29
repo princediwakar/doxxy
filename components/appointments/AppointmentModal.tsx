@@ -30,7 +30,8 @@ import {
   generateTimeSlots,
 } from "./appointment.utils";
 import type { AppointmentData } from "@/types/appointments";
-import { useAppointmentForm, useAppointmentMutation } from "../../hooks/useAppointmentForm";
+import { useAppointmentForm } from "@/hooks/useAppointmentForm";
+import { useAppointmentMutation } from "@/hooks/useAppointmentMutations";
 
 interface AppointmentModalProps {
   open: boolean;

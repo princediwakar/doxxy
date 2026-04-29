@@ -1,5 +1,5 @@
 // src/components/billing/BillingModal.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { FileText, Edit, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +28,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useBilling, BillingFormValues } from "@/hooks/useBilling";
+import { toast } from "sonner";
 import { ServiceItemsSection } from "./ServiceItemsSection";
 import { printBill } from "./billingPrintUtils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -58,6 +59,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     appointments,
     patients,
     isLoadingInvoiceNumber,
+    appointmentsError,
+    patientsError,
+    doctorFeeError,
     calculateTotals,
     addServiceItem,
     removeServiceItem,
@@ -66,6 +70,17 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     isSubmitting,
     refetchInvoiceNumber,
   } = useBilling({ bill, patient, appointment, mode, open });
+
+  // Show error toasts for failed queries
+  useEffect(() => {
+    if (appointmentsError) toast.error('Failed to load appointments');
+  }, [appointmentsError]);
+  useEffect(() => {
+    if (patientsError) toast.error('Failed to load patients');
+  }, [patientsError]);
+  useEffect(() => {
+    if (doctorFeeError) toast.error('Failed to load doctor fee information');
+  }, [doctorFeeError]);
 
   const { activeClinic } = useAuth();
 

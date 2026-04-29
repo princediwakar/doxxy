@@ -79,13 +79,13 @@ export const PatientModal = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: patient?.name || initialName || "", // Use initialName here
-      gender: patient?.gender || "",
-      age: patient?.age || undefined,
-      phone: patient?.phone || "",
-      email: patient?.email || "",
-      address: patient?.address || "",
-      medical_id: patient?.medical_id || "",
+      name: (patient?.name || initialName) || "", // Use initialName here
+      gender: patient?.gender ?? "",
+      age: patient?.age ?? undefined,
+      phone: patient?.phone ?? "",
+      email: patient?.email ?? "",
+      address: patient?.address ?? "",
+      medical_id: patient?.medical_id ?? "",
     },
   });
 
@@ -93,13 +93,13 @@ export const PatientModal = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        name: patient?.name || initialName || "", // Use initialName here on reset
-        gender: patient?.gender || "",
-        age: patient?.age || undefined,
-        phone: patient?.phone || "",
-        email: patient?.email || "",
-        address: patient?.address || "",
-        medical_id: patient?.medical_id || "",
+        name: (patient?.name || initialName) || "", // Use initialName here on reset
+        gender: patient?.gender ?? "",
+        age: patient?.age ?? undefined,
+        phone: patient?.phone ?? "",
+        email: patient?.email ?? "",
+        address: patient?.address ?? "",
+        medical_id: patient?.medical_id ?? "",
       });
     }
   }, [open, patient, initialName, form]);
