@@ -1,6 +1,7 @@
 // src/pages/Billing.tsx
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -68,6 +69,24 @@ const Billing = () => {
   const [modalMode, setModalMode] = useState<"create" | "view" | "edit">(
     "create"
   );
+
+  // Handle FAB quick-action via ?action=new
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const fabHandled = useRef(false);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new" && !fabHandled.current) {
+      fabHandled.current = true;
+      setSelectedBill(null);
+      setModalMode("create");
+      setIsModalOpen(true);
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("action");
+      const qs = next.toString();
+      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, [searchParams, router]);
 
   const {
     data: bills = [],
@@ -237,23 +256,21 @@ const Billing = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-              <CreditCard className="w-5 h-5 " />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Billing</h1>
-              <p className="text-muted-foreground">
-                Manage patient bills and payments
-              </p>
-            </div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+            <CreditCard className="w-5 h-5 " />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Billing</h1>
+            <p className="text-muted-foreground">
+              Manage patient bills and payments
+            </p>
           </div>
         </div>
         <Button
           onClick={handleNewBill}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0"
         >
           <Plus size={18} className="mr-2" />
           Create Bill

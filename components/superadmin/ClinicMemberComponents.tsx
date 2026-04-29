@@ -88,11 +88,11 @@ interface MembersListProps {
 
 export const InviteMemberDialog = ({ open, onOpenChange, data, setData, onSubmit, isPending, departments }: InviteDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent>
+    <DialogContent className="max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center space-x-2"><Mail className="h-5 w-5" /><span>Invite New Member</span></DialogTitle>
       </DialogHeader>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full overflow-hidden">
         <div><label className="text-sm font-medium">Email *</label><Input value={data.email} onChange={e => setData({...data, email: e.target.value})} placeholder="email@example.com" /></div>
         <div><label className="text-sm font-medium">Name *</label><Input value={data.name} onChange={e => setData({...data, name: e.target.value})} placeholder="John Doe" /></div>
         <div><label className="text-sm font-medium">Phone</label><Input value={data.phone} onChange={e => setData({...data, phone: e.target.value})} /></div>
@@ -114,9 +114,9 @@ export const InviteMemberDialog = ({ open, onOpenChange, data, setData, onSubmit
           </Select>
         </div>
       </div>
-      <div className="flex justify-end space-x-2 mt-4">
-        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button onClick={onSubmit} disabled={isPending}>{isPending ? 'Sending...' : 'Send Invitation'}</Button>
+      <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Cancel</Button>
+        <Button onClick={onSubmit} disabled={isPending} className="w-full sm:w-auto">{isPending ? 'Sending...' : 'Send Invitation'}</Button>
       </div>
     </DialogContent>
   </Dialog>
@@ -124,11 +124,11 @@ export const InviteMemberDialog = ({ open, onOpenChange, data, setData, onSubmit
 
 export const CreateDoctorDialog = ({ open, onOpenChange, data, setData, onSubmit, isPending, departments }: DoctorDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle className="flex items-center space-x-2"><Stethoscope className="h-5 w-5" /><span>Create Doctor Profile</span></DialogTitle>
       </DialogHeader>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full overflow-hidden">
         <div><Label>Name *</Label><Input value={data.name} onChange={e => setData({...data, name: e.target.value})} /></div>
         <div><Label>Email *</Label><Input value={data.email} onChange={e => setData({...data, email: e.target.value})} /></div>
         <div><Label>Specialization</Label><Input value={data.primary_specialization} onChange={e => setData({...data, primary_specialization: e.target.value})} /></div>
@@ -145,9 +145,9 @@ export const CreateDoctorDialog = ({ open, onOpenChange, data, setData, onSubmit
         </div>
         <div className="md:col-span-2"><Label>Bio</Label><Input value={data.bio} onChange={e => setData({...data, bio: e.target.value})} /></div>
       </div>
-      <div className="flex justify-end space-x-2 mt-4">
-        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button onClick={onSubmit} disabled={isPending}>{isPending ? 'Creating...' : 'Create'}</Button>
+      <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Cancel</Button>
+        <Button onClick={onSubmit} disabled={isPending} className="w-full sm:w-auto">{isPending ? 'Creating...' : 'Create'}</Button>
       </div>
     </DialogContent>
   </Dialog>
@@ -155,7 +155,7 @@ export const CreateDoctorDialog = ({ open, onOpenChange, data, setData, onSubmit
 
 export const EditMemberDialog = ({ open, onOpenChange, member, role, setRole, deptId, setDeptId, onSubmit, isPending, departments }: EditDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-md">
+    <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
       <DialogHeader><DialogTitle className="flex items-center space-x-2"><Edit3 className="h-5 w-5" /><span>Edit Member</span></DialogTitle></DialogHeader>
       <div className="space-y-4">
         <div className="text-sm text-muted-foreground">Editing: <span className="font-medium">{member?.profile?.name}</span></div>
@@ -177,9 +177,9 @@ export const EditMemberDialog = ({ open, onOpenChange, member, role, setRole, de
           </Select>
         </div>
       </div>
-      <div className="flex justify-end space-x-2 mt-4">
-        <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-        <Button onClick={onSubmit} disabled={isPending}>{isPending ? 'Updating...' : 'Update'}</Button>
+      <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
+        <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Cancel</Button>
+        <Button onClick={onSubmit} disabled={isPending} className="w-full sm:w-auto">{isPending ? 'Updating...' : 'Update'}</Button>
       </div>
     </DialogContent>
   </Dialog>
@@ -201,27 +201,27 @@ export const ClinicMembersList = ({ members, isLoading, searchTerm, error, onEdi
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-4 w-full max-w-full overflow-hidden">
       {members.map(member => (
-        <Card key={member.id} className="hover:shadow-md transition-shadow">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">{getRoleIcon(member.role)}</div>
-                <div>
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-semibold">{member.profile?.name || 'Unknown'}</h3>
-                    <Badge className={`text-xs ${getRoleBadgeColor(member.role)}`}>{member.role}</Badge>
-                    {member.hasDoctor && <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200"><Stethoscope className="h-3 w-3 mr-1"/> Doctor Profile</Badge>}
+        <Card key={member.id} className="hover:shadow-md transition-shadow w-full max-w-full overflow-hidden">
+          <CardContent className="p-4 w-full max-w-full overflow-hidden">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 w-full max-w-full">
+              <div className="flex items-start space-x-3 sm:space-x-4 min-w-0 flex-1 w-full max-w-full">
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">{getRoleIcon(member.role)}</div>
+                <div className="min-w-0 flex-1 w-full max-w-full">
+                  <div className="flex flex-wrap items-center gap-2 min-w-0">
+                    <h3 className="font-semibold truncate min-w-0 max-w-full">{member.profile?.name || 'Unknown'}</h3>
+                    <Badge className={`text-xs shrink-0 ${getRoleBadgeColor(member.role)}`}>{member.role}</Badge>
+                    {member.hasDoctor && <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200 shrink-0"><Stethoscope className="h-3 w-3 mr-1"/>Doctor</Badge>}
                   </div>
-                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                    {member.profile?.email && <div className="flex items-center space-x-1"><Mail className="h-3 w-3" /><span>{member.profile.email}</span></div>}
-                    {member.profile?.phone && <div className="flex items-center space-x-1"><Phone className="h-3 w-3" /><span>{member.profile.phone}</span></div>}
-                    {member.department?.department_types && <div className="flex items-center space-x-1"><Building2 className="h-3 w-3" /><span>{getDeptName(member.department)}</span></div>}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-sm text-muted-foreground mt-1 min-w-0">
+                    {member.profile?.email && <div className="flex items-center space-x-1 min-w-0"><Mail className="h-3 w-3 shrink-0" /><span className="truncate min-w-0">{member.profile.email}</span></div>}
+                    {member.profile?.phone && <div className="flex items-center space-x-1"><Phone className="h-3 w-3 shrink-0" /><span>{member.profile.phone}</span></div>}
+                    {member.department?.department_types && <div className="flex items-center space-x-1"><Building2 className="h-3 w-3 shrink-0" /><span className="truncate">{getDeptName(member.department)}</span></div>}
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1 sm:space-x-2 ml-auto sm:ml-0 shrink-0">
                 {(member.role === 'superadmin' || member.role === 'doctor') && !member.hasDoctor && (
                   <Button variant="outline" size="sm" onClick={() => onCreateDoctor(member)} disabled={isCreatingDoctor} className="text-blue-600 hover:text-blue-700"><Stethoscope className="h-4 w-4" /></Button>
                 )}

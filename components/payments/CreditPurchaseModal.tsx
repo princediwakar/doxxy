@@ -192,18 +192,18 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">
+          <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
             Purchase Appointment Credits
           </DialogTitle>
-          <DialogDescription className="text-center text-muted-foreground">
+          <DialogDescription className="text-center text-muted-foreground text-sm">
             Select a package to continue using the platform.
           </DialogDescription>
         </DialogHeader>
 
         {/* Package Selection Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-4">
           {creditPackages.map((pkg) => (
             <Card
               key={pkg.id}
@@ -219,18 +219,18 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
               )}
             >
               {pkg.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600">
+                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-xs">
                   <Star className="w-3 h-3 mr-1 fill-current" /> Popular
                 </Badge>
               )}
-              <CardHeader className="text-center pb-2 pt-6">
-                <CardTitle className="text-lg">{pkg.name}</CardTitle>
-                <div className="text-2xl font-bold text-blue-700">₹{pkg.amount}</div>
+              <CardHeader className="text-center pb-2 pt-4 sm:pt-6">
+                <CardTitle className="text-base sm:text-lg">{pkg.name}</CardTitle>
+                <div className="text-xl sm:text-2xl font-bold text-blue-700">₹{pkg.amount}</div>
               </CardHeader>
-              <CardContent className="text-center space-y-2">
-                <div className="font-semibold text-gray-900">{pkg.credits} Credits</div>
+              <CardContent className="text-center space-y-1 sm:space-y-2">
+                <div className="font-semibold text-gray-900 text-sm">{pkg.credits} Credits</div>
                 <div className="text-xs text-muted-foreground">
-                  ₹{Math.round(pkg.amount / pkg.credits)} / appointment
+                  ₹{Math.round(pkg.amount / pkg.credits)} / appt
                 </div>
                 <Separator className="my-2" />
                 <div className="text-xs text-green-700 flex items-center justify-center gap-1">

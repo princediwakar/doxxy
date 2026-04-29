@@ -1,6 +1,6 @@
 # Mobile Optimization Plan - Doxxy
 
-> **Status**: Phase 2 Complete
+> **Status**: Phase 3 Complete
 > **Last Updated**: 2026-04-28
 
 ---
@@ -141,32 +141,106 @@ Mobile (<1024px): Hidden sidebar, hamburger icon in header, drawer navigation
 
 ## Phase 3: Feature Prioritization (Mobile-First)
 
+### Role-Based Mobile Priorities
+
+**Staff (Primary Mobile Users)**
+- Appointment Scheduling
+- Patient Creation/Registration
+- Billing (view + create)
+- Pharmacy (view + manage)
+
+**Doctors (Secondary Mobile Users)**
+- Starting/Continuing Consultations
+- Creating Prescriptions
+- Viewing Patient History
+
+**Superadmins (Full Mobile - can do everything)**
+- All staff actions
+- All doctor actions
+- Settings
+
 ### Priority Matrix
 
 | Priority | Feature | User Role | Mobile Optimization |
 |----------|---------|-----------|-------------------|
-| **P1** | View Today's Appointments | Staff, Doctor | Quick card list, swipe actions |
+| **P1** | Today's Appointments | Staff, Doctor | Quick card list with swipe actions |
 | **P1** | Start/Continue Consultation | Doctor | One-tap start button |
-| **P1** | New Appointment (walk-in) | Staff | Quick patient search → one-tap create |
-| **P2** | View Patient History | Doctor | Read-only, optimized for scrolling |
-| **P2** | Create Prescription | Doctor | Simplified form |
-| **P2** | View Billing | Staff | Quick stats + list |
+| **P1** | Patient Quick Search | Staff | Fast search with autocomplete |
+| **P1** | New Walk-in Appointment | Staff | Quick patient search → create flow |
+| **P1** | Patient Check-in | Staff | One-tap arrival mark |
+| **P2** | Create Prescription | Doctor | Simplified mobile form |
+| **P2** | View Patient History | Doctor, Staff | Read-only card view |
+| **P2** | Billing (Full) | Staff | Quick stats + list + create |
+| **P2** | Patient Registration | Staff | Simplified mobile form |
+| **P3** | Pharmacy Management | Staff | Full responsive + inventory |
 | **P3** | Full Consultation Form | Doctor | Expandable sections |
-| **P3** | Pharmacy Management | Staff | View-only |
-| **P4** | Settings/Profile | All | Low priority |
+| **P4** | Settings/Profile | All | Low priority, desktop for superadmin |
 
 ### Mobile-First Views
 
-Create simplified "Doctor Dashboard Mobile" and "Staff Dashboard Mobile":
+Create simplified role-specific dashboards with quick actions:
 
-**Doctor Mobile quick actions:**
+**Doctor Mobile (P1 for Doctors):**
 1. Start next appointment (one tap)
 2. Continue current consultation
 3. View today's patient list
+4. Quick prescription creation
 
-**Staff Mobile quick actions:**
-1. Quick new appointment (patient search + create)
-2. Today's appointments list
+**Staff Mobile (P1 for Staff):**
+1. Today's appointments (cards with swipe actions)
+2. Patient quick search
+3. New walk-in appointment
+4. Patient check-in
+5. Quick billing view
+
+### Mobile-Specific UI Patterns
+
+**Floating Action Button (FAB):**
+- Quick-create actions from any screen
+- Options: New Appointment, New Patient, New Bill
+
+**Swipe Actions on Appointment Cards:**
+- Swipe left = Check-in (mark arrived)
+- Swipe right = Start consultation (doctor only)
+- Tap = View details
+
+**Pull-to-Refresh:**
+- All list views
+
+### Feature Completeness by Role
+
+#### STAFF - Full Mobile Support (Responsive)
+| Feature | Desktop | Tablet | Mobile |
+|---------|---------|--------|--------|
+| Today's Appointments | Full table | Cards | Cards + swipe |
+| New Appointment | Full form | Streamlined | Streamlined |
+| Patient Search | Full table | Cards | Cards |
+| Patient Registration | Full form | Streamlined | Streamlined |
+| Billing View | Full table | Cards | Cards |
+| Create Bill | Full form | Streamlined | Streamlined |
+| Pharmacy View | Full table | Cards | Cards |
+| Pharmacy Management | Full table | Cards | Cards |
+
+#### DOCTOR - Essential Mobile Support
+| Feature | Desktop | Tablet | Mobile |
+|---------|---------|--------|--------|
+| Today's Patients | Full table | Cards | Cards |
+| Start Consultation | Full page | Streamlined | One-tap |
+| Continue Consultation | Full page | Expandable | Expandable |
+| Create Prescription | Full form | Simplified | Simplified |
+| Patient History | Full table | Cards | Read-only cards |
+
+#### SUPERADMIN - Full Mobile Support (Like Staff)
+| Feature | Desktop | Tablet | Mobile |
+|---------|---------|--------|--------|
+| Dashboard Stats | Full | Cards | Cards |
+| Today's Appointments | Full table | Cards | Cards + swipe |
+| New Appointment | Full form | Streamlined | Streamlined |
+| Patient Search | Full table | Cards | Cards |
+| Patient Registration | Full form | Streamlined | Streamlined |
+| Billing View/Create | Full table | Cards | Cards |
+| Pharmacy Management | Full table | Cards | Cards |
+| Settings | Full | Full | Full |
 
 ---
 
@@ -185,9 +259,22 @@ Create simplified "Doctor Dashboard Mobile" and "Staff Dashboard Mobile":
 - [x] Button sizes
 
 ### Sprint 3: Mobile Optimizations
-- [ ] Consultation collapsible sections
-- [ ] Mobile dashboard shortcuts
-- [ ] Quick-action FAB (floating action button)
+- [x] Consultation collapsible sections
+- [x] Mobile dashboard shortcuts
+- [x] Quick-action FAB (floating action button)
+- [x] Swipe actions on appointment cards
+- [x] Pull-to-refresh on all lists
+
+### Sprint 3a: Staff Full Mobile (Priority)
+- [x] Appointments mobile cards + swipe check-in
+- [x] Mobile patient search + registration
+- [x] Billing responsive (full mobile support)
+- [x] Pharmacy responsive (full mobile support)
+
+### Sprint 3b: Doctor Mobile Essential
+- [x] One-tap consultation start
+- [x] Simplified prescription form
+- [x] Patient history cards
 
 ### Sprint 4: Polish
 - [ ] Offline support (service worker)

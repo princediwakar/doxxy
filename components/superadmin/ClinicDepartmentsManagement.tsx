@@ -1,3 +1,4 @@
+// components/superadmin/ClinicDepartmentsManagement.tsx
 "use client";
 
 import { useState } from 'react';
@@ -188,20 +189,20 @@ const ClinicDepartmentsManagement = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-0 w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Clinic Departments</h2>
-          <p className="text-muted-foreground">
-            Manage medical departments and specialties for your clinic
+          <h2 className="text-lg font-semibold text-foreground">Clinic Departments</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage departments & specialties
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Badge className="status-badge bg-primary/10 text-primary border border-primary/20 text-sm font-medium">
             {activeDepartments.length} Active
           </Badge>
-          <Badge className="status-badge bg-muted text-muted-foreground border border-border text-sm font-medium">
+          <Badge className="status-badge bg-muted text-muted-foreground border border-border text-sm font-medium hidden sm:inline-flex">
             {availableDepartments.length} Available
           </Badge>
         </div>
@@ -209,7 +210,7 @@ const ClinicDepartmentsManagement = () => {
 
       {/* Search */}
           <div className="relative max-w-md">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search departments..."
               value={searchTerm}

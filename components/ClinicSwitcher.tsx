@@ -32,20 +32,14 @@ const ClinicSwitcher = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
       <PopoverTrigger asChild>
         <Button
           variant="ghost"
-          className={cn(
-            "w-full justify-start text-left font-semibold hover:bg-accent/50",
-            sidebarOpen ? "px-4" : "px-2 justify-center"
-          )}
+          className="w-full justify-start text-left font-semibold hover:bg-accent/50 px-4"
           aria-label="Select clinic"
         >
           <Building2 size={16} className="mr-2" />
-          <span className={cn(
-             "flex-grow overflow-hidden text-ellipsis whitespace-nowrap transition-opacity duration-200",
-             sidebarOpen ? "opacity-100" : "opacity-0 md:opacity-0 hidden md:block"
-          )}>
+          <span className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap">
             {activeClinic ? activeClinic.clinics?.name : "Select a Clinic"}
           </span>
-          {userClinics.length > 1 && sidebarOpen && (
+          {userClinics.length > 1 && (
              <ChevronDown size={16} className={cn(
                "ml-2 transition-transform duration-200",
                open && "transform rotate-180"

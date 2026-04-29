@@ -271,7 +271,7 @@ const Profile = () => {
         </Card>
       )}
 
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
         <div className="flex items-center gap-3">
           <div
             className={`flex items-center justify-center w-10 h-10 rounded-lg ${roleConfig.bgClass}`}
@@ -285,7 +285,7 @@ const Profile = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {roleConfig.badge && (
             <Badge className="bg-primary/10 text-primary border-primary/20">
               <roleConfig.badge.icon className="w-3 h-3 mr-1" />

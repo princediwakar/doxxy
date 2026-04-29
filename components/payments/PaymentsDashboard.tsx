@@ -1,3 +1,4 @@
+// components/payments/PaymentsDashboard.tsx
 "use client";
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -36,16 +37,16 @@ export const PaymentsDashboard: React.FC = () => {
   }, [billingSummary]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-0 w-full max-w-full overflow-hidden">
       {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Billing & Credits</h1>
-          <p className="text-muted-foreground">
-            Manage your appointment credits and view transaction history.
+          <h2 className="text-lg font-semibold tracking-tight">Billing & Credits</h2>
+          <p className="text-sm text-muted-foreground">
+            Credits & transaction history
           </p>
         </div>
-        <Button onClick={() => setIsCreditModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+        <Button onClick={() => setIsCreditModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 shrink-0 w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Add Credits
         </Button>
@@ -167,21 +168,21 @@ export const PaymentsDashboard: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50 transition-colors">
-                  <div className="flex items-center gap-4">
+                <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-slate-50 transition-colors">
+                  <div className="flex items-start gap-3">
                     {/* Status Icon */}
                     {tx.payment_status === 'completed' ? (
-                      <CheckCircle2 className="h-8 w-8 text-green-500" />
+                      <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 shrink-0" />
                     ) : tx.payment_status === 'failed' ? (
-                      <XCircle className="h-8 w-8 text-red-500" />
+                      <XCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 shrink-0" />
                     ) : (
-                      <Clock className="h-8 w-8 text-yellow-500" />
+                      <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 shrink-0" />
                     )}
                     
-                    <div>
-                      <div className="font-medium">
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm sm:text-base">
                         {tx.transaction_type === 'credit_purchase' ? 'Credit Top-up' : 'Bill Payment'}
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -196,11 +197,11 @@ export const PaymentsDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <div className="font-bold">₹{tx.amount}</div>
+                  <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 ml-auto sm:ml-0">
+                    <div className="font-bold text-sm sm:text-base">₹{tx.amount}</div>
                     <Badge 
                       variant="outline" 
-                      className={`mt-1 capitalize ${
+                      className={`text-xs capitalize shrink-0 ${
                         tx.payment_status === 'completed' 
                           ? 'border-green-200 text-green-700 bg-green-50' 
                           : tx.payment_status === 'failed'

@@ -1,3 +1,4 @@
+// components/superadmin/ClinicMembersManagement.tsx
 "use client";
 
 import { useState } from 'react';
@@ -119,19 +120,22 @@ const ClinicMembersManagement = () => {
   }
 
   return (
-    <div className="space-y-6" data-testid="clinic-members-management">
-      <div className="flex justify-between items-start">
-        <div><h2 className="text-2xl font-bold text-foreground">Clinic Members</h2><p className="text-muted-foreground">Manage your clinic staff, doctors, and administrators</p></div>
-        <div className="flex items-center space-x-2">
-          <Badge className="bg-primary/10 text-primary border border-primary/20">{ops.members.length} Members</Badge>
-          <Button onClick={() => setShowInvite(true)} className="flex items-center space-x-2"><Plus className="h-4 w-4" /><span>Invite Member</span></Button>
+    <div className="space-y-6 px-4 md:px-0" data-testid="clinic-members-management">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Clinic Members</h2>
+          <p className="text-sm text-muted-foreground">Manage staff, doctors & admins</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Badge className="bg-primary/10 text-primary border border-primary/20 hidden sm:inline-flex">{ops.members.length} Members</Badge>
+          <Button onClick={() => setShowInvite(true)} className="flex items-center gap-2 w-full sm:w-auto justify-center"><Plus className="h-4 w-4" /><span className="sm:inline">Invite</span></Button>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search members by name or email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search members..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
         </div>
         <Select value={selectedRole} onValueChange={(val: UserRole | 'all') => setSelectedRole(val)}>
           <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Filter by role" /></SelectTrigger>

@@ -82,10 +82,12 @@ export interface UseAppointmentsReturn {
   // Actions
   handleCancelAppointment: (id: string) => void;
   handleStartConsultation: (id: string) => Promise<boolean>;
+  handleCheckIn: (id: string) => void;
   refreshAppointments: () => void;
 
   // Loading States
   cancelLoading: boolean;
+  checkInLoading: boolean;
   updateStatusLoading: boolean;
   hasAutoSelected: boolean;
 }

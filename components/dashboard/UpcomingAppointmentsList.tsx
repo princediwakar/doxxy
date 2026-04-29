@@ -125,23 +125,25 @@ export function UpcomingAppointmentsList({
             </div>
             {showPagination && (
               <div className="flex justify-center items-center gap-2 mt-4">
-                <button
-                  className="px-3 py-1 rounded bg-muted text-foreground disabled:opacity-50"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage && setCurrentPage(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
                   Prev
-                </button>
+                </Button>
                 <span className="text-sm">
                   Page {currentPage} of {totalPages}
                 </span>
-                <button
-                  className="px-3 py-1 rounded bg-muted text-foreground disabled:opacity-50"
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => setCurrentPage && setCurrentPage(currentPage + 1)}
                   disabled={currentPage === totalPages}
                 >
                   Next
-                </button>
+                </Button>
               </div>
             )}
           </>

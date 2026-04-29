@@ -79,7 +79,7 @@ export function MobileNav() {
           <Menu className="h-6 w-6" />
         </Button>
       </DrawerTrigger>
-      <DrawerContent className="max-w-sm mx-0 h-full mt-0">
+      <DrawerContent className="max-w-sm mx-0 h-[85dvh] mt-0">
         <DrawerHeader className="text-left relative">
           <DrawerTitle className="flex items-center gap-3">
             <img src="/logo.svg" alt="Doxxy" className="h-8" />

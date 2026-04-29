@@ -203,6 +203,24 @@ export const useAppointments = (): UseAppointmentsReturn => {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const checkInAppointmentMutation = useMutation({
+    mutationFn: async (appointmentId: string) => {
+      const { error } = await supabase
+        .from('appointments')
+        .update({ 
+          status: APPOINTMENT_STATUS.IN_PROGRESS,
+          checked_in_at: new Date().toISOString()
+        })
+        .eq('id', appointmentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success('Patient checked in');
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   const handleStartConsultation = async (appointmentId: string): Promise<boolean> => {
     try {
       if (!appointmentId) throw new Error('Invalid appointment ID');
@@ -289,6 +307,8 @@ export const useAppointments = (): UseAppointmentsReturn => {
     itemsPerPage: ITEMS_PER_PAGE,
     handleCancelAppointment: (id) => cancelAppointmentMutation.mutate(id),
     handleStartConsultation,
+    handleCheckIn: (id) => checkInAppointmentMutation.mutate(id),
+    checkInLoading: checkInAppointmentMutation.isPending,
     refreshAppointments: () => queryClient.invalidateQueries({ queryKey: ['appointments'] }),
     cancelLoading: cancelAppointmentMutation.isPending,
     updateStatusLoading: false,

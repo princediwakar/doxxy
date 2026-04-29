@@ -1,3 +1,4 @@
+// components/superadmin/ClinicDetailsManagement.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -204,26 +205,26 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 md:px-0 w-full max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Clinic Details</h2>
-          <p className="text-muted-foreground">
-            Manage your clinic's basic information and contact details
+          <h2 className="text-lg font-semibold">Clinic Details</h2>
+          <p className="text-sm text-muted-foreground">
+            Basic info & contact details
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2 shrink-0">
           {hasUnsavedChanges && (
             <Badge variant="outline" className="text-success border-success/20">
               <AlertCircle className="h-3 w-3 mr-1" />
-              Unsaved Changes
+              <span className="hidden sm:inline">Unsaved</span>
             </Badge>
           )}
           {!hasUnsavedChanges && !updateClinicMutation.isPending && (
             <Badge variant="outline" className="text-success border-success/20">
               <CheckCircle className="h-3 w-3 mr-1" />
-              Saved
+              <span className="hidden sm:inline">Saved</span>
             </Badge>
           )}
         </div>
@@ -241,8 +242,8 @@ const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
               ))}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6 border border-border rounded-lg p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="space-y-6 border border-border rounded-lg p-4 md:p-6 w-full max-w-full overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Clinic Name */}
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-medium">

@@ -41,49 +41,96 @@ export function ProcurementsHistoryTab() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-<CardTitle className="flex items-center gap-2">
-            <Receipt className="w-5 h-5 text-primary" />
-            Purchase Records
-          </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-<TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Dealer</TableHead>
-                <TableHead>Bill No.</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-          <TableBody>
-            {procurements?.length === 0 ? (
-              <TableRow>
-<TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                    No purchase records found.
-                  </TableCell>
-              </TableRow>
-            ) : (
-              procurements?.map((proc) => (
-                <TableRow key={proc.id}>
-                  <TableCell>{proc.invoice_date}</TableCell>
-                  <TableCell className="font-medium">{proc.supplier_name}</TableCell>
-                  <TableCell>{proc.invoice_number}</TableCell>
-                  <TableCell>₹{proc.total_amount.toFixed(2)}</TableCell>
-                  <TableCell>
-                    <Badge variant={proc.status === 'Completed' ? 'default' : 'secondary'} className={proc.status === 'Completed' ? 'bg-green-500' : ''}>
-                      {proc.status}
-                    </Badge>
-                  </TableCell>
+    <>
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {procurements?.length === 0 ? (
+          <Card className="p-6">
+            <CardContent className="text-center text-muted-foreground">
+              No purchase records found.
+            </CardContent>
+          </Card>
+        ) : (
+          procurements?.map((proc) => (
+            <Card key={proc.id} className="p-4">
+              <CardHeader className="pb-2">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="font-medium">{proc.supplier_name}</p>
+                    <p className="text-sm text-muted-foreground">{proc.invoice_number}</p>
+                  </div>
+                  <Badge 
+                    variant={proc.status === 'Completed' ? 'default' : 'secondary'} 
+                    className={proc.status === 'Completed' ? 'bg-green-500' : ''}
+                  >
+                    {proc.status}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Date</span>
+                    <p className="font-medium">{proc.invoice_date}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Total</span>
+                    <p className="font-medium">₹{proc.total_amount.toFixed(2)}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" />
+              Purchase Records
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Dealer</TableHead>
+                  <TableHead>Bill No.</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {procurements?.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                      No purchase records found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  procurements?.map((proc) => (
+                    <TableRow key={proc.id}>
+                      <TableCell>{proc.invoice_date}</TableCell>
+                      <TableCell className="font-medium">{proc.supplier_name}</TableCell>
+                      <TableCell>{proc.invoice_number}</TableCell>
+                      <TableCell>₹{proc.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge variant={proc.status === 'Completed' ? 'default' : 'secondary'} className={proc.status === 'Completed' ? 'bg-green-500' : ''}>
+                          {proc.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

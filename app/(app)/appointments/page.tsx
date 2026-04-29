@@ -1,8 +1,8 @@
 "use client";
 
 // src/pages/Appointments.tsx
-import { useState, useEffect, Suspense, lazy } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef, Suspense, lazy } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Calendar } from 'lucide-react';
@@ -11,6 +11,7 @@ import { useAppointments } from '@/hooks/useAppointments';
 import { usePrefetching } from '@/hooks/usePrefetching';
 import { AppointmentsTabs } from '@/components/appointments/AppointmentsTabs';
 import { DoctorSelector } from '@/components/appointments/DoctorSelector';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AppointmentWithDetails, AppointmentFilter } from '@/types/appointments';
 
@@ -35,6 +36,7 @@ const Appointments = () => {
     getTotalPages,
     handleCancelAppointment,
     handleStartConsultation,
+    handleCheckIn,
     refreshAppointments,
     cancelLoading,
     selectedDoctorId,
@@ -48,6 +50,22 @@ const Appointments = () => {
       Promise.all([prefetchPatients(), prefetchDoctors()]).catch(console.error);
     }
   }, [isLoading, prefetchPatients, prefetchDoctors]);
+
+  const searchParams = useSearchParams();
+  const fabHandled = useRef(false);
+
+  // Handle FAB quick-action via ?action=new
+  useEffect(() => {
+    if (searchParams.get("action") === "new" && !fabHandled.current) {
+      fabHandled.current = true;
+      setSelectedAppointment(null);
+      setIsAppointmentModalOpen(true);
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("action");
+      const qs = next.toString();
+      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, [searchParams, router]);
 
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
@@ -105,19 +123,17 @@ const Appointments = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between space-y-4 sm:space-y-0">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Appointments</h1>
-              <p className="text-muted-foreground">Manage and track all clinic appointments</p>
-            </div>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+            <Calendar className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Appointments</h1>
+            <p className="text-muted-foreground">Manage and track all clinic appointments</p>
           </div>
         </div>
-        <Button onClick={handleNewAppointment}>
+        <Button onClick={handleNewAppointment} className="shrink-0">
           <Plus className="h-4 w-4 mr-2" />
           New Appointment
         </Button>
@@ -140,24 +156,27 @@ const Appointments = () => {
         />
       </div>
 
-      <AppointmentsTabs
-        appointments={appointments}
-        isLoading={isLoading} // PASSED isLoading PROP
-        activeTab={activeTab}
-        onTabChange={(t) => setActiveTab(t as AppointmentFilter)}
-        currentPage={currentPage}
-        onPageChange={handlePageChange}
-        getPaginatedAppointments={getPaginatedAppointments}
-        getTotalPages={getTotalPages}
-        onAppointmentClick={handleAppointmentClick}
-        onCancelAppointment={handleCancelAppointment}
-        onStartConsultation={handleStartConsultationClick}
-        onViewConsultation={handleViewConsultation}
-        onCreateBill={handleCreateBill}
-        activeClinicRole={activeClinicRole}
-        cancelLoading={cancelLoading}
-        isSearching={!!searchTerm}
-      />
+      <PullToRefresh onRefresh={refreshAppointments}>
+        <AppointmentsTabs
+          appointments={appointments}
+          isLoading={isLoading} // PASSED isLoading PROP
+          activeTab={activeTab}
+          onTabChange={(t) => setActiveTab(t as AppointmentFilter)}
+          currentPage={currentPage}
+          onPageChange={handlePageChange}
+          getPaginatedAppointments={getPaginatedAppointments}
+          getTotalPages={getTotalPages}
+          onAppointmentClick={handleAppointmentClick}
+          onCancelAppointment={handleCancelAppointment}
+          onStartConsultation={handleStartConsultationClick}
+          onViewConsultation={handleViewConsultation}
+          onCreateBill={handleCreateBill}
+          onCheckIn={handleCheckIn}
+          activeClinicRole={activeClinicRole}
+          cancelLoading={cancelLoading}
+          isSearching={!!searchTerm}
+        />
+      </PullToRefresh>
 
       <AppointmentModal
         open={isAppointmentModalOpen}

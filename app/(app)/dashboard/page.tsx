@@ -340,16 +340,21 @@ const Dashboard = React.memo(() => {
 
   return (
     <div className="space-y-6 ">
-      <div className="flex justify-between mb-6">
-        <div className="">
-          <h1 className="text-2xl font-bold">{greeting}</h1>
-          <p className="text-muted-foreground">
-            {isEnhancedSuperadmin
-              ? "Complete overview of clinic operations and your personal practice."
-              : "Here's a quick overview of your clinic's activity today."}
-          </p>
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+            <Activity size={18} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">{greeting}</h1>
+            <p className="text-muted-foreground">
+              {isEnhancedSuperadmin
+                ? "Complete overview of clinic operations and your personal practice."
+                : "Here's a quick overview of your clinic's activity today."}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-4 shrink-0">
           {/* Show New Appointment button for Doctors, Staff and Superadmins */}
           {(activeClinicRole === "staff" ||
             activeClinicRole === "superadmin" ||

@@ -33,6 +33,7 @@ interface AppointmentsTabsProps {
   onStartConsultation: (appointment: AppointmentWithDetails) => void;
   onViewConsultation: (appointment: AppointmentWithDetails) => void;
   onCreateBill: (appointment: AppointmentWithDetails) => void;
+  onCheckIn?: (appointmentId: string) => void;
   activeClinicRole: string | null;
   cancelLoading?: boolean;
   isSearching: boolean;
@@ -52,6 +53,7 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
   onStartConsultation,
   onViewConsultation,
   onCreateBill,
+  onCheckIn,
   activeClinicRole,
   cancelLoading,
   isSearching,
@@ -100,6 +102,7 @@ export const AppointmentsTabs: React.FC<AppointmentsTabsProps> = ({
           onStartConsultation={onStartConsultation}
           onViewConsultation={onViewConsultation}
           onCreateBill={onCreateBill}
+          onCheckIn={onCheckIn}
           activeClinicRole={activeClinicRole}
           cancelLoading={cancelLoading}
         />

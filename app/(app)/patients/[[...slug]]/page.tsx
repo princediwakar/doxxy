@@ -1,6 +1,7 @@
 //src/pages/Patients.tsx
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, FileText, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -31,6 +32,7 @@ import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
 import { PatientSearch } from "@/components/patients/PatientSearch";
 import { PatientList } from "@/components/patients/PatientList";
 import { PatientDetailView } from "@/components/patients/PatientDetailView";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { formatTimeIST } from "@/lib/utils";
 
 const supabase = getSupabase();
@@ -231,6 +233,23 @@ const PatientRecords = () => {
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+
+  // Handle FAB quick-action via ?action=new
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const fabHandled = useRef(false);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "new" && !fabHandled.current) {
+      fabHandled.current = true;
+      setEditingPatient(null);
+      setIsPatientModalOpen(true);
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("action");
+      const qs = next.toString();
+      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, [searchParams, router]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: [
