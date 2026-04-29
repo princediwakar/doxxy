@@ -28,21 +28,6 @@ export function UpcomingAppointmentsList({
   showViewAllButton = false,
   onViewAll,
 }: UpcomingAppointmentsListProps) {
-  const getStatusBadgeClass = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'scheduled':
-        return 'status-badge status-pending';
-      case 'in progress':
-        return 'status-badge status-in-progress';
-      case 'completed':
-        return 'status-badge status-active';
-      case 'cancelled':
-        return 'status-badge status-inactive';
-      default:
-        return 'status-badge status-pending';
-    }
-  };
-
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
       case 'scheduled':
@@ -109,11 +94,11 @@ export function UpcomingAppointmentsList({
                     (onAppointmentClick ? "hover:bg-muted/50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary" : "")
                   }
                   onClick={onAppointmentClick ? () => onAppointmentClick(appointment.id) : undefined}
-                  onKeyDown={onAppointmentClick ? (e) => { if (e.key === 'Enter') onAppointmentClick(appointment.id); } : undefined}
+                  onKeyDown={onAppointmentClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onAppointmentClick(appointment.id); } } : undefined}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-foreground truncate">{appointment.patient}</span>
-                                                <Badge variant={getStatusVariant(appointment.status)} className={getStatusBadgeClass(appointment.status)}>{appointment.status}</Badge>
+                                                <Badge variant={getStatusVariant(appointment.status)}>{appointment.status}</Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground mt-1">
                     <span className="flex items-center"><User size={14} className="mr-1" />{appointment.doctor}</span>

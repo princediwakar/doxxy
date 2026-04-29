@@ -39,7 +39,7 @@ export const useClinicData = () => {
     }
 
     try {
-      console.log("Checking doctor profile for user:", userId, "in clinic:", clinicId);
+      if (process.env.NODE_ENV === "development") console.log("Checking doctor profile for user:", userId, "in clinic:", clinicId);
       
       const { data: doctorProfile, error } = await supabase
         .from('doctors')
@@ -55,7 +55,7 @@ export const useClinicData = () => {
       }
 
       const hasDoctorProfile = !!doctorProfile;
-      console.log("Doctor profile check result:", hasDoctorProfile);
+      if (process.env.NODE_ENV === "development") console.log("Doctor profile check result:", hasDoctorProfile);
       setHasDoctorProfile(hasDoctorProfile);
       return hasDoctorProfile;
     } catch (error) {
@@ -70,14 +70,14 @@ export const useClinicData = () => {
       setActiveClinicState(null);
       setHasDoctorProfile(undefined);
       localStorage.removeItem('activeClinicId');
-      console.log("Cleared active clinic.");
+      if (process.env.NODE_ENV === "development") console.log("Cleared active clinic.");
     } else {
       setUserClinics(currentUserClinics => {
         const selectedClinic = currentUserClinics.find(clinic => clinic.clinic_id === clinicId);
         if (selectedClinic) {
           setActiveClinicState(selectedClinic);
           localStorage.setItem('activeClinicId', selectedClinic.clinic_id);
-          console.log("Set active clinic:", selectedClinic.clinics?.name);
+          if (process.env.NODE_ENV === "development") console.log("Set active clinic:", selectedClinic.clinics?.name);
           
           // Check doctor profile for superadmins when clinic changes
           if (user?.id && selectedClinic.role === 'superadmin') {
@@ -88,7 +88,7 @@ export const useClinicData = () => {
         } else {
           setHasDoctorProfile(undefined);
           localStorage.removeItem('activeClinicId');
-          console.log("Clinic ID not found in userClinics, cleared local storage.");
+          if (process.env.NODE_ENV === "development") console.log("Clinic ID not found in userClinics, cleared local storage.");
         }
         return currentUserClinics;
       });
@@ -100,14 +100,14 @@ export const useClinicData = () => {
     checkProfileCompletion: (userId: string) => Promise<boolean>,
     retryCount = 0
   ) => {
-    console.log("fetchUserAndClinicData: Starting with user:", userFromSession?.id);
+    if (process.env.NODE_ENV === "development") console.log("fetchUserAndClinicData: Starting with user:", userFromSession?.id);
     
     if (!userFromSession) {
       setUserClinics([]);
       setActiveClinicState(null);
       setHasDoctorProfile(undefined);
       localStorage.removeItem('activeClinicId');
-      console.log("No user, cleared clinics and active clinic.");
+      if (process.env.NODE_ENV === "development") console.log("No user, cleared clinics and active clinic.");
       isFetchingRef.current = false;
       return;
     }
@@ -115,7 +115,7 @@ export const useClinicData = () => {
     await checkProfileCompletion(userFromSession.id);
 
     if (isFetchingRef.current) {
-      console.log("Already fetching user clinic data, skipping duplicate call.");
+      if (process.env.NODE_ENV === "development") console.log("Already fetching user clinic data, skipping duplicate call.");
       return;
     }
 
@@ -125,7 +125,7 @@ export const useClinicData = () => {
     let initialActiveClinic: ClinicMemberWithClinic | null = null;
 
     try {
-      console.log("fetchUserAndClinicData: Fetching user clinic memberships using RPC");
+      if (process.env.NODE_ENV === "development") console.log("fetchUserAndClinicData: Fetching user clinic memberships using RPC");
       const { data: memberData, error: memberError } = await supabase.rpc('get_user_clinic_memberships', {
         user_id: userFromSession.id
       });
@@ -136,7 +136,7 @@ export const useClinicData = () => {
       }
 
       if (!memberData || memberData.length === 0) {
-        console.log("User is not a member of any clinics.");
+        if (process.env.NODE_ENV === "development") console.log("User is not a member of any clinics.");
         setUserClinics([]);
         setActiveClinicState(null);
         setHasDoctorProfile(undefined);
@@ -210,7 +210,7 @@ export const useClinicData = () => {
     } catch (error) {
       console.error("fetchUserAndClinicData: Error:", error);
       if (retryCount < 2) {
-        console.log(`Retrying fetchUserAndClinicData (attempt ${retryCount + 2})`);
+        if (process.env.NODE_ENV === "development") console.log(`Retrying fetchUserAndClinicData (attempt ${retryCount + 2})`);
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
         await fetchUserAndClinicData(userFromSession, checkProfileCompletion, retryCount + 1);
       } else {
@@ -223,10 +223,12 @@ export const useClinicData = () => {
     } finally {
       setClinicLoading(false);
       isFetchingRef.current = false;
-      console.log("fetchUserAndClinicData: Completed with state:", {
-        userClinicsLength: fetchedClinics.length,
-        activeClinic: !!initialActiveClinic
-      });
+      if (process.env.NODE_ENV === "development") {
+        console.log("fetchUserAndClinicData: Completed with state:", {
+          userClinicsLength: fetchedClinics.length,
+          activeClinic: !!initialActiveClinic
+        });
+      }
     }
   }, [checkDoctorProfile]);
 
@@ -254,7 +256,7 @@ export const useClinicData = () => {
 
     if (!user) return;
 
-    console.log('Setting up real-time subscription for user clinic membership changes');
+    if (process.env.NODE_ENV === "development") console.log('Setting up real-time subscription for user clinic membership changes');
     
     subscriptionRef.current = supabase
       .channel('clinic-membership-changes')
@@ -264,7 +266,7 @@ export const useClinicData = () => {
         table: 'clinic_members',
         filter: `user_id=eq.${user.id}`
       }, (payload) => {
-        console.log('Real-time: New clinic membership created:', payload);
+        if (process.env.NODE_ENV === "development") console.log('Real-time: New clinic membership created:', payload);
         // Refresh clinic data when new membership is created
         if (currentUserRef.current) {
           fetchUserAndClinicData(currentUserRef.current, async () => true, 0);
@@ -276,14 +278,14 @@ export const useClinicData = () => {
         table: 'clinic_members',
         filter: `user_id=eq.${user.id}`
       }, (payload) => {
-        console.log('Real-time: Clinic membership updated:', payload);
+        if (process.env.NODE_ENV === "development") console.log('Real-time: Clinic membership updated:', payload);
         // Refresh clinic data when membership is updated
         if (currentUserRef.current) {
           fetchUserAndClinicData(currentUserRef.current, async () => true, 0);
         }
       })
       .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
+        if (process.env.NODE_ENV === "development") console.log('Real-time subscription status:', status);
       });
   }, [fetchUserAndClinicData]);
 

@@ -133,22 +133,24 @@ export const useConsultationForm = ({
   const canEditConsultation = useMemo(() => {
     // Always allow editing for assigned doctors
     if (isAssignedDoctor) {
-      console.log('✅ canEditConsultation: true (isAssignedDoctor)');
+      if (process.env.NODE_ENV === "development") console.log('✅ canEditConsultation: true (isAssignedDoctor)');
       return true;
     }
 
     // For superadmins, check if they have a doctor profile in this clinic
     if (activeClinic?.role === 'superadmin' && hasDoctorProfile && user?.id) {
-      console.log('✅ canEditConsultation: true (superadmin with doctor profile)');
+      if (process.env.NODE_ENV === "development") console.log('✅ canEditConsultation: true (superadmin with doctor profile)');
       return true;
     }
 
-    console.log('❌ canEditConsultation: false',
-      'isAssignedDoctor:', isAssignedDoctor,
-      'activeClinicRole:', activeClinic?.role,
-      'hasDoctorProfile:', hasDoctorProfile,
-      'userId:', user?.id
-    );
+    if (process.env.NODE_ENV === "development") {
+      console.log('❌ canEditConsultation: false',
+        'isAssignedDoctor:', isAssignedDoctor,
+        'activeClinicRole:', activeClinic?.role,
+        'hasDoctorProfile:', hasDoctorProfile,
+        'userId:', user?.id
+      );
+    }
     return false;
   }, [isAssignedDoctor, activeClinic?.role, hasDoctorProfile, user?.id]);
   
@@ -206,32 +208,33 @@ export const useConsultationForm = ({
   // Reset justCompleted state when user starts editing a completed consultation
   // Only reset if the consultation was already completed before this session
   useEffect(() => {
-    console.log('🔄 Reset effect - isConsultationCompleted:', isConsultationCompleted, 'canEditConsultation:', canEditConsultation, 'justCompleted:', justCompleted, 'isCompletingRef:', isCompletingRef.current, 'isEditingCompletedRef:', isEditingCompletedRef.current);
+    const isDev = process.env.NODE_ENV === "development";
+    if (isDev) console.log('🔄 Reset effect - isConsultationCompleted:', isConsultationCompleted, 'canEditConsultation:', canEditConsultation, 'justCompleted:', justCompleted, 'isCompletingRef:', isCompletingRef.current, 'isEditingCompletedRef:', isEditingCompletedRef.current);
 
     // Don't reset if we're currently editing a completed consultation and want to redirect
     if (isConsultationCompleted && canEditConsultation && justCompleted && !isCompletingRef.current && !isEditingCompletedRef.current) {
       // Check if this consultation was already completed when we loaded the page
       // If appointment was already 'Completed' on load, then this is an edit session
       const wasAlreadyCompleted = appointment?.status === 'Completed';
-      console.log('🔄 Reset effect - wasAlreadyCompleted:', wasAlreadyCompleted);
+      if (isDev) console.log('🔄 Reset effect - wasAlreadyCompleted:', wasAlreadyCompleted);
       if (wasAlreadyCompleted) {
-        console.log('🔄 Resetting justCompleted - editing existing completed consultation');
+        if (isDev) console.log('🔄 Resetting justCompleted - editing existing completed consultation');
         setJustCompleted(false);
       }
     }
     // Reset the completion flag after the effect runs
     if (isCompletingRef.current) {
-      console.log('🔄 Reset effect - isCompletingRef is true, will reset in 1 second');
+      if (isDev) console.log('🔄 Reset effect - isCompletingRef is true, will reset in 1 second');
       setTimeout(() => {
-        console.log('🔄 Reset effect - setting isCompletingRef to false');
+        if (isDev) console.log('🔄 Reset effect - setting isCompletingRef to false');
         isCompletingRef.current = false;
       }, 1000);
     }
     // Reset the editing completed flag after navigation
     if (isEditingCompletedRef.current) {
-      console.log('🔄 Reset effect - isEditingCompletedRef is true, will reset in 3 seconds');
+      if (isDev) console.log('🔄 Reset effect - isEditingCompletedRef is true, will reset in 3 seconds');
       setTimeout(() => {
-        console.log('🔄 Reset effect - setting isEditingCompletedRef to false');
+        if (isDev) console.log('🔄 Reset effect - setting isEditingCompletedRef to false');
         isEditingCompletedRef.current = false;
       }, 3000);
     }
@@ -499,15 +502,15 @@ export const useConsultationForm = ({
     // If consultation is already completed and user can edit, allow saving changes and redirect
     if (isConsultationCompleted && canEditConsultation) {
       try {
-        console.log('🔄 Editing completed consultation - saving changes and setting up redirect');
+        if (process.env.NODE_ENV === "development") console.log('🔄 Editing completed consultation - saving changes and setting up redirect');
         const formValues = form.getValues();
         await autoSaveMutation.mutateAsync(formValues);
 
         // Set flags to prevent reset and trigger redirect
         isEditingCompletedRef.current = true;
-        console.log('🔄 Setting justCompleted to true for editing completed consultation');
+        if (process.env.NODE_ENV === "development") console.log('🔄 Setting justCompleted to true for editing completed consultation');
         setJustCompleted(true);
-        console.log('✅ Editing completed consultation - justCompleted set to true for redirect');
+        if (process.env.NODE_ENV === "development") console.log('✅ Editing completed consultation - justCompleted set to true for redirect');
 
         toast({
           title: 'Notes Updated',
@@ -553,8 +556,10 @@ export const useConsultationForm = ({
       await autoSaveMutation.mutateAsync(formValues);
 
       // Update appointment status to completed
-      console.log('handleCompleteConsultation: Updating appointment status to "Completed" for appointment ID:', appointmentId);
-      console.log('SQL Query: UPDATE appointments SET status = \'Completed\' WHERE id =', appointmentId);
+      if (process.env.NODE_ENV === "development") {
+        console.log('handleCompleteConsultation: Updating appointment status to "Completed" for appointment ID:', appointmentId);
+        console.log('SQL Query: UPDATE appointments SET status = \'Completed\' WHERE id =', appointmentId);
+      }
 
       const { data: updateResult, error: appointmentError } = await supabase
         .from('appointments')
@@ -567,12 +572,14 @@ export const useConsultationForm = ({
         throw appointmentError;
       }
 
-      console.log('Update result:', updateResult);
-      console.log('Successfully updated appointment status to "Completed"');
+      if (process.env.NODE_ENV === "development") {
+        console.log('Update result:', updateResult);
+        console.log('Successfully updated appointment status to "Completed"');
+      }
 
       // Deduct credit for the consultation
       if (activeClinic?.clinic_id) {
-        console.log('Deducting credit for consultation via deduct_appointment_credit RPC');
+        if (process.env.NODE_ENV === "development") console.log('Deducting credit for consultation via deduct_appointment_credit RPC');
         const { data: deductResult, error: deductError } = await supabase
           .rpc('deduct_appointment_credit', {
             appointment_id_param: appointmentId,
@@ -590,9 +597,9 @@ export const useConsultationForm = ({
             variant: 'default',
           });
         } else {
-          console.log('Credit deduction result:', deductResult);
+          if (process.env.NODE_ENV === "development") console.log('Credit deduction result:', deductResult);
           if (deductResult === true) {
-            console.log('✅ Credit successfully deducted for consultation');
+            if (process.env.NODE_ENV === "development") console.log('✅ Credit successfully deducted for consultation');
           } else {
             console.warn('⚠️ Credit deduction returned false - clinic may not have sufficient credits');
             toast({
@@ -609,8 +616,10 @@ export const useConsultationForm = ({
 
       setIsConsultationCompleted(true);
       setJustCompleted(true);
-      console.log('✅ Consultation completed - justCompleted set to true');
-      console.log('✅ Appointment status updated to "Completed"');
+      if (process.env.NODE_ENV === "development") {
+        console.log('✅ Consultation completed - justCompleted set to true');
+        console.log('✅ Appointment status updated to "Completed"');
+      }
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
       // Also invalidate billing summary to show updated credit usage

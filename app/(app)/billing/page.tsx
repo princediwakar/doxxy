@@ -1,7 +1,7 @@
 // src/pages/Billing.tsx
 "use client";
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -35,6 +35,7 @@ const BillingModal = lazy(() =>
 import { printBill } from "@/components/billing/billingPrintUtils";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFABAction } from "@/hooks/useFABAction";
 import { useQuery } from "@tanstack/react-query";
 import { DbPatient } from "@/types/core";
 import { Bill, ServiceItem } from "@/types/billing";
@@ -71,22 +72,11 @@ const Billing = () => {
   );
 
   // Handle FAB quick-action via ?action=new
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const fabHandled = useRef(false);
-
-  useEffect(() => {
-    if (searchParams.get("action") === "new" && !fabHandled.current) {
-      fabHandled.current = true;
-      setSelectedBill(null);
-      setModalMode("create");
-      setIsModalOpen(true);
-      const next = new URLSearchParams(searchParams.toString());
-      next.delete("action");
-      const qs = next.toString();
-      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
-    }
-  }, [searchParams, router]);
+  useFABAction("new", () => {
+    setSelectedBill(null);
+    setModalMode("create");
+    setIsModalOpen(true);
+  });
 
   const {
     data: bills = [],

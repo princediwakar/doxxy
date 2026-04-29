@@ -39,13 +39,32 @@ export function FloatingActionButton({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Hide FAB when a Radix dialog is open so it doesn't block the modal
+  const [dialogOpen, setDialogOpen] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      setDialogOpen(
+        !!document.querySelector('[data-state="open"][role="dialog"]')
+      );
+    };
+    check();
+    const mo = new MutationObserver(check);
+    mo.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-state"],
+    });
+    return () => mo.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!isMobile) {
       setIsOpen(false);
     }
   }, [isMobile]);
 
-  if (!mounted || !isMobile || actions.length === 0) {
+  if (!mounted || !isMobile || actions.length === 0 || dialogOpen) {
     return null;
   }
 
@@ -68,8 +87,8 @@ export function FloatingActionButton({
       >
         {isOpen && (
           <div className="flex flex-col gap-3">
-            {[...actions].reverse().map((action, index) => (
-              <Tooltip key={index}>
+            {[...actions].reverse().map((action) => (
+              <Tooltip key={action.id}>
                 <TooltipTrigger asChild>
                   <button
                     onClick={() => handleActionClick(action)}

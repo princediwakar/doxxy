@@ -313,7 +313,7 @@ const ClinicDepartmentsManagement = () => {
         <Card>
           <CardContent className="p-8">
             <div className="text-center text-muted-foreground">
-              <Building2 className="h-5 w-5 flex mb-3 opacity-50" />
+              <Building2 className="h-5 w-5 mx-auto mb-3 opacity-50" />
               <p>{searchTerm ? "No departments match your search" : "No departments found"}</p>
               <p className="text-sm">
                 {searchTerm ? "Try adjusting your search terms" : "Contact support to add department types"}

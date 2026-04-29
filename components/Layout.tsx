@@ -1,6 +1,7 @@
 // src/components/Layout.tsx
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
 import { MobileNav } from "@/components/MobileNav";
@@ -12,8 +13,11 @@ import { PageLoader, Spinner } from "@/components/ui/loading";
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const { loading, activeClinicRole } = useAuth();
 
+  const pathname = usePathname();
+  const isConsultationPage = pathname.startsWith("/consultation/");
+
   const role = activeClinicRole as "staff" | "doctor" | "superadmin" | null;
-  const fabActions = role ? getDefaultFABActions(role) : [];
+  const fabActions = role && !isConsultationPage ? getDefaultFABActions(role) : [];
 
   return (
     <div className="flex min-h-screen bg-muted/90">

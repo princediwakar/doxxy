@@ -240,6 +240,8 @@ export const useAppointments = (): UseAppointmentsReturn => {
           .update({ status: APPOINTMENT_STATUS.IN_PROGRESS })
           .eq('id', appointmentId);
         if (updateError) throw updateError;
+        queryClient.invalidateQueries({ queryKey: ['appointments'] });
+        queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary'] });
         return true;
       }
 

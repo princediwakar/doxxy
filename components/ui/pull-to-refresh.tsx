@@ -74,18 +74,19 @@ export function PullToRefresh({
   return (
     <div
       className={cn("relative", className)}
+      style={{ touchAction: "pan-y" }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Pull indicator */}
+      {/* Pull indicator — positioned above content, slides in as user pulls */}
       <div
         className={cn(
-          "absolute top-0 left-0 right-0 flex items-center justify-center overflow-hidden transition-transform",
-          isPulling || isRefreshing ? "h-12 -translate-y-full" : "h-0"
+          "absolute left-0 right-0 flex items-center justify-center overflow-hidden transition-all duration-200",
+          isPulling || isRefreshing ? "h-12" : "h-0"
         )}
         style={{
-          transform: `translateY(-${Math.min(pullDistance * 2, 100)}%)`,
+          top: isRefreshing ? "0px" : `${Math.min(pullDistance - 48, 0)}px`,
         }}
       >
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

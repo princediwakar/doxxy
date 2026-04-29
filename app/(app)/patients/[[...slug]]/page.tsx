@@ -1,7 +1,6 @@
 //src/pages/Patients.tsx
 "use client";
-import { useState, useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, FileText, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,7 +31,7 @@ import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
 import { PatientSearch } from "@/components/patients/PatientSearch";
 import { PatientList } from "@/components/patients/PatientList";
 import { PatientDetailView } from "@/components/patients/PatientDetailView";
-import { PullToRefresh } from "@/components/ui/pull-to-refresh";
+import { useFABAction } from "@/hooks/useFABAction";
 import { formatTimeIST } from "@/lib/utils";
 
 const supabase = getSupabase();
@@ -71,10 +70,53 @@ const fetchPatientsWithMedicalRecords = async (
   const patients =
     allPatients?.slice(startIndex, startIndex + itemsPerPage) || [];
 
-  // For each patient, fetch their consultations and prescriptions with simpler queries
+  // Fetch doctors once — avoids N+1 per-consultation RPC calls
+  type RpcDoctor = { id: string; name: string; department_name: string };
+  let doctors: RpcDoctor[] = [];
+
+  const { data: rpcData, error: rpcError } = await supabase.rpc(
+    "get_doctors_by_clinic",
+    { clinic_id: clinicId }
+  );
+
+  if (!rpcError && rpcData) {
+    doctors = rpcData as unknown as RpcDoctor[];
+  } else {
+    const { data: fallbackData } = await supabase
+      .from("doctors")
+      .select(
+        `
+        id,
+        name,
+        primary_specialization,
+        clinic_members!clinic_members_user_id_fkey(
+          department_id,
+          clinic_departments!clinic_members_department_id_fkey(
+            department_type_id,
+            department_types!clinic_departments_department_type_id_fkey(name)
+          )
+        )
+      `
+      )
+      .eq("clinic_id", clinicId)
+      .eq("is_active", true);
+
+    const typedFallbackData = (fallbackData || []) as unknown as DoctorWithDepartmentInfo[];
+
+    doctors = typedFallbackData.map((doctor) => ({
+      id: doctor.id,
+      name: doctor.name,
+      department_name:
+        doctor.clinic_members?.[0]?.clinic_departments
+          ?.department_types?.name ||
+        doctor.primary_specialization ||
+        "General Medicine",
+    }));
+  }
+
+  // For each patient, fetch consultations and prescriptions, then enrich with pre-fetched doctor data
   const patientsWithRecords = await Promise.all(
     patients.map(async (patient) => {
-      // Fetch consultations with basic appointment data
       const { data: consultations } = await supabase
         .from("consultations")
         .select(
@@ -92,16 +134,19 @@ const fetchPatientsWithMedicalRecords = async (
         .eq("patient_id", patient.id)
         .order("created_at", { ascending: false });
 
-      // Fetch prescriptions
       const { data: prescriptions } = await supabase
         .from("prescriptions")
         .select("*")
         .eq("patient_id", patient.id)
         .order("created_at", { ascending: false });
 
-      // Get doctor names for each consultation using existing RPC
-      const consultationsWithDoctors = await Promise.all(
-        (consultations || []).map(async (consultation) => {
+      // Filter to completed first, then enrich with doctor data
+      const completedConsultations = (consultations || [])
+        .filter(
+          (c) =>
+            (c.appointments?.status || "").toLowerCase() === "completed"
+        )
+        .map((consultation) => {
           if (!consultation.appointments?.doctor_id) {
             return {
               ...consultation,
@@ -116,60 +161,7 @@ const fetchPatientsWithMedicalRecords = async (
             } as ConsultationWithAppointment;
           }
 
-          // Use the get_doctors_by_clinic RPC to get doctor details
-          type RpcDoctor = { id: string; name: string; department_name: string };
-          let doctors: RpcDoctor[] = [];
-          
-          const { data: rpcData, error: rpcError } = await supabase.rpc(
-            "get_doctors_by_clinic",
-            {
-              clinic_id: clinicId,
-            }
-          );
-
-          if (!rpcError && rpcData) {
-            // We cast here because Supabase RPC return types are often ambiguous in the client gen
-            doctors = rpcData as unknown as RpcDoctor[];
-          } else {
-            console.warn(
-              "RPC function failed, using fallback query:",
-              rpcError?.message
-            );
-            // Fallback to direct query if RPC fails
-            const { data: fallbackData } = await supabase
-              .from("doctors")
-              .select(
-                `
-                id,
-                name,
-                primary_specialization,
-                clinic_members!clinic_members_user_id_fkey(
-                  department_id,
-                  clinic_departments!clinic_members_department_id_fkey(
-                    department_type_id,
-                    department_types!clinic_departments_department_type_id_fkey(name)
-                  )
-                )
-              `
-              )
-              .eq("clinic_id", clinicId)
-              .eq("is_active", true);
-
-            // Cast the raw fallback data to our typed interface to avoid 'any'
-            const typedFallbackData = (fallbackData || []) as unknown as DoctorWithDepartmentInfo[];
-
-            doctors = typedFallbackData.map((doctor) => ({
-                id: doctor.id,
-                name: doctor.name,
-                department_name:
-                  doctor.clinic_members?.[0]?.clinic_departments
-                    ?.department_types?.name ||
-                  doctor.primary_specialization ||
-                  "General Medicine",
-              }));
-          }
-
-          const doctor = doctors?.find(
+          const doctor = doctors.find(
             (d) => d.id === consultation.appointments?.doctor_id
           );
 
@@ -189,13 +181,7 @@ const fetchPatientsWithMedicalRecords = async (
               time: String(consultation.appointments?.time || "00:00:00"),
             },
           } as ConsultationWithAppointment;
-        })
-      );
-
-      // Only include consultations whose associated appointment status is 'Completed'
-      const completedConsultations = consultationsWithDoctors.filter(
-        (c) => (c.appointment?.status || "").toLowerCase() === "completed"
-      );
+        });
 
       return {
         ...patient,
@@ -235,21 +221,10 @@ const PatientRecords = () => {
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
 
   // Handle FAB quick-action via ?action=new
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const fabHandled = useRef(false);
-
-  useEffect(() => {
-    if (searchParams.get("action") === "new" && !fabHandled.current) {
-      fabHandled.current = true;
-      setEditingPatient(null);
-      setIsPatientModalOpen(true);
-      const next = new URLSearchParams(searchParams.toString());
-      next.delete("action");
-      const qs = next.toString();
-      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
-    }
-  }, [searchParams, router]);
+  useFABAction("new", () => {
+    setEditingPatient(null);
+    setIsPatientModalOpen(true);
+  });
 
   const { data, isLoading, error } = useQuery({
     queryKey: [

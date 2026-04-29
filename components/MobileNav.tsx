@@ -2,21 +2,13 @@
 "use client";
 
 import { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import {
-  Menu,
-  Users,
-  CalendarPlus,
-  CreditCard,
-  Home,
-  LogOut,
-  Settings,
-  User2,
-  Pill,
-} from "lucide-react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { LogOut, Menu, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { navItems, isActiveLink } from "@/config/navigation";
 
 import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,40 +24,10 @@ import {
 } from "@/components/ui/drawer";
 import { Separator } from "@/components/ui/separator";
 
-const navItems = [
-  { icon: Home, label: "Dashboard", path: "/dashboard", roles: ["superadmin", "staff", "doctor"] },
-  { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ["staff", "doctor", "superadmin"] },
-  { icon: Users, label: "Patients", path: "/patients", roles: ["staff", "doctor", "superadmin"] },
-  { icon: CreditCard, label: "Billing", path: "/billing", roles: ["staff", "doctor", "superadmin"] },
-  { icon: Pill, label: "Pharmacy", path: "/pharmacy", roles: ["staff", "superadmin"] },
-  { icon: User2, label: "Profile", path: "/profile", roles: ["superadmin", "staff", "doctor"] },
-  { icon: Settings, label: "Settings", path: "/settings", roles: ["superadmin"] },
-];
-
 export function MobileNav() {
   const { user, activeClinic, activeClinicRole, signOut, profileName } = useAuth();
   const [open, setOpen] = useState(false);
-  const location = usePathname();
-  const router = useRouter();
-
-  const isActiveLink = (path: string) => {
-    const normalizedLocation = location.endsWith("/") ? location.slice(0, -1) : location;
-    const normalizedPath = path.endsWith("/") ? path.slice(0, -1) : path;
-
-    if (normalizedPath === "/dashboard") {
-      return normalizedLocation === "/dashboard" || normalizedLocation === "/";
-    }
-
-    return (
-      normalizedLocation === normalizedPath ||
-      normalizedLocation.startsWith(normalizedPath + "/")
-    );
-  };
-
-  const handleNavigation = (path: string) => {
-    router.push(path);
-    setOpen(false);
-  };
+  const pathname = usePathname();
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
@@ -87,7 +49,7 @@ export function MobileNav() {
         </DrawerHeader>
 
         <div className="px-4 pb-4">
-          {activeClinic && <ClinicSwitcher sidebarOpen={false} />}
+          {activeClinic && <ClinicSwitcher />}
         </div>
 
         <Separator className="my-2" />
@@ -97,25 +59,26 @@ export function MobileNav() {
             {navItems.map((item) => {
               if (activeClinicRole && item.roles.includes(activeClinicRole)) {
                 return (
-                  <button
-                    key={item.path}
-                    onClick={() => handleNavigation(item.path)}
-                    className={cn(
-                      "w-full flex items-center py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 min-h-[48px]",
-                      isActiveLink(item.path)
-                        ? "bg-primary/10 text-primary border border-primary/20"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    <item.icon
-                      size={20}
+                  <DrawerClose key={item.path} asChild>
+                    <Link
+                      href={item.path}
                       className={cn(
-                        "mr-3 flex-shrink-0",
-                        isActiveLink(item.path) ? "text-primary" : "text-muted-foreground"
+                        "w-full flex items-center py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 min-h-[48px]",
+                        isActiveLink(pathname, item.path)
+                          ? "bg-primary/10 text-primary border border-primary/20"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
                       )}
-                    />
-                    <span className="font-medium">{item.label}</span>
-                  </button>
+                    >
+                      <item.icon
+                        size={20}
+                        className={cn(
+                          "mr-3 flex-shrink-0",
+                          isActiveLink(pathname, item.path) ? "text-primary" : "text-muted-foreground"
+                        )}
+                      />
+                      <span className="font-medium">{item.label}</span>
+                    </Link>
+                  </DrawerClose>
                 );
               }
               return null;
@@ -142,14 +105,18 @@ export function MobileNav() {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleNavigation("/profile")}
-            >
-              <User2 size={16} className="mr-2" />
-              Profile
-            </Button>
+            <DrawerClose asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+              >
+                <Link href="/profile">
+                  <User2 size={16} className="mr-2" />
+                  Profile
+                </Link>
+              </Button>
+            </DrawerClose>
             <Button
               variant="outline"
               size="sm"

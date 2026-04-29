@@ -49,9 +49,17 @@ export const PatientList = ({
               {(patients || []).map((patient) => (
                 <div
                   key={patient.id}
+                  role="button"
+                  tabIndex={0}
                   className={`p-4 cursor-pointer transition-colors border-b hover:bg-primary/10 ${selectedPatient?.id === patient.id ? 'bg-primary/10 border-primary/20' : ''
                     }`}
                   onClick={() => setSelectedPatient(patient)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedPatient(patient);
+                    }
+                  }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">

@@ -1,11 +1,12 @@
 // File: src/components/app-sidebar.tsx
 "use client";
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { Users, CalendarPlus, CreditCard, Home, LogOut, Settings, User2, Pill } from "lucide-react";
+import { LogOut, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { navItems, isActiveLink } from "@/config/navigation";
 
 import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,37 +14,10 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 
-const navItems = [
-  { icon: Home, label: "Dashboard", path: "/dashboard", roles: ['superadmin', 'staff', 'doctor'] },
-  { icon: CalendarPlus, label: "Appointments", path: "/appointments", roles: ['staff', 'doctor', 'superadmin'] },
-  { icon: Users, label: "Patients", path: "/patients", roles: ['staff', 'doctor', 'superadmin'] },
-  { icon: CreditCard, label: "Billing", path: "/billing", roles: ['staff', 'doctor','superadmin'] },
-  { icon: Pill, label: "Pharmacy", path: "/pharmacy", roles: ['staff', 'superadmin'] },
-  { icon: User2, label: "Profile", path: "/profile", roles: ['superadmin', 'staff', 'doctor'] },
-  { icon: Settings, label: "Settings", path: "/settings", roles: ['superadmin'] },
-];
-
 export function AppSidebar() {
   const { user, activeClinic, activeClinicRole, signOut, profileName } = useAuth();
 
-  const location = usePathname();
-  const router = useRouter();
-  // Helper to determine if a link is active
-  const isActiveLink = (path: string) => {
-    // Normalize paths by removing trailing slashes
-    const normalizedLocation = location.endsWith('/') ? location.slice(0, -1) : location;
-    const normalizedPath = path.endsWith('/') ? path.slice(0, -1) : path;
-
-    // For dashboard, check both /dashboard and root /
-    if (normalizedPath === '/dashboard') {
-      return normalizedLocation === '/dashboard' || normalizedLocation === '/';
-    }
-
-    // For other paths, check exact match or if location starts with path + '/'
-    // This prevents false positives like /patient-something matching /patients
-    return normalizedLocation === normalizedPath ||
-           normalizedLocation.startsWith(normalizedPath + '/');
-  };
+  const pathname = usePathname();
 
   
 
@@ -57,7 +31,7 @@ export function AppSidebar() {
 
       {/* Clinic Switcher */}
       <div className="p-3">
-         {activeClinic && <ClinicSwitcher sidebarOpen={true} />}
+         {activeClinic && <ClinicSwitcher />}
       </div>
 
       {/* Navigation Links */}
@@ -74,14 +48,14 @@ export function AppSidebar() {
                         href={fullPath}
                         className={cn(
                           "flex items-center py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 group min-h-[48px]",
-                          isActiveLink(item.path)
+                          isActiveLink(pathname, item.path)
                             ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
                             : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
                       )}
                     >
                         <item.icon size={18} className={cn(
                           "mr-3 flex-shrink-0 transition-transform group-hover:scale-105",
-                          isActiveLink(item.path) ? "text-primary" : "text-muted-foreground"
+                          isActiveLink(pathname, item.path) ? "text-primary" : "text-muted-foreground"
                         )} />
                       <span className="font-medium">{item.label}</span>
                     </Link>
@@ -138,9 +112,11 @@ export function AppSidebar() {
               </div>
               <Separator />
               <div className="p-2">
-                  <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground" onClick={() => { router.push('/profile'); }}>
-                    <User2 size={16} className="h-4 w-4 mr-3" />
-                    View Profile
+                  <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground" asChild>
+                    <Link href="/profile">
+                      <User2 size={16} className="h-4 w-4 mr-3" />
+                      View Profile
+                    </Link>
                  </Button>
                  <Button variant="ghost" className="w-full justify-start mt-1 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={signOut}>
                    <LogOut size={16} className="h-4 w-4 mr-3" />

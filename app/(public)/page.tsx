@@ -799,32 +799,34 @@ const LandingPageClient = () => {
 
     // If user is authenticated, redirect to appropriate page
     if (user) {
-      console.log(
-        "LandingPage: Authenticated user detected, checking redirect logic",
-        {
-          user: !!user,
-          needsProfileCompletion,
-          clinicLoading,
-          activeClinic: activeClinic ? activeClinic.clinics?.name : null,
-        }
-      );
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "LandingPage: Authenticated user detected, checking redirect logic",
+          {
+            user: !!user,
+            needsProfileCompletion,
+            clinicLoading,
+            activeClinic: activeClinic ? activeClinic.clinics?.name : null,
+          }
+        );
+      }
 
       // Profile incomplete - redirect to complete profile
       if (needsProfileCompletion) {
-        console.log("LandingPage: Redirecting to /complete-profile");
+        if (process.env.NODE_ENV === "development") console.log("LandingPage: Redirecting to /complete-profile");
         router.replace("/complete-profile");
         return;
       }
 
       // Profile complete but clinic loading - wait
       if (clinicLoading) {
-        console.log("LandingPage: Clinic data loading, waiting...");
+        if (process.env.NODE_ENV === "development") console.log("LandingPage: Clinic data loading, waiting...");
         return;
       }
 
       // Profile complete, no clinic - redirect to create clinic
       if (!activeClinic) {
-        console.log(
+        if (process.env.NODE_ENV === "development") console.log(
           "LandingPage: No active clinic, redirecting to /create-clinic"
         );
         router.replace("/create-clinic");
@@ -832,7 +834,7 @@ const LandingPageClient = () => {
       }
 
       // Profile complete, has clinic - redirect to dashboard
-      console.log(
+      if (process.env.NODE_ENV === "development") console.log(
         "LandingPage: User has active clinic, redirecting to /dashboard"
       );
       router.replace("/dashboard");

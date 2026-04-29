@@ -93,6 +93,12 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     script.onload = () => setIsRazorpayLoaded(true);
     script.onerror = () => toast.error('Failed to load payment gateway');
     document.body.appendChild(script);
+
+    return () => {
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
+    };
   }, []);
 
   // 2. Pre-select popular package ONLY when modal opens

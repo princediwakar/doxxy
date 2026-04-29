@@ -28,56 +28,35 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
-interface AppointmentsTableProps {
-  appointments: AppointmentWithDetails[];
+interface AppointmentCardProps {
+  appointment: AppointmentWithDetails;
+  index: number;
   onAppointmentClick: (appointment: AppointmentWithDetails) => void;
   onCancelAppointment: (appointmentId: string) => void;
   onStartConsultation: (appointment: AppointmentWithDetails) => void;
   onViewConsultation: (appointment: AppointmentWithDetails) => void;
   onCreateBill: (appointment: AppointmentWithDetails) => void;
   onCheckIn?: (appointmentId: string) => void;
-  activeClinicRole?: string | null;
-  cancelLoading?: boolean;
+  cancelLoading: boolean;
+  getStatusColor: (status: string) => string;
 }
 
-export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
-  appointments,
+const AppointmentCard: React.FC<AppointmentCardProps> = ({
+  appointment,
+  index,
   onAppointmentClick,
   onCancelAppointment,
   onStartConsultation,
   onViewConsultation,
   onCreateBill,
   onCheckIn,
-  cancelLoading = false,
+  cancelLoading,
+  getStatusColor,
 }) => {
   const { user } = useAuth();
   const router = useRouter();
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Scheduled': return 'bg-blue-100 text-blue-800';
-      case 'In Progress': return 'bg-yellow-100 text-yellow-800';
-      case 'Completed': return 'bg-green-100 text-green-800';
-      case 'Cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
 
-  if (appointments.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold mb-2">No appointments found</h3>
-        <p className="text-muted-foreground">
-          There are no appointments matching your current filter.
-        </p>
-      </div>
-    );
-  }
-
-  const AppointmentCard: React.FC<{
-    appointment: AppointmentWithDetails;
-    index: number;
-  }> = ({ appointment, index }) => (
+  return (
     <Card
       className="cursor-pointer hover:bg-muted/50 touch-manipulation"
       onClick={() => onAppointmentClick(appointment)}
@@ -130,7 +109,6 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
           >
             {appointment.billing_status || 'Unbilled'}
           </Badge>
-          {/* Mobile: Action buttons - use dropdown for mobile to avoid overflow */}
           <div className="md:hidden flex justify-end" onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -170,7 +148,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                     {appointment.user_id === user?.id ? "Edit" : "View"}
                   </DropdownMenuItem>
                 )}
-                {appointment.status !== 'Cancelled' && 
+                {appointment.status !== 'Cancelled' &&
                  (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
                   <DropdownMenuItem onClick={() => onCreateBill(appointment)}>
                     <Receipt className="mr-2 h-4 w-4" />
@@ -197,6 +175,53 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
       </CardContent>
     </Card>
   );
+};
+
+interface AppointmentsTableProps {
+  appointments: AppointmentWithDetails[];
+  onAppointmentClick: (appointment: AppointmentWithDetails) => void;
+  onCancelAppointment: (appointmentId: string) => void;
+  onStartConsultation: (appointment: AppointmentWithDetails) => void;
+  onViewConsultation: (appointment: AppointmentWithDetails) => void;
+  onCreateBill: (appointment: AppointmentWithDetails) => void;
+  onCheckIn?: (appointmentId: string) => void;
+  activeClinicRole?: string | null;
+  cancelLoading?: boolean;
+}
+
+export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
+  appointments,
+  onAppointmentClick,
+  onCancelAppointment,
+  onStartConsultation,
+  onViewConsultation,
+  onCreateBill,
+  onCheckIn,
+  cancelLoading = false,
+}) => {
+  const { user } = useAuth();
+  const router = useRouter();
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Scheduled': return 'bg-blue-100 text-blue-800';
+      case 'In Progress': return 'bg-yellow-100 text-yellow-800';
+      case 'Completed': return 'bg-green-100 text-green-800';
+      case 'Cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (appointments.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No appointments found</h3>
+        <p className="text-muted-foreground">
+          There are no appointments matching your current filter.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -207,6 +232,14 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
             key={`${appointment.id}-${index}`}
             appointment={appointment}
             index={index}
+            onAppointmentClick={onAppointmentClick}
+            onCancelAppointment={onCancelAppointment}
+            onStartConsultation={onStartConsultation}
+            onViewConsultation={onViewConsultation}
+            onCreateBill={onCreateBill}
+            onCheckIn={onCheckIn}
+            cancelLoading={cancelLoading}
+            getStatusColor={getStatusColor}
           />
         ))}
       </div>

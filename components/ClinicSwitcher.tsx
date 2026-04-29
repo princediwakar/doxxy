@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation"
 import { useState } from "react";
 
-const ClinicSwitcher = ({ sidebarOpen }: { sidebarOpen: boolean }) => {
+const ClinicSwitcher = () => {
   const { userClinics, activeClinic, setActiveClinicId } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);

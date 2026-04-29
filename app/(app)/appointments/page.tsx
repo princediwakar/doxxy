@@ -1,8 +1,8 @@
 "use client";
 
 // src/pages/Appointments.tsx
-import { useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense, lazy } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Calendar } from 'lucide-react';
@@ -12,6 +12,7 @@ import { usePrefetching } from '@/hooks/usePrefetching';
 import { AppointmentsTabs } from '@/components/appointments/AppointmentsTabs';
 import { DoctorSelector } from '@/components/appointments/DoctorSelector';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { useFABAction } from '@/hooks/useFABAction';
 import { useAuth } from '@/contexts/AuthContext';
 import type { AppointmentWithDetails, AppointmentFilter } from '@/types/appointments';
 
@@ -51,21 +52,11 @@ const Appointments = () => {
     }
   }, [isLoading, prefetchPatients, prefetchDoctors]);
 
-  const searchParams = useSearchParams();
-  const fabHandled = useRef(false);
-
   // Handle FAB quick-action via ?action=new
-  useEffect(() => {
-    if (searchParams.get("action") === "new" && !fabHandled.current) {
-      fabHandled.current = true;
-      setSelectedAppointment(null);
-      setIsAppointmentModalOpen(true);
-      const next = new URLSearchParams(searchParams.toString());
-      next.delete("action");
-      const qs = next.toString();
-      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
-    }
-  }, [searchParams, router]);
+  useFABAction("new", () => {
+    setSelectedAppointment(null);
+    setIsAppointmentModalOpen(true);
+  });
 
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);

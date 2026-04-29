@@ -75,7 +75,7 @@ export function ProcurementsHistoryTab() {
                   </div>
                   <div>
                     <span className="text-muted-foreground">Total</span>
-                    <p className="font-medium">₹{proc.total_amount.toFixed(2)}</p>
+                    <p className="font-medium">₹{proc.total_amount?.toFixed(2) ?? "0.00"}</p>
                   </div>
                 </div>
               </CardContent>
@@ -117,7 +117,7 @@ export function ProcurementsHistoryTab() {
                       <TableCell>{proc.invoice_date}</TableCell>
                       <TableCell className="font-medium">{proc.supplier_name}</TableCell>
                       <TableCell>{proc.invoice_number}</TableCell>
-                      <TableCell>₹{proc.total_amount.toFixed(2)}</TableCell>
+                      <TableCell>₹{proc.total_amount?.toFixed(2) ?? "0.00"}</TableCell>
                       <TableCell>
                         <Badge variant={proc.status === 'Completed' ? 'default' : 'secondary'} className={proc.status === 'Completed' ? 'bg-green-500' : ''}>
                           {proc.status}

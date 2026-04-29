@@ -147,8 +147,8 @@ export default {
     				900: 'hsl(var(--warning-900))',
     			},
     			info: {
-    				DEFAULT: 'hsl(var(--info))',
-    				foreground: 'hsl(var(--info-foreground))',
+    				DEFAULT: 'hsl(var(--info) / <alpha-value>)',
+    				foreground: 'hsl(var(--info-foreground) / <alpha-value>)',
     				50: 'hsl(var(--info-50))',
     				100: 'hsl(var(--info-100))',
     				200: 'hsl(var(--info-200))',

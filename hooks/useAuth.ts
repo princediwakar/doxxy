@@ -26,7 +26,7 @@ export const useAuthFlow = () => {
   const handleInvite = useCallback(async (inviteToken: string, inviteEmail: string | null) => {
     setLoading(true);
     try {
-      console.log("Auth: Handling invite with token and email:", inviteToken, inviteEmail);
+      if (process.env.NODE_ENV === "development") console.log("Auth: Handling invite with token and email:", inviteToken, inviteEmail);
 
       // For custom invitations, we need to verify the invitation token directly
       // instead of using Supabase's OTP verification
@@ -62,22 +62,24 @@ export const useAuthFlow = () => {
       }
 
       if (invitationData) {
-        console.log("Auth: Invitation verified successfully:", invitationData);
+        if (process.env.NODE_ENV === "development") console.log("Auth: Invitation verified successfully:", invitationData);
 
         // Store the invitation data for PrivateRoute logic - use localStorage for persistence
-        console.log("Auth: Storing invitation data in localStorage:", {
-          token: inviteToken,
-          email: inviteEmail,
-          clinic_id: invitationData.clinic_id
-        });
+        if (process.env.NODE_ENV === "development") {
+          console.log("Auth: Storing invitation data in localStorage:", {
+            token: inviteToken,
+            email: inviteEmail,
+            clinic_id: invitationData.clinic_id
+          });
+        }
         localStorage.setItem('invitation_token', inviteToken);
         localStorage.setItem('invitation_data', JSON.stringify(invitationData));
 
         // Verify storage worked
         const storedToken = localStorage.getItem('invitation_token');
         const storedData = localStorage.getItem('invitation_data');
-        console.log("Auth: Verification - stored token:", storedToken);
-        console.log("Auth: Verification - stored data exists:", !!storedData);
+        if (process.env.NODE_ENV === "development") console.log("Auth: Verification - stored token:", storedToken);
+        if (process.env.NODE_ENV === "development") console.log("Auth: Verification - stored data exists:", !!storedData);
 
         // Set the auth flow to invite mode
         setAuthFlow("invite");
@@ -100,7 +102,7 @@ export const useAuthFlow = () => {
   const handlePasswordReset = useCallback(async (resetToken: string, resetEmail: string | null) => {
     setLoading(true);
     try {
-      console.log("Auth: Handling password reset with token and email:", resetToken, resetEmail);
+      if (process.env.NODE_ENV === "development") console.log("Auth: Handling password reset with token and email:", resetToken, resetEmail);
       
       const { data, error } = await supabase.auth.verifyOtp({
         email: resetEmail || '',
@@ -116,7 +118,7 @@ export const useAuthFlow = () => {
       }
 
       if (data.session && data.user) {
-        console.log("Auth: Password reset verified successfully, user logged in:", data.user.id);
+        if (process.env.NODE_ENV === "development") console.log("Auth: Password reset verified successfully, user logged in:", data.user.id);
         setAuthFlow("update-password");
         setEmail(resetEmail || data.user.email || '');
         toast.info("Please set your new password.");
@@ -141,26 +143,28 @@ export const useAuthFlow = () => {
     const action = searchParams.get("action");
     const emailFromUrl = searchParams.get("email");
 
-    console.log("Auth: useEffect running - checking URL params:", {
-      token: token ? "present" : "missing",
-      type,
-      action,
-      email: emailFromUrl ? "present" : "missing"
-    });
+    if (process.env.NODE_ENV === "development") {
+      console.log("Auth: useEffect running - checking URL params:", {
+        token: token ? "present" : "missing",
+        type,
+        action,
+        email: emailFromUrl ? "present" : "missing"
+      });
+    }
 
     if (token && (type || action)) {
-      console.log("Auth: Conditions met for invitation/reset processing");
+      if (process.env.NODE_ENV === "development") console.log("Auth: Conditions met for invitation/reset processing");
       if (type === "invite" || action === "invite") {
-        console.log("Auth: Processing invitation...");
+        if (process.env.NODE_ENV === "development") console.log("Auth: Processing invitation...");
         const processInvite = () => handleInvite(token, emailFromUrl);
         processInvite();
       } else if (type === "recovery") {
-        console.log("Auth: Processing password reset...");
+        if (process.env.NODE_ENV === "development") console.log("Auth: Processing password reset...");
         const processPasswordReset = () => handlePasswordReset(token, emailFromUrl);
         processPasswordReset();
       }
     } else {
-      console.log("Auth: No invitation/reset processing needed");
+      if (process.env.NODE_ENV === "development") console.log("Auth: No invitation/reset processing needed");
     }
   }, [searchParams, handleInvite, handlePasswordReset]);
 
@@ -176,15 +180,17 @@ export const useAuthFlow = () => {
 
     // If user is authenticated, redirect to appropriate page
     if (user) {
-      console.log('Auth: Authenticated user detected, checking redirect logic', {
-        user: !!user,
-        needsProfileCompletion,
-        activeClinic: activeClinic ? 'present' : null
-      });
+      if (process.env.NODE_ENV === "development") {
+        console.log('Auth: Authenticated user detected, checking redirect logic', {
+          user: !!user,
+          needsProfileCompletion,
+          activeClinic: activeClinic ? 'present' : null
+        });
+      }
 
       // Profile incomplete - redirect to complete profile
       if (needsProfileCompletion) {
-        console.log('Auth: Redirecting to /complete-profile');
+        if (process.env.NODE_ENV === "development") console.log('Auth: Redirecting to /complete-profile');
         const redirectTo = "/complete-profile";
         router.replace(redirectTo);
         return;
@@ -192,14 +198,14 @@ export const useAuthFlow = () => {
 
       // Profile complete, no clinic - redirect to create clinic
       if (!activeClinic) {
-        console.log('Auth: No active clinic, redirecting to /create-clinic');
+        if (process.env.NODE_ENV === "development") console.log('Auth: No active clinic, redirecting to /create-clinic');
         const redirectTo = "/create-clinic";
         router.replace(redirectTo);
         return;
       }
 
       // Profile complete, has clinic - redirect to dashboard or intended page
-      console.log('Auth: User has active clinic, redirecting to dashboard');
+      if (process.env.NODE_ENV === "development") console.log('Auth: User has active clinic, redirecting to dashboard');
       const redirectTo = searchParams.get('redirect') || "/dashboard";
       router.replace(redirectTo);
     }
