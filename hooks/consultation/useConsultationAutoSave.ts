@@ -1,0 +1,192 @@
+"use client";
+import { logger } from "@/lib/logger";
+
+import { useEffect, useCallback, useRef } from "react";
+import { useMutation, useQueryClient, UseMutationResult } from "@tanstack/react-query";
+import { getSupabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import type { ConsultationFormValues, PrescriptionMedication } from "@/types/consultation";
+import type { DbAppointment, DbConsultationBase, DbJson } from "@/types/core";
+import type { UseFormReturn } from "react-hook-form";
+import type { ClinicMemberWithClinic } from "@/hooks/useClinicData";
+import type { User } from "@supabase/supabase-js";
+
+import { isDeepEqual } from "./utils";
+
+const supabase = getSupabase();
+
+export interface UseConsultationAutoSaveParams {
+  form: UseFormReturn<ConsultationFormValues>;
+  formValues: ConsultationFormValues;
+  appointmentId: string | undefined;
+  appointment: DbAppointment | null | undefined;
+  activeClinic: ClinicMemberWithClinic | null;
+  user: User | null;
+  canEditConsultation: boolean;
+  autoSaveReady: boolean;
+}
+
+export interface UseConsultationAutoSaveReturn {
+  autoSaveMutation: UseMutationResult<DbConsultationBase, Error, ConsultationFormValues>;
+  handleSave: () => void;
+  setBaseline: (values: ConsultationFormValues) => void;
+}
+
+export const useConsultationAutoSave = ({
+  form,
+  formValues,
+  appointmentId,
+  appointment,
+  activeClinic,
+  user,
+  canEditConsultation,
+  autoSaveReady,
+}: UseConsultationAutoSaveParams): UseConsultationAutoSaveReturn => {
+  const queryClient = useQueryClient();
+  const previousValuesRef = useRef<ConsultationFormValues>();
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    previousValuesRef.current = form.getValues();
+  }, []);
+
+  const setBaseline = useCallback((values: ConsultationFormValues) => {
+    previousValuesRef.current = values;
+  }, []);
+
+  const autoSaveMutation = useMutation({
+    mutationFn: async (data: ConsultationFormValues) => {
+      if (!appointmentId || !activeClinic?.clinic_id || !appointment) {
+        logger.error('❌ Auto-save failed: Missing required data', {
+          appointmentId, clinicId: activeClinic?.clinic_id, appointment
+        });
+        throw new Error('Missing required data');
+      }
+
+      const consultationData = {
+        appointment_id: appointmentId,
+        patient_id: appointment?.patient_id || '',
+        doctor_id: appointment?.doctor_id || user?.id || '',
+        clinic_id: activeClinic.clinic_id,
+        specialty_data: data.specialty_data,
+      };
+
+      const { data: updateResult, error: updateError } = await supabase
+        .from('consultations')
+        .update(consultationData)
+        .eq('appointment_id', appointmentId)
+        .select();
+
+      let result;
+
+      if (!updateError && updateResult && updateResult.length === 0) {
+        const insertResult = await supabase
+          .from('consultations')
+          .insert(consultationData)
+          .select()
+          .single();
+
+        if (insertResult.error) {
+          logger.error('❌ Auto-save insert error:', insertResult.error);
+          throw insertResult.error;
+        }
+        result = insertResult.data;
+      } else if (updateError) {
+        logger.error('❌ Auto-save update error:', updateError);
+        throw updateError;
+      } else if (updateResult && updateResult.length > 0) {
+        result = updateResult[0];
+      } else {
+        logger.error('❌ Auto-save: Unexpected response from consultation update');
+        throw new Error('Unexpected response from consultation update');
+      }
+
+      if (data.specialty_data.prescriptions !== undefined) {
+        const validPrescriptions = data.specialty_data.prescriptions.filter(
+          (med: PrescriptionMedication) => med.name && med.name.trim().length > 0
+        );
+
+        if (validPrescriptions.length > 0) {
+          const prescriptionsData = validPrescriptions.map((med: PrescriptionMedication) => ({
+            consultation_id: result.id,
+            patient_id: appointment?.patient_id || '',
+            doctor_id: appointment?.doctor_id || user?.id || '',
+            clinic_id: activeClinic.clinic_id || '',
+            medications: [med] as unknown as DbJson,
+          }));
+
+          const { error: prescError } = await supabase
+            .from('prescriptions')
+            .upsert(prescriptionsData, {
+              onConflict: 'consultation_id,patient_id,doctor_id',
+              ignoreDuplicates: false
+            });
+
+          if (prescError) {
+            logger.error('❌ Auto-save prescription upsert error:', prescError);
+            throw prescError;
+          }
+        } else {
+          const { error: deleteError } = await supabase
+            .from('prescriptions')
+            .delete()
+            .eq('consultation_id', result.id);
+
+          if (deleteError) {
+            logger.error('❌ Auto-save prescription delete error:', deleteError);
+            throw deleteError;
+          }
+        }
+      }
+
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['consultation', appointmentId] });
+      toast.success('Consultation saved', {
+        description: 'Your consultation notes have been saved successfully.',
+      });
+    },
+    onError: (error) => {
+      logger.error('❌ Auto-save error:', error);
+      toast.error('Save failed', {
+        description: 'Could not save consultation notes. Please try again.',
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!canEditConsultation || !autoSaveReady) return;
+    if (isDeepEqual(previousValuesRef.current, formValues)) return;
+
+    if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      const currentValues = form.getValues();
+      if (
+        Object.keys(currentValues.specialty_data).length > 0 &&
+        !isDeepEqual(previousValuesRef.current, currentValues)
+      ) {
+        previousValuesRef.current = currentValues;
+        autoSaveMutation.mutate(currentValues);
+      }
+    }, 2000);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) clearTimeout(autoSaveTimeoutRef.current);
+    };
+  }, [formValues, canEditConsultation, autoSaveReady]);
+
+  const handleSave = useCallback(() => {
+    if (!canEditConsultation) {
+      toast.error('Cannot Save', {
+        description: 'You do not have permission to edit this consultation.',
+      });
+      return;
+    }
+    autoSaveMutation.mutate(form.getValues());
+  }, [form, autoSaveMutation, canEditConsultation]);
+
+  return { autoSaveMutation, handleSave, setBaseline };
+};
