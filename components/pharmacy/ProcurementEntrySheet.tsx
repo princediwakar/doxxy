@@ -2,10 +2,12 @@
 "use client";
 import { logger } from "@/lib/logger";
 
-import React, { useState, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useCreateProcurement, useAuthToken } from "@/hooks/useProcurements";
+import { useCreateProcurement } from "@/hooks/useProcurements";
 import { useProcurementStorage } from "@/hooks/useProcurementStorage";
+import { useBillExtraction } from "@/hooks/useBillExtraction";
+import { useCreateMedicine } from "@/hooks/useCreateMedicine";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { procurementSchema, ProcurementFormValues } from "@/types/pharmacy";
@@ -30,26 +32,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
-import { showErrorToast } from "@/lib/error-utils";
 import { MedicineCombobox } from "@/components/ui/medicine-combobox";
 import { Medicine, MedicationAutoFillData } from "@/types/prescriptions";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface ExtractedItem {
-  raw_extracted_name: string;
-  normalized_search_name: string;
-  batch_number: string;
-  expiry_date: string;
-  quantity: number;
-  unit_price: number;
-  mrp: number;
-  total_price: number;
-  medicine_id?: number | null;
-  extracted_name?: string;
-}
-
 interface ProcurementEntrySheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -61,9 +47,8 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
   const { activeClinic } = useAuth();
   const createProcurement = useCreateProcurement();
   const { uploadBillImage, isUploading } = useProcurementStorage();
-  const { getToken } = useAuthToken();
-  const [isExtracting, setIsExtracting] = useState(false);
-  const [extractionStats, setExtractionStats] = useState<{ total: number; matched: number } | null>(null);
+  const { extractData, isExtracting, extractionStats, resetExtraction } = useBillExtraction();
+  const { createMedicine } = useCreateMedicine();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProcurementFormValues>({
@@ -82,6 +67,12 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
     name: "items",
   });
 
+  useEffect(() => {
+    if (open) {
+      resetExtraction();
+    }
+  }, [open, resetExtraction]);
+
   // ── File upload ─────────────────────────────────────────────────────────────
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -90,7 +81,18 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
 
     try {
       const publicUrl = await uploadBillImage(file, activeClinic.clinic_id);
-      await extractData(publicUrl);
+      const result = await extractData(publicUrl);
+      if (result) {
+        form.reset(result.formData);
+        const unmapped = result.totalCount - result.matchedCount;
+        if (unmapped === 0) {
+          toast.success(`All ${result.totalCount} items added to stock!`);
+        } else {
+          toast.success(
+            `Added ${result.totalCount} items — ${result.matchedCount} found in catalog, ${unmapped} are new.`
+          );
+        }
+      }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error";
       logger.error("Upload error:", msg);
@@ -100,88 +102,13 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
     }
   };
 
-  // ── AI extraction ───────────────────────────────────────────────────────────
-
-// Replace your extractData function in ProcurementEntrySheet.tsx with this:
-
-const extractData = async (imageUrl: string) => {
-  try {
-    setIsExtracting(true);
-    setExtractionStats(null);
-    toast.info("Extracting details using AI...");
-
-    const response = await fetch("/api/procurement/extract/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ imageUrl }),
-    });
-
-    let json: any = {};
-    try {
-      json = await response.json();
-    } catch {
-      showErrorToast(new Error("Failed to parse extraction response"));
-    }
-
-    if (!response.ok) {
-      const serverError = json?.error || json?.details || `HTTP ${response.status}`;
-      toast.error(`Extraction failed: ${serverError}`, { duration: 8000 });
-      return;
-    }
-
-    const { data } = json;
-    if (!data) {
-      toast.error("No data returned from extraction");
-      return;
-    }
-
-    const items: ExtractedItem[] = data.items ?? [];
-    const matchedCount = items.filter((i: ExtractedItem) => i.medicine_id).length;
-
-    form.reset({
-      supplier_name: data.supplier_name ?? "",
-      invoice_number: data.invoice_number ?? "",
-      invoice_date: data.invoice_date ?? new Date().toISOString().split("T")[0],
-      total_amount: data.total_amount ?? 0,
-      items: items.map((item: ExtractedItem) => ({
-        extracted_name: item.extracted_name || item.raw_extracted_name || "",
-        medicine_id: item.medicine_id ?? null,
-        batch_number: item.batch_number ?? "",
-        expiry_date: item.expiry_date ?? "",
-        quantity: item.quantity ?? 1,
-        unit_price: item.unit_price ?? 0,
-        mrp: item.mrp ?? 0,
-        total_price: item.total_price ?? 0,
-      })),
-    });
-
-    setExtractionStats({ total: items.length, matched: matchedCount });
-
-    const unmapped = items.length - matchedCount;
-    if (unmapped === 0) {
-      toast.success(`All ${items.length} items added to stock!`);
-    } else {
-      toast.success(
-        `Added ${items.length} items — ${matchedCount} found in catalog, ${unmapped} are new.`
-      );
-    }
-  } catch (error: unknown) {
-    // This only fires for network errors (fetch itself failed)
-    const msg = error instanceof Error ? error.message : "Unknown error";
-    logger.error("Extraction error:", msg);
-    toast.error(`Network error: ${msg}`);
-  } finally {
-    setIsExtracting(false);
-  }
-};
-
   // ── Save ────────────────────────────────────────────────────────────────────
 
   const onSubmit = (data: ProcurementFormValues) => {
     createProcurement.mutate(data, {
       onSuccess: () => {
         form.reset();
-        setExtractionStats(null);
+        resetExtraction();
         onOpenChange(false);
       },
     });
@@ -190,34 +117,11 @@ const extractData = async (imageUrl: string) => {
   // ── Medicine selection from combobox ────────────────────────────────────────
 
   const handleCreateMedicine = async (index: number, name: string) => {
-    try {
-      const token = await getToken();
-      const res = await fetch("/api/medicines", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ name }),
-      });
-
-      let json: any = {};
-      try {
-        json = await res.json();
-      } catch {
-        // body unparseable — fall through to response.ok check
-      }
-      if (!res.ok) {
-        toast.error(json.error || "Failed to create medicine");
-        return;
-      }
-
-      form.setValue(`items.${index}.medicine_id`, json.id);
-      form.setValue(`items.${index}.extracted_name`, json.name);
-      toast.success(`Medicine "${json.name}" created and linked!`);
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "Unknown error";
-      toast.error(`Failed to create medicine: ${msg}`);
+    const result = await createMedicine(name);
+    if (result) {
+      form.setValue(`items.${index}.medicine_id`, result.id);
+      form.setValue(`items.${index}.extracted_name`, result.name);
+      toast.success(`Medicine "${result.name}" created and linked!`);
     }
   };
 

@@ -79,7 +79,7 @@ export function useCreateProcurement() {
         .filter((item) => !item.medicine_id && item.extracted_name?.trim())
         .map((item) => item.extracted_name!.trim());
 
-      const uniqueUnmapped = [...new Set(unmappedNames)];
+      const uniqueUnmapped = unmappedNames.filter((name, i) => unmappedNames.indexOf(name) === i);
       const nameToIdMap = new Map<string, number>();
 
       if (uniqueUnmapped.length > 0) {
@@ -119,7 +119,7 @@ export function useCreateProcurement() {
         clinic_id: string;
         medicine_id: number;
         batch_number: string;
-        expiry_date: string | null;
+        expiry_date: string;
         current_stock: number;
         unit_cost_price: number;
         mrp: number;
@@ -144,7 +144,7 @@ export function useCreateProcurement() {
             clinic_id: activeClinic.clinic_id,
             medicine_id: medicineId,
             batch_number: item.batch_number ?? "",
-            expiry_date: item.expiry_date || null,
+            expiry_date: item.expiry_date,
             current_stock: item.quantity,
             unit_cost_price: item.unit_price,
             mrp: item.mrp ?? 0,
