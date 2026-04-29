@@ -1,5 +1,6 @@
 // components/superadmin/ClinicDepartmentsManagement.tsx
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -87,7 +88,7 @@ const ClinicDepartmentsManagement = () => {
       toast.success('Department added successfully');
     },
     onError: (error: Error) => {
-      console.error('Error adding department:', error);
+      logger.error('Error adding department:', error);
       toast.error('Failed to add department: ' + error.message);
     },
   });
@@ -128,7 +129,7 @@ const ClinicDepartmentsManagement = () => {
       toast.success('Department removed successfully');
     },
     onError: (error: Error) => {
-      console.error('Error removing department:', error);
+      logger.error('Error removing department:', error);
       toast.error(error.message || 'Failed to remove department.');
     },
   });

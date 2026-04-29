@@ -1,5 +1,6 @@
 // src/components/BasicProfileEditor.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -220,7 +221,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       onClose();
     },
     onError: (error: Error) => {
-      console.error('Profile update failed:', error);
+      logger.error('Profile update failed:', error);
       if (error.message !== 'Validation failed') {
         toast({ 
           title: 'Error updating profile', 

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 // src/pages/Appointments.tsx
 import { useState, useEffect, Suspense, lazy } from 'react';
@@ -14,6 +15,7 @@ import { DoctorSelector } from '@/components/appointments/DoctorSelector';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { useFABAction } from '@/hooks/useFABAction';
 import { useAuth } from '@/contexts/AuthContext';
+import { showErrorToast } from '@/lib/error-utils';
 import type { AppointmentWithDetails, AppointmentFilter } from '@/types/appointments';
 
 // Lazy load heavy components
@@ -48,7 +50,7 @@ const Appointments = () => {
 
   useEffect(() => {
     if (!isLoading) {
-      Promise.all([prefetchPatients(), prefetchDoctors()]).catch(console.error);
+      Promise.all([prefetchPatients(), prefetchDoctors()]).catch(showErrorToast);
     }
   }, [isLoading, prefetchPatients, prefetchDoctors]);
 
@@ -87,7 +89,7 @@ const Appointments = () => {
       await handleStartConsultation(appointment.id);
       router.push(`/consultation/${appointment.id}`);
     } catch (err) {
-      console.warn('Consultation start prevented:', err);
+      logger.warn('Consultation start prevented:', err);
     }
   };
 

@@ -1,5 +1,6 @@
 // src/components/appointments/useAppointmentForm.ts
 "use client";
+import { logger } from "@/lib/logger";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -59,7 +60,7 @@ export const useAppointmentForm = (open: boolean) => {
         return rpcData as unknown as TransformedDoctor[];
       }
 
-      console.warn(
+      logger.warn(
         "RPC function failed, using fallback query:",
         rpcError?.message
       );

@@ -1,5 +1,6 @@
 // File: hooks/usePayments.ts
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -84,7 +85,7 @@ export const usePayments = () => {
           .maybeSingle(); 
 
         if (clinicError) {
-          console.error("Error fetching credits:", clinicError);
+          logger.error("Error fetching credits:", clinicError);
           throw clinicError;
         }
 
@@ -176,7 +177,7 @@ export const usePayments = () => {
       return { transaction, order: orderResponse.order };
     },
     onError: (error) => {
-      console.error(error);
+      logger.error(error);
       toast.error("Failed to create order", { description: error.message });
     },
   });
@@ -207,7 +208,7 @@ export const usePayments = () => {
       toast.error("Payment Verification Failed", { 
         description: "If money was deducted, please contact support with your Payment ID." 
       });
-      console.error("Verification error:", error);
+      logger.error("Verification error:", error);
     },
   });
 

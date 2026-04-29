@@ -32,9 +32,7 @@ import { BasicProfileEditor } from "@/components/BasicProfileEditor";
 import { MedicalCredentialsModal } from "@/components/doctor/MedicalCredentialsModal";
 import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding";
 import { useQueryClient } from "@tanstack/react-query";
-// import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
-// import { useErrorHandler } from "@/hooks/useErrorHandler";
-// import { isNotFoundError } from "@/lib/error-utils";
+import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
 
 const Profile = () => {
   const { user, activeClinic, activeClinicRole, hasDoctorProfile } = useAuth();
@@ -561,12 +559,10 @@ const Profile = () => {
   );
 };
 
-// Wrap the component with ErrorBoundary
-// const ProfileWithErrorBoundary = () => (
-//   <ErrorBoundary>
-//     <Profile />
-//   </ErrorBoundary>
-// );
+const ProfileWithErrorBoundary = () => (
+  <ErrorBoundary>
+    <Profile />
+  </ErrorBoundary>
+);
 
-// export default ProfileWithErrorBoundary;
-export default Profile;
+export default ProfileWithErrorBoundary;

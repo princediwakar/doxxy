@@ -7,12 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Mail,
   Phone,
-  Calendar,
   CheckCircle
+  Calendar,
 } from 'lucide-react';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
 import { getSupabase } from "@/integrations/supabase/client";
+import { logger } from "@/lib/logger";
 
 
 // --- REUSABLE COMPONENTS ---
@@ -267,7 +268,7 @@ const ContactClient = () => {
         throw new Error(rpcError.message || 'Failed to submit form');
       }
       
-      console.log('Contact form submitted successfully with ID:', data);
+      logger.log('Contact form submitted successfully with ID:', data);
       
       // Send email notification via Edge Function
       try {
@@ -287,13 +288,13 @@ const ContactClient = () => {
         });
         
         if (emailResponse.error) {
-          console.error('Failed to send email notification:', emailResponse.error);
+          logger.error('Failed to send email notification:', emailResponse.error);
           // Don't throw error here - form submission was successful, email is just a bonus
         } else {
-          console.log('Email notification sent successfully:', emailResponse.data);
+          logger.log('Email notification sent successfully:', emailResponse.data);
         }
       } catch (emailError) {
-        console.error('Error sending email notification:', emailError);
+        logger.error('Error sending email notification:', emailError);
         // Don't throw error here - form submission was successful, email is just a bonus
       }
       
@@ -307,7 +308,7 @@ const ContactClient = () => {
         message: '',
       });
     } catch (err) {
-      console.error('Contact form error:', err);
+      logger.error('Contact form error:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
     } finally {
       setIsSubmitting(false);

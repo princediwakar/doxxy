@@ -1,5 +1,6 @@
 // File: components/consultation/ConsultationPreviewModal.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import { Eye, Printer } from "lucide-react";
 import {
   Dialog,
@@ -107,7 +108,7 @@ export const ConsultationPreviewModal = ({
       );
       toast.success("Print dialog opened successfully");
     } catch (error) {
-      console.error("Error printing consultation:", error);
+      logger.error("Error printing consultation:", error);
       toast.error("Failed to open print dialog");
     }
   };

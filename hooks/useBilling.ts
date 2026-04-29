@@ -1,5 +1,6 @@
 // src/hooks/useBilling.ts
 "use client";
+import { logger } from "@/lib/logger";
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -64,20 +65,20 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     queryFn: async () => {
       if (!activeClinic?.clinic_id) throw new Error('No active clinic selected');
       
-      console.log('🔧 Calling generate_invoice_number with clinic_id:', activeClinic.clinic_id);
+      logger.log('🔧 Calling generate_invoice_number with clinic_id:', activeClinic.clinic_id);
       
       // First attempt with database function
       try {
         const { data, error } = await supabase
           .rpc('generate_invoice_number', { clinic_id_arg: activeClinic.clinic_id });
-        console.log('🔧 RPC Response:', { data, error });
+        logger.log('🔧 RPC Response:', { data, error });
         if (error) throw error;
         if (data) {
-          console.log('✅ Database function returned:', data);
+          logger.log('✅ Database function returned:', data);
           return data;
         }
       } catch (error) {
-        console.warn('Database invoice generation failed:', error);
+        logger.warn('Database invoice generation failed:', error);
       }
       
       // Fallback: Generate client-side with timestamp + random

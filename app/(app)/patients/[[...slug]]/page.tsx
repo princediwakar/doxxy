@@ -1,5 +1,6 @@
 //src/pages/Patients.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, FileText, User } from "lucide-react";
@@ -42,7 +43,7 @@ const fetchPatientsWithMedicalRecords = async (
   currentPage: number,
   itemsPerPage: number
 ): Promise<{ patients: PatientWithConsultations[]; totalCount: number }> => {
-  console.log(
+  logger.log(
     "fetchPatientsWithMedicalRecords: Fetching for clinic",
     clinicId,
     "search",
@@ -377,7 +378,7 @@ const PatientRecords = () => {
       toast.dismiss(exportToast);
       toast.success("PDF exported successfully!");
     } catch (error) {
-      console.error("Export error:", error);
+      logger.error("Export error:", error);
       toast.dismiss(exportToast);
       toast.error("Failed to export PDF");
     } finally {

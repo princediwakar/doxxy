@@ -1,5 +1,6 @@
 // src/components/appointments/AppointmentsTable.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import React from 'react';
 import {
   Table,
@@ -351,7 +352,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
                             // For now, navigate directly and let the consultation page handle prefetching
                             router.push(`/consultation/${appointment.id}`);
                           } catch (error) {
-                            console.error('Error prefetching consultation data:', error);
+                            logger.error('Error prefetching consultation data:', error);
                             router.push(`/consultation/${appointment.id}`);
                           }
                         } else {

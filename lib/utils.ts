@@ -1,4 +1,5 @@
 import * as React from "react";
+import { logger } from "@/lib/logger";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -48,7 +49,7 @@ export function formatTimeIST(timeString?: string | null, isStoredInUTC: boolean
     
     return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
   } catch (error) {
-    console.error('Error formatting time:', error);
+    logger.error('Error formatting time:', error);
     return timeString || '';
   }
 }

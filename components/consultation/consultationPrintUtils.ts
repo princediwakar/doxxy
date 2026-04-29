@@ -1,4 +1,5 @@
 // File: components/consultation/consultationPrintUtils.ts
+import { logger } from "@/lib/logger";
 import { ConsultationFormValues } from '@/types/consultation';
 import { DbPatient } from '@/types/core';
 import { Tables } from '@/integrations/supabase/types';
@@ -218,7 +219,7 @@ export const printConsultation = async (
     const filename = generateConsultationFilename(patient, appointment, departmentType);
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      console.error('Could not open print window');
+      logger.error('Could not open print window');
       return;
     }
 
@@ -319,6 +320,6 @@ export const printConsultation = async (
       printWindow.close();
     }, 500);
   } catch (error) {
-    console.error('Error generating print content:', error);
+    logger.error('Error generating print content:', error);
   }
 };

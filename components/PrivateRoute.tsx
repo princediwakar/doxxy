@@ -1,5 +1,6 @@
 // File: src/components/PrivateRoute.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/loading";
@@ -41,11 +42,11 @@ const PrivateRoute = ({ children }: { children?: React.ReactNode }) => {
       // If we have a token, DO NOT redirect to create-clinic yet.
       // The loading state below will catch this and show a spinner.
       if (invitationToken) {
-        console.log('PrivateRoute: Invitation token found, holding redirect.');
+        logger.log('PrivateRoute: Invitation token found, holding redirect.');
         return; 
       }
       
-      console.log('PrivateRoute: No active clinic, redirecting to /create-clinic');
+      logger.log('PrivateRoute: No active clinic, redirecting to /create-clinic');
       router.replace('/create-clinic');
       return;
     }

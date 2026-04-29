@@ -1,5 +1,6 @@
 // components/ui/medicine-combobox.tsx
 "use client";
+import { logger } from "@/lib/logger";
 
 import * as React from "react"
 import { Pill, X, Plus } from "lucide-react"
@@ -236,7 +237,7 @@ export function MedicineCombobox({
           .rpc('search_medicines', { search_term: '', limit_count: 50 })
         
         if (error) {
-          console.error('Error fetching medicines:', error)
+          logger.error('Error fetching medicines:', error)
           return []
         }
         return data || []
@@ -250,7 +251,7 @@ export function MedicineCombobox({
         })
 
       if (error) {
-        console.error('Error searching medicines:', error)
+        logger.error('Error searching medicines:', error)
         return []
       }
 
@@ -272,7 +273,7 @@ export function MedicineCombobox({
         .rpc('search_medicines', { search_term: value, limit_count: 1 })
 
       if (error) {
-        console.error('Error fetching selected medicine:', error.message || error)
+        logger.error('Error fetching selected medicine:', error.message || error)
         return null
       }
       return data?.[0] || null

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Users, Stethoscope, Activity, Clock, Plus } from "lucide-react";
@@ -77,7 +78,7 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
   );
 
   const upcomingAppointments = useMemo(() => {
-    console.log(
+    logger.log(
       "DoctorDashboard: All upcoming appointments raw:",
       allAppointments,
       "Today:",

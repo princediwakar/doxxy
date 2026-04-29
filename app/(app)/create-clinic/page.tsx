@@ -1,5 +1,6 @@
 // File: app/(app)/create-clinic/page.tsx
 "use client";
+import { logger } from "@/lib/logger";
 
 import * as React from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -21,9 +22,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stethoscope, Building2, AlertTriangle } from "lucide-react";
 import { createDoctorProfile } from "@/lib/doctor-utils";
-// import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
-// import { useErrorHandler } from "@/hooks/useErrorHandler";
-// import { showErrorToast } from "@/lib/error-utils";
+import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
 import {
   Form,
   FormControl,
@@ -108,7 +107,7 @@ const CreateClinicPage = () => {
       const { data, error } = await supabase.from("department_types").select("*");
       if (error) {
         // showErrorToast(error, { title: "Failed to load departments" });
-        console.error("Failed to load departments:", error);
+        logger.error("Failed to load departments:", error);
         throw error;
       }
       return data || [];
@@ -293,7 +292,7 @@ const CreateClinicPage = () => {
       router.replace("/dashboard");
     } catch (error: unknown) {
       // showErrorToast(error, { title: "Error creating clinic" });
-      console.error("Error creating clinic:", error);
+      logger.error("Error creating clinic:", error);
       toast({
         title: "Error creating clinic",
         description: error instanceof Error ? error.message : "An unexpected error occurred.",
@@ -640,12 +639,10 @@ const CreateClinicPage = () => {
   );
 };
 
-// Wrap the component with ErrorBoundary
-// const CreateClinicPageWithErrorBoundary = () => (
-//   <ErrorBoundary>
-//     <CreateClinicPage />
-//   </ErrorBoundary>
-// );
+const CreateClinicPageWithErrorBoundary = () => (
+  <ErrorBoundary>
+    <CreateClinicPage />
+  </ErrorBoundary>
+);
 
-// export default CreateClinicPageWithErrorBoundary;
-export default CreateClinicPage; 
+export default CreateClinicPageWithErrorBoundary;

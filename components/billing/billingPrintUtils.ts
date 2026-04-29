@@ -1,4 +1,5 @@
 // src/components/billing/billingPrintUtils.ts
+import { logger } from "@/lib/logger";
 import { DbPatient, DbClinic } from '@/types/core';
 import { Bill, ServiceItem } from '@/types/billing';
 
@@ -240,7 +241,7 @@ export const printBill = async (
     // Standard A4 dimensions for popup preview (optional)
     const printWindow = window.open('', '_blank', 'width=900,height=1200');
     if (!printWindow) {
-      console.error("Popup blocked");
+      logger.error("Popup blocked");
       return;
     }
 
@@ -250,6 +251,6 @@ export const printBill = async (
     printWindow.focus();
     
   } catch (error) {
-    console.error('Error generating print content:', error);
+    logger.error('Error generating print content:', error);
   }
 };

@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 // src/pages/Consultation.tsx
 import { useState, useCallback, useMemo, useEffect } from "react";
@@ -43,6 +44,7 @@ import { DbPatient as Patient } from "@/types/core";
 import { Prescription } from "@/types/prescriptions";
 import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
 import { usePrefetching } from "@/hooks/usePrefetching";
+import { showErrorToast } from "@/lib/error-utils";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import { type FieldSection, type NoteFieldConfig } from "@/lib/schemaUtils";
 import { FieldValue } from "@/types/consultation";
@@ -82,7 +84,7 @@ const Consultation = () => {
   useEffect(() => {
     if (!appointmentLoading && appointment) {
       // Prefetch in background to prepare for navigation
-      prefetchAllEssentialData().catch(console.error);
+      prefetchAllEssentialData().catch(showErrorToast);
     }
   }, [appointmentLoading, appointment, prefetchAllEssentialData]);
 
@@ -191,7 +193,7 @@ const Consultation = () => {
         );
         toast.success("Print dialog opened successfully");
       } catch (error) {
-        console.error("Error printing consultation:", error);
+        logger.error("Error printing consultation:", error);
         toast.error("Failed to open print dialog");
       }
     }

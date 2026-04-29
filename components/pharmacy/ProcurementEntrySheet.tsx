@@ -1,5 +1,6 @@
 // components/pharmacy/ProcurementEntrySheet.tsx
 "use client";
+import { logger } from "@/lib/logger";
 
 import React, { useState, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +29,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { showErrorToast } from "@/lib/error-utils";
 import { MedicineCombobox } from "@/components/ui/medicine-combobox";
 import { Medicine, MedicationAutoFillData } from "@/types/prescriptions";
 import { Badge } from "@/components/ui/badge";
@@ -107,7 +109,7 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
       await extractData(publicUrl);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error";
-      console.error("Upload error:", msg);
+      logger.error("Upload error:", msg);
       toast.error("Failed to upload bill image");
     } finally {
       setIsUploading(false);
@@ -131,12 +133,15 @@ const extractData = async (imageUrl: string) => {
       body: JSON.stringify({ imageUrl }),
     });
 
-    const json = await response.json().catch(() => ({}));
+    let json: any = {};
+    try {
+      json = await response.json();
+    } catch {
+      showErrorToast(new Error("Failed to parse extraction response"));
+    }
 
     if (!response.ok) {
-      // Show the REAL error from the server — not a generic message
       const serverError = json?.error || json?.details || `HTTP ${response.status}`;
-      console.error("Server error:", serverError);
       toast.error(`Extraction failed: ${serverError}`, { duration: 8000 });
       return;
     }
@@ -180,7 +185,7 @@ const extractData = async (imageUrl: string) => {
   } catch (error: unknown) {
     // This only fires for network errors (fetch itself failed)
     const msg = error instanceof Error ? error.message : "Unknown error";
-    console.error("Extraction error:", msg);
+    logger.error("Extraction error:", msg);
     toast.error(`Network error: ${msg}`);
   } finally {
     setIsExtracting(false);
@@ -234,7 +239,12 @@ const extractData = async (imageUrl: string) => {
         const res = await fetchWithAuth("/api/medicines", { names: uniqueUnmapped, is_auto_created: true });
 
         if (!res.ok) {
-          const json = await res.json().catch(() => ({}));
+          let json: any = {};
+          try {
+            json = await res.json();
+          } catch {
+            // body unparseable — throw with status
+          }
           throw new Error(json.error || "Failed to create unmapped medicines");
         }
 
@@ -315,7 +325,7 @@ const extractData = async (imageUrl: string) => {
           : typeof error === "object" && error !== null
           ? JSON.stringify(error)
           : String(error);
-      console.error("Save error:", msg);
+      logger.error("Save error:", msg);
       toast.error(msg === "Unknown error" ? "Failed to save stock." : msg);
     } finally {
       setIsSaving(false);
@@ -341,7 +351,12 @@ const extractData = async (imageUrl: string) => {
     try {
       const res = await fetchWithAuth("/api/medicines", { name });
 
-      const json = await res.json().catch(() => ({}));
+      let json: any = {};
+      try {
+        json = await res.json();
+      } catch {
+        // body unparseable — fall through to response.ok check
+      }
       if (!res.ok) {
         toast.error(json.error || "Failed to create medicine");
         return;

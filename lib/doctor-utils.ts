@@ -1,4 +1,5 @@
 import { getSupabase } from '@/integrations/supabase/client';
+import { logger } from "@/lib/logger";
 
 const supabase = getSupabase();
 
@@ -36,7 +37,7 @@ clinicId,
       .single();
 
     if (membershipCheckError && membershipCheckError.code !== 'PGRST116') {
-      console.warn('Error checking existing membership:', membershipCheckError.message);
+      logger.warn('Error checking existing membership:', membershipCheckError.message);
     }
 
     // Only update membership if the user doesn't exist or isn't a superadmin
@@ -53,7 +54,7 @@ clinicId,
         });
 
       if (membershipError) {
-        console.warn('Could not create clinic membership:', membershipError.message);
+        logger.warn('Could not create clinic membership:', membershipError.message);
       }
     } else if (departmentId) {
       // If user is a superadmin, just update their department_id
@@ -68,7 +69,7 @@ clinicId,
         .eq('clinic_id', clinicId);
 
       if (updateError) {
-        console.warn('Could not update department_id:', updateError.message);
+        logger.warn('Could not update department_id:', updateError.message);
       }
     }
 
@@ -98,7 +99,7 @@ clinicId,
 
     return { data: doctorData, error: null };
   } catch (error) {
-    console.error('Error in createDoctorProfile:', error);
+    logger.error('Error in createDoctorProfile:', error);
     return { 
       data: null, 
       error: error instanceof Error ? error : new Error('Unknown error occurred') 

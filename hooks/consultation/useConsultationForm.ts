@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -96,7 +97,7 @@ export const useConsultationForm = ({
         .single();
 
       if (error) {
-        console.error('Error fetching assigned doctor:', error);
+        logger.error('Error fetching assigned doctor:', error);
         return null;
       }
 
@@ -133,18 +134,18 @@ export const useConsultationForm = ({
   const canEditConsultation = useMemo(() => {
     // Always allow editing for assigned doctors
     if (isAssignedDoctor) {
-      if (process.env.NODE_ENV === "development") console.log('✅ canEditConsultation: true (isAssignedDoctor)');
+      if (process.env.NODE_ENV === "development") logger.log('✅ canEditConsultation: true (isAssignedDoctor)');
       return true;
     }
 
     // For superadmins, check if they have a doctor profile in this clinic
     if (activeClinic?.role === 'superadmin' && hasDoctorProfile && user?.id) {
-      if (process.env.NODE_ENV === "development") console.log('✅ canEditConsultation: true (superadmin with doctor profile)');
+      if (process.env.NODE_ENV === "development") logger.log('✅ canEditConsultation: true (superadmin with doctor profile)');
       return true;
     }
 
     if (process.env.NODE_ENV === "development") {
-      console.log('❌ canEditConsultation: false',
+      logger.log('❌ canEditConsultation: false',
         'isAssignedDoctor:', isAssignedDoctor,
         'activeClinicRole:', activeClinic?.role,
         'hasDoctorProfile:', hasDoctorProfile,
@@ -209,32 +210,32 @@ export const useConsultationForm = ({
   // Only reset if the consultation was already completed before this session
   useEffect(() => {
     const isDev = process.env.NODE_ENV === "development";
-    if (isDev) console.log('🔄 Reset effect - isConsultationCompleted:', isConsultationCompleted, 'canEditConsultation:', canEditConsultation, 'justCompleted:', justCompleted, 'isCompletingRef:', isCompletingRef.current, 'isEditingCompletedRef:', isEditingCompletedRef.current);
+    if (isDev) logger.log('🔄 Reset effect - isConsultationCompleted:', isConsultationCompleted, 'canEditConsultation:', canEditConsultation, 'justCompleted:', justCompleted, 'isCompletingRef:', isCompletingRef.current, 'isEditingCompletedRef:', isEditingCompletedRef.current);
 
     // Don't reset if we're currently editing a completed consultation and want to redirect
     if (isConsultationCompleted && canEditConsultation && justCompleted && !isCompletingRef.current && !isEditingCompletedRef.current) {
       // Check if this consultation was already completed when we loaded the page
       // If appointment was already 'Completed' on load, then this is an edit session
       const wasAlreadyCompleted = appointment?.status === 'Completed';
-      if (isDev) console.log('🔄 Reset effect - wasAlreadyCompleted:', wasAlreadyCompleted);
+      if (isDev) logger.log('🔄 Reset effect - wasAlreadyCompleted:', wasAlreadyCompleted);
       if (wasAlreadyCompleted) {
-        if (isDev) console.log('🔄 Resetting justCompleted - editing existing completed consultation');
+        if (isDev) logger.log('🔄 Resetting justCompleted - editing existing completed consultation');
         setJustCompleted(false);
       }
     }
     // Reset the completion flag after the effect runs
     if (isCompletingRef.current) {
-      if (isDev) console.log('🔄 Reset effect - isCompletingRef is true, will reset in 1 second');
+      if (isDev) logger.log('🔄 Reset effect - isCompletingRef is true, will reset in 1 second');
       setTimeout(() => {
-        if (isDev) console.log('🔄 Reset effect - setting isCompletingRef to false');
+        if (isDev) logger.log('🔄 Reset effect - setting isCompletingRef to false');
         isCompletingRef.current = false;
       }, 1000);
     }
     // Reset the editing completed flag after navigation
     if (isEditingCompletedRef.current) {
-      if (isDev) console.log('🔄 Reset effect - isEditingCompletedRef is true, will reset in 3 seconds');
+      if (isDev) logger.log('🔄 Reset effect - isEditingCompletedRef is true, will reset in 3 seconds');
       setTimeout(() => {
-        if (isDev) console.log('🔄 Reset effect - setting isEditingCompletedRef to false');
+        if (isDev) logger.log('🔄 Reset effect - setting isEditingCompletedRef to false');
         isEditingCompletedRef.current = false;
       }, 3000);
     }
@@ -252,7 +253,7 @@ export const useConsultationForm = ({
     mutationFn: async (data: ConsultationFormValues) => {
 
       if (!appointmentId || !activeClinic?.clinic_id || !appointment) {
-        console.error('❌ Auto-save failed: Missing required data', {
+        logger.error('❌ Auto-save failed: Missing required data', {
           appointmentId,
           clinicId: activeClinic?.clinic_id,
           appointment
@@ -288,17 +289,17 @@ export const useConsultationForm = ({
           .single();
 
         if (insertResult.error) {
-        console.error('❌ Auto-save insert error:', insertResult.error);
+        logger.error('❌ Auto-save insert error:', insertResult.error);
         throw insertResult.error;
       }
         result = insertResult.data;
       } else if (updateError) {
-        console.error('❌ Auto-save update error:', updateError);
+        logger.error('❌ Auto-save update error:', updateError);
         throw updateError;
       } else if (updateResult && updateResult.length > 0) {
         result = updateResult[0];
       } else {
-        console.error('❌ Auto-save: Unexpected response from consultation update');
+        logger.error('❌ Auto-save: Unexpected response from consultation update');
         throw new Error('Unexpected response from consultation update');
       }
 
@@ -328,7 +329,7 @@ export const useConsultationForm = ({
             });
 
           if (prescError) {
-            console.error('❌ Auto-save prescription upsert error:', prescError);
+            logger.error('❌ Auto-save prescription upsert error:', prescError);
             throw prescError;
           }
         } else {
@@ -339,7 +340,7 @@ export const useConsultationForm = ({
             .eq('consultation_id', result.id);
 
           if (deleteError) {
-            console.error('❌ Auto-save prescription delete error:', deleteError);
+            logger.error('❌ Auto-save prescription delete error:', deleteError);
             throw deleteError;
           }
         }
@@ -356,7 +357,7 @@ export const useConsultationForm = ({
       });
     },
     onError: (error) => {
-      console.error('❌ Auto-save error:', error);
+      logger.error('❌ Auto-save error:', error);
       toast({
         title: 'Save failed',
         description: 'Could not save consultation notes. Please try again.',
@@ -490,7 +491,7 @@ export const useConsultationForm = ({
   const handleCompleteConsultation = useCallback(async () => {
     // Validate appointment ID
     if (!appointmentId || appointmentId.trim() === '') {
-      console.error('Invalid appointment ID in handleCompleteConsultation:', appointmentId);
+      logger.error('Invalid appointment ID in handleCompleteConsultation:', appointmentId);
       toast({
         title: 'Invalid Appointment',
         description: 'Cannot complete consultation with invalid appointment ID.',
@@ -502,15 +503,15 @@ export const useConsultationForm = ({
     // If consultation is already completed and user can edit, allow saving changes and redirect
     if (isConsultationCompleted && canEditConsultation) {
       try {
-        if (process.env.NODE_ENV === "development") console.log('🔄 Editing completed consultation - saving changes and setting up redirect');
+        if (process.env.NODE_ENV === "development") logger.log('🔄 Editing completed consultation - saving changes and setting up redirect');
         const formValues = form.getValues();
         await autoSaveMutation.mutateAsync(formValues);
 
         // Set flags to prevent reset and trigger redirect
         isEditingCompletedRef.current = true;
-        if (process.env.NODE_ENV === "development") console.log('🔄 Setting justCompleted to true for editing completed consultation');
+        if (process.env.NODE_ENV === "development") logger.log('🔄 Setting justCompleted to true for editing completed consultation');
         setJustCompleted(true);
-        if (process.env.NODE_ENV === "development") console.log('✅ Editing completed consultation - justCompleted set to true for redirect');
+        if (process.env.NODE_ENV === "development") logger.log('✅ Editing completed consultation - justCompleted set to true for redirect');
 
         toast({
           title: 'Notes Updated',
@@ -518,7 +519,7 @@ export const useConsultationForm = ({
         });
         return;
       } catch (error) {
-        console.error('Error updating consultation notes:', error);
+        logger.error('Error updating consultation notes:', error);
         isEditingCompletedRef.current = false;
         toast({
           title: 'Update Failed',
@@ -557,8 +558,8 @@ export const useConsultationForm = ({
 
       // Update appointment status to completed
       if (process.env.NODE_ENV === "development") {
-        console.log('handleCompleteConsultation: Updating appointment status to "Completed" for appointment ID:', appointmentId);
-        console.log('SQL Query: UPDATE appointments SET status = \'Completed\' WHERE id =', appointmentId);
+        logger.log('handleCompleteConsultation: Updating appointment status to "Completed" for appointment ID:', appointmentId);
+        logger.log('SQL Query: UPDATE appointments SET status = \'Completed\' WHERE id =', appointmentId);
       }
 
       const { data: updateResult, error: appointmentError } = await supabase
@@ -568,18 +569,18 @@ export const useConsultationForm = ({
         .select();
 
       if (appointmentError) {
-        console.error('Error updating appointment status to "Completed":', appointmentError);
+        logger.error('Error updating appointment status to "Completed":', appointmentError);
         throw appointmentError;
       }
 
       if (process.env.NODE_ENV === "development") {
-        console.log('Update result:', updateResult);
-        console.log('Successfully updated appointment status to "Completed"');
+        logger.log('Update result:', updateResult);
+        logger.log('Successfully updated appointment status to "Completed"');
       }
 
       // Deduct credit for the consultation
       if (activeClinic?.clinic_id) {
-        if (process.env.NODE_ENV === "development") console.log('Deducting credit for consultation via deduct_appointment_credit RPC');
+        if (process.env.NODE_ENV === "development") logger.log('Deducting credit for consultation via deduct_appointment_credit RPC');
         const { data: deductResult, error: deductError } = await supabase
           .rpc('deduct_appointment_credit', {
             appointment_id_param: appointmentId,
@@ -588,7 +589,7 @@ export const useConsultationForm = ({
           });
 
         if (deductError) {
-          console.error('Error deducting appointment credit:', deductError);
+          logger.error('Error deducting appointment credit:', deductError);
           // Don't throw - we still want to mark consultation as completed
           // but log the billing error
           toast({
@@ -597,11 +598,11 @@ export const useConsultationForm = ({
             variant: 'default',
           });
         } else {
-          if (process.env.NODE_ENV === "development") console.log('Credit deduction result:', deductResult);
+          if (process.env.NODE_ENV === "development") logger.log('Credit deduction result:', deductResult);
           if (deductResult === true) {
-            if (process.env.NODE_ENV === "development") console.log('✅ Credit successfully deducted for consultation');
+            if (process.env.NODE_ENV === "development") logger.log('✅ Credit successfully deducted for consultation');
           } else {
-            console.warn('⚠️ Credit deduction returned false - clinic may not have sufficient credits');
+            logger.warn('⚠️ Credit deduction returned false - clinic may not have sufficient credits');
             toast({
               title: 'Consultation Completed',
               description: 'Consultation marked as complete, but clinic has insufficient credits for billing.',
@@ -610,15 +611,15 @@ export const useConsultationForm = ({
           }
         }
       } else {
-        console.warn('Cannot deduct credits: No active clinic found');
+        logger.warn('Cannot deduct credits: No active clinic found');
       }
 
 
       setIsConsultationCompleted(true);
       setJustCompleted(true);
       if (process.env.NODE_ENV === "development") {
-        console.log('✅ Consultation completed - justCompleted set to true');
-        console.log('✅ Appointment status updated to "Completed"');
+        logger.log('✅ Consultation completed - justCompleted set to true');
+        logger.log('✅ Appointment status updated to "Completed"');
       }
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
@@ -633,7 +634,7 @@ export const useConsultationForm = ({
 
       // Just set the completion flag - parent component handles navigation
     } catch (error) {
-       console.error('Error completing consultation:', error);
+       logger.error('Error completing consultation:', error);
        isCompletingRef.current = false;
        toast({
         title: 'Completion Failed',

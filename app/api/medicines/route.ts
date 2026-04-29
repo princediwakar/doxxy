@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // app/api/medicines/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
       .single();
 
     if (insertError) {
-      console.error('Medicine insert error:', insertError.message);
+      logger.error('Medicine insert error:', insertError.message);
       return NextResponse.json({ error: 'Failed to create medicine' }, { status: 500 });
     }
 
@@ -84,7 +85,7 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Route error:', msg);
+    logger.error('Route error:', msg);
     return NextResponse.json({ error: 'Server error', details: msg }, { status: 500 });
   }
 }

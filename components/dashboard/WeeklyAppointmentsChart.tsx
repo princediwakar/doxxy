@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { format, startOfWeek, addDays, isSameDay, parseISO, isValid } from 'date-fns';
@@ -66,7 +67,7 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = R
         const aptDate = typeof apt.date === 'string' ? parseISO(apt.date) : apt.date;
         return isValid(aptDate) && isSameDay(day, aptDate);
       } catch {
-        console.warn('Invalid date format:', apt.date);
+        logger.warn('Invalid date format:', apt.date);
         return false;
       }
     });

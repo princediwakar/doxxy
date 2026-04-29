@@ -1,5 +1,6 @@
 // src/components/doctor/MedicalCredentialsModal.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
         .eq('clinic_id', activeClinic.clinics.id);
       
       if (error) {
-        console.error('Error fetching departments:', error);
+        logger.error('Error fetching departments:', error);
         return [];
       }
       return data.map((d: any) => ({ 
@@ -228,7 +229,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
         .eq('user_id', doctorProfile.user_id)
         .eq('clinic_id', activeClinic.clinic_id);
 
-      if (clinicMemberError) console.warn('Failed to update department', clinicMemberError);
+      if (clinicMemberError) logger.warn('Failed to update department', clinicMemberError);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['doctorProfile'] });

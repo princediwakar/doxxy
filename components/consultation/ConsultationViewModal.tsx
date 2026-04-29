@@ -1,5 +1,6 @@
 // src/components/consultation/ConsultationViewModal.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
@@ -53,7 +54,7 @@ export function ConsultationViewModal({
         .eq("clinic_id", activeClinic.clinic_id)
         .single();
       if (error) {
-        console.error("Failed to fetch patient data:", error);
+        logger.error("Failed to fetch patient data:", error);
         return null;
       }
       return data;
@@ -112,7 +113,7 @@ export function ConsultationViewModal({
       );
 
       if (!rpcError && rpcData) {
-        console.log("RPC function succeeded, returning data:", rpcData);
+        logger.log("RPC function succeeded, returning data:", rpcData);
         const doctor = rpcData?.find(
           (d: TransformedDoctorData) => d.id === appointment.doctor_id
         );
@@ -131,7 +132,7 @@ export function ConsultationViewModal({
           : null;
       }
 
-      console.warn(
+      logger.warn(
         "RPC function failed, using fallback query:",
         rpcError?.message
       );
@@ -301,7 +302,7 @@ export function ConsultationViewModal({
       );
       toast.success("Print dialog opened successfully");
     } catch (error) {
-      console.error("Error printing consultation:", error);
+      logger.error("Error printing consultation:", error);
       toast.error("Failed to open print dialog");
     }
   };

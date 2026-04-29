@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState, useCallback, useRef } from "react";
 import { getSupabase } from "@/integrations/supabase/client";
@@ -14,12 +15,12 @@ export const useProfileCompletion = () => {
   const checkProfileCompletion = useCallback(async (userId: string): Promise<boolean> => {
     // Skip check if we already know profile is complete for this user
     if (profileCheckRef.current === userId && needsProfileCompletion === false) {
-      console.log("Profile already marked complete for user:", userId);
+      logger.log("Profile already marked complete for user:", userId);
       return false;
     }
 
     try {
-      console.log("Checking profile completion for user:", userId);
+      logger.log("Checking profile completion for user:", userId);
       
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -28,14 +29,14 @@ export const useProfileCompletion = () => {
         .maybeSingle();
 
       if (error) {
-        console.error("Error checking profile completion:", error);
+        logger.error("Error checking profile completion:", error);
         setNeedsProfileCompletion(true);
         profileCheckRef.current = null;
         return true;
       }
 
       const incomplete = !profile || !profile.name || !profile.phone;
-      console.log("Profile completion check result:", {
+      logger.log("Profile completion check result:", {
         userId,
         hasProfile: !!profile,
         hasName: !!profile?.name,
@@ -47,7 +48,7 @@ export const useProfileCompletion = () => {
       profileCheckRef.current = incomplete ? null : userId;
       return incomplete;
     } catch (error) {
-      console.error("Exception in profile completion check:", error);
+      logger.error("Exception in profile completion check:", error);
       setNeedsProfileCompletion(true);
       profileCheckRef.current = null;
       return true;
@@ -57,22 +58,22 @@ export const useProfileCompletion = () => {
   // Function to mark profile as complete (called after successful profile update)
   const markProfileComplete = useCallback(async (user: User | null) => {
     if (!user?.id) {
-      console.warn("Cannot mark profile complete - no user ID");
+      logger.warn("Cannot mark profile complete - no user ID");
       return;
     }
     
-    console.log("Marking profile as complete for user:", user.id);
+    logger.log("Marking profile as complete for user:", user.id);
     setNeedsProfileCompletion(false);
     profileCheckRef.current = user.id;
 
     // Refresh user session to update user_metadata
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) {
-      console.error("Error refreshing session:", error);
+      logger.error("Error refreshing session:", error);
       return;
     }
     
-    console.log("Profile completion state updated, profile is now complete");
+    logger.log("Profile completion state updated, profile is now complete");
     return session?.user || null;
   }, []);
 

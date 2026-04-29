@@ -1,6 +1,7 @@
 // app/api/procurement/extract/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 export const maxDuration = 60;
 
@@ -79,7 +80,7 @@ async function callGemini(
       });
     } catch (networkErr) {
       lastError = `Network error for model ${model}: ${networkErr}`;
-      console.error(lastError);
+      logger.error(lastError);
       continue;
     }
 
@@ -91,7 +92,7 @@ async function callGemini(
       // 429 = quota → stop trying
       // 503 = service unavailable → stop trying
       lastError = `Model ${model} → HTTP ${res.status}: ${responseText.slice(0, 300)}`;
-      console.error('Gemini model error:', lastError);
+      logger.error('Gemini model error:', lastError);
 
       if (res.status === 429 || res.status === 503) {
         throw new Error(`Gemini quota/unavailable (${res.status}): ${responseText.slice(0, 200)}`);
@@ -106,7 +107,7 @@ async function callGemini(
       data = JSON.parse(responseText);
     } catch {
       lastError = `Model ${model} returned non-JSON: ${responseText.slice(0, 200)}`;
-      console.error(lastError);
+      logger.error(lastError);
       continue;
     }
 
@@ -116,37 +117,37 @@ async function callGemini(
 
     if (!text) {
       lastError = `Model ${model} empty content (finishReason=${finishReason}): ${JSON.stringify(data).slice(0, 200)}`;
-      console.error(lastError);
+      logger.error(lastError);
       continue;
     }
 
     if (finishReason === 'MAX_TOKENS') {
       // Response was truncated — JSON will be broken. Raise tokens and retry next model slot.
       lastError = `Model ${model} hit MAX_TOKENS — JSON truncated at ${text.length} chars. Raise maxOutputTokens.`;
-      console.error(lastError);
+      logger.error(lastError);
       // Don't try to parse truncated JSON — skip to next model
       continue;
     }
 
     if (finishReason !== 'STOP') {
-      console.warn(`Model ${model} finishReason=${finishReason} — attempting parse anyway`);
+      logger.warn(`Model ${model} finishReason=${finishReason} — attempting parse anyway`);
     }
 
     // Parse JSON content
     try {
       const parsed = JSON.parse(text);
-      console.log(`Gemini success with model: ${model} (finishReason=${finishReason})`);
+      logger.log(`Gemini success with model: ${model} (finishReason=${finishReason})`);
       return parsed;
     } catch {
       // Strip accidental markdown fences as safety net
       const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
       try {
         const parsed = JSON.parse(cleaned);
-        console.log(`Gemini success with model: ${model} (after fence strip)`);
+        logger.log(`Gemini success with model: ${model} (after fence strip)`);
         return parsed;
       } catch (parseErr) {
         lastError = `Model ${model} JSON parse failed (finishReason=${finishReason}). Raw: ${text.slice(0, 300)}`;
-        console.error(lastError, parseErr);
+        logger.error(lastError, parseErr);
         continue;
       }
     }
@@ -238,7 +239,7 @@ async function matchTermsBulk(
   terms: string[]
 ): Promise<MatchResult[]> {
   const { data, error } = await supabase.rpc('match_invoice_items_bulk', { search_terms: terms });
-  if (error) { console.error('Bulk RPC error:', error.message); throw error; }
+  if (error) { logger.error('Bulk RPC error:', error.message); throw error; }
   return (data as MatchResult[]) ?? [];
 }
 
@@ -316,9 +317,9 @@ async function aiMatch(
     }
 
     const resolved = [...result.values()].filter((v) => v.matched_id).length;
-    console.log(`AI matching: ${resolved}/${unmatchedTerms.length} resolved`);
+    logger.log(`AI matching: ${resolved}/${unmatchedTerms.length} resolved`);
   } catch (err) {
-    console.error('AI matching failed:', err instanceof Error ? err.message : err);
+    logger.error('AI matching failed:', err instanceof Error ? err.message : err);
   }
 
   return result;
@@ -352,7 +353,7 @@ export async function POST(request: Request) {
 
     try {
       extractedData = await callGemini(EXTRACTION_PROMPT, imageBase64, mimeType) as typeof extractedData;
-      console.log('Extraction complete:', extractedData.items?.length, 'items');
+      logger.log('Extraction complete:', extractedData.items?.length, 'items');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       // Surface the REAL error — not a generic "Extraction failed"
@@ -391,14 +392,14 @@ export async function POST(request: Request) {
       });
 
       const matched = extractedData.items.filter((i) => i.medicine_id).length;
-      console.log(`Matching: ${matched}/${extractedData.items.length} items matched`);
+      logger.log(`Matching: ${matched}/${extractedData.items.length} items matched`);
     }
 
     return NextResponse.json({ data: extractedData, provider: 'google', model: 'gemini-2.5-flash-lite' });
 
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Route error:', msg);
+    logger.error('Route error:', msg);
     return NextResponse.json({ error: 'Server error', details: msg }, { status: 500 });
   }
 }

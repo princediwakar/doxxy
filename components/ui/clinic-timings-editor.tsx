@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -108,7 +109,7 @@ export function ClinicTimingsEditor({ value, onChange, className }: ClinicTiming
 
       setTimings(validatedTimings);
     } catch (error) {
-      console.error('Error parsing clinic timings:', error);
+      logger.error('Error parsing clinic timings:', error);
       setTimings(defaultTimings);
     }
   }, [value]);

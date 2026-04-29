@@ -1,5 +1,6 @@
 // File: app/(app)/complete-profile/page.tsx
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"
@@ -142,7 +143,7 @@ const CompleteProfile = () => {
       }
       
     } catch (error: any) {
-      console.error("Profile Error:", error);
+      logger.error("Profile Error:", error);
       toast.error("Error: " + (error.message || "Something went wrong"));
       // Even on error, if we saved profile, we allow them to proceed
       // But we still mark complete so they aren't stuck loop

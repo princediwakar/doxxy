@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // app/sitemap.ts
 import { MetadataRoute } from "next";
 import { getBlogPosts } from "@/content/blog";
@@ -120,7 +121,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
   } catch (error) {
-    console.error("Error fetching blog posts for sitemap:", error);
+    logger.error("Error fetching blog posts for sitemap:", error);
     // Continue without blog posts if there's an error
   }
 

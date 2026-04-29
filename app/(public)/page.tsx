@@ -1,6 +1,6 @@
-
 "use client";
 
+import { logger } from "@/lib/logger";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -800,7 +800,7 @@ const LandingPageClient = () => {
     // If user is authenticated, redirect to appropriate page
     if (user) {
       if (process.env.NODE_ENV === "development") {
-        console.log(
+        logger.log(
           "LandingPage: Authenticated user detected, checking redirect logic",
           {
             user: !!user,
@@ -813,20 +813,20 @@ const LandingPageClient = () => {
 
       // Profile incomplete - redirect to complete profile
       if (needsProfileCompletion) {
-        if (process.env.NODE_ENV === "development") console.log("LandingPage: Redirecting to /complete-profile");
+        if (process.env.NODE_ENV === "development") logger.log("LandingPage: Redirecting to /complete-profile");
         router.replace("/complete-profile");
         return;
       }
 
       // Profile complete but clinic loading - wait
       if (clinicLoading) {
-        if (process.env.NODE_ENV === "development") console.log("LandingPage: Clinic data loading, waiting...");
+        if (process.env.NODE_ENV === "development") logger.log("LandingPage: Clinic data loading, waiting...");
         return;
       }
 
       // Profile complete, no clinic - redirect to create clinic
       if (!activeClinic) {
-        if (process.env.NODE_ENV === "development") console.log(
+        if (process.env.NODE_ENV === "development") logger.log(
           "LandingPage: No active clinic, redirecting to /create-clinic"
         );
         router.replace("/create-clinic");
@@ -834,7 +834,7 @@ const LandingPageClient = () => {
       }
 
       // Profile complete, has clinic - redirect to dashboard
-      if (process.env.NODE_ENV === "development") console.log(
+      if (process.env.NODE_ENV === "development") logger.log(
         "LandingPage: User has active clinic, redirecting to /dashboard"
       );
       router.replace("/dashboard");

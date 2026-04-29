@@ -1,5 +1,6 @@
 // src/hooks/useAppointments.ts
 "use client";
+import { logger } from "@/lib/logger";
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
@@ -285,7 +286,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
       return true;
 
     } catch (err: unknown) {
-      console.error('Consultation Start Failed:', err);
+      logger.error('Consultation Start Failed:', err);
       const message = err instanceof Error ? err.message : 'Failed to start consultation';
       toast.error(message);
       throw err;

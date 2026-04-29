@@ -1,5 +1,6 @@
 // File: components/payments/CreditPurchaseModal.tsx
 "use client";
+import { logger } from "@/lib/logger";
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -167,7 +168,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             });
             onOpenChange(false); // Close modal on success
           } catch (e) {
-            console.error(e);
+            logger.error(e);
           } finally {
             setIsProcessingPayment(false);
           }

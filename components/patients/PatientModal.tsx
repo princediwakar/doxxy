@@ -1,5 +1,6 @@
 // src/components/patients/PatientModal.tsx
 "use client";
+import { logger } from "@/lib/logger";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -144,7 +145,7 @@ export const PatientModal = ({
       form.reset();
     },
     onError: (error) => {
-      console.error("Error creating patient:", error);
+      logger.error("Error creating patient:", error);
       toast.error(`Failed to create patient: ${error.message}`);
     },
   });
@@ -184,7 +185,7 @@ export const PatientModal = ({
       onOpenChange(false);
     },
     onError: (error) => {
-      console.error("Error updating patient:", error);
+      logger.error("Error updating patient:", error);
       toast.error(`Failed to update patient: ${error.message}`);
     },
   });

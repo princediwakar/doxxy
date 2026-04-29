@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
@@ -26,7 +27,7 @@ export const useAuthFlow = () => {
   const handleInvite = useCallback(async (inviteToken: string, inviteEmail: string | null) => {
     setLoading(true);
     try {
-      if (process.env.NODE_ENV === "development") console.log("Auth: Handling invite with token and email:", inviteToken, inviteEmail);
+      if (process.env.NODE_ENV === "development") logger.log("Auth: Handling invite with token and email:", inviteToken, inviteEmail);
 
       // For custom invitations, we need to verify the invitation token directly
       // instead of using Supabase's OTP verification
@@ -40,7 +41,7 @@ export const useAuthFlow = () => {
         .single();
 
       if (invitationError) {
-        console.error("Auth: Invitation verification error:", invitationError);
+        logger.error("Auth: Invitation verification error:", invitationError);
 
         // Check if it's an expired invitation
         const { data: expiredInvitation } = await supabase
@@ -62,11 +63,11 @@ export const useAuthFlow = () => {
       }
 
       if (invitationData) {
-        if (process.env.NODE_ENV === "development") console.log("Auth: Invitation verified successfully:", invitationData);
+        if (process.env.NODE_ENV === "development") logger.log("Auth: Invitation verified successfully:", invitationData);
 
         // Store the invitation data for PrivateRoute logic - use localStorage for persistence
         if (process.env.NODE_ENV === "development") {
-          console.log("Auth: Storing invitation data in localStorage:", {
+          logger.log("Auth: Storing invitation data in localStorage:", {
             token: inviteToken,
             email: inviteEmail,
             clinic_id: invitationData.clinic_id
@@ -78,20 +79,20 @@ export const useAuthFlow = () => {
         // Verify storage worked
         const storedToken = localStorage.getItem('invitation_token');
         const storedData = localStorage.getItem('invitation_data');
-        if (process.env.NODE_ENV === "development") console.log("Auth: Verification - stored token:", storedToken);
-        if (process.env.NODE_ENV === "development") console.log("Auth: Verification - stored data exists:", !!storedData);
+        if (process.env.NODE_ENV === "development") logger.log("Auth: Verification - stored token:", storedToken);
+        if (process.env.NODE_ENV === "development") logger.log("Auth: Verification - stored data exists:", !!storedData);
 
         // Set the auth flow to invite mode
         setAuthFlow("invite");
         setEmail(inviteEmail || '');
         toast.info("Welcome! Please set your password to complete your account setup.");
       } else {
-        console.error("Auth: No valid invitation found");
+        logger.error("Auth: No valid invitation found");
         toast.error("No valid invitation found. Please ask for a new invitation.");
         setAuthFlow("login");
       }
     } catch (error: unknown) {
-      console.error("Auth: Exception during invite verification:", error);
+      logger.error("Auth: Exception during invite verification:", error);
       toast.error((error as Error).message || "An unknown error occurred during invite verification.");
       setAuthFlow("login");
     } finally {
@@ -102,7 +103,7 @@ export const useAuthFlow = () => {
   const handlePasswordReset = useCallback(async (resetToken: string, resetEmail: string | null) => {
     setLoading(true);
     try {
-      if (process.env.NODE_ENV === "development") console.log("Auth: Handling password reset with token and email:", resetToken, resetEmail);
+      if (process.env.NODE_ENV === "development") logger.log("Auth: Handling password reset with token and email:", resetToken, resetEmail);
       
       const { data, error } = await supabase.auth.verifyOtp({
         email: resetEmail || '',
@@ -111,24 +112,24 @@ export const useAuthFlow = () => {
       });
 
       if (error) {
-        console.error("Auth: Password reset verification error:", error);
+        logger.error("Auth: Password reset verification error:", error);
         toast.error(error.message || "Invalid or expired reset token.");
         setAuthFlow("login");
         return;
       }
 
       if (data.session && data.user) {
-        if (process.env.NODE_ENV === "development") console.log("Auth: Password reset verified successfully, user logged in:", data.user.id);
+        if (process.env.NODE_ENV === "development") logger.log("Auth: Password reset verified successfully, user logged in:", data.user.id);
         setAuthFlow("update-password");
         setEmail(resetEmail || data.user.email || '');
         toast.info("Please set your new password.");
       } else {
-        console.error("Auth: Password reset verification succeeded but no session created");
+        logger.error("Auth: Password reset verification succeeded but no session created");
         toast.error("Failed to create session after password reset verification.");
         setAuthFlow("login");
       }
     } catch (error: unknown) {
-      console.error("Auth: Exception during password reset verification:", error);
+      logger.error("Auth: Exception during password reset verification:", error);
       toast.error((error as Error).message || "An unknown error occurred during password reset verification.");
       setAuthFlow("login");
     } finally {
@@ -144,7 +145,7 @@ export const useAuthFlow = () => {
     const emailFromUrl = searchParams.get("email");
 
     if (process.env.NODE_ENV === "development") {
-      console.log("Auth: useEffect running - checking URL params:", {
+      logger.log("Auth: useEffect running - checking URL params:", {
         token: token ? "present" : "missing",
         type,
         action,
@@ -153,18 +154,18 @@ export const useAuthFlow = () => {
     }
 
     if (token && (type || action)) {
-      if (process.env.NODE_ENV === "development") console.log("Auth: Conditions met for invitation/reset processing");
+      if (process.env.NODE_ENV === "development") logger.log("Auth: Conditions met for invitation/reset processing");
       if (type === "invite" || action === "invite") {
-        if (process.env.NODE_ENV === "development") console.log("Auth: Processing invitation...");
+        if (process.env.NODE_ENV === "development") logger.log("Auth: Processing invitation...");
         const processInvite = () => handleInvite(token, emailFromUrl);
         processInvite();
       } else if (type === "recovery") {
-        if (process.env.NODE_ENV === "development") console.log("Auth: Processing password reset...");
+        if (process.env.NODE_ENV === "development") logger.log("Auth: Processing password reset...");
         const processPasswordReset = () => handlePasswordReset(token, emailFromUrl);
         processPasswordReset();
       }
     } else {
-      if (process.env.NODE_ENV === "development") console.log("Auth: No invitation/reset processing needed");
+      if (process.env.NODE_ENV === "development") logger.log("Auth: No invitation/reset processing needed");
     }
   }, [searchParams, handleInvite, handlePasswordReset]);
 
@@ -181,7 +182,7 @@ export const useAuthFlow = () => {
     // If user is authenticated, redirect to appropriate page
     if (user) {
       if (process.env.NODE_ENV === "development") {
-        console.log('Auth: Authenticated user detected, checking redirect logic', {
+        logger.log('Auth: Authenticated user detected, checking redirect logic', {
           user: !!user,
           needsProfileCompletion,
           activeClinic: activeClinic ? 'present' : null
@@ -190,7 +191,7 @@ export const useAuthFlow = () => {
 
       // Profile incomplete - redirect to complete profile
       if (needsProfileCompletion) {
-        if (process.env.NODE_ENV === "development") console.log('Auth: Redirecting to /complete-profile');
+        if (process.env.NODE_ENV === "development") logger.log('Auth: Redirecting to /complete-profile');
         const redirectTo = "/complete-profile";
         router.replace(redirectTo);
         return;
@@ -198,14 +199,14 @@ export const useAuthFlow = () => {
 
       // Profile complete, no clinic - redirect to create clinic
       if (!activeClinic) {
-        if (process.env.NODE_ENV === "development") console.log('Auth: No active clinic, redirecting to /create-clinic');
+        if (process.env.NODE_ENV === "development") logger.log('Auth: No active clinic, redirecting to /create-clinic');
         const redirectTo = "/create-clinic";
         router.replace(redirectTo);
         return;
       }
 
       // Profile complete, has clinic - redirect to dashboard or intended page
-      if (process.env.NODE_ENV === "development") console.log('Auth: User has active clinic, redirecting to dashboard');
+      if (process.env.NODE_ENV === "development") logger.log('Auth: User has active clinic, redirecting to dashboard');
       const redirectTo = searchParams.get('redirect') || "/dashboard";
       router.replace(redirectTo);
     }
@@ -228,7 +229,7 @@ export const useAuthFlow = () => {
       });
 
       if (error) {
-        console.error('Email Auth Error:', error);
+        logger.error('Email Auth Error:', error);
         
         // Handle specific error cases with better messaging
         if (error.message?.includes('Error sending confirmation email') || 
@@ -248,7 +249,7 @@ export const useAuthFlow = () => {
       setOtpSent(true);
       toast.success("Magic link sent to your email! Check your inbox and click the link to sign in.");
     } catch (error: unknown) {
-      console.error('Email Auth Exception:', error);
+      logger.error('Email Auth Exception:', error);
       toast.error("Unable to send verification code. Please try again or use Google sign-in.");
     } finally {
       setLoading(false);
@@ -301,14 +302,14 @@ export const useAuthFlow = () => {
       });
 
       if (error) {
-        console.error('Resend OTP Error:', error);
+        logger.error('Resend OTP Error:', error);
         toast.error("Failed to resend code. Please try again.");
         return;
       }
 
       toast.success("New verification code sent!");
     } catch (error: unknown) {
-      console.error('Resend OTP Exception:', error);
+      logger.error('Resend OTP Exception:', error);
       toast.error("Failed to resend code. Please try again.");
     } finally {
       setLoading(false);

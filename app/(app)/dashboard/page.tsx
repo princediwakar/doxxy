@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -215,7 +216,7 @@ const Dashboard = React.memo(() => {
     : allAppointments;
 
   const upcomingAppointments = useMemo(() => {
-    console.log("Dashboard appointments for chart:", chartAppointments);
+    logger.log("Dashboard appointments for chart:", chartAppointments);
 
     return appointmentsForList
       .filter((apt) => apt.date >= today)

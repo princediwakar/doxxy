@@ -228,5 +228,3 @@ export {
   type Database,
 };
 
-// Export all types as a namespace for easy access
-export * as DbTypes from './core';

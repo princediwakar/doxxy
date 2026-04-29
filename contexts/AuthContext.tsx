@@ -6,6 +6,7 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { useClinicData, ClinicMemberWithClinic } from "@/hooks/useClinicData";
+import { logger } from "@/lib/logger";
 
 const supabase = getSupabase();
 
@@ -62,7 +63,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setProfileName(null);
     profileCompletion.resetProfileCompletion();
     clinicData.clearClinicData();
-    console.log("Signed out, cleared state and local storage.");
+    logger.log("Signed out, cleared state and local storage.");
   }, [clinicData, profileCompletion]);
 
   const setActiveClinicId = useCallback((clinicId: string | null) => {
@@ -106,7 +107,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Safety timeout to ensure initialLoading doesn't stay true forever
     const safetyTimeout = setTimeout(() => {
       if (mounted && !initialLoadComplete) {
-        console.warn("AuthContext: Safety timeout triggered, forcing initial load complete");
+        logger.warn("AuthContext: Safety timeout triggered, forcing initial load complete");
         setInitialLoading(false);
         setInitialLoadComplete(true);
       }
@@ -116,13 +117,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!mounted) return;
       
       try {
-        console.log("AuthContext: Getting initial session");
+        logger.log("AuthContext: Getting initial session");
         setInitialLoading(true);
         
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("AuthContext: Error getting session:", error);
+          logger.error("AuthContext: Error getting session:", error);
           if (mounted) {
             setSession(null);
             setUser(null);
@@ -135,17 +136,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         if (!mounted) return;
         
-        console.log("AuthContext: Initial session obtained:", !!session?.user);
+        logger.log("AuthContext: Initial session obtained:", !!session?.user);
         setSession(session);
         setUser(session?.user ?? null);
         currentUserId = session?.user?.id ?? null;
 
         if (session?.user) {
-          console.log("AuthContext: Processing user session");
+          logger.log("AuthContext: Processing user session");
 
           // Check if this is an invitation sign-in from initial session
           if (session.user.user_metadata?.invitation_token) {
-            console.log("AuthContext: Detected invitation sign-in from initial session, storing invitation data:", {
+            logger.log("AuthContext: Detected invitation sign-in from initial session, storing invitation data:", {
               invitation_token: session.user.user_metadata.invitation_token,
               clinic_id: session.user.user_metadata.clinic_id,
               role: session.user.user_metadata.role
@@ -160,7 +161,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               name: session.user.user_metadata.name
             }));
 
-            console.log("AuthContext: Invitation data stored in localStorage from initial session");
+            logger.log("AuthContext: Invitation data stored in localStorage from initial session");
           }
 
           if (mounted) {
@@ -174,10 +175,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           }
         }
       } catch (error) {
-        console.error("AuthContext: Error getting initial session:", error);
+        logger.error("AuthContext: Error getting initial session:", error);
       } finally {
         if (mounted) {
-          console.log("AuthContext: Initial loading complete");
+          logger.log("AuthContext: Initial loading complete");
           setInitialLoading(false);
           setInitialLoadComplete(true);
           clearTimeout(safetyTimeout);
@@ -189,7 +190,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
-        console.log(`AuthContext: Auth state changed: ${_event}`, { 
+        logger.log(`AuthContext: Auth state changed: ${_event}`, { 
           hasSession: !!newSession, 
           initialLoadHandled: initialLoadComplete, 
           currentInitialLoading: initialLoading,
@@ -203,14 +204,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         // Only handle auth state changes after initial load is complete to prevent loops
         if (!initialLoadComplete) {
-          console.log("AuthContext: Skipping auth state change handling until initial load complete");
+          logger.log("AuthContext: Skipping auth state change handling until initial load complete");
           return;
         }
         
         if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
           // Check if this is an invitation sign-in and store invitation data
           if (newSession?.user && newSession.user.user_metadata?.invitation_token) {
-            console.log("AuthContext: Detected invitation sign-in, storing invitation data:", {
+            logger.log("AuthContext: Detected invitation sign-in, storing invitation data:", {
               invitation_token: newSession.user.user_metadata.invitation_token,
               clinic_id: newSession.user.user_metadata.clinic_id,
               role: newSession.user.user_metadata.role
@@ -225,12 +226,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
               name: newSession.user.user_metadata.name
             }));
 
-            console.log("AuthContext: Invitation data stored in localStorage");
+            logger.log("AuthContext: Invitation data stored in localStorage");
           }
 
           // FIX: Check user change and use the REF to get the latest function
           if (newSession?.user && (newSession.user.id !== currentUserId || clinicData.userClinics.length === 0)) {
-            console.log("AuthContext: User changed or no clinic data, fetching data");
+            logger.log("AuthContext: User changed or no clinic data, fetching data");
             currentUserId = newSession.user.id;
             // Use .current() here
             await fetchUserAndClinicDataRef.current(newSession.user);
@@ -247,10 +248,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Page visibility handling to refresh session when tab becomes active
     const handleVisibilityChange = () => {
       if (!document.hidden && mounted && initialLoadComplete) {
-        console.log("AuthContext: Page became visible, refreshing session");
+        logger.log("AuthContext: Page became visible, refreshing session");
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.user && session.user.id !== currentUserId) {
-            console.log("AuthContext: User changed after page visibility, refetching data");
+            logger.log("AuthContext: User changed after page visibility, refetching data");
             currentUserId = session.user.id;
             // FIX: Use the ref here
             fetchUserAndClinicDataRef.current(session.user);

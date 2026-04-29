@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useState, useCallback, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
@@ -234,7 +235,7 @@ export const usePrescription = ({
       queryClient.invalidateQueries({ queryKey: ['consultations'] });
     },
     onError: (error: Error) => {
-      console.error('Error saving prescription:', error);
+      logger.error('Error saving prescription:', error);
       toast.error(`Error saving prescription: ${error.message}`);
     },
   });

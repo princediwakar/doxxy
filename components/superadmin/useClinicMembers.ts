@@ -1,4 +1,5 @@
 "use client";
+import { logger } from "@/lib/logger";
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
@@ -144,7 +145,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
         throw new Error("Invalid email format");
       }
 
-      console.log("Inviting:", cleanEmail); // Debug log
+      logger.log("Inviting:", cleanEmail); // Debug log
 
       const { data, error } = await supabase.functions.invoke('invite-member', {
         body: { 
