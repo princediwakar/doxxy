@@ -13,6 +13,48 @@ import type { ClinicMemberWithClinic } from "@/hooks/useClinicData";
 const supabase = getSupabase();
 const isDev = process.env.NODE_ENV === "development";
 
+type CreditDeductionResult = 'success' | 'failed' | 'insufficient' | 'no_clinic';
+
+async function finalizeAppointment(
+  appointmentId: string,
+  clinicId: string | undefined,
+): Promise<{ creditResult: CreditDeductionResult }> {
+  if (isDev) logger.log('Updating appointment status to "Completed" for:', appointmentId);
+
+  const { error: appointmentError } = await supabase
+    .from('appointments')
+    .update({ status: 'Completed' })
+    .eq('id', appointmentId);
+
+  if (appointmentError) {
+    logger.error('Error updating appointment status:', appointmentError);
+    throw appointmentError;
+  }
+
+  if (!clinicId) {
+    logger.warn('Cannot deduct credits: No active clinic found');
+    return { creditResult: 'no_clinic' };
+  }
+
+  if (isDev) logger.log('Deducting consultation credit');
+  const { data: deductResult, error: deductError } = await supabase
+    .rpc('deduct_appointment_credit', {
+      appointment_id_param: appointmentId,
+      clinic_id_param: clinicId,
+      credits_to_deduct: 1
+    });
+
+  if (deductError) {
+    logger.error('Error deducting appointment credit:', deductError);
+    return { creditResult: 'failed' };
+  }
+  if (deductResult !== true) {
+    logger.warn('Credit deduction returned false - clinic may have insufficient credits');
+    return { creditResult: 'insufficient' };
+  }
+  return { creditResult: 'success' };
+}
+
 export interface UseConsultationCompletionParams {
   appointmentId: string | undefined;
   appointment: DbAppointment | null | undefined;
@@ -125,41 +167,16 @@ export const useConsultationCompletion = ({
       isCompletingRef.current = true;
       await autoSaveMutation.mutateAsync(form.getValues());
 
-      if (isDev) logger.log('Updating appointment status to "Completed" for:', appointmentId);
+      const { creditResult } = await finalizeAppointment(appointmentId, activeClinic?.clinic_id);
 
-      const { error: appointmentError } = await supabase
-        .from('appointments')
-        .update({ status: 'Completed' })
-        .eq('id', appointmentId as string);
-
-      if (appointmentError) {
-        logger.error('Error updating appointment status:', appointmentError);
-        throw appointmentError;
-      }
-
-      // Deduct credit
-      if (activeClinic?.clinic_id) {
-        if (isDev) logger.log('Deducting consultation credit');
-        const { data: deductResult, error: deductError } = await supabase
-          .rpc('deduct_appointment_credit', {
-            appointment_id_param: appointmentId,
-            clinic_id_param: activeClinic.clinic_id,
-            credits_to_deduct: 1
-          });
-
-        if (deductError) {
-          logger.error('Error deducting appointment credit:', deductError);
-          toast('Consultation Completed', {
-            description: 'Consultation marked as complete, but credit deduction failed. Please check billing.',
-          });
-        } else if (deductResult !== true) {
-          logger.warn('Credit deduction returned false - clinic may have insufficient credits');
-          toast('Consultation Completed', {
-            description: 'Consultation marked as complete, but clinic has insufficient credits for billing.',
-          });
-        }
-      } else {
-        logger.warn('Cannot deduct credits: No active clinic found');
+      if (creditResult === 'failed') {
+        toast('Consultation Completed', {
+          description: 'Consultation marked as complete, but credit deduction failed. Please check billing.',
+        });
+      } else if (creditResult === 'insufficient') {
+        toast('Consultation Completed', {
+          description: 'Consultation marked as complete, but clinic has insufficient credits for billing.',
+        });
       }
 
       setIsConsultationCompleted(true);

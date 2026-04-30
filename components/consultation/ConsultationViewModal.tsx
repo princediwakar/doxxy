@@ -25,6 +25,7 @@ import {
   FieldValue,
 } from "@/types/consultation";
 import { useConsultationViewData } from "@/hooks/useConsultationViewData";
+import { Spinner } from '@/components/ui/loading';
 
 interface ConsultationViewModalProps {
   open: boolean;
@@ -202,7 +203,7 @@ export function ConsultationViewModal({
           {/* Loading State */}
           {isLoadingConsultation && (
             <div className="flex items-center justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <Spinner size="lg" />
               <span className="ml-2">Loading consultation details...</span>
             </div>
           )}

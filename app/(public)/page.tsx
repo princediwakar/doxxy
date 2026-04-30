@@ -23,7 +23,9 @@ import {
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import { useAuth } from "@/contexts/AuthContext";
+import { Spinner } from '@/components/ui/loading';
 import { useEffect } from "react";
+import { APP_URL } from '@/lib/constants';
 
 
 const structuredData = {
@@ -31,7 +33,7 @@ const structuredData = {
   "@type": "MedicalOrganization",
   "name": "Doxxy",
   "description": "Modern clinic management software for healthcare providers",
-  "url": process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com",
+  "url": APP_URL,
   "logo": "/doxxy.png",
   "medicalSpecialty": "Healthcare Software",
 }
@@ -852,7 +854,7 @@ const LandingPageClient = () => {
   if (initialLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+        <Spinner size="xl" />
       </div>
     );
   }
@@ -861,7 +863,6 @@ const LandingPageClient = () => {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
       <HeroSection />
-      {/* <SuccessMetrics metrics={successMetrics} /> */}
       <PainPoints points={painPoints} />
       <ProductShowcase />
       <Specialties specialties={specialties} />

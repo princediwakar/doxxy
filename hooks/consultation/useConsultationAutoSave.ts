@@ -15,6 +15,99 @@ import { isDeepEqual } from "./utils";
 
 const supabase = getSupabase();
 
+async function saveConsultation(
+  data: ConsultationFormValues,
+  appointmentId: string | undefined,
+  clinicId: string | undefined,
+  appointment: DbAppointment | null | undefined,
+  userId: string | undefined,
+): Promise<DbConsultationBase> {
+  if (!appointmentId || !clinicId || !appointment) {
+    logger.error('❌ Auto-save failed: Missing required data', {
+      appointmentId, clinicId, appointment
+    });
+    throw new Error('Missing required data');
+  }
+
+  const consultationData = {
+    appointment_id: appointmentId,
+    patient_id: appointment.patient_id || '',
+    doctor_id: appointment.doctor_id || userId || '',
+    clinic_id: clinicId,
+    specialty_data: data.specialty_data,
+  };
+
+  const { data: updateResult, error: updateError } = await supabase
+    .from('consultations')
+    .update(consultationData)
+    .eq('appointment_id', appointmentId)
+    .select();
+
+  let result: DbConsultationBase;
+
+  if (!updateError && updateResult && updateResult.length === 0) {
+    const insertResult = await supabase
+      .from('consultations')
+      .insert(consultationData)
+      .select()
+      .single();
+
+    if (insertResult.error) {
+      logger.error('❌ Auto-save insert error:', insertResult.error);
+      throw insertResult.error;
+    }
+    result = insertResult.data;
+  } else if (updateError) {
+    logger.error('❌ Auto-save update error:', updateError);
+    throw updateError;
+  } else if (updateResult && updateResult.length > 0) {
+    result = updateResult[0];
+  } else {
+    logger.error('❌ Auto-save: Unexpected response from consultation update');
+    throw new Error('Unexpected response from consultation update');
+  }
+
+  if (data.specialty_data.prescriptions !== undefined) {
+    const validPrescriptions = data.specialty_data.prescriptions.filter(
+      (med: PrescriptionMedication) => med.name && med.name.trim().length > 0
+    );
+
+    if (validPrescriptions.length > 0) {
+      const prescriptionData = {
+        consultation_id: result.id,
+        patient_id: appointment.patient_id || '',
+        doctor_id: appointment.doctor_id || userId || '',
+        clinic_id: clinicId || '',
+        medications: validPrescriptions as unknown as DbJson,
+      };
+
+      const { error: prescError } = await supabase
+        .from('prescriptions')
+        .upsert(prescriptionData, {
+          onConflict: 'consultation_id,patient_id,doctor_id',
+          ignoreDuplicates: false
+        });
+
+      if (prescError) {
+        logger.error('❌ Auto-save prescription upsert error:', prescError);
+        throw prescError;
+      }
+    } else {
+      const { error: deleteError } = await supabase
+        .from('prescriptions')
+        .delete()
+        .eq('consultation_id', result.id);
+
+      if (deleteError) {
+        logger.error('❌ Auto-save prescription delete error:', deleteError);
+        throw deleteError;
+      }
+    }
+  }
+
+  return result;
+}
+
 export interface UseConsultationAutoSaveParams {
   form: UseFormReturn<ConsultationFormValues>;
   formValues: ConsultationFormValues;
@@ -55,92 +148,14 @@ export const useConsultationAutoSave = ({
   }, []);
 
   const autoSaveMutation = useMutation({
-    mutationFn: async (data: ConsultationFormValues) => {
-      if (!appointmentId || !activeClinic?.clinic_id || !appointment) {
-        logger.error('❌ Auto-save failed: Missing required data', {
-          appointmentId, clinicId: activeClinic?.clinic_id, appointment
-        });
-        throw new Error('Missing required data');
-      }
-
-      const consultationData = {
-        appointment_id: appointmentId,
-        patient_id: appointment?.patient_id || '',
-        doctor_id: appointment?.doctor_id || user?.id || '',
-        clinic_id: activeClinic.clinic_id,
-        specialty_data: data.specialty_data,
-      };
-
-      const { data: updateResult, error: updateError } = await supabase
-        .from('consultations')
-        .update(consultationData)
-        .eq('appointment_id', appointmentId)
-        .select();
-
-      let result;
-
-      if (!updateError && updateResult && updateResult.length === 0) {
-        const insertResult = await supabase
-          .from('consultations')
-          .insert(consultationData)
-          .select()
-          .single();
-
-        if (insertResult.error) {
-          logger.error('❌ Auto-save insert error:', insertResult.error);
-          throw insertResult.error;
-        }
-        result = insertResult.data;
-      } else if (updateError) {
-        logger.error('❌ Auto-save update error:', updateError);
-        throw updateError;
-      } else if (updateResult && updateResult.length > 0) {
-        result = updateResult[0];
-      } else {
-        logger.error('❌ Auto-save: Unexpected response from consultation update');
-        throw new Error('Unexpected response from consultation update');
-      }
-
-      if (data.specialty_data.prescriptions !== undefined) {
-        const validPrescriptions = data.specialty_data.prescriptions.filter(
-          (med: PrescriptionMedication) => med.name && med.name.trim().length > 0
-        );
-
-        if (validPrescriptions.length > 0) {
-          const prescriptionsData = validPrescriptions.map((med: PrescriptionMedication) => ({
-            consultation_id: result.id,
-            patient_id: appointment?.patient_id || '',
-            doctor_id: appointment?.doctor_id || user?.id || '',
-            clinic_id: activeClinic.clinic_id || '',
-            medications: [med] as unknown as DbJson,
-          }));
-
-          const { error: prescError } = await supabase
-            .from('prescriptions')
-            .upsert(prescriptionsData, {
-              onConflict: 'consultation_id,patient_id,doctor_id',
-              ignoreDuplicates: false
-            });
-
-          if (prescError) {
-            logger.error('❌ Auto-save prescription upsert error:', prescError);
-            throw prescError;
-          }
-        } else {
-          const { error: deleteError } = await supabase
-            .from('prescriptions')
-            .delete()
-            .eq('consultation_id', result.id);
-
-          if (deleteError) {
-            logger.error('❌ Auto-save prescription delete error:', deleteError);
-            throw deleteError;
-          }
-        }
-      }
-
-      return result;
-    },
+    mutationFn: (data: ConsultationFormValues) =>
+      saveConsultation(
+        data,
+        appointmentId,
+        activeClinic?.clinic_id,
+        appointment,
+        user?.id,
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
       queryClient.invalidateQueries({ queryKey: ['consultation', appointmentId] });

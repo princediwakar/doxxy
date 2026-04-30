@@ -49,5 +49,6 @@ export function useDoctorProfile(userId: string | undefined, clinicId: string | 
       if ((error as { code?: string })?.code === "PGRST116") return false;
       return failureCount < 3;
     },
+    staleTime: 5 * 60 * 1000,
   });
 }

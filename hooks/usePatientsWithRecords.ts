@@ -195,5 +195,6 @@ export function usePatientsWithRecords(
       ),
     enabled: enabled && !!clinicId,
     retry: 1,
+    staleTime: 60 * 1000,
   });
 }

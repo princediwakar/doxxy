@@ -1204,24 +1204,6 @@ medicine_id: number
       [_ in never]: never
     }
     Functions: {
-      add_clinic_credits:
-        | {
-            Args: {
-              clinic_id_param: string
-              credits_to_add: number
-              transaction_id_param?: string
-            }
-            Returns: boolean
-          }
-        | {
-            Args: {
-              p_clinic_id: string
-              p_credits: number
-              p_order_id?: string
-              p_payment_id?: string
-            }
-            Returns: Json
-          }
       add_clinic_member: {
         Args: {
           new_department_id?: string
@@ -1273,33 +1255,6 @@ medicine_id: number
         }
         Returns: string
       }
-      create_patient:
-        | {
-            Args: {
-              p_address?: string
-              p_age?: number
-              p_clinic_id: string
-              p_email?: string
-              p_gender?: string
-              p_medical_id?: string
-              p_name: string
-              p_phone?: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_address: string
-              p_clinic_id: string
-              p_date_of_birth: string
-              p_email: string
-              p_gender: string
-              p_medical_id: string
-              p_name: string
-              p_phone: string
-            }
-            Returns: string
-          }
       debug_invitation_flow: { Args: { user_email: string }; Returns: Json }
       deduct_appointment_credit: {
         Args: {
@@ -1581,18 +1536,6 @@ medicine_id: number
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }
-      get_user_clinics: {
-        Args: never
-        Returns: {
-          clinic_id: string
-        }[]
-      }
-      get_user_clinics_simple: {
-        Args: never
-        Returns: {
-          clinic_id: string
-        }[]
-      }
       get_user_role_in_clinic: {
         Args: { check_clinic_id: string }
         Returns: string
@@ -1682,33 +1625,6 @@ medicine_id: number
         }
         Returns: string
       }
-      update_patient:
-        | {
-            Args: {
-              p_address?: string
-              p_age?: number
-              p_email?: string
-              p_gender?: string
-              p_medical_id?: string
-              p_name?: string
-              p_patient_id: string
-              p_phone?: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_address?: string
-              p_date_of_birth?: string
-              p_email?: string
-              p_gender?: string
-              p_medical_id?: string
-              p_name?: string
-              p_patient_id: string
-              p_phone?: string
-            }
-            Returns: string
-          }
       update_profile: {
         Args: {
           p_email: string
@@ -1757,25 +1673,16 @@ medicine_id: number
         }
       }
       user_clinic_ids: { Args: never; Returns: string[] }
-      verify_and_process_payment:
-        | {
-            Args: {
-              p_razorpay_payment_id: string
-              p_razorpay_signature: string
-              p_transaction_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_clinic_id: string
-              p_credits_purchased: number
-              p_razorpay_payment_id: string
-              p_razorpay_signature: string
-              p_transaction_id: string
-            }
-            Returns: Json
-          }
+      verify_and_process_payment: {
+        Args: {
+          p_clinic_id: string
+          p_credits_purchased: number
+          p_razorpay_payment_id: string
+          p_razorpay_signature: string
+          p_transaction_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       appointment_status:

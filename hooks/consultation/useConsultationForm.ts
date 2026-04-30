@@ -114,29 +114,21 @@ export const useConsultationForm = ({
       validateMandatoryFields,
     });
 
-  // --- Form lifecycle effects ---
-
-  // Effect: enable auto-save after mount and when defaultValues change
+  // Effect: sync form baseline and manage auto-save readiness
   useEffect(() => {
-    setBaseline(defaultValues);
     setAutoSaveReady(false);
-    const timer = setTimeout(() => setAutoSaveReady(true), 100);
-    return () => clearTimeout(timer);
-  }, [defaultValues, setBaseline]);
 
-  // Effect: reset form when existing consultation data becomes available
-  useEffect(() => {
     if (existingConsultation?.specialty_data) {
-      setAutoSaveReady(false);
-
       const data = existingConsultation.specialty_data as z.infer<typeof consultationNotesSchema>;
       form.reset({ specialty_data: data });
       setBaseline({ specialty_data: data });
-
-      const timer = setTimeout(() => setAutoSaveReady(true), 100);
-      return () => clearTimeout(timer);
+    } else {
+      setBaseline(defaultValues);
     }
-  }, [existingConsultation?.specialty_data, form, setBaseline]);
+
+    const timer = setTimeout(() => setAutoSaveReady(true), 100);
+    return () => clearTimeout(timer);
+  }, [existingConsultation?.specialty_data, defaultValues, form, setBaseline]);
 
   return {
     form,

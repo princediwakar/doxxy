@@ -11,12 +11,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Spinner } from '@/components/ui/loading';
 
 export function ProcurementsHistoryTab() {
   const { data: procurements, isLoading } = useProcurements();
 
   if (isLoading) {
-    return <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+    return <div className="p-8 flex justify-center"><Spinner size="lg" /></div>;
   }
 
   return (

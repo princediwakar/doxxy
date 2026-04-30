@@ -82,6 +82,7 @@ export const usePrescription = ({
       return data || [];
     },
     enabled: open && !!activeClinic?.clinic_id,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Fetch doctors for manual selection
@@ -96,6 +97,7 @@ export const usePrescription = ({
       return data || [];
     },
     enabled: open && !!activeClinic?.clinic_id,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Fetch patients for manual selection
@@ -112,6 +114,7 @@ export const usePrescription = ({
       return data || [];
     },
     enabled: open && !!activeClinic?.clinic_id,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Get selected appointment details

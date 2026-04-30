@@ -2,7 +2,8 @@
 import { logger } from "@/lib/logger";
 
 // src/pages/Appointments.tsx
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,8 +20,8 @@ import { showErrorToast } from '@/lib/error-utils';
 import type { AppointmentWithDetails, AppointmentFilter } from '@/types/appointments';
 
 // Lazy load heavy components
-const ConsultationViewModal = lazy(() => import('@/components/consultation/ConsultationViewModal').then(module => ({ default: module.ConsultationViewModal })));
-const BillingModal = lazy(() => import('@/components/billing/BillingModal').then(module => ({ default: module.BillingModal })));
+const ConsultationViewModal = dynamic(() => import('@/components/consultation/ConsultationViewModal').then(mod => mod.ConsultationViewModal));
+const BillingModal = dynamic(() => import('@/components/billing/BillingModal').then(mod => mod.BillingModal));
 
 const Appointments = () => {
   const router = useRouter();

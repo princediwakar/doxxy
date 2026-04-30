@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import type { User } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Spinner } from '@/components/ui/loading';
 
 interface BasicProfileEditorProps {
   open: boolean;
@@ -277,7 +278,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
             >
               {isUpdating ? (
                 <>
-                  <div className="w-4 h-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <Spinner size="sm" variant="white" className="mr-2" />
                   Saving...
                 </>
               ) : (

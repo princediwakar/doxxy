@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { useAuthFlow } from "@/hooks/useAuth";
 import { AuthCard } from "@/components/auth/AuthFlows";
+import { Spinner } from '@/components/ui/loading';
 
 // Disable static generation for auth page since it uses useSearchParams()
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ const AuthContent = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <Spinner size="lg" className="mx-auto" />
           <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>
@@ -36,7 +37,7 @@ const Auth = () => {
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <Spinner size="lg" className="mx-auto" />
           <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
         </div>
       </div>

@@ -23,21 +23,21 @@ import DoctorDashboard from "@/components/role/DoctorDashboard";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Spinner } from '@/components/ui/loading';
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import React, { useState, useMemo } from "react";
 import { AppointmentStatus, AppointmentType } from "@/types/core";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
+import dynamic from 'next/dynamic';
 import { useHasDoctorProfile } from "@/hooks/useHasDoctorProfile";
 import { useDoctorDashboardData } from "@/hooks/useDoctorDashboardData";
 import { useDashboardData } from "@/hooks/useDashboardData";
 
 // Lazy load heavy components
-const ConsultationViewModal = lazy(() =>
-  import("@/components/consultation/ConsultationViewModal").then((module) => ({
-    default: module.ConsultationViewModal,
-  }))
+const ConsultationViewModal = dynamic(() =>
+  import("@/components/consultation/ConsultationViewModal").then((mod) => mod.ConsultationViewModal)
 );
 
 const Dashboard = React.memo(() => {
@@ -137,7 +137,7 @@ const Dashboard = React.memo(() => {
   if (authLoading || !activeClinic || !activeClinicRole) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <Spinner size="xl" />
       </div>
     );
   }
@@ -410,7 +410,7 @@ const Dashboard = React.memo(() => {
       <Suspense
         fallback={
           <div className="flex items-center justify-center p-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            <Spinner size="md" />
           </div>
         }
       >

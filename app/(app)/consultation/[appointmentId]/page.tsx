@@ -1,53 +1,34 @@
 "use client";
 import { logger } from "@/lib/logger";
 
-// src/pages/Consultation.tsx
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import {
-  User,
-  Stethoscope,
-  Activity,
-  ChevronDown,
-  ChevronRight,
-  ClipboardList,
-  FileText,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Suspense } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { FieldPath } from "react-hook-form";
 import { toast } from "sonner";
+import { Spinner } from '@/components/ui/loading';
 
-// Import all the extracted components and hooks
 import {
   ConsultationHeader,
   PatientSidebar,
-  ConsultationFormField,
+  ConsultationSectionCard,
+  ConsultationProgress,
   printConsultation,
+  mapDepartmentName,
 } from "@/components/consultation";
 
-// Lazy load heavy modal components
-import { lazy, Suspense } from "react";
-const ConsultationPreviewModal = lazy(() =>
-  import("@/components/consultation/ConsultationPreviewModal").then(
-    (module) => ({ default: module.ConsultationPreviewModal })
-  )
+import dynamic from 'next/dynamic';
+const ConsultationPreviewModal = dynamic(() =>
+  import("@/components/consultation/ConsultationPreviewModal").then((mod) => mod.ConsultationPreviewModal)
 );
-import { ConsultationFormValues, DepartmentInfo } from "@/types/consultation";
-import { DbPatient as Patient } from "@/types/core";
-import { Prescription } from "@/types/prescriptions";
+import type { ConsultationFormValues, DepartmentInfo } from "@/types/consultation";
+import type { DbPatient as Patient } from "@/types/core";
+import type { Prescription } from "@/types/prescriptions";
 import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
 import { usePrefetching } from "@/hooks/usePrefetching";
 import { showErrorToast } from "@/lib/error-utils";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
-import { type FieldSection, type NoteFieldConfig } from "@/lib/schemaUtils";
-import { FieldValue } from "@/types/consultation";
+import type { FieldSection } from "@/lib/schemaUtils";
 
 const Consultation = () => {
   const router = useRouter();
@@ -55,249 +36,65 @@ const Consultation = () => {
   const appointmentId = params.appointmentId as string;
   const { user } = useAuth();
 
-  // Preview state
   const [showPreview, setShowPreview] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
-  // Collapsible sections state - organized by section
-  const [expandedSections, setExpandedSections] = useState<
-    Record<string, boolean>
-  >({});
-
-  // Fetch all consultation data
   const {
-    appointment,
-    appointmentLoading,
-    previousConsultations,
-    recentPrescriptions,
-    clinicDetails,
-    doctorDetails,
-    existingConsultation,
-    departmentInfo,
-    existingConsultationLoading,
-    departmentInfoLoading,
+    appointment, appointmentLoading, previousConsultations, recentPrescriptions,
+    clinicDetails, doctorDetails, existingConsultation,
+    departmentInfo, existingConsultationLoading, departmentInfoLoading,
   } = useConsultationData(appointmentId);
 
-  // Prefetching hook
   const { prefetchAllEssentialData } = usePrefetching();
 
-  // Prefetch essential data when consultation data is loaded
   useEffect(() => {
     if (!appointmentLoading && appointment) {
-      // Prefetch in background to prepare for navigation
       prefetchAllEssentialData().catch(showErrorToast);
     }
   }, [appointmentLoading, appointment, prefetchAllEssentialData]);
 
-  // Get specialty sections based on department
-  const specialtySections = useMemo(() => {
-    // Get department from the separate query
-    const departmentName =
-      departmentInfo?.clinic_departments?.department_types?.name;
-
-    // Map department names to schema keys
-    const departmentMapping: Record<string, string> = {
-      Ophthalmology: "Ophthalmology",
-      Neurology: "Neurology",
-      Cardiology: "Cardiology",
-      Dermatology: "Dermatology",
-      Orthopedics: "Orthopedics",
-      Psychiatry: "Psychiatry",
-      Pediatrics: "Pediatrics",
-      ENT: "ENT",
-      Gynecology: "Gynecology",
-      Pulmonology: "Pulmonology",
-      Dental: "Dental",
-      "General Medicine": "General",
-    };
-
-    const mappedDepartment =
-      departmentMapping[departmentName || ""] || "General";
-    return (
-      specialtyFieldSections[mappedDepartment] ||
-      specialtyFieldSections["General"]
-    );
-  }, [departmentInfo]);
-
-  // Get department type for validation
   const departmentType = useMemo(() => {
-    const departmentName =
-      departmentInfo?.clinic_departments?.department_types?.name;
-    const departmentMapping: Record<string, string> = {
-      Ophthalmology: "Ophthalmology",
-      Neurology: "Neurology",
-      Cardiology: "Cardiology",
-      Dermatology: "Dermatology",
-      Orthopedics: "Orthopedics",
-      Psychiatry: "Psychiatry",
-      Pediatrics: "Pediatrics",
-      ENT: "ENT",
-      Gynecology: "Gynecology",
-      Pulmonology: "Pulmonology",
-      Dental: "Dental",
-      "General Medicine": "General",
-    };
-    return departmentMapping[departmentName || ""] || "General";
+    const name = departmentInfo?.clinic_departments?.department_types?.name || "";
+    return mapDepartmentName(name);
   }, [departmentInfo]);
 
-  // Form management - decoupled state management
+  const specialtySections = useMemo(
+    () => specialtyFieldSections[departmentType] || specialtyFieldSections["General"],
+    [departmentType]
+  );
+
   const {
-    form,
-    isConsultationCompleted,
-    canEditConsultation,
-    autoSaveMutation,
-    handleSave,
-    handleCompleteConsultation,
-    mandatoryFieldsStatus,
-    justCompleted,
+    form, isConsultationCompleted, canEditConsultation, autoSaveMutation,
+    handleSave, handleCompleteConsultation, mandatoryFieldsStatus, justCompleted,
   } = useConsultationForm({
-    appointmentId,
-    appointment,
-    existingConsultation,
-    departmentType,
+    appointmentId, appointment, existingConsultation, departmentType,
   });
 
-  // Handle consultation completion with navigation
   useEffect(() => {
-    if (justCompleted) {
-      // Set timeout for redirect
-      const timer = setTimeout(() => {
-        router.push("/appointments");
-      }, 3000);
-
-      // Show countdown toast
-      toast.success(
-        "Consultation completed! Redirecting to appointments in 3 seconds..."
-      );
-
-      return () => {
-        clearTimeout(timer);
-      };
-    }
+    if (!justCompleted) return;
+    const timer = setTimeout(() => router.push("/appointments"), 3000);
+    toast.success("Consultation completed! Redirecting to appointments in 3 seconds...");
+    return () => clearTimeout(timer);
   }, [justCompleted, router]);
 
-  // Enhanced print functionality
   const handlePrint = useCallback(async () => {
     const formData = form.getValues().specialty_data;
     const patient = appointment?.patient;
-
-    if (patient) {
-      try {
-        await printConsultation(
-          formData,
-          patient,
-          appointment,
-          clinicDetails,
-          doctorDetails,
-          user,
-          departmentType // Pass department type for consistent formatting
-        );
-        toast.success("Print dialog opened successfully");
-      } catch (error) {
-        logger.error("Error printing consultation:", error);
-        toast.error("Failed to open print dialog");
-      }
+    if (!patient) return;
+    try {
+      await printConsultation(formData, patient, appointment, clinicDetails, doctorDetails, user, departmentType);
+      toast.success("Print dialog opened successfully");
+    } catch (error) {
+      logger.error("Error printing consultation:", error);
+      toast.error("Failed to open print dialog");
     }
   }, [form, appointment, clinicDetails, doctorDetails, user, departmentType]);
 
-  // Section rendering with improved UX
-  const renderSection = (section: FieldSection, sectionIndex: number) => {
-    const isExpanded = expandedSections[section.title] ?? true;
-
-    const toggleSection = () => {
-      setExpandedSections((prev) => ({
-        ...prev,
-        [section.title]: !expandedSections[section.title],
-      }));
-    };
-
-    const getSectionIcon = (title: string) => {
-      if (title.toLowerCase().includes("history"))
-        return <User className="h-5 w-5 text-primary" />;
-      if (title.toLowerCase().includes("examination"))
-        return <Stethoscope className="h-5 w-5 text-success" />;
-      if (
-        title.toLowerCase().includes("plan") ||
-        title.toLowerCase().includes("diagnosis")
-      )
-        return <ClipboardList className="h-5 w-5 text-secondary" />;
-      if (title.toLowerCase().includes("investigation"))
-        return <FileText className="h-5 w-5 text-accent" />;
-      return <Activity className="h-5 w-5 text-muted-foreground" />;
-    };
-
-    const completedFields = section.fields.filter((field: NoteFieldConfig) => {
-      const formValues = form.getValues();
-      const value = (formValues.specialty_data as Record<string, unknown>)?.[
-        field.name
-      ];
-      return value && String(value).trim().length > 0;
-    }).length;
-
-    return (
-      <Card key={sectionIndex} className="bg-white">
-        <Collapsible open={isExpanded} onOpenChange={toggleSection}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between w-full">
-                <CardTitle className="flex items-center gap-3 text-lg">
-                  {getSectionIcon(section.title)}
-                  <span className="text-gray-900">{section.title}</span>
-                </CardTitle>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-500">
-                    {completedFields}/{section.fields.length} completed
-                  </span>
-                  {isExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="p-6 space-y-4">
-              {section.fields.map(
-                (field: NoteFieldConfig, fieldIndex: number) => (
-                  <ConsultationFormField
-                    key={fieldIndex}
-                    fieldConfig={field}
-                    fieldIndex={fieldIndex}
-                    value={
-                      form.watch(
-                        `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>
-                      ) as unknown as FieldValue
-                    }
-                    onChange={(value) =>
-                      form.setValue(
-                        `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>,
-                        value as never
-                      )
-                    }
-                    isReadOnly={!canEditConsultation}
-                    // Simple auto-focus only for the very first field
-                    autoFocus={sectionIndex === 0 && fieldIndex === 0}
-                  />
-                )
-              )}
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
-      </Card>
-    );
-  };
-
-  // Loading states
-  if (
-    appointmentLoading ||
-    existingConsultationLoading ||
-    departmentInfoLoading
-  ) {
+  if (appointmentLoading || existingConsultationLoading || departmentInfoLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Spinner size="xl" className="mx-auto mb-4" />
           <p>Loading consultation data...</p>
         </div>
       </div>
@@ -318,7 +115,6 @@ const Consultation = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
       <ConsultationHeader
         patient={patient}
         isConsultationCompleted={!!isConsultationCompleted}
@@ -332,90 +128,53 @@ const Consultation = () => {
         onComplete={handleCompleteConsultation}
       />
 
-      <div className="max-w-7xl mx-auto  py-8">
+      <div className="max-w-7xl mx-auto py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Main Consultation Form with Sections */}
           <div className="md:col-span-2 lg:col-span-3">
             <div className="space-y-6">
-              {/* Progress Overview */}
-              <Card className="bg-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        Medical Consultation
-                      </h2>
-                      <p className="text-sm text-gray-600 mt-1">
-                        {specialtySections.reduce((completed, section) => {
-                          const hasContent = section.fields.some(
-                            (field: NoteFieldConfig) => {
-                              const formValues = form.getValues();
-                              const value = (
-                                formValues.specialty_data as Record<
-                                  string,
-                                  unknown
-                                >
-                              )?.[field.name];
-                              return (
-                                value &&
-                                (typeof value === "string"
-                                  ? value.length > 0
-                                  : Array.isArray(value)
-                                  ? value.length > 0
-                                  : !!value)
-                              );
-                            }
-                          );
-                          return completed + (hasContent ? 1 : 0);
-                        }, 0)}
-                        /{specialtySections.length} sections completed
-                      </p>
-                    </div>
-                    <Badge
-                      variant={
-                        isConsultationCompleted === true
-                          ? "default"
-                          : "secondary"
-                      }
-                      className="text-sm"
-                    >
-                      {isConsultationCompleted === true
-                        ? "Completed"
-                        : "In Progress"}
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
+              <ConsultationProgress
+                specialtySections={specialtySections}
+                form={form}
+                isConsultationCompleted={!!isConsultationCompleted}
+              />
 
               <form className="space-y-6">
-                {specialtySections.map((section, index) =>
-                  renderSection(section, index)
-                )}
+                {specialtySections.map((section, index) => (
+                  <ConsultationSectionCard
+                    key={index}
+                    section={section}
+                    sectionIndex={index}
+                    form={form}
+                    canEditConsultation={!!canEditConsultation}
+                    isExpanded={expandedSections[section.title] ?? true}
+                    onToggle={() =>
+                      setExpandedSections((prev) => ({
+                        ...prev,
+                        [section.title]: !expandedSections[section.title],
+                      }))
+                    }
+                  />
+                ))}
               </form>
             </div>
           </div>
 
-          {/* Patient Information Sidebar */}
           <div className="hidden lg:block lg:col-span-1">
             <PatientSidebar
               patient={patient}
               appointment={appointment}
               departmentInfo={departmentInfo as DepartmentInfo}
               previousConsultations={previousConsultations || []}
-              // Cast the Database type (with JSON) to the UI type (with strict objects)
-              recentPrescriptions={
-                (recentPrescriptions || []) as unknown as Prescription[]
-              }
+              recentPrescriptions={(recentPrescriptions || []) as unknown as Prescription[]}
             />
           </div>
         </div>
       </div>
 
-      {/* Preview Modal */}
       <Suspense
         fallback={
           <div className="flex items-center justify-center p-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+            <Spinner size="md" />
           </div>
         }
       >

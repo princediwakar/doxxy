@@ -98,7 +98,7 @@ export const generatePrintContent = (
               print-color-adjust: exact !important;
             }
         body { 
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          font-family: 'Inter', sans-serif;
           line-height: 1.5; 
               color: #374151;
               background: white;

@@ -9,6 +9,7 @@ import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebounce } from "use-debounce"
 import { useMedicineSearch } from "@/hooks/useMedicineSearch"
+import { Spinner } from '@/components/ui/loading'
 import { Medicine, MedicationAutoFillData } from "@/types/prescriptions"
 
 interface MedicineComboboxProps {
@@ -332,7 +333,7 @@ export function MedicineCombobox({
             <CommandEmpty>
               {isLoading || initialLoading ? (
                 <div className="flex items-center justify-center py-6">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                  <Spinner size="md" />
                   <span className="ml-2">Loading medicines...</span>
                 </div>
               ) : medicines.length === 0 && debouncedSearchQuery ? (

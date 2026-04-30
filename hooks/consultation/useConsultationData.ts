@@ -160,6 +160,7 @@ export const useConsultationData = (appointmentId: string | undefined) => {
       };
     },
     enabled: !!appointmentId && !!activeClinic?.clinic_id,
+    staleTime: 2 * 60 * 1000,
   });
 
   return {

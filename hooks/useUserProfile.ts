@@ -24,5 +24,6 @@ export function useUserProfile(userId: string | undefined) {
       return data;
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
   });
 }

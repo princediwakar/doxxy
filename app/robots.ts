@@ -1,9 +1,8 @@
 // app/robots.tsx
 import { MetadataRoute } from "next";
+import { APP_URL } from "@/lib/constants";
 
-// Base URL - should match your production domain
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com";
+const BASE_URL = APP_URL;
 
 export default function robots(): MetadataRoute.Robots {
   return {

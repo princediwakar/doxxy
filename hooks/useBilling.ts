@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useInvoiceNumber } from '@/hooks/useInvoiceNumber';
 import { useBillingQueries } from '@/hooks/useBillingQueries';
 import { useSaveBill } from '@/hooks/useSaveBill';
+import { useBillingFormEffects } from '@/hooks/useBillingFormEffects';
 import type {
   ServiceItem,
   BillingFormValues,
@@ -142,40 +143,8 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
       return () => clearTimeout(timer);
     }
   }, [mode, open, activeClinic?.clinic_id, newInvoiceNumber, isLoadingInvoiceNumber, invoiceError, refetchInvoiceNumber, form]);
-  // Effect 3: Prefill service item with department-based consultation description
-  useEffect(() => {
-    if (doctorFee && selectedAppointmentId && selectedAppointment && mode !== 'view') {
-      const currentItems = form.getValues('service_items') || [];
-      const departmentName = selectedAppointment.department_name === 'General Medicine' || !selectedAppointment.department_name
-        ? 'General'
-        : selectedAppointment.department_name;
-      if (currentItems[0]?.description === '') {
-        form.setValue('service_items', [{
-          description: `${departmentName} Consultation`,
-          quantity: 1,
-          rate: doctorFee.consultation_fee,
-          amount: doctorFee.consultation_fee,
-        }]);
-      }
-    }
-  }, [doctorFee, selectedAppointmentId, selectedAppointment, form, mode]);
-
-  // Effect 4: Reset form when modal opens
-  useEffect(() => {
-    if (open) {
-      form.reset({
-        patient_id: bill?.patient_id || patient?.id || appointment?.patient_id || '',
-        appointment_id: bill?.appointment_id || appointment?.id || '',
-        amount: bill?.amount ? Number(bill.amount) : 0,
-        description: bill?.description || '',
-        invoice_number: bill?.invoice_number || '',
-        service_items: bill?.service_items ? (bill.service_items as unknown as ServiceItem[]) : [{ description: '', quantity: 1, rate: 0, amount: 0 }],
-        discount_percentage: bill?.discount_percentage ? Number(bill.discount_percentage) : 0,
-        tax_percentage: bill?.tax_percentage ? Number(bill.tax_percentage) : 0,
-        notes: bill?.notes || '',
-      });
-    }
-  }, [open, bill, patient, appointment, form]);
+  // Form lifecycle effects (prefill + reset)
+  useBillingFormEffects(form, open, mode, bill, patient, appointment, doctorFee, selectedAppointmentId, selectedAppointment);
 
   return {
     form,

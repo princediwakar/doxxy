@@ -103,6 +103,7 @@ export const usePayments = () => {
         };
       },
       enabled: !!activeClinic?.clinic_id,
+      staleTime: 60 * 1000,
     });
 
   // 2. Fetch Transactions
@@ -124,6 +125,7 @@ export const usePayments = () => {
         return data as PaymentTransaction[];
       },
       enabled: !!activeClinic?.clinic_id,
+      staleTime: 30 * 1000,
     });
 
   // 3. Create Order Mutation

@@ -22,6 +22,7 @@ export function useClinicDepartmentManagement(clinicId?: string) {
       if (error) throw error;
       return data || [];
     },
+    staleTime: 30 * 60 * 1000,
   });
 
   const clinicDepartmentsQuery = useQuery<DbClinicDepartment[]>({
@@ -36,6 +37,7 @@ export function useClinicDepartmentManagement(clinicId?: string) {
       return data || [];
     },
     enabled: !!clinicId,
+    staleTime: 2 * 60 * 1000,
   });
 
   const addDepartmentMutation = useMutation({

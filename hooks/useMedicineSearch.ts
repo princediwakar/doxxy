@@ -39,6 +39,7 @@ export function useMedicineSearch(searchQuery: string, selectedValue?: string) {
       return data || [];
     },
     enabled: !!session?.access_token && !initialLoading,
+    staleTime: 10 * 60 * 1000,
   });
 
   const selectedMedicineQuery = useQuery({
@@ -58,6 +59,7 @@ export function useMedicineSearch(searchQuery: string, selectedValue?: string) {
       return data?.[0] || null;
     },
     enabled: !!selectedValue && !!session?.access_token && !initialLoading,
+    staleTime: 10 * 60 * 1000,
   });
 
   return {

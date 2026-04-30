@@ -15,15 +15,17 @@ import {
   Prescription,
   SpecialtyData,
 } from "@/types/patients";
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { PrescriptionViewModal } from "@/components/prescriptions/PrescriptionViewModal";
 import { ExportOptionsModal, ExportConfiguration } from "@/components/ExportOptionsModal";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 import { PatientModal } from "@/components/patients/PatientModal";
+import { Spinner } from '@/components/ui/loading';
 
 // Lazy load heavy components
-const ConsultationViewModal = lazy(() => import('@/components/consultation/ConsultationViewModal').then(module => ({ default: module.ConsultationViewModal })));
-const BillingModal = lazy(() => import('@/components/billing/BillingModal').then(module => ({ default: module.BillingModal })));
+const ConsultationViewModal = dynamic(() => import('@/components/consultation/ConsultationViewModal').then(mod => mod.ConsultationViewModal));
+const BillingModal = dynamic(() => import('@/components/billing/BillingModal').then(mod => mod.BillingModal));
 import { toast } from "sonner";
 import { PatientsPageHeader } from "@/components/patients/PatientsPageHeader";
 import { PatientSearch } from "@/components/patients/PatientSearch";
@@ -292,7 +294,7 @@ const PatientRecords = () => {
       </div>
 
       {/* Modals */}
-      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+      <Suspense fallback={<div className="flex items-center justify-center p-4"><Spinner size="md" /></div>}>
         <ConsultationViewModal
           open={isConsultationViewOpen}
           onOpenChange={setIsConsultationViewOpen}
@@ -330,7 +332,7 @@ const PatientRecords = () => {
         patient={selectedPatient}
       />
 
-      <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+      <Suspense fallback={<div className="flex items-center justify-center p-4"><Spinner size="md" /></div>}>
         <BillingModal
           open={isBillingModalOpen}
           onOpenChange={setIsBillingModalOpen}

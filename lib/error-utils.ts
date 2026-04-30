@@ -5,6 +5,12 @@
 
 import { toast } from 'sonner';
 
+interface ErrorLike {
+  code?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+
 // Error type definitions
 export type ErrorType =
   | 'NETWORK_ERROR'
@@ -79,7 +85,7 @@ export function getErrorType(error: unknown): ErrorType {
   if (!error) return 'UNKNOWN_ERROR';
 
   const errorString = String(error).toLowerCase();
-  const errorObj = error as any;
+  const errorObj = error as ErrorLike;
 
   // Check for Supabase error codes
   if (errorObj?.code && SUPABASE_ERROR_CODES[errorObj.code as keyof typeof SUPABASE_ERROR_CODES]) {
@@ -271,7 +277,7 @@ export function formatErrorForDisplay(error: unknown): {
  * Check if error is a Supabase "no rows" error
  */
 export function isNotFoundError(error: unknown): boolean {
-  const errorObj = error as any;
+  const errorObj = error as ErrorLike;
   return errorObj?.code === 'PGRST116' || getErrorType(error) === 'NOT_FOUND_ERROR';
 }
 

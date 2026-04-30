@@ -26,6 +26,7 @@ export function useBillingQueries(
       return (data || []) as AppointmentForBilling[];
     },
     enabled: open && !!activeClinic?.clinic_id,
+    staleTime: 2 * 60 * 1000,
   });
 
   const { data: patients, isLoading: isLoadingPatients, error: patientsError } = useQuery({
@@ -41,6 +42,7 @@ export function useBillingQueries(
       return (data || []) as DbPatient[];
     },
     enabled: open && !!activeClinic?.clinic_id,
+    staleTime: 2 * 60 * 1000,
   });
 
   // Find selected appointment from loaded appointments
@@ -63,6 +65,7 @@ export function useBillingQueries(
       } as DoctorFeeInfo;
     },
     enabled: !!selectedAppointment?.doctor_id && mode !== "view",
+    staleTime: 5 * 60 * 1000,
   });
 
   // Filter appointments by selected patient

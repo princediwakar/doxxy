@@ -4,11 +4,12 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import { Providers } from '@/components/Providers'
+import { APP_URL } from '@/lib/constants'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com"),
+  metadataBase: new URL(APP_URL),
   title: 'Doxxy - Clinic Management',
   description: 'Modern clinic management software for healthcare providers',
   verification: { google: '6XTorYQy4TdZB9Z3EF6fNyU4BcWaTma53piGhXir-Tc' },

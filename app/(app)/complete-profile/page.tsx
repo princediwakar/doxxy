@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { processInvitationsOnProfileComplete } from "@/lib/invitation-utils";
 import { useCompleteProfile } from "@/hooks/useCompleteProfile";
 import { useUserProfile } from "@/hooks/useUserProfile";
+import { useQueryClient } from "@tanstack/react-query";
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -35,6 +36,7 @@ const CompleteProfile = () => {
   const [processingMessage, setProcessingMessage] = useState<string>("");
   const [email, setEmail] = useState("");
   const completeProfile = useCompleteProfile();
+  const queryClient = useQueryClient();
 
   const { data: profileData } = useUserProfile(user?.id);
 
@@ -112,7 +114,11 @@ const CompleteProfile = () => {
         localStorage.removeItem('invitation_data');
       }
 
-      // 5. Navigate
+      // 5. Invalidate cached queries so target pages load fresh data
+      queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+      queryClient.invalidateQueries({ queryKey: ['doctorDashboardData'] });
+
+      // 6. Navigate
       if (invitationResult.shouldNavigateToCreateClinic) {
         toast.success("Profile updated! Let's set up your clinic.");
         router.replace("/create-clinic");
@@ -121,13 +127,11 @@ const CompleteProfile = () => {
         router.replace("/dashboard");
       }
       
-    } catch (error: any) {
-      logger.error("Profile Error:", error);
-      toast.error("Error: " + (error.message || "Something went wrong"));
-      // Even on error, if we saved profile, we allow them to proceed
-      // But we still mark complete so they aren't stuck loop
-      await markProfileComplete();
-      router.replace("/create-clinic");
+    } catch (error: unknown) {
+      logger.error("Profile completion failed:", error);
+      const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+      toast.error(message);
+      // Don't mark profile complete or redirect — let user retry
     } finally {
       setLoading(false);
     }

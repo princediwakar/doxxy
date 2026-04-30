@@ -3,9 +3,9 @@ import { logger } from "@/lib/logger";
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { getSupabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
-import { RealtimeChannel } from "@supabase/supabase-js";
+import { User, RealtimeChannel } from "@supabase/supabase-js";
 import type { DbClinic, UserRole } from "@/types/core";
+import { fetchClinicData } from "@/lib/fetch-clinic-data";
 
 const supabase = getSupabase();
 
@@ -32,7 +32,6 @@ export const useClinicData = () => {
 
   const activeClinicRole = activeClinic ? activeClinic.role : null;
 
-  // Function to check if user has doctor profile in active clinic
   const checkDoctorProfile = useCallback(async (userId: string, clinicId: string | null): Promise<boolean> => {
     if (!clinicId) {
       setHasDoctorProfile(false);
@@ -41,7 +40,7 @@ export const useClinicData = () => {
 
     try {
       if (process.env.NODE_ENV === "development") logger.log("Checking doctor profile for user:", userId, "in clinic:", clinicId);
-      
+
       const { data: doctorProfile, error } = await supabase
         .from('doctors')
         .select('id')
@@ -79,8 +78,7 @@ export const useClinicData = () => {
           setActiveClinicState(selectedClinic);
           localStorage.setItem('activeClinicId', selectedClinic.clinic_id);
           if (process.env.NODE_ENV === "development") logger.log("Set active clinic:", selectedClinic.clinics?.name);
-          
-          // Check doctor profile for superadmins when clinic changes
+
           if (user?.id && selectedClinic.role === 'superadmin') {
             checkDoctorProfile(user.id, selectedClinic.clinic_id);
           } else {
@@ -97,140 +95,18 @@ export const useClinicData = () => {
   }, [checkDoctorProfile]);
 
   const fetchUserAndClinicData = useCallback(async (
-    userFromSession: User | null, 
+    userFromSession: User | null,
     checkProfileCompletion: (userId: string) => Promise<boolean>,
-    retryCount = 0
+    _retryCount = 0
   ) => {
-    if (process.env.NODE_ENV === "development") logger.log("fetchUserAndClinicData: Starting with user:", userFromSession?.id);
-    
-    if (!userFromSession) {
-      setUserClinics([]);
-      setActiveClinicState(null);
-      setHasDoctorProfile(undefined);
-      localStorage.removeItem('activeClinicId');
-      if (process.env.NODE_ENV === "development") logger.log("No user, cleared clinics and active clinic.");
-      isFetchingRef.current = false;
-      return;
-    }
-
-    await checkProfileCompletion(userFromSession.id);
-
-    if (isFetchingRef.current) {
-      if (process.env.NODE_ENV === "development") logger.log("Already fetching user clinic data, skipping duplicate call.");
-      return;
-    }
-
-    setClinicLoading(true);
-    isFetchingRef.current = true;
-    let fetchedClinics: ClinicMemberWithClinic[] = [];
-    let initialActiveClinic: ClinicMemberWithClinic | null = null;
-
-    try {
-      if (process.env.NODE_ENV === "development") logger.log("fetchUserAndClinicData: Fetching user clinic memberships using RPC");
-      const { data: memberData, error: memberError } = await supabase.rpc('get_user_clinic_memberships', {
-        user_id: userFromSession.id
-      });
-
-      if (memberError) {
-        logger.error("fetchUserAndClinicData: Error fetching clinic members:", memberError);
-        throw new Error(`RPC error: ${memberError.message}`);
-      }
-
-      if (!memberData || memberData.length === 0) {
-        if (process.env.NODE_ENV === "development") logger.log("User is not a member of any clinics.");
-        setUserClinics([]);
-        setActiveClinicState(null);
-        setHasDoctorProfile(undefined);
-        localStorage.removeItem('activeClinicId');
-        return;
-      }
-
-      // Get all clinic IDs to fetch in a single query
-      const clinicIds = memberData.map(member => member.clinic_id);
-
-      // Fetch all clinics in a single query
-      const { data: allClinics, error: clinicsError } = await supabase
-        .from('clinics')
-        .select('*')
-        .in('id', clinicIds);
-
-      if (clinicsError) {
-        logger.error("Error fetching clinic details:", clinicsError);
-        throw new Error(`Clinics fetch error: ${clinicsError.message}`);
-      }
-
-      // Create a map for quick lookup
-      const clinicMap = new Map(allClinics?.map(clinic => [clinic.id, clinic]) || []);
-
-      // Build the clinic memberships with clinic data
-      fetchedClinics = memberData.map(member => {
-        const clinicData = clinicMap.get(member.clinic_id);
-        if (!clinicData) {
-          logger.error(`Clinic data not found for clinic ID: ${member.clinic_id}`);
-          return null;
-        }
-
-        return {
-          ...member,
-          clinics: clinicData,
-          clinic_name: clinicData.name,
-          joined_at: member.joined_at
-        } as ClinicMemberWithClinic;
-      }).filter((clinic): clinic is ClinicMemberWithClinic => clinic !== null);
-
-      if (fetchedClinics.length === 0) {
-        logger.warn("No valid clinics found after filtering.");
-        setUserClinics([]);
-        setActiveClinicState(null);
-        setHasDoctorProfile(undefined);
-        localStorage.removeItem('activeClinicId');
-        return;
-      }
-
-      setUserClinics(fetchedClinics);
-
-      const storedClinicId = localStorage.getItem('activeClinicId');
-      if (storedClinicId) {
-        initialActiveClinic = fetchedClinics.find(clinic => clinic.clinic_id === storedClinicId) || null;
-      }
-
-      if (!initialActiveClinic && fetchedClinics.length > 0) {
-        initialActiveClinic = fetchedClinics[0];
-        localStorage.setItem('activeClinicId', fetchedClinics[0].clinic_id);
-      }
-
-      if (initialActiveClinic) {
-        setActiveClinicState(initialActiveClinic);
-        
-        if (userFromSession.id && initialActiveClinic.role === 'superadmin') {
-          await checkDoctorProfile(userFromSession.id, initialActiveClinic.clinic_id);
-        } else {
-          setHasDoctorProfile(initialActiveClinic.role === 'doctor');
-        }
-      }
-    } catch (error) {
-      logger.error("fetchUserAndClinicData: Error:", error);
-      if (retryCount < 2) {
-        if (process.env.NODE_ENV === "development") logger.log(`Retrying fetchUserAndClinicData (attempt ${retryCount + 2})`);
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
-        await fetchUserAndClinicData(userFromSession, checkProfileCompletion, retryCount + 1);
-      } else {
-        logger.error("Max retries reached, clearing clinic data.");
-        setUserClinics([]);
-        setActiveClinicState(null);
-        setHasDoctorProfile(undefined);
-        localStorage.removeItem('activeClinicId');
-      }
-    } finally {
-      setClinicLoading(false);
-      isFetchingRef.current = false;
-      if (process.env.NODE_ENV === "development") {
-        logger.log("fetchUserAndClinicData: Completed with state:", {
-          userClinicsLength: fetchedClinics.length,
-          activeClinic: !!initialActiveClinic
-        });
-      }
-    }
+    await fetchClinicData(userFromSession, checkProfileCompletion, {
+      setClinicLoading,
+      setUserClinics,
+      setActiveClinicState,
+      setHasDoctorProfile,
+      isFetchingRef,
+      checkDoctorProfile,
+    });
   }, [checkDoctorProfile]);
 
   const clearClinicData = useCallback(() => {
@@ -239,17 +115,14 @@ export const useClinicData = () => {
     setHasDoctorProfile(undefined);
     localStorage.removeItem('activeClinicId');
     isFetchingRef.current = false;
-    
-    // Clean up subscription
+
     if (subscriptionRef.current) {
       subscriptionRef.current.unsubscribe();
       subscriptionRef.current = null;
     }
   }, []);
 
-  // Real-time subscription for clinic membership changes
   const setupRealtimeSubscription = useCallback((user: User | null) => {
-    // Clean up existing subscription
     if (subscriptionRef.current) {
       subscriptionRef.current.unsubscribe();
       subscriptionRef.current = null;
@@ -258,7 +131,7 @@ export const useClinicData = () => {
     if (!user) return;
 
     if (process.env.NODE_ENV === "development") logger.log('Setting up real-time subscription for user clinic membership changes');
-    
+
     subscriptionRef.current = supabase
       .channel('clinic-membership-changes')
       .on('postgres_changes', {
@@ -268,7 +141,6 @@ export const useClinicData = () => {
         filter: `user_id=eq.${user.id}`
       }, (payload) => {
         if (process.env.NODE_ENV === "development") logger.log('Real-time: New clinic membership created:', payload);
-        // Refresh clinic data when new membership is created
         if (currentUserRef.current) {
           fetchUserAndClinicData(currentUserRef.current, async () => true, 0);
         }
@@ -280,7 +152,6 @@ export const useClinicData = () => {
         filter: `user_id=eq.${user.id}`
       }, (payload) => {
         if (process.env.NODE_ENV === "development") logger.log('Real-time: Clinic membership updated:', payload);
-        // Refresh clinic data when membership is updated
         if (currentUserRef.current) {
           fetchUserAndClinicData(currentUserRef.current, async () => true, 0);
         }
@@ -290,10 +161,8 @@ export const useClinicData = () => {
       });
   }, [fetchUserAndClinicData]);
 
-  // Set up subscription when user changes
   useEffect(() => {
     return () => {
-      // Clean up subscription on unmount
       if (subscriptionRef.current) {
         subscriptionRef.current.unsubscribe();
       }
@@ -301,24 +170,16 @@ export const useClinicData = () => {
   }, []);
 
   return {
-    // State
     clinicLoading,
     userClinics,
     activeClinic,
     activeClinicRole,
     hasDoctorProfile,
-    
-    // Actions
     setActiveClinicId,
     fetchUserAndClinicData,
     checkDoctorProfile,
     clearClinicData,
-    setUserClinics,
-    setActiveClinicState,
-    setHasDoctorProfile,
     setupRealtimeSubscription,
-    
-    // Refs for external access
     currentUserRef,
   };
-}; 
+};

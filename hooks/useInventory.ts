@@ -35,6 +35,7 @@ export function useInventory() {
       return data;
     },
     enabled: !!activeClinic?.clinic_id,
+    staleTime: 2 * 60 * 1000,
   });
 
   const updateStock = useMutation({

@@ -16,7 +16,7 @@ export function useHasDoctorProfile() {
       const { data, error } = await supabase
         .from("doctors")
         .select("id")
-        .eq("id", user.id)
+        .eq("user_id", user.id)
         .eq("clinic_id", activeClinic.clinic_id)
         .maybeSingle();
       if (error) throw error;

@@ -35,6 +35,7 @@ export function useConsultationViewData(
       !!appointment?.patient_id &&
       !!activeClinic?.clinic_id &&
       (!appointment.patient_gender || !appointment.patient_age),
+    staleTime: 5 * 60 * 1000,
   });
 
   const consultationQuery = useQuery<Consultation | null>({
@@ -59,6 +60,7 @@ export function useConsultationViewData(
       return null;
     },
     enabled: open && !!appointment?.id,
+    staleTime: 5 * 60 * 1000,
   });
 
   const doctorQuery = useQuery<TransformedDoctorData[] | null>({
@@ -103,6 +105,7 @@ export function useConsultationViewData(
       return doctor ? [doctor] : null;
     },
     enabled: open && !!appointment?.doctor_id && !!activeClinic?.clinic_id,
+    staleTime: 5 * 60 * 1000,
   });
 
   return {

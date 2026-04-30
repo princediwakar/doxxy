@@ -14,5 +14,7 @@ export function useDepartmentTypes() {
       return data || [];
     },
     retry: (failureCount, _error) => failureCount < 3,
+    staleTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }

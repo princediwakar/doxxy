@@ -1,7 +1,7 @@
 // src/components/appointments/AppointmentsTable.tsx
 "use client";
 import { logger } from "@/lib/logger";
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -42,7 +42,7 @@ interface AppointmentCardProps {
   getStatusColor: (status: string) => string;
 }
 
-const AppointmentCard: React.FC<AppointmentCardProps> = ({
+const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
   appointment,
   index,
   onAppointmentClick,
@@ -57,10 +57,50 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
   const { user } = useAuth();
   const router = useRouter();
 
+  const handleCardClick = useCallback(() => {
+    onAppointmentClick(appointment);
+  }, [onAppointmentClick, appointment]);
+
+  const handleStopPropagation = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleCheckIn = useCallback(() => {
+    onCheckIn?.(appointment.id);
+  }, [onCheckIn, appointment.id]);
+
+  const handleStart = useCallback(() => {
+    onStartConsultation(appointment);
+  }, [onStartConsultation, appointment]);
+
+  const handleContinue = useCallback(() => {
+    onStartConsultation(appointment);
+  }, [onStartConsultation, appointment]);
+
+  const handleViewOrEdit = useCallback(async () => {
+    if (appointment.user_id === user?.id) {
+      router.push(`/consultation/${appointment.id}`);
+    } else {
+      onViewConsultation(appointment);
+    }
+  }, [appointment, user?.id, router, onViewConsultation]);
+
+  const handleCreateBill = useCallback(() => {
+    onCreateBill(appointment);
+  }, [onCreateBill, appointment]);
+
+  const handleViewEditAppointment = useCallback(() => {
+    onAppointmentClick(appointment);
+  }, [onAppointmentClick, appointment]);
+
+  const handleCancel = useCallback(() => {
+    onCancelAppointment(appointment.id);
+  }, [onCancelAppointment, appointment.id]);
+
   return (
     <Card
       className="cursor-pointer hover:bg-muted/50 touch-manipulation"
-      onClick={() => onAppointmentClick(appointment)}
+      onClick={handleCardClick}
     >
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
@@ -110,7 +150,7 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
           >
             {appointment.billing_status || 'Unbilled'}
           </Badge>
-          <div className="md:hidden flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <div className="md:hidden flex justify-end" onClick={handleStopPropagation}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
@@ -120,49 +160,43 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 {onCheckIn && appointment.status === 'Scheduled' && (
-                  <DropdownMenuItem onClick={() => onCheckIn(appointment.id)}>
+                  <DropdownMenuItem onClick={handleCheckIn}>
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Check In
                   </DropdownMenuItem>
                 )}
                 {appointment.status === 'Scheduled' && appointment.user_id === user?.id && (
-                  <DropdownMenuItem onClick={() => onStartConsultation(appointment)}>
+                  <DropdownMenuItem onClick={handleStart}>
                     <Play className="mr-2 h-4 w-4" />
                     Start
                   </DropdownMenuItem>
                 )}
                 {appointment.status === 'In Progress' && appointment.user_id === user?.id && (
-                  <DropdownMenuItem onClick={() => onStartConsultation(appointment)}>
+                  <DropdownMenuItem onClick={handleContinue}>
                     <Play className="mr-2 h-4 w-4" />
                     Continue
                   </DropdownMenuItem>
                 )}
                 {appointment.status === 'Completed' && (
-                  <DropdownMenuItem onClick={async () => {
-                    if (appointment.user_id === user?.id) {
-                      router.push(`/consultation/${appointment.id}`);
-                    } else {
-                      onViewConsultation(appointment);
-                    }
-                  }}>
+                  <DropdownMenuItem onClick={handleViewOrEdit}>
                     <Eye className="mr-2 h-4 w-4" />
                     {appointment.user_id === user?.id ? "Edit" : "View"}
                   </DropdownMenuItem>
                 )}
                 {appointment.status !== 'Cancelled' &&
                  (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
-                  <DropdownMenuItem onClick={() => onCreateBill(appointment)}>
+                  <DropdownMenuItem onClick={handleCreateBill}>
                     <Receipt className="mr-2 h-4 w-4" />
                     Create Bill
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={() => onAppointmentClick(appointment)}>
+                <DropdownMenuItem onClick={handleViewEditAppointment}>
                   <Eye className="mr-2 h-4 w-4" />
                   View/Edit Appointment
                 </DropdownMenuItem>
                 {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
                   <DropdownMenuItem
-                    onClick={() => onCancelAppointment(appointment.id)}
+                    onClick={handleCancel}
                     className="text-destructive"
                     disabled={cancelLoading}
                   >
@@ -176,7 +210,202 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({
       </CardContent>
     </Card>
   );
-};
+});
+
+interface TableAppointmentRowProps {
+  appointment: AppointmentWithDetails;
+  onAppointmentClick: (appointment: AppointmentWithDetails) => void;
+  onCancelAppointment: (appointmentId: string) => void;
+  onStartConsultation: (appointment: AppointmentWithDetails) => void;
+  onViewConsultation: (appointment: AppointmentWithDetails) => void;
+  onCreateBill: (appointment: AppointmentWithDetails) => void;
+  getStatusColor: (status: string) => string;
+  cancelLoading: boolean;
+}
+
+const TableAppointmentRow: React.FC<TableAppointmentRowProps> = React.memo(({
+  appointment,
+  onAppointmentClick,
+  onCancelAppointment,
+  onStartConsultation,
+  onViewConsultation,
+  onCreateBill,
+  getStatusColor,
+  cancelLoading,
+}) => {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  const handleRowClick = useCallback(() => {
+    onAppointmentClick(appointment);
+  }, [onAppointmentClick, appointment]);
+
+  const handleStopPropagation = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const handleStart = useCallback(() => {
+    onStartConsultation(appointment);
+  }, [onStartConsultation, appointment]);
+
+  const handleContinue = useCallback(() => {
+    onStartConsultation(appointment);
+  }, [onStartConsultation, appointment]);
+
+  const handleEditOrView = useCallback(async () => {
+    if (appointment.user_id === user?.id) {
+      try {
+        router.push(`/consultation/${appointment.id}`);
+      } catch (error) {
+        logger.error('Error prefetching consultation data:', error);
+        router.push(`/consultation/${appointment.id}`);
+      }
+    } else {
+      onViewConsultation(appointment);
+    }
+  }, [appointment, user?.id, router, onViewConsultation]);
+
+  const handleCreateBill = useCallback(() => {
+    onCreateBill(appointment);
+  }, [onCreateBill, appointment]);
+
+  const handleViewEdit = useCallback(() => {
+    onAppointmentClick(appointment);
+  }, [onAppointmentClick, appointment]);
+
+  const handleCancel = useCallback(() => {
+    onCancelAppointment(appointment.id);
+  }, [onCancelAppointment, appointment.id]);
+
+  return (
+    <TableRow
+      className="cursor-pointer hover:bg-muted/50"
+      onClick={handleRowClick}
+    >
+      <TableCell>
+        <div className="font-medium">{appointment.patient_name}</div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={appointment.doctor_avatar_url} />
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+              {appointment.doctor_name?.[0]?.toUpperCase() || 'D'}
+            </AvatarFallback>
+          </Avatar>
+          <span>{appointment.doctor_name}</span>
+        </div>
+        {appointment.department_name && (
+          <div className="text-xs text-muted-foreground">
+            {appointment.department_name}
+          </div>
+        )}
+      </TableCell>
+      <TableCell>
+        <div className="space-y-1">
+          <div className="font-medium">
+            {format(parseISO(appointment.date), 'MMM dd, yyyy')}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {formatTimeIST(appointment.time)}
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge
+          variant="outline"
+          className={getStatusColor(appointment.status)}
+        >
+          {appointment.status}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <Badge
+          variant={appointment.billing_status === 'Paid' ? 'default' : 'secondary'}
+          className={
+            appointment.billing_status === 'Paid'
+              ? 'bg-green-100 text-green-800'
+              : appointment.billing_status === 'Pending'
+                ? 'bg-orange-100 text-orange-800'
+                : 'bg-gray-100 text-gray-800'
+          }
+        >
+          {appointment.billing_status || 'Unbilled'}
+        </Badge>
+      </TableCell>
+      <TableCell onClick={handleStopPropagation}>
+        <div className="flex items-center gap-2">
+          {appointment.status === 'Scheduled' && appointment.user_id === user?.id && (
+            <Button
+              size="sm"
+              onClick={handleStart}
+              title="Start Consultation"
+            >
+              <span>Start</span>
+            </Button>
+          )}
+
+          {appointment.status === 'In Progress' && appointment.user_id === user?.id && (
+            <Button
+              size="sm"
+              onClick={handleContinue}
+              title="Continue Consultation"
+            >
+              <span>Continue</span>
+            </Button>
+          )}
+
+          {appointment.status === 'Completed' && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleEditOrView}
+              title={appointment.user_id === user?.id ? "Edit Notes" : "View Notes"}
+            >
+              <span>{appointment.user_id === user?.id ? "Edit Notes" : "View Notes"}</span>
+            </Button>
+          )}
+
+          {appointment.status !== 'Cancelled' &&
+           (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
+            <Button
+              size="sm"
+              onClick={handleCreateBill}
+              title="Create Bill"
+            >
+              <Receipt className="h-4 w-4 mr-1" />
+              <span>Create Bill</span>
+            </Button>
+          )}
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={handleViewEdit}>
+                <Eye className="mr-2 h-4 w-4" />
+                View/Edit Appointment
+              </DropdownMenuItem>
+              {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
+                <DropdownMenuItem
+                  onClick={handleCancel}
+                  className="text-destructive"
+                  disabled={cancelLoading}
+                >
+                  Cancel Appointment
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+});
 
 interface AppointmentsTableProps {
   appointments: AppointmentWithDetails[];
@@ -202,7 +431,8 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
 }) => {
   const { user } = useAuth();
   const router = useRouter();
-  const getStatusColor = (status: string) => {
+
+  const getStatusColor = useCallback((status: string) => {
     switch (status) {
       case 'Scheduled': return 'bg-blue-100 text-blue-800';
       case 'In Progress': return 'bg-yellow-100 text-yellow-800';
@@ -210,7 +440,7 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
       case 'Cancelled': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
+  }, []);
 
   if (appointments.length === 0) {
     return (
@@ -260,153 +490,20 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
         </TableHeader>
         <TableBody>
           {appointments.map((appointment, index) => (
-            <TableRow
+            <TableAppointmentRow
               key={`${appointment.id}-${index}`}
-              className="cursor-pointer hover:bg-muted/50"
-              onClick={() => onAppointmentClick(appointment)}
-            >
-              <TableCell>
-                <div className="font-medium">{appointment.patient_name}</div>
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={appointment.doctor_avatar_url} />
-                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                      {appointment.doctor_name?.[0]?.toUpperCase() || 'D'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>{appointment.doctor_name}</span>
-                </div>
-                {appointment.department_name && (
-                  <div className="text-xs text-muted-foreground">
-                    {appointment.department_name}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="font-medium">
-                    {format(parseISO(appointment.date), 'MMM dd, yyyy')}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {formatTimeIST(appointment.time)}
-                  </div>
-                </div>
-              </TableCell>
-              
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={getStatusColor(appointment.status)}
-                >
-                  {appointment.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant={appointment.billing_status === 'Paid' ? 'default' : 'secondary'}
-                  className={
-                    appointment.billing_status === 'Paid'
-                      ? 'bg-green-100 text-green-800'
-                      : appointment.billing_status === 'Pending'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-gray-100 text-gray-800'
-                  }
-                >
-                  {appointment.billing_status || 'Unbilled'}
-                </Badge>
-              </TableCell>
-              <TableCell onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center gap-2">
-                  {appointment.status === 'Scheduled' && appointment.user_id === user?.id && (
-                    <Button
-                      size="sm"
-                      onClick={() => onStartConsultation(appointment)}
-                      title="Start Consultation"
-                    >
-                      <span>Start</span>
-                    </Button>
-                  )}
-
-                  {appointment.status === 'In Progress' && appointment.user_id === user?.id && (
-                    <Button
-                      size="sm"
-                      onClick={() => onStartConsultation(appointment)}
-                      title="Continue Consultation"
-                    >
-                      <span>Continue</span>
-                    </Button>
-                  )}
-
-                  {appointment.status === 'Completed' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={async () => {
-                        // Associated doctors can edit completed consultations
-                        if (appointment.user_id === user?.id) {
-                          // Prefetch consultation data before navigation
-                          try {
-                            // We'll need to pass the prefetch function from parent
-                            // For now, navigate directly and let the consultation page handle prefetching
-                            router.push(`/consultation/${appointment.id}`);
-                          } catch (error) {
-                            logger.error('Error prefetching consultation data:', error);
-                            router.push(`/consultation/${appointment.id}`);
-                          }
-                        } else {
-                          // Staff and other doctors can only view
-                          onViewConsultation(appointment);
-                        }
-                      }}
-                      title={appointment.user_id === user?.id ? "Edit Notes" : "View Notes"}
-                    >
-                      <span>{appointment.user_id === user?.id ? "Edit Notes" : "View Notes"}</span>
-                    </Button>
-                  )}
-
-                  {appointment.status !== 'Cancelled' && 
-                   (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
-                    <Button
-                      size="sm"
-                      onClick={() => onCreateBill(appointment)}
-                      title="Create Bill"
-                    >
-                      <Receipt className="h-4 w-4 mr-1" />
-                      <span>Create Bill</span>
-                    </Button>
-                  )}
-
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => onAppointmentClick(appointment)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View/Edit Appointment
-                      </DropdownMenuItem>
-                      {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
-                        <DropdownMenuItem
-                          onClick={() => onCancelAppointment(appointment.id)}
-                          className="text-destructive"
-                          disabled={cancelLoading}
-                        >
-                          Cancel Appointment
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </TableCell>
-            </TableRow>
+              appointment={appointment}
+              onAppointmentClick={onAppointmentClick}
+              onCancelAppointment={onCancelAppointment}
+              onStartConsultation={onStartConsultation}
+              onViewConsultation={onViewConsultation}
+              onCreateBill={onCreateBill}
+              getStatusColor={getStatusColor}
+              cancelLoading={cancelLoading}
+            />
           ))}
         </TableBody>
-        </Table>
+      </Table>
       </div>
     </>
   );

@@ -1,6 +1,4 @@
-// File: app/(app)/create-clinic/page.tsx
 "use client";
-import { logger } from "@/lib/logger";
 
 import * as React from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
@@ -9,19 +7,18 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from "@/integrations/supabase/client";
 import { useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
 import { DbDepartmentType } from "@/types/core";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stethoscope, Building2, AlertTriangle } from "lucide-react";
-import { createDoctorProfile } from "@/lib/doctor-utils";
+import { useDepartmentTypes } from "@/hooks/useDepartmentTypes";
+import { useCreateClinic } from "@/hooks/useCreateClinic";
+import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
 import {
   Form,
@@ -31,8 +28,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-const supabase = getSupabase();
 
 // Step 1: Clinic details schema
 const clinicDetailsSchema = z.object({
@@ -80,8 +75,6 @@ type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 const CreateClinicPage = () => {
   const { user, fetchUserAndClinicData, setActiveClinicId } = useAuth();
   const router = useRouter();
-  const { toast } = useToast();
-  // const { withErrorHandling } = useErrorHandler();
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
   const [clinicDetails, setClinicDetails] = React.useState<ClinicDetailsForm>({
     name: "",
@@ -100,23 +93,11 @@ const CreateClinicPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Fetch department types with error handling
-  const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useQuery({
-    queryKey: ["departmentTypes"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("department_types").select("*");
-      if (error) {
-        // showErrorToast(error, { title: "Failed to load departments" });
-        logger.error("Failed to load departments:", error);
-        throw error;
-      }
-      return data || [];
-    },
-    retry: (failureCount, error) => {
-      // Retry up to 3 times for network errors
-      return failureCount < 3;
-    },
-  });
+  // Fetch department types
+  const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useDepartmentTypes();
+
+  const createClinicMutation = useCreateClinic();
+  const queryClient = useQueryClient();
 
   // Step 1 form
   const detailsForm = useForm<ClinicDetailsForm>({
@@ -175,104 +156,23 @@ const CreateClinicPage = () => {
     setStep(2);
   };
 
-  // Final Submit (Step 3) with error handling
+  // Final Submit (Step 3) — delegates to useCreateClinic hook
   const handleSubmit = async (data: DoctorProfileForm) => {
     if (!user) return;
     setIsSubmitting(true);
 
     try {
-      // Use the create_clinic_with_admin function
-      const { data: clinicResult, error: clinicError } = await supabase
-        .rpc('create_clinic_with_admin', {
-          clinic_name: clinicDetails.name,
-          user_phone: user.phone || undefined
-        })
-        .single();
-
-      if (clinicError) throw clinicError;
-      if (!clinicResult) throw new Error("Clinic creation failed - no result returned.");
-
-      const createdClinicId = (clinicResult as { clinic_id: string }).clinic_id;
-
-      // Update additional clinic details (address, email, phone, website)
-      const { error: updateError } = await supabase
-        .from('clinics')
-        .update({
-          address: clinicDetails.address || null,
-          email: clinicDetails.email || null,
-          phone: clinicDetails.phone || null,
-          website: clinicDetails.website || null,
-          created_by: user.id
-        })
-        .eq('id', createdClinicId);
-
-      if (updateError) throw updateError;
-
-      // Insert selected departments into clinic_departments first
-      // IMPORTANT: clinic_members.department_id references clinic_departments.id (NOT department_types.id)
-      let userDepartmentId: string | null = null;
-      if (departments.length > 0) {
-        const departmentRows = departments.map((departmentTypeId) => ({
-          clinic_id: createdClinicId,
-          department_type_id: departmentTypeId,
-        }));
-        const { data: insertedDepartments, error: deptError } = await supabase
-          .from('clinic_departments')
-          .insert(departmentRows)
-          .select('id, department_type_id');
-        if (deptError) throw deptError;
-
-        // Find the clinic_departments.id for the user's selected department
-        // We need clinic_departments.id (not department_types.id) for the foreign key
-        if (data.isDoctor === 'yes' && data.selectedDepartment && insertedDepartments) {
-          const userDepartment = insertedDepartments.find(
-            dept => dept.department_type_id === data.selectedDepartment
-          );
-          userDepartmentId = userDepartment?.id || null;
-        }
-      }
-
-      // Only create doctor profile if the superadmin is a practicing doctor
-      if (data.isDoctor === 'yes') {
-        // First update the clinic_members record with the selected department
-        // BUT keep the role as superadmin since they are the clinic creator
-        const { error: memberUpdateError } = await supabase
-          .from('clinic_members')
-          .update({
-            department_id: userDepartmentId,
-            role: 'superadmin' // Keep as superadmin
-          })
-          .eq('user_id', user.id)
-          .eq('clinic_id', createdClinicId);
-
-        if (memberUpdateError) throw memberUpdateError;
-
-        // Then create the doctor profile
-        const { error: doctorError } = await createDoctorProfile({
-          userId: user.id,
-          clinicId: createdClinicId,
-          name: user.user_metadata?.name || user.email || '',
+      const createdClinicId = await createClinicMutation.mutateAsync({
+        user: {
+          id: user.id,
           email: user.email,
-          consultationFee: data.consultationFee || 0,
-          bio: data.bio,
-          departmentId: userDepartmentId
-        });
-        if (doctorError) throw doctorError;
-      } else {
-        // For admin-only users, ensure they have a clinic_members record without department_id
-        const { error: adminMemberError } = await supabase
-          .from('clinic_members')
-          .upsert({
-            user_id: user.id,
-            clinic_id: createdClinicId,
-            role: 'superadmin',
-            department_id: null // Explicitly set to null for admin-only users
-          }, {
-            onConflict: 'user_id,clinic_id'
-          });
-
-        if (adminMemberError) throw adminMemberError;
-      }
+          phone: user.phone,
+          user_metadata: user.user_metadata,
+        },
+        clinicDetails,
+        departments,
+        doctorProfile: data,
+      });
 
       // Update auth context - ensure clinic data is refreshed
       await fetchUserAndClinicData(user);
@@ -280,24 +180,14 @@ const CreateClinicPage = () => {
       // Now that clinic data is refreshed, set the new clinic as active
       setActiveClinicId(createdClinicId);
 
-      const selectedDepartmentNames = (departmentTypes as DbDepartmentType[])?.filter(dt => departments.includes(dt.id)).map(dt => dt.name).join(", ") || "None";
-      const doctorStatus = data.isDoctor === 'yes' ? "You will also appear in doctor lists for appointments." : "You will manage the clinic as an administrator only.";
-
-      toast({
-        title: "Success",
-        description: `Clinic "${clinicDetails.name}" created successfully.\nDepartments: ${selectedDepartmentNames}\n${doctorStatus}`,
-      });
+      // Invalidate cached queries so dashboard loads fresh data
+      queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
+      queryClient.invalidateQueries({ queryKey: ['doctorDashboardData'] });
 
       // Navigate to dashboard - the new clinic should now be active
       router.replace("/dashboard");
-    } catch (error: unknown) {
-      // showErrorToast(error, { title: "Error creating clinic" });
-      logger.error("Error creating clinic:", error);
-      toast({
-        title: "Error creating clinic",
-        description: error instanceof Error ? error.message : "An unexpected error occurred.",
-        variant: "destructive",
-      });
+    } catch {
+      // Error toast handled by hook's onError
     } finally {
       setIsSubmitting(false);
     }

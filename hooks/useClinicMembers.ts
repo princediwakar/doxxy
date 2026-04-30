@@ -114,6 +114,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
       );
     },
     enabled: !!clinicId,
+    staleTime: 30 * 1000,
   });
 
   // Fetch Departments for Dropdowns
@@ -129,6 +130,7 @@ export const useClinicMembers = (clinicId: string | undefined) => {
       return (data as DepartmentWithDetails[]) || [];
     },
     enabled: !!clinicId,
+    staleTime: 10 * 60 * 1000,
   });
 
   // Mutations

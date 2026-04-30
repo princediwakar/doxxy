@@ -33,6 +33,7 @@ export const useDoctors = () => {
       return data as Doctor[];
     },
     enabled: !!activeClinic?.clinics?.id,
+    staleTime: 10 * 60 * 1000,
   });
 
   return { doctors, isLoading, error };

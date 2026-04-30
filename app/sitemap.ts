@@ -2,11 +2,9 @@ import { logger } from "@/lib/logger";
 // app/sitemap.ts
 import { MetadataRoute } from "next";
 import { getBlogPosts } from "@/content/blog";
+import { APP_URL } from "@/lib/constants";
 
-// Base URL - should match your production domain
-// You can also make this configurable via environment variables
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com";
+const BASE_URL = APP_URL;
 
 // Configuration for public routes with their metadata
 // This makes it easier to maintain and update

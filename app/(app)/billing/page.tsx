@@ -1,7 +1,6 @@
 // src/pages/Billing.tsx
 "use client";
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,14 +22,13 @@ import {
 import { Search, Plus, CreditCard, IndianRupee, FileText, Printer, Pencil } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MonthSelector } from "@/components/ui/MonthSelector";
-import { Suspense, lazy } from "react";
+import { Suspense } from "react";
+import dynamic from 'next/dynamic';
 import { Spinner } from "@/components/ui/loading";
 
 // Lazy load heavy billing components
-const BillingModal = lazy(() =>
-  import("@/components/billing/BillingModal").then((module) => ({
-    default: module.BillingModal,
-  }))
+const BillingModal = dynamic(() =>
+  import("@/components/billing/BillingModal").then((mod) => mod.BillingModal)
 );
 import { printBill } from "@/components/billing/billingPrintUtils";
 import { useAuth } from "@/contexts/AuthContext";

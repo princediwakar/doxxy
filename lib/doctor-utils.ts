@@ -28,7 +28,7 @@ clinicId,
   departmentId?: string | null;
 }) {
   try {
-    // Check if the user already has a clinic membership and their current role
+    // Upsert clinic membership — preserve superadmin role when it already exists
     const { data: existingMembership, error: membershipCheckError } = await supabase
       .from('clinic_members')
       .select('role, department_id')
@@ -40,7 +40,6 @@ clinicId,
       logger.warn('Error checking existing membership:', membershipCheckError.message);
     }
 
-    // Only update membership if the user doesn't exist or isn't a superadmin
     if (!existingMembership || existingMembership.role !== 'superadmin') {
       const { error: membershipError } = await supabase
         .from('clinic_members')
@@ -56,30 +55,12 @@ clinicId,
       if (membershipError) {
         logger.warn('Could not create clinic membership:', membershipError.message);
       }
-    } else if (departmentId) {
-      // If user is a superadmin, just update their department_id
-      // BUT keep their role as superadmin
-      const { error: updateError } = await supabase
-        .from('clinic_members')
-        .update({ 
-          department_id: departmentId,
-          role: 'superadmin' // Ensure role stays as superadmin
-        })
-        .eq('user_id', userId)
-        .eq('clinic_id', clinicId);
-
-      if (updateError) {
-        logger.warn('Could not update department_id:', updateError.message);
-      }
     }
 
-    // Wait a bit for the membership to be processed
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Now create the doctor profile
+    // Create the doctor profile (upsert so retries are safe)
     const { data: doctorData, error: doctorError } = await supabase
       .from('doctors')
-      .insert({
+      .upsert({
         user_id: userId,
         clinic_id: clinicId,
         name,
@@ -89,6 +70,8 @@ clinicId,
         availability,
         bio,
         is_active: true
+      }, {
+        onConflict: 'user_id,clinic_id'
       })
       .select()
       .single();

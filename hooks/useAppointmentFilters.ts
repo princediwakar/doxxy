@@ -45,6 +45,7 @@ export function useAppointmentFilters() {
       !!activeClinic?.clinic_id &&
       (activeClinicRole === "doctor" ||
         (activeClinicRole === "superadmin" && hasDoctorProfile)),
+    staleTime: 60 * 1000,
   });
 
   useEffect(() => {

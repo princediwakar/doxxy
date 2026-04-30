@@ -65,6 +65,7 @@ export function useBillingData(clinicId?: string, selectedMonth?: string) {
       });
     },
     enabled: !!clinicId,
+    staleTime: 2 * 60 * 1000,
   });
 
   const statsQuery = useQuery<BillingStats>({
@@ -92,6 +93,7 @@ export function useBillingData(clinicId?: string, selectedMonth?: string) {
       return { totalRevenue, totalBills: (data as unknown[]).length };
     },
     enabled: !!clinicId,
+    staleTime: 2 * 60 * 1000,
   });
 
   return {

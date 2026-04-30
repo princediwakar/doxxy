@@ -4,7 +4,9 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Suspense, lazy } from 'react';
+import { Spinner } from '@/components/ui/loading';
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Settings,
   Users,
@@ -15,10 +17,10 @@ import {
   Wallet,
 } from "lucide-react";
 
-const ClinicDepartmentsManagement = lazy(() => import('@/components/superadmin/ClinicDepartmentsManagement'));
-const ClinicMembersManagement = lazy(() => import('@/components/superadmin/ClinicMembersManagement'));
-const ClinicDetailsManagement = lazy(() => import('@/components/superadmin/ClinicDetailsManagement'));
-const PaymentsDashboard = lazy(() => import('@/components/payments/PaymentsDashboard').then(module => ({ default: module.PaymentsDashboard })));
+const ClinicDepartmentsManagement = dynamic(() => import('@/components/superadmin/ClinicDepartmentsManagement'));
+const ClinicMembersManagement = dynamic(() => import('@/components/superadmin/ClinicMembersManagement'));
+const ClinicDetailsManagement = dynamic(() => import('@/components/superadmin/ClinicDetailsManagement'));
+const PaymentsDashboard = dynamic(() => import('@/components/payments/PaymentsDashboard').then(mod => mod.PaymentsDashboard));
 
 const SettingsPage = () => {
   const { activeClinicRole, activeClinic } = useAuth();
@@ -110,25 +112,25 @@ const SettingsPage = () => {
 
         {/* Added min-w-0 and overflow-hidden to prevent flex children from blowing out width */}
         <TabsContent value="members" className="space-y-0 w-full min-w-0 overflow-hidden outline-none">
-          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><Spinner size="md" /></div>}>
             <ClinicMembersManagement />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="departments" className="space-y-0 w-full min-w-0 overflow-hidden outline-none">
-          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><Spinner size="md" /></div>}>
             <ClinicDepartmentsManagement />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="details" className="space-y-0 w-full min-w-0 overflow-hidden outline-none">
-          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><Spinner size="md" /></div>}>
             <ClinicDetailsManagement />
           </Suspense>
         </TabsContent>
 
         <TabsContent value="payments" className="space-y-0 w-full min-w-0 overflow-hidden outline-none">
-          <Suspense fallback={<div className="flex items-center justify-center p-4"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div></div>}>
+          <Suspense fallback={<div className="flex items-center justify-center p-4"><Spinner size="md" /></div>}>
             <PaymentsDashboard />
           </Suspense>
         </TabsContent>

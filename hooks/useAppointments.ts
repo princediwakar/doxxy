@@ -118,6 +118,7 @@ export const useAppointments = (): UseAppointmentsReturn => {
     queryFn: () => fetchAppointments(activeClinic?.clinic_id, debouncedSearch),
     enabled: !!activeClinic?.clinic_id && !authLoading,
     placeholderData: (previousData) => previousData,
+    staleTime: 30 * 1000,
   });
 
   const rawAppointments = useMemo(

@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
-import { getSupabase } from '@/integrations/supabase/client';
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useDoctorProfile } from "@/hooks/useDoctorProfile";
+import {
+  useDoctorQuickOnboarding,
+  useClinicDepartmentsForOnboarding,
+} from "@/hooks/useDoctorQuickOnboarding";
 import {
   Stethoscope,
   X,
@@ -21,8 +24,6 @@ import {
 } from "@/components/ui/dialog";
 import { ButtonLoader } from '@/components/ui/loading';
 
-const supabase = getSupabase();
-
 interface DoctorQuickOnboardingProps {
   open: boolean;
   onClose: () => void;
@@ -31,9 +32,7 @@ interface DoctorQuickOnboardingProps {
 
 export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickOnboardingProps) {
   const { user, activeClinic, markProfileComplete } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     selectedDepartment: '',
@@ -41,43 +40,19 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     consultation_fee: '',
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  // Fetch profile data from profiles table
-  const { data: profileData } = useQuery({
-    queryKey: ['userProfile', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', user.id)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error; 
-      return data;
-    },
-    enabled: !!user?.id && open,
-  });
+  const { data: profileData } = useUserProfile(user?.id);
+  const { data: existingDoctorProfile } = useDoctorProfile(
+    user?.id,
+    activeClinic?.clinic_id
+  );
+  const { data: departments = [] } = useClinicDepartmentsForOnboarding(
+    activeClinic?.clinic_id
+  );
 
-  // Fetch existing doctor profile
-  const { data: existingDoctorProfile } = useQuery({
-    queryKey: ['doctorProfile', user?.id, activeClinic?.clinic_id],
-    queryFn: async () => {
-      if (!user?.id || !activeClinic?.clinic_id) return null;
-      const { data, error } = await supabase
-        .from('doctors')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('clinic_id', activeClinic.clinic_id)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
-    enabled: !!user?.id && !!activeClinic?.clinic_id && open,
-  });
+  const onboardMutation = useDoctorQuickOnboarding();
+  const isSubmitting = onboardMutation.isPending;
 
   // Initialize form with profile data
   React.useEffect(() => {
@@ -97,152 +72,50 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     }
   }, [profileData, existingDoctorProfile, user]);
 
-  // Fetch available departments
-  const { data: departments = [] } = useQuery({
-    queryKey: ['clinicDepartments', activeClinic?.clinic_id],
-    queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
-      const { data, error } = await supabase
-        .from('clinic_departments')
-        .select('id, department_types(id, name)')
-        .eq('clinic_id', activeClinic.clinic_id);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!activeClinic?.clinic_id && open,
-  });
-
-  const createOrUpdateDoctorMutation = useMutation({
-    mutationFn: async () => {
-      if (!user || !activeClinic) throw new Error('User or clinic not found');
-
-      // --- VALIDATION LOGIC ---
-      const errors: Record<string, string> = {};
-      
-      // 1. Name is Mandatory
-      if (!formData.name.trim()) {
-        errors.name = 'Full Name is required';
-      }
-
-      // 2. Department is Mandatory
-      if (!formData.selectedDepartment) {
-        errors.selectedDepartment = 'Department selection is required';
-      }
-
-      // 3. Specialization is Mandatory
-      if (!formData.primarySpecialization.trim()) {
-        errors.primarySpecialization = 'Specialization is required';
-      }
-
-      // 4. Consultation Fee is Mandatory
-      if (!formData.consultation_fee || isNaN(parseInt(formData.consultation_fee))) {
-        errors.consultation_fee = 'Please set a base fee (enter 0 if free)';
-      }
-      
-      if (Object.keys(errors).length > 0) {
-        setFormErrors(errors);
-        throw new Error('Validation failed');
-      }
-
-      // --- DATABASE OPERATIONS ---
-
-      // 1. Upsert Profile (Name only)
-      const { data: existingProfile } = await supabase
-        .from('profiles')
-        .select('id, phone')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (!existingProfile) {
-        await supabase.from('profiles').insert({
-          id: user.id,
-          name: formData.name.trim(),
-          email: user.email,
-          created_at: new Date().toISOString(),
-        });
-      } else {
-        // We only update name here, keeping existing phone if it exists in DB
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ name: formData.name.trim() })
-          .eq('id', user.id);
-          
-        if (profileError) throw profileError;
-      }
-
-      // 2. Update Auth Metadata
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { name: formData.name.trim() }
-      });
-      if (authError) throw authError;
-
-      // 3. Upsert Doctor Record
-      const doctorData = {
-        name: formData.name.trim(),
-        email: user.email || '',
-        // Use existing profile phone, or auth phone, or empty string
-        phone: existingProfile?.phone || user.phone || '', 
-        primary_specialization: formData.primarySpecialization,
-        consultation_fee: parseInt(formData.consultation_fee),
-        bio: `Medical professional specializing in ${formData.primarySpecialization}`,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      };
-
-      if (existingDoctorProfile) {
-        const { error: doctorError } = await supabase
-          .from('doctors')
-          .update(doctorData)
-          .eq('user_id', user.id)
-          .eq('clinic_id', activeClinic.clinic_id);
-        if (doctorError) throw doctorError;
-      } else {
-        const { error: doctorError } = await supabase.from('doctors').insert({
-          ...doctorData,
-          user_id: user.id,
-          clinic_id: activeClinic.clinic_id,
-        });
-        if (doctorError) throw doctorError;
-      }
-
-      // 4. Update Clinic Member Department
-      const { error: deptError } = await supabase
-        .from('clinic_members')
-        .update({ department_id: formData.selectedDepartment })
-        .eq('user_id', user.id)
-        .eq('clinic_id', activeClinic.clinic_id);
-      if (deptError) throw deptError;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['userHasDoctorProfile'] });
-      queryClient.invalidateQueries({ queryKey: ['userProfile', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['doctorProfile', user?.id, activeClinic?.clinic_id] });
-      toast({ 
-        title: "Success",
-        description: "Medical profile ready! You can now start accepting appointments.",
-      });
-      markProfileComplete();
-      onSuccess();
-      onClose();
-    },
-    onError: (error: Error) => {
-      if (error.message !== 'Validation failed') {
-        toast({ 
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
-    },
-    onSettled: () => {
-      setIsSubmitting(false);
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    createOrUpdateDoctorMutation.mutate();
+
+    // --- VALIDATION LOGIC ---
+    const errors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      errors.name = 'Full Name is required';
+    }
+    if (!formData.selectedDepartment) {
+      errors.selectedDepartment = 'Department selection is required';
+    }
+    if (!formData.primarySpecialization.trim()) {
+      errors.primarySpecialization = 'Specialization is required';
+    }
+    if (!formData.consultation_fee || isNaN(parseInt(formData.consultation_fee))) {
+      errors.consultation_fee = 'Please set a base fee (enter 0 if free)';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    onboardMutation.mutate(
+      {
+        name: formData.name,
+        departmentId: formData.selectedDepartment,
+        specialization: formData.primarySpecialization,
+        consultationFee: parseInt(formData.consultation_fee),
+        userId: user!.id,
+        userEmail: user?.email,
+        userPhone: user?.phone,
+        clinicId: activeClinic!.clinic_id,
+        existingDoctorProfile: !!existingDoctorProfile,
+      },
+      {
+        onSuccess: () => {
+          markProfileComplete();
+          onSuccess();
+          onClose();
+        },
+      }
+    );
   };
 
   const handleClose = () => {

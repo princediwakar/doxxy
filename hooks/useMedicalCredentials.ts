@@ -36,6 +36,7 @@ export function useMedicalCredentials(
       }));
     },
     enabled: !!clinicId,
+    staleTime: 10 * 60 * 1000,
   });
 
   const currentDepartmentQuery = useQuery({
@@ -55,6 +56,7 @@ export function useMedicalCredentials(
       return data;
     },
     enabled: !!doctorUserId && !!clinicId,
+    staleTime: 5 * 60 * 1000,
   });
 
   const updateCredentialsMutation = useMutation({

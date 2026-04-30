@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import ReactMarkdown from "react-markdown";
+import { APP_URL } from "@/lib/constants";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -62,7 +63,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
   const post = await getBlogPost(slug);
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://doxxy.neurovisionhospital.com';
+  const baseUrl = APP_URL;
 
   if (!post) {
     notFound();

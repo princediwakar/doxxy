@@ -35,7 +35,7 @@
 - **Role-Specific Dashboards:** Superadmin, Staff, and Doctor dashboards with relevant stats, charts, and quick actions.
 
 ### UI/UX
-- **Modern Interface:** Built with Vite, React, TypeScript, Tailwind CSS, and Shadcn UI.
+- **Modern Interface:** Built with Next.js, React, TypeScript, Tailwind CSS, and shadcn/ui.
 - **React Query:** Efficient data fetching and caching.
 - **Form Validation:** All forms use zod for validation.
 - **Notifications:** User feedback via toast notifications.
@@ -103,11 +103,13 @@ The process for inviting and adding any member (doctor, staff, superadmin) to a 
 
 ### Code Structure
 
-- `src/components/`: All UI components, including role-based dashboards, modals, and management screens.
-- `src/pages/`: Main route pages (Dashboard, Appointments, Patients, Billing, Settings, etc.).
-- `src/contexts/`: Context providers (e.g., AuthContext).
-- `src/hooks/`: Custom React hooks for data fetching and logic.
-- `src/integrations/supabase/`: Supabase client and generated types.
+- `components/`: All UI components, including role-based dashboards, modals, and management screens.
+- `app/`: Next.js App Router pages and API routes.
+- `contexts/`: Context providers (e.g., AuthContext).
+- `hooks/`: Custom React hooks for data fetching and logic.
+- `integrations/supabase/`: Supabase client and generated types.
+- `lib/`: Shared utilities and constants.
+- `types/`: TypeScript type definitions.
 - `supabase/functions/`: Edge Functions (notably `invite-member`).
 - `supabase/migrations/`, `supabase/migrations_2/`: Database migrations.
 

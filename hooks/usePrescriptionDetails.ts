@@ -53,5 +53,6 @@ export function usePrescriptionDetails(
       };
     },
     enabled: enabled && !!prescriptionId && !!clinicId,
+    staleTime: 30 * 60 * 1000,
   });
 }
