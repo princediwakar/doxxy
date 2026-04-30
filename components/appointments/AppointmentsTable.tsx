@@ -20,8 +20,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MoreHorizontal, Calendar, Eye, Receipt, User, Clock, Play, CheckCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { MoreHorizontal, Calendar, Receipt, User, Play, Edit } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { formatTimeIST } from '@/lib/utils';
 import { AppointmentWithDetails } from '@/types/appointments';
@@ -37,7 +37,6 @@ interface AppointmentCardProps {
   onStartConsultation: (appointment: AppointmentWithDetails) => void;
   onViewConsultation: (appointment: AppointmentWithDetails) => void;
   onCreateBill: (appointment: AppointmentWithDetails) => void;
-  onCheckIn?: (appointmentId: string) => void;
   cancelLoading: boolean;
   getStatusColor: (status: string) => string;
 }
@@ -50,7 +49,6 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
   onStartConsultation,
   onViewConsultation,
   onCreateBill,
-  onCheckIn,
   cancelLoading,
   getStatusColor,
 }) => {
@@ -64,10 +62,6 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
   const handleStopPropagation = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
   }, []);
-
-  const handleCheckIn = useCallback(() => {
-    onCheckIn?.(appointment.id);
-  }, [onCheckIn, appointment.id]);
 
   const handleStart = useCallback(() => {
     onStartConsultation(appointment);
@@ -150,7 +144,28 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
           >
             {appointment.billing_status || 'Unbilled'}
           </Badge>
-          <div className="md:hidden flex justify-end" onClick={handleStopPropagation}>
+          <div className="flex items-center gap-2" onClick={handleStopPropagation}>
+            {appointment.status === 'Scheduled' && appointment.user_id === user?.id && (
+              <Button size="sm" onClick={handleStart}>
+                <Play className="mr-1 h-4 w-4" /> Start
+              </Button>
+            )}
+            {appointment.status === 'In Progress' && appointment.user_id === user?.id && (
+              <Button size="sm" onClick={handleContinue}>
+                <Play className="mr-1 h-4 w-4" /> Continue
+              </Button>
+            )}
+            {appointment.status === 'Completed' && (
+              <Button size="sm" variant="outline" onClick={handleViewOrEdit}>
+                {appointment.user_id === user?.id ? "Edit" : "View"}
+              </Button>
+            )}
+            {appointment.status !== 'Cancelled' &&
+             (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
+              <Button size="sm" onClick={handleCreateBill}>
+                <Receipt className="mr-1 h-4 w-4" /> Bill
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
@@ -159,40 +174,9 @@ const AppointmentCard: React.FC<AppointmentCardProps> = React.memo(({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                {onCheckIn && appointment.status === 'Scheduled' && (
-                  <DropdownMenuItem onClick={handleCheckIn}>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Check In
-                  </DropdownMenuItem>
-                )}
-                {appointment.status === 'Scheduled' && appointment.user_id === user?.id && (
-                  <DropdownMenuItem onClick={handleStart}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Start
-                  </DropdownMenuItem>
-                )}
-                {appointment.status === 'In Progress' && appointment.user_id === user?.id && (
-                  <DropdownMenuItem onClick={handleContinue}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Continue
-                  </DropdownMenuItem>
-                )}
-                {appointment.status === 'Completed' && (
-                  <DropdownMenuItem onClick={handleViewOrEdit}>
-                    <Eye className="mr-2 h-4 w-4" />
-                    {appointment.user_id === user?.id ? "Edit" : "View"}
-                  </DropdownMenuItem>
-                )}
-                {appointment.status !== 'Cancelled' &&
-                 (!appointment.billing_status || appointment.billing_status === 'Unbilled') && (
-                  <DropdownMenuItem onClick={handleCreateBill}>
-                    <Receipt className="mr-2 h-4 w-4" />
-                    Create Bill
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onClick={handleViewEditAppointment}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View/Edit Appointment
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Appointment
                 </DropdownMenuItem>
                 {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
                   <DropdownMenuItem
@@ -387,8 +371,8 @@ const TableAppointmentRow: React.FC<TableAppointmentRowProps> = React.memo(({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem onClick={handleViewEdit}>
-                <Eye className="mr-2 h-4 w-4" />
-                View/Edit Appointment
+                <Edit className="mr-2 h-4 w-4" />
+                Edit Appointment
               </DropdownMenuItem>
               {(appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
                 <DropdownMenuItem
@@ -414,7 +398,6 @@ interface AppointmentsTableProps {
   onStartConsultation: (appointment: AppointmentWithDetails) => void;
   onViewConsultation: (appointment: AppointmentWithDetails) => void;
   onCreateBill: (appointment: AppointmentWithDetails) => void;
-  onCheckIn?: (appointmentId: string) => void;
   activeClinicRole?: string | null;
   cancelLoading?: boolean;
 }
@@ -426,7 +409,6 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
   onStartConsultation,
   onViewConsultation,
   onCreateBill,
-  onCheckIn,
   cancelLoading = false,
 }) => {
   const { user } = useAuth();
@@ -468,7 +450,6 @@ export const AppointmentsTable: React.FC<AppointmentsTableProps> = ({
             onStartConsultation={onStartConsultation}
             onViewConsultation={onViewConsultation}
             onCreateBill={onCreateBill}
-            onCheckIn={onCheckIn}
             cancelLoading={cancelLoading}
             getStatusColor={getStatusColor}
           />

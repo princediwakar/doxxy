@@ -29,24 +29,6 @@ export function useAppointmentActions() {
     onError: (err: Error) => toast.error(err.message),
   });
 
-  const checkInAppointmentMutation = useMutation({
-    mutationFn: async (appointmentId: string) => {
-      const { error } = await supabase
-        .from("appointments")
-        .update({
-          status: APPOINTMENT_STATUS.IN_PROGRESS,
-          checked_in_at: new Date().toISOString(),
-        })
-        .eq("id", appointmentId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
-      toast.success("Patient checked in");
-    },
-    onError: (err: Error) => toast.error(err.message),
-  });
-
   const handleStartConsultation = async (
     appointmentId: string,
     canBookAppointment: (credits: number) => boolean
@@ -122,7 +104,6 @@ export function useAppointmentActions() {
 
   return {
     cancelAppointmentMutation,
-    checkInAppointmentMutation,
     handleStartConsultation,
   };
 }

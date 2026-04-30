@@ -40,7 +40,6 @@ const Appointments = () => {
     getTotalPages,
     handleCancelAppointment,
     handleStartConsultation,
-    handleCheckIn,
     refreshAppointments,
     cancelLoading,
     selectedDoctorId,
@@ -165,7 +164,6 @@ const Appointments = () => {
           onStartConsultation={handleStartConsultationClick}
           onViewConsultation={handleViewConsultation}
           onCreateBill={handleCreateBill}
-          onCheckIn={handleCheckIn}
           activeClinicRole={activeClinicRole}
           cancelLoading={cancelLoading}
           isSearching={!!searchTerm}

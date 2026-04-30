@@ -109,7 +109,6 @@ export const useAppointments = (): UseAppointmentsReturn => {
 
   const {
     cancelAppointmentMutation,
-    checkInAppointmentMutation,
     handleStartConsultation: startConsultation,
   } = useAppointmentActions();
 
@@ -173,8 +172,6 @@ export const useAppointments = (): UseAppointmentsReturn => {
     itemsPerPage: ITEMS_PER_PAGE,
     handleCancelAppointment: (id: string) => cancelAppointmentMutation.mutate(id),
     handleStartConsultation,
-    handleCheckIn: (id: string) => checkInAppointmentMutation.mutate(id),
-    checkInLoading: checkInAppointmentMutation.isPending,
     refreshAppointments: () => queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all }),
     cancelLoading: cancelAppointmentMutation.isPending,
     updateStatusLoading: false,
