@@ -35,45 +35,49 @@ export const ConsultationHeader = ({
 
   return (
       <div className="sticky top-0 z-50 bg-white border-b shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:py-4">
+            {/* Left: Back + Patient info */}
+            <div className="flex items-center gap-2 sm:gap-4 min-w-0">
               <Button
                 variant="ghost"
                 onClick={onBack}
-                className="flex items-center gap-2"
+                className="flex items-center gap-1 sm:gap-2 shrink-0"
                 size="sm"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back
+                <span className="hidden sm:inline">Back</span>
               </Button>
-              <Separator orientation="vertical" className="h-6" />
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-semibold text-gray-900">
+              <Separator orientation="vertical" className="h-6 hidden sm:block" />
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h1 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                     {patient?.name}
                   </h1>
                   {isConsultationCompleted && (
-                    <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                    <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 shrink-0">
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Completed
                     </Badge>
                   )}
+                  {isConsultationCompleted && !canEditConsultation && (
+                    <Badge variant="outline" className="text-xs border-green-200 text-green-700 shrink-0">
+                      <Lock className="h-3 w-3 mr-1" />
+                      Read Only
+                    </Badge>
+                  )}
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   {patient?.age && `${patient.age} yrs`}
                   {patient?.gender && ` • ${patient.gender}`}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              {isConsultationCompleted && !canEditConsultation ? (
-                <Badge variant="outline" className="text-xs border-green-200 text-green-700">
-                  <Lock className="h-3 w-3 mr-1" />
-                  Read Only
-                </Badge>
-              ) : (
-                <Badge variant={autoSaveMutation.isPending ? "secondary" : "outline"} className="text-xs">
+
+            {/* Right: Status + Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              {!isConsultationCompleted && canEditConsultation && (
+                <Badge variant={autoSaveMutation.isPending ? "secondary" : "outline"} className="text-xs hidden sm:inline-flex">
                   {autoSaveMutation.isPending ? "Saving..." : "Saved"}
                 </Badge>
               )}
@@ -87,20 +91,8 @@ export const ConsultationHeader = ({
                 title={!canEditConsultation ? "Cannot save consultation" : "Save consultation"}
               >
                 <Save className="h-4 w-4" />
-                Save
+                <span className="hidden sm:inline">Save</span>
               </Button>
-              {/* 
-              <Button
-                onClick={onPrint}
-                variant="outline"
-                disabled={isConsultationCompleted}
-                size="sm"
-                className="flex items-center gap-1"
-                title={isConsultationCompleted ? "Cannot print completed consultation" : "Print consultation"}
-              >
-                <Printer className="h-4 w-4" />
-                Print
-              </Button> */}
               <Button
                 onClick={onPreview}
                 variant="outline"
@@ -108,20 +100,21 @@ export const ConsultationHeader = ({
                 className="flex items-center gap-1"
               >
                 <Eye className="h-4 w-4" />
-                Preview
+                <span className="">Preview</span>
               </Button>
               <Button
-                    onClick={onComplete}
-                    disabled={!canComplete && !canEditCompleted}
-                    size="sm"
-                    className={`flex items-center gap-1 transition-all ${(canComplete || canEditCompleted)
-                        ? 'bg-blue-600 hover:bg-blue-700 text-secondary '
-                        : 'opacity-60'
-                      }`}
-                    variant={(canComplete || canEditCompleted) ? "default" : "secondary"}
-                  >
-                    End consultation
-                  </Button>
+                onClick={onComplete}
+                disabled={!canComplete && !canEditCompleted}
+                size="sm"
+                className={`flex items-center gap-1 transition-all shrink-0 ${(canComplete || canEditCompleted)
+                    ? 'bg-blue-600 hover:bg-blue-700 text-secondary '
+                    : 'opacity-60'
+                  }`}
+                variant={(canComplete || canEditCompleted) ? "default" : "secondary"}
+              >
+                <span className="hidden sm:inline">End consultation</span>
+                <span className="sm:hidden">End consultation</span>
+              </Button>
             </div>
           </div>
         </div>
