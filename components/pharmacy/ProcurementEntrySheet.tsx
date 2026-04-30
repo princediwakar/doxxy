@@ -11,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { procurementSchema, ProcurementFormValues } from "@/types/pharmacy";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UploadCloud, Save, Loader2, Sparkles } from "lucide-react";
+import { UploadCloud, Save, Loader2, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -97,11 +98,11 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="h-[95vh] rounded-t-xl sm:max-w-none flex flex-col p-0 border-t-0 shadow-2xl"
+        className="h-[95vh] rounded-t-xl sm:max-w-none flex flex-col p-0 border-t-0 shadow-2xl [&>button:last-of-type]:hidden"
       >
         <div className="flex flex-col h-full bg-background">
           <SheetHeader className="px-6 py-4 border-b bg-card">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div>
                 <SheetTitle className="text-xl flex items-center gap-2">
                   Add New Stock
@@ -130,13 +131,13 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                   Add new medicines to your stock. Upload a bill image to auto-fill details.
                 </SheetDescription>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading || isExtracting}
-                  className="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200"
+                  className="w-full sm:w-auto justify-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200"
                 >
                   {isUploading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -155,7 +156,7 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                 <Button
                   onClick={form.handleSubmit(onSubmit)}
                   disabled={createProcurement.isPending || isExtracting || isUploading}
-                  className="min-w-[140px]"
+                  className="w-full sm:w-auto justify-center"
                 >
                   {createProcurement.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -164,6 +165,16 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                   )}
                   Save to Stock
                 </Button>
+                <SheetClose asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </SheetClose>
               </div>
             </div>
             {unmappedCount > 0 && fields.length > 0 && !isExtracting && (
