@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UploadCloud, Save, Loader2, Sparkles, X } from "lucide-react";
+import { UploadCloud, Save, Loader2, Sparkles, X, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -38,6 +38,7 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
   const { extractData, isExtracting, extractionStats, resetExtraction } = useBillExtraction();
   const { createMedicine } = useCreateMedicine();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<ProcurementFormValues>({
     resolver: zodResolver(procurementSchema),
@@ -82,6 +83,7 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
       toast.error("Failed to upload bill image");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
     }
   };
   const onSubmit = (data: ProcurementFormValues) => {
@@ -105,6 +107,16 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div>
                 <SheetTitle className="text-xl flex items-center gap-2">
+                  <SheetClose asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0 -ml-2"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </SheetClose>
                   Add New Stock
                   {isExtracting && (
                     <Badge
@@ -154,6 +166,24 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                   onChange={handleFileUpload}
                 />
                 <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => cameraInputRef.current?.click()}
+                  disabled={isUploading || isExtracting}
+                  className="w-full sm:w-auto justify-center md:hidden"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Take Photo
+                </Button>
+                <Input
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                />
+                <Button
                   onClick={form.handleSubmit(onSubmit)}
                   disabled={createProcurement.isPending || isExtracting || isUploading}
                   className="w-full sm:w-auto justify-center"
@@ -165,16 +195,6 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                   )}
                   Save to Stock
                 </Button>
-                <SheetClose asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </SheetClose>
               </div>
             </div>
             {unmappedCount > 0 && fields.length > 0 && !isExtracting && (
