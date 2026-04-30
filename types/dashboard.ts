@@ -16,6 +16,7 @@ export interface FormattedAppointment {
   date: string;
   status: AppointmentStatus;
   type: AppointmentType;
+  doctor_id: string;
 }
 
 /** Database appointment structure for dashboard queries */
@@ -90,6 +91,7 @@ export interface UpcomingAppointmentsListProps {
   onAppointmentClick?: (appointmentId: string) => void;
   showViewAllButton?: boolean;
   onViewAll?: () => void;
+  onStartConsultation?: (appointmentId: string) => void;
 }
 
 /** Props for WeeklyAppointmentsChart component */
@@ -165,6 +167,7 @@ export function convertToFormattedAppointment(
     date: apt.date,
     status,
     type,
+    doctor_id: apt.doctor_id,
   };
 }
 

@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarCheck, User, Clock } from "lucide-react";
+import { CalendarCheck, User, Clock, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FormattedAppointment } from "@/types/dashboard";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ interface UpcomingAppointmentsListProps {
   onAppointmentClick?: (appointmentId: string) => void;
   showViewAllButton?: boolean;
   onViewAll?: () => void;
+  onStartConsultation?: (appointmentId: string) => void;
 }
 
 export function UpcomingAppointmentsList({
@@ -27,6 +28,7 @@ export function UpcomingAppointmentsList({
   onAppointmentClick,
   showViewAllButton = false,
   onViewAll,
+  onStartConsultation,
 }: UpcomingAppointmentsListProps) {
   const getStatusVariant = (status: string) => {
     switch (status.toLowerCase()) {
@@ -105,6 +107,20 @@ export function UpcomingAppointmentsList({
                     <span className="flex items-center"><CalendarCheck size={14} className="mr-1" />{appointment.date}</span>
                     <span className="flex items-center"><Clock size={14} className="mr-1" />{formatTimeIST(appointment.time)}</span>
                   </div>
+                  {onStartConsultation && (appointment.status === 'Scheduled' || appointment.status === 'In Progress') && (
+                    <div className="mt-2">
+                      <Button
+                        size="sm"
+                        variant='default'
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStartConsultation(appointment.id);
+                        }}
+                      >
+                        {appointment.status === 'Scheduled' ? 'Start Consultation' : 'Continue Consultation'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

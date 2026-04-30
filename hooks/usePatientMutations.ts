@@ -28,7 +28,7 @@ export function usePatientMutations() {
         phone: values.phone ?? null,
         email: values.email ?? null,
         address: values.address ?? null,
-        medical_id: values.medical_id ?? null,
+        medical_id: values.medical_id?.trim() || null,
       };
 
       const { data, error } = await supabase
@@ -43,7 +43,10 @@ export function usePatientMutations() {
     onSuccess: () => {
       toast.success("Patient created successfully.");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.patients.byClinic(activeClinic?.clinic_id ?? ""),
+        queryKey: ['patientsWithMedicalRecords'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.patients.all,
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.data(activeClinic?.clinic_id ?? ""),
@@ -65,7 +68,7 @@ export function usePatientMutations() {
         phone: rest.phone ?? null,
         email: rest.email ?? null,
         address: rest.address ?? null,
-        medical_id: rest.medical_id ?? null,
+        medical_id: rest.medical_id?.trim() || null,
       };
 
       const { data, error } = await supabase
@@ -81,7 +84,10 @@ export function usePatientMutations() {
     onSuccess: () => {
       toast.success("Patient updated successfully.");
       queryClient.invalidateQueries({
-        queryKey: queryKeys.patients.byClinic(activeClinic?.clinic_id ?? ""),
+        queryKey: ['patientsWithMedicalRecords'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.patients.all,
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.data(activeClinic?.clinic_id ?? ""),

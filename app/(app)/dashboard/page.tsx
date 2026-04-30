@@ -34,6 +34,10 @@ import dynamic from 'next/dynamic';
 import { useHasDoctorProfile } from "@/hooks/useHasDoctorProfile";
 import { useDoctorDashboardData } from "@/hooks/useDoctorDashboardData";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useAppointmentActions } from "@/hooks/useAppointmentActions";
+import { usePayments } from "@/hooks/usePayments";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 // Lazy load heavy components
 const ConsultationViewModal = dynamic(() =>
@@ -78,6 +82,10 @@ const Dashboard = React.memo(() => {
     isLoading,
     error,
   } = useDashboardData();
+
+  const { handleStartConsultation: startConsultation } = useAppointmentActions();
+  const { canBookAppointment } = usePayments();
+  const queryClient = useQueryClient();
 
   // Greeting logic - memoized
   const greeting = useMemo(() => {
@@ -130,6 +138,7 @@ const Dashboard = React.memo(() => {
         date: apt.date,
         status: apt.status as AppointmentStatus,
         type: apt.type as AppointmentType,
+        doctor_id: apt.doctor_id,
       }));
   }, [appointmentsForList, today, chartAppointments]);
 
@@ -235,6 +244,17 @@ const Dashboard = React.memo(() => {
   // Handle new appointment
   const handleNewAppointment = () => {
     setIsAppointmentModalOpen(true);
+  };
+
+  const handleStartConsultation = async (appointmentId: string) => {
+    try {
+      await startConsultation(appointmentId, canBookAppointment);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.doctor(activeClinic?.clinic_id ?? '', user?.id ?? '') });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.data(activeClinic?.clinic_id ?? '') });
+      router.push(`/consultation/${appointmentId}`);
+    } catch {
+      // Error toast already shown by useAppointmentActions
+    }
   };
 
   return (
@@ -391,6 +411,7 @@ const Dashboard = React.memo(() => {
           onAppointmentClick={handleAppointmentClick}
           showViewAllButton={true}
           onViewAll={() => router.push("/appointments?filter=upcoming")}
+          onStartConsultation={isEnhancedSuperadmin ? handleStartConsultation : undefined}
         />
         <WeeklyAppointmentsChart
           appointments={chartAppointments}

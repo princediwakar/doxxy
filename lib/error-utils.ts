@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 interface ErrorLike {
   code?: string;
   message?: string;
+  details?: string;
   [key: string]: unknown;
 }
 
@@ -84,8 +85,8 @@ const RATE_LIMIT_PATTERNS = [
 export function getErrorType(error: unknown): ErrorType {
   if (!error) return 'UNKNOWN_ERROR';
 
-  const errorString = String(error).toLowerCase();
   const errorObj = error as ErrorLike;
+  const errorString = (errorObj?.message || (error instanceof Error ? error.message : String(error))).toLowerCase();
 
   // Check for Supabase error codes
   if (errorObj?.code && SUPABASE_ERROR_CODES[errorObj.code as keyof typeof SUPABASE_ERROR_CODES]) {
@@ -125,7 +126,8 @@ export function getErrorType(error: unknown): ErrorType {
  */
 export function classifyError(error: unknown): ClassifiedError {
   const type = getErrorType(error);
-  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorObj = error as ErrorLike;
+  const errorMessage = errorObj?.message || (error instanceof Error ? error.message : String(error));
 
   const baseConfig = {
     type,
@@ -161,9 +163,35 @@ export function classifyError(error: unknown): ClassifiedError {
         userMessage: 'Too many requests. Please wait a moment before trying again.',
         retryAfter: 60,
       };
+    case 'VALIDATION_ERROR':
+      return {
+        ...baseConfig,
+        userMessage: buildValidationErrorMessage(errorObj, baseConfig.userMessage),
+      };
     default:
       return baseConfig;
   }
+}
+
+function buildValidationErrorMessage(errorObj: ErrorLike, fallback: string): string {
+  if (errorObj?.code === '23505' || errorObj?.message?.includes('duplicate key')) {
+    const details = errorObj?.details || errorObj?.message || '';
+    const constraintMatch = details.match(/constraint\s+"(\w+)"/);
+    if (constraintMatch) {
+      const constraint = constraintMatch[1];
+      if (constraint.includes('medical_id')) {
+        return 'A patient with this Medical ID already exists in your clinic. Please use a different Medical ID.';
+      }
+      if (constraint.includes('email')) {
+        return 'A patient with this email already exists in your clinic.';
+      }
+      if (constraint.includes('phone')) {
+        return 'A patient with this phone number already exists in your clinic.';
+      }
+      return 'A record with this value already exists. Please use a different value.';
+    }
+  }
+  return fallback;
 }
 
 /**

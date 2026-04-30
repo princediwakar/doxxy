@@ -13,6 +13,10 @@ import { AppointmentStatus, AppointmentType } from "@/types/core";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
 import { useDoctorDashboardData } from "@/hooks/useDoctorDashboardData";
+import { useAppointmentActions } from "@/hooks/useAppointmentActions";
+import { usePayments } from "@/hooks/usePayments";
+import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 
 const DoctorDashboard = React.memo(function DoctorDashboard() {
   const { activeClinic, user, activeClinicRole, profileName } = useAuth();
@@ -29,6 +33,10 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
     isLoading,
     error,
   } = useDoctorDashboardData();
+
+  const { handleStartConsultation: startConsultation } = useAppointmentActions();
+  const { canBookAppointment } = usePayments();
+  const queryClient = useQueryClient();
 
   // Prepare appointments and patients data - memoized
   const allAppointments = useMemo(
@@ -58,6 +66,7 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
         date: apt.date,
         status: apt.status as AppointmentStatus,
         type: apt.type as AppointmentType,
+        doctor_id: apt.doctor_id,
       }));
   }, [allAppointments, today]);
 
@@ -111,6 +120,16 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
   // Handle new appointment
   const handleNewAppointment = () => {
     setIsAppointmentModalOpen(true);
+  };
+
+  const handleStartConsultation = async (appointmentId: string) => {
+    try {
+      await startConsultation(appointmentId, canBookAppointment);
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.doctor(activeClinic?.clinic_id ?? '', user?.id ?? '') });
+      router.push(`/consultation/${appointmentId}`);
+    } catch {
+      // Error toast already shown by useAppointmentActions
+    }
   };
 
   if (isLoading) {
@@ -220,6 +239,7 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
           totalPages={totalUpcomingPages}
           showViewAllButton={true}
           onViewAll={() => router.push("/appointments?filter=upcoming")}
+          onStartConsultation={handleStartConsultation}
         />
         <WeeklyAppointmentsChart
           appointments={allAppointments}

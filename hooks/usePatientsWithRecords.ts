@@ -14,6 +14,21 @@ const supabase = getSupabase();
 
 type RpcDoctor = { id: string; name: string; department_name: string };
 
+type ConsultationBatchRow = {
+  patient_id: string;
+  appointments: {
+    id?: string;
+    date?: string;
+    time?: string;
+    status?: string;
+    doctor_id?: string;
+  } | null;
+} & Record<string, unknown>;
+
+type PrescriptionBatchRow = {
+  patient_id: string;
+} & Record<string, unknown>;
+
 async function fetchPatientsWithMedicalRecords(
   clinicId: string,
   searchTerm: string,
@@ -96,9 +111,15 @@ async function fetchPatientsWithMedicalRecords(
     }));
   }
 
-  const patientsWithRecords = await Promise.all(
-    (patients || []).map(async (patient) => {
-      const { data: consultations } = await supabase
+  const patientIds = (patients || []).map((p) => p.id);
+
+  // Batch-fetch consultations and prescriptions for all patients on this page
+  let allConsultations: ConsultationBatchRow[] = [];
+  let allPrescriptions: PrescriptionBatchRow[] = [];
+
+  if (patientIds.length > 0) {
+    const [consultationsResult, prescriptionsResult] = await Promise.all([
+      supabase
         .from("consultations")
         .select(
           `
@@ -112,64 +133,85 @@ async function fetchPatientsWithMedicalRecords(
           )
         `
         )
-        .eq("patient_id", patient.id)
-        .order("created_at", { ascending: false });
-
-      const { data: prescriptions } = await supabase
+        .in("patient_id", patientIds)
+        .order("created_at", { ascending: false }),
+      supabase
         .from("prescriptions")
         .select("*")
-        .eq("patient_id", patient.id)
-        .order("created_at", { ascending: false });
+        .in("patient_id", patientIds)
+        .order("created_at", { ascending: false }),
+    ]);
 
-      const completedConsultations = (consultations || [])
-        .filter(
-          (c) =>
-            (c.appointments?.status || "").toLowerCase() === "completed"
-        )
-        .map((consultation) => {
-          if (!consultation.appointments?.doctor_id) {
-            return {
-              ...consultation,
-              appointment: {
-                ...consultation.appointments,
-                status: consultation.appointments?.status,
-                doctor_name: "Unknown Doctor",
-                department_name: "Unknown Department",
-                date: new Date().toISOString().split("T")[0],
-                time: "00:00:00",
-              },
-            } as ConsultationWithAppointment;
-          }
+    allConsultations = (consultationsResult.data || []) as ConsultationBatchRow[];
+    allPrescriptions = (prescriptionsResult.data || []) as PrescriptionBatchRow[];
+  }
 
-          const doctor = doctors.find(
-            (d) => d.id === consultation.appointments?.doctor_id
-          );
+  const consultationsByPatient = new Map<string, typeof allConsultations>();
+  const prescriptionsByPatient = new Map<string, typeof allPrescriptions>();
 
+  for (const c of allConsultations || []) {
+    const list = consultationsByPatient.get(c.patient_id) || [];
+    list.push(c);
+    consultationsByPatient.set(c.patient_id, list);
+  }
+  for (const p of allPrescriptions || []) {
+    const list = prescriptionsByPatient.get(p.patient_id) || [];
+    list.push(p);
+    prescriptionsByPatient.set(p.patient_id, list);
+  }
+
+  const patientsWithRecords = (patients || []).map((patient) => {
+    const consultations = consultationsByPatient.get(patient.id) || [];
+    const prescriptions = prescriptionsByPatient.get(patient.id) || [];
+
+    const completedConsultations = consultations
+      .filter(
+        (c) =>
+          (c.appointments?.status || "").toLowerCase() === "completed"
+      )
+      .map((consultation) => {
+        if (!consultation.appointments?.doctor_id) {
           return {
             ...consultation,
             appointment: {
               ...consultation.appointments,
-              status: (consultation.appointments?.status || undefined) as
-                | AppointmentStatus
-                | undefined,
-              doctor_name: doctor?.name || "Unknown Doctor",
-              department_name: doctor?.department_name || "Unknown Department",
-              date: String(
-                consultation.appointments?.date ||
-                  new Date().toISOString().split("T")[0]
-              ),
-              time: String(consultation.appointments?.time || "00:00:00"),
+              status: consultation.appointments?.status,
+              doctor_name: "Unknown Doctor",
+              department_name: "Unknown Department",
+              date: new Date().toISOString().split("T")[0],
+              time: "00:00:00",
             },
-          } as ConsultationWithAppointment;
-        });
+          } as unknown as ConsultationWithAppointment;
+        }
 
-      return {
-        ...patient,
-        consultations: completedConsultations,
-        prescriptions: prescriptions || [],
-      } as PatientWithConsultations;
-    })
-  );
+        const doctor = doctors.find(
+          (d) => d.id === consultation.appointments?.doctor_id
+        );
+
+        return {
+          ...consultation,
+          appointment: {
+            ...consultation.appointments,
+            status: (consultation.appointments?.status || undefined) as
+              | AppointmentStatus
+              | undefined,
+            doctor_name: doctor?.name || "Unknown Doctor",
+            department_name: doctor?.department_name || "Unknown Department",
+            date: String(
+              consultation.appointments?.date ||
+                new Date().toISOString().split("T")[0]
+            ),
+            time: String(consultation.appointments?.time || "00:00:00"),
+          },
+        } as unknown as ConsultationWithAppointment;
+      });
+
+    return {
+      ...patient,
+      consultations: completedConsultations,
+      prescriptions,
+    } as PatientWithConsultations;
+  });
 
   return {
     patients: patientsWithRecords,
