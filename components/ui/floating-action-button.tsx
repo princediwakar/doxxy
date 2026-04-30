@@ -81,7 +81,7 @@ export function FloatingActionButton({
     <TooltipProvider>
       <div
         className={cn(
-          "fixed bottom-6 right-6 z-[60] flex flex-col-reverse items-center gap-3 pb-safe",
+          "fixed bottom-24 right-6 z-[60] flex flex-col-reverse items-center gap-3 pb-safe",
           className
         )}
       >

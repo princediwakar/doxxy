@@ -8,7 +8,7 @@ import { LogOut, Menu, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { navItems, isActiveLink } from "@/config/navigation";
+import { getHamburgerNavItems, isActiveLink } from "@/config/navigation";
 
 import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,33 +56,28 @@ export function MobileNav() {
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <nav className="space-y-1">
-            {navItems.map((item) => {
-              if (activeClinicRole && item.roles.includes(activeClinicRole)) {
-                return (
-                  <DrawerClose key={item.path} asChild>
-                    <Link
-                      href={item.path}
-                      className={cn(
-                        "w-full flex items-center py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 min-h-[48px]",
-                        isActiveLink(pathname, item.path)
-                          ? "bg-primary/10 text-primary border border-primary/20"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      )}
-                    >
-                      <item.icon
-                        size={20}
-                        className={cn(
-                          "mr-3 flex-shrink-0",
-                          isActiveLink(pathname, item.path) ? "text-primary" : "text-muted-foreground"
-                        )}
-                      />
-                      <span className="font-medium">{item.label}</span>
-                    </Link>
-                  </DrawerClose>
-                );
-              }
-              return null;
-            })}
+            {(activeClinicRole ? getHamburgerNavItems(activeClinicRole) : []).map((item) => (
+              <DrawerClose key={item.path} asChild>
+                <Link
+                  href={item.path}
+                  className={cn(
+                    "w-full flex items-center py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 min-h-[48px]",
+                    isActiveLink(pathname, item.path)
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon
+                    size={20}
+                    className={cn(
+                      "mr-3 flex-shrink-0",
+                      isActiveLink(pathname, item.path) ? "text-primary" : "text-muted-foreground"
+                    )}
+                  />
+                  <span className="font-medium">{item.label}</span>
+                </Link>
+              </DrawerClose>
+            ))}
           </nav>
         </div>
 
