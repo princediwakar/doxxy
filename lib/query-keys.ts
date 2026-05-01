@@ -42,6 +42,7 @@ export const queryKeys = {
     stats: (clinicId: string, month: string) => ['billingStats', clinicId, month] as const,
     byPatient: (patientId: string) => ['bills', 'patient', patientId] as const,
     byAppointment: (appointmentId: string) => ['bills', 'appointment', appointmentId] as const,
+    financials: (clinicId: string) => ['financials', clinicId] as const,
   },
   clinicDepartments: {
     allTypes: ['departmentTypes'] as const,
