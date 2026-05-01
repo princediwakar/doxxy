@@ -40,7 +40,7 @@ All public pages now have unique, optimized metadata:
 ✅ **Verification**: Implemented via Google Tag Manager (GTM-PW8LFQ97) in `app/(public)/layout.tsx`
 
 ⚠️ **Action Needed**: Ensure sitemap submission and active monitoring:
-- Submit sitemap: `https://doxxy.neurovisionhospital.com/sitemap.xml`
+- Submit sitemap: `https://doxxy.in/sitemap.xml`
 - Monitor indexing status weekly
 - Review search queries and click-through rates
 - Fix any crawl errors reported
@@ -56,7 +56,7 @@ All public pages now have unique, optimized metadata:
 
 ## Why "doxxy" Doesn't Appear in Search Results
 
-1. **Low Domain Authority**: Subdomain `doxxy.neurovisionhospital.com` inherits authority from parent domain
+1. **Low Domain Authority**: Subdomain `doxxy.in` inherits authority from parent domain
 2. **Limited Page-Specific Content**: All pages share identical metadata
 3. **Possible Indexing Delays**: New content may take time to appear
 4. **Competition**: Other sites/brands may rank higher for "doxxy"
@@ -107,7 +107,7 @@ export const metadata: Metadata = {
 
 **Next Steps:**
 1. **Access Console**: Visit [Google Search Console](https://search.google.com/search-console)
-2. **Submit Sitemap**: Add `https://doxxy.neurovisionhospital.com/sitemap.xml`
+2. **Submit Sitemap**: Add `https://doxxy.in/sitemap.xml`
 3. **Monitor Weekly**:
    - Check indexing status
    - Review crawl errors
@@ -157,7 +157,7 @@ const structuredData = {
   "@type": "MedicalOrganization",
   "name": "Doxxy",
   "description": "Modern clinic management software for healthcare providers",
-  "url": process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.neurovisionhospital.com",
+  "url": process.env.NEXT_PUBLIC_APP_URL || "https://doxxy.in",
   "logo": "/doxxy.png",
   "medicalSpecialty": "Healthcare Software",
 }
@@ -297,7 +297,7 @@ const articleStructuredData = {
    - ✅ Robots.txt in `app/robots.ts`
 
 ### 🔄 **ACTION NEEDED:**
-1. **Google Search Console** - Submit sitemap at `https://doxxy.neurovisionhospital.com/sitemap.xml`
+1. **Google Search Console** - Submit sitemap at `https://doxxy.in/sitemap.xml`
 2. **Content calendar** - Marketing team to create blog content strategy
 3. **Monitoring** - Set up weekly SEO performance monitoring
 

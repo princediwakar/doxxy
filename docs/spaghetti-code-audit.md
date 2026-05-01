@@ -155,7 +155,7 @@ Additionally, `types/core.ts` needs a general-purpose `DbJson` type added (curre
 - Metadata blocks duplicated across ~20 public pages.
 
 **30. Hard-Coded Values**
-- Base URL `"https://doxxy.neurovisionhospital.com"` hard-coded in 5 files.
+- Base URL `"https://doxxy.in"` hard-coded in 5 files.
 - Magic spinner timeout (500ms) in 3 print utility locations.
 - Font-family inline styles repeated 4 times in auth components.
 

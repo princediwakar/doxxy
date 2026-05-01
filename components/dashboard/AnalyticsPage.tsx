@@ -61,13 +61,18 @@ export function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground">Overview</h2>
-        <p className="text-sm text-muted-foreground">
-          {isEnhanced
-            ? "Clinic overview and your personal practice analytics."
-            : "Clinic-wide analytics and appointment trends."}
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+          <Activity className="w-5 h-5" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold">Overview</h1>
+          <p className="text-muted-foreground">
+            {isEnhanced
+              ? "Clinic overview and your personal practice analytics."
+              : "Clinic-wide analytics and appointment trends."}
+          </p>
+        </div>
       </div>
 
       <div className="space-y-4">
