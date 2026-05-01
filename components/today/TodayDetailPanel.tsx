@@ -109,7 +109,7 @@ function AppointmentCard({
           <Button size="sm" onClick={onStart}><Play className="h-3 w-3 mr-1" />Continue</Button>
         )}
         {appointment.status === "Completed" && isOwnAppointment && (
-          <Button size="sm" onClick={onEditConsultation}><Edit className="h-3 w-3 mr-1" />Edit Notes</Button>
+          <Button size="sm" variant="outline" onClick={onEditConsultation}><Edit className="h-3 w-3 mr-1" />Edit Notes</Button>
         )}
         {appointment.status === "Completed" && !isOwnAppointment && (
           <Button size="sm" variant="outline" onClick={onView}>View</Button>
@@ -329,13 +329,13 @@ export function TodayDetailPanel({
           <div className="flex items-start justify-between">
             <h3 className="font-semibold">{patient.name}</h3>
             <div className="flex gap-1">
-              <Button size="sm" variant="secondary" onClick={onScheduleAppointment}>
+              <Button size="sm" variant="outline" onClick={onScheduleAppointment}>
                 <CalendarPlus className="h-3 w-3 mr-1" />Schedule
               </Button>
-              <Button size="sm" variant="secondary" onClick={onCreateBillForPatient}>
+              <Button size="sm" variant="outline" onClick={onCreateBillForPatient}>
                 <Receipt className="h-3 w-3 mr-1" />Bill
               </Button>
-              <Button size="sm" variant="secondary" onClick={onEditPatient}>
+              <Button size="sm" variant="outline" onClick={onEditPatient}>
                 <Edit className="h-3 w-3 mr-1" />Edit
               </Button>
             </div>
