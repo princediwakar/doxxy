@@ -43,6 +43,7 @@ interface BillingModalProps {
   appointment?: AppointmentForBilling | null;
   mode?: "create" | "view" | "edit";
   onModeChange?: (mode: "create" | "view" | "edit") => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 export const BillingModal: React.FC<BillingModalProps> = ({
@@ -53,6 +54,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   appointment,
   mode = "create",
   onModeChange,
+  onDirtyChange,
 }) => {
   const {
     form,
@@ -81,6 +83,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   useEffect(() => {
     if (doctorFeeError) toast.error('Failed to load doctor fee information');
   }, [doctorFeeError]);
+
+  useEffect(() => {
+    onDirtyChange?.(form.formState.isDirty);
+  }, [form.formState.isDirty, onDirtyChange]);
 
   const { activeClinic } = useAuth();
 

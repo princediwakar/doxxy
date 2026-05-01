@@ -161,7 +161,7 @@ const ClinicDetailsManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h2 className="text-lg font-semibold">Clinic Details</h2>
+          <h2 className="text-lg font-semibold">About Clinic</h2>
           <p className="text-sm text-muted-foreground">
             Basic info & contact details
           </p>

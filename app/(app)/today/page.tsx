@@ -1,0 +1,210 @@
+"use client";
+
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { logger } from "@/lib/logger";
+import { showErrorToast } from "@/lib/error-utils";
+import { useTodayStore } from "@/stores/todayStore";
+import { useTodayAppointments } from "@/hooks/useTodayAppointments";
+import { useOutstandingBalances } from "@/hooks/useOutstandingBalances";
+import { usePatientSearch } from "@/hooks/usePatientSearch";
+import { usePatientDetail } from "@/hooks/usePatientDetail";
+import { useAppointmentActions } from "@/hooks/useAppointmentActions";
+import { usePayments } from "@/hooks/usePayments";
+import { usePrefetching } from "@/hooks/usePrefetching";
+import { useFABAction } from "@/hooks/useFABAction";
+import { ArrowLeft } from "lucide-react";
+import { TodayHeader } from "@/components/today/TodayHeader";
+import { TodayPatientList } from "@/components/today/TodayPatientList";
+import { TodayDetailPanel } from "@/components/today/TodayDetailPanel";
+import { TodayModals } from "@/components/today/TodayModals";
+import type { AppointmentWithDetails } from "@/types/appointments";
+import type { DbPatientByClinic } from "@/types/core";
+import type { Patient } from "@/types/patients";
+
+export default function TodayPage() {
+  const router = useRouter();
+
+  const activeFilter = useTodayStore((s) => s.activeFilter);
+  const searchQuery = useTodayStore((s) => s.searchQuery);
+  const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
+  const mobileDetailOpen = useTodayStore((s) => s.mobileDetailOpen);
+  const openModal = useTodayStore((s) => s.openModal);
+  const closeModal = useTodayStore((s) => s.closeModal);
+  const selectPatient = useTodayStore((s) => s.selectPatient);
+  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
+  const [isMobile, setIsMobile] = useState(true);
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  const { queue, isLoading: isLoadingQueue, refetch } = useTodayAppointments();
+  const { data: billingData, isLoading: isLoadingBilling } = useOutstandingBalances();
+  const { patients: searchPatients, isLoading: isLoadingSearch } = usePatientSearch(
+    activeFilter === "all" ? searchQuery : undefined
+  );
+  const { data: patientDetail, isLoading: isLoadingDetail } = usePatientDetail(selectedPatientId);
+
+  const { handleStartConsultation: startConsultation, cancelAppointmentMutation } =
+    useAppointmentActions();
+  const { canBookAppointment } = usePayments();
+  const { prefetchPatients, prefetchDoctors, prefetchConsultationData } = usePrefetching();
+
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
+  const [isAppointmentModalOpen, setAppointmentModalOpen] = useState(false);
+  const [appointmentModalPatient, setAppointmentModalPatient] = useState<Patient | null>(null);
+  const [billPatient, setBillPatient] = useState<DbPatientByClinic | null>(null);
+
+  useFABAction("new-patient", () => openModal("patient-edit"));
+
+  useEffect(() => {
+    if (!isLoadingQueue) {
+      Promise.all([prefetchPatients(), prefetchDoctors()]).catch(showErrorToast);
+    }
+  }, [isLoadingQueue, prefetchPatients, prefetchDoctors]);
+
+  const appointmentsByPatient = useMemo(() => {
+    const all = [...queue.inProgress, ...queue.scheduled, ...queue.completed];
+    const map = new Map<string, AppointmentWithDetails[]>();
+    for (const app of all) {
+      const list = map.get(app.patient_id) || [];
+      list.push(app);
+      map.set(app.patient_id, list);
+    }
+    return map;
+  }, [queue]);
+
+  const patientAppointments = selectedPatientId
+    ? appointmentsByPatient.get(selectedPatientId) ?? []
+    : [];
+
+  const handleAppointmentClick = useCallback(
+    (app: AppointmentWithDetails) => {
+      setSelectedAppointment(app);
+      selectPatient(app.patient_id);
+    }, [selectPatient]);
+
+  const handleStartConsultation = useCallback(
+    async (app: AppointmentWithDetails) => {
+      try {
+        await prefetchConsultationData(app.id);
+        await startConsultation(app.id, canBookAppointment);
+        router.push(`/consultation/${app.id}`);
+      } catch (err) { logger.warn("Consultation start prevented:", err); }
+    },
+    [prefetchConsultationData, startConsultation, router, canBookAppointment]);
+
+  const handleViewConsultation = useCallback(
+    (app: AppointmentWithDetails) => { setSelectedAppointment(app); openModal("consult"); },
+    [openModal]);
+
+  const handleCreateBill = useCallback(
+    (app: AppointmentWithDetails) => { setSelectedAppointment(app); setBillPatient(null); openModal("bill"); },
+    [openModal]);
+
+  const handleCreateBillForPatient = useCallback(() => {
+    if (patientDetail?.patient) setBillPatient(patientDetail.patient);
+    setSelectedAppointment(null);
+    openModal("bill");
+  }, [patientDetail, openModal]);
+
+  const handleEditAppointment = useCallback(
+    (app: AppointmentWithDetails) => { setSelectedAppointment(app); setAppointmentModalOpen(true); }, []);
+
+  const handleCancelAppointment = useCallback(
+    (app: AppointmentWithDetails) => { cancelAppointmentMutation.mutate(app.id); },
+    [cancelAppointmentMutation]);
+
+  const handleEditPatient = useCallback(
+    () => { openModal("patient-edit"); }, [openModal]);
+
+  const handleScheduleAppointment = useCallback(
+    () => {
+      if (patientDetail?.patient) {
+        setAppointmentModalPatient(patientDetail.patient as Patient);
+        setSelectedAppointment(null);
+        setAppointmentModalOpen(true);
+      }
+    }, [patientDetail]);
+
+  const handlePatientCreated = useCallback(
+    (patient: Patient) => {
+      closeModal();
+      setAppointmentModalPatient(patient);
+      setAppointmentModalOpen(true);
+    }, [closeModal]);
+
+  const showMobileDetail = isMobile && mobileDetailOpen;
+  const detailProps = {
+    patientAppointments, patientDetail, isLoadingDetail,
+    onStartConsultation: handleStartConsultation,
+    onViewConsultation: handleViewConsultation,
+    onCreateBill: handleCreateBill,
+    onCreateBillForPatient: handleCreateBillForPatient,
+    onScheduleAppointment: handleScheduleAppointment,
+    onEditAppointment: handleEditAppointment,
+    onCancelAppointment: handleCancelAppointment,
+    onEditPatient: handleEditPatient,
+    cancelLoading: cancelAppointmentMutation.isPending,
+  };
+
+  const listProps = {
+    queue, isLoadingQueue,
+    billingPatients: billingData ?? [],
+    isLoadingBilling,
+    searchPatients, isLoadingSearch,
+    appointmentsByPatient,
+    onAppointmentClick: handleAppointmentClick,
+  };
+
+  return (
+    <div className="space-y-6">
+      {!(isMobile && showMobileDetail) && <TodayHeader />}
+
+      {isMobile && showMobileDetail ? (
+        <div className="flex flex-col" style={{ height: "calc(100vh - 7rem)" }}>
+          <div className="flex items-center gap-2 px-1 py-2 border-b">
+            <button
+              onClick={() => setMobileDetailOpen(false)}
+              className="flex items-center gap-1 text-sm font-medium hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back to Queue
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <TodayDetailPanel {...detailProps} />
+          </div>
+        </div>
+      ) : isMobile ? (
+        <div className="border rounded-lg bg-muted/5 p-4 overflow-y-auto" style={{ height: "calc(100vh - 11rem)" }}>
+          <TodayPatientList {...listProps} />
+        </div>
+      ) : (
+        <div className="flex gap-6">
+          <div className="w-1/3 border rounded-lg bg-muted/5 p-4 min-h-[calc(100vh-16rem)] overflow-y-auto">
+            <TodayPatientList {...listProps} />
+          </div>
+          <div className="w-2/3 border rounded-lg bg-muted/5 p-4 min-h-[calc(100vh-16rem)] overflow-y-auto">
+            <TodayDetailPanel {...detailProps} />
+          </div>
+        </div>
+      )}
+
+      <TodayModals
+        selectedAppointment={selectedAppointment}
+        setSelectedAppointment={setSelectedAppointment}
+        isAppointmentModalOpen={isAppointmentModalOpen}
+        setAppointmentModalOpen={setAppointmentModalOpen}
+        appointmentModalPatient={appointmentModalPatient}
+        billPatient={billPatient}
+        onRefetch={refetch}
+        onPatientCreated={handlePatientCreated}
+      />
+    </div>
+  );
+}

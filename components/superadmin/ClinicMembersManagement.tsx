@@ -123,7 +123,7 @@ const ClinicMembersManagement = () => {
     <div className="space-y-6 px-4 md:px-0" data-testid="clinic-members-management">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Clinic Members</h2>
+          <h2 className="text-lg font-semibold text-foreground">Staff</h2>
           <p className="text-sm text-muted-foreground">Manage staff, doctors & admins</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">

@@ -4,13 +4,13 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { getBottomNavItems, isActiveLink } from "@/config/navigation";
+import { navItems, isActiveLink } from "@/config/navigation";
 
 export function BottomNav() {
   const { activeClinicRole } = useAuth();
   const pathname = usePathname();
 
-  const items = activeClinicRole ? getBottomNavItems(activeClinicRole) : [];
+  const items = activeClinicRole ? navItems.filter(item => item.bottomNav && item.roles.includes(activeClinicRole)) : [];
 
   if (items.length === 0) return null;
 

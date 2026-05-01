@@ -72,8 +72,8 @@ const Consultation = () => {
 
   useEffect(() => {
     if (!justCompleted) return;
-    const timer = setTimeout(() => router.push("/appointments"), 3000);
-    toast.success("Consultation completed! Redirecting to appointments in 3 seconds...");
+    const timer = setTimeout(() => router.push("/today"), 3000);
+    toast.success("Consultation completed! Redirecting to Today in 3 seconds...");
     return () => clearTimeout(timer);
   }, [justCompleted, router]);
 
@@ -121,7 +121,7 @@ const Consultation = () => {
         canEditConsultation={!!canEditConsultation}
         autoSaveMutation={autoSaveMutation}
         mandatoryFieldsStatus={mandatoryFieldsStatus}
-        onBack={() => router.push("/appointments")}
+        onBack={() => router.push("/today")}
         onSave={handleSave}
         onPrint={handlePrint}
         onPreview={() => setShowPreview(true)}

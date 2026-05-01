@@ -11,13 +11,13 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       // Disallow authenticated app routes
       disallow: [
-        "/dashboard",
-        "/patients",
-        "/appointments",
+        "/today",
+        "/clinic/",
         "/consultation/",
-        "/settings",
         "/profile",
-        "/billing",
+        "/pharmacy",
+        "/complete-profile",
+        "/create-clinic",
       ],
     },
     sitemap: `${BASE_URL}/sitemap.xml`,

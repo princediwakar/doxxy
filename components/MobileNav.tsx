@@ -8,7 +8,7 @@ import { LogOut, Menu, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { getHamburgerNavItems, isActiveLink } from "@/config/navigation";
+import { navItems, isActiveLink } from "@/config/navigation";
 
 import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -56,7 +56,7 @@ export function MobileNav() {
 
         <div className="flex-1 overflow-y-auto px-4 py-4">
           <nav className="space-y-1">
-            {(activeClinicRole ? getHamburgerNavItems(activeClinicRole) : []).map((item) => (
+            {(activeClinicRole ? navItems.filter(item => !item.bottomNav && item.roles.includes(activeClinicRole)) : []).map((item) => (
               <DrawerClose key={item.path} asChild>
                 <Link
                   href={item.path}

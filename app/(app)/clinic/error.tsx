@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { ErrorFallback } from '@/components/error-boundary/ErrorFallback';
 import { getErrorType } from '@/lib/error-utils';
 
-export default function DashboardError({
+export default function ClinicError({
   error,
   reset,
 }: {
@@ -12,7 +12,7 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('Dashboard error boundary caught:', error);
+    console.error('Clinic error boundary caught:', error);
   }, [error]);
 
   return (

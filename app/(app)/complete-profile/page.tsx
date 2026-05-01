@@ -124,7 +124,7 @@ const CompleteProfile = () => {
         router.replace("/create-clinic");
       } else {
         toast.success(invitationResult.message || "Welcome!");
-        router.replace("/dashboard");
+        router.replace("/today");
       }
       
     } catch (error: unknown) {

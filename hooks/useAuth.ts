@@ -51,8 +51,8 @@ export const useAuthFlow = () => {
         return;
       }
 
-      if (process.env.NODE_ENV === "development") logger.log('Auth: User has active clinic, redirecting to dashboard');
-      router.replace(searchParams.get('redirect') || "/dashboard");
+      if (process.env.NODE_ENV === "development") logger.log('Auth: User has active clinic, redirecting to /today');
+      router.replace(searchParams.get('redirect') || "/today");
     }
   }, [user, authLoading, needsProfileCompletion, activeClinic, router, searchParams]);
 

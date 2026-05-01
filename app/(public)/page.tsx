@@ -835,11 +835,11 @@ const LandingPageClient = () => {
         return;
       }
 
-      // Profile complete, has clinic - redirect to dashboard
+      // Profile complete, has clinic - redirect to /today
       if (process.env.NODE_ENV === "development") logger.log(
-        "LandingPage: User has active clinic, redirecting to /dashboard"
+        "LandingPage: User has active clinic, redirecting to /today"
       );
-      router.replace("/dashboard");
+      router.replace("/today");
     }
   }, [
     user,

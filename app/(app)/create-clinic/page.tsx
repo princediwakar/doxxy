@@ -184,8 +184,8 @@ const CreateClinicPage = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
       queryClient.invalidateQueries({ queryKey: ['doctorDashboardData'] });
 
-      // Navigate to dashboard - the new clinic should now be active
-      router.replace("/dashboard");
+      // Navigate to /today - the new clinic should now be active
+      router.replace("/today");
     } catch {
       // Error toast handled by hook's onError
     } finally {

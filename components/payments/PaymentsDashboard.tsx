@@ -41,7 +41,7 @@ export const PaymentsDashboard: React.FC = () => {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Billing & Credits</h2>
+          <h2 className="text-lg font-semibold tracking-tight">Payments</h2>
           <p className="text-sm text-muted-foreground">
             Credits & transaction history
           </p>

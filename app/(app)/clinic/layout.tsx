@@ -1,0 +1,72 @@
+"use client";
+
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { Spinner } from "@/components/ui/loading";
+import { BarChart3, IndianRupee, Users, Building2, Building, Wallet } from "lucide-react";
+
+const subNavItems = [
+  { icon: BarChart3, label: "Overview", path: "/clinic/overview" },
+  { icon: IndianRupee, label: "Financials", path: "/clinic/financials" },
+  { icon: Users, label: "Staff", path: "/clinic/staff" },
+  { icon: Building2, label: "Departments", path: "/clinic/departments" },
+  { icon: Building, label: "About", path: "/clinic/about" },
+  { icon: Wallet, label: "Payments", path: "/clinic/payments" },
+];
+
+export default function ClinicLayout({ children }: { children: React.ReactNode }) {
+  const { activeClinicRole, loading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && activeClinicRole !== "superadmin") {
+      router.replace("/today");
+    }
+  }, [loading, activeClinicRole, router]);
+
+  if (loading || activeClinicRole !== "superadmin") {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <h1 className="text-2xl font-bold">Clinic</h1>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6">
+        <nav className="lg:w-48 shrink-0">
+          <div className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
+            {subNavItems.map((item) => {
+              const isActive =
+                pathname === item.path || pathname.startsWith(item.path + "/");
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+
+        <div className="flex-1 min-w-0">{children}</div>
+      </div>
+    </div>
+  );
+}

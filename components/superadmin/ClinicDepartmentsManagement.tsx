@@ -102,7 +102,7 @@ const ClinicDepartmentsManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-foreground">Clinic Departments</h2>
+          <h2 className="text-lg font-semibold text-foreground">Departments</h2>
           <p className="text-sm text-muted-foreground">
             Manage departments & specialties
           </p>

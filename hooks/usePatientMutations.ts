@@ -40,7 +40,7 @@ export function usePatientMutations() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success("Patient created successfully.");
       queryClient.invalidateQueries({
         queryKey: ['patientsWithMedicalRecords'],
@@ -51,6 +51,11 @@ export function usePatientMutations() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.data(activeClinic?.clinic_id ?? ""),
       });
+      if (data?.id) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.patients.byId(data.id),
+        });
+      }
     },
     onError: (error) => {
       showErrorToast(error, { title: "Failed to create patient" });
@@ -81,7 +86,7 @@ export function usePatientMutations() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Patient updated successfully.");
       queryClient.invalidateQueries({
         queryKey: ['patientsWithMedicalRecords'],
@@ -91,6 +96,9 @@ export function usePatientMutations() {
       });
       queryClient.invalidateQueries({
         queryKey: queryKeys.dashboard.data(activeClinic?.clinic_id ?? ""),
+      });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.patients.byId(variables.id),
       });
     },
     onError: (error) => {

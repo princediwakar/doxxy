@@ -211,9 +211,15 @@ export default {
     					opacity: '1',
     					transform: 'translateY(0)'
     				}
-    			}
+    			},
+			'shake': {
+				'0%, 100%': { transform: 'translateX(0)' },
+				'10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-4px)' },
+				'20%, 40%, 60%, 80%': { transform: 'translateX(4px)' }
+			},
     		},
     		animation: {
+			'shake': 'shake 0.6s ease-in-out',
     			'accordion-down': 'accordion-down 0.2s ease-out',
     			'accordion-up': 'accordion-up 0.2s ease-out',
     			'pulse-slow': 'pulse-slow 2s ease-in-out infinite',
