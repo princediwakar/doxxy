@@ -28,7 +28,6 @@ export function useSaveBill(mode: string, bill: Bill | null | undefined, totals:
         discount_percentage: values.discount_percentage,
         tax_percentage: values.tax_percentage,
         notes: values.notes,
-        status: "Pending" as const,
       };
 
       if (mode === "edit" && bill) {

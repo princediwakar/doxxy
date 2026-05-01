@@ -22,6 +22,7 @@ interface TodayDetailPanelProps {
   isLoadingBills: boolean;
   onStartConsultation: (app: AppointmentWithDetails) => void;
   onViewConsultation: (app: AppointmentWithDetails) => void;
+  onEditConsultation: (app: AppointmentWithDetails) => void;
   onCreateBill: (app: AppointmentWithDetails) => void;
   onCreateBillForPatient: () => void;
   onScheduleAppointment: () => void;
@@ -38,13 +39,6 @@ const STATUS_COLORS: Record<string, string> = {
   Scheduled: "bg-blue-100 text-blue-800",
   Completed: "bg-green-100 text-green-800",
   Cancelled: "bg-red-100 text-red-800",
-};
-
-const BILL_STATUS_COLORS: Record<string, string> = {
-  Paid: "bg-green-100 text-green-800",
-  Unpaid: "bg-orange-100 text-orange-800",
-  Pending: "bg-yellow-100 text-yellow-800",
-  Overdue: "bg-red-100 text-red-800",
 };
 
 type ConsultationRow = {
@@ -74,6 +68,7 @@ function AppointmentCard({
   appointment,
   onStart,
   onView,
+  onEditConsultation,
   onBill,
   onViewBill,
   onEdit,
@@ -85,6 +80,7 @@ function AppointmentCard({
   appointment: AppointmentWithDetails;
   onStart: () => void;
   onView: () => void;
+  onEditConsultation: () => void;
   onBill: () => void;
   onViewBill?: () => void;
   onEdit: () => void;
@@ -118,8 +114,11 @@ function AppointmentCard({
         {appointment.status === "In Progress" && isOwnAppointment && (
           <Button size="sm" onClick={onStart}><Play className="h-3 w-3 mr-1" />Continue</Button>
         )}
-        {appointment.status === "Completed" && (
-          <Button size="sm" variant="outline" onClick={onView}>{isOwnAppointment ? "Edit" : "View"}</Button>
+        {appointment.status === "Completed" && isOwnAppointment && (
+          <Button size="sm" onClick={onEditConsultation}><Edit className="h-3 w-3 mr-1" />Edit Notes</Button>
+        )}
+        {appointment.status === "Completed" && !isOwnAppointment && (
+          <Button size="sm" variant="outline" onClick={onView}>View</Button>
         )}
         {appointment.status !== "Cancelled" && !hasBill && (
           <Button size="sm" variant="outline" onClick={onBill}>
@@ -161,6 +160,7 @@ export function TodayDetailPanel({
   isLoadingBills,
   onStartConsultation,
   onViewConsultation,
+  onEditConsultation,
   onCreateBill,
   onCreateBillForPatient,
   onScheduleAppointment,
@@ -287,9 +287,6 @@ export function TodayDetailPanel({
                     </p>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    <Badge className={BILL_STATUS_COLORS[bill.status ?? "Unpaid"] ?? "bg-gray-100 text-gray-800"}>
-                      {bill.status ?? "Unpaid"}
-                    </Badge>
                     <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString("en-IN")}</span>
                   </div>
                 </button>
@@ -312,6 +309,7 @@ export function TodayDetailPanel({
             appointment={app}
             onStart={() => onStartConsultation(app)}
             onView={() => onViewConsultation(app)}
+            onEditConsultation={() => onEditConsultation(app)}
             onBill={() => onCreateBill(app)}
             onViewBill={appBills.length > 0 ? () => onViewBill(appBills[0]) : undefined}
             onEdit={() => onEditAppointment(app)}
@@ -331,6 +329,7 @@ export function TodayDetailPanel({
             appointment={app}
             onStart={() => {}}
             onView={() => onViewConsultation(app)}
+            onEditConsultation={() => onEditConsultation(app)}
             onBill={() => onCreateBill(app)}
             onViewBill={appBills.length > 0 ? () => onViewBill(appBills[0]) : undefined}
             onEdit={() => onEditAppointment(app)}

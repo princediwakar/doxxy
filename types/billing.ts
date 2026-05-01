@@ -1,7 +1,7 @@
 // src/types/billing.ts
 // Billing Module - Hub & Spoke Type Architecture
 
-import type { DbBill, DbPatient, DbPaymentTransaction, BillStatus, Json } from "./core";
+import type { DbBill, DbPatient, DbPaymentTransaction, Json } from "./core";
 import type { UseFormReturn } from "react-hook-form";
 import type { UseMutationResult } from "@tanstack/react-query";
 
@@ -128,4 +128,4 @@ export interface PaymentFormValues {
 // EXPORTS
 // ============================================================================
 
-export { type BillStatus, type Json };
+export { type Json };

@@ -222,9 +222,6 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                                 </div>
                               )}
                             </div>
-                            <Badge variant={getBillStatusBadgeVariant(bill.status)}>
-                              {bill.status}
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>

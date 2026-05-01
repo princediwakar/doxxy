@@ -203,8 +203,7 @@ export type DbProfileUpdate = Database['public']['Tables']['profiles']['Update']
 export type AppointmentStatus = Database['public']['Enums']['appointment_status'];
 /** Appointment type enum */
 export type AppointmentType = Database['public']['Enums']['appointment_type'];
-/** Bill status enum */
-export type BillStatus = Database['public']['Enums']['bill_status'];
+
 /** Procurement status enum */
 export type ProcurementStatus = Database['public']['Enums']['procurement_status'];
 /** User role enum */

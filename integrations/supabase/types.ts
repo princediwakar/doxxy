@@ -145,7 +145,6 @@ export type Database = {
           notes: string | null
           patient_id: string
           service_items: Json | null
-          status: Database["public"]["Enums"]["bill_status"] | null
           tax_percentage: number | null
           updated_at: string | null
         }
@@ -163,7 +162,6 @@ export type Database = {
           notes?: string | null
           patient_id: string
           service_items?: Json | null
-          status?: Database["public"]["Enums"]["bill_status"] | null
           tax_percentage?: number | null
           updated_at?: string | null
         }
@@ -181,7 +179,6 @@ export type Database = {
           notes?: string | null
           patient_id?: string
           service_items?: Json | null
-          status?: Database["public"]["Enums"]["bill_status"] | null
           tax_percentage?: number | null
           updated_at?: string | null
         }
@@ -1281,7 +1278,6 @@ medicine_id: number
       get_appointments_with_details_by_clinic: {
         Args: { clinic_id: string }
         Returns: {
-          billing_status: string
           created_at: string
           date: string
           department_name: string
@@ -1296,21 +1292,6 @@ medicine_id: number
           time: string
           type: Database["public"]["Enums"]["appointment_type"]
           user_id: string
-        }[]
-      }
-      get_bills_by_clinic: {
-        Args: { clinic_id: string }
-        Returns: {
-          amount: number
-          appointment_id: string
-          created_at: string
-          due_date: string
-          id: string
-          invoice_number: string
-          patient_id: string
-          patient_name: string
-          status: string
-          updated_at: string
         }[]
       }
       get_clinic_billing_summary: {
@@ -1691,7 +1672,6 @@ medicine_id: number
         | "Completed"
         | "Cancelled"
       appointment_type: "Walk-in" | "Digital"
-      bill_status: "Paid" | "Pending" | "Overdue"
       procurement_status: "Draft" | "Verified" | "Completed"
       user_role: "staff" | "doctor" | "superadmin"
     }
@@ -1828,7 +1808,6 @@ export const Constants = {
         "Cancelled",
       ],
       appointment_type: ["Walk-in", "Digital"],
-      bill_status: ["Paid", "Pending", "Overdue"],
       procurement_status: ["Draft", "Verified", "Completed"],
       user_role: ["staff", "doctor", "superadmin"],
     },
