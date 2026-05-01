@@ -167,8 +167,8 @@ export function TodayPatientList({
     if (billingPatients.length === 0) {
       return (
         <div className="text-center py-16 text-muted-foreground">
-          <p className="font-medium">All bills are settled</p>
-          <p className="text-sm">No outstanding balances.</p>
+          <p className="font-medium">No bills yet</p>
+          <p className="text-sm">Bills will appear here once created.</p>
         </div>
       );
     }
@@ -190,7 +190,7 @@ export function TodayPatientList({
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{bp.patient_name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {bp.bill_count} unpaid bill{bp.bill_count !== 1 ? "s" : ""}
+                  {bp.bill_count} bill{bp.bill_count !== 1 ? "s" : ""}
                 </p>
               </div>
             </div>

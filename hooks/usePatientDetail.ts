@@ -30,7 +30,7 @@ async function fetchPatientDetail(
   const [consultationsRes, prescriptionsRes] = await Promise.all([
     supabase
       .from("consultations")
-      .select("*, appointments(id, date, time, status, doctor_id)")
+      .select("*, appointments(id, date, time, status, doctor_id, type, created_at, doctors(name))")
       .eq("patient_id", patientId)
       .order("created_at", { ascending: false })
       .limit(20),

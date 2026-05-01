@@ -19,7 +19,6 @@ async function fetchOutstandingBalances(clinicId: string): Promise<BillingPatien
     .from("bills")
     .select("patient_id, amount, patients(name)")
     .eq("clinic_id", clinicId)
-    .neq("status", "Paid")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
