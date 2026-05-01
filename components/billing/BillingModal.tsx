@@ -1,6 +1,6 @@
 // src/components/billing/BillingModal.tsx
 import React, { useEffect } from "react";
-import { FileText, Edit, Printer } from "lucide-react";
+import { FileText, Edit, Printer, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,6 +31,8 @@ import { useBilling, BillingFormValues } from "@/hooks/useBilling";
 import { toast } from "sonner";
 import { ServiceItemsSection } from "./ServiceItemsSection";
 import { printBill } from "./billingPrintUtils";
+import { sendBillViaWhatsApp } from "@/lib/billPdfExport";
+import { usePatientPhone } from "@/hooks/usePatientPhone";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
@@ -89,6 +91,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   }, [form.formState.isDirty, onDirtyChange]);
 
   const { activeClinic } = useAuth();
+  const { data: patientPhone } = usePatientPhone(bill?.patient_id);
 
   const onSubmit = (values: BillingFormValues) => {
     saveBillMutation.mutate(values, {
@@ -147,13 +150,49 @@ export const BillingModal: React.FC<BillingModalProps> = ({
           {bill && (
             <Button
               type="button"
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                const phone = patient?.phone || patientPhone;
+                if (!phone) {
+                  toast.error("Patient has no phone number on file");
+                  return;
+                }
+                const formServiceItems = form.watch("service_items");
+                const billData: Bill = {
+                  ...bill,
+                  service_items:
+                    formServiceItems && formServiceItems.length > 0
+                      ? formServiceItems
+                      : bill.service_items,
+                  discount_percentage: form.watch("discount_percentage"),
+                  tax_percentage: form.watch("tax_percentage"),
+                  notes: form.watch("notes") || null,
+                };
+                await sendBillViaWhatsApp(
+                  billData,
+                  phone,
+                  patient || null,
+                  activeClinic?.clinics || null
+                );
+              }}
+              className="flex items-center gap-2"
+            >
+              <Send className="h-4 w-4" />
+              <span className="hidden sm:inline">Send</span>
+            </Button>
+          )}
+
+          {bill && (
+            <Button
+              type="button"
               variant="default"
               size="sm"
               onClick={handlePrint}
               className="flex items-center gap-2"
             >
               <Printer className="h-4 w-4" />
-              Print
+              <span className="hidden sm:inline">Print</span>
             </Button>
           )}
 
@@ -166,7 +205,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               className="flex items-center gap-2"
             >
               <Edit className="h-4 w-4" />
-              Edit
+              <span className="hidden sm:inline">Edit</span>
             </Button>
           )}
 

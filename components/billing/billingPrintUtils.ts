@@ -25,7 +25,7 @@ function getPatientName(bill: Bill, patient: DbPatient | null): string {
   return 'Patient';
 }
 
-function generateBillFilename(bill: Bill, patient: DbPatient | null): string {
+export function generateBillFilename(bill: Bill, patient: DbPatient | null): string {
   const name = getPatientName(bill, patient);
   const safeName = name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
   const invoiceNum = bill.invoice_number?.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') || 'Invoice';
@@ -110,18 +110,12 @@ export const generateBillPrintContent = (
         <div class="flex justify-between items-start border-b border-slate-200 pb-6 mb-6">
           <div>
             <h1 class="text-3xl font-bold text-slate-900 tracking-tight">INVOICE</h1>
-            <p class="text-slate-500 mt-1">#${billData.invoice_number || 'Pending'}</p>
+            <p class="text-slate-500 mt-1">#${billData.invoice_number || ''}</p>
           </div>
           <div class="text-right">
             <div class="text-slate-500 text-sm">
               <p class="font-medium text-slate-900">Date Issued:</p>
               <p>${formatDate(billData.created_at)}</p>
-            </div>
-            <div class="text-slate-500 text-sm mt-1">
-              <p class="font-medium text-slate-900">Status:</p>
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800 uppercase tracking-wide">
-                ${billData.status || 'Draft'}
-              </span>
             </div>
           </div>
         </div>
