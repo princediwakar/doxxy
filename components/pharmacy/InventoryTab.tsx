@@ -73,9 +73,8 @@ function getGroupStatus(items: InventoryItemWithMedicine[], today: Date, nextMon
 
 export function InventoryTab() {
   const { activeClinicRole } = useAuth();
-  const { inventory, isLoading, updateStock } = useInventory();
+  const { inventory, isLoading, updateItem } = useInventory();
   const [editingItem, setEditingItem] = useState<InventoryItemWithMedicine | null>(null);
-  const [newStock, setNewStock] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
@@ -91,16 +90,21 @@ export function InventoryTab() {
 
   const handleEditClick = (item: InventoryItemWithMedicine) => {
     setEditingItem(item);
-    setNewStock(item.current_stock.toString());
     setIsDialogOpen(true);
   };
 
-  const handleSaveStock = () => {
-    if (!editingItem || newStock === "") return;
-    const stockValue = parseInt(newStock, 10);
-    if (isNaN(stockValue) || stockValue < 0) return;
-    updateStock.mutate({ itemId: editingItem.id, newStock: stockValue }, {
-      onSuccess: () => { setIsDialogOpen(false); setEditingItem(null); setNewStock(""); },
+  const handleSave = () => {
+    if (!editingItem) return;
+    updateItem.mutate({
+      id: editingItem.id,
+      batch_number: editingItem.batch_number,
+      expiry_date: editingItem.expiry_date,
+      current_stock: editingItem.current_stock,
+      reorder_level: editingItem.reorder_level,
+      unit_cost_price: editingItem.unit_cost_price,
+      mrp: editingItem.mrp,
+    }, {
+      onSuccess: () => { setIsDialogOpen(false); setEditingItem(null); },
     });
   };
 
@@ -254,25 +258,84 @@ export function InventoryTab() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Update Stock</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Medicine</Label>
-              <p className="text-sm font-medium">{editingItem?.medicines?.name || "Unknown"}</p>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Edit Stock Item</DialogTitle></DialogHeader>
+          {editingItem && (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Medicine</Label>
+                <p className="text-sm font-medium">{editingItem.medicines?.name || "Unknown"}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="batch">Batch No.</Label>
+                  <Input
+                    id="batch"
+                    value={editingItem.batch_number}
+                    onChange={(e) => setEditingItem({ ...editingItem, batch_number: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="expiry">Expiry Date</Label>
+                  <Input
+                    id="expiry"
+                    type="date"
+                    value={editingItem.expiry_date}
+                    onChange={(e) => setEditingItem({ ...editingItem, expiry_date: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="stock">Stock</Label>
+                  <Input
+                    id="stock"
+                    type="number"
+                    min="0"
+                    value={editingItem.current_stock}
+                    onChange={(e) => setEditingItem({ ...editingItem, current_stock: parseInt(e.target.value, 10) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reorder">Reorder Level</Label>
+                  <Input
+                    id="reorder"
+                    type="number"
+                    min="0"
+                    value={editingItem.reorder_level}
+                    onChange={(e) => setEditingItem({ ...editingItem, reorder_level: parseInt(e.target.value, 10) || 0 })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cost">Cost Price (₹)</Label>
+                  <Input
+                    id="cost"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editingItem.unit_cost_price}
+                    onChange={(e) => setEditingItem({ ...editingItem, unit_cost_price: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mrp">MRP (₹)</Label>
+                  <Input
+                    id="mrp"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={editingItem.mrp}
+                    onChange={(e) => setEditingItem({ ...editingItem, mrp: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Batch No.</Label>
-              <p className="text-sm text-muted-foreground">{editingItem?.batch_number}</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stock">New Stock Quantity</Label>
-              <Input id="stock" type="number" min="0" value={newStock} onChange={(e) => setNewStock(e.target.value)} />
-            </div>
-          </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSaveStock} disabled={updateStock.isPending}>{updateStock.isPending ? "Saving..." : "Save Changes"}</Button>
+            <Button onClick={handleSave} disabled={updateItem.isPending}>{updateItem.isPending ? "Saving..." : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

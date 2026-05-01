@@ -56,5 +56,32 @@ export function useInventory() {
     },
   });
 
-  return { inventory, isLoading, updateStock };
+  const updateItem = useMutation({
+    mutationFn: async (item: {
+      id: string;
+      batch_number: string;
+      expiry_date: string;
+      current_stock: number;
+      reorder_level: number;
+      unit_cost_price: number;
+      mrp: number;
+    }) => {
+      const { id, ...fields } = item;
+      const { error } = await supabase
+        .from("inventory_items")
+        .update(fields as unknown as DbInventoryItemUpdate)
+        .eq("id", id);
+
+      if (error) throw error;
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.inventory.all });
+    },
+    onError: (error) => {
+      showErrorToast(error, { title: "Failed to update item" });
+    },
+  });
+
+  return { inventory, isLoading, updateStock, updateItem };
 }
