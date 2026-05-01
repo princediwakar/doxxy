@@ -52,8 +52,7 @@ export default function TodayPage() {
   const { data: patientDetail, isLoading: isLoadingDetail } = usePatientDetail(selectedPatientId);
   const { data: patientBills = [], isLoading: isLoadingBills } = usePatientBills(selectedPatientId);
 
-  const { handleStartConsultation: startConsultation, cancelAppointmentMutation } =
-    useAppointmentActions();
+  const { handleStartConsultation: startConsultation } = useAppointmentActions();
   const { canBookAppointment } = usePayments();
   const { prefetchPatients, prefetchDoctors, prefetchConsultationData } = usePrefetching();
 
@@ -107,6 +106,10 @@ export default function TodayPage() {
     (app: AppointmentWithDetails) => { setSelectedAppointment(app); openModal("consult"); },
     [openModal]);
 
+  const handleEditConsultation = useCallback(
+    (app: AppointmentWithDetails) => { router.push(`/consultation/${app.id}`); },
+    [router]);
+
   const handleCreateBill = useCallback(
     (app: AppointmentWithDetails) => { setSelectedAppointment(app); setBillPatient(null); setSelectedBill(null); openModal("bill"); },
     [openModal]);
@@ -120,10 +123,6 @@ export default function TodayPage() {
 
   const handleEditAppointment = useCallback(
     (app: AppointmentWithDetails) => { setSelectedAppointment(app); setAppointmentModalOpen(true); }, []);
-
-  const handleCancelAppointment = useCallback(
-    (app: AppointmentWithDetails) => { cancelAppointmentMutation.mutate(app.id); },
-    [cancelAppointmentMutation]);
 
   const handleViewBill = useCallback(
     (bill: BillWithDetails) => { setSelectedBill(bill); openModal("bill"); },
@@ -172,15 +171,14 @@ export default function TodayPage() {
     patientBills, isLoadingBills,
     onStartConsultation: handleStartConsultation,
     onViewConsultation: handleViewConsultation,
+    onEditConsultation: handleEditConsultation,
     onCreateBill: handleCreateBill,
     onCreateBillForPatient: handleCreateBillForPatient,
     onScheduleAppointment: handleScheduleAppointment,
     onEditAppointment: handleEditAppointment,
-    onCancelAppointment: handleCancelAppointment,
     onEditPatient: handleEditPatient,
     onViewBill: handleViewBill,
     onViewConsultationFromHistory: handleViewConsultationFromHistory,
-    cancelLoading: cancelAppointmentMutation.isPending,
   };
 
   const listProps = {
@@ -233,6 +231,7 @@ export default function TodayPage() {
         setAppointmentModalOpen={setAppointmentModalOpen}
         appointmentModalPatient={appointmentModalPatient}
         billPatient={billPatient}
+        editPatient={patientDetail?.patient ?? null}
         selectedBill={selectedBill}
         setSelectedBill={setSelectedBill}
         historyAppointment={historyAppointment}

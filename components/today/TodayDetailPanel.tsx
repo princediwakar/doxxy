@@ -27,11 +27,9 @@ interface TodayDetailPanelProps {
   onCreateBillForPatient: () => void;
   onScheduleAppointment: () => void;
   onEditAppointment: (app: AppointmentWithDetails) => void;
-  onCancelAppointment: (app: AppointmentWithDetails) => void;
   onEditPatient: () => void;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
-  cancelLoading?: boolean;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -72,8 +70,6 @@ function AppointmentCard({
   onBill,
   onViewBill,
   onEdit,
-  onCancel,
-  cancelLoading,
   isOwnAppointment,
   hasBill,
 }: {
@@ -84,8 +80,6 @@ function AppointmentCard({
   onBill: () => void;
   onViewBill?: () => void;
   onEdit: () => void;
-  onCancel: () => void;
-  cancelLoading: boolean;
   isOwnAppointment: boolean;
   hasBill: boolean;
 }) {
@@ -128,11 +122,6 @@ function AppointmentCard({
         <Button size="sm" variant="ghost" onClick={onEdit}>
           <Edit className="h-3 w-3 mr-1" />Reschedule
         </Button>
-        {(appointment.status === "Scheduled" || appointment.status === "In Progress") && (
-          <Button size="sm" variant="ghost" className="text-destructive" onClick={onCancel} disabled={cancelLoading}>
-            <X className="h-3 w-3 mr-1" />Cancel
-          </Button>
-        )}
       </div>
 
       {appointment.status === "Completed" && (
@@ -165,11 +154,9 @@ export function TodayDetailPanel({
   onCreateBillForPatient,
   onScheduleAppointment,
   onEditAppointment,
-  onCancelAppointment,
   onEditPatient,
   onViewBill,
   onViewConsultationFromHistory,
-  cancelLoading,
 }: TodayDetailPanelProps) {
   const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
   const clearSelection = useTodayStore((s) => s.clearSelection);
@@ -313,8 +300,6 @@ export function TodayDetailPanel({
             onBill={() => onCreateBill(app)}
             onViewBill={appBills.length > 0 ? () => onViewBill(appBills[0]) : undefined}
             onEdit={() => onEditAppointment(app)}
-            onCancel={() => onCancelAppointment(app)}
-            cancelLoading={cancelLoading ?? false}
             isOwnAppointment={app.user_id === user?.id}
             hasBill={appBills.length > 0}
           />
@@ -333,8 +318,6 @@ export function TodayDetailPanel({
             onBill={() => onCreateBill(app)}
             onViewBill={appBills.length > 0 ? () => onViewBill(appBills[0]) : undefined}
             onEdit={() => onEditAppointment(app)}
-            onCancel={() => {}}
-            cancelLoading={false}
             isOwnAppointment={app.user_id === user?.id}
             hasBill={appBills.length > 0}
           />

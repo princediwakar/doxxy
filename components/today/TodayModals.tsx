@@ -29,6 +29,7 @@ interface TodayModalsProps {
   setAppointmentModalOpen: (open: boolean) => void;
   appointmentModalPatient: Patient | null;
   billPatient?: DbPatientByClinic | null;
+  editPatient?: DbPatientByClinic | null;
   selectedBill?: BillWithDetails | null;
   setSelectedBill?: (bill: BillWithDetails | null) => void;
   historyAppointment?: AppointmentData | null;
@@ -44,6 +45,7 @@ export function TodayModals({
   setAppointmentModalOpen,
   appointmentModalPatient,
   billPatient,
+  editPatient,
   selectedBill,
   setSelectedBill,
   historyAppointment,
@@ -174,7 +176,7 @@ export function TodayModals({
             onOpenChange={(open) => {
               if (!open) closeModal();
             }}
-            patient={null}
+            patient={editPatient ?? null}
             onPatientCreated={onPatientCreated}
           />
         )}

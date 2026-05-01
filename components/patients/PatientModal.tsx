@@ -29,13 +29,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { usePatientMutations } from "@/hooks/usePatientMutations";
 import { cn } from "@/lib/utils";
 import type { Patient } from "@/types/patients";
+import type { DbPatientByClinic } from "@/types/core";
 
 interface PatientModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  patient: Patient | null; // For editing existing patient
-  onPatientCreated: (patient: Patient) => void; // Callback after creation
-  initialName?: string; // New prop to pre-fill name
+  patient: DbPatientByClinic | null;
+  onPatientCreated: (patient: Patient) => void;
+  initialName?: string;
 }
 
 // Helper function for smart title casing
