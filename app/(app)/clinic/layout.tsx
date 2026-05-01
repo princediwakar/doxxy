@@ -5,10 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { Spinner } from "@/components/ui/loading";
-import { BarChart3, IndianRupee, Users, Building2, Building, Wallet } from "lucide-react";
+import { IndianRupee, Users, Building2, Building, Wallet } from "lucide-react";
 
 const subNavItems = [
-  { icon: BarChart3, label: "Overview", path: "/clinic/overview" },
   { icon: IndianRupee, label: "Financials", path: "/clinic/financials" },
   { icon: Users, label: "Staff", path: "/clinic/staff" },
   { icon: Building2, label: "Departments", path: "/clinic/departments" },
