@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { showErrorToast } from "@/lib/error-utils";
+import { getSupabase } from "@/integrations/supabase/client";
 import type { ProcurementFormValues } from "@/types/pharmacy";
 
 interface RawExtractedItem {
@@ -36,15 +37,21 @@ export function useBillExtraction() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionStats, setExtractionStats] = useState<{ total: number; matched: number } | null>(null);
 
-  const extractData = async (imageUrl: string): Promise<ExtractionResult | null> => {
+  const extractData = async (imageUrl: string): Promise<ExtractionResult> => {
     setIsExtracting(true);
     setExtractionStats(null);
     const infoToastId = toast.info("Extracting details using AI...");
 
     try {
+      const { data: { session } } = await getSupabase().auth.getSession();
+      const token = session?.access_token;
+
       const response = await fetch("/api/procurement/extract/", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({ imageUrl }),
       });
 
@@ -92,7 +99,7 @@ export function useBillExtraction() {
       const msg = error instanceof Error ? error.message : "Unknown error";
       toast.dismiss(infoToastId);
       showErrorToast(new Error(msg), { title: "Extraction failed" });
-      return null;
+      throw error;
     } finally {
       setIsExtracting(false);
     }

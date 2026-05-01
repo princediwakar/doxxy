@@ -61,26 +61,40 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
   }, [open, resetExtraction]);
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !activeClinic?.clinic_id) return;
+    if (!file) return;
 
+    if (!activeClinic?.clinic_id) {
+      toast.error("No clinic selected. Please select a clinic first.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+      return;
+    }
+
+    let publicUrl: string;
     try {
-      const publicUrl = await uploadBillImage(file, activeClinic.clinic_id);
-      const result = await extractData(publicUrl);
-      if (result) {
-        form.reset(result.formData);
-        const unmapped = result.totalCount - result.matchedCount;
-        if (unmapped === 0) {
-          toast.success(`All ${result.totalCount} items added to stock!`);
-        } else {
-          toast.success(
-            `Added ${result.totalCount} items — ${result.matchedCount} found in catalog, ${unmapped} are new.`
-          );
-        }
-      }
+      publicUrl = await uploadBillImage(file, activeClinic.clinic_id);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error";
-      logger.error("Upload error:", msg);
+      logger.error("Bill image upload failed:", msg);
       toast.error("Failed to upload bill image");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (cameraInputRef.current) cameraInputRef.current.value = "";
+      return;
+    }
+
+    try {
+      const result = await extractData(publicUrl);
+      form.reset(result.formData);
+      const unmapped = result.totalCount - result.matchedCount;
+      if (unmapped === 0) {
+        toast.success(`All ${result.totalCount} items added to stock!`);
+      } else {
+        toast.success(
+          `Added ${result.totalCount} items — ${result.matchedCount} found in catalog, ${unmapped} are new.`
+        );
+      }
+    } catch {
+      // extractData already shows the error toast
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";

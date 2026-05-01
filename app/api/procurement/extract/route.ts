@@ -277,7 +277,19 @@ async function dbMatch(
   for (let i = 0; i < terms.length; i += BATCH) {
     const batch = terms.slice(i, i + BATCH);
     try {
-      results.push(...await matchTermsBulk(supabase, batch));
+      const batchResults = await matchTermsBulk(supabase, batch);
+      const unmatched = new Set(batch);
+
+      for (const br of batchResults) {
+        results.push(br);
+        if (br.matched_id != null) unmatched.delete(br.original_search_term);
+      }
+
+      // Fall back to single-match (lower similarity threshold) for missed terms
+      for (const term of Array.from(unmatched)) {
+        results.push(await matchTermSingle(supabase, term));
+        await sleep(50);
+      }
     } catch {
       for (const term of batch) {
         results.push(await matchTermSingle(supabase, term));
@@ -342,17 +354,24 @@ async function aiMatch(
 
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
+const CACHE_HEADERS = {
+  'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+  'Pragma': 'no-cache',
+  'Expires': '0',
+};
+
 export async function POST(request: Request) {
   try {
-    const { imageUrl } = await request.json();
+    const body = await request.json();
+    const { imageUrl } = body || {};
     if (!imageUrl) {
-      return NextResponse.json({ error: 'Image URL is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Image URL is required' }, { status: 400, headers: CACHE_HEADERS });
     }
 
     // 1. Download image
     const imageRes = await fetch(imageUrl);
     if (!imageRes.ok) {
-      return NextResponse.json({ error: 'Failed to download image from storage' }, { status: 400 });
+      return NextResponse.json({ error: 'Failed to download image from storage' }, { status: 400, headers: CACHE_HEADERS });
     }
     const mimeType = imageRes.headers.get('content-type') || 'image/jpeg';
     const imageBase64 = Buffer.from(await imageRes.arrayBuffer()).toString('base64');
@@ -371,18 +390,20 @@ export async function POST(request: Request) {
       logger.log('Extraction complete:', extractedData.items?.length, 'items');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      // Surface the REAL error — not a generic "Extraction failed"
-      return NextResponse.json({ error: msg }, { status: 503 });
+      return NextResponse.json({ error: msg }, { status: 503, headers: CACHE_HEADERS });
     }
 
     if (!Array.isArray(extractedData.items)) extractedData.items = [];
 
-    // 3. Match items
+    // 3. Match items using the caller's auth context so RLS passes
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (supabaseUrl && supabaseKey && extractedData.items.length > 0) {
-      const supabase = createClient(supabaseUrl, supabaseKey);
+      const authHeader = request.headers.get('Authorization') ?? '';
+      const supabase = createClient(supabaseUrl, supabaseKey, {
+        global: { headers: authHeader ? { Authorization: authHeader } : {} },
+      });
 
       const terms = extractedData.items.map(
         (item) => item.normalized_search_name?.trim() || item.raw_extracted_name?.trim() || ''
@@ -410,11 +431,14 @@ export async function POST(request: Request) {
       logger.log(`Matching: ${matched}/${extractedData.items.length} items matched`);
     }
 
-    return NextResponse.json({ data: extractedData, provider: 'google', model: 'gemini-2.5-flash-lite' });
+    return NextResponse.json(
+      { data: extractedData, provider: 'google', model: 'gemini-2.5-flash-lite' },
+      { headers: CACHE_HEADERS }
+    );
 
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Route error:', msg);
-    return NextResponse.json({ error: 'Server error', details: msg }, { status: 500 });
+    return NextResponse.json({ error: 'Server error', details: msg }, { status: 500, headers: CACHE_HEADERS });
   }
 }
