@@ -6,7 +6,6 @@ import { logger } from "@/lib/logger";
 import { showErrorToast } from "@/lib/error-utils";
 import { useTodayStore } from "@/stores/todayStore";
 import { useTodayAppointments } from "@/hooks/useTodayAppointments";
-import { useOutstandingBalances } from "@/hooks/useOutstandingBalances";
 import { usePatientSearch } from "@/hooks/usePatientSearch";
 import { usePatientDetail } from "@/hooks/usePatientDetail";
 import { usePatientBills } from "@/hooks/usePatientBills";
@@ -45,7 +44,6 @@ export default function TodayPage() {
   }, []);
 
   const { queue, isLoading: isLoadingQueue, refetch } = useTodayAppointments();
-  const { data: billingData, isLoading: isLoadingBilling } = useOutstandingBalances();
   const { patients: searchPatients, isLoading: isLoadingSearch } = usePatientSearch(
     activeFilter === "all" ? searchQuery : undefined
   );
@@ -183,8 +181,6 @@ export default function TodayPage() {
 
   const listProps = {
     queue, isLoadingQueue,
-    billingPatients: billingData ?? [],
-    isLoadingBilling,
     searchPatients, isLoadingSearch,
     appointmentsByPatient,
     onAppointmentClick: handleAppointmentClick,
@@ -214,11 +210,11 @@ export default function TodayPage() {
           <TodayPatientList {...listProps} />
         </div>
       ) : (
-        <div className="flex gap-6">
-          <div className="w-1/3 border rounded-lg bg-muted/5 p-4 min-h-[calc(100vh-16rem)] overflow-y-auto">
+        <div className="flex gap-6" style={{ height: "calc(100vh - 13rem)" }}>
+          <div className="w-1/3 border rounded-lg bg-muted/5 p-4 overflow-y-auto">
             <TodayPatientList {...listProps} />
           </div>
-          <div className="w-2/3 border rounded-lg bg-muted/5 p-4 min-h-[calc(100vh-16rem)] overflow-y-auto">
+          <div className="w-2/3 border rounded-lg bg-muted/5 p-4 overflow-y-auto">
             <TodayDetailPanel {...detailProps} />
           </div>
         </div>

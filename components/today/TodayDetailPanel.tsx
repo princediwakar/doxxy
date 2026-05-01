@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { ChevronDown, ChevronUp, Clock, User, Phone, Hash, Play, Receipt, Edit, Eye, X, CalendarPlus, FileText } from "lucide-react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { ChevronDown, ChevronUp, Clock, User, Phone, Hash, Play, Receipt, Edit, Eye, X, CalendarPlus } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { formatTimeIST } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -161,7 +161,16 @@ export function TodayDetailPanel({
   const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
   const clearSelection = useTodayStore((s) => s.clearSelection);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [billsOpen, setBillsOpen] = useState(false);
   const { user } = useAuth();
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedPatientId && panelRef.current) {
+      const scrollParent = panelRef.current.closest(".overflow-y-auto");
+      if (scrollParent) scrollParent.scrollTop = 0;
+    }
+  }, [selectedPatientId]);
 
   const handleClose = useCallback(() => {
     clearSelection();
@@ -209,81 +218,6 @@ export function TodayDetailPanel({
   const completedAppointments = patientAppointments.filter(
     (a) => a.status === "Completed"
   );
-
-  // --- BILLING MODE ---
-  if (activeFilter === "billing") {
-    return (
-      <div className="relative">
-        <button
-          onClick={handleClose}
-          className="hidden lg:block absolute top-0 right-0 text-muted-foreground hover:text-foreground z-10"
-        >
-          <X className="h-4 w-4" />
-        </button>
-        <div className="space-y-4">
-          {patient && (
-            <div className="rounded-lg border bg-card p-4 space-y-3">
-              <div className="flex items-start justify-between">
-                <h3 className="font-semibold">{patient.name}</h3>
-                <Button size="sm" variant="secondary" onClick={onCreateBillForPatient}>
-                  <Receipt className="h-3 w-3 mr-1" />Create Bill
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <User className="h-3.5 w-3.5" />
-                  <span>{[patient.gender, patient.age ? `${patient.age}y` : null].filter(Boolean).join(", ") || "N/A"}</span>
-                </div>
-                {patient.phone && (
-                  <div className="flex items-center gap-1">
-                    <Phone className="h-3.5 w-3.5" />
-                    <span>{patient.phone}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {isLoadingBills ? (
-            <div className="flex items-center justify-center py-10">
-              <Spinner size="lg" />
-            </div>
-          ) : patientBills.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground">
-              <FileText className="h-10 w-10 mx-auto mb-3 opacity-30" />
-              <p className="font-medium">No bills for this patient</p>
-              <p className="text-sm">Create a bill to get started.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <h3 className="text-sm font-semibold text-muted-foreground">
-                Bills ({patientBills.length})
-              </h3>
-              {patientBills.map((bill) => (
-                <button
-                  key={bill.id}
-                  onClick={() => onViewBill(bill)}
-                  className="w-full text-left rounded-lg border bg-card p-3 hover:bg-muted/50 transition-colors flex items-center justify-between group"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">
-                      {bill.invoice_number ?? `INV-${bill.id.slice(0, 8)}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {bill.created_at ? format(parseISO(bill.created_at), "MMM dd, yyyy") : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString("en-IN")}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
 
   // --- QUEUE / ALL MODE ---
   const content = (
@@ -439,11 +373,56 @@ export function TodayDetailPanel({
           </div>
         )}
       </div>
+
+      {/* Bills Section */}
+      <div className="rounded-lg border">
+        <button
+          onClick={() => setBillsOpen(!billsOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-lg transition-colors"
+        >
+          <span>Bills ({patientBills.length})</span>
+          {billsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {billsOpen && (
+          <div className="px-4 pb-4 space-y-2">
+            {isLoadingBills ? (
+              <div className="flex items-center justify-center py-4">
+                <Spinner size="sm" />
+              </div>
+            ) : patientBills.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No bills for this patient.
+              </p>
+            ) : (
+              patientBills.map((bill) => (
+                <button
+                  key={bill.id}
+                  onClick={() => onViewBill(bill)}
+                  className="w-full text-left rounded-lg border bg-card p-3 hover:bg-muted/50 transition-colors flex items-center justify-between group"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      {bill.invoice_number ?? `INV-${bill.id.slice(0, 8)}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {bill.created_at ? format(parseISO(bill.created_at), "MMM dd, yyyy") : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString("en-IN")}</span>
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 
   return (
-    <div className="relative">
+    <div className="relative" ref={panelRef}>
       <button
         onClick={handleClose}
         className="hidden lg:block absolute top-0 right-0 text-muted-foreground hover:text-foreground z-10"

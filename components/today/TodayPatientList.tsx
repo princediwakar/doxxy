@@ -8,15 +8,12 @@ import { Spinner } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
 import { useTodayStore } from "@/stores/todayStore";
 import type { TodayQueue } from "@/hooks/useTodayAppointments";
-import type { BillingPatient } from "@/hooks/useOutstandingBalances";
 import type { DbPatientByClinic } from "@/types/core";
 import type { AppointmentWithDetails } from "@/types/appointments";
 
 interface TodayPatientListProps {
   queue: TodayQueue;
   isLoadingQueue: boolean;
-  billingPatients: BillingPatient[];
-  isLoadingBilling: boolean;
   searchPatients: DbPatientByClinic[];
   isLoadingSearch: boolean;
   appointmentsByPatient: Map<string, AppointmentWithDetails[]>;
@@ -95,8 +92,6 @@ function QueueSection({
 export function TodayPatientList({
   queue,
   isLoadingQueue,
-  billingPatients,
-  isLoadingBilling,
   searchPatients,
   isLoadingSearch,
   onAppointmentClick,
@@ -105,13 +100,6 @@ export function TodayPatientList({
   const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
   const searchQuery = useTodayStore((s) => s.searchQuery);
   const selectPatient = useTodayStore((s) => s.selectPatient);
-
-  const handleBillingPatientClick = useCallback(
-    (patientId: string) => {
-      selectPatient(patientId);
-    },
-    [selectPatient]
-  );
 
   const handleSearchPatientClick = useCallback(
     (patientId: string) => {
@@ -155,59 +143,6 @@ export function TodayPatientList({
             selectedPatientId={selectedPatientId}
             onAppointmentClick={onAppointmentClick}
           />
-        ))}
-      </div>
-    );
-  }
-
-  // --- BILLING MODE ---
-  if (activeFilter === "billing") {
-    if (isLoadingBilling) {
-      return (
-        <div className="flex items-center justify-center py-20">
-          <Spinner size="lg" />
-        </div>
-      );
-    }
-
-    if (billingPatients.length === 0) {
-      return (
-        <div className="text-center py-16 text-muted-foreground">
-          <p className="font-medium">No bills yet</p>
-          <p className="text-sm">Bills will appear here once created.</p>
-        </div>
-      );
-    }
-
-    return (
-      <div className="py-2 space-y-1">
-        {billingPatients.map((bp) => (
-          <button
-            key={bp.patient_id}
-            onClick={() => handleBillingPatientClick(bp.patient_id)}
-            className={cn(
-              "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
-              selectedPatientId === bp.patient_id && "bg-primary/10 ring-1 ring-primary/20"
-            )}
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
-                <User className="h-4 w-4 text-orange-600" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{bp.patient_name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {bp.bill_count} bill{bp.bill_count !== 1 ? "s" : ""}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 text-xs">
-                ₹{bp.total_due.toLocaleString("en-IN")}
-              </Badge>
-              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </button>
         ))}
       </div>
     );

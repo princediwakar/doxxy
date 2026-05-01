@@ -8,7 +8,6 @@ import { useTodayStore, type ActiveFilter } from "@/stores/todayStore";
 
 const FILTERS: { value: ActiveFilter; label: string }[] = [
   { value: "queue", label: "Queue" },
-  { value: "billing", label: "Billing" },
   { value: "all", label: "All" },
 ];
 
