@@ -88,17 +88,17 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
   }, [profileName, user?.email]);
 
   // Card click handlers
-  const handlePatientsCardClick = () => router.push("/patients");
+  const handlePatientsCardClick = () => router.push("/today?filter=all");
   const handleAppointmentsTodayCardClick = () =>
-    router.push("/appointments?filter=today");
+    router.push("/today?filter=queue");
   const handlePendingConsultationsCardClick = () =>
-    router.push("/appointments?filter=pending");
+    router.push("/today?filter=queue");
   const handleCompletedConsultationsCardClick = () =>
-    router.push("/consultations?filter=completed");
+    router.push("/today?filter=all");
 
   // Weekly chart bar click handler
   const handleChartBarClick = (date: string) => {
-    router.push(`/appointments?filter=date&date=${date}`);
+    router.push(`/today?filter=queue&date=${date}`);
   };
 
   // Calculate some additional stats - memoized
@@ -238,7 +238,7 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
           setCurrentPage={setCurrentUpcomingPage}
           totalPages={totalUpcomingPages}
           showViewAllButton={true}
-          onViewAll={() => router.push("/appointments?filter=upcoming")}
+          onViewAll={() => router.push("/today?filter=queue")}
           onStartConsultation={handleStartConsultation}
         />
         <WeeklyAppointmentsChart
