@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { Clock, User, ChevronRight, Circle } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { formatTimeIST } from "@/lib/utils";
+import { formatTimeIST, cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
 import { useTodayStore } from "@/stores/todayStore";
@@ -34,12 +34,14 @@ function QueueSection({
   appointments,
   color,
   bg,
+  selectedPatientId,
   onAppointmentClick,
 }: {
   title: string;
   appointments: AppointmentWithDetails[];
   color: string;
   bg: string;
+  selectedPatientId: string | null;
   onAppointmentClick: (app: AppointmentWithDetails) => void;
 }) {
   if (appointments.length === 0) return null;
@@ -57,7 +59,10 @@ function QueueSection({
           <button
             key={app.id}
             onClick={() => onAppointmentClick(app)}
-            className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors"
+            className={cn(
+              "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
+              selectedPatientId === app.patient_id && "bg-primary/10 ring-1 ring-primary/20"
+            )}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -147,6 +152,7 @@ export function TodayPatientList({
             appointments={queue[group.key]}
             color={group.color}
             bg={group.bg}
+            selectedPatientId={selectedPatientId}
             onAppointmentClick={onAppointmentClick}
           />
         ))}
@@ -179,9 +185,10 @@ export function TodayPatientList({
           <button
             key={bp.patient_id}
             onClick={() => handleBillingPatientClick(bp.patient_id)}
-            className={`w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors ${
-              selectedPatientId === bp.patient_id ? "bg-muted" : ""
-            }`}
+            className={cn(
+              "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
+              selectedPatientId === bp.patient_id && "bg-primary/10 ring-1 ring-primary/20"
+            )}
           >
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
@@ -195,7 +202,7 @@ export function TodayPatientList({
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 text-xs">
+              <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50 text-xs">
                 ₹{bp.total_due.toLocaleString("en-IN")}
               </Badge>
               <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -239,9 +246,10 @@ export function TodayPatientList({
         <button
           key={patient.id}
           onClick={() => handleSearchPatientClick(patient.id)}
-          className={`w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors ${
-            selectedPatientId === patient.id ? "bg-muted" : ""
-          }`}
+          className={cn(
+            "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
+            selectedPatientId === patient.id && "bg-primary/10 ring-1 ring-primary/20"
+          )}
         >
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
