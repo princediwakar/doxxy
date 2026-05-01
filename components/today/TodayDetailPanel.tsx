@@ -188,13 +188,13 @@ export function TodayDetailPanel({
           <div className="flex items-start justify-between">
             <h3 className="font-semibold">{patient.name}</h3>
             <div className="flex gap-1">
-              <Button size="sm" variant="ghost" onClick={onScheduleAppointment}>
+              <Button size="sm" variant="secondary" onClick={onScheduleAppointment}>
                 <CalendarPlus className="h-3 w-3 mr-1" />Schedule
               </Button>
-              <Button size="sm" variant="ghost" onClick={onCreateBillForPatient}>
+              <Button size="sm" variant="secondary" onClick={onCreateBillForPatient}>
                 <Receipt className="h-3 w-3 mr-1" />Bill
               </Button>
-              <Button size="sm" variant="ghost" onClick={onEditPatient}>
+              <Button size="sm" variant="secondary" onClick={onEditPatient}>
                 <Edit className="h-3 w-3 mr-1" />Edit
               </Button>
             </div>

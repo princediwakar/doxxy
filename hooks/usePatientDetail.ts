@@ -5,7 +5,6 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { queryKeys } from "@/lib/query-keys";
 import type { DbPatientByClinic } from "@/types/core";
-import type { AppointmentWithDetails } from "@/types/appointments";
 
 const supabase = getSupabase();
 
