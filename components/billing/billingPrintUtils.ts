@@ -25,14 +25,14 @@ function getPatientName(bill: Bill, patient: DbPatient | null): string {
   return 'Patient';
 }
 
-export function generateBillFilename(bill: Bill, patient: DbPatient | null): string {
+export function generateBillFilename(bill: Bill, patient: DbPatient | null, clinicName?: string | null): string {
   const name = getPatientName(bill, patient);
   const safeName = name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
-  const invoiceNum = bill.invoice_number?.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') || 'Invoice';
-  const dateStr = bill.created_at 
-    ? new Date(bill.created_at).toISOString().split('T')[0] 
+  const safeClinic = clinicName?.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_') || 'Clinic';
+  const dateStr = bill.created_at
+    ? new Date(bill.created_at).toISOString().split('T')[0]
     : new Date().toISOString().split('T')[0];
-  return `${safeName}_${dateStr}_${invoiceNum}`;
+  return `${safeName}_${dateStr}_${safeClinic}_Bill`;
 }
 
 // ----------------------------------------------------------------------
@@ -44,7 +44,7 @@ export const generateBillPrintContent = (
   patient: DbPatient | null,
   clinic: DbClinic | null
 ) => {
-  const filename = generateBillFilename(billData, patient);
+  const filename = generateBillFilename(billData, patient, clinic?.name);
   const patientName = getPatientName(billData, patient);
 
   const formatDate = (dateString?: string | null) => 
@@ -232,7 +232,7 @@ export const printBill = async (
 ) => {
   try {
     const printContent = generateBillPrintContent(billData, patient, clinic);
-    const filename = generateBillFilename(billData, patient);
+    const filename = generateBillFilename(billData, patient, clinic?.name);
 
     // Standard A4 dimensions for popup preview (optional)
     const printWindow = window.open('', '_blank', 'width=900,height=1200');

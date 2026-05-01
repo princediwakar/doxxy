@@ -58,7 +58,7 @@ export async function sendBillViaWhatsApp(
       heightLeft -= pageHeight;
     }
 
-    const filename = `${generateBillFilename(bill, patient as Parameters<typeof generateBillFilename>[1])}.pdf`;
+    const filename = `${generateBillFilename(bill, patient as Parameters<typeof generateBillFilename>[1], clinic?.name)}.pdf`;
     pdf.save(filename);
 
     window.open(`https://wa.me/${sanitizedPhone}`, "_blank");

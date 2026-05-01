@@ -39,16 +39,20 @@ export function usePatientBills(patientId?: string | null) {
 
       const { data, error } = await supabase
         .from("bills")
-        .select("*")
+        .select("*, patients(name)")
         .eq("patient_id", patientId)
         .order("created_at", { ascending: false });
 
       if (error) throw new Error(error.message);
 
-      return ((data as Record<string, unknown>[]) || []).map((b) => ({
-        ...b,
-        service_items: parseServiceItems(b.service_items),
-      })) as BillWithDetails[];
+      return ((data as Record<string, unknown>[]) || []).map((b) => {
+        const { patients, ...billData } = b;
+        return {
+          ...billData,
+          service_items: parseServiceItems(billData.service_items),
+          patient_name: (patients as { name?: string } | null)?.name,
+        } as BillWithDetails;
+      });
     },
     enabled: !!patientId,
     staleTime: 60 * 1000,
