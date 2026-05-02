@@ -96,8 +96,10 @@ export interface UpcomingAppointmentsListProps {
 
 /** Props for WeeklyAppointmentsChart component */
 export interface WeeklyAppointmentsChartProps {
-  appointments: DatabaseAppointment[];
+  appointments?: DatabaseAppointment[];
+  data?: DailyBreakdown[];
   onBarClick?: (date: string) => void;
+  loading?: boolean;
 }
 
 /** Props for DashboardStatsCard component */
@@ -109,6 +111,9 @@ export interface DashboardStatsCardProps {
   ariaLabel?: string;
   variant?: "default" | "primary" | "secondary";
   description?: string;
+  trendValue?: number;
+  trendDirection?: TrendDirection;
+  trendLabel?: string;
 }
 
 // ============================================================================
@@ -189,4 +194,82 @@ export function convertDbAppointmentToDatabaseAppointment(
     doctor_name: doctorName,
     clinic_id: apt.clinic_id,
   };
+}
+
+// ============================================================================
+// ANALYTICS TYPES (Overview V2)
+// ============================================================================
+
+/** Single day breakdown in analytics daily_breakdown JSON */
+export interface DailyBreakdown {
+  date: string;
+  completed: number;
+  pending: number;
+  no_shows: number;
+  cancelled: number;
+  total: number;
+}
+
+/** Raw clinic analytics from get_clinic_analytics RPC */
+export interface ClinicAnalytics {
+  total_patients_seen: number;
+  total_appointments: number;
+  completed: number;
+  pending: number;
+  no_shows: number;
+  cancelled: number;
+  daily_breakdown: DailyBreakdown[];
+}
+
+/** Raw doctor analytics from get_doctor_analytics RPC */
+export interface DoctorAnalytics {
+  total_patients: number;
+  total_appointments: number;
+  completed: number;
+  pending: number;
+  no_shows: number;
+  cancelled: number;
+  daily_breakdown: DailyBreakdown[];
+}
+
+/** Age group bucket from get_aggregated_demographics RPC */
+export interface AgeGroup {
+  age_group: string;
+  count: number;
+}
+
+/** Gender split entry from get_aggregated_demographics RPC */
+export interface GenderSplit {
+  gender: string;
+  count: number;
+}
+
+/** Aggregated demographics from get_aggregated_demographics RPC */
+export interface AggregatedDemographics {
+  age_groups: AgeGroup[];
+  gender_split: GenderSplit[];
+}
+
+/** Single provider row from get_provider_performance_matrix RPC */
+export interface ProviderPerformanceRow {
+  doctor_id: string;
+  doctor_name: string;
+  total_booked: number;
+  completed: number;
+  pending: number;
+  no_shows: number;
+  cancelled: number;
+  completion_rate: number;
+  no_show_rate: number;
+  utilization: number;
+}
+
+/** Trend direction for stat cards */
+export type TrendDirection = 'up' | 'down' | 'neutral';
+
+/** Trend indicator for DashboardStatsCard */
+export interface AnalyticsTrend {
+  value: number;
+  direction: TrendDirection;
+  label: string;
 }

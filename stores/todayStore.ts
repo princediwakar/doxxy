@@ -8,6 +8,8 @@ interface TodayState {
   activeFilter: ActiveFilter;
   searchQuery: string;
   debouncedSearch: string;
+  genderFilter: string | null;
+  ageGroupFilter: string | null;
   selectedPatientId: string | null;
   activeModal: ActiveModal;
   mobileDetailOpen: boolean;
@@ -19,6 +21,8 @@ interface TodayActions {
   setFilter: (filter: ActiveFilter) => void;
   setSearchQuery: (query: string) => void;
   setDebouncedSearch: (query: string) => void;
+  setGenderFilter: (gender: string | null) => void;
+  setAgeGroupFilter: (ageGroup: string | null) => void;
   selectPatient: (patientId: string) => boolean;
   clearSelection: () => void;
   openModal: (modal: ActiveModal) => void;
@@ -31,6 +35,8 @@ export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
   activeFilter: 'queue',
   searchQuery: '',
   debouncedSearch: '',
+  genderFilter: null,
+  ageGroupFilter: null,
   selectedPatientId: null,
   activeModal: null,
   mobileDetailOpen: false,
@@ -46,6 +52,10 @@ export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
   },
 
   setDebouncedSearch: (query) => set({ debouncedSearch: query }),
+
+  setGenderFilter: (gender) => set({ genderFilter: gender, activeFilter: 'all' }),
+
+  setAgeGroupFilter: (ageGroup) => set({ ageGroupFilter: ageGroup, activeFilter: 'all' }),
 
   selectPatient: (patientId) => {
     if (get().dirtyFormGuard) {

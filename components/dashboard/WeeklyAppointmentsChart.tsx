@@ -1,29 +1,25 @@
 "use client";
-import { logger } from "@/lib/logger";
 
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { format, startOfWeek, addDays, isSameDay, parseISO, isValid } from 'date-fns';
-import React, { useMemo } from 'react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  ReferenceLine,
+} from "recharts";
+import React, { useMemo } from "react";
+import { format, startOfWeek, addDays } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Activity, TrendingUp, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Activity, TrendingUp, Calendar } from "lucide-react";
+import type { DailyBreakdown, WeeklyAppointmentsChartProps } from "@/types/dashboard";
 
-import { WeeklyAppointmentsChartProps } from "@/types/dashboard";
-
-function getWeekDays(start: Date) {
-  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
-}
-
-// Custom tooltip component
 interface TooltipProps {
   active?: boolean;
-  payload?: Array<{
-    payload: {
-      count: number;
-      completedCount: number;
-      pendingCount: number;
-    };
-  }>;
+  payload?: Array<{ payload: DailyBreakdown & { name: string } }>;
   label?: string;
 }
 
@@ -32,78 +28,108 @@ const CustomTooltip = React.memo(({ active, payload, label }: TooltipProps) => {
     const data = payload[0].payload;
     return (
       <div className="bg-background border border-border rounded-lg shadow-lg p-3">
-        <p className="font-medium">{`${label}`}</p>
-        <p className="text-primary">
-          {`Appointments: ${data.count}`}
-        </p>
-        {data.completedCount > 0 && (
-          <p className="text-green-600 text-sm">
-            {`Completed: ${data.completedCount}`}
-          </p>
-        )}
-        {data.pendingCount > 0 && (
-          <p className="text-orange-600 text-sm">
-            {`Pending: ${data.pendingCount}`}
-          </p>
-        )}
+        <p className="font-medium">{label}</p>
+        <p className="text-sm text-muted-foreground">{data.date}</p>
+        <div className="mt-1 space-y-0.5 text-sm">
+          <p className="text-green-600">Completed: {data.completed}</p>
+          <p className="text-muted-foreground">Pending: {data.pending}</p>
+          <p className="text-red-500">No-Shows: {data.no_shows}</p>
+          <p className="text-amber-500">Cancelled: {data.cancelled}</p>
+          <p className="font-medium">Total: {data.total}</p>
+        </div>
       </div>
     );
   }
   return null;
 });
 
-export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = React.memo(({
+CustomTooltip.displayName = "CustomTooltip";
+
+const CustomCursor = (props: { x?: number; y?: number; width?: number; height?: number }) => {
+  if (props.x === undefined || props.y === undefined || props.width === undefined || props.height === undefined) {
+    return null;
+  }
+  return (
+    <rect
+      x={props.x}
+      y={props.y}
+      width={props.width}
+      height={props.height}
+      fill="rgba(0,0,0,0.04)"
+      rx={4}
+    />
+  );
+};
+
+const EmptyState = () => (
+  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+    <Calendar size={48} className="mb-4 opacity-50" />
+    <p className="text-sm">No appointments in this period</p>
+    <p className="text-xs mt-1">Chart will update when appointments are scheduled</p>
+  </div>
+);
+
+export const WeeklyAppointmentsChart = React.memo(function WeeklyAppointmentsChart({
   appointments,
-  onBarClick
-}) => {
-  const weekStart = useMemo(() => startOfWeek(new Date(), { weekStartsOn: 1 }), []); // Monday
-  const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
-
-  // Enhanced data processing with status breakdown - memoized
-  const data = useMemo(() => weekDays.map((day) => {
-    const dayAppointments = appointments.filter((apt) => {
-      if (!apt.date) return false;
-      try {
-        const aptDate = typeof apt.date === 'string' ? parseISO(apt.date) : apt.date;
-        return isValid(aptDate) && isSameDay(day, aptDate);
-      } catch {
-        logger.warn('Invalid date format:', apt.date);
-        return false;
+  data,
+  onBarClick,
+  loading = false,
+}: WeeklyAppointmentsChartProps) {
+  const chartData: DailyBreakdown[] = useMemo(() => {
+    if (data) return data;
+    if (appointments) {
+      const map = new Map<string, DailyBreakdown>();
+      const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+      for (let i = 0; i < 7; i++) {
+        const d = addDays(weekStart, i);
+        const key = format(d, "yyyy-MM-dd");
+        map.set(key, {
+          date: key,
+          completed: 0,
+          pending: 0,
+          no_shows: 0,
+          cancelled: 0,
+          total: 0,
+        });
       }
-    });
+      appointments.forEach((apt) => {
+        const entry = map.get(apt.date);
+        if (!entry) return;
+        entry.total++;
+        const s = apt.status.toLowerCase();
+        if (s === "completed") entry.completed++;
+        else if (s === "scheduled" || s === "in progress") entry.pending++;
+        else if (s === "cancelled") entry.cancelled++;
+        else if (s === "no-show") entry.no_shows++;
+      });
+      return Array.from(map.values());
+    }
+    return [];
+  }, [data, appointments]);
 
-    const count = dayAppointments.length;
-    const completedCount = dayAppointments.filter(apt =>
-      apt.status?.toLowerCase() === 'completed'
-    ).length;
-    const pendingCount = dayAppointments.filter(apt =>
-      apt.status?.toLowerCase() === 'scheduled' ||
-      apt.status?.toLowerCase() === 'in progress'
-    ).length;
+  const { totalAppointments, completionRate, dailyAvg } = useMemo(() => {
+    const total = chartData.reduce((sum, d) => sum + (d.total || 0), 0);
+    const completed = chartData.reduce((sum, d) => sum + (d.completed || 0), 0);
+    const rate = total > 0 ? (completed / total) * 100 : 0;
+    const avg = chartData.length > 0 ? total / chartData.length : 0;
+    return { totalAppointments: total, completionRate: rate, dailyAvg: avg };
+  }, [chartData]);
 
-    return {
-      day: format(day, 'EEE'),
-      fullDate: format(day, 'MMMM d'),
-      date: format(day, 'yyyy-MM-dd'),
-      count,
-      completedCount,
-      pendingCount,
-      isToday: isSameDay(day, new Date()),
-    };
-  }), [weekDays, appointments]);
+  const formattedData = useMemo(
+    () =>
+      chartData.map((d) => {
+        const dateStr = d.date ? d.date.slice(0, 10) : "";
+        return {
+          ...d,
+          day: dateStr ? format(new Date(dateStr + "T12:00:00"), "EEE") : "",
+        };
+      }),
+    [chartData]
+  );
 
-  const { totalAppointments, completionRate, busyDay } = useMemo(() => {
-    const totalAppointments = data.reduce((sum, day) => sum + day.count, 0);
-    const totalCompleted = data.reduce((sum, day) => sum + day.completedCount, 0);
-    const completionRate = totalAppointments > 0 ? (totalCompleted / totalAppointments * 100).toFixed(1) : '0';
-    const busyDay = data.reduce((prev, current) => (prev.count > current.count) ? prev : current);
-
-    return { totalAppointments, completionRate, busyDay };
-  }, [data]);
-
-  const handleBarClick = (data: { date: string }) => {
-    if (onBarClick) {
-      onBarClick(data.date);
+  const handleBarClick = (entry: { date: string }) => {
+    if (onBarClick && entry.date) {
+      onBarClick(entry.date);
     }
   };
 
@@ -113,55 +139,93 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = R
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Activity size={18} />
-            <CardTitle className="text-base">Weekly Appointments</CardTitle>
+            <CardTitle className="text-base">Appointment Breakdown</CardTitle>
           </div>
           {totalAppointments > 0 && (
             <Badge variant="secondary" className="text-xs">
               <TrendingUp size={12} className="mr-1" />
-              {completionRate}% completed
+              {completionRate.toFixed(1)}% completed
             </Badge>
           )}
         </div>
-        <CardDescription className="flex items-center justify-between">
-          <span>Appointments per day this week</span>
-          {totalAppointments > 0 && busyDay.count > 0 && (
-            <span className="text-xs text-muted-foreground">
-              Busiest: {busyDay.day} ({busyDay.count})
-            </span>
-          )}
+        <CardDescription>
+          <span>
+            {totalAppointments} total &middot; avg {dailyAvg.toFixed(1)}/day
+          </span>
         </CardDescription>
       </CardHeader>
-      <CardContent className="h-72">
-        {totalAppointments === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <Calendar size={48} className="mb-4 opacity-50" />
-            <p className="text-sm">No appointments this week</p>
-            <p className="text-xs mt-1">Chart will update when appointments are scheduled</p>
+      <CardContent className="h-80">
+        {loading ? (
+          <div className="h-full bg-muted rounded animate-pulse" />
+        ) : totalAppointments === 0 && formattedData.length === 0 ? (
+          <div className="h-full">
+            <EmptyState />
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart 
-              data={data} 
+            <BarChart
+              data={formattedData}
               margin={{ top: 20, right: 20, left: 0, bottom: 0 }}
+              barGap={0}
+              barCategoryGap="20%"
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis 
-                dataKey="day" 
+              <XAxis
+                dataKey="day"
                 tick={{ fontSize: 12 }}
-                tickLine={{ stroke: '#e0e0e0' }}
+                tickLine={{ stroke: "#e0e0e0" }}
               />
-              <YAxis 
+              <YAxis
                 allowDecimals={false}
                 tick={{ fontSize: 12 }}
-                tickLine={{ stroke: '#e0e0e0' }}
-                axisLine={{ stroke: '#e0e0e0' }}
+                tickLine={{ stroke: "#e0e0e0" }}
+                axisLine={{ stroke: "#e0e0e0" }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<CustomTooltip />} cursor={<CustomCursor />} />
+              {dailyAvg > 0 && (
+                <ReferenceLine
+                  y={dailyAvg}
+                  stroke="#94a3b8"
+                  strokeDasharray="6 4"
+                  strokeWidth={1.5}
+                  label={{
+                    value: `avg ${dailyAvg.toFixed(1)}`,
+                    position: "insideTopRight",
+                    fontSize: 11,
+                    fill: "#94a3b8",
+                  }}
+                />
+              )}
               <Bar
-                dataKey="count"
-                fill="#0080ff"
+                dataKey="completed"
+                stackId="a"
+                fill="#22c55e"
+                radius={[0, 0, 0, 0]}
+                cursor={onBarClick ? "pointer" : "default"}
+                onClick={onBarClick ? handleBarClick : undefined}
+              />
+              <Bar
+                dataKey="pending"
+                stackId="a"
+                fill="#94a3b8"
+                radius={[0, 0, 0, 0]}
+                cursor={onBarClick ? "pointer" : "default"}
+                onClick={onBarClick ? handleBarClick : undefined}
+              />
+              <Bar
+                dataKey="no_shows"
+                stackId="a"
+                fill="#ef4444"
+                radius={[0, 0, 0, 0]}
+                cursor={onBarClick ? "pointer" : "default"}
+                onClick={onBarClick ? handleBarClick : undefined}
+              />
+              <Bar
+                dataKey="cancelled"
+                stackId="a"
+                fill="#f59e0b"
                 radius={[4, 4, 0, 0]}
-                cursor={onBarClick ? 'pointer' : 'default'}
+                cursor={onBarClick ? "pointer" : "default"}
                 onClick={onBarClick ? handleBarClick : undefined}
               />
             </BarChart>
@@ -171,5 +235,3 @@ export const WeeklyAppointmentsChart: React.FC<WeeklyAppointmentsChartProps> = R
     </Card>
   );
 });
-
-WeeklyAppointmentsChart.displayName = 'WeeklyAppointmentsChart'; 

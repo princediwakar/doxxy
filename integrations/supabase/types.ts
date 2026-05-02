@@ -674,8 +674,8 @@ export type Database = {
           expiry_date: string
           id: string
           medicine_id: number
-          reorder_level: number
           mrp: number
+          reorder_level: number
           unit_cost_price: number
           updated_at: string
         }
@@ -686,9 +686,9 @@ export type Database = {
           current_stock?: number
           expiry_date: string
           id?: string
-medicine_id: number
-          reorder_level?: number
+          medicine_id: number
           mrp?: number
+          reorder_level?: number
           unit_cost_price?: number
           updated_at?: string
         }
@@ -700,8 +700,8 @@ medicine_id: number
           expiry_date?: string
           id?: string
           medicine_id?: number
+          mrp?: number
           reorder_level?: number
-          selling_price?: number
           unit_cost_price?: number
           updated_at?: string
         }
@@ -725,10 +725,13 @@ medicine_id: number
       medicines: {
         Row: {
           created_at: string | null
+          form_canonical: string | null
           id: number
+          is_auto_created: boolean
           is_discontinued: boolean | null
           manufacturer_name: string | null
           name: string
+          name_normalized: string | null
           pack_size_label: string | null
           pack_type: string | null
           price: number | null
@@ -737,10 +740,13 @@ medicine_id: number
         }
         Insert: {
           created_at?: string | null
+          form_canonical?: string | null
           id?: number
+          is_auto_created?: boolean
           is_discontinued?: boolean | null
           manufacturer_name?: string | null
           name: string
+          name_normalized?: string | null
           pack_size_label?: string | null
           pack_type?: string | null
           price?: number | null
@@ -749,10 +755,13 @@ medicine_id: number
         }
         Update: {
           created_at?: string | null
+          form_canonical?: string | null
           id?: number
+          is_auto_created?: boolean
           is_discontinued?: boolean | null
           manufacturer_name?: string | null
           name?: string
+          name_normalized?: string | null
           pack_size_label?: string | null
           pack_type?: string | null
           price?: number | null
@@ -1220,6 +1229,54 @@ medicine_id: number
           in_progress_count: number
         }[]
       }
+      check_accepted_invitation: {
+        Args: { p_email: string; p_token: string }
+        Returns: {
+          accepted_at: string | null
+          clinic_id: string
+          created_at: string | null
+          department_id: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invitation_token: string | null
+          invited_by: string | null
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "pending_invitations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      check_expired_invitation: {
+        Args: { p_email: string; p_token: string }
+        Returns: {
+          accepted_at: string | null
+          clinic_id: string
+          created_at: string | null
+          department_id: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invitation_token: string | null
+          invited_by: string | null
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "pending_invitations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
         Returns: Json
@@ -1266,6 +1323,7 @@ medicine_id: number
         Returns: boolean
       }
       delete_patient: { Args: { p_patient_id: string }; Returns: boolean }
+      extract_form_canonical: { Args: { term: string }; Returns: string }
       fix_empty_display_names: { Args: never; Returns: number }
       generate_clinic_slug: {
         Args: { clinic_id?: string; clinic_name: string }
@@ -1274,6 +1332,13 @@ medicine_id: number
       generate_invoice_number: {
         Args: { clinic_id_arg: string }
         Returns: string
+      }
+      get_aggregated_demographics: {
+        Args: { _clinic_id: string; _doctor_id?: string }
+        Returns: {
+          age_groups: Json
+          gender_split: Json
+        }[]
       }
       get_appointments_with_details_by_clinic: {
         Args: { clinic_id: string }
@@ -1292,6 +1357,33 @@ medicine_id: number
           time: string
           type: Database["public"]["Enums"]["appointment_type"]
           user_id: string
+        }[]
+      }
+      get_bills_by_clinic: {
+        Args: { clinic_id: string }
+        Returns: {
+          amount: number
+          appointment_id: string
+          created_at: string
+          due_date: string
+          id: string
+          invoice_number: string
+          patient_id: string
+          patient_name: string
+          status: string
+          updated_at: string
+        }[]
+      }
+      get_clinic_analytics: {
+        Args: { _clinic_id: string; _end_date: string; _start_date: string }
+        Returns: {
+          cancelled: number
+          completed: number
+          daily_breakdown: Json
+          no_shows: number
+          pending: number
+          total_appointments: number
+          total_patients_seen: number
         }[]
       }
       get_clinic_billing_summary: {
@@ -1365,6 +1457,18 @@ medicine_id: number
           pending_consultations: number
           total_appointments: number
           total_doctors: number
+          total_patients: number
+        }[]
+      }
+      get_doctor_analytics: {
+        Args: { _doctor_id: string; _end_date: string; _start_date: string }
+        Returns: {
+          cancelled: number
+          completed: number
+          daily_breakdown: Json
+          no_shows: number
+          pending: number
+          total_appointments: number
           total_patients: number
         }[]
       }
@@ -1452,6 +1556,18 @@ medicine_id: number
         }[]
       }
       get_profile_image_url: { Args: { p_user_id: string }; Returns: string }
+      get_provider_performance_matrix: {
+        Args: { _clinic_id: string; _end_date: string; _start_date: string }
+        Returns: {
+          cancelled: number
+          completed: number
+          doctor_id: string
+          doctor_name: string
+          no_shows: number
+          pending: number
+          total_booked: number
+        }[]
+      }
       get_public_clinic_by_slug: {
         Args: { p_slug: string }
         Returns: {
@@ -1545,6 +1661,25 @@ medicine_id: number
         Args: { check_clinic_id: string }
         Returns: boolean
       }
+      match_invoice_item_single: {
+        Args: { search_term: string }
+        Returns: {
+          matched_id: number
+          matched_name: string
+          original_search_term: string
+          similarity_score: number
+        }[]
+      }
+      match_invoice_items_bulk: {
+        Args: { search_terms: string[] }
+        Returns: {
+          matched_id: number
+          matched_name: string
+          original_search_term: string
+          similarity_score: number
+        }[]
+      }
+      normalize_medicine_term: { Args: { term: string }; Returns: string }
       search_medicines: {
         Args: { limit_count?: number; search_term?: string }
         Returns: {
@@ -1561,6 +1696,8 @@ medicine_id: number
           similarity_score: number
         }[]
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       submit_contact_form: {
         Args: {
           city?: string
@@ -1654,27 +1791,6 @@ medicine_id: number
         }
       }
       user_clinic_ids: { Args: never; Returns: string[] }
-      check_accepted_invitation: {
-        Args: {
-          p_token: string
-          p_email: string
-        }
-        Returns: Database["public"]["Tables"]["pending_invitations"]["Row"][]
-      }
-      check_expired_invitation: {
-        Args: {
-          p_token: string
-          p_email: string
-        }
-        Returns: Database["public"]["Tables"]["pending_invitations"]["Row"][]
-      }
-      verify_invitation_token: {
-        Args: {
-          p_token: string
-          p_email: string
-        }
-        Returns: Database["public"]["Tables"]["pending_invitations"]["Row"][]
-      }
       verify_and_process_payment: {
         Args: {
           p_clinic_id: string
@@ -1685,6 +1801,30 @@ medicine_id: number
         }
         Returns: Json
       }
+      verify_invitation_token: {
+        Args: { p_email: string; p_token: string }
+        Returns: {
+          accepted_at: string | null
+          clinic_id: string
+          created_at: string | null
+          department_id: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invitation_token: string | null
+          invited_by: string | null
+          name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "pending_invitations"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
     }
     Enums: {
       appointment_status:
@@ -1692,6 +1832,7 @@ medicine_id: number
         | "In Progress"
         | "Completed"
         | "Cancelled"
+        | "No-Show"
       appointment_type: "Walk-in" | "Digital"
       procurement_status: "Draft" | "Verified" | "Completed"
       user_role: "staff" | "doctor" | "superadmin"
@@ -1827,6 +1968,7 @@ export const Constants = {
         "In Progress",
         "Completed",
         "Cancelled",
+        "No-Show",
       ],
       appointment_type: ["Walk-in", "Digital"],
       procurement_status: ["Draft", "Verified", "Completed"],

@@ -99,6 +99,8 @@ export function TodayPatientList({
   const activeFilter = useTodayStore((s) => s.activeFilter);
   const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
   const searchQuery = useTodayStore((s) => s.searchQuery);
+  const genderFilter = useTodayStore((s) => s.genderFilter);
+  const ageGroupFilter = useTodayStore((s) => s.ageGroupFilter);
   const selectPatient = useTodayStore((s) => s.selectPatient);
 
   const handleSearchPatientClick = useCallback(
@@ -157,7 +159,9 @@ export function TodayPatientList({
     );
   }
 
-  if (!searchQuery.trim()) {
+  const hasActiveFilter = !!(genderFilter || ageGroupFilter);
+
+  if (!searchQuery.trim() && !hasActiveFilter) {
     return (
       <div className="text-center py-16 text-muted-foreground">
         <p className="font-medium">Search for patients</p>
@@ -167,10 +171,15 @@ export function TodayPatientList({
   }
 
   if (searchPatients.length === 0) {
+    const filterLabel = [
+      searchQuery.trim() && `"${searchQuery}"`,
+      genderFilter && `gender: ${genderFilter}`,
+      ageGroupFilter && `age: ${ageGroupFilter}`,
+    ].filter(Boolean).join(", ");
     return (
       <div className="text-center py-16 text-muted-foreground">
         <p className="font-medium">No patients found</p>
-        <p className="text-sm">No patients matching &quot;{searchQuery}&quot;.</p>
+        <p className="text-sm">No patients matching {filterLabel}.</p>
       </div>
     );
   }

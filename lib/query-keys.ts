@@ -29,6 +29,10 @@ export const queryKeys = {
   dashboard: {
     data: (clinicId: string) => ['dashboardData', clinicId] as const,
     doctor: (clinicId: string, userId: string) => ['doctorDashboardData', clinicId, userId] as const,
+    analytics: (clinicId: string, startDate: string, endDate: string) => ['clinicAnalytics', clinicId, startDate, endDate] as const,
+    doctorAnalytics: (doctorId: string, startDate: string, endDate: string) => ['doctorAnalytics', doctorId, startDate, endDate] as const,
+    demographics: (clinicId: string, doctorId: string | null) => ['demographics', clinicId, doctorId ?? 'all'] as const,
+    providerPerformance: (clinicId: string, startDate: string, endDate: string) => ['providerPerformance', clinicId, startDate, endDate] as const,
   },
   medicines: {
     search: (query: string) => ['medicines', query] as const,

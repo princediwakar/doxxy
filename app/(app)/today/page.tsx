@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { logger } from "@/lib/logger";
 import { showErrorToast } from "@/lib/error-utils";
 import { useTodayStore } from "@/stores/todayStore";
@@ -24,18 +24,29 @@ import type { BillWithDetails } from "@/types/billing";
 import type { DbPatientByClinic } from "@/types/core";
 import type { Patient, AppointmentData } from "@/types/patients";
 
-export default function TodayPage() {
+function TodayPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const activeFilter = useTodayStore((s) => s.activeFilter);
   const searchQuery = useTodayStore((s) => s.searchQuery);
+  const genderFilter = useTodayStore((s) => s.genderFilter);
+  const ageGroupFilter = useTodayStore((s) => s.ageGroupFilter);
   const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
   const mobileDetailOpen = useTodayStore((s) => s.mobileDetailOpen);
   const openModal = useTodayStore((s) => s.openModal);
   const closeModal = useTodayStore((s) => s.closeModal);
   const selectPatient = useTodayStore((s) => s.selectPatient);
   const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
+  const setGenderFilter = useTodayStore((s) => s.setGenderFilter);
+  const setAgeGroupFilter = useTodayStore((s) => s.setAgeGroupFilter);
   const [isMobile, setIsMobile] = useState(true);
+
+  useEffect(() => {
+    setGenderFilter(searchParams.get("gender"));
+    setAgeGroupFilter(searchParams.get("age_group"));
+  }, [searchParams]);
+
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 1023px)");
     setIsMobile(mql.matches);
@@ -46,7 +57,9 @@ export default function TodayPage() {
 
   const { queue, isLoading: isLoadingQueue, refetch } = useTodayAppointments();
   const { patients: searchPatients, isLoading: isLoadingSearch } = usePatientSearch(
-    activeFilter === "all" ? searchQuery : undefined
+    activeFilter === "all" ? searchQuery : undefined,
+    genderFilter,
+    ageGroupFilter,
   );
   const { data: patientDetail, isLoading: isLoadingDetail } = usePatientDetail(selectedPatientId);
   const { data: patientBills = [], isLoading: isLoadingBills } = usePatientBills(selectedPatientId);
@@ -238,5 +251,13 @@ export default function TodayPage() {
         onPatientCreated={handlePatientCreated}
       />
     </div>
+  );
+}
+
+export default function TodayPage() {
+  return (
+    <Suspense>
+      <TodayPageInner />
+    </Suspense>
   );
 }

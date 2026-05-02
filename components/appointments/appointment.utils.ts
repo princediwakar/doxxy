@@ -39,7 +39,7 @@ export const appointmentFormSchema = z.object({
     required_error: "Appointment type is required",
   }),
   status: z.enum(
-    ["Scheduled", "In Progress", "Completed", "Cancelled"] as const,
+    ["Scheduled", "In Progress", "Completed", "Cancelled", "No-Show"] as const,
     {
       required_error: "Status is required",
     }

@@ -230,6 +230,18 @@ export type DbDashboardData = Database['public']['Functions']['get_dashboard_dat
 /** Get doctor dashboard data function return type */
 export type DbDoctorDashboardData = Database['public']['Functions']['get_doctor_dashboard_data']['Returns'][0];
 
+/** Get clinic analytics function return type */
+export type DbClinicAnalytics = Database['public']['Functions']['get_clinic_analytics']['Returns'][0];
+
+/** Get doctor analytics function return type */
+export type DbDoctorAnalytics = Database['public']['Functions']['get_doctor_analytics']['Returns'][0];
+
+/** Get aggregated demographics function return type */
+export type DbAggregatedDemographics = Database['public']['Functions']['get_aggregated_demographics']['Returns'][0];
+
+/** Get provider performance matrix function return type */
+export type DbProviderPerformanceRow = Database['public']['Functions']['get_provider_performance_matrix']['Returns'][0];
+
 // ============================================================================
 // ENHANCED RELATIONSHIP TYPES (shared across spokes)
 // ============================================================================
