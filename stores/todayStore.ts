@@ -53,9 +53,9 @@ export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
 
   setDebouncedSearch: (query) => set({ debouncedSearch: query }),
 
-  setGenderFilter: (gender) => set({ genderFilter: gender, activeFilter: 'all' }),
+  setGenderFilter: (gender) => set({ genderFilter: gender, ...(gender ? { activeFilter: 'all' } : {}) }),
 
-  setAgeGroupFilter: (ageGroup) => set({ ageGroupFilter: ageGroup, activeFilter: 'all' }),
+  setAgeGroupFilter: (ageGroup) => set({ ageGroupFilter: ageGroup, ...(ageGroup ? { activeFilter: 'all' } : {}) }),
 
   selectPatient: (patientId) => {
     if (get().dirtyFormGuard) {
