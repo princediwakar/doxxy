@@ -383,39 +383,43 @@ const CreateClinicPage = () => {
                           value={field.value}
                           className="grid grid-cols-1 gap-4"
                         >
-                          <Card className={`cursor-pointer transition-colors ${field.value === 'yes' ? 'ring-2 ring-primary' : ''}`}>
-                            <CardContent className="flex items-center space-x-3 p-4">
-                              <RadioGroupItem value="yes" id="yes" />
-                              <div className="flex items-center space-x-3">
-                                <Stethoscope className="h-5 w-5 text-primary" />
-                                <div>
-                                  <Label htmlFor="yes" className="font-medium cursor-pointer text-foreground">
-                                    Yes, I'm a practicing doctor
-                                  </Label>
-                                  <p className="text-sm text-muted-foreground">
-                                    I will see patients and appear in appointment lists
-                                  </p>
+                          <Label htmlFor="yes" className="cursor-pointer">
+                            <Card className={`transition-colors ${field.value === 'yes' ? 'ring-2 ring-primary' : ''}`}>
+                              <CardContent className="flex items-center space-x-3 p-4">
+                                <RadioGroupItem value="yes" id="yes" />
+                                <div className="flex items-center space-x-3">
+                                  <Stethoscope className="h-5 w-5 text-primary" />
+                                  <div>
+                                    <span className="font-medium text-foreground">
+                                      Yes, I'm a practicing doctor
+                                    </span>
+                                    <p className="text-sm text-muted-foreground">
+                                      I will see patients and appear in appointment lists
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                              </CardContent>
+                            </Card>
+                          </Label>
 
-                          <Card className={`cursor-pointer transition-colors ${field.value === 'no' ? 'ring-2 ring-primary' : ''}`}>
-                            <CardContent className="flex items-center space-x-3 p-4">
-                              <RadioGroupItem value="no" id="no" />
-                              <div className="flex items-center space-x-3">
-                                <Building2 className="h-5 w-5 text-primary" />
-                                <div>
-                                  <Label htmlFor="no" className="font-medium cursor-pointer text-foreground">
-                                    No, I'm an administrator only
-                                  </Label>
-                                  <p className="text-sm text-muted-foreground">
-                                    I will manage the clinic but not see patients
-                                  </p>
+                          <Label htmlFor="no" className="cursor-pointer">
+                            <Card className={`transition-colors ${field.value === 'no' ? 'ring-2 ring-primary' : ''}`}>
+                              <CardContent className="flex items-center space-x-3 p-4">
+                                <RadioGroupItem value="no" id="no" />
+                                <div className="flex items-center space-x-3">
+                                  <Building2 className="h-5 w-5 text-primary" />
+                                  <div>
+                                    <span className="font-medium text-foreground">
+                                      No, I'm an administrator only
+                                    </span>
+                                    <p className="text-sm text-muted-foreground">
+                                      I will manage the clinic but not see patients
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
+                              </CardContent>
+                            </Card>
+                          </Label>
                         </RadioGroup>
                       </FormControl>
                       <FormMessage />
@@ -464,13 +468,24 @@ const CreateClinicPage = () => {
                         <FormItem>
                           <FormLabel>Consultation Fee (₹)</FormLabel>
                           <FormControl>
-                            <Input 
+                            <Input
                               type="number"
                               placeholder="500"
                               min="0"
                               step="50"
-                              {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              ref={field.ref}
+                              name={field.name}
+                              value={field.value === 0 ? '' : field.value}
+                              onChange={(e) => {
+                                const raw = e.target.value;
+                                if (raw === '') {
+                                  field.onChange(0);
+                                } else {
+                                  const parsed = parseInt(raw, 10);
+                                  field.onChange(isNaN(parsed) ? 0 : parsed);
+                                }
+                              }}
+                              onBlur={field.onBlur}
                             />
                           </FormControl>
                           <FormMessage />
