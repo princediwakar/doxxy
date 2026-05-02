@@ -103,16 +103,18 @@ export const InviteMemberDialog = ({ open, onOpenChange, data, setData, onSubmit
             <SelectContent><SelectItem value="staff">Staff</SelectItem><SelectItem value="doctor">Doctor</SelectItem><SelectItem value="superadmin">Superadmin</SelectItem></SelectContent>
           </Select>
         </div>
-        <div className="md:col-span-2">
-          <label className="text-sm font-medium">Department</label>
-          <Select value={data.department_id || 'none'} onValueChange={v => setData({...data, department_id: v === 'none' ? undefined : v})}>
-            <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No Department</SelectItem>
-              {departments.map((d) => <SelectItem key={d.id} value={d.id}>{getDeptName(d)}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        {data.role !== 'staff' && (
+          <div className="md:col-span-2">
+            <label className="text-sm font-medium">Department</label>
+            <Select value={data.department_id || 'none'} onValueChange={v => setData({...data, department_id: v === 'none' ? undefined : v})}>
+              <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Department</SelectItem>
+                {departments.map((d) => <SelectItem key={d.id} value={d.id}>{getDeptName(d)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
         <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Cancel</Button>
