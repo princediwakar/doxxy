@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AppSidebar } from "@/components/AppSidebar";
-import { MobileNav } from "@/components/MobileNav";
+import { MobileHeader } from "@/components/MobileHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Suspense } from "react";
@@ -41,10 +41,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <AppSidebar />
       </div>
 
-      {/* Mobile Navigation Trigger - visible below lg */}
-      <div className="lg:hidden fixed top-0 left-0 z-50 pl-2 pt-safe">
-        <MobileNav />
-      </div>
+      {/* Mobile Header - visible below lg */}
+      <MobileHeader />
 
       {/* Main Content Area */}
       <div className="flex-1 mt-14 lg:mt-4 lg:ml-72 pb-24 lg:pb-0 min-w-0 overflow-hidden">
