@@ -1654,6 +1654,27 @@ medicine_id: number
         }
       }
       user_clinic_ids: { Args: never; Returns: string[] }
+      check_accepted_invitation: {
+        Args: {
+          p_token: string
+          p_email: string
+        }
+        Returns: Database["public"]["Tables"]["pending_invitations"]["Row"][]
+      }
+      check_expired_invitation: {
+        Args: {
+          p_token: string
+          p_email: string
+        }
+        Returns: Database["public"]["Tables"]["pending_invitations"]["Row"][]
+      }
+      verify_invitation_token: {
+        Args: {
+          p_token: string
+          p_email: string
+        }
+        Returns: Database["public"]["Tables"]["pending_invitations"]["Row"][]
+      }
       verify_and_process_payment: {
         Args: {
           p_clinic_id: string
