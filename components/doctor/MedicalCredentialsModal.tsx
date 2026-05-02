@@ -198,6 +198,16 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
 
               {/* Practice Tab */}
               <TabsContent value="practice" className="p-6 space-y-6 m-0 focus-visible:ring-0 outline-none animate-in fade-in-50">
+                <div className="grid grid-cols-2 gap-6">
+                                      <div className="space-y-2">
+                      <Label htmlFor="consultation_fee">Consultation Fee (₹)</Label>
+                      <Input id="consultation_fee" type="number" value={formData.consultation_fee} onChange={(e) => handleFieldChange('consultation_fee', e.target.value)} placeholder="e.g., 500" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="years_of_experience">Years of Experience</Label>
+                      <Input id="years_of_experience" type="number" value={formData.years_of_experience} onChange={(e) => handleFieldChange('years_of_experience', e.target.value)} placeholder="e.g., 10" />
+                    </div>
+                  </div>
                   <div className="space-y-3">
                     <Label htmlFor="professional_summary" className="text-base font-semibold flex items-center gap-2">
                       <Briefcase className="w-4 h-4" /> Professional Summary
@@ -210,16 +220,7 @@ export function MedicalCredentialsModal({ open, onClose, doctorProfile, onSucces
                       className="min-h-[140px]" 
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="years_of_experience">Years of Experience</Label>
-                      <Input id="years_of_experience" type="number" value={formData.years_of_experience} onChange={(e) => handleFieldChange('years_of_experience', e.target.value)} placeholder="e.g., 10" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="consultation_fee">Consultation Fee (₹)</Label>
-                      <Input id="consultation_fee" type="number" value={formData.consultation_fee} onChange={(e) => handleFieldChange('consultation_fee', e.target.value)} placeholder="e.g., 500" />
-                    </div>
-                  </div>
+                  
               </TabsContent>
 
               {/* Specialization Tab */}
