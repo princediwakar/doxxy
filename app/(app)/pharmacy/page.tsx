@@ -20,7 +20,7 @@ export default function PharmacyPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold">Pharmacy Store</h1>
-            <p className="text-muted-foreground">Manage medicine stock, track expiry dates, and add new purchases.</p>
+            <p className="hidden sm:block text-muted-foreground">Manage medicine stock, track expiry dates, and add new purchases.</p>
           </div>
         </div>
         <Button onClick={() => setIsEntrySheetOpen(true)} className="gap-2 bg-primary shrink-0">

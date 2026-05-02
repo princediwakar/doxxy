@@ -207,7 +207,7 @@ const Profile = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold ">Profile</h1>
-            <p className="text-muted-foreground">
+            <p className="hidden md:block text-muted-foreground">
               Manage your profile information and settings
             </p>
           </div>
