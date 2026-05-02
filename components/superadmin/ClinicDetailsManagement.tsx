@@ -158,13 +158,15 @@ const ClinicDetailsManagement = () => {
 
   return (
     <div className="space-y-6 px-4 md:px-0 w-full max-w-full overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-        <div>
-          <h2 className="text-lg font-semibold">About Clinic</h2>
-          <p className="text-sm text-muted-foreground">
-            Basic info & contact details
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+            <Building className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">About Clinic</h1>
+            <p className="hidden sm:block text-muted-foreground">Basic info and contact details</p>
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {hasUnsavedChanges && (

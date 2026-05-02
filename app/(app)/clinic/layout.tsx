@@ -36,16 +36,6 @@ export default function ClinicLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-          <Building2 className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Clinic</h1>
-          <p className="text-muted-foreground">Everything about your clinic.</p>
-        </div>
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-6">
         <nav className="lg:w-48 shrink-0">
           <div className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">

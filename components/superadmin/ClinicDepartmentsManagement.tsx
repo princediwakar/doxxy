@@ -99,13 +99,15 @@ const ClinicDepartmentsManagement = () => {
 
   return (
     <div className="space-y-6 px-4 md:px-0 w-full max-w-full overflow-hidden">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground">Departments</h2>
-          <p className="text-sm text-muted-foreground">
-            Manage departments & specialties
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+            <Building2 className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Departments</h1>
+            <p className="hidden sm:block text-muted-foreground">Manage clinic departments</p>
+          </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Badge className="status-badge bg-primary/10 text-primary border border-primary/20 text-sm font-medium">

@@ -90,7 +90,7 @@ export default function FinancialsPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold">Financials</h1>
-          <p className="text-muted-foreground">Revenue trends and analytics</p>
+          <p className="hidden sm:block text-muted-foreground">Revenue trends and analytics</p>
         </div>
       </div>
 

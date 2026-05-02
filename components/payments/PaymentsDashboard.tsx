@@ -14,6 +14,7 @@ import {
   XCircle,
   AlertCircle,
   History,
+  Wallet,
 } from "lucide-react";
 import { usePayments } from "@/hooks/usePayments";
 import { CreditPurchaseModal } from "./CreditPurchaseModal";
@@ -38,15 +39,17 @@ export const PaymentsDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 px-4 md:px-0 w-full max-w-full overflow-hidden">
-      {/* Header Section */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">Billing & Credits</h2>
-          <p className="text-sm text-muted-foreground">
-            Credits & transaction history
-          </p>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
+            <Wallet className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold">Payments</h1>
+            <p className="hidden sm:block text-muted-foreground">Credits and transaction history</p>
+          </div>
         </div>
-        <Button onClick={() => setIsCreditModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 shrink-0 w-full sm:w-auto">
+        <Button onClick={() => setIsCreditModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 shrink-0">
           <Plus className="h-4 w-4 mr-2" />
           Add Credits
         </Button>
