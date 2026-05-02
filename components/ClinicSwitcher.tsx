@@ -39,12 +39,10 @@ const ClinicSwitcher = () => {
           <span className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap">
             {activeClinic ? activeClinic.clinics?.name : "Select a Clinic"}
           </span>
-          {userClinics.length > 1 && (
-             <ChevronDown size={16} className={cn(
-               "ml-2 transition-transform duration-200",
-               open && "transform rotate-180"
-             )} />
-          )}
+          <ChevronDown size={16} className={cn(
+            "ml-2 transition-transform duration-200 flex-shrink-0",
+            open && "transform rotate-180"
+          )} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-64 p-1 bg-popover border border-border shadow-lg rounded-lg">

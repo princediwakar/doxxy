@@ -78,7 +78,7 @@ interface MembersListProps {
   searchTerm: string;
   error: Error | null;
   onEdit: (m: MemberWithDetails) => void;
-  onDelete: (id: string) => void;
+  onDelete: (member: MemberWithDetails) => void;
   onCreateDoctor: (m: MemberWithDetails) => void;
   isDeleting: boolean;
   isCreatingDoctor: boolean;
@@ -226,7 +226,7 @@ export const ClinicMembersList = ({ members, isLoading, searchTerm, error, onEdi
                   <Button variant="outline" size="sm" onClick={() => onCreateDoctor(member)} disabled={isCreatingDoctor} className="text-blue-600 hover:text-blue-700"><Stethoscope className="h-4 w-4" /></Button>
                 )}
                 <Button variant="outline" size="sm" onClick={() => onEdit(member)}><Edit3 className="h-4 w-4" /></Button>
-                <Button variant="outline" size="sm" onClick={() => onDelete(member.id)} disabled={isDeleting} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                <Button variant="outline" size="sm" onClick={() => onDelete(member)} disabled={isDeleting} className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
           </CardContent>

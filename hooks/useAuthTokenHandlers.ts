@@ -57,27 +57,48 @@ export function useAuthTokenHandlers({
   async function handleInvite(inviteToken: string, inviteEmail: string | null) {
     setLoading(true);
     try {
+      if (!inviteEmail) {
+        toast.error("Invalid invitation link. Please ask the clinic admin to resend the invitation.");
+        setAuthFlow("login");
+        return;
+      }
+
       if (process.env.NODE_ENV === "development") logger.log("Auth: Handling invite with token and email:", inviteToken, inviteEmail);
 
       const { data: invitationData, error: invitationError } = await supabase
-        .from('pending_invitations')
-        .select('*')
-        .eq('invitation_token', inviteToken)
-        .eq('email', inviteEmail?.toLowerCase() || '')
-        .is('accepted_at', null)
-        .gte('expires_at', new Date().toISOString())
+        .rpc('verify_invitation_token', {
+          p_token: inviteToken,
+          p_email: inviteEmail?.toLowerCase() || '',
+        })
         .single();
 
       if (invitationError) {
         logger.error("Auth: Invitation verification error:", invitationError);
 
+        // Check if this invitation was already accepted (existing user was auto-added)
+        const { data: acceptedInvitation } = await supabase
+          .rpc('check_accepted_invitation', {
+            p_token: inviteToken,
+            p_email: inviteEmail?.toLowerCase() || '',
+          })
+          .maybeSingle();
+
+        if (acceptedInvitation) {
+          toast.success("You've already been added to the clinic! Please log in to continue.", {
+            duration: 6000,
+          });
+          setAuthFlow("login");
+          setEmail(inviteEmail || '');
+          return;
+        }
+
+        // Check if expired
         const { data: expiredInvitation } = await supabase
-          .from('pending_invitations')
-          .select('*')
-          .eq('invitation_token', inviteToken)
-          .eq('email', inviteEmail?.toLowerCase() || '')
-          .lt('expires_at', new Date().toISOString())
-          .single();
+          .rpc('check_expired_invitation', {
+            p_token: inviteToken,
+            p_email: inviteEmail?.toLowerCase() || '',
+          })
+          .maybeSingle();
 
         if (expiredInvitation) {
           toast.error("This invitation has expired. Please ask for a new invitation.");

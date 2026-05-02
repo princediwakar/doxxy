@@ -162,20 +162,41 @@ export const useClinicMembers = (clinicId: string | undefined) => {
       });
 
       if (error) {
-        // Parse Supabase Edge Function error structure
+        // FunctionsHttpError stores the actual Response in error.context
+        let errorMessage: string | null = null;
         try {
-          const errorBody = JSON.parse(error.message);
-          throw new Error(errorBody.error || error.message);
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            errorMessage = body?.error || null;
+          }
         } catch {
-          throw new Error(error.message);
+          // context not available or body already consumed
         }
+        throw new Error(errorMessage || 'Failed to invite member');
       }
       
       if (!data?.success) throw new Error(data?.error || 'Failed to invite user');
       return data;
     },
     onSuccess: (data) => {
-      toast.success(data?.message || 'Member invited successfully!');
+      const msg = data?.message || 'Member invited successfully!';
+      if (data?.invitationLink) {
+        // Operation succeeded but email delivery failed — show success + manual share link
+        toast.success(msg, {
+          description: 'Email could not be sent. Share this link with the invitee:',
+          action: {
+            label: 'Copy Link',
+            onClick: () => {
+              navigator.clipboard.writeText(data.invitationLink);
+              toast.success('Link copied!');
+            },
+          },
+          duration: 20000,
+        });
+        toast.info(data.invitationLink, { duration: 20000 });
+      } else {
+        toast.success(msg);
+      }
       queryClient.invalidateQueries({ queryKey: queryKeys.clinicMembers.byClinic(clinicId ?? "") });
       queryClient.invalidateQueries({ queryKey: queryKeys.clinicMembers.pendingInvitations(clinicId ?? "") });
     },
@@ -221,9 +242,20 @@ export const useClinicMembers = (clinicId: string | undefined) => {
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: async (memberId: string) => {
-      const { error } = await supabase.from('clinic_members').delete().eq('id', memberId);
+    mutationFn: async (member: MemberWithDetails) => {
+      const { error } = await supabase.from('clinic_members').delete().eq('id', member.id);
       if (error) throw error;
+
+      if (member.clinic_id && member.profile?.email) {
+        await supabase.from('pending_invitations').delete()
+          .eq('email', member.profile.email)
+          .eq('clinic_id', member.clinic_id);
+      }
+      if (member.user_id && member.clinic_id) {
+        await supabase.from('doctors').delete()
+          .eq('user_id', member.user_id)
+          .eq('clinic_id', member.clinic_id);
+      }
     },
     onSuccess: () => {
       toast.success('Member removed successfully');

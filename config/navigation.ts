@@ -5,7 +5,7 @@ export const navItems = [
   { icon: BarChart3, label: "Overview", path: "/overview", roles: ["superadmin", "doctor"], bottomNav: true },
   { icon: Pill, label: "Pharmacy", path: "/pharmacy", roles: ["staff", "superadmin"], bottomNav: true },
   { icon: Building2, label: "Clinic", path: "/clinic", roles: ["superadmin"], bottomNav: true },
-  { icon: User, label: "Profile", path: "/profile", roles: ["superadmin", "staff", "doctor"], bottomNav: false },
+  { icon: User, label: "Profile", path: "/profile", roles: ["superadmin", "staff", "doctor"], bottomNav: true },
 ];
 
 export function isActiveLink(location: string, path: string) {

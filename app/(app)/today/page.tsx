@@ -18,6 +18,7 @@ import { TodayHeader } from "@/components/today/TodayHeader";
 import { TodayPatientList } from "@/components/today/TodayPatientList";
 import { TodayDetailPanel } from "@/components/today/TodayDetailPanel";
 import { TodayModals } from "@/components/today/TodayModals";
+import { DoctorProfilePrompt } from "@/components/doctor/DoctorProfilePrompt";
 import type { AppointmentWithDetails } from "@/types/appointments";
 import type { BillWithDetails } from "@/types/billing";
 import type { DbPatientByClinic } from "@/types/core";
@@ -188,6 +189,7 @@ export default function TodayPage() {
 
   return (
     <div className="space-y-6">
+      <DoctorProfilePrompt />
       {!(isMobile && showMobileDetail) && <TodayHeader />}
 
       {isMobile && showMobileDetail ? (

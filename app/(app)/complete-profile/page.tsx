@@ -42,7 +42,7 @@ const CompleteProfile = () => {
 
   useEffect(() => {
     if (!user) return;
-    const invitationDataStr = sessionStorage.getItem('invitation_data');
+    const invitationDataStr = localStorage.getItem('invitation_data');
     const invitationData = invitationDataStr ? JSON.parse(invitationDataStr) : null;
     const prefillName = invitationData?.name || user.user_metadata?.name || "";
     const prefillEmail = invitationData?.email || user.email || "";

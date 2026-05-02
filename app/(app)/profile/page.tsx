@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -43,6 +44,13 @@ const Profile = () => {
   const [showPostOnboarding, setShowPostOnboarding] = useState(false);
   const [localHasDoctorProfile, setLocalHasDoctorProfile] =
     useState(hasDoctorProfile);
+
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get("setup") === "doctor") {
+      setIsOnboardingModalOpen(true);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     setLocalHasDoctorProfile(hasDoctorProfile);

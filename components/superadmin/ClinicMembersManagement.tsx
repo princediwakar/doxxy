@@ -149,7 +149,7 @@ const ClinicMembersManagement = () => {
         searchTerm={searchTerm}
         error={ops.membersError}
         onEdit={openEditForm}
-        onDelete={(id) => ops.removeMemberMutation.mutate(id)}
+        onDelete={(member) => ops.removeMemberMutation.mutate(member)}
         onCreateDoctor={openDoctorForm}
         isDeleting={ops.removeMemberMutation.isPending}
         isCreatingDoctor={ops.createDoctorMutation.isPending}
