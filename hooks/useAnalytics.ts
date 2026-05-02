@@ -85,6 +85,7 @@ export function useAnalytics({ startDate, endDate }: UseAnalyticsOptions) {
   const clinicId = activeClinic?.clinic_id ?? "";
   const isDoctor = activeClinicRole === "doctor";
   const isSuperadmin = activeClinicRole === "superadmin";
+  const isStaff = activeClinicRole === "staff";
 
   // Resolve doctor_id for the current user
   const { data: doctorId } = useQuery({
@@ -137,11 +138,11 @@ export function useAnalytics({ startDate, endDate }: UseAnalyticsOptions) {
         daily_breakdown: parseDailyBreakdown(raw.daily_breakdown),
       } as ClinicAnalytics;
     },
-    enabled: !!clinicId && isSuperadmin,
+    enabled: !!clinicId && (isSuperadmin || isStaff),
     staleTime: 5 * 60 * 1000,
   });
 
-  // --- Clinic Analytics (previous period, superadmin only) ---
+  // --- Clinic Analytics (previous period, superadmin/staff only) ---
   const { data: clinicPrevious } = useQuery({
     queryKey: queryKeys.dashboard.analytics(
       clinicId,
@@ -168,7 +169,7 @@ export function useAnalytics({ startDate, endDate }: UseAnalyticsOptions) {
         daily_breakdown: parseDailyBreakdown(raw.daily_breakdown),
       } as ClinicAnalytics;
     },
-    enabled: !!clinicId && isSuperadmin,
+    enabled: !!clinicId && (isSuperadmin || isStaff),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -261,11 +262,11 @@ export function useAnalytics({ startDate, endDate }: UseAnalyticsOptions) {
         gender_split: (Array.isArray(raw.gender_split) ? raw.gender_split : []) as unknown as GenderSplit[],
       } as AggregatedDemographics;
     },
-    enabled: !!clinicId && (isDoctor || (isSuperadmin && hasDoctorProfile)),
+    enabled: !!clinicId && (isDoctor || (isSuperadmin && hasDoctorProfile) || isStaff),
     staleTime: 5 * 60 * 1000,
   });
 
-  // --- Provider Performance Matrix (superadmin only) ---
+  // --- Provider Performance Matrix (superadmin/staff only) ---
   const {
     data: providerPerformance,
     isLoading: providerPerformanceLoading,
@@ -304,7 +305,7 @@ export function useAnalytics({ startDate, endDate }: UseAnalyticsOptions) {
         } as ProviderPerformanceRow;
       });
     },
-    enabled: !!clinicId && isSuperadmin,
+    enabled: !!clinicId && (isSuperadmin || isStaff),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -326,7 +327,7 @@ export function useAnalytics({ startDate, endDate }: UseAnalyticsOptions) {
   const analyticsData = isDoctor ? doctorCurrent : clinicCurrent;
   const chartBreakdown = analyticsData?.daily_breakdown ?? [];
   const isLoading =
-    (isSuperadmin && clinicCurrentLoading) ||
+    ((isSuperadmin || isStaff) && clinicCurrentLoading) ||
     ((isDoctor || (isSuperadmin && hasDoctorProfile)) && doctorCurrentLoading);
 
   return {

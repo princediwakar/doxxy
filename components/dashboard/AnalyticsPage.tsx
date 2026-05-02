@@ -43,11 +43,6 @@ export function AnalyticsPage() {
     error,
   } = useAnalytics({ startDate, endDate });
 
-  if (!authLoading && activeClinicRole === "staff") {
-    router.replace("/today");
-    return null;
-  }
-
   if (authLoading || !activeClinic || !activeClinicRole) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
@@ -64,6 +59,8 @@ export function AnalyticsPage() {
 
   const isDoctor = activeClinicRole === "doctor";
   const isSuperadmin = activeClinicRole === "superadmin";
+  const isStaff = activeClinicRole === "staff";
+  const showClinicWide = isSuperadmin || isStaff;
   const showPractice = isDoctor || (isSuperadmin && hasDoctorProfile);
 
   return (
@@ -76,7 +73,7 @@ export function AnalyticsPage() {
           <div>
             <h1 className="text-2xl font-bold">Overview</h1>
             <p className="hidden sm:block text-sm text-muted-foreground">
-              {isSuperadmin
+              {showClinicWide
                 ? "Clinic-wide analytics & provider performance"
                 : "Your practice analytics"}
             </p>
@@ -113,8 +110,8 @@ export function AnalyticsPage() {
         </div>
       ) : (
         <>
-          {/* Superadmin: Clinic-wide stat cards */}
-          {isSuperadmin && clinicData && (
+          {/* Clinic-wide stat cards */}
+          {showClinicWide && clinicData && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <DashboardStatsCard
                 icon={<Users size={18} className="text-medical-blue" />}
@@ -205,8 +202,8 @@ export function AnalyticsPage() {
             </div>
           )}
 
-          {/* Superadmin: Chart + Demographics + Provider Table */}
-          {isSuperadmin && (
+          {/* Chart + Demographics + Provider Table */}
+          {showClinicWide && (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
