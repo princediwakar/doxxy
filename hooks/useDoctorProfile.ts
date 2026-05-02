@@ -14,7 +14,7 @@ export function useDoctorProfile(userId: string | undefined, clinicId: string | 
 
       const { data, error } = await supabase
         .from("doctors")
-        .select("*")
+        .select("id, user_id, clinic_id, name, email, phone, bio, primary_specialization, consultation_fee, is_active, created_at, updated_at")
         .eq("user_id", userId)
         .eq("clinic_id", clinicId)
         .single();

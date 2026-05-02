@@ -26,11 +26,9 @@ import {
   Phone,
   Mail,
   CheckCircle,
-  CheckCircle2,
   AlertTriangle,
 } from "lucide-react";
 import { BasicProfileEditor } from "@/components/BasicProfileEditor";
-import { MedicalCredentialsModal } from "@/components/doctor/MedicalCredentialsModal";
 import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
@@ -39,9 +37,7 @@ const Profile = () => {
   const { user, activeClinic, activeClinicRole, hasDoctorProfile } = useAuth();
   const queryClient = useQueryClient();
   const [isBasicModalOpen, setIsBasicModalOpen] = useState(false);
-  const [isMedicalModalOpen, setIsMedicalModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
-  const [showPostOnboarding, setShowPostOnboarding] = useState(false);
   const [localHasDoctorProfile, setLocalHasDoctorProfile] =
     useState(hasDoctorProfile);
 
@@ -173,31 +169,6 @@ const Profile = () => {
 
   return (
     <div className="space-y-6">
-      {showPostOnboarding && (
-        <Card className="bg-success/10 border-success/20">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-6 h-6 text-success" />
-              <div>
-                <h3 className="font-semibold text-foreground">
-                  Basic profile created!
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Continue to add your full credentials for verification.
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => {
-                setIsMedicalModalOpen(true);
-              }}
-            >
-              Complete Full Profile
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
         <div className="flex items-center gap-3">
           <div
@@ -299,7 +270,7 @@ const Profile = () => {
                   Medical Profile
                 </CardTitle>
                 <Button
-                  onClick={() => setIsMedicalModalOpen(true)}
+                  onClick={() => setIsOnboardingModalOpen(true)}
                   size="sm"
                   variant="ghost"
                 >
@@ -331,35 +302,7 @@ const Profile = () => {
                         {doctorProfile.department_name || "Not assigned"}
                       </p>
                     </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Registration
-                      </label>
-                      <p className="text-sm">
-                        {doctorProfile.medical_registration_number ||
-                          "Not provided"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Experience
-                      </label>
-                      <p className="text-sm">
-                        {doctorProfile.years_of_experience
-                          ? `${doctorProfile.years_of_experience} years`
-                          : "Not specified"}
-                      </p>
-                    </div>
                   </div>
-
-                  {doctorProfile.medical_college && (
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Medical College
-                      </label>
-                      <p className="text-sm">{doctorProfile.medical_college}</p>
-                    </div>
-                  )}
                 </>
               ) : (
                 <div className="text-center py-8">
@@ -370,7 +313,7 @@ const Profile = () => {
                   <p className="text-xs text-muted-foreground mb-4">
                     Set up your professional credentials to start practicing
                   </p>
-                  <Button onClick={() => setIsMedicalModalOpen(true)}>
+                  <Button onClick={() => setIsOnboardingModalOpen(true)}>
                     <UserPlus className="w-4 h-4 mr-2" />
                     Complete Medical Profile
                   </Button>
@@ -458,20 +401,6 @@ const Profile = () => {
         />
       )}
 
-      {isMedicalModalOpen &&
-        (activeClinicRole === "doctor" || doctorProfile) && (
-          <MedicalCredentialsModal
-            open={isMedicalModalOpen}
-            onClose={() => setIsMedicalModalOpen(false)}
-            doctorProfile={doctorProfile || undefined}
-            onSuccess={() => {
-              setIsMedicalModalOpen(false);
-              setShowPostOnboarding(false);
-              refetchDoctorProfile();
-            }}
-          />
-        )}
-
       {isOnboardingModalOpen && (
         <DoctorQuickOnboarding
           open={isOnboardingModalOpen}
@@ -479,7 +408,6 @@ const Profile = () => {
           onSuccess={() => {
             setIsOnboardingModalOpen(false);
             refetchDoctorProfile();
-            setShowPostOnboarding(true);
             setLocalHasDoctorProfile(true);
           }}
         />

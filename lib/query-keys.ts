@@ -53,9 +53,6 @@ export const queryKeys = {
     byClinic: (clinicId: string) => ['clinicDepartmentsForClinic', clinicId] as const,
     forMembers: (clinicId: string) => ['clinicDepartments', clinicId] as const,
   },
-  doctorDepartment: {
-    byDoctor: (userId: string, clinicId: string) => ['doctorDepartment', userId, clinicId] as const,
-  },
   consultations: {
     byAppointment: (appointmentId: string) => ['consultation', appointmentId] as const,
   },

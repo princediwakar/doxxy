@@ -13,7 +13,6 @@ clinicId,
   email,
   primarySpecialization,
   consultationFee,
-  availability = 'Mon-Fri 9:00 AM - 5:00 PM',
   bio,
   departmentId
 }: {
@@ -23,7 +22,6 @@ clinicId,
   email?: string;
   primarySpecialization?: string;
   consultationFee?: number;
-  availability?: string;
   bio?: string;
   departmentId?: string | null;
 }) {
@@ -67,7 +65,6 @@ clinicId,
         email,
         primary_specialization: primarySpecialization,
         consultation_fee: consultationFee,
-        availability,
         bio,
         is_active: true
       }, {

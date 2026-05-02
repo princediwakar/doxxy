@@ -522,124 +522,46 @@ export type Database = {
       }
       doctors: {
         Row: {
-          additional_qualifications: string | null
-          availability: string | null
           bio: string | null
-          board_certifications: string[] | null
           clinic_id: string
-          clinic_timings: Json | null
           consultation_fee: number | null
           created_at: string | null
           email: string | null
-          fellowship_details: string | null
-          graduation_year: number | null
           id: string
           is_active: boolean | null
-          languages_spoken: string[] | null
-          medical_college: string | null
-          medical_council: string | null
-          medical_degree: string | null
-          medical_license_expiry: string | null
-          medical_license_state: string | null
-          medical_qualifications: string[] | null
-          medical_registration_number: string | null
-          medical_specializations: string[] | null
-          medical_university: string | null
           name: string
-          pg_completion_year: number | null
-          pg_institution: string | null
-          pg_specialization: string | null
           phone: string | null
-          postgraduate_degree: string | null
-          practice_timings: Json | null
           primary_specialization: string | null
-          professional_summary: string | null
-          profile_completion_percentage: number | null
-          research_experience: string | null
-          subspecialty: string[] | null
           updated_at: string | null
           user_id: string
-          years_of_experience: number | null
         }
         Insert: {
-          additional_qualifications?: string | null
-          availability?: string | null
           bio?: string | null
-          board_certifications?: string[] | null
           clinic_id: string
-          clinic_timings?: Json | null
           consultation_fee?: number | null
           created_at?: string | null
           email?: string | null
-          fellowship_details?: string | null
-          graduation_year?: number | null
           id?: string
           is_active?: boolean | null
-          languages_spoken?: string[] | null
-          medical_college?: string | null
-          medical_council?: string | null
-          medical_degree?: string | null
-          medical_license_expiry?: string | null
-          medical_license_state?: string | null
-          medical_qualifications?: string[] | null
-          medical_registration_number?: string | null
-          medical_specializations?: string[] | null
-          medical_university?: string | null
           name: string
-          pg_completion_year?: number | null
-          pg_institution?: string | null
-          pg_specialization?: string | null
           phone?: string | null
-          postgraduate_degree?: string | null
-          practice_timings?: Json | null
           primary_specialization?: string | null
-          professional_summary?: string | null
-          profile_completion_percentage?: number | null
-          research_experience?: string | null
-          subspecialty?: string[] | null
           updated_at?: string | null
           user_id: string
-          years_of_experience?: number | null
         }
         Update: {
-          additional_qualifications?: string | null
-          availability?: string | null
           bio?: string | null
-          board_certifications?: string[] | null
           clinic_id?: string
-          clinic_timings?: Json | null
           consultation_fee?: number | null
           created_at?: string | null
           email?: string | null
-          fellowship_details?: string | null
-          graduation_year?: number | null
           id?: string
           is_active?: boolean | null
-          languages_spoken?: string[] | null
-          medical_college?: string | null
-          medical_council?: string | null
-          medical_degree?: string | null
-          medical_license_expiry?: string | null
-          medical_license_state?: string | null
-          medical_qualifications?: string[] | null
-          medical_registration_number?: string | null
-          medical_specializations?: string[] | null
-          medical_university?: string | null
           name?: string
-          pg_completion_year?: number | null
-          pg_institution?: string | null
-          pg_specialization?: string | null
           phone?: string | null
-          postgraduate_degree?: string | null
-          practice_timings?: Json | null
           primary_specialization?: string | null
-          professional_summary?: string | null
-          profile_completion_percentage?: number | null
-          research_experience?: string | null
-          subspecialty?: string[] | null
           updated_at?: string | null
           user_id?: string
-          years_of_experience?: number | null
         }
         Relationships: [
           {
@@ -1607,21 +1529,6 @@ export type Database = {
           slug: string
           social_media: Json
           website: string
-        }[]
-      }
-      get_public_doctors_by_clinic: {
-        Args: { p_clinic_id: string }
-        Returns: {
-          bio: string
-          consultation_fee: number
-          department_name: string
-          id: string
-          languages_spoken: string[]
-          medical_qualifications: string[]
-          medical_specializations: string[]
-          name: string
-          primary_specialization: string
-          years_of_experience: number
         }[]
       }
       get_user_clinic_memberships: {

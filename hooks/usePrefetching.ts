@@ -56,7 +56,7 @@ export const usePrefetching = () => {
       queryFn: async () => {
         const { data, error } = await supabase
           .from('doctors')
-          .select('*')
+          .select('id, name, user_id, primary_specialization, email, phone, bio, consultation_fee, is_active, created_at, updated_at')
           .eq('clinic_id', activeClinic.clinics?.id || '')
           .eq('is_active', true);
 

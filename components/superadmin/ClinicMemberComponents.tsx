@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Stethoscope, Edit3, Trash2, Shield, UserCog, Users, Phone, Building2 } from 'lucide-react';
+import { Mail, Stethoscope, Edit3, Trash2, Shield, UserCog, Users, Phone, Building2, X } from 'lucide-react';
 import { InviteMemberData, CreateDoctorData, MemberWithDetails, DepartmentWithDetails } from '@/hooks/useClinicMembers';
+import { ButtonLoader } from '@/components/ui/loading';
 import { UserRole } from '@/types/core';
 
 // --- Helper Functions ---
@@ -126,30 +127,74 @@ export const InviteMemberDialog = ({ open, onOpenChange, data, setData, onSubmit
 
 export const CreateDoctorDialog = ({ open, onOpenChange, data, setData, onSubmit, isPending, departments }: DoctorDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle className="flex items-center space-x-2"><Stethoscope className="h-5 w-5" /><span>Create Doctor Profile</span></DialogTitle>
+    <DialogContent className="sm:max-w-[500px]">
+      <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+        <div className="flex items-center space-x-2">
+          <div className="bg-blue-100 p-2 rounded-full">
+            <Stethoscope className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <DialogTitle className="text-xl font-semibold">Create Doctor Profile</DialogTitle>
+            <p className="text-sm text-muted-foreground">Set up a medical profile for this clinic member</p>
+          </div>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onOpenChange(false)}
+          disabled={isPending}
+          className="h-6 w-6 p-0"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </DialogHeader>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full overflow-hidden">
-        <div><Label>Name *</Label><Input value={data.name} onChange={e => setData({...data, name: e.target.value})} /></div>
-        <div><Label>Email *</Label><Input value={data.email} onChange={e => setData({...data, email: e.target.value})} /></div>
-        <div><Label>Specialization</Label><Input value={data.primary_specialization} onChange={e => setData({...data, primary_specialization: e.target.value})} /></div>
-        <div><Label>Fee (₹)</Label><Input type="number" value={data.consultation_fee} onChange={e => setData({...data, consultation_fee: Number(e.target.value)})} /></div>
-        <div className="md:col-span-2">
-          <Label>Department</Label>
-          <Select value={data.department_id || 'none'} onValueChange={v => setData({...data, department_id: v === 'none' ? '' : v})}>
-            <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="doctor-name" className="text-sm font-medium">Full Name <span className="text-destructive">*</span></Label>
+          <Input id="doctor-name" value={data.name} onChange={e => setData({...data, name: e.target.value})} placeholder="Enter full name" />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="doctor-email" className="text-sm font-medium">Email <span className="text-destructive">*</span></Label>
+          <Input id="doctor-email" value={data.email} onChange={e => setData({...data, email: e.target.value})} placeholder="email@example.com" />
+        </div>
+
+
+
+
+
+        <div className="space-y-2">
+          <Label htmlFor="doctor-department" className="text-sm font-medium">Department</Label>
+          <Select value={data.department_id || ''} onValueChange={v => setData({...data, department_id: v === '' ? '' : v})}>
+            <SelectTrigger id="doctor-department">
+              <SelectValue placeholder="Select primary department" />
+            </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">No Department</SelectItem>
               {departments.map((d) => <SelectItem key={d.id} value={d.id}>{getDeptName(d)}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
-        <div className="md:col-span-2"><Label>Bio</Label><Input value={data.bio} onChange={e => setData({...data, bio: e.target.value})} /></div>
+
+                <div className="space-y-2">
+          <Label htmlFor="doctor-fee" className="text-sm font-medium">Consultation Fee (₹)</Label>
+          <Input id="doctor-fee" type="number" value={data.consultation_fee} onChange={e => setData({...data, consultation_fee: Number(e.target.value)})} placeholder="350" min="0" />
+        </div>
+
+                <div className="space-y-2">
+          <Label htmlFor="doctor-specialization" className="text-sm font-medium">Medical Specialization</Label>
+          <Input id="doctor-specialization" value={data.primary_specialization} onChange={e => setData({...data, primary_specialization: e.target.value})} placeholder="e.g., Cardiology, Neurology, General Medicine" />
+        </div>
       </div>
-      <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
-        <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Cancel</Button>
-        <Button onClick={onSubmit} disabled={isPending} className="w-full sm:w-auto">{isPending ? 'Creating...' : 'Create'}</Button>
+
+      <div className="flex justify-end space-x-3 pt-4">
+        <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+          Cancel
+        </Button>
+        <Button onClick={onSubmit} disabled={isPending}>
+          {isPending && <ButtonLoader loading={isPending} className="mr-2" />}
+          Create Doctor Profile
+        </Button>
       </div>
     </DialogContent>
   </Dialog>
