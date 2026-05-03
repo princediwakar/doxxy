@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { ChevronDown, ChevronUp, Clock, User, Phone, Hash, Play, Receipt, Edit, Eye, X, CalendarPlus } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, User, Phone, Hash, Stethoscope, Receipt, Calendar, Eye, X, CalendarPlus, Edit } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { formatTimeIST } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/loading";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useTodayStore, type ActiveFilter } from "@/stores/todayStore";
 import { useAuth } from "@/contexts/AuthContext";
 import type { AppointmentWithDetails } from "@/types/appointments";
@@ -103,13 +104,13 @@ function AppointmentCard({
 
       <div className="flex flex-wrap gap-2">
         {appointment.status === "Scheduled" && isOwnAppointment && (
-          <Button size="sm" onClick={onStart}><Play className="h-3 w-3 mr-1" />Start</Button>
+          <Button size="sm" onClick={onStart}><Stethoscope className="h-3 w-3 mr-1" />Start</Button>
         )}
         {appointment.status === "In Progress" && isOwnAppointment && (
-          <Button size="sm" onClick={onStart}><Play className="h-3 w-3 mr-1" />Continue</Button>
+          <Button size="sm" onClick={onStart}><Stethoscope className="h-3 w-3 mr-1" />Continue</Button>
         )}
         {appointment.status === "Completed" && isOwnAppointment && (
-          <Button size="sm" variant="outline" onClick={onEditConsultation}><Edit className="h-3 w-3 mr-1" />Edit Notes</Button>
+          <Button size="sm" variant="outline" onClick={onEditConsultation}><Stethoscope className="h-3 w-3 mr-1" />Edit Notes</Button>
         )}
         {appointment.status === "Completed" && !isOwnAppointment && (
           <Button size="sm" variant="outline" onClick={onView}>View</Button>
@@ -124,9 +125,14 @@ function AppointmentCard({
             <Receipt className="h-3 w-3 mr-1" />View Bill
           </Button>
         )}
-        <Button size="sm" variant="ghost" onClick={onEdit}>
-          <Edit className="h-3 w-3 mr-1" />Edit
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button size="sm" variant="ghost" onClick={onEdit}>
+              <Calendar className="h-3 w-3 mr-1" />Edit
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Edit Appointment</TooltipContent>
+        </Tooltip>
       </div>
 
       {appointment.status === "Completed" && (
@@ -134,11 +140,6 @@ function AppointmentCard({
           <Button size="sm" variant="secondary" onClick={onView}>
             <Eye className="h-3 w-3 mr-1" />View Notes
           </Button>
-          {hasBill && onViewBill && (
-            <Button size="sm" variant="secondary" onClick={onViewBill}>
-              <Receipt className="h-3 w-3 mr-1" />View Bill
-            </Button>
-          )}
         </div>
       )}
     </div>
