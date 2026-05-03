@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, Suspense, useCallback } from "react";
+import { useEffect, useRef, Suspense, useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useTodayStore } from "@/stores/todayStore";
@@ -60,6 +60,7 @@ export function TodayModals({
   const setDirtyFormGuard = useTodayStore((s) => s.setDirtyFormGuard);
 
   const billModalRef = useRef<HTMLDivElement>(null);
+  const [billViewMode, setBillViewMode] = useState<"view" | "edit">("view");
 
   useEffect(() => {
     if (shakeTrigger > 0 && billModalRef.current) {
@@ -97,6 +98,7 @@ export function TodayModals({
       if (!open) {
         closeModal();
         setSelectedBill?.(null);
+        setBillViewMode("view");
       }
     },
     [closeModal, setSelectedBill]
@@ -140,7 +142,11 @@ export function TodayModals({
             open={true}
             onOpenChange={handleBillViewClose}
             bill={selectedBill}
-            mode="view"
+            mode={billViewMode}
+            onModeChange={(newMode) => {
+              if (newMode === "view") onRefetch();
+              setBillViewMode(newMode as "view" | "edit");
+            }}
           />
         )}
       </Suspense>

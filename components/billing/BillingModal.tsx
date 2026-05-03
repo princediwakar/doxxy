@@ -1,6 +1,6 @@
 // src/components/billing/BillingModal.tsx
 import React, { useEffect } from "react";
-import { FileText, Edit, Printer } from "lucide-react";
+import { FileText, Edit, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,7 +30,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useBilling, BillingFormValues } from "@/hooks/useBilling";
 import { toast } from "sonner";
 import { ServiceItemsSection } from "./ServiceItemsSection";
-import { printBill } from "./billingPrintUtils";
+import { printBill, generateBillPrintContent, generateBillFilename } from "./billingPrintUtils";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
@@ -105,7 +105,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   const handlePrint = async () => {
     if (!bill) return;
 
-    // Prepare bill data for printing
     const formServiceItems = form.watch("service_items");
     const billData: Bill = {
       ...bill,
@@ -116,6 +115,72 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     };
 
     await printBill(billData, patient || null, activeClinic?.clinics || null);
+  };
+
+  const handleDownload = async () => {
+    if (!bill) return;
+
+    try {
+      const formServiceItems = form.watch("service_items");
+      const billData: Bill = {
+        ...bill,
+        service_items:
+          formServiceItems && formServiceItems.length > 0
+            ? formServiceItems
+            : null,
+      };
+
+      const html = generateBillPrintContent(billData, patient || null, activeClinic?.clinics || null);
+
+      const [jsPDFModule, html2canvasModule] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas"),
+      ]);
+
+      const jsPDF = jsPDFModule.default;
+      const html2canvas = html2canvasModule.default;
+
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "-9999px";
+      container.innerHTML = html;
+      document.body.appendChild(container);
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+      });
+
+      document.body.removeChild(container);
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const filename = generateBillFilename(billData, patient || null, activeClinic?.clinics?.name);
+      pdf.save(filename);
+    } catch (error) {
+      toast.error("Failed to download bill PDF");
+    }
   };
 
   const getModalTitle = () => {
@@ -141,6 +206,19 @@ export const BillingModal: React.FC<BillingModalProps> = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
         {/* Top Actions - Positioned left of the Close X */}
         <div className="absolute right-12 top-4 flex items-center gap-2 z-50">
+          {bill && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">Download</span>
+            </Button>
+          )}
+
           {bill && (
             <Button
               type="button"
