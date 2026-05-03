@@ -26,6 +26,7 @@ import type { DbPatient as Patient } from "@/types/core";
 import type { Prescription } from "@/types/prescriptions";
 import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
 import { usePrefetching } from "@/hooks/usePrefetching";
+import { useTodayStore } from "@/stores/todayStore";
 import { showErrorToast } from "@/lib/error-utils";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import type { FieldSection } from "@/lib/schemaUtils";
@@ -69,6 +70,40 @@ const Consultation = () => {
   } = useConsultationForm({
     appointmentId, appointment, existingConsultation, departmentType,
   });
+
+  const draftConsultationData = useTodayStore((s) => s.draftConsultationData);
+  const clearDraftConsultationData = useTodayStore((s) => s.clearDraftConsultationData);
+
+  useEffect(() => {
+    if (!draftConsultationData) return;
+
+    const currentSpecialtyData = (form.getValues().specialty_data || {}) as Record<string, unknown>;
+    const merged = {
+      ...currentSpecialtyData,
+      chief_complaint: draftConsultationData.symptoms !== 'NOT_SPECIFIED'
+        ? draftConsultationData.symptoms
+        : (currentSpecialtyData.chief_complaint || ''),
+      diagnosis: draftConsultationData.diagnosis !== 'NOT_SPECIFIED'
+        ? draftConsultationData.diagnosis
+        : (currentSpecialtyData.diagnosis || ''),
+      treatment: draftConsultationData.advice !== 'NOT_SPECIFIED'
+        ? draftConsultationData.advice
+        : (currentSpecialtyData.treatment || ''),
+      prescriptions: draftConsultationData.prescriptions
+        .filter((p) => p.drug_name !== 'NOT_SPECIFIED')
+        .map((p) => ({
+          name: p.drug_name,
+          dosage: p.dosage !== 'NOT_SPECIFIED' ? p.dosage : '',
+          frequency: p.frequency !== 'NOT_SPECIFIED' ? p.frequency : '',
+          duration: p.duration !== 'NOT_SPECIFIED' ? p.duration : '',
+          route: p.route !== 'NOT_SPECIFIED' ? p.route : '',
+          instructions: p.instructions !== 'NOT_SPECIFIED' ? p.instructions : '',
+        })),
+    };
+
+    form.reset({ specialty_data: merged } as ConsultationFormValues);
+    clearDraftConsultationData();
+  }, [draftConsultationData, form, clearDraftConsultationData]);
 
   useEffect(() => {
     if (!justCompleted) return;
