@@ -101,7 +101,7 @@ function TodayPageInner() {
   const handleAppointmentClick = useCallback(
     (app: AppointmentWithDetails) => {
       setSelectedAppointment(app);
-      selectPatient(app.patient_id);
+      selectPatient(app.patient_id, app.id);
     }, [selectPatient]);
 
   const handleStartConsultation = useCallback(

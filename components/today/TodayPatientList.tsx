@@ -31,14 +31,14 @@ function QueueSection({
   appointments,
   color,
   bg,
-  selectedPatientId,
+  selectedAppointmentId,
   onAppointmentClick,
 }: {
   title: string;
   appointments: AppointmentWithDetails[];
   color: string;
   bg: string;
-  selectedPatientId: string | null;
+  selectedAppointmentId: string | null;
   onAppointmentClick: (app: AppointmentWithDetails) => void;
 }) {
   if (appointments.length === 0) return null;
@@ -58,7 +58,7 @@ function QueueSection({
             onClick={() => onAppointmentClick(app)}
             className={cn(
               "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
-              selectedPatientId === app.patient_id && "bg-primary/10 ring-1 ring-primary/20"
+              selectedAppointmentId === app.id && "bg-primary/10 ring-1 ring-primary/20"
             )}
           >
             <div className="flex items-center gap-3 min-w-0">
@@ -98,6 +98,7 @@ export function TodayPatientList({
 }: TodayPatientListProps) {
   const activeFilter = useTodayStore((s) => s.activeFilter);
   const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
+  const selectedAppointmentId = useTodayStore((s) => s.selectedAppointmentId);
   const searchQuery = useTodayStore((s) => s.searchQuery);
   const genderFilter = useTodayStore((s) => s.genderFilter);
   const ageGroupFilter = useTodayStore((s) => s.ageGroupFilter);
@@ -142,7 +143,7 @@ export function TodayPatientList({
             appointments={queue[group.key]}
             color={group.color}
             bg={group.bg}
-            selectedPatientId={selectedPatientId}
+            selectedAppointmentId={selectedAppointmentId}
             onAppointmentClick={onAppointmentClick}
           />
         ))}

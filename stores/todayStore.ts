@@ -11,6 +11,7 @@ interface TodayState {
   genderFilter: string | null;
   ageGroupFilter: string | null;
   selectedPatientId: string | null;
+  selectedAppointmentId: string | null;
   activeModal: ActiveModal;
   mobileDetailOpen: boolean;
   dirtyFormGuard: boolean;
@@ -23,7 +24,7 @@ interface TodayActions {
   setDebouncedSearch: (query: string) => void;
   setGenderFilter: (gender: string | null) => void;
   setAgeGroupFilter: (ageGroup: string | null) => void;
-  selectPatient: (patientId: string) => boolean;
+  selectPatient: (patientId: string, appointmentId?: string) => boolean;
   clearSelection: () => void;
   openModal: (modal: ActiveModal) => void;
   closeModal: () => void;
@@ -38,6 +39,7 @@ export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
   genderFilter: null,
   ageGroupFilter: null,
   selectedPatientId: null,
+  selectedAppointmentId: null,
   activeModal: null,
   mobileDetailOpen: false,
   dirtyFormGuard: false,
@@ -57,17 +59,17 @@ export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
 
   setAgeGroupFilter: (ageGroup) => set({ ageGroupFilter: ageGroup, ...(ageGroup ? { activeFilter: 'all' } : {}) }),
 
-  selectPatient: (patientId) => {
+  selectPatient: (patientId, appointmentId) => {
     if (get().dirtyFormGuard) {
       toast.error('Complete or discard the current bill before switching patients.');
       set((s) => ({ shakeTrigger: s.shakeTrigger + 1 }));
       return false;
     }
-    set({ selectedPatientId: patientId, mobileDetailOpen: true });
+    set({ selectedPatientId: patientId, selectedAppointmentId: appointmentId ?? null, mobileDetailOpen: true });
     return true;
   },
 
-  clearSelection: () => set({ selectedPatientId: null, mobileDetailOpen: false }),
+  clearSelection: () => set({ selectedPatientId: null, selectedAppointmentId: null, mobileDetailOpen: false }),
 
   openModal: (modal) => set({ activeModal: modal }),
 
