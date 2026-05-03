@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { showErrorToast } from "@/lib/error-utils";
 import { generateBillPrintContent, generateBillFilename } from "@/components/billing/billingPrintUtils";
 import type { Bill } from "@/types/billing";
@@ -59,10 +60,33 @@ export async function sendBillViaWhatsApp(
     }
 
     const filename = `${generateBillFilename(bill, patient as Parameters<typeof generateBillFilename>[1], clinic?.name)}.pdf`;
-    pdf.save(filename);
 
-    window.open(`https://wa.me/${sanitizedPhone}`, "_blank");
+    const pdfBlob = pdf.output("blob");
+    const file = new File([pdfBlob], filename, { type: "application/pdf" });
+
+    const canShareFiles =
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: [file] });
+
+    if (canShareFiles) {
+      await navigator.clipboard.writeText(sanitizedPhone);
+      toast.info("Patient's phone number copied — paste it in WhatsApp to find the chat", {
+        duration: 4000,
+      });
+      await navigator.share({
+        files: [file],
+        title: `Bill - ${patient?.name || "Patient"}`,
+        text: `Bill for ${patient?.name || "Patient"} — ${sanitizedPhone}`,
+      });
+    } else {
+      pdf.save(filename);
+      window.open(`https://wa.me/${sanitizedPhone}`, "_blank");
+    }
   } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return;
+    }
     showErrorToast(error, { title: "Failed to generate bill PDF" });
   }
 }
