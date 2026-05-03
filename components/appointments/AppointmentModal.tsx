@@ -101,17 +101,19 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] z-[50] overflow-visible">
+      <DialogContent className="sm:max-w-[475px] z-[50] overflow-visible border-t-2 border-t-blue-500">
         <DialogHeader>
-          <DialogTitle>
-             <div className="flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4" />
-              {appointment ? "Edit Appointment" : "New Appointment"}
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/30">
+              <CalendarIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             </div>
-          </DialogTitle>
-          <DialogDescription>
-            {appointment ? "Update details below." : "Schedule a new appointment."}
-          </DialogDescription>
+            <div>
+              <DialogTitle>{appointment ? "Edit Appointment" : "New Appointment"}</DialogTitle>
+              <DialogDescription>
+                {appointment ? "Update details below." : "Schedule a new appointment."}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         <Form {...form}>

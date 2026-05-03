@@ -125,15 +125,19 @@ export const PatientModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] z-[50]">
+      <DialogContent className="sm:max-w-[425px] z-[50] border-t-2 border-t-emerald-500">
         <DialogHeader>
-          <DialogTitle><div className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4" />
-            {patient ? "Edit Patient" : "New Patient"}
-          </div></DialogTitle>
-          <DialogDescription>
-            {patient ? "Edit patient details" : "Add a new patient"}
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
+              <UserIcon className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <DialogTitle>{patient ? "Edit Patient" : "New Patient"}</DialogTitle>
+              <DialogDescription>
+                {patient ? "Edit patient details" : "Add a new patient"}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
