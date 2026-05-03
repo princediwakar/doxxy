@@ -22,8 +22,8 @@ export function DoctorProfilePrompt() {
   }
 
   const isIncomplete =
-    !doctorProfile.primary_specialization ||
-    doctorProfile.primary_specialization.trim() === "";
+    doctorProfile.consultation_fee === null ||
+    doctorProfile.consultation_fee === undefined;
 
   if (!isIncomplete) return null;
 
@@ -38,7 +38,7 @@ export function DoctorProfilePrompt() {
             Complete your medical profile
           </p>
           <p className="text-sm text-blue-700">
-            Add your specialization and consultation details to start seeing
+            Add your consultation fee and department details to start seeing
             patients.
           </p>
         </div>

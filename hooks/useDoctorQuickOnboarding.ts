@@ -41,7 +41,7 @@ export function useDoctorQuickOnboarding() {
     }: {
       name: string;
       departmentId: string;
-      specialization: string;
+      specialization?: string;
       consultationFee: number;
       userId: string;
       userEmail?: string | null;
@@ -82,9 +82,9 @@ export function useDoctorQuickOnboarding() {
         name: name.trim(),
         email: userEmail || "",
         phone: existingProfile?.phone || userPhone || "",
-        primary_specialization: specialization,
+        primary_specialization: specialization || null,
         consultation_fee: consultationFee,
-        bio: `Medical professional specializing in ${specialization}`,
+        bio: specialization ? `Medical professional specializing in ${specialization}` : 'Medical professional',
         is_active: true,
         updated_at: new Date().toISOString(),
       };

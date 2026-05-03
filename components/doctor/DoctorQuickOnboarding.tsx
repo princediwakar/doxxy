@@ -66,6 +66,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
       setFormData(prev => ({
         ...prev,
         name: profileData?.name || existingDoctorProfile.name || user?.user_metadata?.name || '',
+        selectedDepartment: existingDoctorProfile.department_id || '',
         primarySpecialization: existingDoctorProfile.primary_specialization || '',
         consultation_fee: existingDoctorProfile.consultation_fee?.toString() || '',
       }));
@@ -83,9 +84,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     }
     if (!formData.selectedDepartment) {
       errors.selectedDepartment = 'Department selection is required';
-    }
-    if (!formData.primarySpecialization.trim()) {
-      errors.primarySpecialization = 'Specialization is required';
     }
     if (!formData.consultation_fee || isNaN(parseInt(formData.consultation_fee))) {
       errors.consultation_fee = 'Please set a base fee (enter 0 if free)';
@@ -207,7 +205,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
           {/* Specialization */}
           <div className="space-y-2">
             <Label htmlFor="specialization" className="text-sm font-medium">
-              Medical Specialization <span className="text-destructive">*</span>
+              Medical Specialization
             </Label>
             <Input
               id="specialization"

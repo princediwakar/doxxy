@@ -230,7 +230,7 @@ serve(async (req: Request) => {
           <div style="text-align:center;margin:30px 0">
             <a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Log in to Doxxy</a>
           </div>
-          ${memberData.role === 'doctor' ? '<p style="color:#64748b;font-size:14px">After logging in, complete your medical profile (specialization, consultation fee) from the Profile page.</p>' : ''}
+          ${memberData.role === 'doctor' ? '<p style="color:#64748b;font-size:14px">After logging in, complete your medical profile (department, consultation fee) from the Profile page.</p>' : ''}
         </div>`,
       })
 

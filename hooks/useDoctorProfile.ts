@@ -39,6 +39,7 @@ export function useDoctorProfile(userId: string | undefined, clinicId: string | 
 
       return {
         ...data,
+        department_id: memberData?.department_id || null,
         department_name:
           memberData?.clinic_departments?.department_types?.name ||
           "No Department",
