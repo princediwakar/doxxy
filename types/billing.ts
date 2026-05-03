@@ -4,6 +4,8 @@
 import type { DbBill, DbPatient, DbPaymentTransaction, Json } from "./core";
 import type { UseFormReturn } from "react-hook-form";
 import type { UseMutationResult } from "@tanstack/react-query";
+import type { Medicine } from "./prescriptions";
+import type { InventoryItemWithMedicine } from "@/hooks/useInventory";
 
 // ============================================================================
 // BILLING TYPES
@@ -25,6 +27,9 @@ export interface ServiceItem {
   quantity: number;
   rate: number;
   amount: number;
+  medicine_id?: number | null;
+  inventory_item_id?: string | null;
+  source?: 'catalog' | 'inventory' | 'manual';
 }
 
 /** Billing form values */
@@ -100,6 +105,11 @@ export interface UseBillingReturn {
     index: number,
     field: keyof ServiceItem,
     value: string | number
+  ) => void;
+  selectMedicineForItem: (
+    index: number,
+    medicine: Medicine,
+    inventoryItem?: InventoryItemWithMedicine
   ) => void;
   saveBillMutation: UseMutationResult<DbBill, Error, BillingFormValues>;
   isSubmitting: boolean;

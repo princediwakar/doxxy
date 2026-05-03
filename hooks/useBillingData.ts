@@ -25,11 +25,12 @@ function parseServiceItems(jsonData: unknown): ServiceItem[] | null {
         typeof obj.amount === "number"
       ) {
         items.push({
+          ...obj,
           description: obj.description,
           quantity: obj.quantity,
           rate: obj.rate,
           amount: obj.amount,
-        });
+        } as ServiceItem);
       }
     }
   }

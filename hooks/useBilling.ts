@@ -8,6 +8,8 @@ import { useInvoiceNumber } from '@/hooks/useInvoiceNumber';
 import { useBillingQueries } from '@/hooks/useBillingQueries';
 import { useSaveBill } from '@/hooks/useSaveBill';
 import { useBillingFormEffects } from '@/hooks/useBillingFormEffects';
+import type { Medicine } from '@/types/prescriptions';
+import type { InventoryItemWithMedicine } from '@/hooks/useInventory';
 import type {
   ServiceItem,
   BillingFormValues,
@@ -19,6 +21,9 @@ const serviceItemSchema = z.object({
   quantity: z.number().min(1, 'Quantity must be at least 1'),
   rate: z.number().min(0, 'Rate must be positive'),
   amount: z.number().min(0, 'Amount must be positive'),
+  medicine_id: z.number().nullable().optional(),
+  inventory_item_id: z.string().uuid().nullable().optional(),
+  source: z.enum(['catalog', 'inventory', 'manual']).optional(),
 });
 
 const billingFormSchema = z.object({
@@ -124,6 +129,23 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     form.trigger('service_items');
   };
 
+  const selectMedicineForItem = (index: number, medicine: Medicine, inventoryItem?: InventoryItemWithMedicine) => {
+    const currentItems = form.getValues('service_items') || [];
+    const updatedItems = [...currentItems];
+    const rate = inventoryItem?.mrp ?? medicine.price ?? 0;
+    updatedItems[index] = {
+      ...updatedItems[index],
+      description: medicine.name,
+      rate,
+      amount: (updatedItems[index].quantity || 1) * rate,
+      medicine_id: medicine.id,
+      inventory_item_id: inventoryItem?.id ?? null,
+      source: inventoryItem ? 'inventory' : 'catalog',
+    };
+    form.setValue('service_items', updatedItems, { shouldValidate: true, shouldDirty: true });
+    form.trigger('service_items');
+  };
+
   // Save bill mutation
   const saveBillMutation = useSaveBill(mode, bill, calculateTotals);
   // Effect 1: Set invoice number in form when generated
@@ -162,6 +184,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     addServiceItem,
     removeServiceItem,
     updateServiceItem,
+    selectMedicineForItem,
     saveBillMutation,
     isSubmitting: saveBillMutation.isPending,
     refetchInvoiceNumber,

@@ -1,5 +1,5 @@
 // src/components/billing/BillingModal.tsx
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { FileText, Edit, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,16 @@ import {
   DialogDescription,
   DialogHeader,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Form,
   FormControl,
@@ -68,6 +78,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     addServiceItem,
     removeServiceItem,
     updateServiceItem,
+    selectMedicineForItem,
     saveBillMutation,
     isSubmitting,
     refetchInvoiceNumber,
@@ -89,6 +100,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   }, [form.formState.isDirty, onDirtyChange]);
 
   const { activeClinic } = useAuth();
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
   const onSubmit = (values: BillingFormValues) => {
     saveBillMutation.mutate(values, {
@@ -195,10 +207,20 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   };
 
   const handleOpenChange = (newOpen: boolean) => {
-    // Only close the modal if we're not switching modes
     if (!newOpen) {
+      if (form.formState.isDirty) {
+        setShowDiscardDialog(true);
+        return;
+      }
       onOpenChange(false);
     }
+  };
+
+  const handleDiscard = () => {
+    setShowDiscardDialog(false);
+    form.reset();
+    onDirtyChange?.(false);
+    onOpenChange(false);
   };
 
   return (
@@ -403,6 +425,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 onUpdateItem={updateServiceItem}
                 onAddItem={addServiceItem}
                 onRemoveItem={removeServiceItem}
+                onSelectMedicine={selectMedicineForItem}
                 mode={mode}
               />
 
@@ -421,6 +444,21 @@ export const BillingModal: React.FC<BillingModalProps> = ({
           </Form>
         </ScrollArea>
       </DialogContent>
+
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard unsaved bill?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes to this bill. Discarding will lose all entered information.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscard}>Discard</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };
