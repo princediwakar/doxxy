@@ -1,6 +1,6 @@
 // src/components/billing/BillingModal.tsx
 import React, { useEffect } from "react";
-import { FileText, Edit, Printer, Send } from "lucide-react";
+import { FileText, Edit, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,8 +31,6 @@ import { useBilling, BillingFormValues } from "@/hooks/useBilling";
 import { toast } from "sonner";
 import { ServiceItemsSection } from "./ServiceItemsSection";
 import { printBill } from "./billingPrintUtils";
-import { sendBillViaWhatsApp } from "@/lib/billPdfExport";
-import { usePatientPhone } from "@/hooks/usePatientPhone";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
@@ -91,7 +89,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   }, [form.formState.isDirty, onDirtyChange]);
 
   const { activeClinic } = useAuth();
-  const { data: patientPhone } = usePatientPhone(bill?.patient_id);
 
   const onSubmit = (values: BillingFormValues) => {
     saveBillMutation.mutate(values, {
@@ -144,39 +141,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
         {/* Top Actions - Positioned left of the Close X */}
         <div className="absolute right-12 top-4 flex items-center gap-2 z-50">
-          {bill && (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={async () => {
-                const phone = patient?.phone || patientPhone;
-                if (!phone) {
-                  toast.error("Patient has no phone number on file");
-                  return;
-                }
-                const formServiceItems = form.watch("service_items");
-                const billData: Bill = {
-                  ...bill,
-                  service_items:
-                    formServiceItems && formServiceItems.length > 0
-                      ? formServiceItems
-                      : bill.service_items,
-                };
-                await sendBillViaWhatsApp(
-                  billData,
-                  phone,
-                  patient || null,
-                  activeClinic?.clinics || null
-                );
-              }}
-              className="flex items-center gap-2"
-            >
-              <Send className="h-4 w-4" />
-              <span className="hidden sm:inline">Send</span>
-            </Button>
-          )}
-
           {bill && (
             <Button
               type="button"
