@@ -119,8 +119,13 @@ function AppointmentCard({
             <Receipt className="h-3 w-3 mr-1" />Bill
           </Button>
         )}
+        {hasBill && onViewBill && (
+          <Button size="sm" variant="outline" onClick={onViewBill}>
+            <Receipt className="h-3 w-3 mr-1" />View Bill
+          </Button>
+        )}
         <Button size="sm" variant="ghost" onClick={onEdit}>
-          <Edit className="h-3 w-3 mr-1" />Reschedule
+          <Edit className="h-3 w-3 mr-1" />Edit
         </Button>
       </div>
 
@@ -293,6 +298,50 @@ export function TodayDetailPanel({
         </div>
       )}
 
+      {/* Bills Section */}
+      <div className="rounded-lg border">
+        <button
+          onClick={() => setBillsOpen(!billsOpen)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-lg transition-colors"
+        >
+          <span>Bills ({patientBills.length})</span>
+          {billsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {billsOpen && (
+          <div className="px-4 pb-4 space-y-2">
+            {isLoadingBills ? (
+              <div className="flex items-center justify-center py-4">
+                <Spinner size="sm" />
+              </div>
+            ) : patientBills.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No bills for this patient.
+              </p>
+            ) : (
+              patientBills.map((bill) => (
+                <button
+                  key={bill.id}
+                  onClick={() => onViewBill(bill)}
+                  className="w-full text-left rounded-lg border bg-card p-3 hover:bg-muted/50 transition-colors flex items-center justify-between group"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">
+                      {bill.invoice_number ?? `INV-${bill.id.slice(0, 8)}`}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {bill.created_at ? format(parseISO(bill.created_at), "MMM dd, yyyy") : ""}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString("en-IN")}</span>
+                    <Eye className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+      </div>
       {/* History Section */}
       <div className="rounded-lg border">
         <button
@@ -374,50 +423,7 @@ export function TodayDetailPanel({
         )}
       </div>
 
-      {/* Bills Section */}
-      <div className="rounded-lg border">
-        <button
-          onClick={() => setBillsOpen(!billsOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium hover:bg-muted/50 rounded-lg transition-colors"
-        >
-          <span>Bills ({patientBills.length})</span>
-          {billsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-        {billsOpen && (
-          <div className="px-4 pb-4 space-y-2">
-            {isLoadingBills ? (
-              <div className="flex items-center justify-center py-4">
-                <Spinner size="sm" />
-              </div>
-            ) : patientBills.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No bills for this patient.
-              </p>
-            ) : (
-              patientBills.map((bill) => (
-                <button
-                  key={bill.id}
-                  onClick={() => onViewBill(bill)}
-                  className="w-full text-left rounded-lg border bg-card p-3 hover:bg-muted/50 transition-colors flex items-center justify-between group"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">
-                      {bill.invoice_number ?? `INV-${bill.id.slice(0, 8)}`}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {bill.created_at ? format(parseISO(bill.created_at), "MMM dd, yyyy") : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString("en-IN")}</span>
-                    <Eye className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+
     </div>
   );
 

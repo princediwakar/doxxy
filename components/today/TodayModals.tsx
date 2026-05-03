@@ -170,6 +170,19 @@ export function TodayModals({
       />
 
       <Suspense fallback={null}>
+        {activeModal === "patient-new" && (
+          <PatientModal
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) closeModal();
+            }}
+            patient={null}
+            onPatientCreated={onPatientCreated}
+          />
+        )}
+      </Suspense>
+
+      <Suspense fallback={null}>
         {activeModal === "patient-edit" && (
           <PatientModal
             open={true}

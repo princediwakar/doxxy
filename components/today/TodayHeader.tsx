@@ -19,7 +19,7 @@ export function TodayHeader() {
   const openModal = useTodayStore((s) => s.openModal);
 
   const handleNewPatient = useCallback(() => {
-    openModal("patient-edit");
+    openModal("patient-new");
   }, [openModal]);
 
   return (

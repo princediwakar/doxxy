@@ -75,7 +75,7 @@ function TodayPageInner() {
   const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(null);
   const [historyAppointment, setHistoryAppointment] = useState<AppointmentData | null>(null);
 
-  useFABAction("new-patient", () => openModal("patient-edit"));
+  useFABAction("new-patient", () => openModal("patient-new"));
 
   useEffect(() => {
     if (!isLoadingQueue) {

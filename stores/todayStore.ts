@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { toast } from 'sonner';
 
 export type ActiveFilter = 'queue' | 'all';
-export type ActiveModal = 'consult' | 'bill' | 'appointment' | 'patient-edit' | null;
+export type ActiveModal = 'consult' | 'bill' | 'appointment' | 'patient-edit' | 'patient-new' | null;
 
 interface TodayState {
   activeFilter: ActiveFilter;

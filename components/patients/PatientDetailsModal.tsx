@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Calendar, Phone, Mail, MapPin, User, Clock, Plus } from 'lucide-react';
+import { Calendar, Phone, Mail, MapPin, User, Clock, Plus, FileText } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -15,10 +15,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePatientAppointments } from '@/hooks/usePatientAppointments';
+import { usePatientBills } from '@/hooks/usePatientBills';
 import { AppointmentModal } from '../appointments/AppointmentModal';
 import { BillingModal } from '../billing/BillingModal';
 import { formatTimeIST } from "@/lib/utils";
 import type { Patient } from "@/types/patients";
+import type { BillWithDetails } from "@/types/billing";
 
 interface PatientDetailsModalProps {
   open: boolean;
@@ -34,10 +36,25 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   const { activeClinic } = useAuth();
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [isBillingModalOpen, setIsBillingModalOpen] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(null);
+  const [billingModalMode, setBillingModalMode] = useState<"view" | "edit">("view");
 
   const { data: appointments, isLoading: appointmentsLoading } = usePatientAppointments(
     open ? patient?.id : undefined
   );
+
+  const { data: bills } = usePatientBills(open ? patient?.id : undefined);
+
+  const billByAppointmentId = useMemo(() => {
+    if (!bills) return new Map<string, BillWithDetails>();
+    const map = new Map<string, BillWithDetails>();
+    for (const bill of bills) {
+      if (bill.appointment_id && !map.has(bill.appointment_id)) {
+        map.set(bill.appointment_id, bill);
+      }
+    }
+    return map;
+  }, [bills]);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -49,7 +66,11 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
     }
   };
 
-
+  const handleViewBill = (bill: BillWithDetails) => {
+    setSelectedBill(bill);
+    setBillingModalMode("view");
+    setIsBillingModalOpen(true);
+  };
 
   if (!patient) return null;
 
@@ -115,12 +136,6 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                   <Clock className="h-4 w-4" />
                   Appointments
                 </TabsTrigger>
-                {/*
-                <TabsTrigger value="bills" className="flex items-center gap-2">
-                  <CreditCard className="h-4 w-4" />
-                  Bills
-                </TabsTrigger>
-                */}
               </TabsList>
 
               <TabsContent value="appointments" className="space-y-4">
@@ -171,6 +186,23 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                               </Badge>
                             </div>
                           </div>
+                          {(() => {
+                            const linkedBill = billByAppointmentId.get(appointment.id);
+                            if (!linkedBill) return null;
+                            return (
+                              <div className="flex items-center gap-2 mt-2 pt-2 border-t">
+                                <Badge variant="secondary" className="text-xs">Auto</Badge>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewBill(linkedBill)}
+                                >
+                                  <FileText className="h-3 w-3 mr-1" />
+                                  View Bill
+                                </Button>
+                              </div>
+                            );
+                          })()}
                         </CardContent>
                       </Card>
                     ))}
@@ -181,59 +213,6 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                   </div>
                 )}
               </TabsContent>
-
-              {/*
-              <TabsContent value="bills" className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-semibold">Bills</h3>
-                  <Button onClick={() => setIsBillingModalOpen(true)} size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Bill
-                  </Button>
-                </div>
-
-                {billsLoading ? (
-                  <div className="text-center py-4">Loading bills...</div>
-                ) : bills && bills.length > 0 ? (
-                  <div className="space-y-3">
-                    {bills.map((bill) => (
-                      <Card key={bill.id}>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="space-y-2">
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">
-                                  ${bill.amount.toString()}
-                                </span>
-                                {bill.invoice_number && (
-                                  <span className="text-sm text-muted-foreground">
-                                    #{bill.invoice_number}
-                                  </span>
-                                )}
-                              </div>
-                              {bill.appointment_date && (
-                                <div className="text-sm text-muted-foreground">
-                                  Service Date: {format(parseISO(bill.appointment_date), 'PPP')}
-                                </div>
-                              )}
-                              {bill.description && (
-                                <div className="text-sm">
-                                  {bill.description}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No bills found for this patient.
-                  </div>
-                )}
-              </TabsContent>
-              */}
             </Tabs>
           </div>
         </DialogContent>
@@ -248,9 +227,17 @@ const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
 
       <BillingModal
         open={isBillingModalOpen}
-        onOpenChange={setIsBillingModalOpen}
-        bill={null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedBill(null);
+            setBillingModalMode("view");
+          }
+          setIsBillingModalOpen(open);
+        }}
+        bill={selectedBill}
         patient={patient}
+        mode={billingModalMode}
+        onModeChange={(newMode) => setBillingModalMode(newMode as "view" | "edit")}
       />
     </>
   );

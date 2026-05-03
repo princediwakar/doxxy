@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
+
 import { useBilling, BillingFormValues } from "@/hooks/useBilling";
 import { toast } from "sonner";
 import { ServiceItemsSection } from "./ServiceItemsSection";
@@ -116,9 +116,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
         formServiceItems && formServiceItems.length > 0
           ? formServiceItems
           : null,
-      discount_percentage: form.watch("discount_percentage"),
-      tax_percentage: form.watch("tax_percentage"),
-      notes: form.watch("notes") || null,
     };
 
     await printBill(billData, patient || null, activeClinic?.clinics || null);
@@ -144,7 +141,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
         {/* Top Actions - Positioned left of the Close X */}
         <div className="absolute right-12 top-4 flex items-center gap-2 z-50">
           {bill && (
@@ -165,9 +162,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                     formServiceItems && formServiceItems.length > 0
                       ? formServiceItems
                       : bill.service_items,
-                  discount_percentage: form.watch("discount_percentage"),
-                  tax_percentage: form.watch("tax_percentage"),
-                  notes: form.watch("notes") || null,
                 };
                 await sendBillViaWhatsApp(
                   billData,
@@ -370,104 +364,12 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 mode={mode}
               />
 
-              {/* Discount and Tax */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="discount_percentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Discount Percentage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                          disabled={mode === "view"}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="tax_percentage"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tax Percentage</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.01"
-                          {...field}
-                          onChange={(e) =>
-                            field.onChange(parseFloat(e.target.value) || 0)
-                          }
-                          disabled={mode === "view"}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Notes */}
-              <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        value={field.value || ""}
-                        placeholder="Additional notes"
-                        disabled={mode === "view"}
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               {/* Calculation Summary */}
               <div className="bg-muted/50 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
                   <span>₹{calculateTotals.subtotal.toFixed(2)}</span>
                 </div>
-                {calculateTotals.discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-red-600">
-                    <span>
-                      Discount ({form.watch("discount_percentage")}%):
-                    </span>
-                    <span>-₹{calculateTotals.discountAmount.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal after discount:</span>
-                  <span>
-                    ₹{calculateTotals.subtotalAfterDiscount.toFixed(2)}
-                  </span>
-                </div>
-                {calculateTotals.taxAmount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <span>Tax ({form.watch("tax_percentage")}%):</span>
-                    <span>₹{calculateTotals.taxAmount.toFixed(2)}</span>
-                  </div>
-                )}
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
                   <span>Total:</span>
                   <span>₹{calculateTotals.total.toFixed(2)}</span>

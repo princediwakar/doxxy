@@ -20,10 +20,17 @@ export function useAppointmentActions() {
         .update({ status: APPOINTMENT_STATUS.CANCELLED })
         .eq("id", appointmentId);
       if (error) throw error;
+
+      try {
+        await supabase.from("bills").delete().eq("appointment_id", appointmentId);
+      } catch {
+        // non-blocking — the cancellation already succeeded
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.appointments.all });
       queryClient.invalidateQueries({ queryKey: ["clinic-billing-summary"] });
+      queryClient.invalidateQueries({ queryKey: ["bills"] });
       toast.success("Appointment cancelled");
     },
     onError: (err: Error) => toast.error(err.message),
