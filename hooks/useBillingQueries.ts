@@ -1,9 +1,11 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { getSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import type { AppointmentForBilling, DoctorFeeInfo } from "@/types/billing";
-import type { DbPatient } from "@/types/core";
+import type { AppointmentForBilling, DoctorFeeInfo, ServiceItem } from "@/types/billing";
+import type { DbPatient, PrescriptionMedication } from "@/types/core";
+import type { Json } from "@/types/core";
 import { queryKeys } from "@/lib/query-keys";
 
 const supabase = getSupabase();
@@ -68,6 +70,86 @@ export function useBillingQueries(
     staleTime: 5 * 60 * 1000,
   });
 
+  // Fetch prescriptions linked to this appointment's consultation
+  const { data: prescriptions } = useQuery({
+    queryKey: ["billing-prescriptions", selectedAppointmentId],
+    queryFn: async () => {
+      if (!selectedAppointmentId) return [];
+      const { data: consultation } = await supabase
+        .from("consultations")
+        .select("id")
+        .eq("appointment_id", selectedAppointmentId)
+        .maybeSingle();
+      if (!consultation) return [];
+      const { data, error } = await supabase
+        .from("prescriptions")
+        .select("id, medications")
+        .eq("consultation_id", consultation.id);
+      if (error) throw error;
+      return (data || []) as { id: string; medications: Json | null }[];
+    },
+    enabled: !!selectedAppointmentId && mode !== "view",
+    staleTime: 2 * 60 * 1000,
+  });
+
+  // Extract unique medication names from prescriptions
+  const medicationNames = useMemo(() => {
+    if (!prescriptions?.length) return [];
+    const names: string[] = [];
+    const seen = new Set<string>();
+    for (const rx of prescriptions) {
+      const meds = rx.medications as PrescriptionMedication[] | null | undefined;
+      if (meds) {
+        for (const med of meds) {
+          if (med.name && !seen.has(med.name)) {
+            seen.add(med.name);
+            names.push(med.name);
+          }
+        }
+      }
+    }
+    return names;
+  }, [prescriptions]);
+
+  // Batch-fetch medicine prices
+  const { data: medicinePrices } = useQuery({
+    queryKey: ["medicine-prices", medicationNames],
+    queryFn: async () => {
+      if (!medicationNames.length) return {};
+      const { data, error } = await supabase
+        .from("medicines")
+        .select("name, price")
+        .in("name", medicationNames);
+      if (error) throw error;
+      const map: Record<string, number> = {};
+      for (const row of data || []) {
+        if (row.name && row.price != null) {
+          map[row.name] = row.price;
+        }
+      }
+      return map;
+    },
+    enabled: medicationNames.length > 0 && mode !== "view",
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Build prescription service items
+  const prescriptionItems = useMemo((): ServiceItem[] => {
+    if (!prescriptions?.length) return [];
+    const items: ServiceItem[] = [];
+    for (const rx of prescriptions) {
+      const meds = rx.medications as PrescriptionMedication[] | null | undefined;
+      if (!meds) continue;
+      for (const med of meds) {
+        if (!med.name) continue;
+        const price = medicinePrices?.[med.name] ?? 0;
+        const label = [med.name, med.dosage].filter(Boolean).join(" ");
+        items.push({ description: label, quantity: 1, rate: price, amount: price });
+      }
+    }
+    return items;
+  }, [prescriptions, medicinePrices]);
+
   // Filter appointments by selected patient
   const filteredAppointments = (appointments || []).filter((apt) => {
     if (!selectedPatientId) return true;
@@ -84,5 +166,6 @@ export function useBillingQueries(
     doctorFee: doctorFee || null,
     doctorFeeError: doctorFeeError as Error | null,
     selectedAppointment,
+    prescriptionItems,
   };
 }

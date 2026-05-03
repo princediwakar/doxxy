@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { PatientHeader } from "./PatientHeader";
 import { LastVisitSummary } from "./LastVisitSummary";
 import { AdministrativeFooter } from "./AdministrativeFooter";
@@ -33,6 +35,7 @@ export function StaffView({
   onViewBill,
   onViewConsultationFromHistory,
 }: StaffViewProps) {
+  const [showLastVisit, setShowLastVisit] = useState(false);
   const patient = patientDetail?.patient ?? null;
 
   return (
@@ -42,22 +45,40 @@ export function StaffView({
           name={patient.name}
           age={patient.age}
           gender={patient.gender}
+          variant="staff"
           onSchedule={onSchedule}
           onBill={onBill}
           onEditPatient={onEditPatient}
           onEditAppointment={onEditAppointment}
         />
       )}
-      <LastVisitSummary patientId={patientId} />
+
       <AdministrativeFooter
         patientDetail={patientDetail}
         isLoadingDetail={isLoadingDetail}
         patientBills={patientBills}
         isLoadingBills={isLoadingBills}
         selectedPatientId={patientId}
+        defaultExpandBills
+        defaultExpandHistory
         onViewBill={onViewBill}
         onViewConsultationFromHistory={onViewConsultationFromHistory}
       />
+
+      <div className="rounded-lg border">
+        <button
+          onClick={() => setShowLastVisit(!showLastVisit)}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 rounded-lg transition-colors"
+        >
+          <span>Last Visit Summary</span>
+          {showLastVisit ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {showLastVisit && (
+          <div className="px-4 pb-4">
+            <LastVisitSummary patientId={patientId} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

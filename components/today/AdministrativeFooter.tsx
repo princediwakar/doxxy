@@ -36,6 +36,8 @@ interface AdministrativeFooterProps {
   patientBills: BillWithDetails[];
   isLoadingBills: boolean;
   selectedPatientId: string;
+  defaultExpandBills?: boolean;
+  defaultExpandHistory?: boolean;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
 }
@@ -52,11 +54,13 @@ export function AdministrativeFooter({
   patientBills,
   isLoadingBills,
   selectedPatientId,
+  defaultExpandBills = false,
+  defaultExpandHistory = false,
   onViewBill,
   onViewConsultationFromHistory,
 }: AdministrativeFooterProps) {
-  const [billsOpen, setBillsOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [billsOpen, setBillsOpen] = useState(defaultExpandBills);
+  const [historyOpen, setHistoryOpen] = useState(defaultExpandHistory);
 
   if (isLoadingDetail) {
     return (

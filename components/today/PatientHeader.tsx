@@ -22,6 +22,7 @@ interface PatientHeaderProps {
   age?: string | number;
   gender?: string;
   status?: string;
+  variant?: "doctor" | "staff";
   onSchedule: () => void;
   onBill: () => void;
   onEditPatient: () => void;
@@ -33,6 +34,7 @@ export function PatientHeader({
   age,
   gender,
   status,
+  variant = "doctor",
   onSchedule,
   onBill,
   onEditPatient,
@@ -41,33 +43,51 @@ export function PatientHeader({
   const demographic = [gender, age ? `${age}y` : null].filter(Boolean).join(", ") || "N/A";
 
   return (
-    <div className="flex items-start justify-between">
-      <div>
-        <h2 className="text-lg font-semibold">{name}</h2>
+    <div className="flex items-start justify-between gap-3">
+      <div className="min-w-0">
+        <h2 className="text-lg font-semibold truncate">{name}</h2>
         <p className="text-sm text-muted-foreground">{demographic}</p>
         {status && <Badge className={`mt-1 ${STATUS_COLORS[status] ?? "bg-gray-100 text-gray-800"}`}>{status}</Badge>}
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreVertical className="h-4 w-4" />
+
+      {variant === "staff" ? (
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+          <Button variant="outline" size="sm" onClick={onBill}>
+            <Receipt className="h-3.5 w-3.5 mr-1" />Bill
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onSchedule}>
-            <CalendarPlus className="h-4 w-4 mr-2" />Schedule
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onBill}>
-            <Receipt className="h-4 w-4 mr-2" />Bill
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onEditPatient}>
-            <Edit className="h-4 w-4 mr-2" />Edit Patient
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onEditAppointment}>
-            <Stethoscope className="h-4 w-4 mr-2" />Edit Appointment
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <Button variant="outline" size="sm" onClick={onEditAppointment}>
+            <Stethoscope className="h-3.5 w-3.5 mr-1" />Appt
+          </Button>
+          <Button variant="outline" size="sm" onClick={onSchedule}>
+            <CalendarPlus className="h-3.5 w-3.5 mr-1" />Schedule
+          </Button>
+          <Button variant="outline" size="sm" onClick={onEditPatient}>
+            <Edit className="h-3.5 w-3.5 mr-1" />Edit
+          </Button>
+        </div>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onSchedule}>
+              <CalendarPlus className="h-4 w-4 mr-2" />Schedule
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onBill}>
+              <Receipt className="h-4 w-4 mr-2" />Bill
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onEditPatient}>
+              <Edit className="h-4 w-4 mr-2" />Edit Patient
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onEditAppointment}>
+              <Stethoscope className="h-4 w-4 mr-2" />Edit Appointment
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </div>
   );
 }

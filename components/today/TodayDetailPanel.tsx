@@ -41,6 +41,7 @@ export function TodayDetailPanel({
   patientBills,
   isLoadingBills,
   onStartConsultation,
+  onCreateBill,
   onScheduleAppointment,
   onCreateBillForPatient,
   onEditPatient,
@@ -117,7 +118,7 @@ export function TodayDetailPanel({
           isLoadingBills={isLoadingBills}
           departmentName={selectedAppointment?.department_name}
           onSchedule={onScheduleAppointment}
-          onBill={onCreateBillForPatient}
+          onBill={selectedAppointment ? () => onCreateBill(selectedAppointment) : onCreateBillForPatient}
           onEditPatient={onEditPatient}
           onEditAppointment={() => selectedAppointment && onEditAppointment(selectedAppointment)}
           onApproveEncounter={handleApproveEncounter}
@@ -135,7 +136,7 @@ export function TodayDetailPanel({
           patientBills={patientBills}
           isLoadingBills={isLoadingBills}
           onSchedule={onScheduleAppointment}
-          onBill={onCreateBillForPatient}
+          onBill={selectedAppointment ? () => onCreateBill(selectedAppointment) : onCreateBillForPatient}
           onEditPatient={onEditPatient}
           onEditAppointment={() => selectedAppointment && onEditAppointment(selectedAppointment)}
           onViewBill={onViewBill}
