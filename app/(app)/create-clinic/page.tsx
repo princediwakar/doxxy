@@ -460,7 +460,7 @@ const CreateClinicPage = () => {
                       )}
                     />
 
-                    {/* Consultation Fee - NEW FIELD */}
+                    {/* Consultation Fee */}
                     <FormField
                       control={doctorForm.control}
                       name="consultationFee"
@@ -486,38 +486,6 @@ const CreateClinicPage = () => {
                                 }
                               }}
                               onBlur={field.onBlur}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={doctorForm.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Professional Phone</FormLabel>
-                          <FormControl>
-                            <Input placeholder="+91 98765 43210" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={doctorForm.control}
-                      name="bio"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Professional Bio (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea 
-                              placeholder="Specialist in cardiology with 10+ years of experience..."
-                              className="min-h-[80px]"
-                              {...field} 
                             />
                           </FormControl>
                           <FormMessage />

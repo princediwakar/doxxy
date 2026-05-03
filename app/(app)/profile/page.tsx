@@ -34,23 +34,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
 
 const Profile = () => {
-  const { user, activeClinic, activeClinicRole, hasDoctorProfile } = useAuth();
+  const { user, activeClinic, activeClinicRole } = useAuth();
   const queryClient = useQueryClient();
   const [isBasicModalOpen, setIsBasicModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
-  const [localHasDoctorProfile, setLocalHasDoctorProfile] =
-    useState(hasDoctorProfile);
-
   const searchParams = useSearchParams();
   useEffect(() => {
     if (searchParams.get("setup") === "doctor") {
       setIsOnboardingModalOpen(true);
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    setLocalHasDoctorProfile(hasDoctorProfile);
-  }, [hasDoctorProfile]);
   // const { handleSupabaseError } = useErrorHandler();
 
   // Fetch doctor profile if user has one
@@ -261,14 +254,16 @@ const Profile = () => {
           </CardContent>
         </Card>
 
-        {(activeClinicRole === "doctor" || doctorProfile) && (
-          <Card className="">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Stethoscope className="w-5 h-5" />
-                  Medical Profile
-                </CardTitle>
+        <Card className="">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <roleConfig.icon
+                  className={`w-5 h-5 ${roleConfig.iconClass}`}
+                />
+                Role & Access
+              </CardTitle>
+              {doctorProfile && (
                 <Button
                   onClick={() => setIsOnboardingModalOpen(true)}
                   size="sm"
@@ -276,98 +271,71 @@ const Profile = () => {
                 >
                   <Edit className="w-4 h-4" />
                 </Button>
-              </div>
-              <CardDescription>
-                Professional medical credentials and information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {doctorProfile ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Specialization
-                      </label>
-                      <p className="text-sm">
-                        {doctorProfile.primary_specialization ||
-                          "Not specified"}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground">
-                        Department
-                      </label>
-                      <p className="text-sm">
-                        {doctorProfile.department_name || "Not assigned"}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <Stethoscope className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground mb-2">
-                    Medical profile not complete
-                  </p>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Set up your professional credentials to start practicing
-                  </p>
-                  <Button onClick={() => setIsOnboardingModalOpen(true)}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Complete Medical Profile
-                  </Button>
-                </div>
               )}
-            </CardContent>
-          </Card>
-        )}
+            </div>
+            <CardDescription>
+              Your role, clinic, and permissions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">
+                Current Role
+              </label>
+              <p className="text-sm font-medium">{roleConfig.subtitle}</p>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">
+                Clinic
+              </label>
+              <p className="text-sm">{activeClinic?.clinics?.name}</p>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">
+                Permissions
+              </label>
+              <p className="text-sm">
+                {activeClinicRole === "superadmin"
+                  ? "Full clinic management access"
+                  : "Standard healthcare team access"}
+              </p>
+            </div>
 
-        {!localHasDoctorProfile && (
-          <Card className="">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <roleConfig.icon
-                  className={`w-5 h-5 ${roleConfig.iconClass}`}
-                />
-                Role Information
-              </CardTitle>
-              <CardDescription>
-                Your role and responsibilities in the clinic
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Current Role
-                </label>
-                <p className="text-sm font-medium">{roleConfig.subtitle}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Clinic
-                </label>
-                <p className="text-sm">{activeClinic?.clinics?.name}</p>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground">
-                  Permissions
-                </label>
-                <p className="text-sm">
-                  {activeClinicRole === "superadmin"
-                    ? "Full clinic management access"
-                    : "Standard healthcare team access"}
-                </p>
-              </div>
+            {doctorProfile && (
+              <>
+                <Separator />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Specialization
+                    </label>
+                    <p className="text-sm">
+                      {doctorProfile.primary_specialization || "Not specified"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">
+                      Department
+                    </label>
+                    <p className="text-sm">
+                      {doctorProfile.department_name || "Not assigned"}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
 
-              {activeClinicRole === "superadmin" && (
+            {!doctorProfile &&
+              (activeClinicRole === "superadmin" ||
+                activeClinicRole === "doctor") && (
                 <>
                   <Separator />
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Medical Practice</h4>
                     <p className="text-xs text-muted-foreground">
-                      As a clinic administrator, you can also set up a medical
-                      practice profile
+                      {activeClinicRole === "superadmin"
+                        ? "As a clinic administrator, you can also set up a medical practice profile"
+                        : "Complete your medical profile to start seeing patients"}
                     </p>
                     <Button
                       onClick={handleBecomeDoctorClick}
@@ -375,14 +343,15 @@ const Profile = () => {
                       size="sm"
                     >
                       <UserPlus className="w-4 h-4 mr-2" />
-                      Setup Medical Profile
+                      {activeClinicRole === "superadmin"
+                        ? "Setup Medical Profile"
+                        : "Complete Medical Profile"}
                     </Button>
                   </div>
                 </>
               )}
-            </CardContent>
-          </Card>
-        )}
+          </CardContent>
+        </Card>
       </div>
 
       {isBasicModalOpen && (
@@ -408,7 +377,6 @@ const Profile = () => {
           onSuccess={() => {
             setIsOnboardingModalOpen(false);
             refetchDoctorProfile();
-            setLocalHasDoctorProfile(true);
           }}
         />
       )}
