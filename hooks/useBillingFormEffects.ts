@@ -20,25 +20,30 @@ export function useBillingFormEffects(
   appointment: UseBillingProps['appointment'],
   doctorFee: DoctorFee | null | undefined,
   selectedAppointmentId: string | null,
-  selectedAppointment: SelectedAppointment | null | undefined
+  selectedAppointment: SelectedAppointment | null | undefined,
+  prescriptionItems: ServiceItem[] = [],
 ) {
-  // Prefill service item with department-based consultation description
+  // Prefill service items with consultation fee + prescriptions
   useEffect(() => {
     if (doctorFee && selectedAppointmentId && selectedAppointment && mode !== 'view') {
       const currentItems = form.getValues('service_items') || [];
-      const departmentName = selectedAppointment.department_name === 'General Medicine' || !selectedAppointment.department_name
-        ? 'General'
-        : selectedAppointment.department_name;
       if (currentItems[0]?.description === '') {
-        form.setValue('service_items', [{
+        const departmentName = selectedAppointment.department_name === 'General Medicine' || !selectedAppointment.department_name
+          ? 'General'
+          : selectedAppointment.department_name;
+        const items: ServiceItem[] = [{
           description: `${departmentName} Consultation`,
           quantity: 1,
           rate: doctorFee.consultation_fee,
           amount: doctorFee.consultation_fee,
-        }]);
+        }];
+        if (prescriptionItems.length > 0) {
+          items.push(...prescriptionItems);
+        }
+        form.setValue('service_items', items);
       }
     }
-  }, [doctorFee, selectedAppointmentId, selectedAppointment, form, mode]);
+  }, [doctorFee, selectedAppointmentId, selectedAppointment, prescriptionItems, form, mode]);
 
   // Reset form when modal opens
   useEffect(() => {

@@ -273,3 +273,6 @@ export {
   type Database,
 };
 
+// Voice Scribe re-exports
+export type { AIStructuredOutput, AIExtractedPrescription } from './voice';
+

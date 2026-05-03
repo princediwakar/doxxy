@@ -134,3 +134,103 @@ export const getMandatoryFieldsFromSchema = (
     .filter(field => field.mandatory)
     .map(field => field.name);
 };
+
+// ============================================================================
+// Zod → OpenAI JSON Schema Converter
+// ============================================================================
+
+type JsonSchema = {
+  type?: string;
+  description?: string;
+  properties?: Record<string, JsonSchema>;
+  items?: JsonSchema;
+  enum?: string[];
+  required?: string[];
+  additionalProperties?: boolean;
+};
+
+function getFieldDescription(schema: z.ZodTypeAny): string | undefined {
+  try {
+    const desc = schema.description;
+    if (!desc) return undefined;
+    const meta = JSON.parse(desc) as { label?: string; placeholder?: string };
+    return meta.label;
+  } catch {
+    return undefined;
+  }
+}
+
+function zodToJsonSchemaInner(schema: z.ZodTypeAny): JsonSchema {
+  const def = schema._def;
+
+  // Unwrap optional — propagate description from the outer type (zField wraps .optional())
+  if (def.typeName === 'ZodOptional') {
+    const innerResult = zodToJsonSchemaInner(def.innerType);
+    if (!innerResult.description) {
+      const outerDesc = getFieldDescription(schema);
+      if (outerDesc) innerResult.description = outerDesc;
+    }
+    return innerResult;
+  }
+
+  if (def.typeName === 'ZodString') {
+    const result: JsonSchema = { type: 'string' };
+    const desc = getFieldDescription(schema);
+    if (desc) result.description = desc;
+    return result;
+  }
+
+  if (def.typeName === 'ZodEnum') {
+    const result: JsonSchema = { type: 'string', enum: [...def.values] };
+    const desc = getFieldDescription(schema);
+    if (desc) result.description = desc;
+    return result;
+  }
+
+  if (def.typeName === 'ZodObject') {
+    const shape = def.shape() as Record<string, z.ZodTypeAny>;
+    const properties: Record<string, JsonSchema> = {};
+    const required: string[] = [];
+
+    for (const [key, value] of Object.entries(shape)) {
+      const innerDef = value._def;
+      const isOptional = innerDef.typeName === 'ZodOptional';
+
+      // Pass the original value so ZodOptional handler can extract zField description
+      properties[key] = zodToJsonSchemaInner(value);
+
+      if (!isOptional) {
+        required.push(key);
+      }
+    }
+
+    const result: JsonSchema = {
+      type: 'object',
+      properties,
+      additionalProperties: false,
+    };
+    if (required.length > 0) {
+      result.required = required;
+    }
+    const desc = getFieldDescription(schema);
+    if (desc) result.description = desc;
+    return result;
+  }
+
+  if (def.typeName === 'ZodArray') {
+    const result: JsonSchema = {
+      type: 'array',
+      items: zodToJsonSchemaInner(def.type),
+    };
+    const desc = getFieldDescription(schema);
+    if (desc) result.description = desc;
+    return result;
+  }
+
+  // Fallback for unsupported types (ZodEffects, ZodUnion, etc.)
+  return { };
+}
+
+export function zodToJsonSchema(schema: z.ZodObject<z.ZodRawShape>): JsonSchema {
+  return zodToJsonSchemaInner(schema);
+}

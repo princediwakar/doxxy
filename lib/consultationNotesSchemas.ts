@@ -454,7 +454,7 @@ export const emergencyMedicineNotesSchema = baseNotesSchema.extend({
 // 4. REGISTRY & BRIDGE (The Legacy Compat Layer)
 // ============================================================================
 
-const schemasByDepartment: Record<string, z.ZodObject<z.ZodRawShape>> = {
+export const schemasByDepartment: Record<string, z.ZodObject<z.ZodRawShape>> = {
   General: generalNotesSchema,
   Ophthalmology: ophthalmologyNotesSchema,
   Neurology: neurologyNotesSchema,
@@ -471,6 +471,10 @@ const schemasByDepartment: Record<string, z.ZodObject<z.ZodRawShape>> = {
   Endocrinology: endocrinologyNotesSchema,
   EmergencyMedicine: emergencyMedicineNotesSchema,
 };
+
+export function getSchemaForDepartment(department: string): z.ZodObject<z.ZodRawShape> {
+  return schemasByDepartment[department] ?? generalNotesSchema;
+}
 
 // "God Object" schema (Intersection of all possible fields)
 // This mirrors the previous implementation where all fields existed on the type

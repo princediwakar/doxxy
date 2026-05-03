@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { toast } from 'sonner';
+import type { AIStructuredOutput } from '@/types/voice';
 
 export type ActiveFilter = 'queue' | 'all';
 export type ActiveModal = 'consult' | 'bill' | 'appointment' | 'patient-edit' | 'patient-new' | null;
@@ -16,6 +17,7 @@ interface TodayState {
   mobileDetailOpen: boolean;
   dirtyFormGuard: boolean;
   shakeTrigger: number;
+  draftConsultationData: AIStructuredOutput | null;
 }
 
 interface TodayActions {
@@ -30,6 +32,8 @@ interface TodayActions {
   closeModal: () => void;
   setMobileDetailOpen: (open: boolean) => void;
   setDirtyFormGuard: (dirty: boolean) => void;
+  setDraftConsultationData: (data: AIStructuredOutput | null) => void;
+  clearDraftConsultationData: () => void;
 }
 
 export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
@@ -44,6 +48,7 @@ export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
   mobileDetailOpen: false,
   dirtyFormGuard: false,
   shakeTrigger: 0,
+  draftConsultationData: null,
 
   setFilter: (filter) => set({ activeFilter: filter }),
 
@@ -78,4 +83,7 @@ export const useTodayStore = create<TodayState & TodayActions>((set, get) => ({
   setMobileDetailOpen: (open) => set({ mobileDetailOpen: open }),
 
   setDirtyFormGuard: (dirty) => set({ dirtyFormGuard: dirty }),
+
+  setDraftConsultationData: (data) => set({ draftConsultationData: data }),
+  clearDraftConsultationData: () => set({ draftConsultationData: null }),
 }));

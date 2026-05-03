@@ -13,6 +13,7 @@ import { useAppointmentActions } from "@/hooks/useAppointmentActions";
 import { usePayments } from "@/hooks/usePayments";
 import { usePrefetching } from "@/hooks/usePrefetching";
 import { useFABAction } from "@/hooks/useFABAction";
+import { useEncounterCompletion } from "@/hooks/encounter/useEncounterCompletion";
 import { ArrowLeft } from "lucide-react";
 import { TodayHeader } from "@/components/today/TodayHeader";
 import { TodayPatientList } from "@/components/today/TodayPatientList";
@@ -23,6 +24,7 @@ import type { AppointmentWithDetails } from "@/types/appointments";
 import type { BillWithDetails } from "@/types/billing";
 import type { DbPatientByClinic } from "@/types/core";
 import type { Patient, AppointmentData } from "@/types/patients";
+import type { AIStructuredOutput } from "@/types/voice";
 
 function TodayPageInner() {
   const router = useRouter();
@@ -67,6 +69,8 @@ function TodayPageInner() {
   const { handleStartConsultation: startConsultation } = useAppointmentActions();
   const { canBookAppointment } = usePayments();
   const { prefetchPatients, prefetchDoctors, prefetchConsultationData } = usePrefetching();
+  const { completeEncounter, isCompleting } = useEncounterCompletion();
+  const setDraftConsultationData = useTodayStore((s) => s.setDraftConsultationData);
 
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
   const [isAppointmentModalOpen, setAppointmentModalOpen] = useState(false);
@@ -160,6 +164,23 @@ function TodayPageInner() {
   const handleEditPatient = useCallback(
     () => { openModal("patient-edit"); }, [openModal]);
 
+  const handleApproveEncounter = useCallback(
+    (appointmentId: string, patientId: string, doctorId: string, aiData: AIStructuredOutput) => {
+      completeEncounter({ appointmentId, patientId, doctorId, aiData }, {
+        onSuccess: () => selectPatient(patientId, appointmentId),
+      });
+    },
+    [completeEncounter, selectPatient]
+  );
+
+  const handleEditManually = useCallback(
+    (appointmentId: string, aiData: AIStructuredOutput) => {
+      setDraftConsultationData(aiData);
+      router.push(`/consultation/${appointmentId}`);
+    },
+    [setDraftConsultationData, router]
+  );
+
   const handleScheduleAppointment = useCallback(
     () => {
       if (patientDetail?.patient) {
@@ -191,6 +212,9 @@ function TodayPageInner() {
     onEditPatient: handleEditPatient,
     onViewBill: handleViewBill,
     onViewConsultationFromHistory: handleViewConsultationFromHistory,
+    onApproveEncounter: handleApproveEncounter,
+    onEditManually: handleEditManually,
+    isCompleting,
   };
 
   const listProps = {

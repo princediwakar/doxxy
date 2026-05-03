@@ -67,4 +67,8 @@ export const queryKeys = {
     byClinic: (clinicId: string) => ['clinicMembers', clinicId] as const,
     pendingInvitations: (clinicId: string) => ['pendingInvitations', clinicId] as const,
   },
+  lastVisitSummary: (patientId: string) => ['lastVisitSummary', patientId] as const,
+  voice: {
+    transcribe: ['voice', 'transcribe'] as const,
+  },
 } as const;

@@ -73,7 +73,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     refetch: refetchInvoiceNumber,
   } = useInvoiceNumber(open, mode, !!bill?.invoice_number);
 
-  // Data queries: appointments, patients, doctor fee, selected appointment
+  // Data queries: appointments, patients, doctor fee, selected appointment, prescriptions
   const {
     appointments: filteredAppointments,
     patients,
@@ -84,6 +84,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     doctorFee,
     doctorFeeError,
     selectedAppointment,
+    prescriptionItems,
   } = useBillingQueries(open, selectedPatientId, selectedAppointmentId, mode);
 
   // Calculate bill totals
@@ -166,7 +167,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     }
   }, [mode, open, activeClinic?.clinic_id, newInvoiceNumber, isLoadingInvoiceNumber, invoiceError, refetchInvoiceNumber, form]);
   // Form lifecycle effects (prefill + reset)
-  useBillingFormEffects(form, open, mode, bill, patient, appointment, doctorFee, selectedAppointmentId, selectedAppointment);
+  useBillingFormEffects(form, open, mode, bill, patient, appointment, doctorFee, selectedAppointmentId, selectedAppointment, prescriptionItems);
 
   return {
     form,
