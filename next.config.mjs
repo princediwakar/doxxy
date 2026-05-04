@@ -8,6 +8,16 @@ const bundleAnalyzer = withBundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/consultation/:id",
+        destination: "/today?selectedAppointment=:id",
+        permanent: false,
+      },
+    ];
+  },
+
   // Image Optimization
   images: {
     remotePatterns: [

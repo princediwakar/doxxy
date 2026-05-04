@@ -24,10 +24,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     }
   }, [pathname, router]);
 
-  const isConsultationPage = pathname.startsWith("/consultation/");
-
   const role = activeClinicRole as "staff" | "doctor" | "superadmin" | null;
-  const fabActions = role && !isConsultationPage ? [{
+  const fabActions = role ? [{
     id: "new-patient",
     icon: <User className="w-5 h-5" />,
     label: "New Patient",

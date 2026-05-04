@@ -1,156 +1,122 @@
+// components/today/EncounterCanvas.tsx
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { PatientHeader } from "./PatientHeader";
-import { LastVisitSummary } from "./LastVisitSummary";
 import { DictationZone } from "./DictationZone";
-import { ReviewHandoff } from "./ReviewHandoff";
+import { InlineConsultationForm } from "./InlineConsultationForm";
 import { AdministrativeFooter } from "./AdministrativeFooter";
-import type { AIStructuredOutput, EncounterReviewState, FieldConfidence } from "@/types/voice";
+import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
 import type { PatientDetail } from "@/hooks/usePatientDetail";
 import type { BillWithDetails } from "@/types/billing";
+import type { AppointmentWithDetails } from "@/types/appointments";
+import type { DbAppointment } from "@/types/core";
 
 interface EncounterCanvasProps {
   patientId: string;
   patientDetail: PatientDetail | undefined;
   isLoadingDetail: boolean;
   appointmentStatus?: string;
-  patientBills: BillWithDetails[];
-  isLoadingBills: boolean;
   departmentName?: string;
   onSchedule: () => void;
   onBill: () => void;
   onEditPatient: () => void;
   onEditAppointment: () => void;
-  onApproveEncounter: (structured: AIStructuredOutput) => void;
-  onEditManually: (structured: AIStructuredOutput) => void;
-  onStartConsultation?: () => void;
-  isCompleting: boolean;
+  canEditConsultation: boolean;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
+  appointment: AppointmentWithDetails | null;
+  onComplete: () => void;
 }
-
-const EMPTY_STRUCTURED: AIStructuredOutput = {
-  symptoms: "NOT_SPECIFIED",
-  diagnosis: "NOT_SPECIFIED",
-  prescriptions: [],
-  advice: "NOT_SPECIFIED",
-  rawFields: {},
-};
 
 export function EncounterCanvas({
   patientId,
   patientDetail,
   isLoadingDetail,
   appointmentStatus,
-  patientBills,
-  isLoadingBills,
   departmentName,
   onSchedule,
   onBill,
   onEditPatient,
   onEditAppointment,
-  onApproveEncounter,
-  onEditManually,
-  onStartConsultation,
-  isCompleting,
+  canEditConsultation,
   onViewBill,
   onViewConsultationFromHistory,
+  appointment,
+  onComplete,
 }: EncounterCanvasProps) {
-  const [reviewState, setReviewState] = useState<EncounterReviewState>({ phase: "idle" });
-  const reviewSectionRef = useRef<HTMLDivElement | null>(null);
+  const [aiStructuredData, setAiStructuredData] = useState<AIStructuredOutput | null>(null);
+  const formRef = useRef<HTMLDivElement>(null!);
 
-  const scrollToReview = useCallback(() => {
-    reviewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
-
-  const isReviewOpen = reviewState.phase === "review";
-  const variant = appointmentStatus === "Completed" ? "compact" : "active";
-
-  const prevIsCompletingRef = useRef(isCompleting);
-  useEffect(() => {
-    if (prevIsCompletingRef.current && !isCompleting && reviewState.phase === 'review') {
-      setReviewState({ phase: 'idle' });
-    }
-    prevIsCompletingRef.current = isCompleting;
-  }, [isCompleting, reviewState.phase]);
+  const onAiDataConsumed = useCallback(() => setAiStructuredData(null), []);
 
   const handleStructured = useCallback(
-    (structured: AIStructuredOutput | null, transcript: string, fieldConfidence?: FieldConfidence[]) => {
-      setReviewState({ phase: "review", structured, transcript, fieldConfidence });
+    (structured: AIStructuredOutput | null, _transcript: string, _fieldConfidence?: FieldConfidence[]) => {
+      if (structured) setAiStructuredData(structured);
     },
     [],
   );
 
-  const handleRecordingStarted = useCallback(() => {
-    // no-op: dictation happens in-place on the today page
+  const handleScrollToForm = useCallback(() => {
+    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
-
-  const handleApprove = useCallback(
-    (structured: AIStructuredOutput) => {
-      onApproveEncounter(structured);
-    },
-    [onApproveEncounter]
-  );
-
-  const handleDiscard = useCallback(() => {
-    setReviewState({ phase: 'idle' });
-  }, []);
-
-  const handleOpenNotes = useCallback(() => {
-    onEditManually(EMPTY_STRUCTURED);
-  }, [onEditManually]);
 
   const patient = patientDetail?.patient ?? null;
 
+  if (isLoadingDetail || !patient) {
+    return (
+      <div className="space-y-4">
+        <div className="h-24 w-full bg-muted/20 animate-pulse rounded-xl border border-muted/30" />
+        <div className="h-48 w-full bg-muted/10 animate-pulse rounded-xl border border-muted/20" />
+        <div className="h-32 w-full bg-muted/10 animate-pulse rounded-xl border border-muted/20" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      {patient && (
-        <PatientHeader
-          name={patient.name}
-          age={patient.age}
-          gender={patient.gender}
-          status={appointmentStatus}
-          onSchedule={onSchedule}
-          onBill={onBill}
-          onEditPatient={onEditPatient}
-          onEditAppointment={onEditAppointment}
+      <PatientHeader
+        name={patient.name}
+        age={patient.age}
+        gender={patient.gender}
+        status={appointmentStatus}
+        onSchedule={onSchedule}
+        onBill={onBill}
+        onEditPatient={onEditPatient}
+        onEditAppointment={onEditAppointment}
+      />
+
+      {appointmentStatus !== "Completed" && canEditConsultation && (
+        <DictationZone
+          onStructured={handleStructured}
+          onOpenNotes={handleScrollToForm}
+          variant="active"
+          secondaryLabel="Edit Consultation Notes"
+          departmentName={departmentName}
+          existingStructured={aiStructuredData}
+          scrollToReview={handleScrollToForm}
         />
       )}
 
-      <LastVisitSummary patientId={patientId} />
-
-      <DictationZone
-        onStructured={handleStructured}
-        onOpenNotes={handleOpenNotes}
-        onRecordingStarted={handleRecordingStarted}
-        variant={isReviewOpen ? "compact" : variant}
-        secondaryLabel="Edit Consultation Notes"
-        departmentName={departmentName}
-        existingStructured={isReviewOpen ? reviewState.structured : null}
-        scrollToReview={scrollToReview}
-      />
-
-      {isReviewOpen && (
-        <div ref={reviewSectionRef}>
-          <ReviewHandoff
-            structured={reviewState.structured}
-            transcript={reviewState.transcript}
-            fieldConfidence={reviewState.fieldConfidence}
-            isCompleting={isCompleting}
-            onApprove={handleApprove}
-            onEditManually={onEditManually}
-            onDiscard={handleDiscard}
-          />
-        </div>
+      {appointment && (
+        <InlineConsultationForm
+          formRef={formRef}
+          appointmentId={appointment.id}
+          appointment={appointment as unknown as DbAppointment}
+          patient={patient}
+          patientDetail={patientDetail}
+          canEditConsultation={canEditConsultation}
+          aiStructuredData={aiStructuredData}
+          onAiDataConsumed={onAiDataConsumed}
+          onComplete={onComplete}
+        />
       )}
 
       <AdministrativeFooter
         patientDetail={patientDetail}
-        isLoadingDetail={isLoadingDetail}
-        patientBills={patientBills}
-        isLoadingBills={isLoadingBills}
+        isLoadingDetail={false}
         selectedPatientId={patientId}
+        currentAppointmentId={appointment?.id ?? null}
         onViewBill={onViewBill}
         onViewConsultationFromHistory={onViewConsultationFromHistory}
       />

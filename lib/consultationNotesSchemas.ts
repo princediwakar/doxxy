@@ -94,7 +94,7 @@ export const baseNotesSchema = z.object({
     label: "Chief Complaint", section: "History", type: "textarea", rows: 3, placeholder: "Enter chief complaint"
   }),
   history_of_present_illness: zField(z.string().optional(), {
-    label: "History of Present Illness", section: "History", type: "textarea", rows: 6, placeholder: "Describe history of present illness"
+    label: "History of Present Illness", section: "History", type: "textarea", rows: 3, placeholder: "Describe history of present illness"
   }),
   past_medical_history: zField(z.string().optional(), {
     label: "Past Medical History", section: "History", type: "textarea", rows: 3, placeholder: "List past medical history"

@@ -55,9 +55,9 @@ export function PatientHeader({
           <Button variant="outline" size="sm" onClick={onBill}>
             <Receipt className="h-3.5 w-3.5 mr-1" />Bill
           </Button>
-          <Button variant="outline" size="sm" onClick={onEditAppointment}>
+          {/* <Button variant="outline" size="sm" onClick={onEditAppointment}>
             <Stethoscope className="h-3.5 w-3.5 mr-1" />Appt
-          </Button>
+          </Button> */}
           <Button variant="outline" size="sm" onClick={onSchedule}>
             <CalendarPlus className="h-3.5 w-3.5 mr-1" />Schedule
           </Button>

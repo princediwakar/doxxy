@@ -27,6 +27,7 @@ interface AuthContextProps {
   checkProfileCompletion: (userId: string) => Promise<boolean>;
   markProfileComplete: () => Promise<void>;
   hasDoctorProfile: boolean | undefined;
+  doctorId: string | null;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -288,6 +289,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkProfileCompletion: profileCompletion.checkProfileCompletion,
     markProfileComplete,
     hasDoctorProfile: clinicData.hasDoctorProfile,
+    doctorId: clinicData.doctorId,
   }), [
     session,
     user,
@@ -304,6 +306,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     profileCompletion.checkProfileCompletion,
     markProfileComplete,
     clinicData.hasDoctorProfile,
+    clinicData.doctorId,
   ]);
 
   return (

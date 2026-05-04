@@ -20,6 +20,7 @@ export interface UseConsultationFormParams {
   appointment: DbAppointment | null | undefined;
   existingConsultation: DbConsultationBase | null | undefined;
   departmentType?: string;
+  canEditConsultation?: boolean;
 }
 
 export interface UseConsultationFormReturn {
@@ -56,11 +57,15 @@ export const useConsultationForm = ({
   appointment,
   existingConsultation,
   departmentType,
+  canEditConsultation: canEditConsultationOverride,
 }: UseConsultationFormParams): UseConsultationFormReturn => {
   const { user, activeClinic } = useAuth();
 
-  // 1. Permission checking
-  const { canEditConsultation } = useConsultationPermissions({ appointment });
+  // 1. Permission checking — use override when provided, otherwise compute
+  const { canEditConsultation } =
+    canEditConsultationOverride !== undefined
+      ? { canEditConsultation: canEditConsultationOverride }
+      : useConsultationPermissions({ appointment });
 
   // 2. Form setup
   const defaultValues: ConsultationFormValues = useMemo(

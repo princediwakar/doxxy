@@ -1,3 +1,4 @@
+// hooks/usePatientDetail.ts
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +12,6 @@ const supabase = getSupabase();
 interface PatientDetail {
   patient: DbPatientByClinic | null;
   consultations: Array<Record<string, unknown>>;
-  prescriptions: Array<Record<string, unknown>>;
 }
 
 async function fetchPatientDetail(
@@ -27,25 +27,18 @@ async function fetchPatientDetail(
 
   if (patientError) throw patientError;
 
-  const [consultationsRes, prescriptionsRes] = await Promise.all([
-    supabase
-      .from("consultations")
-      .select("*, appointments(id, date, time, status, doctor_id, type, created_at, doctors(name))")
-      .eq("patient_id", patientId)
-      .order("created_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("prescriptions")
-      .select("*")
-      .eq("patient_id", patientId)
-      .order("created_at", { ascending: false })
-      .limit(20),
-  ]);
+  const { data: consultations, error: consultationsError } = await supabase
+    .from("consultations")
+    .select("*, appointments(id, date, time, status, doctor_id, type, created_at, doctors(name))")
+    .eq("patient_id", patientId)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (consultationsError) throw consultationsError;
 
   return {
     patient: patient as DbPatientByClinic | null,
-    consultations: (consultationsRes.data ?? []) as Array<Record<string, unknown>>,
-    prescriptions: (prescriptionsRes.data ?? []) as Array<Record<string, unknown>>,
+    consultations: (consultations ?? []) as Array<Record<string, unknown>>,
   };
 }
 
@@ -58,7 +51,6 @@ export function usePatientDetail(patientId: string | null) {
     queryFn: () => fetchPatientDetail(clinicId, patientId!),
     enabled: !!clinicId && !!patientId && !authLoading,
     staleTime: 30 * 1000,
-    placeholderData: (prev) => prev,
   });
 }
 

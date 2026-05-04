@@ -1,3 +1,4 @@
+// hooks/useAuth.ts
 "use client";
 import { logger } from "@/lib/logger";
 

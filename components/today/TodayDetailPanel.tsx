@@ -1,27 +1,24 @@
+// components/today/TodayDetailPanel.tsx
 "use client";
 
-import { useCallback } from "react";
-import { X, User } from "lucide-react";
+import { useCallback, memo } from "react";
+import { User } from "lucide-react";
 import { Spinner } from "@/components/ui/loading";
-import { useTodayStore, type ActiveFilter } from "@/stores/todayStore";
-import { useAuth } from "@/contexts/AuthContext";
+import { useConsultationPermissions } from "@/hooks/consultation/useConsultationPermissions";
 import { EncounterCanvas } from "./EncounterCanvas";
-import { StaffView } from "./StaffView";
+import { PatientHeader } from "./PatientHeader";
+import { AdministrativeFooter } from "./AdministrativeFooter";
 import type { AppointmentWithDetails } from "@/types/appointments";
 import type { PatientDetail } from "@/hooks/usePatientDetail";
 import type { BillWithDetails } from "@/types/billing";
-import type { AIStructuredOutput } from "@/types/voice";
 
 interface TodayDetailPanelProps {
-  activeFilter: ActiveFilter;
   patientAppointments: AppointmentWithDetails[];
   patientDetail: PatientDetail | undefined;
   isLoadingDetail: boolean;
-  patientBills: BillWithDetails[];
-  isLoadingBills: boolean;
-  onStartConsultation: (app: AppointmentWithDetails) => void;
-  onViewConsultation: (app: AppointmentWithDetails) => void;
-  onEditConsultation: (app: AppointmentWithDetails) => void;
+  isLoadingQueue: boolean;
+  selectedPatientId: string | null;
+  selectedAppointmentId: string | null;
   onCreateBill: (app: AppointmentWithDetails) => void;
   onCreateBillForPatient: () => void;
   onScheduleAppointment: () => void;
@@ -29,18 +26,17 @@ interface TodayDetailPanelProps {
   onEditPatient: () => void;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
-  onApproveEncounter: (appointmentId: string, patientId: string, doctorId: string, aiData: AIStructuredOutput) => void;
-  onEditManually: (appointmentId: string, aiData: AIStructuredOutput) => void;
-  isCompleting: boolean;
+  onRefreshNeeded: () => void;
+  deepLinkedAppointment?: AppointmentWithDetails | null;
 }
 
-export function TodayDetailPanel({
+const TodayDetailPanelInner = ({
   patientAppointments,
   patientDetail,
   isLoadingDetail,
-  patientBills,
-  isLoadingBills,
-  onStartConsultation,
+  isLoadingQueue,
+  selectedPatientId,
+  selectedAppointmentId,
   onCreateBill,
   onScheduleAppointment,
   onCreateBillForPatient,
@@ -48,42 +44,33 @@ export function TodayDetailPanel({
   onEditAppointment,
   onViewBill,
   onViewConsultationFromHistory,
-  onApproveEncounter,
-  onEditManually,
-  isCompleting,
-}: TodayDetailPanelProps) {
-  const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
-  const selectedAppointmentId = useTodayStore((s) => s.selectedAppointmentId);
-  const clearSelection = useTodayStore((s) => s.clearSelection);
-  const { user } = useAuth();
+  onRefreshNeeded,
+  deepLinkedAppointment,
+}: TodayDetailPanelProps) => {
 
   const selectedAppointment = selectedAppointmentId
-    ? patientAppointments.find((a) => a.id === selectedAppointmentId) ?? null
+    ? patientAppointments.find((a) => a.id === selectedAppointmentId) ??
+      (deepLinkedAppointment && deepLinkedAppointment.id === selectedAppointmentId
+        ? deepLinkedAppointment
+        : null)
     : null;
 
+  const { canEditConsultation } = useConsultationPermissions({
+    appointment: selectedAppointment ?? undefined,
+  });
 
-  const handleApproveEncounter = useCallback(
-    (aiData: AIStructuredOutput) => {
-      if (!selectedAppointment) return;
-      onApproveEncounter(
-        selectedAppointment.id,
-        selectedAppointment.patient_id,
-        selectedAppointment.doctor_id,
-        aiData
-      );
-    },
-    [selectedAppointment, onApproveEncounter]
-  );
-
-  const handleEditManually = useCallback(
-    (aiData: AIStructuredOutput) => {
-      if (!selectedAppointment) return;
-      onEditManually(selectedAppointment.id, aiData);
-    },
-    [selectedAppointment, onEditManually]
-  );
+  const handleComplete = useCallback(() => {
+    onRefreshNeeded();
+  }, [onRefreshNeeded]);
 
   if (!selectedPatientId) {
+    if (isLoadingQueue) {
+      return (
+        <div className="flex items-center justify-center py-20">
+          <Spinner size="lg" />
+        </div>
+      );
+    }
     return (
       <div className="hidden lg:flex items-center justify-center h-full text-muted-foreground">
         <div className="text-center">
@@ -95,54 +82,53 @@ export function TodayDetailPanel({
     );
   }
 
-  if (isLoadingDetail) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-
-  const isOwnAppointment = selectedAppointment?.user_id === user?.id;
-
   return (
     <div className="relative">
-
-      {isOwnAppointment ? (
+      {canEditConsultation ? (
         <EncounterCanvas
           patientId={selectedPatientId}
           patientDetail={patientDetail}
           isLoadingDetail={isLoadingDetail}
           appointmentStatus={selectedAppointment?.status}
-          patientBills={patientBills}
-          isLoadingBills={isLoadingBills}
           departmentName={selectedAppointment?.department_name}
           onSchedule={onScheduleAppointment}
           onBill={selectedAppointment ? () => onCreateBill(selectedAppointment) : onCreateBillForPatient}
           onEditPatient={onEditPatient}
           onEditAppointment={() => selectedAppointment && onEditAppointment(selectedAppointment)}
-          onApproveEncounter={handleApproveEncounter}
-          onEditManually={handleEditManually}
-          onStartConsultation={() => selectedAppointment && onStartConsultation(selectedAppointment)}
-          isCompleting={isCompleting}
+          canEditConsultation={canEditConsultation}
           onViewBill={onViewBill}
           onViewConsultationFromHistory={onViewConsultationFromHistory}
+          appointment={selectedAppointment}
+          onComplete={handleComplete}
         />
       ) : (
-        <StaffView
-          patientId={selectedPatientId}
-          patientDetail={patientDetail}
-          isLoadingDetail={isLoadingDetail}
-          patientBills={patientBills}
-          isLoadingBills={isLoadingBills}
-          onSchedule={onScheduleAppointment}
-          onBill={selectedAppointment ? () => onCreateBill(selectedAppointment) : onCreateBillForPatient}
-          onEditPatient={onEditPatient}
-          onEditAppointment={() => selectedAppointment && onEditAppointment(selectedAppointment)}
-          onViewBill={onViewBill}
-          onViewConsultationFromHistory={onViewConsultationFromHistory}
-        />
+        <div className="space-y-4">
+          {patientDetail?.patient && (
+            <PatientHeader
+              name={patientDetail.patient.name}
+              age={patientDetail.patient.age}
+              gender={patientDetail.patient.gender}
+              variant="staff"
+              onSchedule={onScheduleAppointment}
+              onBill={selectedAppointment ? () => onCreateBill(selectedAppointment) : onCreateBillForPatient}
+              onEditPatient={onEditPatient}
+              onEditAppointment={() => selectedAppointment && onEditAppointment(selectedAppointment)}
+            />
+          )}
+          <AdministrativeFooter
+            patientDetail={patientDetail}
+            isLoadingDetail={isLoadingDetail}
+            selectedPatientId={selectedPatientId}
+            currentAppointmentId={null}
+            defaultExpandBills
+            defaultExpandHistory
+            onViewBill={onViewBill}
+            onViewConsultationFromHistory={onViewConsultationFromHistory}
+          />
+        </div>
       )}
     </div>
   );
-}
+};
+
+export const TodayDetailPanel = memo(TodayDetailPanelInner);

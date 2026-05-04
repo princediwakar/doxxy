@@ -26,6 +26,7 @@ export const useClinicData = () => {
   const [userClinics, setUserClinics] = useState<ClinicMemberWithClinic[]>([]);
   const [activeClinic, setActiveClinicState] = useState<ClinicMemberWithClinic | null>(null);
   const [hasDoctorProfile, setHasDoctorProfile] = useState<boolean | undefined>(undefined);
+  const [doctorId, setDoctorId] = useState<string | null>(null);
   const isFetchingRef = useRef(false);
   const subscriptionRef = useRef<RealtimeChannel | null>(null);
   const currentUserRef = useRef<User | null>(null);
@@ -35,6 +36,7 @@ export const useClinicData = () => {
   const checkDoctorProfile = useCallback(async (userId: string, clinicId: string | null): Promise<boolean> => {
     if (!clinicId) {
       setHasDoctorProfile(false);
+      setDoctorId(null);
       return false;
     }
 
@@ -51,16 +53,19 @@ export const useClinicData = () => {
       if (error) {
         logger.error("Error checking doctor profile:", error);
         setHasDoctorProfile(false);
+        setDoctorId(null);
         return false;
       }
 
-      const hasDoctorProfile = !!doctorProfile;
-      if (process.env.NODE_ENV === "development") logger.log("Doctor profile check result:", hasDoctorProfile);
-      setHasDoctorProfile(hasDoctorProfile);
-      return hasDoctorProfile;
+      const profileExists = !!doctorProfile;
+      if (process.env.NODE_ENV === "development") logger.log("Doctor profile check result:", profileExists);
+      setHasDoctorProfile(profileExists);
+      setDoctorId(doctorProfile?.id ?? null);
+      return profileExists;
     } catch (error) {
       logger.error("Exception in doctor profile check:", error);
       setHasDoctorProfile(false);
+      setDoctorId(null);
       return false;
     }
   }, []);
@@ -69,6 +74,7 @@ export const useClinicData = () => {
     if (clinicId === null) {
       setActiveClinicState(null);
       setHasDoctorProfile(undefined);
+      setDoctorId(null);
       localStorage.removeItem('activeClinicId');
       if (process.env.NODE_ENV === "development") logger.log("Cleared active clinic.");
     } else {
@@ -79,10 +85,11 @@ export const useClinicData = () => {
           localStorage.setItem('activeClinicId', selectedClinic.clinic_id);
           if (process.env.NODE_ENV === "development") logger.log("Set active clinic:", selectedClinic.clinics?.name);
 
-          if (user?.id && selectedClinic.role === 'superadmin') {
+          if (user?.id && (selectedClinic.role === 'superadmin' || selectedClinic.role === 'doctor')) {
             checkDoctorProfile(user.id, selectedClinic.clinic_id);
           } else {
-            setHasDoctorProfile(selectedClinic.role === 'doctor');
+            setHasDoctorProfile(false);
+            setDoctorId(null);
           }
         } else {
           setHasDoctorProfile(undefined);
@@ -175,6 +182,7 @@ export const useClinicData = () => {
     activeClinic,
     activeClinicRole,
     hasDoctorProfile,
+    doctorId,
     setActiveClinicId,
     fetchUserAndClinicData,
     checkDoctorProfile,

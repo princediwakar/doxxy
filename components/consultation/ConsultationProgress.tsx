@@ -37,22 +37,11 @@ export const ConsultationProgress = ({
 
   return (
     <Card className="bg-white">
-      <CardContent className="p-6">
+      <CardContent className="p-4">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              Medical Consultation
-            </h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {completed}/{specialtySections.length} sections completed
-            </p>
-          </div>
-          <Badge
-            variant={isConsultationCompleted ? "default" : "secondary"}
-            className="text-sm"
-          >
-            {isConsultationCompleted ? "Completed" : "In Progress"}
-          </Badge>
+          <p className="text-sm text-muted-foreground">
+            {completed}/{specialtySections.length} sections completed
+          </p>
         </div>
       </CardContent>
     </Card>

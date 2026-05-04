@@ -192,30 +192,15 @@ export function DictationZone({
             <Mic className="h-5 w-5 inline mr-1.5" />
             Record Additional Notes
           </button>
-          <Button variant="outline" size="sm" onClick={onOpenNotes} className="shrink-0">
-            <FileText className="h-3.5 w-3.5 mr-1" />{secondaryLabel}
-          </Button>
         </div>
       ) : (
-        <>
-          <button
-            onClick={beginRecording}
-            className="w-full rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 p-6 text-lg text-center font-semibold transition-all"
-          >
-            <Mic className="h-8 w-8 mx-auto mb-2 block" />
-            Tap to Dictate
-          </button>
-
-          <p className="text-center text-sm text-muted-foreground">
-            or{" "}
-            <button
-              onClick={onOpenNotes}
-              className="underline hover:text-foreground transition-colors font-medium"
-            >
-              {secondaryLabel.toLowerCase()}
-            </button>
-          </p>
-        </>
+        <button
+          onClick={beginRecording}
+          className="w-full rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 p-6 text-lg text-center font-semibold transition-all"
+        >
+          <Mic className="h-8 w-8 mx-auto mb-2 block" />
+          Tap to Dictate
+        </button>
       )}
     </div>
   );

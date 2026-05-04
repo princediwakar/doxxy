@@ -126,7 +126,7 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
     try {
       await startConsultation(appointmentId, canBookAppointment);
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.doctor(activeClinic?.clinic_id ?? '', user?.id ?? '') });
-      router.push(`/consultation/${appointmentId}`);
+      router.push(`/today?selectedAppointment=${appointmentId}`);
     } catch {
       // Error toast already shown by useAppointmentActions
     }

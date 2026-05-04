@@ -1,3 +1,4 @@
+// components/today/TodayPatientList.tsx
 "use client";
 
 import { useCallback } from "react";
@@ -17,6 +18,10 @@ interface TodayPatientListProps {
   searchPatients: DbPatientByClinic[];
   isLoadingSearch: boolean;
   appointmentsByPatient: Map<string, AppointmentWithDetails[]>;
+  genderFilter: string | null;
+  ageGroupFilter: string | null;
+  selectedPatientId: string | null;
+  selectedAppointmentId: string | null;
   onAppointmentClick: (app: AppointmentWithDetails) => void;
 }
 
@@ -94,14 +99,14 @@ export function TodayPatientList({
   isLoadingQueue,
   searchPatients,
   isLoadingSearch,
+  genderFilter,
+  ageGroupFilter,
+  selectedPatientId,
+  selectedAppointmentId,
   onAppointmentClick,
 }: TodayPatientListProps) {
   const activeFilter = useTodayStore((s) => s.activeFilter);
-  const selectedPatientId = useTodayStore((s) => s.selectedPatientId);
-  const selectedAppointmentId = useTodayStore((s) => s.selectedAppointmentId);
   const searchQuery = useTodayStore((s) => s.searchQuery);
-  const genderFilter = useTodayStore((s) => s.genderFilter);
-  const ageGroupFilter = useTodayStore((s) => s.ageGroupFilter);
   const selectPatient = useTodayStore((s) => s.selectPatient);
 
   const handleSearchPatientClick = useCallback(
