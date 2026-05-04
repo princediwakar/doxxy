@@ -116,7 +116,7 @@ export const ConsultationPreviewModal = ({
             </Button>
           </div>
         </DialogHeader>
-        <ScrollArea className="max-h-[80vh]">
+        <ScrollArea className="h-[calc(90vh-8rem)]">
           <ConsultationLayout
             patient={patient}
             appointment={appointment}

@@ -199,7 +199,7 @@ export function ConsultationViewModal({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[80vh]">
+        <ScrollArea className="h-[calc(90vh-8rem)]">
           {/* Loading State */}
           {isLoadingConsultation && (
             <div className="flex items-center justify-center p-8">
