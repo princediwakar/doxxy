@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { PatientHeader } from "./PatientHeader";
 import { LastVisitSummary } from "./LastVisitSummary";
 import { DictationZone } from "./DictationZone";
 import { ReviewHandoff } from "./ReviewHandoff";
 import { AdministrativeFooter } from "./AdministrativeFooter";
-import type { AIStructuredOutput, EncounterReviewState } from "@/types/voice";
+import type { AIStructuredOutput, EncounterReviewState, FieldConfidence } from "@/types/voice";
 import type { PatientDetail } from "@/hooks/usePatientDetail";
 import type { BillWithDetails } from "@/types/billing";
 
@@ -58,18 +58,33 @@ export function EncounterCanvas({
   onViewConsultationFromHistory,
 }: EncounterCanvasProps) {
   const [reviewState, setReviewState] = useState<EncounterReviewState>({ phase: "idle" });
+  const reviewSectionRef = useRef<HTMLDivElement | null>(null);
 
-  const variant = appointmentStatus === "Completed" ? "compact" : "active";
-
-  const handleStructured = useCallback((structured: AIStructuredOutput | null, transcript: string) => {
-    setReviewState({ phase: "review", structured, transcript });
+  const scrollToReview = useCallback(() => {
+    reviewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const handleRecordingStarted = useCallback(() => {
-    if (appointmentStatus === "Scheduled") {
-      onStartConsultation?.();
+  const isReviewOpen = reviewState.phase === "review";
+  const variant = appointmentStatus === "Completed" ? "compact" : "active";
+
+  const prevIsCompletingRef = useRef(isCompleting);
+  useEffect(() => {
+    if (prevIsCompletingRef.current && !isCompleting && reviewState.phase === 'review') {
+      setReviewState({ phase: 'idle' });
     }
-  }, [appointmentStatus, onStartConsultation]);
+    prevIsCompletingRef.current = isCompleting;
+  }, [isCompleting, reviewState.phase]);
+
+  const handleStructured = useCallback(
+    (structured: AIStructuredOutput | null, transcript: string, fieldConfidence?: FieldConfidence[]) => {
+      setReviewState({ phase: "review", structured, transcript, fieldConfidence });
+    },
+    [],
+  );
+
+  const handleRecordingStarted = useCallback(() => {
+    // no-op: dictation happens in-place on the today page
+  }, []);
 
   const handleApprove = useCallback(
     (structured: AIStructuredOutput) => {
@@ -101,23 +116,28 @@ export function EncounterCanvas({
 
       <LastVisitSummary patientId={patientId} />
 
-      {reviewState.phase === "review" ? (
-        <ReviewHandoff
-          structured={reviewState.structured}
-          transcript={reviewState.transcript}
-          isCompleting={isCompleting}
-          onApprove={handleApprove}
-          onEditManually={onEditManually}
-        />
-      ) : (
-        <DictationZone
-          onStructured={handleStructured}
-          onOpenNotes={handleOpenNotes}
-          onRecordingStarted={handleRecordingStarted}
-          variant={variant}
-          secondaryLabel="Edit Consultation Notes"
-          departmentName={departmentName}
-        />
+      <DictationZone
+        onStructured={handleStructured}
+        onOpenNotes={handleOpenNotes}
+        onRecordingStarted={handleRecordingStarted}
+        variant={isReviewOpen ? "compact" : variant}
+        secondaryLabel="Edit Consultation Notes"
+        departmentName={departmentName}
+        existingStructured={isReviewOpen ? reviewState.structured : null}
+        scrollToReview={scrollToReview}
+      />
+
+      {isReviewOpen && (
+        <div ref={reviewSectionRef}>
+          <ReviewHandoff
+            structured={reviewState.structured}
+            transcript={reviewState.transcript}
+            fieldConfidence={reviewState.fieldConfidence}
+            isCompleting={isCompleting}
+            onApprove={handleApprove}
+            onEditManually={onEditManually}
+          />
+        </div>
       )}
 
       <AdministrativeFooter

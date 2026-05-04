@@ -4,7 +4,7 @@ import { getSchemaForDepartment } from '@/lib/consultationNotesSchemas';
 import { mapDepartmentName } from '@/components/consultation/constants';
 import { zodToJsonSchema, getAllFieldsFromSchema } from '@/lib/schemaUtils';
 import type { NoteFieldConfig } from '@/lib/schemaUtils';
-import type { AIStructuredOutput } from '@/types/voice';
+import type { AIStructuredOutput, FieldConfidence } from '@/types/voice';
 
 const INDIAN_SHORTHAND_REFERENCE = `
 INDIAN CLINICAL SHORTHAND REFERENCE:
@@ -87,15 +87,6 @@ function buildFieldMetadata(fields: NoteFieldConfig[]): Record<string, { label: 
   return meta;
 }
 
-const COMMON_FIELD_NAMES = new Set([
-  'chief_complaint',
-  'diagnosis',
-  'prescriptions',
-  'assessment',
-  'treatment',
-  'follow_up',
-]);
-
 function mapStructuredOutput(
   aiOutput: Record<string, unknown>,
   fields: NoteFieldConfig[],
@@ -103,7 +94,7 @@ function mapStructuredOutput(
   const rawFields: Record<string, unknown> = {};
 
   for (const field of fields) {
-    if (COMMON_FIELD_NAMES.has(field.name)) continue;
+    if (field.name === 'chief_complaint' || field.name === 'diagnosis' || field.name === 'prescriptions') continue;
     if (field.name in aiOutput) {
       rawFields[field.name] = aiOutput[field.name];
     }
@@ -127,15 +118,41 @@ function mapStructuredOutput(
     return [];
   })();
 
-  const adviceParts = [
-    aiOutput.assessment,
-    aiOutput.treatment,
-    aiOutput.follow_up,
-  ].filter((v): v is string => typeof v === 'string' && v !== 'NOT_SPECIFIED' && v.length > 0);
+  return { symptoms, diagnosis, prescriptions, advice: 'NOT_SPECIFIED', rawFields };
+}
 
-  const advice = adviceParts.length > 0 ? adviceParts.join('. ') : 'NOT_SPECIFIED';
+const BRIEF_THRESHOLD = 4;
 
-  return { symptoms, diagnosis, prescriptions, advice, rawFields };
+export function computeFieldConfidence(output: AIStructuredOutput): FieldConfidence[] {
+  const results: FieldConfidence[] = [];
+
+  function assessTextField(value: string, field: string, label?: string) {
+    const display = label ?? field;
+    if (value === 'NOT_SPECIFIED' || value.trim() === '') {
+      results.push({ field, level: 'low', reason: 'NOT_SPECIFIED' });
+    } else if (value.length < BRIEF_THRESHOLD) {
+      results.push({ field, level: 'medium', reason: `Brief extraction (${value.length} chars)` });
+    }
+  }
+
+  assessTextField(output.symptoms, 'symptoms');
+  assessTextField(output.diagnosis, 'diagnosis');
+
+  for (const [key, value] of Object.entries(output.rawFields || {})) {
+    if (typeof value === 'string') {
+      assessTextField(value, key);
+    }
+  }
+
+  for (let i = 0; i < output.prescriptions.length; i++) {
+    const p = output.prescriptions[i];
+    const prefix = `prescriptions[${i}].`;
+    if (p.dosage === 'NOT_SPECIFIED') results.push({ field: `${prefix}dosage`, level: 'low', reason: 'NOT_SPECIFIED' });
+    if (p.frequency === 'NOT_SPECIFIED') results.push({ field: `${prefix}frequency`, level: 'low', reason: 'NOT_SPECIFIED' });
+    if (p.route === 'NOT_SPECIFIED') results.push({ field: `${prefix}route`, level: 'low', reason: 'NOT_SPECIFIED' });
+  }
+
+  return results;
 }
 
 const MAX_RETRIES = 3;
@@ -189,6 +206,7 @@ export async function structureClinicalNotes(
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         temperature: 0.1,
+        max_tokens: 4096,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Transcribe and structure this clinical dictation:\n\n${transcript}` },

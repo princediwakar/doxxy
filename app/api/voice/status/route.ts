@@ -2,7 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { structureClinicalNotes } from '@/lib/voice/structureClinicalNotes';
+import { structureClinicalNotes, computeFieldConfidence } from '@/lib/voice/structureClinicalNotes';
+import type { AIStructuredOutput } from '@/types/voice';
 import {
   getJobStatus,
   getDownloadUrls,
@@ -48,6 +49,9 @@ export async function GET(request: NextRequest) {
         status: 'done',
         transcript: job.transcript,
         structured: job.structured_data,
+        fieldConfidence: job.structured_data
+          ? computeFieldConfidence(job.structured_data as unknown as AIStructuredOutput)
+          : [],
       });
     }
 
@@ -106,6 +110,7 @@ export async function GET(request: NextRequest) {
           status: 'done',
           transcript: job.transcript,
           structured,
+          fieldConfidence: computeFieldConfidence(structured),
         });
       } catch (structuringError) {
         logger.error('Structuring retry failed for job:', job.id, structuringError);
@@ -233,7 +238,12 @@ export async function GET(request: NextRequest) {
             .from('voice-recordings')
             .remove([job.storage_path]);
 
-          return NextResponse.json({ status: 'done', transcript, structured });
+          return NextResponse.json({
+            status: 'done',
+            transcript,
+            structured,
+            fieldConfidence: computeFieldConfidence(structured),
+          });
         }
 
         // Unknown state — keep waiting

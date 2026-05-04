@@ -4,14 +4,35 @@ import { AlertTriangle, Check, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/loading";
-import type { AIStructuredOutput, AIExtractedPrescription } from "@/types/voice";
+import type { AIStructuredOutput, AIExtractedPrescription, FieldConfidence } from "@/types/voice";
 
 interface ReviewHandoffProps {
   structured: AIStructuredOutput | null;
   transcript: string;
+  fieldConfidence?: FieldConfidence[];
   isCompleting: boolean;
   onApprove: (structured: AIStructuredOutput) => void;
   onEditManually: (structured: AIStructuredOutput) => void;
+}
+
+function getConfidence(
+  fieldConfidence: FieldConfidence[] | undefined,
+  field: string,
+): FieldConfidence | undefined {
+  return fieldConfidence?.find((fc) => fc.field === field);
+}
+
+function ConfidenceBanner({ reason }: { reason: string }) {
+  const text =
+    reason === "NOT_SPECIFIED"
+      ? "Not detected — please verify"
+      : "Brief extraction — please verify";
+  return (
+    <div className="flex items-center gap-1.5 text-xs text-amber-700 mt-1">
+      <AlertTriangle className="h-3 w-3" />
+      <span>{text}</span>
+    </div>
+  );
 }
 
 function formatFieldLabel(key: string): string {
@@ -80,7 +101,7 @@ function PrescriptionRow({ p }: { p: AIExtractedPrescription }) {
   );
 }
 
-export function ReviewHandoff({ structured, transcript, isCompleting, onApprove, onEditManually }: ReviewHandoffProps) {
+export function ReviewHandoff({ structured, transcript, fieldConfidence, isCompleting, onApprove, onEditManually }: ReviewHandoffProps) {
   const isEmpty = !structured;
   const fallbackStructured: AIStructuredOutput = {
     symptoms: "NOT_SPECIFIED",
@@ -116,6 +137,9 @@ export function ReviewHandoff({ structured, transcript, isCompleting, onApprove,
     );
   }
 
+  const symptomsConf = getConfidence(fieldConfidence, "symptoms");
+  const diagnosisConf = getConfidence(fieldConfidence, "diagnosis");
+
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground italic px-1 line-clamp-3">
@@ -123,19 +147,21 @@ export function ReviewHandoff({ structured, transcript, isCompleting, onApprove,
       </p>
 
       {/* Symptoms */}
-      <div className="rounded-lg border bg-card p-3">
+      <div className={`rounded-lg border bg-card p-3 ${symptomsConf ? "border-l-4 border-l-yellow-400" : ""}`}>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Symptoms</h4>
         <p className="text-sm">
           {data.symptoms === "NOT_SPECIFIED" ? "Not specified" : data.symptoms}
         </p>
+        {symptomsConf && <ConfidenceBanner reason={symptomsConf.reason} />}
       </div>
 
       {/* Diagnosis */}
-      <div className="rounded-lg border bg-card p-3">
+      <div className={`rounded-lg border bg-card p-3 ${diagnosisConf ? "border-l-4 border-l-yellow-400" : ""}`}>
         <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Diagnosis</h4>
         <p className="text-sm">
           {data.diagnosis === "NOT_SPECIFIED" ? "Not specified" : data.diagnosis}
         </p>
+        {diagnosisConf && <ConfidenceBanner reason={diagnosisConf.reason} />}
       </div>
 
       {/* Prescriptions */}
@@ -168,15 +194,7 @@ export function ReviewHandoff({ structured, transcript, isCompleting, onApprove,
         )}
       </div>
 
-      {/* Advice */}
-      <div className="rounded-lg border bg-card p-3">
-        <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-1">Advice</h4>
-        <p className="text-sm">
-          {data.advice === "NOT_SPECIFIED" ? "Not specified" : data.advice}
-        </p>
-      </div>
-
-      {/* Department-specific fields */}
+      {/* All schema fields (management, department-specific, etc.) */}
       {data.rawFields && Object.keys(data.rawFields).length > 0 && (
         <RawFieldsSection rawFields={data.rawFields} />
       )}

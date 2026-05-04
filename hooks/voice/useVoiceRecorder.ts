@@ -23,6 +23,7 @@ export function useVoiceRecorder() {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const accumulatedSecondsRef = useRef(0);
   const mimeTypeRef = useRef<string>('');
 
   const cleanup = useCallback(() => {
@@ -90,6 +91,7 @@ export function useVoiceRecorder() {
       recorder.start(1000);
       setState('recording');
       setElapsedSeconds(0);
+      accumulatedSecondsRef.current = 0;
 
       timerRef.current = setInterval(() => {
         setElapsedSeconds((prev) => {
@@ -120,7 +122,7 @@ export function useVoiceRecorder() {
 
   const stopRecording = useCallback((): Promise<VoiceRecordingResult | null> => {
     const recorder = mediaRecorderRef.current;
-    if (!recorder || recorder.state !== 'recording') {
+    if (!recorder || (recorder.state !== 'recording' && recorder.state !== 'paused')) {
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
@@ -132,6 +134,7 @@ export function useVoiceRecorder() {
       mediaRecorderRef.current = null;
       chunksRef.current = [];
       setState('idle');
+      setElapsedSeconds(0);
       return Promise.resolve(null);
     }
 
@@ -143,11 +146,48 @@ export function useVoiceRecorder() {
           : null;
         cleanup();
         setState('idle');
+        setElapsedSeconds(0);
         resolve(result);
       };
 
       recorder.stop();
     });
+  }, []);
+
+  const pauseRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state !== 'recording') return;
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    setElapsedSeconds((current) => {
+      accumulatedSecondsRef.current = current;
+      return current;
+    });
+
+    recorder.pause();
+    setState('paused');
+  }, []);
+
+  const resumeRecording = useCallback(() => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state !== 'paused') return;
+
+    recorder.resume();
+    setState('recording');
+
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds((prev) => {
+        const next = prev + 1;
+        if (next === 300) {
+          toast.warning('Long recording — ensure stable connection');
+        }
+        return next;
+      });
+    }, 1000);
   }, []);
 
   const resetRecording = useCallback(() => {
@@ -162,6 +202,8 @@ export function useVoiceRecorder() {
     elapsedSeconds,
     errorMessage,
     startRecording,
+    pauseRecording,
+    resumeRecording,
     stopRecording,
     resetRecording,
   };

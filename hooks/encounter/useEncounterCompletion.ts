@@ -8,6 +8,7 @@ import { showErrorToast } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/query-keys';
 import { APPOINTMENT_STATUS } from '@/types/appointments';
 import type { AIStructuredOutput } from '@/types/core';
+import type { Json } from '@/integrations/supabase/types';
 
 const supabase = getSupabase();
 
@@ -30,11 +31,12 @@ export function useEncounterCompletion() {
       const clinicId = activeClinic?.clinic_id;
       if (!clinicId) throw new Error('Clinic ID not found');
 
-      const specialtyData = {
+      const specialtyData: Record<string, unknown> = {
         chief_complaint: aiData.symptoms !== 'NOT_SPECIFIED' ? aiData.symptoms : '',
         diagnosis: aiData.diagnosis !== 'NOT_SPECIFIED' ? aiData.diagnosis : '',
-        treatment: aiData.advice !== 'NOT_SPECIFIED' ? aiData.advice : '',
+        ...aiData.rawFields,
       };
+      const specialtyJson = specialtyData as Json;
 
       const { data: existing, error: checkError } = await supabase
         .from('consultations')
@@ -47,7 +49,7 @@ export function useEncounterCompletion() {
       if (existing) {
         const { error: updateError } = await supabase
           .from('consultations')
-          .update({ specialty_data: specialtyData })
+          .update({ specialty_data: specialtyJson })
           .eq('id', existing.id);
         if (updateError) throw updateError;
       } else {
@@ -58,7 +60,7 @@ export function useEncounterCompletion() {
             clinic_id: clinicId,
             patient_id: patientId,
             doctor_id: doctorId,
-            specialty_data: specialtyData,
+            specialty_data: specialtyJson,
             clinical_notes: {},
           });
         if (insertError) throw insertError;
