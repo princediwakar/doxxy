@@ -9,6 +9,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import type { Database } from "@/integrations/supabase/types";
 import type {
   PrescriptionFormValues,
   UsePrescriptionProps
@@ -201,7 +202,7 @@ export const usePrescription = ({
         throw new Error('Doctor ID and Patient ID are required');
       }
 
-      const prescriptionData = {
+      const prescriptionData: Database['public']['Tables']['prescriptions']['Insert'] = {
         clinic_id: activeClinic.clinic_id,
         doctor_id: finalDoctorId,
         patient_id: finalPatientId,
@@ -215,10 +216,10 @@ export const usePrescription = ({
             duration: med.duration || null,
             instructions: med.instructions || null,
           })),
-        notes: formData.notes?.trim() || null,
+        
       };
 
-      if (prescriptionData.medications.length === 0) {
+      if ((prescriptionData.medications as Array<unknown>).length === 0) {
         throw new Error('At least one medication is required');
       }
 

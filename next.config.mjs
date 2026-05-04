@@ -11,6 +11,11 @@ const nextConfig = {
   async redirects() {
     return [
       {
+        source: "/",
+        destination: "/today",
+        permanent: false,
+      },
+      {
         source: "/consultation/:id",
         destination: "/today?selectedAppointment=:id",
         permanent: false,

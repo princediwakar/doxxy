@@ -2,8 +2,10 @@
 "use client";
 
 import { useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Clock, User, ChevronRight, Circle } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { toast } from "sonner";
 import { formatTimeIST, cn } from "@/lib/utils";
 import { Spinner } from "@/components/ui/loading";
 import { Badge } from "@/components/ui/badge";
@@ -105,15 +107,26 @@ export function TodayPatientList({
   selectedAppointmentId,
   onAppointmentClick,
 }: TodayPatientListProps) {
-  const activeFilter = useTodayStore((s) => s.activeFilter);
-  const searchQuery = useTodayStore((s) => s.searchQuery);
-  const selectPatient = useTodayStore((s) => s.selectPatient);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const dirtyFormGuard = useTodayStore((s) => s.dirtyFormGuard);
+  const triggerShake = useTodayStore((s) => s.triggerShake);
+
+  const activeFilter = searchParams.get('filter') || 'queue';
+  const searchQuery = searchParams.get('q') || '';
 
   const handleSearchPatientClick = useCallback(
     (patientId: string) => {
-      selectPatient(patientId);
+      if (dirtyFormGuard) {
+        toast.error('Complete or discard the current bill before switching patients.');
+        triggerShake();
+        return;
+      }
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('patient', patientId);
+      router.push(`/today?${params.toString()}`, { scroll: false });
     },
-    [selectPatient]
+    [dirtyFormGuard, triggerShake, router, searchParams]
   );
 
   const totalToday =

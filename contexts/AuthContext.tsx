@@ -28,6 +28,7 @@ interface AuthContextProps {
   markProfileComplete: () => Promise<void>;
   hasDoctorProfile: boolean | undefined;
   doctorId: string | null;
+  setUserFromServer: (serverUser: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextProps | undefined>(undefined);
@@ -39,8 +40,7 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const initialLoading = false;
   const [profileName, setProfileName] = useState<string | null>(null);
 
   // Use optimized hooks
@@ -93,6 +93,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     fetchUserAndClinicDataRef.current = fetchUserAndClinicData;
   }, [fetchUserAndClinicData]);
 
+  // Server-to-client bridge: accept user from server layout / proxy
+  const setUserFromServer = useCallback((serverUser: User | null) => {
+    if (serverUser) {
+      setUser(serverUser);
+      fetchUserAndClinicDataRef.current(serverUser);
+    }
+  }, []);
+
   const markProfileComplete = useCallback(async () => {
     const updatedUser = await profileCompletion.markProfileComplete(user);
     if (updatedUser) {
@@ -100,115 +108,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [user, profileCompletion]);
 
-  // Main authentication effect
+  // Main authentication effect — onAuthStateChange listener for real-time auth events.
+  // Server layout already verified auth; this listener picks up the current session
+  // from Supabase on mount (fires initial state synchronously on subscribe).
   useEffect(() => {
     let mounted = true;
     let currentUserId: string | null = null;
 
-    // Safety timeout to ensure initialLoading doesn't stay true forever
-    const safetyTimeout = setTimeout(() => {
-      if (mounted && !initialLoadComplete) {
-        logger.warn("AuthContext: Safety timeout triggered, forcing initial load complete");
-        setInitialLoading(false);
-        setInitialLoadComplete(true);
-      }
-    }, 10000); // 10 second timeout
-
-    const getInitialSession = async () => {
-      if (!mounted) return;
-      
-      try {
-        logger.log("AuthContext: Getting initial session");
-        setInitialLoading(true);
-        
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          logger.error("AuthContext: Error getting session:", error);
-          if (mounted) {
-            setSession(null);
-            setUser(null);
-            setProfileName(null);
-            profileCompletion.resetProfileCompletion();
-            clinicData.clearClinicData();
-          }
-          return;
-        }
-        
-        if (!mounted) return;
-        
-        logger.log("AuthContext: Initial session obtained:", !!session?.user);
-        setSession(session);
-        setUser(session?.user ?? null);
-        currentUserId = session?.user?.id ?? null;
-
-        if (session?.user) {
-          logger.log("AuthContext: Processing user session");
-
-          // Check if this is an invitation sign-in from initial session
-          if (session.user.user_metadata?.invitation_token) {
-            logger.log("AuthContext: Detected invitation sign-in from initial session, storing invitation data:", {
-              invitation_token: session.user.user_metadata.invitation_token,
-              clinic_id: session.user.user_metadata.clinic_id,
-              role: session.user.user_metadata.role
-            });
-
-            // Store invitation data in localStorage for profile completion
-            localStorage.setItem('invitation_token', session.user.user_metadata.invitation_token);
-            localStorage.setItem('invitation_data', JSON.stringify({
-              clinic_id: session.user.user_metadata.clinic_id,
-              role: session.user.user_metadata.role,
-              clinic_name: session.user.user_metadata.clinic_name,
-              name: session.user.user_metadata.name
-            }));
-
-            logger.log("AuthContext: Invitation data stored in localStorage from initial session");
-          }
-
-          if (mounted) {
-            // FIX: Use the ref here
-            await fetchUserAndClinicDataRef.current(session.user);
-          }
-        } else {
-          if (mounted) {
-            profileCompletion.resetProfileCompletion();
-            clinicData.clearClinicData();
-          }
-        }
-      } catch (error) {
-        logger.error("AuthContext: Error getting initial session:", error);
-      } finally {
-        if (mounted) {
-          logger.log("AuthContext: Initial loading complete");
-          setInitialLoading(false);
-          setInitialLoadComplete(true);
-          clearTimeout(safetyTimeout);
-        }
-      }
-    };
-
-    getInitialSession();
-
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, newSession) => {
-        logger.log(`AuthContext: Auth state changed: ${_event}`, { 
-          hasSession: !!newSession, 
-          initialLoadHandled: initialLoadComplete, 
-          currentInitialLoading: initialLoading,
+        logger.log(`AuthContext: Auth state changed: ${_event}`, {
+          hasSession: !!newSession,
           currentClinicLoading: clinicData.clinicLoading
         });
-        
+
         if (!mounted) return;
-        
+
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        
-        // Only handle auth state changes after initial load is complete to prevent loops
-        if (!initialLoadComplete) {
-          logger.log("AuthContext: Skipping auth state change handling until initial load complete");
-          return;
-        }
-        
+
         if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
           // Check if this is an invitation sign-in and store invitation data
           if (newSession?.user && newSession.user.user_metadata?.invitation_token) {
@@ -230,15 +148,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
             logger.log("AuthContext: Invitation data stored in localStorage");
           }
 
-          // FIX: Check user change and use the REF to get the latest function
+          // Fetch clinic data when user signs in or session refreshes
           if (newSession?.user && (newSession.user.id !== currentUserId || clinicData.userClinics.length === 0)) {
             logger.log("AuthContext: User changed or no clinic data, fetching data");
             currentUserId = newSession.user.id;
-            // Use .current() here
             await fetchUserAndClinicDataRef.current(newSession.user);
           }
         }
-        
+
         if (_event === 'SIGNED_OUT') {
           currentUserId = null;
           await signOut();
@@ -248,13 +165,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Page visibility handling to refresh session when tab becomes active
     const handleVisibilityChange = () => {
-      if (!document.hidden && mounted && initialLoadComplete) {
+      if (!document.hidden && mounted) {
         logger.log("AuthContext: Page became visible, refreshing session");
         supabase.auth.getSession().then(({ data: { session } }) => {
           if (session?.user && session.user.id !== currentUserId) {
             logger.log("AuthContext: User changed after page visibility, refetching data");
             currentUserId = session.user.id;
-            // FIX: Use the ref here
             fetchUserAndClinicDataRef.current(session.user);
           }
         });
@@ -265,7 +181,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return () => {
       mounted = false;
-      clearTimeout(safetyTimeout);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       authListener.subscription.unsubscribe();
     };
@@ -290,6 +205,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     markProfileComplete,
     hasDoctorProfile: clinicData.hasDoctorProfile,
     doctorId: clinicData.doctorId,
+    setUserFromServer,
   }), [
     session,
     user,
@@ -307,6 +223,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     markProfileComplete,
     clinicData.hasDoctorProfile,
     clinicData.doctorId,
+    setUserFromServer,
   ]);
 
   return (
