@@ -1,284 +1,132 @@
-import { NextResponse } from 'next/server';
+// app/api/voice/transcribe/route.ts
+import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { getSchemaForDepartment } from '@/lib/consultationNotesSchemas';
-import { mapDepartmentName } from '@/components/consultation/constants';
-import { zodToJsonSchema, getAllFieldsFromSchema } from '@/lib/schemaUtils';
-import type { NoteFieldConfig } from '@/lib/schemaUtils';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import {
+  createSarvamJob,
+  getUploadUrls,
+  uploadToPresignedUrl,
+  startSarvamJob,
+  SarvamBatchError,
+} from '@/lib/voice/sarvamBatch';
 
-export const maxDuration = 45;
+export const maxDuration = 30;
 
-const INDIAN_SHORTHAND_REFERENCE = `
-INDIAN CLINICAL SHORTHAND REFERENCE:
-| Shorthand | Meaning | Category |
-|-----------|---------|----------|
-| OD / OD | Once daily | frequency |
-| BD / BID | Twice a day | frequency |
-| TDS / TID | Three times a day | frequency |
-| QID | Four times a day | frequency |
-| SOS / PRN | As needed | frequency |
-| HS | At bedtime | frequency |
-| PC | After meals | frequency |
-| AC | Before meals | frequency |
-| STAT | Immediately | frequency |
-| Q4H / Q6H / Q8H / Q12H | Every N hours | frequency |
-| Dolo | Paracetamol 650mg (brand) | drug_name |
-| Meftal | Mefenamic Acid (brand) | drug_name |
-| Crocin | Paracetamol (brand) | drug_name |
-| Azithral | Azithromycin (brand) | drug_name |
-| Augmentin | Amoxicillin + Clavulanic Acid (brand) | drug_name |
-
-When transcribing, preserve the doctor's shorthand in the frequency field exactly as spoken (e.g., "BD", "TDS").
-`;
-
-const ROUTE_DETECTION = `
-PRESCRIPTION ROUTE DETECTION:
-- "Tab" / "tablet" / "cap" / "capsule" / "syrup" / "by mouth" / no route mentioned for oral drugs → "Oral"
-- "Inj" / "injection" / "inject" → default to "IM" unless "IV" is specified
-- "Oint" / "ointment" / "cream" / "gel" / "apply" / "lotion" → "Topical"
-- "Eye drops" / "eye" → "Eye Drops"
-- "Inhaler" / "inhale" / "puff" / "nebulizer" → "Inhaled"
-- "Subcutaneous" / "SC" / "under skin" → "Subcutaneous"
-`;
-
-const SPECIAL_INSTRUCTIONS = `
-SPECIAL INSTRUCTIONS EXTRACTION:
-- "after food" / "after meals" / "PC" → "Take after food"
-- "before food" / "before meals" / "AC" → "Take before food"
-- "at bedtime" / "HS" → "Take at bedtime"
-- "with milk" / "with water" → note the specific instruction
-- "complete the course" → "Complete the full course"
-- "apply thinly" / "apply twice daily" → note the application instruction
-- "avoid alcohol" / "no alcohol" → "Avoid alcohol"
-- "for fever" / "for pain" / "if needed" → note the condition
-- If no special instruction is given, set instructions to "NOT_SPECIFIED"`;
-
-function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): string {
-  const fieldList = fields
-    .map((f) => {
-      const hint = f.placeholder ? ` — ${f.placeholder}` : '';
-      return `  - ${f.name}: ${f.label}${hint}`;
-    })
-    .join('\n');
-
-  return `You are a clinical AI that converts voice transcripts into structured consultation notes for Indian clinics.
-
-${INDIAN_SHORTHAND_REFERENCE}
-
-DEPARTMENT: ${department}
-
-FIELDS TO EXTRACT:
-${fieldList}
-
-INSTRUCTIONS:
-1. Extract all fields listed above from the transcript. Set any field you cannot determine to "NOT_SPECIFIED".
-2. For the prescriptions array, extract each medication with its drug_name, dosage, frequency, duration, route, and instructions.
-3. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
-4. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in drug_name.
-
-${ROUTE_DETECTION}
-
-${SPECIAL_INSTRUCTIONS}`;
-}
-
-function buildFieldMetadata(fields: NoteFieldConfig[]): Record<string, { label: string }> {
-  const meta: Record<string, { label: string }> = {};
-  for (const f of fields) {
-    meta[f.name] = { label: f.label };
-  }
-  return meta;
-}
-
-const COMMON_FIELD_NAMES = new Set([
-  'chief_complaint',
-  'diagnosis',
-  'prescriptions',
-  'assessment',
-  'treatment',
-  'follow_up',
-]);
-
-function mapStructuredOutput(
-  aiOutput: Record<string, unknown>,
-  fields: NoteFieldConfig[],
-): {
-  symptoms: string;
-  diagnosis: string;
-  prescriptions: Array<Record<string, string>>;
-  advice: string;
-  rawFields: Record<string, unknown>;
-} {
-  const rawFields: Record<string, unknown> = {};
-
-  for (const field of fields) {
-    if (COMMON_FIELD_NAMES.has(field.name)) continue;
-    if (field.name in aiOutput) {
-      rawFields[field.name] = aiOutput[field.name];
-    }
-  }
-
-  const symptoms = String(aiOutput.chief_complaint ?? 'NOT_SPECIFIED');
-  const diagnosis = String(aiOutput.diagnosis ?? 'NOT_SPECIFIED');
-
-  const prescriptions = (() => {
-    const raw = aiOutput.prescriptions;
-    if (Array.isArray(raw)) {
-      return raw.map((p: Record<string, unknown>) => ({
-        drug_name: String(p.drug_name ?? 'NOT_SPECIFIED'),
-        dosage: String(p.dosage ?? 'NOT_SPECIFIED'),
-        frequency: String(p.frequency ?? 'NOT_SPECIFIED'),
-        duration: String(p.duration ?? 'NOT_SPECIFIED'),
-        route: String(p.route ?? 'NOT_SPECIFIED'),
-        instructions: String(p.instructions ?? 'NOT_SPECIFIED'),
-      }));
-    }
-    return [];
-  })();
-
-  const adviceParts = [
-    aiOutput.assessment,
-    aiOutput.treatment,
-    aiOutput.follow_up,
-  ].filter((v): v is string => typeof v === 'string' && v !== 'NOT_SPECIFIED' && v.length > 0);
-
-  const advice = adviceParts.length > 0 ? adviceParts.join('. ') : 'NOT_SPECIFIED';
-
-  return { symptoms, diagnosis, prescriptions, advice, rawFields };
-}
-
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const formData = await request.formData();
-    const audioFile = formData.get('audio') as File | null;
-    const mimeType = (formData.get('mimeType') as string) || 'audio/webm';
-    const rawDepartment = (formData.get('department') as string) || '';
-
-    if (!audioFile) {
-      return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const audioBuffer = await audioFile.arrayBuffer();
+    const token = authHeader.replace('Bearer ', '');
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(token);
 
-    const sarvamMimeType = mimeType.split(';')[0];
-
-    // Step 1: Sarvam STT
-    const sarvamKey = process.env.SARVAM_API_KEY;
-    if (!sarvamKey) {
-      return NextResponse.json({ error: 'Speech-to-text service not configured' }, { status: 500 });
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const sarvamFormData = new FormData();
-    sarvamFormData.append('file', new Blob([audioBuffer], { type: sarvamMimeType }), 'audio');
-    sarvamFormData.append('model', 'saarika:v2.5');
-    sarvamFormData.append('language_code', 'unknown');
+    const body = await request.json();
+    const filePath: string = body.filePath;
+    const department: string = body.department || 'General';
 
-    const sarvamResponse = await fetch('https://api.sarvam.ai/speech-to-text', {
-      method: 'POST',
-      headers: { 'api-subscription-key': sarvamKey },
-      body: sarvamFormData,
-    });
+    if (!filePath) {
+      return NextResponse.json({ error: 'filePath is required' }, { status: 400 });
+    }
 
-    if (!sarvamResponse.ok) {
-      const errorText = await sarvamResponse.text();
-      logger.error('Sarvam STT error:', sarvamResponse.status, errorText);
+    // Idempotency: if a completed job already exists for this storage path, return it
+    const { data: existing } = await supabaseAdmin
+      .from('transcription_jobs')
+      .select('id, status, transcript, structured_data')
+      .eq('storage_path', filePath)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-      if (sarvamResponse.status === 403) {
+    if (existing && existing.status === 'completed') {
+      return NextResponse.json({
+        jobId: existing.id,
+        transcript: existing.transcript,
+        structured: existing.structured_data,
+      });
+    }
+
+    // Insert our job row
+    const { data: job, error: insertError } = await supabaseAdmin
+      .from('transcription_jobs')
+      .insert({
+        user_id: user.id,
+        storage_path: filePath,
+        department,
+        status: 'pending',
+      })
+      .select('id')
+      .single();
+
+    if (insertError || !job) {
+      logger.error('Failed to create transcription job:', insertError);
+      return NextResponse.json({ error: 'Failed to create transcription job' }, { status: 500 });
+    }
+
+    // Download audio from Supabase Storage
+    const { data: audioData, error: downloadError } = await supabaseAdmin.storage
+      .from('voice-recordings')
+      .download(filePath);
+
+    if (downloadError || !audioData) {
+      logger.error('Failed to download audio from storage:', downloadError);
+      await supabaseAdmin.from('transcription_jobs').update({ status: 'failed' }).eq('id', job.id);
+      return NextResponse.json({ error: 'Failed to retrieve audio file' }, { status: 500 });
+    }
+
+    const audioExt = filePath.split('.').pop() || 'webm';
+
+    const mimeType = audioExt === 'webm' ? 'audio/webm'
+      : audioExt === 'mp4' ? 'audio/mp4'
+        : audioExt === 'mpeg' ? 'audio/mpeg'
+          : 'audio/ogg';
+    const audioBlob = new Blob([await audioData.arrayBuffer()], { type: mimeType });
+    const audioFileName = `audio.${audioExt}`;
+
+    // Submit to Sarvam Batch API
+    let sarvamJobId: string;
+    try {
+      sarvamJobId = await createSarvamJob();
+
+      const uploadRes = await getUploadUrls(sarvamJobId, [audioFileName]);
+      const uploadUrl = uploadRes.upload_urls[audioFileName]?.file_url;
+      if (!uploadUrl) {
+        throw new SarvamBatchError(`No upload URL for file: ${audioFileName}`);
+      }
+      logger.log(`[Sarvam] Uploading file: ${audioFileName}, size: ${audioBlob.size} bytes, type: ${audioBlob.type}, uploadUrl host: ${new URL(uploadUrl).host}`);
+      await uploadToPresignedUrl(uploadUrl, audioBlob, audioFileName);
+      await startSarvamJob(sarvamJobId);
+    } catch (sarvamError: unknown) {
+      const msg = sarvamError instanceof Error ? sarvamError.message : 'Unknown error';
+      logger.error('Sarvam batch submission failed:', msg);
+
+      await supabaseAdmin
+        .from('transcription_jobs')
+        .update({ status: 'failed', transcript: msg })
+        .eq('id', job.id);
+
+      if (sarvamError instanceof SarvamBatchError && sarvamError.statusCode === 403) {
         return NextResponse.json({ error: 'Speech-to-text authentication failed' }, { status: 502 });
       }
-      if (sarvamResponse.status === 429) {
-        return NextResponse.json({ error: 'Speech-to-text quota exceeded' }, { status: 429 });
-      }
-      return NextResponse.json({ error: 'Speech-to-text service error' }, { status: 502 });
+      return NextResponse.json({ error: 'Speech-to-text service unavailable' }, { status: 502 });
     }
 
-    const sarvamData = await sarvamResponse.json();
-    const transcript: string = sarvamData.transcript || '';
+    // Update job with Sarvam task ID and move to transcribing
+    await supabaseAdmin
+      .from('transcription_jobs')
+      .update({ sarvam_task_id: sarvamJobId, status: 'transcribing' })
+      .eq('id', job.id);
 
-    if (!transcript.trim()) {
-      return NextResponse.json({
-        transcript: '',
-        structured: null,
-        provider: 'sarvam',
-      });
-    }
-
-    // Step 2: OpenAI Structured Outputs — department-aware
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
-      logger.warn('OpenAI API key not configured, returning transcript-only');
-      return NextResponse.json({
-        transcript,
-        structured: null,
-        provider: 'sarvam',
-      });
-    }
-
-    const department = rawDepartment ? mapDepartmentName(rawDepartment) : 'General';
-    const schema = getSchemaForDepartment(department);
-    const fields = getAllFieldsFromSchema(schema);
-    const jsonSchema = zodToJsonSchema(schema);
-    const systemPrompt = generateSystemPrompt(department, fields);
-    const fieldMetadata = buildFieldMetadata(fields);
-
-    try {
-      const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${openaiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          temperature: 0.1,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Transcribe and structure this clinical dictation:\n\n${transcript}` },
-          ],
-          response_format: {
-            type: 'json_schema',
-            json_schema: {
-              name: 'clinical_note',
-              strict: true,
-              schema: jsonSchema,
-            },
-          },
-        }),
-      });
-
-      if (!openaiResponse.ok) {
-        const errText = await openaiResponse.text();
-        logger.error('OpenAI error:', openaiResponse.status, errText);
-        return NextResponse.json({
-          transcript,
-          structured: null,
-          provider: 'sarvam',
-          fieldMetadata,
-        });
-      }
-
-      const openaiData = await openaiResponse.json();
-      const content = openaiData.choices?.[0]?.message?.content;
-      if (!content) {
-        return NextResponse.json({ transcript, structured: null, provider: 'sarvam', fieldMetadata });
-      }
-
-      const aiOutput = JSON.parse(content);
-      const structured = mapStructuredOutput(aiOutput, fields);
-
-      return NextResponse.json({
-        transcript,
-        structured,
-        provider: 'sarvam+openai',
-        fieldMetadata,
-      });
-    } catch (openaiError) {
-      logger.error('OpenAI processing failed:', openaiError);
-      return NextResponse.json({
-        transcript,
-        structured: null,
-        provider: 'sarvam',
-        fieldMetadata,
-      });
-    }
+    return NextResponse.json({ jobId: job.id });
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logger.error('Voice transcribe route error:', msg);

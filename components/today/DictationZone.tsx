@@ -160,7 +160,7 @@ export function DictationZone({
       ) : isProcessing ? (
         <div className="rounded-lg border bg-card p-6 text-center space-y-2">
           <Spinner size="md" />
-          <p className="text-sm text-muted-foreground">Structuring clinical notes...</p>
+          <p className="text-sm text-muted-foreground">Transcribing your notes...</p>
         </div>
       ) : isCompact ? (
         <div className="flex items-center gap-2">

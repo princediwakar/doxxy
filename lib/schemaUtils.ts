@@ -140,7 +140,7 @@ export const getMandatoryFieldsFromSchema = (
 // ============================================================================
 
 type JsonSchema = {
-  type?: string;
+  type?: string | string[];
   description?: string;
   properties?: Record<string, JsonSchema>;
   items?: JsonSchema;
@@ -164,11 +164,17 @@ function zodToJsonSchemaInner(schema: z.ZodTypeAny): JsonSchema {
   const def = schema._def;
 
   // Unwrap optional — propagate description from the outer type (zField wraps .optional())
+  // For OpenAI strict mode, make the inner type nullable (["string", "null"]) since
+  // all properties must appear in "required" — optionality is expressed via nullability.
   if (def.typeName === 'ZodOptional') {
     const innerResult = zodToJsonSchemaInner(def.innerType);
     if (!innerResult.description) {
       const outerDesc = getFieldDescription(schema);
       if (outerDesc) innerResult.description = outerDesc;
+    }
+    // Convert type to nullable union: "string" → ["string", "null"]
+    if (innerResult.type && !Array.isArray(innerResult.type)) {
+      innerResult.type = [innerResult.type, 'null'];
     }
     return innerResult;
   }
@@ -193,25 +199,17 @@ function zodToJsonSchemaInner(schema: z.ZodTypeAny): JsonSchema {
     const required: string[] = [];
 
     for (const [key, value] of Object.entries(shape)) {
-      const innerDef = value._def;
-      const isOptional = innerDef.typeName === 'ZodOptional';
-
-      // Pass the original value so ZodOptional handler can extract zField description
       properties[key] = zodToJsonSchemaInner(value);
-
-      if (!isOptional) {
-        required.push(key);
-      }
+      // OpenAI strict mode requires all properties to be in "required"
+      required.push(key);
     }
 
     const result: JsonSchema = {
       type: 'object',
       properties,
+      required,
       additionalProperties: false,
     };
-    if (required.length > 0) {
-      result.required = required;
-    }
     const desc = getFieldDescription(schema);
     if (desc) result.description = desc;
     return result;

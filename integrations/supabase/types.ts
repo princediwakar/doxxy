@@ -186,7 +186,7 @@ export type Database = {
           {
             foreignKeyName: "bills_appointment_id_fkey"
             columns: ["appointment_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "appointments"
             referencedColumns: ["id"]
           },
@@ -1127,6 +1127,42 @@ export type Database = {
         }
         Relationships: []
       }
+      transcription_jobs: {
+        Row: {
+          created_at: string
+          department: string
+          id: string
+          sarvam_task_id: string | null
+          status: Database["public"]["Enums"]["transcription_job_status"]
+          storage_path: string
+          structured_data: Json | null
+          transcript: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string
+          id?: string
+          sarvam_task_id?: string | null
+          status?: Database["public"]["Enums"]["transcription_job_status"]
+          storage_path: string
+          structured_data?: Json | null
+          transcript?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          department?: string
+          id?: string
+          sarvam_task_id?: string | null
+          status?: Database["public"]["Enums"]["transcription_job_status"]
+          storage_path?: string
+          structured_data?: Json | null
+          transcript?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1742,6 +1778,12 @@ export type Database = {
         | "No-Show"
       appointment_type: "Walk-in" | "Digital"
       procurement_status: "Draft" | "Verified" | "Completed"
+      transcription_job_status:
+        | "pending"
+        | "transcribing"
+        | "structuring"
+        | "completed"
+        | "failed"
       user_role: "staff" | "doctor" | "superadmin"
     }
     CompositeTypes: {
@@ -1879,7 +1921,15 @@ export const Constants = {
       ],
       appointment_type: ["Walk-in", "Digital"],
       procurement_status: ["Draft", "Verified", "Completed"],
+      transcription_job_status: [
+        "pending",
+        "transcribing",
+        "structuring",
+        "completed",
+        "failed",
+      ],
       user_role: ["staff", "doctor", "superadmin"],
     },
   },
 } as const
+

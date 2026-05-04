@@ -4,8 +4,6 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { VoiceRecordingState, VoiceRecordingResult } from '@/types/voice';
 
-const MAX_RECORDING_SECONDS = 30;
-
 function getSupportedMimeType(): string {
   const types = [
     'audio/webm;codecs=opus',
@@ -95,14 +93,11 @@ export function useVoiceRecorder() {
 
       timerRef.current = setInterval(() => {
         setElapsedSeconds((prev) => {
-          if (prev + 1 >= MAX_RECORDING_SECONDS) {
-            if (mediaRecorderRef.current?.state === 'recording') {
-              mediaRecorderRef.current.stop();
-              toast.info('Maximum recording length reached');
-            }
-            return MAX_RECORDING_SECONDS;
+          const next = prev + 1;
+          if (next === 300) {
+            toast.warning('Long recording — ensure stable connection');
           }
-          return prev + 1;
+          return next;
         });
       }, 1000);
 
