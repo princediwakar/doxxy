@@ -93,6 +93,10 @@ export function EncounterCanvas({
     [onApproveEncounter]
   );
 
+  const handleDiscard = useCallback(() => {
+    setReviewState({ phase: 'idle' });
+  }, []);
+
   const handleOpenNotes = useCallback(() => {
     onEditManually(EMPTY_STRUCTURED);
   }, [onEditManually]);
@@ -136,6 +140,7 @@ export function EncounterCanvas({
             isCompleting={isCompleting}
             onApprove={handleApprove}
             onEditManually={onEditManually}
+            onDiscard={handleDiscard}
           />
         </div>
       )}

@@ -121,6 +121,28 @@ function mapStructuredOutput(
   return { symptoms, diagnosis, prescriptions, advice: 'NOT_SPECIFIED', rawFields };
 }
 
+export function stripNotSpecified(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return null;
+  if (typeof obj === 'string') {
+    return obj === 'NOT_SPECIFIED' || obj.trim() === '' ? null : obj;
+  }
+  if (Array.isArray(obj)) {
+    const cleaned = obj.map(stripNotSpecified).filter((v) => v !== null);
+    return cleaned.length === 0 ? null : cleaned;
+  }
+  if (typeof obj === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+      const cleaned = stripNotSpecified(value);
+      if (cleaned !== null) {
+        result[key] = cleaned;
+      }
+    }
+    return Object.keys(result).length === 0 ? null : result;
+  }
+  return obj;
+}
+
 const BRIEF_THRESHOLD = 4;
 
 export function computeFieldConfidence(output: AIStructuredOutput): FieldConfidence[] {

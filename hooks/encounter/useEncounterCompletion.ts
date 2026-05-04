@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/query-keys';
 import { APPOINTMENT_STATUS } from '@/types/appointments';
+import { stripNotSpecified } from '@/lib/voice/structureClinicalNotes';
 import type { AIStructuredOutput } from '@/types/core';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -31,16 +32,12 @@ export function useEncounterCompletion() {
       const clinicId = activeClinic?.clinic_id;
       if (!clinicId) throw new Error('Clinic ID not found');
 
-      const filteredRawFields = Object.fromEntries(
-        Object.entries(aiData.rawFields || {}).filter(
-          ([, v]) => v !== 'NOT_SPECIFIED' && v !== '',
-        ),
-      );
+      const cleanedRawFields = stripNotSpecified(aiData.rawFields) as Record<string, unknown> | null;
 
       const specialtyData: Record<string, unknown> = {
         chief_complaint: aiData.symptoms !== 'NOT_SPECIFIED' ? aiData.symptoms : '',
         diagnosis: aiData.diagnosis !== 'NOT_SPECIFIED' ? aiData.diagnosis : '',
-        ...filteredRawFields,
+        ...(cleanedRawFields || {}),
       };
       const specialtyJson = specialtyData as Json;
 
