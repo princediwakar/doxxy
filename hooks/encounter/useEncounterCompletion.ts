@@ -31,10 +31,16 @@ export function useEncounterCompletion() {
       const clinicId = activeClinic?.clinic_id;
       if (!clinicId) throw new Error('Clinic ID not found');
 
+      const filteredRawFields = Object.fromEntries(
+        Object.entries(aiData.rawFields || {}).filter(
+          ([, v]) => v !== 'NOT_SPECIFIED' && v !== '',
+        ),
+      );
+
       const specialtyData: Record<string, unknown> = {
         chief_complaint: aiData.symptoms !== 'NOT_SPECIFIED' ? aiData.symptoms : '',
         diagnosis: aiData.diagnosis !== 'NOT_SPECIFIED' ? aiData.diagnosis : '',
-        ...aiData.rawFields,
+        ...filteredRawFields,
       };
       const specialtyJson = specialtyData as Json;
 

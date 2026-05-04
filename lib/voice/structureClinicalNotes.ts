@@ -70,9 +70,9 @@ ${fieldList}
 
 INSTRUCTIONS:
 1. Extract all fields listed above from the transcript. Set any field you cannot determine to "NOT_SPECIFIED".
-2. For the prescriptions array, extract each medication with its drug_name, dosage, frequency, duration, route, and instructions.
+2. For the prescriptions array, extract each medication with its name, dosage, frequency, duration, route, and instructions.
 3. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
-4. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in drug_name.
+4. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in name.
 
 ${ROUTE_DETECTION}
 
@@ -107,7 +107,7 @@ function mapStructuredOutput(
     const raw = aiOutput.prescriptions;
     if (Array.isArray(raw)) {
       return raw.map((p: Record<string, unknown>) => ({
-        drug_name: String(p.drug_name ?? 'NOT_SPECIFIED'),
+        drug_name: String(p.name ?? 'NOT_SPECIFIED'),
         dosage: String(p.dosage ?? 'NOT_SPECIFIED'),
         frequency: String(p.frequency ?? 'NOT_SPECIFIED'),
         duration: String(p.duration ?? 'NOT_SPECIFIED'),
@@ -147,6 +147,7 @@ export function computeFieldConfidence(output: AIStructuredOutput): FieldConfide
   for (let i = 0; i < output.prescriptions.length; i++) {
     const p = output.prescriptions[i];
     const prefix = `prescriptions[${i}].`;
+    if (p.drug_name === 'NOT_SPECIFIED') results.push({ field: `${prefix}drug_name`, level: 'low', reason: 'NOT_SPECIFIED' });
     if (p.dosage === 'NOT_SPECIFIED') results.push({ field: `${prefix}dosage`, level: 'low', reason: 'NOT_SPECIFIED' });
     if (p.frequency === 'NOT_SPECIFIED') results.push({ field: `${prefix}frequency`, level: 'low', reason: 'NOT_SPECIFIED' });
     if (p.route === 'NOT_SPECIFIED') results.push({ field: `${prefix}route`, level: 'low', reason: 'NOT_SPECIFIED' });
