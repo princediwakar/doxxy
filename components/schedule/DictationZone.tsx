@@ -183,25 +183,26 @@ export function DictationZone({
         </div>
       )}
 
-      {isCompact ? (
-        <div className="flex items-center gap-2">
+      {!hasActiveJobs &&
+        (isCompact ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={beginRecording}
+              className="flex-1 rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 px-4 py-2.5 text-sm text-center font-semibold transition-all"
+            >
+              <Mic className="h-5 w-5 inline mr-1.5" />
+              Record Additional Notes
+            </button>
+          </div>
+        ) : (
           <button
             onClick={beginRecording}
-            className="flex-1 rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 px-4 py-2.5 text-sm text-center font-semibold transition-all"
+            className="w-full rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 px-4 py-3 text-sm text-center font-semibold transition-all flex items-center justify-center gap-2"
           >
-            <Mic className="h-5 w-5 inline mr-1.5" />
-            Record Additional Notes
+            <Mic className="h-5 w-5" />
+            Tap to Dictate
           </button>
-        </div>
-      ) : (
-        <button
-          onClick={beginRecording}
-          className="w-full rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 px-4 py-3 text-sm text-center font-semibold transition-all flex items-center justify-center gap-2"
-        >
-          <Mic className="h-5 w-5" />
-          Tap to Dictate
-        </button>
-      )}
+        ))}
     </div>
   );
 }

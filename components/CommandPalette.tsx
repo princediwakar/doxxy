@@ -79,7 +79,7 @@ export function CommandPalette() {
             {results.map((patient) => (
             <CommandItem
               key={patient.id}
-              value={patient.name}
+              value={`${patient.name} ${patient.id}`}
               onSelect={() => handleSelect(patient.id)}
               className="flex items-center justify-between"
             >

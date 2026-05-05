@@ -1,5 +1,6 @@
 // src/components/billing/BillingModal.tsx
 import React, { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Edit, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,12 +101,14 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   }, [form.formState.isDirty, onDirtyChange]);
 
   const { activeClinicName } = useAppState();
+  const queryClient = useQueryClient();
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
   const onSubmit = async (values: BillingFormValues) => {
     try {
       await saveBill(values);
       toast.success(mode === "edit" ? "Bill updated successfully!" : "Bill created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["patient", values.patient_id, "bills"] });
       if (mode === "edit") {
         onModeChange?.("view");
       } else {
