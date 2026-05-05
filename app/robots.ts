@@ -11,7 +11,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       // Disallow authenticated app routes
       disallow: [
-        "/today",
+        "/schedule",
         "/clinic/",
         "/consultation/",
         "/profile",

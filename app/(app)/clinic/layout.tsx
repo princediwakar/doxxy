@@ -11,7 +11,7 @@ export default async function ClinicLayout({
   const clinic = await getActiveClinic(user.id);
 
   if (!clinic || clinic.role !== "superadmin") {
-    redirect("/today");
+    redirect("/schedule");
   }
 
   return (

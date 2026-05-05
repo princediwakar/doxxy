@@ -1,4 +1,4 @@
-// components/today/TodayPatientList.tsx
+// components/schedule/TodayPatientList.tsx
 "use client";
 
 import { useCallback } from "react";
@@ -77,7 +77,7 @@ function QueueSection({
             className={cn(
               "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
               selectedAppointmentId === app.id &&
-                "bg-primary/10 ring-1 ring-primary/20",
+              "bg-primary/10 ring-1 ring-primary/20",
             )}
           >
             <div className="flex items-center gap-3 min-w-0">
@@ -140,7 +140,7 @@ export function TodayPatientList({
       const params = new URLSearchParams(searchParams.toString());
       params.set("patient", app.patient_id);
       params.set("appointment", app.id);
-      router.push(`/today?${params.toString()}`, { scroll: false });
+      router.push(`/schedule?${params.toString()}`, { scroll: false });
       onAppointmentClick(app);
       setMobileDetailOpen(true);
     },

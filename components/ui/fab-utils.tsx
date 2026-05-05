@@ -16,7 +16,7 @@ export function getDefaultFABActions(role: "staff" | "doctor" | "superadmin"): F
       id: "new-patient",
       icon: <User className="w-5 h-5" />,
       label: "New Patient",
-      href: "/today?action=new-patient",
+      href: "/schedule?action=new-patient",
     },
   ];
 }

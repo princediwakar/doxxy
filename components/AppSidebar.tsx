@@ -2,7 +2,7 @@
 "use client";
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { LogOut, User2, PanelLeftClose, PanelLeft } from "lucide-react";
+import { LogOut, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAppState } from "@/contexts/AppStateContext";
@@ -19,7 +19,7 @@ function openCommandPalette() {
   document.dispatchEvent(new Event("open-command-palette"));
 }
 
-export function AppSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void }) {
+export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
 
   const pathname = usePathname();
@@ -105,24 +105,15 @@ export function AppSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; on
 
   return (
     <div className="flex flex-col h-screen sticky top-0 left-0 w-full flex-shrink-0">
-      {/* Header with Logo and Toggle */}
-      <div className={cn("flex items-center p-3 h-14", isCollapsed ? "justify-center" : "justify-between")}>
-        {!isCollapsed && <img src="/logo.svg" alt="Doxxy" className="h-10" />}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-lg hover:bg-white/50"
-          onClick={onToggle}
-        >
-          <Tooltip delayDuration={300}>
-            <TooltipTrigger asChild>
-              {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-            </TooltipTrigger>
-            <TooltipContent side="right">
-              {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            </TooltipContent>
-          </Tooltip>
-        </Button>
+      {/* Header with Logo */}
+      <div className={cn("flex items-center p-3 h-14", isCollapsed ? "justify-center" : "justify-start")}>
+        <Link href="/">
+          {isCollapsed ? (
+            <span className="text-2xl font-semibold select-none" style={{ color: "#1f8fff", fontFamily: "Georgia, serif" }}>D</span>
+          ) : (
+            <img src="/logo.svg" alt="Doxxy" className="h-10" />
+          )}
+        </Link>
       </div>
 
       {/* Top Navigation Group */}

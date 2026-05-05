@@ -60,14 +60,14 @@ export function PatientDemographics({ data, loading }: PatientDemographicsProps)
 
   const handleAgeGroupClick = useCallback(
     (ageGroup: string) => {
-      router.push(`/today?age_group=${encodeURIComponent(ageGroup)}`);
+      router.push(`/schedule?age_group=${encodeURIComponent(ageGroup)}`);
     },
     [router]
   );
 
   const handleGenderClick = useCallback(
     (gender: string) => {
-      router.push(`/today?gender=${encodeURIComponent(gender)}`);
+      router.push(`/schedule?gender=${encodeURIComponent(gender)}`);
     },
     [router]
   );

@@ -96,7 +96,7 @@ Remove `getBottomNavItems` and `getHamburgerNavItems` — they're thin wrappers.
 - Returns `{ queue, isLoading, refetch }`
 - Stale time: 30s (same as current)
 
-### 3.2 Create `components/today/TodayPatientList.tsx`
+### 3.2 Create `components/schedule/TodayPatientList.tsx`
 
 Left panel (1/3 on desktop, full width on mobile). Three modes based on `activeFilter`:
 
@@ -106,7 +106,7 @@ Left panel (1/3 on desktop, full width on mobile). Three modes based on `activeF
 
 Each row is clickable → sets `selectedPatientId` in store → opens detail panel (push on mobile).
 
-### 3.3 Create `components/today/TodayDetailPanel.tsx`
+### 3.3 Create `components/schedule/TodayDetailPanel.tsx`
 
 Right panel (2/3 on desktop, full-width push on mobile). Three sections:
 
@@ -118,13 +118,13 @@ Accepts `patientId` and `appointment` props. Fetches patient detail + history vi
 
 Mobile: Has a "Back to Queue" button at top that sets `mobileDetailOpen: false` in store.
 
-### 3.4 Create `components/today/TodayHeader.tsx`
+### 3.4 Create `components/schedule/TodayHeader.tsx`
 
 - Search bar (full-width on mobile, flexible on desktop) with search icon
 - Filter tabs: Queue | Billing | All
 - "New Patient" button (mobile: hidden, handled by FAB)
 
-### 3.5 Create `app/(app)/today/page.tsx` (<200 lines)
+### 3.5 Create `app/(app)/schedule/page.tsx` (<200 lines)
 
 Thin orchestrator. Renders:
 ```
@@ -309,10 +309,10 @@ When a staff member opens Create Bill modal for a patient, then clicks another p
 - `stores/todayStore.ts` — Zustand store for active environment
 - `hooks/usePatientSearch.ts` — Debounced universal patient search
 - `hooks/useTodayAppointments.ts` — Refactored today's queue hook
-- `components/today/TodayHeader.tsx` — Search bar + filter tabs
-- `components/today/TodayPatientList.tsx` — Queue/Billing/Search list
-- `components/today/TodayDetailPanel.tsx` — Appointment + patient + history
-- `app/(app)/today/page.tsx` — Today page orchestrator
+- `components/schedule/TodayHeader.tsx` — Search bar + filter tabs
+- `components/schedule/TodayPatientList.tsx` — Queue/Billing/Search list
+- `components/schedule/TodayDetailPanel.tsx` — Appointment + patient + history
+- `app/(app)/schedule/page.tsx` — Today page orchestrator
 - `app/(app)/clinic/layout.tsx` — Clinic sub-navigation layout
 - `app/(app)/clinic/page.tsx` — Redirect to analytics
 - `app/(app)/clinic/analytics/page.tsx` — Dashboard widgets

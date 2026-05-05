@@ -1,4 +1,4 @@
-// components/today/InlineConsultationForm.tsx
+// components/schedule/InlineConsultationForm.tsx
 "use client";
 
 import { useState, useEffect, useMemo } from "react";

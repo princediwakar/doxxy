@@ -17,6 +17,6 @@ export async function createPrescription(data: PrescriptionInsert) {
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true, data: prescription };
 }

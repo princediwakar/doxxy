@@ -1,4 +1,4 @@
-// components/today/TodayDetailPanel.tsx
+// components/schedule/TodayDetailPanel.tsx
 "use client";
 
 import { User } from "lucide-react";
@@ -80,8 +80,8 @@ export function TodayDetailPanel({
             selectedAppointment
               ? () => createBill(selectedAppointment)
               : () =>
-                  patientDetail?.patient &&
-                  createBillForPatient(patientDetail.patient)
+                patientDetail?.patient &&
+                createBillForPatient(patientDetail.patient)
           }
           onEditPatient={editPatient}
           onEditAppointment={() =>

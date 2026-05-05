@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAppState } from "@/contexts/AppStateContext";
 import { useAuthTokenHandlers } from "./useAuthTokenHandlers";
+import type { User } from "@supabase/supabase-js";
 
 const supabase = getSupabase();
 
@@ -19,18 +19,25 @@ export const useAuthFlow = () => {
   const [authFlow, setAuthFlow] = useState<AuthFlow>("login");
   const [googleLoading, setGoogleLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
   const searchParams = useSearchParams();
-  const { user } = useAppState();
   const router = useRouter();
 
   // Process invite/reset tokens from URL
   useAuthTokenHandlers({ setLoading, setAuthFlow, setEmail });
 
+  // Check session on mount — avoid AppStateProvider dependency since /auth is unauthenticated
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+  }, []);
+
   // Redirect authenticated users — middleware handles profile/clinic checks
   useEffect(() => {
     if (user) {
-      router.replace(searchParams.get('redirect') || "/today");
+      router.replace(searchParams.get('redirect') || "/schedule");
     }
   }, [user, router, searchParams]);
 

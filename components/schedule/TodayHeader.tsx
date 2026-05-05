@@ -44,7 +44,7 @@ export function TodayHeader({
     }
     params.delete("patient");
     params.delete("appointment");
-    router.push(`/today?${params.toString()}`, { scroll: false });
+    router.push(`/schedule?${params.toString()}`, { scroll: false });
   };
 
   const handleNewPatient = useCallback(() => {

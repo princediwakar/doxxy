@@ -110,7 +110,7 @@ const CompleteProfile = () => {
         router.replace("/create-clinic");
       } else {
         toast.success(invitationResult.message || "Welcome!");
-        router.replace("/today");
+        router.replace("/schedule");
       }
       
     } catch (error: unknown) {

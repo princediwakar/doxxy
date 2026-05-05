@@ -99,7 +99,7 @@ export function DoctorPerformanceTable({ data, loading }: DoctorPerformanceTable
                         className="text-left hover:text-primary transition-colors font-medium flex items-center gap-1"
                         onClick={() =>
                           navigate(
-                            `/today?doctor=${row.doctor_id}&date=${new Date().toISOString().split("T")[0]}`
+                            `/schedule?doctor=${row.doctor_id}&date=${new Date().toISOString().split("T")[0]}`
                           )
                         }
                       >
@@ -111,7 +111,7 @@ export function DoctorPerformanceTable({ data, loading }: DoctorPerformanceTable
                       <button
                         className="hover:text-primary transition-colors"
                         onClick={() =>
-                          navigate(`/today?doctor=${row.doctor_id}`)
+                          navigate(`/schedule?doctor=${row.doctor_id}`)
                         }
                       >
                         {row.total_booked}
@@ -122,7 +122,7 @@ export function DoctorPerformanceTable({ data, loading }: DoctorPerformanceTable
                         className="hover:text-primary transition-colors"
                         onClick={() =>
                           navigate(
-                            `/today?doctor=${row.doctor_id}&status=completed`
+                            `/schedule?doctor=${row.doctor_id}&status=completed`
                           )
                         }
                       >
@@ -134,7 +134,7 @@ export function DoctorPerformanceTable({ data, loading }: DoctorPerformanceTable
                         className="hover:text-primary transition-colors"
                         onClick={() =>
                           navigate(
-                            `/today?doctor=${row.doctor_id}&status=no-show`
+                            `/schedule?doctor=${row.doctor_id}&status=no-show`
                           )
                         }
                       >

@@ -7,7 +7,7 @@ export default async function LandingPage() {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (session?.user) {
-    redirect('/today');
+    redirect('/schedule');
   }
 
   return <LandingPageContent />;

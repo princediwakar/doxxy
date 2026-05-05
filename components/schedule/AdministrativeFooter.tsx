@@ -1,4 +1,4 @@
-// components/today/AdministrativeFooter.tsx
+// components/schedule/AdministrativeFooter.tsx
 "use client";
 
 import { useState } from "react";
@@ -144,8 +144,8 @@ export function AdministrativeFooter({
                           {c.appointments?.date
                             ? format(parseISO(c.appointments.date), "MMM dd, yyyy")
                             : c.created_at
-                            ? format(parseISO(c.created_at), "MMM dd, yyyy")
-                            : "Unknown date"}
+                              ? format(parseISO(c.created_at), "MMM dd, yyyy")
+                              : "Unknown date"}
                         </p>
                         {c.appointments && (
                           <p className="text-xs text-muted-foreground">

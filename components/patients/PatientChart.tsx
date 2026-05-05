@@ -172,7 +172,7 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
                         const params = new URLSearchParams();
                         params.set("patient", patient.id);
                         params.set("appointment", c.appointments!.id!);
-                        router.push(`/today?${params.toString()}`);
+                        router.push(`/schedule?${params.toString()}`);
                       }}
                     >
                       <Eye className="h-3 w-3 mr-1" />

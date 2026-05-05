@@ -17,7 +17,7 @@ export async function createPatient(data: PatientInsert) {
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true, data: patient };
 }
 
@@ -30,6 +30,6 @@ export async function updatePatient(id: string, data: PatientUpdate) {
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true };
 }

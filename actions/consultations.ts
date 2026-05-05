@@ -24,7 +24,7 @@ export async function saveConsultation(data: ConsultationInsert) {
 
     if (error) return { error: error.message };
 
-    revalidatePath('/today');
+    revalidatePath('/schedule');
     return { success: true, id: existing.id };
   }
 
@@ -36,7 +36,7 @@ export async function saveConsultation(data: ConsultationInsert) {
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true, id: created.id };
 }
 
@@ -50,6 +50,6 @@ export async function completeConsultation(appointmentId: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true };
 }

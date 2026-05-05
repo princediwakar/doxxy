@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import { parseISO, isToday } from 'date-fns';
+import { parseISO, isToday, format } from 'date-fns';
 import { createServerSupabase } from '@/integrations/supabase/server';
 import type { DbPatientByClinic } from '@/types/core';
 
@@ -16,7 +16,7 @@ export const resolveUserDoctor = cache(async (userId: string, clinicId: string) 
   return data?.id ?? null;
 });
 
-export async function getTodayAppointments(clinicId: string, doctorId?: string | null) {
+export async function getTodayAppointments(clinicId: string, doctorId?: string | null, date?: string | null) {
   const supabase = await createServerSupabase();
 
   const { data, error } = await supabase.rpc(
@@ -27,13 +27,13 @@ export async function getTodayAppointments(clinicId: string, doctorId?: string |
   if (error) throw new Error(error.message);
 
   // appointments.date is text with mixed formats (plain "2026-05-02" or full "2026-05-02 00:00:00+05:30")
-  const todayApps = (data || []).filter((app) =>
-    isToday(parseISO(app.date)),
-  );
+  const filtered = date
+    ? (data || []).filter((app) => format(parseISO(app.date), 'yyyy-MM-dd') === date)
+    : (data || []).filter((app) => isToday(parseISO(app.date)));
 
-  const inProgress = todayApps.filter((a) => a.status === 'In Progress');
-  const scheduled = todayApps.filter((a) => a.status === 'Scheduled');
-  const completed = todayApps.filter((a) => a.status === 'Completed');
+  const inProgress = filtered.filter((a) => a.status === 'In Progress');
+  const scheduled = filtered.filter((a) => a.status === 'Scheduled');
+  const completed = filtered.filter((a) => a.status === 'Completed');
 
   return { inProgress, scheduled, completed };
 }

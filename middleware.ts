@@ -2,11 +2,11 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PROTECTED_PATHS = [
-  '/today',
+  '/schedule',
   '/pharmacy',
   '/profile',
   '/clinic',
-  '/overview',
+  '/analytics',
   '/patients',
   '/complete-profile',
   '/create-clinic',

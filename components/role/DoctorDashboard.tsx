@@ -92,17 +92,17 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
   }, [profileName, user?.email]);
 
   // Card click handlers
-  const handlePatientsCardClick = () => router.push("/today?filter=all");
+  const handlePatientsCardClick = () => router.push("/schedule?filter=all");
   const handleAppointmentsTodayCardClick = () =>
-    router.push("/today?filter=queue");
+    router.push("/schedule?filter=queue");
   const handlePendingConsultationsCardClick = () =>
-    router.push("/today?filter=queue");
+    router.push("/schedule?filter=queue");
   const handleCompletedConsultationsCardClick = () =>
-    router.push("/today?filter=all");
+    router.push("/schedule?filter=all");
 
   // Weekly chart bar click handler
   const handleChartBarClick = (date: string) => {
-    router.push(`/today?filter=queue&date=${date}`);
+    router.push(`/schedule?filter=queue&date=${date}`);
   };
 
   // Calculate some additional stats - memoized
@@ -139,7 +139,7 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
         return;
       }
       queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.doctor(activeClinicId, user?.id ?? '') });
-      router.push(`/today?selectedAppointment=${appointmentId}`);
+      router.push(`/schedule?selectedAppointment=${appointmentId}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to start consultation');
     }
@@ -251,7 +251,7 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
           setCurrentPage={setCurrentUpcomingPage}
           totalPages={totalUpcomingPages}
           showViewAllButton={true}
-          onViewAll={() => router.push("/today?filter=queue")}
+          onViewAll={() => router.push("/schedule?filter=queue")}
           onStartConsultation={handleStartConsultation}
         />
         <WeeklyAppointmentsChart

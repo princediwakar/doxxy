@@ -22,7 +22,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <AppSidebar isCollapsed={!sidebarExpanded} onToggle={() => setIsCollapsed(prev => !prev)} />
+        <AppSidebar isCollapsed={!sidebarExpanded} />
       </div>
 
       <div

@@ -149,18 +149,18 @@ Instead, weaponize the existing Zustand `todayStore`:
 
 ### Phase 4: UI Components (bottom-up, each <200 lines)
 
-**9. Create `components/today/PatientHeader.tsx`** (~60 lines)
+**9. Create `components/schedule/PatientHeader.tsx`** (~60 lines)
 - Patient name (large), age/gender, current appointment status badge
 - Kebab menu (three-dot `...` dropdown) with: Schedule, Bill, Edit Patient, Edit Appointment
 - Clean, minimal — no inline buttons cluttering the header
 
-**10. Create `components/today/LastVisitSummary.tsx`** (~70 lines)
+**10. Create `components/schedule/LastVisitSummary.tsx`** (~70 lines)
 - Always-visible box using `useLastVisitSummary`
 - Shows: date of last visit, chief complaint, diagnosis, medication names + dosages
 - Handles empty state (first visit): "No prior visits found"
 - No accordions, no clicks required
 
-**11. Create `components/today/DictationZone.tsx`** (~130 lines)
+**11. Create `components/schedule/DictationZone.tsx`** (~130 lines)
 - Full-width "Press & Hold to Dictate" button (massive, primary CTA)
 - On hold: starts recording via `useVoiceRecorder`, pulse animation + audio waveform SVG, silently calls `onStartConsultation` if appointment is "Scheduled"
 - On release: stops recording, triggers `useVoiceTranscription`
@@ -169,7 +169,7 @@ Instead, weaponize the existing Zustand `todayStore`:
 - Shows elapsed timer while recording
 - Auto-stops at 30s (Sarvam REST API limit)
 
-**12. Create `components/today/ReviewHandoff.tsx`** (~140 lines)
+**12. Create `components/schedule/ReviewHandoff.tsx`** (~140 lines)
 - Raw transcript in small muted text at top (trust/verification)
 - Structured cards: Symptoms, Diagnosis, Prescriptions table
 - Prescription items with `dosage === "NOT_SPECIFIED"` or `frequency === "NOT_SPECIFIED"` show yellow warning badge
@@ -178,33 +178,33 @@ Instead, weaponize the existing Zustand `todayStore`:
   1. Calls `todayStore.setDraftConsultationData(structuredOutput)` (Zustand, instantaneous)
   2. Calls `router.push(/consultation/${appointmentId})` (no DB write, no race condition)
 
-**13. Create `components/today/AdministrativeFooter.tsx`** (~100 lines)
+**13. Create `components/schedule/AdministrativeFooter.tsx`** (~100 lines)
 - Demographics row (gender, age, phone, medical ID)
 - History accordion (extracted from existing TodayDetailPanel, removing chief complaint preview since it's now in LastVisitSummary)
 - Bills accordion (extracted from existing TodayDetailPanel)
 - Props: `patientDetail`, `patientBills`, `isLoadingBills`, and relevant callbacks
 
-**14. Create `components/today/StaffView.tsx`** (~40 lines)
+**14. Create `components/schedule/StaffView.tsx`** (~40 lines)
 - Simple wrapper for staff (non-doctor) view
 - PatientHeader with elevated Schedule/Bill/Edit buttons
 - LastVisitSummary (still useful for context)
 - AdministrativeFooter
 - No DictationZone
 
-**15. Create `components/today/EncounterCanvas.tsx`** (~70 lines)
+**15. Create `components/schedule/EncounterCanvas.tsx`** (~70 lines)
 - Thin orchestrator for doctor view
 - Composes: PatientHeader → LastVisitSummary → DictationZone (or ReviewHandoff when in review state) → AdministrativeFooter
 - Manages encounter review state locally via `useState<EncounterReviewState>`
 
 ### Phase 5: Integration
 
-**16. Rewrite `components/today/TodayDetailPanel.tsx`** (~90 lines)
+**16. Rewrite `components/schedule/TodayDetailPanel.tsx`** (~90 lines)
 - Remove the 150-line `AppointmentCard` inner component
 - Thin orchestrator: checks `isOwnAppointment` → renders `EncounterCanvas` (doctor) or `StaffView` (staff)
 - Receives `onApproveEncounter` and `onEditManually` callbacks from page
 - Passes necessary callbacks down to child components
 
-**17. Modify `app/(app)/today/page.tsx`** (~30 lines changed)
+**17. Modify `app/(app)/schedule/page.tsx`** (~30 lines changed)
 - Wire `useEncounterCompletion` hook
 - `onApproveEncounter`: calls `completeEncounter` mutation → `clearSelection()` on success
 - `onEditManually`: NO mutation — sets `draftConsultationData` in Zustand, then `router.push(/consultation/${appointmentId})`

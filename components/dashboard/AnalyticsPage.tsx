@@ -236,7 +236,7 @@ export function AnalyticsPage() {
                 value={clinicData.completed}
                 trendDirection={trends?.completed?.direction}
                 trendLabel={trends?.completed?.label}
-                onClick={() => router.push("/today?status=completed")}
+                onClick={() => router.push("/schedule?status=completed")}
               />
               <DashboardStatsCard
                 icon={<TrendingDown size={18} className="text-red-500" />}
@@ -244,7 +244,7 @@ export function AnalyticsPage() {
                 value={clinicData.no_shows}
                 trendDirection={trends?.noShows?.direction}
                 trendLabel={trends?.noShows?.label}
-                onClick={() => router.push("/today?status=no-show")}
+                onClick={() => router.push("/schedule?status=no-show")}
               />
               <DashboardStatsCard
                 icon={<Clock size={18} className="text-warning" />}
@@ -284,7 +284,7 @@ export function AnalyticsPage() {
                   value={practiceData.completed}
                   trendDirection={trends?.completed?.direction}
                   trendLabel={trends?.completed?.label}
-                  onClick={() => router.push("/today?status=completed")}
+                  onClick={() => router.push("/schedule?status=completed")}
                 />
                 <DashboardStatsCard
                   icon={<TrendingDown size={18} className="text-red-500" />}
@@ -292,7 +292,7 @@ export function AnalyticsPage() {
                   value={practiceData.no_shows}
                   trendDirection={trends?.noShows?.direction}
                   trendLabel={trends?.noShows?.label}
-                  onClick={() => router.push("/today?status=no-show")}
+                  onClick={() => router.push("/schedule?status=no-show")}
                 />
                 <DashboardStatsCard
                   icon={<Clock size={18} className="text-warning" />}
@@ -312,7 +312,7 @@ export function AnalyticsPage() {
                 <div className="lg:col-span-2">
                   <WeeklyAppointmentsChart
                     data={chartBreakdown}
-                    onBarClick={(date) => router.push(`/today?date=${date}`)}
+                    onBarClick={(date) => router.push(`/schedule?date=${date}`)}
                   />
                 </div>
                 <div className="lg:col-span-1">
@@ -332,7 +332,7 @@ export function AnalyticsPage() {
               <div className="lg:col-span-2">
                 <WeeklyAppointmentsChart
                   data={chartBreakdown}
-                  onBarClick={(date) => router.push(`/today?date=${date}`)}
+                  onBarClick={(date) => router.push(`/schedule?date=${date}`)}
                 />
               </div>
               <div className="lg:col-span-1">

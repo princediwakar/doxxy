@@ -1,4 +1,4 @@
-// components/today/EncounterCanvas.tsx
+// components/schedule/EncounterCanvas.tsx
 "use client";
 
 import { useState, useCallback, useRef } from "react";

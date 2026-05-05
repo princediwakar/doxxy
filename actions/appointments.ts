@@ -12,7 +12,7 @@ export async function createAppointment(data: AppointmentInsert) {
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true };
 }
 
@@ -25,7 +25,7 @@ export async function updateAppointment(
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true };
 }
 
@@ -38,7 +38,7 @@ export async function cancelAppointment(id: string) {
 
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true };
 }
 
@@ -65,7 +65,7 @@ export async function startConsultation(params: {
       .eq('id', appointmentId);
     if (updateError) return { error: updateError.message };
 
-    revalidatePath('/today');
+    revalidatePath('/schedule');
     return { success: true };
   }
 
@@ -110,6 +110,6 @@ export async function startConsultation(params: {
 
   if (statusError) return { error: statusError.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true };
 }

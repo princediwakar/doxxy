@@ -201,7 +201,7 @@ const CreateClinicPage = () => {
       queryClient.invalidateQueries({ queryKey: ['doctorDashboardData'] });
 
       toast.success(`Clinic "${clinicDetails.name}" created successfully.`);
-      router.replace("/today");
+      router.replace("/schedule");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Error creating clinic');
     } finally {

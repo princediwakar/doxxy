@@ -49,7 +49,7 @@ export async function saveBill(
       .select()
       .single();
     if (error) return { error: error.message };
-    revalidatePath('/today');
+    revalidatePath('/schedule');
     return { success: true, data: bill };
   }
 
@@ -60,7 +60,7 @@ export async function saveBill(
     .single();
   if (error) return { error: error.message };
 
-  revalidatePath('/today');
+  revalidatePath('/schedule');
   return { success: true, data: bill };
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { User } from "lucide-react";
-import { TodayDetailPanel } from "@/components/today/TodayDetailPanel";
+import { TodayDetailPanel } from "@/components/schedule/TodayDetailPanel";
 import type { AppointmentWithDetails } from "@/types/appointments";
 import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";

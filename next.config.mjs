@@ -12,12 +12,12 @@ const nextConfig = {
     return [
       {
         source: "/",
-        destination: "/today",
+        destination: "/schedule",
         permanent: false,
       },
       {
         source: "/consultation/:id",
-        destination: "/today?selectedAppointment=:id",
+        destination: "/schedule?selectedAppointment=:id",
         permanent: false,
       },
     ];
