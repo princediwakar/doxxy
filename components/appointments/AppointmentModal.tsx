@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -33,6 +34,7 @@ import type { AppointmentData } from "@/types/appointments";
 import { useAppointmentForm } from "@/hooks/useAppointmentForm";
 import { createAppointment, updateAppointment } from "@/actions/appointments";
 import { useAppState } from "@/contexts/AppStateContext";
+import { queryKeys } from "@/lib/query-keys";
 import { showErrorToast } from "@/lib/error-utils";
 import { toast } from "sonner";
 
@@ -51,6 +53,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 }) => {
   const { patients, isLoadingPatients, doctors, isLoadingDoctors } = useAppointmentForm(open);
   const { activeClinicId } = useAppState();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Local State
@@ -331,10 +334,11 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
           initialName={newPatientName}
           patient={null}
           onPatientCreated={(newPatient) => {
-            // DIRECTLY update form state here. No useEffect needed.
             form.setValue("patient_id", newPatient.id);
             setIsPatientModalOpen(false);
-            // The PatientSelect component will auto-sync the name via its own internal effect watching 'value'
+            queryClient.invalidateQueries({
+              queryKey: queryKeys.patients.byClinic(activeClinicId ?? ""),
+            });
           }}
         />
       )}

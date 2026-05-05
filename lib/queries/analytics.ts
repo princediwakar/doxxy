@@ -9,6 +9,9 @@ import type {
   DailyBreakdown,
   AgeGroup,
   GenderSplit,
+  DoctorDashboardData,
+  DatabaseAppointment,
+  EnhancedPatientForDoctorList,
 } from '@/types/dashboard';
 
 function formatDate(d: Date): string {
@@ -131,12 +134,21 @@ export async function queryDoctorId(userId: string, clinicId: string): Promise<s
   return data?.id ?? null;
 }
 
-export async function queryDoctorDashboardData(clinicId: string, userId: string) {
+export async function queryDoctorDashboardData(clinicId: string, userId: string): Promise<DoctorDashboardData | null> {
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.rpc('get_doctor_dashboard_data', {
     _clinic_id: clinicId,
     _user_id: userId,
   });
   if (error) throw new Error(error.message);
-  return data?.[0] ?? null;
+  const raw = data?.[0];
+  if (!raw) return null;
+  return {
+    total_patients: Number(raw.total_patients) || 0,
+    total_appointments: Number(raw.total_appointments) || 0,
+    pending_consultations: Number(raw.pending_consultations) || 0,
+    completed_consultations: Number(raw.completed_consultations) || 0,
+    upcoming_appointments: (Array.isArray(raw.upcoming_appointments) ? raw.upcoming_appointments : []) as unknown as DatabaseAppointment[],
+    my_patients: (Array.isArray(raw.my_patients) ? raw.my_patients : []) as unknown as EnhancedPatientForDoctorList[],
+  };
 }

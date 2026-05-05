@@ -13,11 +13,95 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+function openCommandPalette() {
+  document.dispatchEvent(new Event("open-command-palette"));
+}
 
 export function AppSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; onToggle: () => void }) {
   const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
 
   const pathname = usePathname();
+
+  const role = activeClinicRole;
+  const topItems = navItems.filter(item => item.topGroup);
+  const bottomItems = navItems.filter(item => !item.topGroup && (role ? item.roles.includes(role) : true));
+
+  const renderNavItem = (item: (typeof navItems)[number]) => {
+    const isSearch = item.label === "Search";
+    const isActive = isSearch ? false : isActiveLink(pathname, item.path);
+
+    const linkContent = (
+      <>
+        <item.icon size={18} className={cn(
+          "flex-shrink-0 transition-transform group-hover:scale-105",
+          isCollapsed ? "mx-auto" : "mr-3",
+          isActive ? "text-primary" : "text-muted-foreground"
+        )} />
+        {!isCollapsed && <span className="font-medium">{item.label}</span>}
+      </>
+    );
+
+    const className = cn(
+      "flex items-center py-3 rounded-lg text-sm font-medium transition-all duration-200 group min-h-[48px] w-full",
+      isCollapsed ? "justify-center px-2" : "px-4",
+      isActive
+        ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
+        : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
+    );
+
+    if (isSearch) {
+      return (
+        <li key={item.path}>
+          {isCollapsed ? (
+            <Tooltip delayDuration={300}>
+              <TooltipTrigger asChild>
+                <button onClick={openCommandPalette} className={className}>
+                  {linkContent}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{item.label}</TooltipContent>
+            </Tooltip>
+          ) : (
+            <button onClick={openCommandPalette} className={className}>
+              {linkContent}
+            </button>
+          )}
+        </li>
+      );
+    }
+
+    const link = (
+      <Link
+        href={item.path}
+        className={className}
+      >
+        {linkContent}
+      </Link>
+    );
+
+    if (isCollapsed) {
+      return (
+        <li key={item.path}>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              {link}
+            </TooltipTrigger>
+            <TooltipContent side="right">{item.label}</TooltipContent>
+          </Tooltip>
+        </li>
+      );
+    }
+
+    return <li key={item.path}>{link}</li>;
+  };
+
+  const filterByRole = (items: typeof navItems) =>
+    role ? items.filter(item => item.roles.includes(role)) : items.filter(item => item.roles.includes("superadmin") && item.roles.includes("staff") && item.roles.includes("doctor"));
+
+  const visibleTopItems = filterByRole(topItems);
+  const visibleBottomItems = bottomItems; // already filtered in declaration
 
   return (
     <div className="flex flex-col h-screen sticky top-0 left-0 w-full flex-shrink-0">
@@ -29,57 +113,40 @@ export function AppSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; on
           size="icon"
           className="h-9 w-9 rounded-lg hover:bg-white/50"
           onClick={onToggle}
-          title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              {isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </TooltipContent>
+          </Tooltip>
         </Button>
       </div>
 
-      {/* Clinic Switcher */}
-      {!isCollapsed && (
-        <div className="p-3">
-          {activeClinicId && <ClinicSwitcher />}
-        </div>
-      )}
-
-      {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto p-3">
+      {/* Top Navigation Group */}
+      <nav className="flex-1 overflow-y-auto p-3 pb-0">
         <ul className={cn("space-y-2", isCollapsed && "flex flex-col items-center")}>
-          {navItems.map((item) => {
-            const role = activeClinicRole;
-            const isCommonToAllRoles = item.roles.includes('superadmin') && item.roles.includes('staff') && item.roles.includes('doctor');
-            if (role ? item.roles.includes(role) : isCommonToAllRoles) {
-              const fullPath = item.path;
-              return (
-                <li key={item.path}>
-                  <Link
-                    href={fullPath}
-                    title={isCollapsed ? item.label : undefined}
-                    className={cn(
-                      "flex items-center py-3 rounded-lg text-sm font-medium transition-all duration-200 group min-h-[48px]",
-                      isCollapsed ? "justify-center px-2" : "px-4",
-                      isActiveLink(pathname, item.path)
-                        ? "bg-primary/10 text-primary border border-primary/20 shadow-sm"
-                        : "text-muted-foreground hover:bg-white/50 hover:text-foreground"
-                    )}
-                  >
-                    <item.icon size={18} className={cn(
-                      "flex-shrink-0 transition-transform group-hover:scale-105",
-                      isCollapsed ? "mx-auto" : "mr-3",
-                      isActiveLink(pathname, item.path) ? "text-primary" : "text-muted-foreground"
-                    )} />
-                    {!isCollapsed && <span className="font-medium">{item.label}</span>}
-                  </Link>
-                </li>
-              );
-            }
-            return null;
-          })}
+          {visibleTopItems.map(renderNavItem)}
         </ul>
       </nav>
 
-      {/* User Profile and Logout */}
-      <div className={cn("mt-auto p-3", isCollapsed && "flex justify-center")}>
+      {/* Bottom Section: Settings, Clinic Switcher, Profile */}
+      <div className={cn("mt-auto p-3 space-y-2", isCollapsed && "flex flex-col items-center")}>
+        {visibleBottomItems.length > 0 && (
+          <ul className={cn("space-y-2", isCollapsed && "flex flex-col items-center w-full")}>
+            {visibleBottomItems.map(renderNavItem)}
+          </ul>
+        )}
+
+        {!isCollapsed && activeClinicId && (
+          <>
+            <Separator />
+            <ClinicSwitcher />
+          </>
+        )}
+
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -89,12 +156,21 @@ export function AppSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; on
                 isCollapsed ? "w-10 px-0 justify-center" : "w-full"
               )}
             >
-              <Avatar className={cn("h-8 w-8 ring-2 ring-primary/20", isCollapsed ? "mx-auto" : "mr-3")}>
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {user?.email?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <Tooltip delayDuration={300}>
+                <TooltipTrigger asChild>
+                  <Avatar className={cn("h-8 w-8 ring-2 ring-primary/20", isCollapsed ? "mx-auto" : "mr-3")}>
+                    <AvatarImage src={user?.user_metadata?.avatar_url} />
+                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                      {user?.email?.[0]?.toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                {isCollapsed && (
+                  <TooltipContent side="right">
+                    {profileName || user?.email}
+                  </TooltipContent>
+                )}
+              </Tooltip>
               {!isCollapsed && (
                 <div className="flex-1 overflow-hidden text-left">
                   <span className="text-sm font-medium text-foreground overflow-hidden text-ellipsis whitespace-nowrap block">
@@ -142,4 +218,4 @@ export function AppSidebar({ isCollapsed, onToggle }: { isCollapsed: boolean; on
       </div>
     </div>
   );
-} 
+}

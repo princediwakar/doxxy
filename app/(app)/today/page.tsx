@@ -1,7 +1,8 @@
-import { getTodayAppointments, getPatientById } from '@/lib/data/today';
+import { getTodayAppointments, resolveUserDoctor, getPatientById } from '@/lib/data/today';
+import { getActiveDoctors } from '@/lib/data/doctors';
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
+import { redirect } from 'next/navigation';
 import { TodayPageClient } from './TodayPageClient';
-import type { AppointmentWithDetails } from '@/types/appointments';
 
 export default async function TodayPage({
   searchParams,
@@ -12,24 +13,48 @@ export default async function TodayPage({
   const clinicMember = await getActiveClinic(user.id);
   const clinicId = clinicMember?.clinic_id ?? null;
 
+  if (!clinicId) {
+    return (
+      <TodayPageClient
+        clinicId={null}
+        serverQueue={{ inProgress: [], scheduled: [], completed: [] }}
+        initialPatientId={null}
+        initialPatientDetail={null}
+        doctors={[]}
+        effectiveDoctorFilter={null}
+        userDoctorId={null}
+      />
+    );
+  }
+
   const params = await searchParams;
   const selectedPatientId =
     typeof params.patient === 'string' ? params.patient : null;
 
-  const queue: {
-    inProgress: AppointmentWithDetails[];
-    scheduled: AppointmentWithDetails[];
-    completed: AppointmentWithDetails[];
-  } = clinicId
-    ? await getTodayAppointments(clinicId)
-    : { inProgress: [], scheduled: [], completed: [] };
+  const userDoctorId = await resolveUserDoctor(user.id, clinicId);
+  const doctorFilterParam =
+    typeof params.doctor === 'string' ? params.doctor : undefined;
+  const effectiveDoctorFilter = doctorFilterParam ?? userDoctorId ?? null;
 
-  // Only fetch patient detail on initial deep-link. Subsequent patient
-  // selections are handled client-side via React Query to avoid jank.
+  const [queue, doctors] = await Promise.all([
+    getTodayAppointments(clinicId, effectiveDoctorFilter),
+    getActiveDoctors(clinicId),
+  ]);
+
+  // Auto-select first scheduled (fallback in-progress) if no patient selected
+  if (!selectedPatientId) {
+    const firstApp = queue.scheduled[0] || queue.inProgress[0];
+    if (firstApp) {
+      const redirectParams = new URLSearchParams();
+      redirectParams.set('patient', firstApp.patient_id);
+      redirectParams.set('appointment', firstApp.id);
+      if (doctorFilterParam) redirectParams.set('doctor', doctorFilterParam);
+      redirect(`/today?${redirectParams.toString()}`);
+    }
+  }
+
   const initialPatientDetail =
-    clinicId && selectedPatientId
-      ? await getPatientById(selectedPatientId)
-      : null;
+    selectedPatientId ? await getPatientById(selectedPatientId) : null;
 
   return (
     <TodayPageClient
@@ -37,6 +62,9 @@ export default async function TodayPage({
       serverQueue={queue}
       initialPatientId={selectedPatientId}
       initialPatientDetail={initialPatientDetail}
+      doctors={doctors}
+      effectiveDoctorFilter={effectiveDoctorFilter}
+      userDoctorId={userDoctorId}
     />
   );
 }

@@ -213,16 +213,18 @@ export const EditMemberDialog = ({ open, onOpenChange, member, role, setRole, de
             <SelectContent><SelectItem value="staff">Staff</SelectItem><SelectItem value="doctor">Doctor</SelectItem><SelectItem value="superadmin">Superadmin</SelectItem></SelectContent>
           </Select>
         </div>
-        <div>
-          <Label>Department</Label>
-          <Select value={deptId || 'none'} onValueChange={v => setDeptId(v === 'none' ? undefined : v)}>
-            <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No Department</SelectItem>
-              {departments.map((d) => <SelectItem key={d.id} value={d.id}>{getDeptName(d)}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+        {role !== 'staff' && (
+          <div>
+            <Label>Department</Label>
+            <Select value={deptId || 'none'} onValueChange={v => setDeptId(v === 'none' ? undefined : v)}>
+              <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No Department</SelectItem>
+                {departments.map((d) => <SelectItem key={d.id} value={d.id}>{getDeptName(d)}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
       <div className="flex flex-col sm:flex-row justify-end gap-2 mt-4">
         <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">Cancel</Button>

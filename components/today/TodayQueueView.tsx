@@ -8,12 +8,14 @@ interface TodayQueueViewProps {
   queue: TodayQueue;
   onAppointmentClick: (app: AppointmentWithDetails) => void;
   isMobile?: boolean;
+  doctorFilter: string | null;
 }
 
 export function TodayQueueView({
   queue,
   onAppointmentClick,
   isMobile = false,
+  doctorFilter,
 }: TodayQueueViewProps) {
   return (
     <div
@@ -23,6 +25,7 @@ export function TodayQueueView({
       <TodayPatientList
         queue={queue}
         onAppointmentClick={onAppointmentClick}
+        doctorFilter={doctorFilter}
       />
     </div>
   );

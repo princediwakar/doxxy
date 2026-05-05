@@ -1,13 +1,27 @@
+import { cache } from 'react';
 import { parseISO, isToday } from 'date-fns';
 import { createServerSupabase } from '@/integrations/supabase/server';
 import type { DbPatientByClinic } from '@/types/core';
 
-export async function getTodayAppointments(clinicId: string) {
+export const resolveUserDoctor = cache(async (userId: string, clinicId: string) => {
+  const supabase = await createServerSupabase();
+
+  const { data } = await supabase
+    .from('doctors')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('clinic_id', clinicId)
+    .maybeSingle();
+
+  return data?.id ?? null;
+});
+
+export async function getTodayAppointments(clinicId: string, doctorId?: string | null) {
   const supabase = await createServerSupabase();
 
   const { data, error } = await supabase.rpc(
     'get_appointments_with_details_by_clinic',
-    { clinic_id: clinicId },
+    { clinic_id: clinicId, filter_doctor_id: doctorId ?? undefined },
   );
 
   if (error) throw new Error(error.message);
@@ -42,5 +56,11 @@ export async function getPatientById(patientId: string) {
     .order('created_at', { ascending: false })
     .limit(20);
 
-  return { patient: patient as DbPatientByClinic, consultations: consultations || [] };
+  const { data: bills } = await supabase
+    .from('bills')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: false });
+
+  return { patient: patient as DbPatientByClinic, consultations: consultations || [], bills: bills || [] };
 }

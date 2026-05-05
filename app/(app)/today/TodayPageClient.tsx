@@ -16,6 +16,13 @@ import type { AppointmentWithDetails } from "@/types/appointments";
 import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
 
+interface Doctor {
+  id: string;
+  name: string;
+  user_id: string;
+  primary_specialization: string | null;
+}
+
 interface TodayPageClientProps {
   clinicId: string | null;
   serverQueue: {
@@ -25,6 +32,9 @@ interface TodayPageClientProps {
   };
   initialPatientId: string | null;
   initialPatientDetail: PatientDetail | null;
+  doctors: Doctor[];
+  effectiveDoctorFilter: string | null;
+  userDoctorId: string | null;
 }
 
 export function TodayPageClient({
@@ -32,6 +42,9 @@ export function TodayPageClient({
   serverQueue,
   initialPatientId,
   initialPatientDetail,
+  doctors,
+  effectiveDoctorFilter,
+  userDoctorId,
 }: TodayPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -123,12 +136,13 @@ export function TodayPageClient({
       <TodayMobileLayout
         showMobileDetail={showMobileDetail}
         onBackToQueue={() => setMobileDetailOpen(false)}
-        header={<TodayHeader />}
+        header={<TodayHeader doctors={doctors} effectiveDoctorFilter={effectiveDoctorFilter} userDoctorId={userDoctorId} />}
         queue={
           <TodayQueueView
             queue={serverQueue}
             onAppointmentClick={selectAppointment}
             isMobile={isMobile}
+            doctorFilter={effectiveDoctorFilter}
           />
         }
         detail={

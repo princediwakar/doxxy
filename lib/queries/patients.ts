@@ -3,10 +3,7 @@
 import { createServerSupabase } from '@/integrations/supabase/server';
 import type { DbPatientByClinic, DbPatient, DbBill } from '@/types/core';
 
-interface PatientDetail {
-  patient: DbPatientByClinic | null;
-  consultations: Array<Record<string, unknown>>;
-}
+import type { PatientDetail } from '@/types/core';
 
 export async function queryPatientDetail(
   clinicId: string,
@@ -32,9 +29,16 @@ export async function queryPatientDetail(
 
   if (consultationsError) throw new Error(consultationsError.message);
 
+  const { data: bills } = await supabase
+    .from('bills')
+    .select('*')
+    .eq('patient_id', patientId)
+    .order('created_at', { ascending: false });
+
   return {
     patient: patient as DbPatientByClinic | null,
     consultations: (consultations ?? []) as Array<Record<string, unknown>>,
+    bills: (bills ?? []) as Array<Record<string, unknown>>,
   };
 }
 

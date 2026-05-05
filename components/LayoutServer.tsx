@@ -3,6 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import type { ClinicMemberWithClinic } from '@/types/core';
 import { AppStateProvider } from '@/contexts/AppStateContext';
 import { SidebarLayout } from '@/components/SidebarLayout';
+import { CommandPalette } from '@/components/CommandPalette';
 import { MobileHeader } from '@/components/MobileHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
@@ -45,6 +46,8 @@ const LayoutServer = ({
             {children}
           </Suspense>
         </SidebarLayout>
+
+        <CommandPalette />
 
         <FloatingActionButton actions={fabActions} />
 

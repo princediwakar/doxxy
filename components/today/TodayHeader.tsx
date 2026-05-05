@@ -2,46 +2,48 @@
 
 import { useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useDebouncedCallback } from "use-debounce";
-import { Search, Plus } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Plus, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTodayStore, type ActiveFilter } from "@/stores/todayStore";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useTodayStore } from "@/stores/todayStore";
 
-const FILTERS: { value: ActiveFilter; label: string }[] = [
-  { value: "queue", label: "Queue" },
-  { value: "all", label: "All" },
-];
+interface Doctor {
+  id: string;
+  name: string;
+  user_id: string;
+  primary_specialization: string | null;
+}
 
-export function TodayHeader() {
+interface TodayHeaderProps {
+  doctors: Doctor[];
+  effectiveDoctorFilter: string | null;
+  userDoctorId: string | null;
+}
+
+export function TodayHeader({
+  doctors,
+  effectiveDoctorFilter,
+  userDoctorId,
+}: TodayHeaderProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const openModal = useTodayStore((s) => s.openModal);
-  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
 
-  const hasFilterParams = !!(searchParams.get("gender") || searchParams.get("age_group"));
-  const activeFilter = (searchParams.get("filter") as ActiveFilter) || (hasFilterParams ? "all" : "queue");
-
-  const pushSearch = useDebouncedCallback((value: string) => {
+  const handleDoctorChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (value.trim()) {
-      params.set("q", value.trim());
-      params.set("filter", "all");
+    if (value === "all") {
+      params.delete("doctor");
     } else {
-      params.delete("q");
+      params.set("doctor", value);
     }
-    router.push(`/today?${params.toString()}`, { scroll: false });
-  }, 300);
-
-  const handleFilterChange = (value: ActiveFilter) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("filter", value);
     params.delete("patient");
     params.delete("appointment");
-    setMobileDetailOpen(false);
-    if (value === "queue") {
-      params.delete("q");
-    }
     router.push(`/today?${params.toString()}`, { scroll: false });
   };
 
@@ -50,44 +52,39 @@ export function TodayHeader() {
   }, [openModal]);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            key={activeFilter}
-            defaultValue={
-              activeFilter === "all" ? searchParams.get("q") || "" : ""
-            }
-            placeholder="Search patients, appointments..."
-            onChange={(e) => pushSearch(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <Button
-          onClick={handleNewPatient}
-          className="hidden lg:inline-flex shrink-0"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Patient
-        </Button>
-      </div>
+    <div className="flex items-center justify-between gap-4">
+      <Select
+        value={effectiveDoctorFilter ?? "all"}
+        onValueChange={handleDoctorChange}
+      >
+        <SelectTrigger className="w-[220px]">
+          <div className="flex items-center">
+            <Stethoscope className="h-4 w-4 mr-2 text-muted-foreground" />
+            <SelectValue />
+          </div>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Doctors</SelectItem>
+          {userDoctorId && (
+            <SelectItem value={userDoctorId}>My Patients</SelectItem>
+          )}
+          {doctors
+            .filter((d) => d.id !== userDoctorId)
+            .map((doctor) => (
+              <SelectItem key={doctor.id} value={doctor.id}>
+                {doctor.name}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
 
-      <div className="flex gap-1 border-b">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => handleFilterChange(f.value)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-[1px] ${
-              activeFilter === f.value
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <Button
+        onClick={handleNewPatient}
+        className="hidden lg:inline-flex shrink-0"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        New Patient
+      </Button>
     </div>
   );
 }

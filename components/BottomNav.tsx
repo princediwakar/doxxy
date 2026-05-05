@@ -18,7 +18,27 @@ export function BottomNav() {
     <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border pb-safe">
       <div className="flex items-center justify-around h-16">
         {items.map((item) => {
+          const isSearch = item.label === "Search";
           const isActive = isActiveLink(pathname, item.path);
+
+          if (isSearch) {
+            return (
+              <button
+                key={item.path}
+                onClick={() => document.dispatchEvent(new Event("open-command-palette"))}
+                className={cn(
+                  "flex flex-col items-center justify-center gap-1 h-full min-w-0 flex-1 touch-manipulation",
+                  "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                <item.icon size={22} className="flex-shrink-0" />
+                <span className="text-[11px] font-medium leading-none truncate max-w-full px-1">
+                  {item.label}
+                </span>
+              </button>
+            );
+          }
+
           return (
             <Link
               key={item.path}

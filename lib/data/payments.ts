@@ -1,7 +1,8 @@
 import { cache } from 'react';
 import { createServerSupabase } from '@/integrations/supabase/server';
+import type { BillingSummary, PaymentTransaction } from '@/types/billing';
 
-export const getBillingSummary = cache(async (clinicId: string) => {
+export const getBillingSummary = cache(async (clinicId: string): Promise<BillingSummary> => {
   const supabase = await createServerSupabase();
 
   const { data: clinicCredits, error: clinicError } = await supabase
@@ -28,7 +29,7 @@ export const getBillingSummary = cache(async (clinicId: string) => {
   };
 });
 
-export const getPaymentTransactions = cache(async (clinicId: string) => {
+export const getPaymentTransactions = cache(async (clinicId: string): Promise<PaymentTransaction[]> => {
   const supabase = await createServerSupabase();
 
   const { data, error } = await supabase
@@ -39,5 +40,5 @@ export const getPaymentTransactions = cache(async (clinicId: string) => {
     .limit(20);
 
   if (error) throw new Error(error.message);
-  return data || [];
+  return (data || []) as unknown as PaymentTransaction[];
 });

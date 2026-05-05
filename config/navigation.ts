@@ -1,11 +1,12 @@
-import { Calendar, Pill, Building2, User, BarChart3, Settings } from "lucide-react";
+import { Search, Calendar, Pill, BarChart3, Settings, User2 } from "lucide-react";
 
 export const navItems = [
-  { icon: Calendar, label: "Today", path: "/today", roles: ["superadmin", "staff", "doctor"], bottomNav: true },
-  { icon: BarChart3, label: "Overview", path: "/overview", roles: ["superadmin", "doctor", "staff"], bottomNav: true },
-  { icon: Pill, label: "Pharmacy", path: "/pharmacy", roles: ["staff", "superadmin"], bottomNav: true },
-  { icon: User, label: "Profile", path: "/profile", roles: ["superadmin", "staff", "doctor"], bottomNav: true },
-  { icon: Settings, label: "Clinic", path: "/clinic", roles: ["superadmin"], bottomNav: true },
+  { icon: Search, label: "Search", path: "#", roles: ["superadmin", "staff", "doctor"], bottomNav: true, topGroup: true },
+  { icon: Calendar, label: "Today", path: "/today", roles: ["superadmin", "staff", "doctor"], bottomNav: true, topGroup: true },
+  { icon: Pill, label: "Pharmacy", path: "/pharmacy", roles: ["staff", "superadmin"], bottomNav: true, topGroup: true },
+  { icon: BarChart3, label: "Analytics", path: "/overview", roles: ["superadmin"], bottomNav: true, topGroup: true },
+  { icon: User2, label: "Profile", path: "/profile", roles: ["superadmin", "staff", "doctor"], bottomNav: false, topGroup: false },
+  { icon: Settings, label: "Clinic Settings", path: "/clinic", roles: ["superadmin"], bottomNav: true, topGroup: false },
 ];
 
 export function isActiveLink(location: string, path: string) {

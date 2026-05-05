@@ -301,7 +301,7 @@ const ClinicMembersManagement = ({
         onOpenChange={setShowEdit}
         member={editMember}
         role={editRole}
-        setRole={setEditRole}
+        setRole={(role) => { setEditRole(role); if (role === 'staff') setEditDept(undefined); }}
         deptId={editDept}
         setDeptId={setEditDept}
         onSubmit={handleUpdateMember}

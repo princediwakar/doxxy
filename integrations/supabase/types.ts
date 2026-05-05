@@ -1299,7 +1299,7 @@ export type Database = {
         }[]
       }
       get_appointments_with_details_by_clinic: {
-        Args: { clinic_id: string }
+        Args: { clinic_id: string; filter_doctor_id?: string }
         Returns: {
           created_at: string
           date: string
@@ -1309,6 +1309,8 @@ export type Database = {
           doctor_name: string
           id: string
           notes: string
+          patient_age: number | null
+          patient_gender: string | null
           patient_id: string
           patient_name: string
           status: Database["public"]["Enums"]["appointment_status"]

@@ -7,6 +7,7 @@ const PROTECTED_PATHS = [
   '/profile',
   '/clinic',
   '/overview',
+  '/patients',
   '/complete-profile',
   '/create-clinic',
 ];
