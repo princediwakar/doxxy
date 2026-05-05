@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import type { ConsultationFormValues, PrescriptionMedication } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase, DbJson } from "@/types/core";
 import type { UseFormReturn } from "react-hook-form";
-import type { ClinicMemberWithClinic } from "@/hooks/useClinicData";
+import type { ClinicMemberWithClinic } from "@/types/core";
 import type { User } from "@supabase/supabase-js";
 
 import { isDeepEqual } from "./utils";
@@ -113,7 +113,7 @@ export interface UseConsultationAutoSaveParams {
   formValues: ConsultationFormValues;
   appointmentId: string | undefined;
   appointment: DbAppointment | null | undefined;
-  activeClinic: ClinicMemberWithClinic | null;
+  activeClinicId: string | undefined;
   user: User | null;
   canEditConsultation: boolean;
   autoSaveReady: boolean;
@@ -130,7 +130,7 @@ export const useConsultationAutoSave = ({
   formValues,
   appointmentId,
   appointment,
-  activeClinic,
+  activeClinicId,
   user,
   canEditConsultation,
   autoSaveReady,
@@ -152,16 +152,13 @@ export const useConsultationAutoSave = ({
       saveConsultation(
         data,
         appointmentId,
-        activeClinic?.clinic_id,
+        activeClinicId,
         appointment,
         user?.id,
       ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinicId] });
       queryClient.invalidateQueries({ queryKey: ['consultation', appointmentId] });
-      toast.success('Consultation saved', {
-        description: 'Your consultation notes have been saved successfully.',
-      });
     },
     onError: (error) => {
       logger.error('❌ Auto-save error:', error);

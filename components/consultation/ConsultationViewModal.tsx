@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { Eye, Printer } from "lucide-react";
@@ -24,7 +24,11 @@ import {
   ConsultationFormValues,
   FieldValue,
 } from "@/types/consultation";
-import { useConsultationViewData } from "@/hooks/useConsultationViewData";
+import { useQuery } from "@tanstack/react-query";
+import { queryPatientDetail } from "@/lib/queries/patients";
+import { queryConsultationData } from "@/lib/queries/consultation";
+import { queryCurrentDoctorDetails } from "@/lib/queries/doctors";
+import { queryKeys } from "@/lib/query-keys";
 import { Spinner } from '@/components/ui/loading';
 
 interface ConsultationViewModalProps {
@@ -38,14 +42,41 @@ export function ConsultationViewModal({
   onOpenChange,
   appointment,
 }: ConsultationViewModalProps) {
-  const { activeClinic, user } = useAuth();
+  const { activeClinicId, activeClinicName, user } = useAppState();
 
-  const {
-    patientData,
-    consultationData,
-    isLoadingConsultation,
-    doctorDetails,
-  } = useConsultationViewData(appointment, open);
+  const patientQuery = useQuery({
+    queryKey: queryKeys.patients.byId(appointment?.patient_id ?? ""),
+    queryFn: () => queryPatientDetail(activeClinicId!, appointment!.patient_id!),
+    enabled:
+      open &&
+      !!appointment?.patient_id &&
+      !!activeClinicId &&
+      (!appointment.patient_gender || !appointment.patient_age),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const consultationQuery = useQuery({
+    queryKey: queryKeys.consultations.byAppointment(appointment?.id ?? ""),
+    queryFn: () => queryConsultationData(appointment!.id!),
+    enabled: open && !!appointment?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const doctorQuery = useQuery({
+    queryKey: queryKeys.doctors.details(
+      appointment?.doctor_id ?? "",
+      activeClinicId ?? "",
+    ),
+    queryFn: () =>
+      queryCurrentDoctorDetails(activeClinicId!, appointment!.doctor_id!),
+    enabled: open && !!appointment?.doctor_id && !!activeClinicId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const patientData = patientQuery.data?.patient ?? null;
+  const consultationData = consultationQuery.data?.consultation ?? null;
+  const isLoadingConsultation = consultationQuery.isLoading;
+  const doctorDetails = doctorQuery.data;
 
   // Determine department and get field configs
   const firstDoctor =
@@ -109,14 +140,14 @@ export function ConsultationViewModal({
     phone: "",
     email: "",
     address: "",
-    clinic_id: activeClinic?.clinic_id || "",
+    clinic_id: activeClinicId || "",
     created_at: "",
     id: "",
     medical_id: "",
   };
 
   // Get the full clinic object for printing
-  const clinicDetails = activeClinic?.clinics || null;
+  const clinicDetails = (activeClinicId && activeClinicName) ? { id: activeClinicId, name: activeClinicName } as any : null;
 
   // Prepare clinic info for layout display
   const clinicInfo: ClinicInfo | null = clinicDetails
@@ -223,7 +254,7 @@ export function ConsultationViewModal({
               appointment={{
                 ...appointment,
                 clinic_id:
-                  appointment?.clinic_id || activeClinic?.clinic_id || "",
+                  appointment?.clinic_id || activeClinicId || "",
                 notes: appointment.notes || "",
               }}
               clinicInfo={clinicInfo}

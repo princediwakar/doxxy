@@ -1,15 +1,17 @@
 "use client";
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
-import { useInvoiceNumber } from '@/hooks/useInvoiceNumber';
+import { useAppState } from '@/contexts/AppStateContext';
 import { useBillingQueries } from '@/hooks/useBillingQueries';
-import { useSaveBill } from '@/hooks/useSaveBill';
 import { useBillingFormEffects } from '@/hooks/useBillingFormEffects';
+import { saveBill, generateInvoiceNumber } from '@/actions/billing';
+import { showErrorToast } from '@/lib/error-utils';
+import { toast } from 'sonner';
 import type { Medicine } from '@/types/prescriptions';
-import type { InventoryItemWithMedicine } from '@/hooks/useInventory';
+import type { InventoryItemWithMedicine } from '@/types/core';
+import type { DbBill } from '@/types/core';
 import type {
   ServiceItem,
   BillingFormValues,
@@ -41,7 +43,7 @@ const billingFormSchema = z.object({
 export type { BillingFormValues, ServiceItem };
 
 export const useBilling = ({ bill, patient, appointment, mode = 'create', open }: UseBillingProps) => {
-  const { activeClinic } = useAuth();
+  const { activeClinicId } = useAppState();
 
   const form = useForm<BillingFormValues>({
     resolver: zodResolver(billingFormSchema),
@@ -58,22 +60,38 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     },
   });
 
-  // Watch form values
   const selectedPatientId = form.watch('patient_id');
   const selectedAppointmentId = form.watch('appointment_id');
   const discountPercentage = form.watch('discount_percentage') || 0;
   const taxPercentage = form.watch('tax_percentage') || 0;
   const serviceItems = form.watch('service_items') || [];
 
-  // Invoice number generation
-  const {
-    data: newInvoiceNumber,
-    isLoading: isLoadingInvoiceNumber,
-    error: invoiceError,
-    refetch: refetchInvoiceNumber,
-  } = useInvoiceNumber(open, mode, !!bill?.invoice_number);
+  const [invoiceNumber, setInvoiceNumber] = useState<string | null>(null);
+  const [isLoadingInvoiceNumber, setIsLoadingInvoiceNumber] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Data queries: appointments, patients, doctor fee, selected appointment, prescriptions
+  const fetchInvoiceNumber = useCallback(async () => {
+    if (!activeClinicId) return;
+    setIsLoadingInvoiceNumber(true);
+    try {
+      const result = await generateInvoiceNumber(activeClinicId);
+      if (result.data) {
+        setInvoiceNumber(result.data);
+        form.setValue('invoice_number', result.data, { shouldValidate: true });
+      }
+    } catch {
+      // fallback handled server-side
+    } finally {
+      setIsLoadingInvoiceNumber(false);
+    }
+  }, [activeClinicId, form]);
+
+  useEffect(() => {
+    if (mode === 'create' && open && activeClinicId && !bill?.invoice_number) {
+      fetchInvoiceNumber();
+    }
+  }, [mode, open, activeClinicId, bill?.invoice_number, fetchInvoiceNumber]);
+
   const {
     appointments: filteredAppointments,
     patients,
@@ -87,7 +105,6 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     prescriptionItems,
   } = useBillingQueries(open, selectedPatientId, selectedAppointmentId, mode);
 
-  // Calculate bill totals
   const calculateTotals = useMemo(() => {
     let subtotal = serviceItems.reduce((sum, item) => sum + (item.amount || 0), 0);
     if (mode === 'view' && bill?.amount && subtotal === 0) {
@@ -100,7 +117,6 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     return { subtotal, discountAmount, subtotalAfterDiscount, taxAmount, total };
   }, [serviceItems, discountPercentage, taxPercentage, mode, bill]);
 
-  // Service item management
   const addServiceItem = () => {
     const currentItems = form.getValues('service_items') || [];
     form.setValue('service_items', [
@@ -147,26 +163,42 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     form.trigger('service_items');
   };
 
-  // Save bill mutation
-  const saveBillMutation = useSaveBill(mode, bill, calculateTotals);
-  // Effect 1: Set invoice number in form when generated
-  useEffect(() => {
-    if (mode === 'create' && newInvoiceNumber) {
-      form.setValue('invoice_number', newInvoiceNumber, { shouldValidate: true });
+  const handleSave = useCallback(async (values: BillingFormValues): Promise<DbBill> => {
+    if (!activeClinicId) throw new Error('No active clinic selected');
+    setIsSubmitting(true);
+    try {
+      const result = await saveBill(
+        mode as 'create' | 'edit',
+        {
+          patient_id: values.patient_id,
+          appointment_id: values.appointment_id,
+          clinic_id: activeClinicId,
+          invoice_number: values.invoice_number,
+          amount: calculateTotals.total,
+          description: values.description,
+          service_items: values.service_items as unknown as import('@/types/core').Json,
+          discount_percentage: values.discount_percentage,
+          tax_percentage: values.tax_percentage,
+          notes: values.notes,
+        },
+        bill?.id,
+      );
+      if ('error' in result && result.error) {
+        throw new Error(result.error);
+      }
+      if ('data' in result && result.data) {
+        return result.data as DbBill;
+      }
+      throw new Error('Unexpected response from server');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : `Failed to ${mode === 'edit' ? 'update' : 'create'} bill`;
+      showErrorToast(new Error(message), { title: 'Bill save failed' });
+      throw err;
+    } finally {
+      setIsSubmitting(false);
     }
-  }, [newInvoiceNumber, form, mode]);
-  // Effect 2: Retry invoice generation after 2s if still missing
-  useEffect(() => {
-    if (mode === 'create' && open && activeClinic?.clinic_id && !newInvoiceNumber && !isLoadingInvoiceNumber && !invoiceError) {
-      const timer = setTimeout(() => {
-        if (!form.getValues('invoice_number')) {
-          refetchInvoiceNumber();
-        }
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [mode, open, activeClinic?.clinic_id, newInvoiceNumber, isLoadingInvoiceNumber, invoiceError, refetchInvoiceNumber, form]);
-  // Form lifecycle effects (prefill + reset)
+  }, [activeClinicId, mode, bill?.id, calculateTotals.total]);
+
   useBillingFormEffects(form, open, mode, bill, patient, appointment, doctorFee, selectedAppointmentId, selectedAppointment, prescriptionItems);
 
   return {
@@ -186,8 +218,8 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     removeServiceItem,
     updateServiceItem,
     selectMedicineForItem,
-    saveBillMutation,
-    isSubmitting: saveBillMutation.isPending,
-    refetchInvoiceNumber,
+    saveBill: handleSave,
+    isSubmitting,
+    refetchInvoiceNumber: fetchInvoiceNumber,
   };
 };

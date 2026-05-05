@@ -1,4 +1,3 @@
-import { Suspense } from 'react';
 import { getTodayAppointments, getPatientById } from '@/lib/data/today';
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
 import { TodayPageClient } from './TodayPageClient';
@@ -25,18 +24,19 @@ export default async function TodayPage({
     ? await getTodayAppointments(clinicId)
     : { inProgress: [], scheduled: [], completed: [] };
 
-  const serverPatientData =
+  // Only fetch patient detail on initial deep-link. Subsequent patient
+  // selections are handled client-side via React Query to avoid jank.
+  const initialPatientDetail =
     clinicId && selectedPatientId
       ? await getPatientById(selectedPatientId)
       : null;
 
   return (
-    <Suspense>
-      <TodayPageClient
-        serverQueue={queue}
-        serverPatientData={serverPatientData}
-        clinicId={clinicId}
-      />
-    </Suspense>
+    <TodayPageClient
+      clinicId={clinicId}
+      serverQueue={queue}
+      initialPatientId={selectedPatientId}
+      initialPatientDetail={initialPatientDetail}
+    />
   );
 }

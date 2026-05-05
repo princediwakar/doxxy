@@ -2,20 +2,22 @@
 "use client";
 
 import { useState } from 'react';
-import { DbDepartmentType } from '@/types/core';
-import { useAuth } from '@/contexts/AuthContext';
-import { useClinicDepartmentManagement } from '@/hooks/useClinicDepartmentManagement';
+import { DbDepartmentType, DbClinicDepartment } from '@/types/core';
+import { useAppState } from '@/contexts/AppStateContext';
+import { addClinicDepartment, removeClinicDepartment } from '@/actions/clinic';
+import { toast } from 'sonner';
+import { showErrorToast } from '@/lib/error-utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Search, 
-  Plus, 
-  Building2, 
-  Check, 
-  X, 
-  Settings, 
+import {
+  Search,
+  Plus,
+  Building2,
+  Check,
+  X,
+  Settings,
   Activity,
   Brain,
   Eye,
@@ -29,24 +31,24 @@ interface DepartmentWithStatus extends DbDepartmentType {
   clinicDepartmentId?: string;
 }
 
-const ClinicDepartmentsManagement = () => {
-  const { activeClinic, activeClinicRole } = useAuth();
-  const [searchTerm, setSearchTerm] = useState("");
+interface ClinicDepartmentsManagementProps {
+  serverDepartmentTypes: DbDepartmentType[];
+  serverClinicDepartments: DbClinicDepartment[];
+}
 
-  const clinicId = activeClinic?.clinic_id;
+const ClinicDepartmentsManagement = ({
+  serverDepartmentTypes,
+  serverClinicDepartments,
+}: ClinicDepartmentsManagementProps) => {
+  const { activeClinicId, activeClinicRole } = useAppState();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isMutating, setIsMutating] = useState(false);
+
+  const clinicId = activeClinicId;
   const isSuperadmin = activeClinicRole === 'superadmin';
 
-  const {
-    departmentTypes,
-    clinicDepartments,
-    isLoading,
-    addDepartment,
-    removeDepartment,
-  } = useClinicDepartmentManagement(clinicId);
-
-  // Combine department types with their active status
-  const departmentsWithStatus: DepartmentWithStatus[] = departmentTypes.map(dept => {
-    const clinicDept = clinicDepartments.find(cd => cd.department_type_id === dept.id);
+  const departmentsWithStatus: DepartmentWithStatus[] = serverDepartmentTypes.map(dept => {
+    const clinicDept = serverClinicDepartments.find(cd => cd.department_type_id === dept.id);
     return {
       ...dept,
       isActive: !!clinicDept,
@@ -54,20 +56,36 @@ const ClinicDepartmentsManagement = () => {
     };
   });
 
-  // Filter departments based on search
   const filteredDepartments = departmentsWithStatus.filter(dept =>
     dept.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Group departments by status
   const activeDepartments = filteredDepartments.filter(d => d.isActive);
   const availableDepartments = filteredDepartments.filter(d => !d.isActive);
 
-  const handleToggleDepartment = (department: DepartmentWithStatus) => {
-    if (department.isActive && department.clinicDepartmentId) {
-      removeDepartment(department.clinicDepartmentId);
-    } else {
-      addDepartment(department.id);
+  const handleToggleDepartment = async (department: DepartmentWithStatus) => {
+    if (!clinicId) return;
+    setIsMutating(true);
+    try {
+      if (department.isActive && department.clinicDepartmentId) {
+        const result = await removeClinicDepartment(department.clinicDepartmentId);
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success('Department removed successfully');
+        }
+      } else {
+        const result = await addClinicDepartment(clinicId, department.id);
+        if (result.error) {
+          showErrorToast(new Error(result.error), { title: 'Failed to add department' });
+        } else {
+          toast.success('Department added successfully');
+        }
+      }
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err : new Error('Failed to update department'), { title: 'Error' });
+    } finally {
+      setIsMutating(false);
     }
   };
 
@@ -81,8 +99,6 @@ const ClinicDepartmentsManagement = () => {
     return <Activity className="h-5 w-5" />;
   };
 
-
-  // Early return for access control after all hooks
   if (!isSuperadmin) {
     return (
       <Card>
@@ -119,32 +135,17 @@ const ClinicDepartmentsManagement = () => {
         </div>
       </div>
 
-      {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search departments..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 border-border focus:ring-primary"
-            />
-          </div>
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          placeholder="Search departments..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 border-border focus:ring-primary"
+        />
+      </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-4">
-                <div className="h-20 bg-muted/50 rounded-md" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Active Departments */}
-      {!isLoading && activeDepartments.length > 0 && (
+      {activeDepartments.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <Check className="h-5 w-5 text-primary" />
@@ -168,7 +169,7 @@ const ClinicDepartmentsManagement = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleToggleDepartment(department)}
-                      disabled={isLoading}
+                      disabled={isMutating}
                       className="text-destructive hover:text-destructive hover:bg-destructive/10"
                     >
                       <X className="h-4 w-4" />
@@ -181,8 +182,7 @@ const ClinicDepartmentsManagement = () => {
         </div>
       )}
 
-      {/* Available Departments */}
-      {!isLoading && availableDepartments.length > 0 && (
+      {availableDepartments.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
             <Plus className="h-5 w-5 text-muted-foreground" />
@@ -206,7 +206,7 @@ const ClinicDepartmentsManagement = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleToggleDepartment(department)}
-                      disabled={isLoading}
+                      disabled={isMutating}
                       className="text-foreground hover:text-foreground hover:bg-muted"
                     >
                       <Plus className="h-4 w-4" />
@@ -219,8 +219,7 @@ const ClinicDepartmentsManagement = () => {
         </div>
       )}
 
-      {/* Empty States */}
-      {!isLoading && filteredDepartments.length === 0 && (
+      {filteredDepartments.length === 0 && (
         <Card>
           <CardContent className="p-8">
             <div className="text-center text-muted-foreground">
@@ -233,10 +232,8 @@ const ClinicDepartmentsManagement = () => {
           </CardContent>
         </Card>
       )}
-
-      
     </div>
   );
 };
 
-export default ClinicDepartmentsManagement; 
+export default ClinicDepartmentsManagement;

@@ -196,9 +196,9 @@ export function DictationZone({
       ) : (
         <button
           onClick={beginRecording}
-          className="w-full rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 p-6 text-lg text-center font-semibold transition-all"
+          className="w-full rounded-lg border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 px-4 py-3 text-sm text-center font-semibold transition-all flex items-center justify-center gap-2"
         >
-          <Mic className="h-8 w-8 mx-auto mb-2 block" />
+          <Mic className="h-5 w-5" />
           Tap to Dictate
         </button>
       )}

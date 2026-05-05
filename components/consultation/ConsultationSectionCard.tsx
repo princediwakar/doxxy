@@ -1,15 +1,7 @@
 "use client";
 
-import {
-  User,
-  Stethoscope,
-  Activity,
-  ChevronDown,
-  ChevronRight,
-  ClipboardList,
-  FileText,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo } from "react";
+import { ChevronDown } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -20,16 +12,12 @@ import type { ConsultationFormValues, FieldValue } from "@/types/consultation";
 import type { FieldSection, NoteFieldConfig } from "@/lib/schemaUtils";
 import { ConsultationFormField } from "./ConsultationFormField";
 
-function getSectionIcon(title: string) {
-  if (title.toLowerCase().includes("history"))
-    return <User className="h-5 w-5 text-primary" />;
-  if (title.toLowerCase().includes("examination"))
-    return <Stethoscope className="h-5 w-5 text-success" />;
-  if (title.toLowerCase().includes("plan") || title.toLowerCase().includes("diagnosis"))
-    return <ClipboardList className="h-5 w-5 text-secondary" />;
-  if (title.toLowerCase().includes("investigation"))
-    return <FileText className="h-5 w-5 text-accent" />;
-  return <Activity className="h-5 w-5 text-muted-foreground" />;
+function isFieldFilled(value: unknown): boolean {
+  if (value === undefined || value === null) return false;
+  if (typeof value === "string") return value.trim().length > 0 && value !== "NOT_SPECIFIED";
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.keys(value).length > 0;
+  return false;
 }
 
 interface ConsultationSectionCardProps {
@@ -49,37 +37,44 @@ export const ConsultationSectionCard = ({
   isExpanded,
   onToggle,
 }: ConsultationSectionCardProps) => {
-  const completedFields = section.fields.filter((field: NoteFieldConfig) => {
-    const formValues = form.getValues();
-    const value = (formValues.specialty_data as Record<string, unknown>)?.[field.name];
-    return value && String(value).trim().length > 0;
-  }).length;
+  const specialtyData = form.watch("specialty_data");
+
+  const filledCount = useMemo(() => {
+    if (!specialtyData || typeof specialtyData !== "object") return 0;
+    const data = specialtyData as Record<string, unknown>;
+    return section.fields.filter((f) => isFieldFilled(data[f.name])).length;
+  }, [specialtyData, section.fields]);
+
+  const totalFields = section.fields.length;
+  const hasContent = filledCount > 0;
+  const allFilled = filledCount === totalFields;
 
   return (
-    <Card className="bg-white">
+    <div className="border-b border-border/60 last:border-b-0">
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+          <div className="cursor-pointer transition-colors py-2">
             <div className="flex items-center justify-between w-full">
-              <CardTitle className="flex items-center gap-3 text-lg">
-                {getSectionIcon(section.title)}
-                <span className="text-gray-900">{section.title}</span>
-              </CardTitle>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500">
-                  {completedFields}/{section.fields.length} completed
-                </span>
-                {isExpanded ? (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+              <div className="flex items-center gap-1.5 text-sm font-medium uppercase">
+                <span>{section.title}</span>
+                {hasContent && (
+                  <span
+                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                      allFilled
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {filledCount}/{totalFields}
+                  </span>
                 )}
               </div>
+              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
             </div>
-          </CardHeader>
+          </div>
         </CollapsibleTrigger>
         <CollapsibleContent>
-          <CardContent className="p-6 space-y-4">
+          <div className="pb-3 space-y-2">
             {section.fields.map(
               (field: NoteFieldConfig, fieldIndex: number) => (
                 <ConsultationFormField
@@ -102,9 +97,9 @@ export const ConsultationSectionCard = ({
                 />
               )
             )}
-          </CardContent>
+          </div>
         </CollapsibleContent>
       </Collapsible>
-    </Card>
+    </div>
   );
 };

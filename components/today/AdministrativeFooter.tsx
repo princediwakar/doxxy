@@ -7,8 +7,7 @@ import { format, parseISO } from "date-fns";
 import { formatTimeIST } from "@/lib/utils";
 import { Spinner } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
-import { usePatientBills } from "@/hooks/usePatientBills";
-import type { PatientDetail } from "@/hooks/usePatientDetail";
+import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
 
 type ConsultationRow = {
@@ -31,6 +30,8 @@ interface AdministrativeFooterProps {
   isLoadingDetail: boolean;
   selectedPatientId: string;
   currentAppointmentId: string | null;
+  patientBills: BillWithDetails[];
+  isLoadingBills: boolean;
   defaultExpandBills?: boolean;
   defaultExpandHistory?: boolean;
   onViewBill: (bill: BillWithDetails) => void;
@@ -48,13 +49,13 @@ export function AdministrativeFooter({
   isLoadingDetail,
   selectedPatientId,
   currentAppointmentId,
+  patientBills = [],
+  isLoadingBills = false,
   defaultExpandBills = false,
   defaultExpandHistory = false,
   onViewBill,
   onViewConsultationFromHistory,
 }: AdministrativeFooterProps) {
-  const { data: patientBills = [], isLoading: isLoadingBills } = usePatientBills(selectedPatientId);
-
   const [billsOpen, setBillsOpen] = useState(defaultExpandBills);
   const [historyOpen, setHistoryOpen] = useState(defaultExpandHistory);
 

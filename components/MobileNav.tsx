@@ -7,7 +7,7 @@ import Link from "next/link";
 import { LogOut, Menu, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { navItems, isActiveLink } from "@/config/navigation";
 
 import ClinicSwitcher from "@/components/ClinicSwitcher";
@@ -25,7 +25,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 
 export function MobileNav() {
-  const { user, activeClinic, activeClinicRole, signOut, profileName } = useAuth();
+  const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -49,7 +49,7 @@ export function MobileNav() {
         </DrawerHeader>
 
         <div className="px-4 pb-4">
-          {activeClinic && <ClinicSwitcher />}
+          {activeClinicId && <ClinicSwitcher />}
         </div>
 
         <Separator className="my-2" />
@@ -95,7 +95,7 @@ export function MobileNav() {
                 {profileName || user?.email}
               </span>
               <span className="text-xs text-muted-foreground capitalize">
-                {activeClinicRole} • {activeClinic?.clinics?.name}
+                {activeClinicRole} • {activeClinicName}
               </span>
             </div>
           </div>

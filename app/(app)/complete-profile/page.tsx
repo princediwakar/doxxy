@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -12,9 +12,10 @@ import { Spinner } from "@/components/ui/loading"; // Added missing import
 import { z } from "zod";
 import { toast } from "sonner";
 import { processInvitationsOnProfileComplete } from "@/lib/invitation-utils";
-import { useCompleteProfile } from "@/hooks/useCompleteProfile";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { useQueryClient } from "@tanstack/react-query";
+import { upsertProfile } from "@/actions/profile";
+import { useQuery } from "@tanstack/react-query";
+import { queryUserProfile } from "@/lib/queries/profile";
+import { queryKeys } from "@/lib/query-keys";
 
 const profileSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -29,16 +30,19 @@ const profileSchema = z.object({
 type ProfileForm = z.infer<typeof profileSchema>;
 
 const CompleteProfile = () => {
-  const { user, signOut, markProfileComplete, fetchUserAndClinicData } = useAuth();
+  const { user, signOut } = useAppState();
   const router = useRouter();
   const [form, setForm] = useState<ProfileForm>({ name: "", phone: "" });
   const [loading, setLoading] = useState(false);
   const [processingMessage, setProcessingMessage] = useState<string>("");
   const [email, setEmail] = useState("");
-  const completeProfile = useCompleteProfile();
-  const queryClient = useQueryClient();
 
-  const { data: profileData } = useUserProfile(user?.id);
+  const { data: profileData } = useQuery({
+    queryKey: queryKeys.profile.user(user?.id ?? ""),
+    queryFn: () => queryUserProfile(user!.id!),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
     if (!user) return;
@@ -75,7 +79,7 @@ const CompleteProfile = () => {
     setProcessingMessage("Saving your profile...");
     
     try {
-      await completeProfile.mutateAsync({
+      const result = await upsertProfile({
         userId: user.id,
         name: form.name,
         phone: form.phone || null,
@@ -83,30 +87,17 @@ const CompleteProfile = () => {
         email: user.email,
       });
 
-      // ------------------------------------------------------------------
-      // CRITICAL STEP: Process Invitation BEFORE marking profile complete
-      // ------------------------------------------------------------------
-      
+      if ('error' in result && result.error) {
+        throw new Error(result.error);
+      }
+
       setProcessingMessage("Checking for invitations...");
-      
-      // Use strictly undefined if phone is empty string to match TS types
+
       const invitationResult = await processInvitationsOnProfileComplete(
         user,
         form.name,
         form.phone || undefined
       );
-
-      // 3. If invitation was processed successfully, REFRESH CLINIC DATA immediately
-      if (invitationResult.hasClinics || invitationResult.shouldNavigateToDashboard) {
-        setProcessingMessage("Setting up your dashboard...");
-        // This ensures 'activeClinic' becomes true inside AuthContext
-        await fetchUserAndClinicData(user);
-      }
-
-      // 4. NOW mark profile as complete.
-      // Because we fetched clinic data in step 3, activeClinic is likely true now.
-      // PrivateRoute will see: (!needsProfileCompletion && activeClinic) -> Dashboard
-      await markProfileComplete();
 
       // Clear tokens
       if (typeof localStorage !== 'undefined') {
@@ -114,11 +105,6 @@ const CompleteProfile = () => {
         localStorage.removeItem('invitation_data');
       }
 
-      // 5. Invalidate cached queries so target pages load fresh data
-      queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
-      queryClient.invalidateQueries({ queryKey: ['doctorDashboardData'] });
-
-      // 6. Navigate
       if (invitationResult.shouldNavigateToCreateClinic) {
         toast.success("Profile updated! Let's set up your clinic.");
         router.replace("/create-clinic");

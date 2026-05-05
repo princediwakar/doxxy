@@ -15,10 +15,12 @@ import { UseFormReturn } from "react-hook-form";
 import type { ConsultationFormValues } from "@/types/consultation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConsultationLayout } from "./ConsultationLayout";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { printConsultation } from "./consultationPrintUtils";
 import { toast } from "sonner";
-import { useCurrentDoctorDetails } from "@/hooks/useCurrentDoctorDetails";
+import { useQuery } from "@tanstack/react-query";
+import { queryCurrentDoctorByUserId } from "@/lib/queries/doctors";
+import { queryKeys } from "@/lib/query-keys";
 
 interface Section {
   title: string;
@@ -48,13 +50,13 @@ export const ConsultationPreviewModal = ({
   specialtySections,
   departmentType = "General",
 }: ConsultationPreviewModalProps) => {
-  const { activeClinic, user } = useAuth();
+  const { activeClinicId, activeClinicName, user } = useAppState();
 
   // Get consultation data from form
   const consultationData = form.watch("specialty_data");
 
   // Get the full clinic object for printing
-  const clinicDetails = activeClinic?.clinics || null;
+  const clinicDetails = (activeClinicId && activeClinicName) ? { id: activeClinicId, name: activeClinicName } as any : null;
 
   // Prepare clinic info for layout display
   const clinicInfo = clinicDetails
@@ -67,7 +69,15 @@ export const ConsultationPreviewModal = ({
       }
     : null;
 
-  const { data: doctorDetails } = useCurrentDoctorDetails();
+  const { data: doctorDetails } = useQuery({
+    queryKey: queryKeys.doctors.currentForClinic(
+      activeClinicId ?? "",
+      user?.id ?? "",
+    ),
+    queryFn: () =>
+      queryCurrentDoctorByUserId(user!.id!, activeClinicId!),
+    enabled: !!activeClinicId && !!user?.id,
+  });
 
   // Prepare doctor info
   const doctorInfo = {

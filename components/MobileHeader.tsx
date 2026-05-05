@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { LogOut, User2 } from "lucide-react";
 
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 
 export function MobileHeader() {
-  const { user, activeClinic, activeClinicRole, signOut, profileName } = useAuth();
+  const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
 
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b pt-safe">
@@ -19,7 +19,7 @@ export function MobileHeader() {
         <img src="/logo.svg" alt="Doxxy" className="h-7 flex-shrink-0" />
 
         <div className="min-w-0 flex-1">
-          {activeClinic && <ClinicSwitcher />}
+          {activeClinicId && <ClinicSwitcher />}
         </div>
 
         <Popover>
@@ -51,7 +51,7 @@ export function MobileHeader() {
                   {profileName || user?.email}
                 </span>
                 <span className="text-xs text-muted-foreground capitalize">
-                  {activeClinicRole} • {activeClinic?.clinics?.name}
+                  {activeClinicRole} • {activeClinicName}
                 </span>
               </div>
             </div>

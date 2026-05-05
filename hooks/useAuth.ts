@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { useAuthTokenHandlers } from "./useAuthTokenHandlers";
 
 const supabase = getSupabase();
@@ -21,41 +21,18 @@ export const useAuthFlow = () => {
   const [otpSent, setOtpSent] = useState(false);
 
   const searchParams = useSearchParams();
-  const { user, activeClinic, loading: authLoading, needsProfileCompletion } = useAuth();
+  const { user } = useAppState();
   const router = useRouter();
 
   // Process invite/reset tokens from URL
   useAuthTokenHandlers({ setLoading, setAuthFlow, setEmail });
 
-  // Redirect authenticated users
+  // Redirect authenticated users — middleware handles profile/clinic checks
   useEffect(() => {
-    if (authLoading) return;
-
     if (user) {
-      if (process.env.NODE_ENV === "development") {
-        logger.log('Auth: Authenticated user detected, checking redirect logic', {
-          user: !!user,
-          needsProfileCompletion,
-          activeClinic: activeClinic ? 'present' : null
-        });
-      }
-
-      if (needsProfileCompletion) {
-        if (process.env.NODE_ENV === "development") logger.log('Auth: Redirecting to /complete-profile');
-        router.replace("/complete-profile");
-        return;
-      }
-
-      if (!activeClinic) {
-        if (process.env.NODE_ENV === "development") logger.log('Auth: No active clinic, redirecting to /create-clinic');
-        router.replace("/create-clinic");
-        return;
-      }
-
-      if (process.env.NODE_ENV === "development") logger.log('Auth: User has active clinic, redirecting to /today');
       router.replace(searchParams.get('redirect') || "/today");
     }
-  }, [user, authLoading, needsProfileCompletion, activeClinic, router, searchParams]);
+  }, [user, router, searchParams]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,9 +135,6 @@ export const useAuthFlow = () => {
     googleLoading,
     otpSent,
     user,
-    activeClinic,
-    authLoading,
-    needsProfileCompletion,
     handleEmailAuth,
     resendOTP,
     handleGoogleSignIn,

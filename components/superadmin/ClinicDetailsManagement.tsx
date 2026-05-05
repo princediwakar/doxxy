@@ -6,10 +6,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/contexts/AuthContext";
-import { useClinicDetails } from "@/hooks/useClinicDetails";
+import { useAppState } from "@/contexts/AppStateContext";
+import { updateClinic } from "@/actions/clinic";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DbClinic } from "@/types/core";
+import { type DbClinic } from "@/types/core";
 import { z } from "zod";
 import { 
   Building, 
@@ -47,9 +49,26 @@ interface ValidationError {
 }
 
 const ClinicDetailsManagement = () => {
-  const { activeClinic, activeClinicRole } = useAuth();
-  const clinic = activeClinic?.clinics as DbClinic | null;
-  const { clinicData, isLoading: isLoadingClinic, updateClinic, isUpdating } = useClinicDetails(clinic?.id);
+  const { activeClinicId, activeClinicRole } = useAppState();
+  const queryClient = useQueryClient();
+  const supabase = getSupabase();
+
+  const { data: clinicData, isLoading: isLoadingClinic } = useQuery({
+    queryKey: ['clinic', 'details', activeClinicId],
+    queryFn: async () => {
+      if (!activeClinicId) return null;
+      const { data, error } = await supabase
+        .from('clinics')
+        .select('*')
+        .eq('id', activeClinicId)
+        .single();
+      if (error) throw error;
+      return data as DbClinic;
+    },
+    enabled: !!activeClinicId,
+  });
+
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const [form, setForm] = useState<ClinicDetailsForm>({
     name: "",
@@ -105,18 +124,30 @@ const ClinicDetailsManagement = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast.error("Please fix validation errors");
       return;
     }
-    
-    updateClinic(form, {
-      onSuccess: () => {
-        setHasUnsavedChanges(false);
-        setValidationErrors([]);
-      },
-    });
+
+    if (!activeClinicId) return;
+
+    setIsUpdating(true);
+    try {
+      const result = await updateClinic(activeClinicId, form);
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ['clinic', 'details', activeClinicId] });
+      setHasUnsavedChanges(false);
+      setValidationErrors([]);
+      toast.success('Clinic details updated');
+    } catch {
+      toast.error('Failed to update clinic details');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const getFieldError = (field: keyof ClinicDetailsForm) => {
@@ -142,7 +173,7 @@ const ClinicDetailsManagement = () => {
     );
   }
 
-  if (!clinic) {
+  if (!activeClinicId) {
     return (
       <Card>
         <CardContent className="p-6">

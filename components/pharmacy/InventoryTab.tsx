@@ -1,14 +1,15 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useInventory, InventoryItemWithMedicine } from "@/hooks/useInventory";
+import { useAppState } from "@/contexts/AppStateContext";
+import type { InventoryItemWithMedicine } from "@/types/core";
+import { updateItem as updateItemAction } from "@/actions/inventory";
+import { toast } from "sonner";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, PackageSearch, Pencil, ChevronDown, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
@@ -71,9 +72,13 @@ function getGroupStatus(items: InventoryItemWithMedicine[], today: Date, nextMon
   return worst;
 }
 
-export function InventoryTab() {
-  const { activeClinicRole } = useAuth();
-  const { inventory, isLoading, updateItem } = useInventory();
+interface InventoryTabProps {
+  inventory: InventoryItemWithMedicine[];
+}
+
+export function InventoryTab({ inventory }: InventoryTabProps) {
+  const { activeClinicRole } = useAppState();
+  const [isSaving, setIsSaving] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItemWithMedicine | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -93,19 +98,31 @@ export function InventoryTab() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!editingItem) return;
-    updateItem.mutate({
-      id: editingItem.id,
-      batch_number: editingItem.batch_number,
-      expiry_date: editingItem.expiry_date,
-      current_stock: editingItem.current_stock,
-      reorder_level: editingItem.reorder_level,
-      unit_cost_price: editingItem.unit_cost_price,
-      mrp: editingItem.mrp,
-    }, {
-      onSuccess: () => { setIsDialogOpen(false); setEditingItem(null); },
-    });
+    setIsSaving(true);
+    try {
+      const result = await updateItemAction({
+        id: editingItem.id,
+        batch_number: editingItem.batch_number,
+        expiry_date: editingItem.expiry_date,
+        current_stock: editingItem.current_stock,
+        reorder_level: editingItem.reorder_level,
+        unit_cost_price: editingItem.unit_cost_price,
+        mrp: editingItem.mrp,
+      });
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
+      }
+      setIsDialogOpen(false);
+      setEditingItem(null);
+      toast.success('Item updated');
+    } catch {
+      toast.error('Failed to update item');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const today = new Date();
@@ -113,10 +130,6 @@ export function InventoryTab() {
   nextMonth.setMonth(today.getMonth() + 1);
 
   const groups = useMemo(() => (inventory ? groupByMedicine(inventory) : []), [inventory]);
-
-  if (isLoading) {
-    return <div className="p-8 flex justify-center"><Spinner size="lg" /></div>;
-  }
 
   return (
     <>
@@ -335,7 +348,7 @@ export function InventoryTab() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={updateItem.isPending}>{updateItem.isPending ? "Saving..." : "Save Changes"}</Button>
+            <Button onClick={handleSave} disabled={isSaving}>{isSaving ? "Saving..." : "Save Changes"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

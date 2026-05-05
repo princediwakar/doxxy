@@ -11,8 +11,9 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Check, Star, Zap, IndianRupee, Loader2 } from 'lucide-react';
-import { usePayments, CreditPackage } from '@/hooks/usePayments';
-import { useAuth } from '@/contexts/AuthContext';
+import { CREDIT_PACKAGES, type CreditPackage } from '@/types/billing';
+import { createRazorpayOrder, processPaymentSuccess } from '@/actions/payments';
+import { useAppState } from '@/contexts/AppStateContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -65,15 +66,11 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   open,
   onOpenChange,
 }) => {
-  const {
-    creditPackages,
-    createRazorpayOrder,
-    processPaymentSuccess,
-    isProcessingPayment,
-    setIsProcessingPayment,
-  } = usePayments();
+  const creditPackages = CREDIT_PACKAGES;
 
-  const { user, activeClinic } = useAuth();
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  const { user, activeClinicName, activeClinicId } = useAppState();
 
   const [selectedPackage, setSelectedPackage] = useState<CreditPackage | null>(null);
   const [customAmount, setCustomAmount] = useState<string>('');
@@ -114,7 +111,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
   }, [open, creditPackages]);
 
   const handlePurchase = async () => {
-    if (!activeClinic) return;
+    if (!activeClinicId) return;
     setIsProcessingPayment(true);
 
     let amount = 0;
@@ -141,12 +138,21 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
     }
 
     try {
-      // Step A: Create Order via Edge Function
-      const { transaction, order } = await createRazorpayOrder.mutateAsync({
+      // Step A: Create Order via Server Action
+      const orderResult = await createRazorpayOrder({
+        clinicId: activeClinicId,
         packageId,
         amount,
         credits
       });
+
+      if ('error' in orderResult) {
+        toast.error("Failed to create order", { description: orderResult.error });
+        setIsProcessingPayment(false);
+        return;
+      }
+
+      const { transaction, order } = orderResult;
 
       const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
       if (!razorpayKey) throw new Error("Razorpay key missing");
@@ -156,17 +162,26 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
         key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
-        name: activeClinic.clinic_name || 'Clinic Credits',
+        name: activeClinicName || 'Clinic Credits',
         description: description,
         order_id: order.id,
         handler: async (response) => {
           try {
-            await processPaymentSuccess.mutateAsync({
+            const verifyResult = await processPaymentSuccess({
               transactionId: transaction.id,
               paymentId: response.razorpay_payment_id,
               signature: response.razorpay_signature
             });
-            onOpenChange(false); // Close modal on success
+
+            if ('error' in verifyResult) {
+              toast.error("Payment Verification Failed", {
+                description: "If money was deducted, please contact support with your Payment ID."
+              });
+              return;
+            }
+
+            toast.success("Payment Successful", { description: "Credits have been added to your account." });
+            onOpenChange(false);
           } catch (e) {
             logger.error(e);
           } finally {
@@ -193,7 +208,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
 
     } catch (error) {
       setIsProcessingPayment(false);
-      // Toast is handled in mutation onError
+      toast.error("Failed to create order", { description: error instanceof Error ? error.message : 'Unknown error' });
     }
   };
 

@@ -1,11 +1,12 @@
 "use client";
 import { logger } from "@/lib/logger";
-import React, { useEffect, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCreateProcurement } from "@/hooks/useProcurements";
-import { useProcurementStorage } from "@/hooks/useProcurementStorage";
-import { useBillExtraction } from "@/hooks/useBillExtraction";
-import { useCreateMedicine } from "@/hooks/useCreateMedicine";
+import React, { useEffect, useRef, useState } from "react";
+import { useAppState } from "@/contexts/AppStateContext";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getSupabase } from "@/integrations/supabase/client";
+import { saveFullProcurement } from "@/actions/inventory";
+import { extractBillData } from "@/lib/bill-extraction";
+import { queryKeys } from "@/lib/query-keys";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { procurementSchema, ProcurementFormValues } from "@/types/pharmacy";
@@ -32,13 +33,126 @@ interface ProcurementEntrySheetProps {
 }
 
 export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySheetProps) {
-  const { activeClinic } = useAuth();
-  const createProcurement = useCreateProcurement();
-  const { uploadBillImage, isUploading } = useProcurementStorage();
-  const { extractData, isExtracting, extractionStats, resetExtraction } = useBillExtraction();
-  const { createMedicine } = useCreateMedicine();
+  const { activeClinicId, user } = useAppState();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
+
+  // Local state for operations that were in hooks
+  const [isUploading, setIsUploading] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionStats, setExtractionStats] = useState<{ total: number; matched: number } | null>(null);
+
+  // ── Bill image upload (inherently client-side — Supabase Storage) ──
+  const uploadBillImage = async (file: File, clinicId: string): Promise<string> => {
+    const supabase = getSupabase();
+    setIsUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${clinicId}/${Date.now()}.${fileExt}`;
+      const { error } = await supabase.storage
+        .from('procurement_bills')
+        .upload(fileName, file);
+      if (error) throw error;
+      const { data } = supabase.storage
+        .from('procurement_bills')
+        .getPublicUrl(fileName);
+      return data.publicUrl;
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // ── Bill extraction (API call) ──
+  const handleExtract = async (imageUrl: string) => {
+    setIsExtracting(true);
+    setExtractionStats(null);
+    const infoToastId = toast.info('Extracting details using AI...');
+    try {
+      const result = await extractBillData(imageUrl);
+      form.reset(result.formData);
+      setExtractionStats({ total: result.totalCount, matched: result.matchedCount });
+      const unmapped = result.totalCount - result.matchedCount;
+      if (unmapped === 0) {
+        toast.success(`All ${result.totalCount} items added to stock!`);
+      } else {
+        toast.success(
+          `Added ${result.totalCount} items — ${result.matchedCount} found in catalog, ${unmapped} are new.`,
+        );
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      logger.error('Bill extraction failed:', msg);
+      toast.error(msg || 'Failed to extract bill data');
+    } finally {
+      toast.dismiss(infoToastId);
+      setIsExtracting(false);
+    }
+  };
+
+  const resetExtraction = () => setExtractionStats(null);
+
+  // ── Create medicine inline (calls API endpoint) ──
+  const createMedicine = async (name: string): Promise<{ id: number; name: string } | null> => {
+    try {
+      const { data: { session } } = await getSupabase().auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch('/api/medicines', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ name }),
+      });
+      let json: Record<string, unknown> = {};
+      try { json = (await res.json()) as Record<string, unknown>; } catch { /* ignore */ }
+      if (!res.ok) throw new Error((json.error as string) || 'Failed to create medicine');
+      return { id: json.id as number, name: json.name as string };
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Failed to create medicine';
+      toast.error(msg);
+      return null;
+    }
+  };
+
+  // ── Procurement mutation via server action ──
+  const saveMutation = useMutation({
+    mutationFn: (data: ProcurementFormValues) => {
+      if (!activeClinicId || !user?.id) throw new Error('No active clinic selected.');
+      return saveFullProcurement({
+        clinicId: activeClinicId,
+        userId: user.id,
+        supplier_name: data.supplier_name,
+        invoice_number: data.invoice_number,
+        invoice_date: data.invoice_date,
+        total_amount: data.total_amount,
+        items: (data.items ?? []).map((item) => ({
+          extracted_name: item.extracted_name,
+          medicine_id: item.medicine_id,
+          batch_number: item.batch_number,
+          expiry_date: item.expiry_date,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          mrp: item.mrp,
+          total_price: item.total_price,
+        })),
+      });
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['pharmacy_inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['pharmacy_procurements'] });
+      const createdCount = result.createdCount ?? 0;
+      if (createdCount > 0) {
+        toast.success(`Saved! ${createdCount} new medicine(s) added to your stock catalog.`);
+      } else {
+        toast.success('Saved! Stock has been updated.');
+      }
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to save stock');
+    },
+  });
 
   const form = useForm<ProcurementFormValues>({
     resolver: zodResolver(procurementSchema),
@@ -58,12 +172,13 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
 
   useEffect(() => {
     if (open) resetExtraction();
-  }, [open, resetExtraction]);
+  }, [open]);
+
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!activeClinic?.clinic_id) {
+    if (!activeClinicId) {
       toast.error("No clinic selected. Please select a clinic first.");
       if (fileInputRef.current) fileInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
@@ -72,7 +187,7 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
 
     let publicUrl: string;
     try {
-      publicUrl = await uploadBillImage(file, activeClinic.clinic_id);
+      publicUrl = await uploadBillImage(file, activeClinicId);
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Unknown error";
       logger.error("Bill image upload failed:", msg);
@@ -82,26 +197,14 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
       return;
     }
 
-    try {
-      const result = await extractData(publicUrl);
-      form.reset(result.formData);
-      const unmapped = result.totalCount - result.matchedCount;
-      if (unmapped === 0) {
-        toast.success(`All ${result.totalCount} items added to stock!`);
-      } else {
-        toast.success(
-          `Added ${result.totalCount} items — ${result.matchedCount} found in catalog, ${unmapped} are new.`
-        );
-      }
-    } catch {
-      // extractData already shows the error toast
-    } finally {
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      if (cameraInputRef.current) cameraInputRef.current.value = "";
-    }
+    await handleExtract(publicUrl);
+
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
+
   const onSubmit = (data: ProcurementFormValues) => {
-    createProcurement.mutate(data, {
+    saveMutation.mutate(data, {
       onSuccess: () => {
         form.reset();
         resetExtraction();
@@ -199,10 +302,10 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                 />
                 <Button
                   onClick={form.handleSubmit(onSubmit)}
-                  disabled={createProcurement.isPending || isExtracting || isUploading}
+                  disabled={saveMutation.isPending || isExtracting || isUploading}
                   className="w-full sm:w-auto justify-center"
                 >
-                  {createProcurement.isPending ? (
+                  {saveMutation.isPending ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   ) : (
                     <Save className="w-4 h-4 mr-2" />

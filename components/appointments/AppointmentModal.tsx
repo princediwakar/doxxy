@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { PatientModal } from "@/components/patients/PatientModal";
-import { PatientSelect } from "./PatientSelect"; // Imported new component
+import { PatientSelect } from "./PatientSelect";
 import {
   Patient,
   appointmentFormSchema,
@@ -31,7 +31,10 @@ import {
 } from "./appointment.utils";
 import type { AppointmentData } from "@/types/appointments";
 import { useAppointmentForm } from "@/hooks/useAppointmentForm";
-import { useAppointmentMutation } from "@/hooks/useAppointmentMutations";
+import { createAppointment, updateAppointment } from "@/actions/appointments";
+import { useAppState } from "@/contexts/AppStateContext";
+import { showErrorToast } from "@/lib/error-utils";
+import { toast } from "sonner";
 
 interface AppointmentModalProps {
   open: boolean;
@@ -46,11 +49,11 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   appointment,
   patient,
 }) => {
-  // 1. Data & Mutation
   const { patients, isLoadingPatients, doctors, isLoadingDoctors } = useAppointmentForm(open);
-  const mutation = useAppointmentMutation(appointment, () => onOpenChange(false));
+  const { activeClinicId } = useAppState();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 2. Local State
+  // Local State
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [newPatientName, setNewPatientName] = useState("");
 
@@ -94,9 +97,46 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   }, [open, appointment, patient, doctors, form]);
 
 
-  const onSubmit = (values: AppointmentFormValues) => {
-    if (mutation.isPending) return;
-    mutation.mutate(values);
+  const onSubmit = async (values: AppointmentFormValues) => {
+    if (isSubmitting || !activeClinicId) return;
+
+    setIsSubmitting(true);
+    try {
+      const baseData = {
+        clinic_id: activeClinicId,
+        date: format(values.date, "yyyy-MM-dd"),
+        time: values.time || "",
+        patient_id: values.patient_id,
+        doctor_id: values.doctor_id,
+        type: values.type,
+        status: values.status,
+        notes: values.notes || "",
+      };
+
+      if (appointment) {
+        const result = await updateAppointment(appointment.id, baseData);
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Appointment updated!");
+          onOpenChange(false);
+        }
+      } else {
+        const result = await createAppointment(baseData);
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Appointment created!");
+          onOpenChange(false);
+        }
+      }
+    } catch (err) {
+      showErrorToast(err, {
+        title: appointment ? "Failed to update appointment." : "Failed to create appointment.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -275,8 +315,8 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
 
             <DialogFooter className="md:col-span-2 gap-2">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? "Saving..." : appointment ? "Update Appointment" : "Create Appointment"}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : appointment ? "Update Appointment" : "Create Appointment"}
               </Button>
             </DialogFooter>
           </form>

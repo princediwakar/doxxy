@@ -3,7 +3,7 @@
 import { logger } from "@/lib/logger";
 import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { queryKeys } from "@/lib/query-keys";
 import {
   RpcPatient,
@@ -14,25 +14,25 @@ import type { DbDoctor } from "@/types/core";
 const supabase = getSupabase();
 
 export const useAppointmentForm = (open: boolean) => {
-  const { activeClinic } = useAuth();
+  const { activeClinicId } = useAppState();
 
   // --- Fetch Patients ---
   const { data: patients, isLoading: isLoadingPatients } = useQuery<
     RpcPatient[],
     Error
   >({
-    queryKey: queryKeys.patients.byClinic(activeClinic?.clinic_id ?? ""),
+    queryKey: queryKeys.patients.byClinic(activeClinicId ?? ""),
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinicId) return [];
       const { data, error } = await supabase.rpc("get_patients_by_clinic", {
-        _clinic_id: activeClinic.clinic_id,
+        _clinic_id: activeClinicId,
         _limit: 100,
         _offset: 0,
       });
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinicId,
   });
 
   // --- Fetch Doctors ---
@@ -40,15 +40,15 @@ export const useAppointmentForm = (open: boolean) => {
     TransformedDoctor[],
     Error
   >({
-    queryKey: queryKeys.doctors.forAppointment(activeClinic?.clinic_id ?? ""),
+    queryKey: queryKeys.doctors.forAppointment(activeClinicId ?? ""),
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinicId) return [];
 
       // 1. Try RPC
       const { data: rpcData, error: rpcError } = await supabase.rpc(
         "get_doctors_by_clinic",
         {
-          clinic_id: activeClinic.clinic_id,
+          clinic_id: activeClinicId,
         }
       );
 
@@ -95,7 +95,7 @@ export const useAppointmentForm = (open: boolean) => {
           )
         `
         )
-        .eq("clinic_id", activeClinic.clinic_id)
+        .eq("clinic_id", activeClinicId)
         .eq("is_active", true);
 
       if (fallbackError) throw new Error(`Failed to fetch doctors: ${fallbackError.message}`);
@@ -143,7 +143,7 @@ export const useAppointmentForm = (open: boolean) => {
         };
       });
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinicId,
   });
 
   return {
@@ -151,6 +151,6 @@ export const useAppointmentForm = (open: boolean) => {
     isLoadingPatients,
     doctors,
     isLoadingDoctors,
-    activeClinic,
+    activeClinicId,
   };
 };

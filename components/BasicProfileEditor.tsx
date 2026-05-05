@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
-import { useProfileEditor } from '@/hooks/useProfileEditor';
+import { useAppState } from '@/contexts/AppStateContext';
+import { updateProfileEditor } from '@/actions/profile';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getSupabase } from '@/integrations/supabase/client';
+import { showErrorToast } from '@/lib/error-utils';
 import { toast } from 'sonner';
 import {
   User as UserIcon,
@@ -33,7 +36,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   user, 
   onProfileUpdate 
 }) => {
-  const { markProfileComplete, activeClinic } = useAuth();
+  const { activeClinicId } = useAppState();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editedName, setEditedName] = useState(user?.user_metadata?.name || '');
@@ -42,19 +45,25 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   const [photoPreview, setPhotoPreview] = useState(user?.user_metadata?.avatar_url || '');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const { profileData, profileLoading, updateProfile, isUpdating } = useProfileEditor({
-    userId: user?.id,
-    enabled: open,
-    activeClinicId: activeClinic?.clinics?.id,
-    onSuccess: () => {
-      toast.success('Profile updated successfully!', {
-        description: 'Your changes have been saved.',
-      });
-      markProfileComplete();
-      onProfileUpdate?.();
-      onClose();
+  const queryClient = useQueryClient();
+  const supabase = getSupabase();
+
+  const { data: profileData, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile', 'user', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
     },
+    enabled: !!user?.id && open,
   });
+
+  const [isUpdating, setIsUpdating] = useState(false);
 
   React.useEffect(() => {
     if (profileData?.name) {
@@ -92,7 +101,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
     }
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     const errors: Record<string, string> = {};
     if (!editedName.trim()) {
       errors.name = 'Name is required';
@@ -108,13 +117,58 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       return;
     }
 
-    updateProfile({
-      name: editedName.trim(),
-      phone: cleanPhone,
-      profilePhoto,
-      currentAvatarUrl: user?.user_metadata?.avatar_url,
-      userEmail: user?.email,
-    });
+    if (!user?.id) return;
+    setIsUpdating(true);
+
+    try {
+      let avatarUrl = user?.user_metadata?.avatar_url;
+
+      if (profilePhoto) {
+        const fileExt = profilePhoto.name?.split('.').pop() || 'jpg';
+        const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, profilePhoto);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        avatarUrl = urlData.publicUrl;
+      }
+
+      const result = await updateProfileEditor({
+        userId: user.id,
+        name: editedName.trim(),
+        phone: cleanPhone,
+        avatarUrl,
+        userEmail: user?.email,
+        activeClinicId,
+      });
+
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['profile', 'user', user.id] });
+      if (activeClinicId) {
+        queryClient.invalidateQueries({ queryKey: ['profile', 'doctor', user.id, activeClinicId] });
+      }
+
+      toast.success('Profile updated successfully!', {
+        description: 'Your changes have been saved.',
+      });
+      onProfileUpdate?.();
+      onClose();
+    } catch (err) {
+      showErrorToast(err instanceof Error ? err : new Error('Error updating profile'), { title: 'Error updating profile' });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleCancel = () => {

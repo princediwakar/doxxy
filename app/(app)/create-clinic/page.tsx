@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation"
+import { useAppState } from "@/contexts/AppStateContext";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { DbDepartmentType } from "@/types/core";
@@ -16,8 +17,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Stethoscope, Building2, AlertTriangle } from "lucide-react";
-import { useDepartmentTypes } from "@/hooks/useDepartmentTypes";
-import { useCreateClinic } from "@/hooks/useCreateClinic";
+import { useQuery } from "@tanstack/react-query";
+import { queryDepartmentTypes } from "@/lib/queries/clinic";
+import { queryKeys } from "@/lib/query-keys";
+import { createClinicWithAdmin } from "@/actions/clinic";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
 import {
@@ -73,7 +76,7 @@ const doctorProfileSchema = z.object({
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
 const CreateClinicPage = () => {
-  const { user, fetchUserAndClinicData, setActiveClinicId } = useAuth();
+  const { user, setActiveClinicId } = useAppState();
   const router = useRouter();
   const [step, setStep] = React.useState<1 | 2 | 3>(1);
   const [clinicDetails, setClinicDetails] = React.useState<ClinicDetailsForm>({
@@ -94,9 +97,14 @@ const CreateClinicPage = () => {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   // Fetch department types
-  const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useDepartmentTypes();
+  const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useQuery({
+    queryKey: queryKeys.clinicDepartments.allTypes,
+    queryFn: () => queryDepartmentTypes(),
+    staleTime: 30 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    retry: 3,
+  });
 
-  const createClinicMutation = useCreateClinic();
   const queryClient = useQueryClient();
 
   // Step 1 form
@@ -156,38 +164,46 @@ const CreateClinicPage = () => {
     setStep(2);
   };
 
-  // Final Submit (Step 3) — delegates to useCreateClinic hook
+  // Final Submit (Step 3) — calls server action
   const handleSubmit = async (data: DoctorProfileForm) => {
     if (!user) return;
     setIsSubmitting(true);
 
     try {
-      const createdClinicId = await createClinicMutation.mutateAsync({
-        user: {
-          id: user.id,
-          email: user.email,
-          phone: user.phone,
-          user_metadata: user.user_metadata,
-        },
-        clinicDetails,
+      const result = await createClinicWithAdmin({
+        clinicName: clinicDetails.name,
+        address: clinicDetails.address,
+        email: clinicDetails.email,
+        phone: clinicDetails.phone,
+        website: clinicDetails.website,
+        userId: user.id,
+        userPhone: user.phone,
         departments,
-        doctorProfile: data,
+        isDoctor: data.isDoctor === 'yes',
+        doctorBio: data.bio,
+        doctorPhone: data.phone,
+        selectedDepartment: data.selectedDepartment,
+        consultationFee: data.consultationFee,
+        userName: user.user_metadata?.name,
+        userEmail: user.email,
       });
 
-      // Update auth context - ensure clinic data is refreshed
-      await fetchUserAndClinicData(user);
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
+      }
 
-      // Now that clinic data is refreshed, set the new clinic as active
-      setActiveClinicId(createdClinicId);
+      if ('clinicId' in result && result.clinicId) {
+        setActiveClinicId(result.clinicId);
+      }
 
-      // Invalidate cached queries so dashboard loads fresh data
       queryClient.invalidateQueries({ queryKey: ['dashboardData'] });
       queryClient.invalidateQueries({ queryKey: ['doctorDashboardData'] });
 
-      // Navigate to /today - the new clinic should now be active
+      toast.success(`Clinic "${clinicDetails.name}" created successfully.`);
       router.replace("/today");
-    } catch {
-      // Error toast handled by hook's onError
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Error creating clinic');
     } finally {
       setIsSubmitting(false);
     }

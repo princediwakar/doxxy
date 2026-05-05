@@ -2,9 +2,10 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { subDays } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
-import { useAnalytics } from "@/hooks/useAnalytics";
+import { subDays, differenceInDays } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import { useAppState } from "@/contexts/AppStateContext";
+import { queryClinicAnalytics, queryDoctorAnalytics, queryDemographics, queryProviderPerformance, queryDoctorId } from "@/lib/queries/analytics";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DoctorPerformanceTable } from "@/components/dashboard/DoctorPerformanceTable";
@@ -14,8 +15,44 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { showErrorToast } from "@/lib/error-utils";
 import { Users, CalendarCheck, Clock, Activity, Heart, TrendingDown } from "lucide-react";
+import type { AnalyticsTrend, TrendDirection, ClinicAnalytics, DoctorAnalytics } from "@/types/dashboard";
 
 type Period = "7d" | "30d";
+
+function formatDate(d: Date): string {
+  return d.toISOString().split("T")[0];
+}
+
+function computeTrend(current: number, previous: number): { value: number; direction: TrendDirection; pct: number } {
+  if (previous === 0) return { value: 0, direction: "neutral", pct: 0 };
+  const pct = Math.round(((current - previous) / previous) * 100);
+  return {
+    value: Math.abs(pct),
+    direction: pct > 0 ? "up" : pct < 0 ? "down" : "neutral",
+    pct,
+  };
+}
+
+function computeMetricTrend(
+  current: ClinicAnalytics | DoctorAnalytics | null | undefined,
+  previous: ClinicAnalytics | DoctorAnalytics | null | undefined,
+  metric: "total_appointments" | "completed" | "pending" | "no_shows" | "cancelled",
+): AnalyticsTrend {
+  const curr = current?.[metric] ?? 0;
+  const prev = previous?.[metric] ?? 0;
+  const trend = computeTrend(curr, prev);
+  return { value: trend.value, direction: trend.direction, label: trend.pct >= 0 ? `+${trend.pct}%` : `${trend.pct}%` };
+}
+
+function computeNoShowTrend(
+  current: ClinicAnalytics | DoctorAnalytics | null | undefined,
+  previous: ClinicAnalytics | DoctorAnalytics | null | undefined,
+): AnalyticsTrend {
+  const trend = computeMetricTrend(current, previous, "no_shows");
+  if (trend.direction === "up") return { ...trend, direction: "down" };
+  if (trend.direction === "down") return { ...trend, direction: "up" };
+  return trend;
+}
 
 function getDateRange(period: Period) {
   const end = new Date();
@@ -25,25 +62,94 @@ function getDateRange(period: Period) {
 
 export function AnalyticsPage() {
   const router = useRouter();
-  const { activeClinic, activeClinicRole, loading: authLoading } = useAuth();
+  const { activeClinicId, activeClinicRole, user } = useAppState();
   const [period, setPeriod] = useState<Period>("7d");
   const { startDate, endDate } = useMemo(() => getDateRange(period), [period]);
 
-  const {
-    clinicData,
-    practiceData,
-    chartBreakdown,
-    trends,
-    demographics,
-    providerPerformance,
-    isLoading,
-    isLoadingDemographics,
-    isLoadingProviderPerformance,
-    hasDoctorProfile,
-    error,
-  } = useAnalytics({ startDate, endDate });
+  const clinicId = activeClinicId ?? "";
+  const isDoctor = activeClinicRole === "doctor";
+  const isSuperadmin = activeClinicRole === "superadmin";
+  const isStaff = activeClinicRole === "staff";
 
-  if (authLoading || !activeClinic || !activeClinicRole) {
+  const daysDiff = differenceInDays(endDate, startDate);
+  const previousStartDate = subDays(startDate, daysDiff + 1);
+  const previousEndDate = subDays(startDate, 1);
+
+  const { data: doctorId } = useQuery({
+    queryKey: ["doctorId", user?.id, clinicId],
+    queryFn: () => queryDoctorId(user?.id!, clinicId),
+    enabled: !!user?.id && !!clinicId && (isDoctor || isSuperadmin),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const hasDoctorProfile = !!doctorId;
+
+  const { data: clinicCurrent, isLoading: clinicCurrentLoading, error: clinicCurrentError } = useQuery({
+    queryKey: ["clinicAnalytics", clinicId, formatDate(startDate), formatDate(endDate)],
+    queryFn: () => queryClinicAnalytics(clinicId, formatDate(startDate), formatDate(endDate)),
+    enabled: !!clinicId && (isSuperadmin || isStaff),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: clinicPrevious } = useQuery({
+    queryKey: ["clinicAnalytics", clinicId, formatDate(previousStartDate), formatDate(previousEndDate)],
+    queryFn: () => queryClinicAnalytics(clinicId, formatDate(previousStartDate), formatDate(previousEndDate)),
+    enabled: !!clinicId && (isSuperadmin || isStaff),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: doctorCurrent, isLoading: doctorCurrentLoading, error: doctorCurrentError } = useQuery({
+    queryKey: ["doctorAnalytics", doctorId, formatDate(startDate), formatDate(endDate)],
+    queryFn: () => queryDoctorAnalytics(doctorId!, formatDate(startDate), formatDate(endDate)),
+    enabled: !!doctorId && (isDoctor || isSuperadmin),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: doctorPrevious } = useQuery({
+    queryKey: ["doctorAnalytics", doctorId, formatDate(previousStartDate), formatDate(previousEndDate)],
+    queryFn: () => queryDoctorAnalytics(doctorId!, formatDate(previousStartDate), formatDate(previousEndDate)),
+    enabled: !!doctorId && (isDoctor || isSuperadmin),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: demographics, isLoading: isLoadingDemographics } = useQuery({
+    queryKey: ["demographics", clinicId, doctorId],
+    queryFn: () => queryDemographics(clinicId!, doctorId ?? null),
+    enabled: !!clinicId && (isDoctor || (isSuperadmin && hasDoctorProfile) || isStaff),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: providerPerformance, isLoading: isLoadingProviderPerformance } = useQuery({
+    queryKey: ["providerPerformance", clinicId, formatDate(startDate), formatDate(endDate)],
+    queryFn: () => queryProviderPerformance(clinicId, formatDate(startDate), formatDate(endDate)),
+    enabled: !!clinicId && (isSuperadmin || isStaff),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Compute trends (from original hook logic)
+  const trends = useMemo(() => {
+    const source = isDoctor ? doctorCurrent : clinicCurrent;
+    const prev = isDoctor ? doctorPrevious : clinicPrevious;
+    if (!source) return null;
+    return {
+      totalAppointments: computeMetricTrend(source, prev, "total_appointments"),
+      completed: computeMetricTrend(source, prev, "completed"),
+      pending: computeMetricTrend(source, prev, "pending"),
+      noShows: computeNoShowTrend(source, prev),
+      cancelled: computeMetricTrend(source, prev, "cancelled"),
+    };
+  }, [isDoctor, clinicCurrent, doctorCurrent, clinicPrevious, doctorPrevious]);
+
+  const clinicData = clinicCurrent;
+  const practiceData = (isDoctor ? doctorCurrent : hasDoctorProfile ? doctorCurrent : null);
+  const analyticsData = isDoctor ? doctorCurrent : clinicCurrent;
+  const chartBreakdown = analyticsData?.daily_breakdown ?? [];
+  const isLoading =
+    ((isSuperadmin || isStaff) && clinicCurrentLoading) ||
+    ((isDoctor || (isSuperadmin && hasDoctorProfile)) && doctorCurrentLoading);
+  const error = clinicCurrentError || doctorCurrentError;
+
+  if (!activeClinicId || !activeClinicRole) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <Spinner size="xl" />

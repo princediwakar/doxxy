@@ -5,7 +5,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UseMutationResult } from "@tanstack/react-query";
 import { z } from "zod";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import type { ConsultationFormValues } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase } from "@/types/core";
 import { consultationNotesSchema } from "@/lib/consultationNotesSchemas";
@@ -59,7 +59,7 @@ export const useConsultationForm = ({
   departmentType,
   canEditConsultation: canEditConsultationOverride,
 }: UseConsultationFormParams): UseConsultationFormReturn => {
-  const { user, activeClinic } = useAuth();
+  const { user, activeClinicId } = useAppState();
 
   // 1. Permission checking — use override when provided, otherwise compute
   const { canEditConsultation } =
@@ -97,7 +97,7 @@ export const useConsultationForm = ({
     formValues,
     appointmentId,
     appointment,
-    activeClinic,
+    activeClinicId,
     user,
     canEditConsultation,
     autoSaveReady,
@@ -112,7 +112,7 @@ export const useConsultationForm = ({
     useConsultationCompletion({
       appointmentId,
       appointment,
-      activeClinic,
+      activeClinicId,
       canEditConsultation,
       form,
       autoSaveMutation,

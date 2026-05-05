@@ -41,7 +41,7 @@ import { useBilling, BillingFormValues } from "@/hooks/useBilling";
 import { toast } from "sonner";
 import { ServiceItemsSection } from "./ServiceItemsSection";
 import { printBill, generateBillPrintContent, generateBillFilename } from "./billingPrintUtils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
 
@@ -79,7 +79,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     removeServiceItem,
     updateServiceItem,
     selectMedicineForItem,
-    saveBillMutation,
+    saveBill,
     isSubmitting,
     refetchInvoiceNumber,
   } = useBilling({ bill, patient, appointment, mode, open });
@@ -99,19 +99,21 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     onDirtyChange?.(form.formState.isDirty);
   }, [form.formState.isDirty, onDirtyChange]);
 
-  const { activeClinic } = useAuth();
+  const { activeClinicName } = useAppState();
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
-  const onSubmit = (values: BillingFormValues) => {
-    saveBillMutation.mutate(values, {
-      onSuccess: () => {
-        if (mode === "edit") {
-          onModeChange?.("view");
-        } else {
-          onOpenChange(false);
-        }
-      },
-    });
+  const onSubmit = async (values: BillingFormValues) => {
+    try {
+      await saveBill(values);
+      toast.success(mode === "edit" ? "Bill updated successfully!" : "Bill created successfully!");
+      if (mode === "edit") {
+        onModeChange?.("view");
+      } else {
+        onOpenChange(false);
+      }
+    } catch {
+      // error toast handled in useBilling
+    }
   };
 
   const handlePrint = async () => {
@@ -126,7 +128,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
           : null,
     };
 
-    await printBill(billData, patient || null, activeClinic?.clinics || null);
+    await printBill(billData, patient || null, null);
   };
 
   const handleDownload = async () => {
@@ -142,7 +144,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
             : null,
       };
 
-      const html = generateBillPrintContent(billData, patient || null, activeClinic?.clinics || null);
+      const html = generateBillPrintContent(billData, patient || null, null);
 
       const [jsPDFModule, html2canvasModule] = await Promise.all([
         import("jspdf"),
@@ -188,7 +190,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
         heightLeft -= pageHeight;
       }
 
-      const filename = generateBillFilename(billData, patient || null, activeClinic?.clinics?.name);
+      const filename = generateBillFilename(billData, patient || null, activeClinicName);
       pdf.save(filename);
     } catch (error) {
       toast.error("Failed to download bill PDF");

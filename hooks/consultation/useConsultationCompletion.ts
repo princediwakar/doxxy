@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import type { ConsultationFormValues } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase } from "@/types/core";
 import type { UseFormReturn } from "react-hook-form";
-import type { ClinicMemberWithClinic } from "@/hooks/useClinicData";
+import type { ClinicMemberWithClinic } from "@/types/core";
 
 const supabase = getSupabase();
 const isDev = process.env.NODE_ENV === "development";
@@ -58,7 +58,7 @@ async function finalizeAppointment(
 export interface UseConsultationCompletionParams {
   appointmentId: string | undefined;
   appointment: DbAppointment | null | undefined;
-  activeClinic: ClinicMemberWithClinic | null;
+  activeClinicId: string | undefined;
   canEditConsultation: boolean;
   form: UseFormReturn<ConsultationFormValues>;
   autoSaveMutation: UseMutationResult<DbConsultationBase, Error, ConsultationFormValues>;
@@ -74,7 +74,7 @@ export interface UseConsultationCompletionReturn {
 export const useConsultationCompletion = ({
   appointmentId,
   appointment,
-  activeClinic,
+  activeClinicId,
   canEditConsultation,
   form,
   autoSaveMutation,
@@ -167,7 +167,7 @@ export const useConsultationCompletion = ({
       isCompletingRef.current = true;
       await autoSaveMutation.mutateAsync(form.getValues());
 
-      const { creditResult } = await finalizeAppointment(appointmentId, activeClinic?.clinic_id);
+      const { creditResult } = await finalizeAppointment(appointmentId, activeClinicId);
 
       if (creditResult === 'failed') {
         toast('Consultation Completed', {
@@ -184,9 +184,9 @@ export const useConsultationCompletion = ({
       if (isDev) logger.log('✅ Consultation completed, appointment status updated');
 
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
-      queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id] });
-      queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary', activeClinic?.clinic_id] });
-      queryClient.invalidateQueries({ queryKey: ['clinic-credits', activeClinic?.clinic_id] });
+      queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinicId] });
+      queryClient.invalidateQueries({ queryKey: ['clinic-billing-summary', activeClinicId] });
+      queryClient.invalidateQueries({ queryKey: ['clinic-credits', activeClinicId] });
 
       toast.success('Consultation Completed', {
         description: 'The consultation has been marked as complete.',
@@ -204,7 +204,7 @@ export const useConsultationCompletion = ({
     validateMandatoryFields,
     form,
     queryClient,
-    activeClinic,
+    activeClinicId,
   ]);
 
   return { isConsultationCompleted, justCompleted, handleCompleteConsultation };

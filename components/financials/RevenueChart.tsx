@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { FileText } from "lucide-react";
-import type { MonthlyData, DailyData } from "@/hooks/useFinancialsData";
+import type { MonthlyData, DailyData } from "@/types/core";
 
 export function RevenueChart({ data }: { data: MonthlyData[] }) {
   const chartData = useMemo(() =>

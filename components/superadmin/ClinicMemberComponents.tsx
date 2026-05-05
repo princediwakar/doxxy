@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail, Stethoscope, Edit3, Trash2, Shield, UserCog, Users, Phone, Building2, X } from 'lucide-react';
-import { InviteMemberData, CreateDoctorData, MemberWithDetails, DepartmentWithDetails } from '@/hooks/useClinicMembers';
+import type { InviteMemberData, CreateDoctorData, MemberWithDetails, DepartmentWithDetails } from '@/types/core';
 import { ButtonLoader } from '@/components/ui/loading';
 import { UserRole } from '@/types/core';
 

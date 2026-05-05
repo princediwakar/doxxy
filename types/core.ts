@@ -146,6 +146,10 @@ export type DbInventoryItemInsert = Database['public']['Tables']['inventory_item
 /** Update type for inventory_items table */
 export type DbInventoryItemUpdate = Database['public']['Tables']['inventory_items']['Update'];
 
+export type InventoryItemWithMedicine = DbInventoryItem & {
+  medicines: Pick<DbMedicine, 'name' | 'manufacturer_name'> | null;
+};
+
 /** Wrapper type for procurements table */
 export type DbProcurement = Database['public']['Tables']['procurements']['Row'];
 /** Insert type for procurements table */
@@ -275,4 +279,96 @@ export {
 
 // Voice Scribe re-exports
 export type { AIStructuredOutput, AIExtractedPrescription } from './voice';
+
+// ============================================================================
+// FINANCIALS TYPES
+// ============================================================================
+
+export interface MonthlyData {
+  month: string;
+  monthLabel: string;
+  revenue: number;
+  billCount: number;
+  avgBill: number;
+}
+
+export interface DailyData {
+  day: number;
+  dayLabel: string;
+  revenue: number;
+  billCount: number;
+}
+
+// ============================================================================
+// PATIENT TYPES
+// ============================================================================
+
+export interface PatientDetail {
+  patient: DbPatientByClinic | null;
+  consultations: Array<Record<string, unknown>>;
+}
+
+// ============================================================================
+// SUPERADMIN / CLINIC MANAGEMENT TYPES
+// ============================================================================
+
+export interface ProfileData {
+  id: string;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export type DepartmentWithDetails = DbClinicDepartment & {
+  department_types: DbDepartmentType | DbDepartmentType[] | null;
+};
+
+export interface MemberWithDetails {
+  id: string;
+  user_id: string | null;
+  clinic_id: string | null;
+  role: UserRole;
+  department_id: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  profile: ProfileData | null;
+  department: DepartmentWithDetails | null;
+  hasDoctor: boolean;
+}
+
+export interface InviteMemberData {
+  email: string;
+  name: string;
+  phone: string;
+  role: UserRole;
+  department_id?: string;
+}
+
+export interface CreateDoctorData {
+  name: string;
+  email: string;
+  primary_specialization?: string;
+  consultation_fee?: number;
+  bio?: string;
+  department_id?: string;
+}
+
+// ============================================================================
+// APP STATE TYPES
+// ============================================================================
+
+export type ClinicMemberWithClinic = {
+  id: string;
+  user_id: string;
+  clinic_id: string;
+  role: UserRole;
+  department_id: string | null;
+  created_at: string;
+  clinics: DbClinic | null;
+  clinic_name?: string;
+  joined_at?: string;
+};
 

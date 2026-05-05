@@ -16,17 +16,23 @@ import {
   History,
   Wallet,
 } from "lucide-react";
-import { usePayments } from "@/hooks/usePayments";
+import type { BillingSummary, PaymentTransaction } from "@/types/billing";
 import { CreditPurchaseModal } from "./CreditPurchaseModal";
 import { format } from "date-fns";
 
-export const PaymentsDashboard: React.FC = () => {
-  const {
-    billingSummary,
-    transactions,
-    isLoadingSummary,
-    isLoadingTransactions,
-  } = usePayments();
+interface PaymentsDashboardProps {
+  serverBillingSummary: BillingSummary | null;
+  serverTransactions: PaymentTransaction[];
+}
+
+export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
+  serverBillingSummary,
+  serverTransactions,
+}) => {
+  const billingSummary = serverBillingSummary;
+  const transactions = serverTransactions;
+  const isLoadingSummary = false;
+  const isLoadingTransactions = false;
 
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
 

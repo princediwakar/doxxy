@@ -1,17 +1,25 @@
-"use client";
-
 import { Spinner } from "@/components/ui/loading";
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
+import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
+import { getClinicMembers, getClinicDepartments } from '@/lib/data/clinic';
+import ClinicMembersManagement from "@/components/superadmin/ClinicMembersManagement";
+import type { MemberWithDetails, DepartmentWithDetails } from '@/types/core';
 
-const ClinicMembersManagement = dynamic(
-  () => import("@/components/superadmin/ClinicMembersManagement")
-);
+export default async function StaffPage() {
+  const user = await getAuthenticatedUser();
+  const member = await getActiveClinic(user.id);
+  const clinicId = member?.clinic_id ?? null;
 
-export default function StaffPage() {
+  const [members, departments] = clinicId
+    ? await Promise.all([getClinicMembers(clinicId), getClinicDepartments(clinicId)])
+    : [[], []];
+
   return (
     <Suspense fallback={<div className="flex items-center justify-center p-4"><Spinner size="md" /></div>}>
-      <ClinicMembersManagement />
+      <ClinicMembersManagement
+        serverMembers={members as MemberWithDetails[]}
+        serverDepartments={departments as DepartmentWithDetails[]}
+      />
     </Suspense>
   );
 }

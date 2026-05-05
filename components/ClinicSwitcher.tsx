@@ -2,14 +2,14 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { ChevronDown, Check, Building2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation"
 import { useState } from "react";
 
 const ClinicSwitcher = () => {
-  const { userClinics, activeClinic, setActiveClinicId } = useAuth();
+  const { userClinics, activeClinicId, activeClinicName, setActiveClinicId } = useAppState();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
@@ -19,7 +19,9 @@ const ClinicSwitcher = () => {
 
   const handleClinicSelect = (clinicId: string) => {
     setActiveClinicId(clinicId);
-    setOpen(false); // Close dropdown after selection
+    document.cookie = `active-clinic-id=${clinicId}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+    setOpen(false);
+    router.refresh();
   };
 
   const handleCreateNewClinic = () => {
@@ -37,7 +39,7 @@ const ClinicSwitcher = () => {
         >
           <Building2 size={16} className="mr-2" />
           <span className="flex-grow overflow-hidden text-ellipsis whitespace-nowrap">
-            {activeClinic ? activeClinic.clinics?.name : "Select a Clinic"}
+            {activeClinicName || "Select a Clinic"}
           </span>
           <ChevronDown size={16} className={cn(
             "ml-2 transition-transform duration-200 flex-shrink-0",
@@ -52,19 +54,19 @@ const ClinicSwitcher = () => {
                variant="ghost"
                className={cn(
                  "w-full justify-start gap-3 px-3 py-2.5 h-auto transition-colors rounded-md",
-                 activeClinic?.clinic_id === clinic.clinic_id 
-                   ? "bg-accent text-accent-foreground" 
+                 activeClinicId === clinic.clinic_id
+                   ? "bg-accent text-accent-foreground"
                    : "hover:bg-accent/50"
                )}
                onClick={() => handleClinicSelect(clinic.clinic_id)}
             >
                <Building2 size={16} className={cn(
                  "flex-shrink-0",
-                 activeClinic?.clinic_id === clinic.clinic_id ? "text-primary" : "text-muted-foreground"
+                 activeClinicId === clinic.clinic_id ? "text-primary" : "text-muted-foreground"
                )} />
                <span className="flex-grow text-left truncate font-medium">
                 {clinic.clinics?.name}</span>
-               {activeClinic?.clinic_id === clinic.clinic_id && (
+               {activeClinicId === clinic.clinic_id && (
                   <Check size={16} className="text-primary flex-shrink-0" />
                )}
             </Button>

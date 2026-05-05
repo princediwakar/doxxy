@@ -5,7 +5,7 @@ import Link from "next/link"
 import { LogOut, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import { navItems, isActiveLink } from "@/config/navigation";
 
 import ClinicSwitcher from "@/components/ClinicSwitcher";
@@ -15,7 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator";
 
 export function AppSidebar() {
-  const { user, activeClinic, activeClinicRole, signOut, profileName } = useAuth();
+  const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
 
   const pathname = usePathname();
 
@@ -31,7 +31,7 @@ export function AppSidebar() {
 
       {/* Clinic Switcher */}
       <div className="p-3">
-         {activeClinic && <ClinicSwitcher />}
+         {activeClinicId && <ClinicSwitcher />}
       </div>
 
       {/* Navigation Links */}
@@ -39,8 +39,10 @@ export function AppSidebar() {
         <ul className="space-y-2">
           {(
             navItems.map((item) => {
-              // Filter based on user role
-              if (activeClinicRole && item.roles.includes(activeClinicRole)) {
+              // Filter based on user role; show items shared by all roles while role loads
+              const role = activeClinicRole;
+              const isCommonToAllRoles = item.roles.includes('superadmin') && item.roles.includes('staff') && item.roles.includes('doctor');
+              if (role ? item.roles.includes(role) : isCommonToAllRoles) {
                 const fullPath = item.path;
                 return (
                   <li key={item.path}>
@@ -106,7 +108,7 @@ export function AppSidebar() {
                      {profileName || user?.email}
                    </span>
                    <span className="text-xs text-muted-foreground capitalize">
-                     {activeClinicRole} • {activeClinic?.clinics?.name}
+                     {activeClinicRole} • {activeClinicName}
                    </span>
                 </div>
               </div>

@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { getSupabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import type { AppointmentForBilling, DoctorFeeInfo, ServiceItem } from "@/types/billing";
 import type { DbPatient, PrescriptionMedication } from "@/types/core";
 import type { Json } from "@/types/core";
@@ -16,34 +16,34 @@ export function useBillingQueries(
   selectedAppointmentId: string | null,
   mode?: string,
 ) {
-  const { activeClinic } = useAuth();
+  const { activeClinicId } = useAppState();
 
   const { data: appointments, isLoading: isLoadingAppointments, error: appointmentsError } = useQuery({
-    queryKey: queryKeys.appointments.byClinic(activeClinic?.clinic_id ?? ""),
+    queryKey: queryKeys.appointments.byClinic(activeClinicId ?? ""),
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinicId) return [];
       const { data, error } = await supabase
-        .rpc("get_appointments_with_details_by_clinic", { clinic_id: activeClinic.clinic_id });
+        .rpc("get_appointments_with_details_by_clinic", { clinic_id: activeClinicId });
       if (error) throw error;
       return (data || []) as AppointmentForBilling[];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinicId,
     staleTime: 2 * 60 * 1000,
   });
 
   const { data: patients, isLoading: isLoadingPatients, error: patientsError } = useQuery({
-    queryKey: queryKeys.patients.byClinic(activeClinic?.clinic_id ?? ""),
+    queryKey: queryKeys.patients.byClinic(activeClinicId ?? ""),
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinicId) return [];
       const { data, error } = await supabase
         .from("patients")
         .select("id, name, phone, email, medical_id")
-        .eq("clinic_id", activeClinic.clinic_id)
+        .eq("clinic_id", activeClinicId)
         .order("name");
       if (error) throw error;
       return (data || []) as DbPatient[];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinicId,
     staleTime: 2 * 60 * 1000,
   });
 

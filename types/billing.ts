@@ -5,7 +5,7 @@ import type { DbBill, DbPatient, DbPaymentTransaction, Json } from "./core";
 import type { UseFormReturn } from "react-hook-form";
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { Medicine } from "./prescriptions";
-import type { InventoryItemWithMedicine } from "@/hooks/useInventory";
+import type { InventoryItemWithMedicine } from "@/types/core";
 
 // ============================================================================
 // BILLING TYPES
@@ -111,7 +111,7 @@ export interface UseBillingReturn {
     medicine: Medicine,
     inventoryItem?: InventoryItemWithMedicine
   ) => void;
-  saveBillMutation: UseMutationResult<DbBill, Error, BillingFormValues>;
+  saveBill: (values: BillingFormValues) => Promise<DbBill>;
   isSubmitting: boolean;
   refetchInvoiceNumber: () => void;
 }
@@ -137,5 +137,50 @@ export interface PaymentFormValues {
 // ============================================================================
 // EXPORTS
 // ============================================================================
+
+// ============================================================================
+// PAYMENT TYPES (moved from hooks/usePayments.ts)
+// ============================================================================
+
+export interface BillingSummary {
+  credit_balance: number;
+  total_credits_purchased: number;
+  total_credits_used: number;
+  pending_payments_count: number;
+}
+
+export interface CreditPackage {
+  id: string;
+  name: string;
+  credits: number;
+  amount: number;
+  description: string;
+  popular?: boolean;
+}
+
+export const CREDIT_PACKAGES: CreditPackage[] = [
+  {
+    id: "Junior",
+    name: "Junior Pack",
+    credits: 50,
+    amount: 499,
+    description: "50 appointments",
+  },
+  {
+    id: "Senior",
+    name: "Senior Pack",
+    credits: 200,
+    amount: 1999,
+    description: "200 appointments",
+    popular: true,
+  },
+  {
+    id: "Professional",
+    name: "Professional Pack",
+    credits: 1000,
+    amount: 9999,
+    description: "1000 appointments",
+  },
+];
 
 export { type Json };

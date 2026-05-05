@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppState } from '@/contexts/AppStateContext';
 import { toast } from 'sonner';
 import { showErrorToast } from '@/lib/error-utils';
 import { queryKeys } from '@/lib/query-keys';
@@ -14,7 +14,7 @@ import type { Json } from '@/integrations/supabase/types';
 const supabase = getSupabase();
 
 export function useEncounterCompletion() {
-  const { activeClinic } = useAuth();
+  const { activeClinicId } = useAppState();
   const queryClient = useQueryClient();
 
   const completeMutation = useMutation({
@@ -29,7 +29,7 @@ export function useEncounterCompletion() {
       doctorId: string;
       aiData: AIStructuredOutput;
     }) => {
-      const clinicId = activeClinic?.clinic_id;
+      const clinicId = activeClinicId;
       if (!clinicId) throw new Error('Clinic ID not found');
 
       const cleanedRawFields = stripNotSpecified(aiData.rawFields) as Record<string, unknown> | null;

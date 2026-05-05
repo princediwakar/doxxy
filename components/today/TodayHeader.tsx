@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { Search, Plus } from "lucide-react";
@@ -18,40 +18,24 @@ export function TodayHeader() {
   const router = useRouter();
   const openModal = useTodayStore((s) => s.openModal);
 
-  const activeFilter = (searchParams.get('filter') as ActiveFilter) || 'queue';
-  const urlSearchQuery = searchParams.get('q') || '';
-  const [localSearch, setLocalSearch] = useState(urlSearchQuery);
+  const activeFilter = (searchParams.get("filter") as ActiveFilter) || "queue";
 
-  // Sync local search state when URL changes externally
-  useEffect(() => {
-    setLocalSearch(urlSearchQuery);
-  }, [urlSearchQuery]);
-
-  const debouncedPushSearch = useDebouncedCallback(
-    (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value.trim()) {
-        params.set('q', value.trim());
-        params.set('filter', 'all');
-      } else {
-        params.delete('q');
-      }
-      router.push(`/today?${params.toString()}`, { scroll: false });
-    },
-    300
-  );
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalSearch(value);
-    debouncedPushSearch(value);
-  };
+  const pushSearch = useDebouncedCallback((value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value.trim()) {
+      params.set("q", value.trim());
+      params.set("filter", "all");
+    } else {
+      params.delete("q");
+    }
+    router.push(`/today?${params.toString()}`, { scroll: false });
+  }, 300);
 
   const handleFilterChange = (value: ActiveFilter) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set('filter', value);
-    if (value === 'queue') {
-      params.delete('q');
+    params.set("filter", value);
+    if (value === "queue") {
+      params.delete("q");
     }
     router.push(`/today?${params.toString()}`, { scroll: false });
   };
@@ -66,13 +50,19 @@ export function TodayHeader() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
+            key={activeFilter}
+            defaultValue={
+              activeFilter === "all" ? searchParams.get("q") || "" : ""
+            }
             placeholder="Search patients, appointments..."
-            value={localSearch}
-            onChange={handleSearchChange}
+            onChange={(e) => pushSearch(e.target.value)}
             className="pl-9"
           />
         </div>
-        <Button onClick={handleNewPatient} className="hidden lg:inline-flex shrink-0">
+        <Button
+          onClick={handleNewPatient}
+          className="hidden lg:inline-flex shrink-0"
+        >
           <Plus className="h-4 w-4 mr-2" />
           New Patient
         </Button>

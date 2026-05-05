@@ -54,6 +54,12 @@ export interface PaginatedAppointments {
 // HOOK RETURN TYPES
 // ============================================================================
 
+export interface TodayQueue {
+  inProgress: AppointmentWithDetails[];
+  scheduled: AppointmentWithDetails[];
+  completed: AppointmentWithDetails[];
+}
+
 export interface UseAppointmentsReturn {
   // Data
   appointments: PaginatedAppointments;

@@ -1,6 +1,6 @@
 // src/components/patients/PatientModal.tsx
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,7 +26,10 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 
-import { usePatientMutations } from "@/hooks/usePatientMutations";
+import { createPatient, updatePatient } from "@/actions/patients";
+import { useAppState } from "@/contexts/AppStateContext";
+import { showErrorToast } from "@/lib/error-utils";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Patient } from "@/types/patients";
 import type { DbPatientByClinic } from "@/types/core";
@@ -75,12 +78,13 @@ export const PatientModal = ({
   onPatientCreated,
   initialName = "",
 }: PatientModalProps) => {
-  const { createPatient, updatePatient } = usePatientMutations();
+  const { activeClinicId } = useAppState();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: (patient?.name || initialName) || "", // Use initialName here
+      name: (patient?.name || initialName) || "",
       gender: patient?.gender ?? "",
       age: patient?.age ?? undefined,
       phone: patient?.phone ?? "",
@@ -94,7 +98,7 @@ export const PatientModal = ({
   useEffect(() => {
     if (open) {
       form.reset({
-        name: (patient?.name || initialName) || "", // Use initialName here on reset
+        name: (patient?.name || initialName) || "",
         gender: patient?.gender ?? "",
         age: patient?.age ?? undefined,
         phone: patient?.phone ?? "",
@@ -105,23 +109,46 @@ export const PatientModal = ({
     }
   }, [open, patient, initialName, form]);
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
-    if (patient) {
-      updatePatient.mutate(
-        { id: patient.id, ...values },
-        { onSuccess: () => onOpenChange(false) }
-      );
-    } else {
-      createPatient.mutate(values, {
-        onSuccess: (newPatient) => {
-          onPatientCreated(newPatient);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!activeClinicId) {
+      toast.error("No active clinic selected.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (patient) {
+        const result = await updatePatient(patient.id, { ...values });
+        if (result.error) {
+          toast.error(result.error);
+        } else {
+          toast.success("Patient updated successfully.");
+          onOpenChange(false);
+        }
+      } else {
+        const result = await createPatient({
+          name: values.name,
+          clinic_id: activeClinicId,
+          gender: values.gender ?? null,
+          age: values.age ?? null,
+          phone: values.phone ?? null,
+          email: values.email ?? null,
+          address: values.address ?? null,
+          medical_id: values.medical_id?.trim() || null,
+        });
+        if (result.error) {
+          toast.error(result.error);
+        } else if (result.data) {
+          onPatientCreated(result.data as Patient);
           form.reset();
-        },
-      });
+        }
+      }
+    } catch (err) {
+      showErrorToast(err, { title: patient ? "Failed to update patient" : "Failed to create patient" });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const isSubmitting = createPatient.isPending || updatePatient.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

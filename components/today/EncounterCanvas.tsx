@@ -7,7 +7,7 @@ import { DictationZone } from "./DictationZone";
 import { InlineConsultationForm } from "./InlineConsultationForm";
 import { AdministrativeFooter } from "./AdministrativeFooter";
 import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
-import type { PatientDetail } from "@/hooks/usePatientDetail";
+import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
 import type { AppointmentWithDetails } from "@/types/appointments";
 import type { DbAppointment } from "@/types/core";
@@ -18,6 +18,8 @@ interface EncounterCanvasProps {
   isLoadingDetail: boolean;
   appointmentStatus?: string;
   departmentName?: string;
+  patientBills: BillWithDetails[];
+  isLoadingBills: boolean;
   onSchedule: () => void;
   onBill: () => void;
   onEditPatient: () => void;
@@ -35,6 +37,8 @@ export function EncounterCanvas({
   isLoadingDetail,
   appointmentStatus,
   departmentName,
+  patientBills,
+  isLoadingBills,
   onSchedule,
   onBill,
   onEditPatient,
@@ -63,7 +67,7 @@ export function EncounterCanvas({
 
   const patient = patientDetail?.patient ?? null;
 
-  if (isLoadingDetail || !patient) {
+  if (isLoadingDetail) {
     return (
       <div className="space-y-4">
         <div className="h-24 w-full bg-muted/20 animate-pulse rounded-xl border border-muted/30" />
@@ -73,13 +77,22 @@ export function EncounterCanvas({
     );
   }
 
+  if (!patient) {
+    return null;
+  }
+
   return (
     <div className="space-y-4">
       <PatientHeader
         name={patient.name}
         age={patient.age}
         gender={patient.gender}
+        medicalId={patient.medical_id}
         status={appointmentStatus}
+        appointmentType={appointment?.type}
+        appointmentTime={appointment?.time}
+        departmentName={appointment?.department_name}
+        notes={appointment?.notes}
         onSchedule={onSchedule}
         onBill={onBill}
         onEditPatient={onEditPatient}
@@ -117,6 +130,8 @@ export function EncounterCanvas({
         isLoadingDetail={false}
         selectedPatientId={patientId}
         currentAppointmentId={appointment?.id ?? null}
+        patientBills={patientBills}
+        isLoadingBills={isLoadingBills}
         onViewBill={onViewBill}
         onViewConsultationFromHistory={onViewConsultationFromHistory}
       />

@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from "@/contexts/AuthContext";
-import { useUserProfile } from "@/hooks/useUserProfile";
-import { useDoctorProfile } from "@/hooks/useDoctorProfile";
-import {
-  useDoctorQuickOnboarding,
-  useClinicDepartmentsForOnboarding,
-} from "@/hooks/useDoctorQuickOnboarding";
+import { useAppState } from "@/contexts/AppStateContext";
+import { quickOnboardDoctor } from "@/actions/doctors";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryUserProfile, queryDoctorProfile } from "@/lib/queries/profile";
+import { queryClinicDepartments } from "@/lib/queries/clinic";
+import { queryKeys } from "@/lib/query-keys";
+import { toast } from "sonner";
 import {
   Stethoscope,
   X,
@@ -31,7 +31,7 @@ interface DoctorQuickOnboardingProps {
 }
 
 export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickOnboardingProps) {
-  const { user, activeClinic, markProfileComplete } = useAuth();
+  const { user, activeClinicId } = useAppState();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -42,17 +42,29 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const { data: profileData } = useUserProfile(user?.id);
-  const { data: existingDoctorProfile } = useDoctorProfile(
-    user?.id,
-    activeClinic?.clinic_id
-  );
-  const { data: departments = [] } = useClinicDepartmentsForOnboarding(
-    activeClinic?.clinic_id
-  );
+  const { data: profileData } = useQuery({
+    queryKey: queryKeys.profile.user(user?.id ?? ""),
+    queryFn: () => queryUserProfile(user!.id!),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const onboardMutation = useDoctorQuickOnboarding();
-  const isSubmitting = onboardMutation.isPending;
+  const { data: existingDoctorProfile } = useQuery({
+    queryKey: queryKeys.profile.doctor(user?.id ?? "", activeClinicId ?? ""),
+    queryFn: () => queryDoctorProfile(user!.id!, activeClinicId!),
+    enabled: !!user?.id && !!activeClinicId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const queryClient = useQueryClient();
+
+  const { data: departments = [] } = useQuery({
+    queryKey: queryKeys.clinicDepartments.byClinic(activeClinicId ?? ""),
+    queryFn: () => queryClinicDepartments(activeClinicId!),
+    enabled: !!activeClinicId,
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with profile data
   React.useEffect(() => {
@@ -94,26 +106,39 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
       return;
     }
 
-    onboardMutation.mutate(
-      {
+    handleQuickOnboard();
+  };
+
+  const handleQuickOnboard = async () => {
+    if (!user?.id || !activeClinicId) return;
+    setIsSubmitting(true);
+    try {
+      const result = await quickOnboardDoctor({
         name: formData.name,
         departmentId: formData.selectedDepartment,
         specialization: formData.primarySpecialization,
         consultationFee: parseInt(formData.consultation_fee),
-        userId: user!.id,
+        userId: user.id,
         userEmail: user?.email,
         userPhone: user?.phone,
-        clinicId: activeClinic!.clinic_id,
+        clinicId: activeClinicId,
         existingDoctorProfile: !!existingDoctorProfile,
-      },
-      {
-        onSuccess: () => {
-          markProfileComplete();
-          onSuccess();
-          onClose();
-        },
+      });
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
       }
-    );
+      queryClient.invalidateQueries({ queryKey: ['profile', 'user', user.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile', 'doctor', user.id, activeClinicId] });
+      queryClient.invalidateQueries({ queryKey: ['userHasDoctorProfile'] });
+      toast.success('Medical profile ready! You can now start accepting appointments.');
+      onSuccess();
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save medical profile');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {

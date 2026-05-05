@@ -1571,8 +1571,29 @@ export type Database = {
         Args: { user_id: string }
         Returns: {
           clinic_id: string
-          clinic_name: string
-          joined_at: string
+          clinic_data: {
+            accreditations: string[] | null
+            address: string | null
+            clinic_images: string[] | null
+            created_at: string | null
+            created_by: string | null
+            description: string | null
+            email: string | null
+            established_year: number | null
+            id: string
+            is_public: boolean | null
+            license_number: string | null
+            name: string
+            operating_hours: Json | null
+            phone: string | null
+            slug: string | null
+            social_media: Json | null
+            website: string | null
+          }
+          created_at: string
+          department_id: string | null
+          member_id: string
+          member_user_id: string
           role: Database["public"]["Enums"]["user_role"]
         }[]
       }

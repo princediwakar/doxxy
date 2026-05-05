@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { useDebounce } from "use-debounce"
-import { useMedicineSearch } from "@/hooks/useMedicineSearch"
+import { useQuery } from "@tanstack/react-query"
+import { queryMedicineSearch } from "@/lib/queries/pharmacy"
 import { Spinner } from '@/components/ui/loading'
 import { Medicine, MedicationAutoFillData } from "@/types/prescriptions"
 
@@ -218,29 +219,21 @@ export function MedicineCombobox({
     }
   }, [value])
 
-  const { medicines, isLoading, initialLoading, selectedMedicine: selectedMedicineData, isFetchingSelected } = useMedicineSearch(
-    debouncedSearchQuery,
-    selectedMedicine?.name === value ? undefined : value
-  )
+  const { data: medicines = [], isLoading } = useQuery({
+    queryKey: ['medicines', 'search', debouncedSearchQuery],
+    queryFn: () => queryMedicineSearch(debouncedSearchQuery),
+    staleTime: 10 * 60 * 1000,
+  })
 
-  // Update selectedMedicine when we get the data
-  React.useEffect(() => {
-    if (selectedMedicineData) {
-      setSelectedMedicine(selectedMedicineData)
-    } else if (!value) {
-      setSelectedMedicine(null)
-    }
-  }, [selectedMedicineData, value])
-
-  // Also check if the selected medicine is in the current medicines array
+  // Look up selected medicine from the medicines list
   React.useEffect(() => {
     if (value && medicines.length > 0) {
-      const foundMedicine = medicines.find((medicine) => medicine.name === value)
-      if (foundMedicine && (!selectedMedicine || selectedMedicine.name !== value)) {
-        setSelectedMedicine(foundMedicine)
-      }
+      const found = medicines.find((m) => m.name === value);
+      if (found) setSelectedMedicine(found);
+    } else if (!value) {
+      setSelectedMedicine(null);
     }
-  }, [value, medicines, selectedMedicine])
+  }, [value, medicines])
 
   const handleSelect = (medicine: Medicine) => {
     const autoFillData: MedicationAutoFillData = {
@@ -287,7 +280,7 @@ export function MedicineCombobox({
           role="combobox"
           aria-expanded={open}
           className={cn("w-full justify-between", className)}
-          disabled={disabled || initialLoading}
+          disabled={disabled || false}
         >
           <div className="flex items-center gap-2 flex-1 text-left">
             <Pill className="h-4 w-4 text-muted-foreground" />
@@ -298,10 +291,7 @@ export function MedicineCombobox({
             ) : value ? (
               <div className="flex flex-col gap-1 flex-1">
                 <span className="font-medium">{value}</span>
-                {isFetchingSelected && <span className="text-xs text-muted-foreground">Loading details...</span>}
               </div>
-            ) : initialLoading ? (
-              <span className="text-muted-foreground">Loading medicines...</span>
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
@@ -326,12 +316,12 @@ export function MedicineCombobox({
             placeholder="Search medicines..."
             value={searchQuery}
             onValueChange={setSearchQuery}
-            disabled={disabled || initialLoading}
+            disabled={disabled || false}
             className="h-9"
           />
           <CommandList>
             <CommandEmpty>
-              {isLoading || initialLoading ? (
+              {isLoading || false ? (
                 <div className="flex items-center justify-center py-6">
                   <Spinner size="md" />
                   <span className="ml-2">Loading medicines...</span>

@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { Eye, CheckCircle, Lock } from "lucide-react";
+import { Eye, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -11,9 +11,9 @@ import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
 import { ConsultationSectionCard } from "@/components/consultation/ConsultationSectionCard";
 import { mapDepartmentName } from "@/components/consultation/constants";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
-import type { PatientDetail } from "@/hooks/usePatientDetail";
+import type { PatientDetail } from "@/types/core";
 import type { AIStructuredOutput } from "@/types/voice";
-import type { Consultation, DepartmentInfo, PatientWithClinic, ConsultationFormValues } from "@/types/consultation";
+import type { PatientWithClinic, ConsultationFormValues } from "@/types/consultation";
 import type { AppointmentWithDetails } from "@/types/appointments";
 import type { DbAppointment, DbPatientByClinic } from "@/types/core";
 
@@ -46,14 +46,13 @@ export function InlineConsultationForm({
 }: InlineConsultationFormProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [savedVisible, setSavedVisible] = useState(false);
 
   const {
     previousConsultations,
     recentPrescriptions,
     existingConsultation,
     departmentInfo,
-    isInitialLoading,
-    isRefetching,
   } = useConsultationData({
     appointmentId,
     appointment: appointment as unknown as AppointmentWithDetails | null,
@@ -75,7 +74,6 @@ export function InlineConsultationForm({
     isConsultationCompleted,
     canEditConsultation,
     autoSaveMutation,
-    handleSave,
     handleCompleteConsultation,
     mandatoryFieldsStatus,
     justCompleted,
@@ -129,69 +127,62 @@ export function InlineConsultationForm({
     onComplete();
   }, [justCompleted, onComplete]);
 
+  useEffect(() => {
+    if (!autoSaveMutation.isSuccess) return;
+    setSavedVisible(true);
+    const timer = setTimeout(() => setSavedVisible(false), 2000);
+    return () => clearTimeout(timer);
+  }, [autoSaveMutation.isSuccess]);
+
   const canComplete =
     mandatoryFieldsStatus.allCompleted && !autoSaveMutation.isPending && !isConsultationCompleted;
   const canEditCompleted = isConsultationCompleted && canEditConsultation;
 
   return (
-    <div ref={formRef} className={`space-y-4${isInitialLoading ? " opacity-60 pointer-events-none" : ""}`}>
-      {(isInitialLoading || isRefetching) && (
-        <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-          <div className="h-full bg-primary rounded-full animate-pulse" />
-        </div>
-      )}
+    <div ref={formRef} className="flex flex-col">
+      <div className="space-y-4">
+        {specialtySections.map((section, index) => (
+          <ConsultationSectionCard
+            key={index}
+            section={section}
+            sectionIndex={index}
+            form={form}
+            canEditConsultation={!!canEditConsultation}
+            isExpanded={expandedSections[section.title] ?? index === 0}
+            onToggle={() =>
+              setExpandedSections((prev) => ({
+                ...prev,
+                [section.title]: !expandedSections[section.title],
+              }))
+            }
+          />
+        ))}
+      </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        {!isConsultationCompleted && canEditConsultation && (
-          <Badge variant={autoSaveMutation.isPending ? "secondary" : "outline"} className="text-xs">
-            {autoSaveMutation.isPending ? "Saving..." : "Saved"}
-          </Badge>
-        )}
+      <div className="sticky bottom-0 bg-background border-t z-10 py-3 flex items-center justify-end gap-2 mt-4">
         {isConsultationCompleted && (
-          <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+          <Badge variant="secondary" className="text-xs">
             <CheckCircle className="h-3 w-3 mr-1" />
             Completed
           </Badge>
         )}
-        {isConsultationCompleted && !canEditConsultation && (
-          <Badge variant="outline" className="text-xs border-green-200 text-green-700">
-            <Lock className="h-3 w-3 mr-1" />
-            Read Only
-          </Badge>
+        {(autoSaveMutation.isPending || savedVisible) && (
+          <span className="text-xs text-muted-foreground">
+            {autoSaveMutation.isPending ? "Saving..." : "Saved"}
+          </span>
         )}
 
-        <div className="flex-1" />
-
-        <Button onClick={() => setShowPreview(true)} variant="outline" size="sm">
+        <Button onClick={() => setShowPreview(true)} variant="ghost" size="sm">
           <Eye className="h-4 w-4 mr-1" />Preview
         </Button>
         <Button
           onClick={handleCompleteConsultation}
           disabled={!canComplete && !canEditCompleted}
           size="sm"
-          className={canComplete || canEditCompleted ? "bg-blue-600 hover:bg-blue-700 text-white" : "opacity-60"}
         >
-          Complete Encounter
+          {isConsultationCompleted ? "Update Notes" : "Finish Visit"}
         </Button>
       </div>
-
-      {specialtySections.map((section, index) => (
-        <ConsultationSectionCard
-          key={index}
-          section={section}
-          sectionIndex={index}
-          form={form}
-          canEditConsultation={!!canEditConsultation}
-          isExpanded={expandedSections[section.title] ?? index === 0}
-          onToggle={() =>
-            setExpandedSections((prev) => ({
-              ...prev,
-              [section.title]: !expandedSections[section.title],
-            }))
-          }
-        />
-      ))}
-
 
       <ConsultationPreviewModal
         showPreview={showPreview}

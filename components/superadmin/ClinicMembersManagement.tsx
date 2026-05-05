@@ -2,7 +2,8 @@
 "use client";
 
 import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppState } from '@/contexts/AppStateContext';
+import { getSupabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,19 +12,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Search, Plus, Settings, Users } from 'lucide-react';
 
-import { useClinicMembers, MemberWithDetails, InviteMemberData, CreateDoctorData } from '@/hooks/useClinicMembers';
-import { UserRole } from '@/types/core';
+import { createDoctorForMember, updateClinicMember, removeClinicMember as removeClinicMemberAction } from '@/actions/clinic';
+import { UserRole, MemberWithDetails, InviteMemberData, CreateDoctorData, DepartmentWithDetails } from '@/types/core';
 import { ClinicMembersList, InviteMemberDialog, CreateDoctorDialog, EditMemberDialog } from './ClinicMemberComponents';
 
-const ClinicMembersManagement = () => {
-  const { activeClinic, activeClinicRole } = useAuth();
-  const clinicId = activeClinic?.clinic_id;
+const supabase = getSupabase();
+
+interface ClinicMembersManagementProps {
+  serverMembers: MemberWithDetails[];
+  serverDepartments: DepartmentWithDetails[];
+}
+
+const ClinicMembersManagement = ({
+  serverMembers,
+  serverDepartments,
+}: ClinicMembersManagementProps) => {
+  const { activeClinicId, activeClinicRole } = useAppState();
+  const clinicId = activeClinicId;
   const isSuperadmin = activeClinicRole === 'superadmin';
 
   // --- State ---
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
-  
+
   const [showInvite, setShowInvite] = useState(false);
   const [inviteData, setInviteData] = useState<InviteMemberData>({ email: '', name: '', phone: '', role: 'staff' });
 
@@ -36,10 +47,13 @@ const ClinicMembersManagement = () => {
   const [editRole, setEditRole] = useState<UserRole>('staff');
   const [editDept, setEditDept] = useState<string | undefined>(undefined);
 
-  const ops = useClinicMembers(clinicId);
+  const [isInviting, setIsInviting] = useState(false);
+  const [isCreatingDoctor, setIsCreatingDoctor] = useState(false);
+  const [isUpdatingMember, setIsUpdatingMember] = useState(false);
+  const [isRemovingMember, setIsRemovingMember] = useState(false);
 
   // --- Filters ---
-  const filteredMembers = ops.members.filter(member => {
+  const filteredMembers = serverMembers.filter(member => {
     const search = searchTerm.toLowerCase();
     const matchesSearch = !search || member.profile?.name?.toLowerCase().includes(search) || member.profile?.email?.toLowerCase().includes(search);
     const matchesRole = selectedRole === 'all' || member.role === selectedRole;
@@ -47,17 +61,73 @@ const ClinicMembersManagement = () => {
   });
 
   // --- Handlers ---
-  const handleInvite = () => {
+  const handleInvite = async () => {
     if (!inviteData.email || !inviteData.name) {
       toast.error('Email and name are required');
       return;
     }
-    ops.inviteMemberMutation.mutate(inviteData, {
-      onSuccess: () => {
-        setShowInvite(false);
-        setInviteData({ email: '', name: '', phone: '', role: 'staff' });
+    setIsInviting(true);
+    try {
+      const cleanEmail = inviteData.email.trim().toLowerCase();
+      const cleanName = inviteData.name.trim();
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(cleanEmail)) {
+        toast.error('Invalid email format');
+        setIsInviting(false);
+        return;
       }
-    });
+
+      const { data, error } = await supabase.functions.invoke('invite-member', {
+        body: {
+          memberData: {
+            ...inviteData,
+            email: cleanEmail,
+            name: cleanName,
+            clinic_id: clinicId,
+          },
+        },
+      });
+
+      if (error) {
+        let errorMessage: string | null = null;
+        try {
+          if (error.context && typeof error.context.json === 'function') {
+            const body = await error.context.json();
+            errorMessage = body?.error || null;
+          }
+        } catch {
+          // context not available
+        }
+        throw new Error(errorMessage || 'Failed to invite member');
+      }
+
+      if (!data?.success) throw new Error(data?.error || 'Failed to invite user');
+
+      const msg = data?.message || 'Member invited successfully!';
+      if (data?.invitationLink) {
+        toast.success(msg, {
+          description: 'Email could not be sent. Share this link with the invitee:',
+          action: {
+            label: 'Copy Link',
+            onClick: () => {
+              navigator.clipboard.writeText(data.invitationLink);
+              toast.success('Link copied!');
+            },
+          },
+          duration: 20000,
+        });
+      } else {
+        toast.success(msg);
+      }
+
+      setShowInvite(false);
+      setInviteData({ email: '', name: '', phone: '', role: 'staff' });
+    } catch (err) {
+      toast.error((err as Error).message || 'Failed to invite member');
+    } finally {
+      setIsInviting(false);
+    }
   };
 
   const openDoctorForm = (member: MemberWithDetails) => {
@@ -73,7 +143,7 @@ const ClinicMembersManagement = () => {
     setShowDoctor(true);
   };
 
-  const handleCreateDoctor = () => {
+  const handleCreateDoctor = async () => {
     if (!doctorMember?.user_id) {
       toast.error('Invalid member selected');
       return;
@@ -82,13 +152,32 @@ const ClinicMembersManagement = () => {
       toast.error('Name and email are required');
       return;
     }
-    ops.createDoctorMutation.mutate({ ...doctorData, userId: doctorMember.user_id }, {
-      onSuccess: () => {
-        setShowDoctor(false);
-        setDoctorMember(null);
-        setDoctorData({ name: '', email: '', primary_specialization: '', consultation_fee: 0, bio: '', department_id: '' });
+    if (!activeClinicId) return;
+    setIsCreatingDoctor(true);
+    try {
+      const result = await createDoctorForMember({
+        userId: doctorMember.user_id,
+        clinicId: activeClinicId,
+        name: doctorData.name,
+        email: doctorData.email,
+        primarySpecialization: doctorData.primary_specialization,
+        consultationFee: doctorData.consultation_fee,
+        bio: doctorData.bio,
+        departmentId: doctorData.department_id,
+      });
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
       }
-    });
+      toast.success('Doctor profile created successfully');
+      setShowDoctor(false);
+      setDoctorMember(null);
+      setDoctorData({ name: '', email: '', primary_specialization: '', consultation_fee: 0, bio: '', department_id: '' });
+    } catch (err) {
+      toast.error('Failed to create doctor profile: ' + (err instanceof Error ? err.message : ''));
+    } finally {
+      setIsCreatingDoctor(false);
+    }
   };
 
   const openEditForm = (member: MemberWithDetails) => {
@@ -98,19 +187,32 @@ const ClinicMembersManagement = () => {
     setShowEdit(true);
   };
 
-  const handleUpdateMember = () => {
-    if (!editMember?.user_id) {
+  const handleUpdateMember = async () => {
+    if (!editMember?.id) {
       toast.error('Invalid member selected');
       return;
     }
-    ops.updateMemberMutation.mutate({ userId: editMember.user_id, role: editRole, departmentId: editDept }, {
-      onSuccess: () => {
-        setShowEdit(false);
-        setEditMember(null);
-        setEditRole('staff');
-        setEditDept(undefined);
+    if (!activeClinicId) return;
+    setIsUpdatingMember(true);
+    try {
+      const result = await updateClinicMember(editMember.id, {
+        role: editRole,
+        department_id: editDept || null,
+      });
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
       }
-    });
+      toast.success('Member updated successfully');
+      setShowEdit(false);
+      setEditMember(null);
+      setEditRole('staff');
+      setEditDept(undefined);
+    } catch (err) {
+      toast.error('Failed to update member: ' + (err instanceof Error ? err.message : ''));
+    } finally {
+      setIsUpdatingMember(false);
+    }
   };
 
   if (!isSuperadmin) {
@@ -132,7 +234,7 @@ const ClinicMembersManagement = () => {
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <Badge className="bg-primary/10 text-primary border border-primary/20 hidden sm:inline-flex">{ops.members.length} Members</Badge>
+          <Badge className="bg-primary/10 text-primary border border-primary/20 hidden sm:inline-flex">{serverMembers.length} Members</Badge>
           <Button onClick={() => setShowInvite(true)} className="flex items-center gap-2"><Plus className="h-4 w-4" /><span className="sm:inline">Invite</span></Button>
         </div>
       </div>
@@ -148,49 +250,63 @@ const ClinicMembersManagement = () => {
         </Select>
       </div>
 
-      <ClinicMembersList 
+      <ClinicMembersList
         members={filteredMembers}
-        isLoading={ops.isLoadingMembers}
+        isLoading={false}
         searchTerm={searchTerm}
-        error={ops.membersError}
+        error={null}
         onEdit={openEditForm}
-        onDelete={(member) => ops.removeMemberMutation.mutate(member)}
+        onDelete={async (member) => {
+          setIsRemovingMember(true);
+          try {
+            const result = await removeClinicMemberAction(member.id);
+            if ('error' in result && result.error) {
+              toast.error(result.error);
+              return;
+            }
+            toast.success('Member removed successfully');
+          } catch (err) {
+            toast.error('Failed to remove member: ' + (err instanceof Error ? err.message : ''));
+          } finally {
+            setIsRemovingMember(false);
+          }
+        }}
         onCreateDoctor={openDoctorForm}
-        isDeleting={ops.removeMemberMutation.isPending}
-        isCreatingDoctor={ops.createDoctorMutation.isPending}
+        isDeleting={isRemovingMember}
+        isCreatingDoctor={isCreatingDoctor}
       />
 
-      <InviteMemberDialog 
-        open={showInvite} 
-        onOpenChange={setShowInvite} 
-        data={inviteData} 
-        setData={setInviteData} 
-        onSubmit={handleInvite} 
-        isPending={ops.inviteMemberMutation.isPending}
-        departments={ops.departments}
+      <InviteMemberDialog
+        open={showInvite}
+        onOpenChange={setShowInvite}
+        data={inviteData}
+        setData={setInviteData}
+        onSubmit={handleInvite}
+        isPending={isInviting}
+        departments={serverDepartments}
       />
 
-      <CreateDoctorDialog 
-        open={showDoctor} 
-        onOpenChange={setShowDoctor} 
-        data={doctorData} 
-        setData={setDoctorData} 
+      <CreateDoctorDialog
+        open={showDoctor}
+        onOpenChange={setShowDoctor}
+        data={doctorData}
+        setData={setDoctorData}
         onSubmit={handleCreateDoctor}
-        isPending={ops.createDoctorMutation.isPending}
-        departments={ops.departments}
+        isPending={isCreatingDoctor}
+        departments={serverDepartments}
       />
 
-      <EditMemberDialog 
-        open={showEdit} 
-        onOpenChange={setShowEdit} 
+      <EditMemberDialog
+        open={showEdit}
+        onOpenChange={setShowEdit}
         member={editMember}
         role={editRole}
         setRole={setEditRole}
         deptId={editDept}
         setDeptId={setEditDept}
         onSubmit={handleUpdateMember}
-        isPending={ops.updateMemberMutation.isPending}
-        departments={ops.departments}
+        isPending={isUpdatingMember}
+        departments={serverDepartments}
       />
     </div>
   );

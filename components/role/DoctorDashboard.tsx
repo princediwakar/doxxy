@@ -4,7 +4,7 @@ import { logger } from "@/lib/logger";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Users, Stethoscope, Activity, Clock, Plus } from "lucide-react";
 import { UpcomingAppointmentsList } from "@/components/dashboard/UpcomingAppointmentsList";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
 import React, { useState, useMemo } from "react";
 import { WeeklyAppointmentsChart } from "@/components/dashboard/WeeklyAppointmentsChart";
 import { DashboardStatsCard } from "@/components/dashboard/DashboardStatsCard";
@@ -12,14 +12,15 @@ import { useRouter } from "next/navigation";
 import { AppointmentStatus, AppointmentType } from "@/types/core";
 import { Button } from "@/components/ui/button";
 import { AppointmentModal } from "@/components/appointments/AppointmentModal";
-import { useDoctorDashboardData } from "@/hooks/useDoctorDashboardData";
-import { useAppointmentActions } from "@/hooks/useAppointmentActions";
-import { usePayments } from "@/hooks/usePayments";
+import { useQuery } from "@tanstack/react-query";
+import { queryDoctorDashboardData } from "@/lib/queries/analytics";
+import { startConsultation } from "@/actions/appointments";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 
 const DoctorDashboard = React.memo(function DoctorDashboard() {
-  const { activeClinic, user, activeClinicRole, profileName } = useAuth();
+  const { activeClinicId, user, activeClinicRole, profileName } = useAppState();
   const router = useRouter();
   const today = new Date().toISOString().split("T")[0];
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
@@ -32,10 +33,13 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
     data: doctorDashboardData,
     isLoading,
     error,
-  } = useDoctorDashboardData();
+  } = useQuery({
+    queryKey: ["doctorDashboard", activeClinicId, user?.id],
+    queryFn: () => queryDoctorDashboardData(activeClinicId!, user?.id!),
+    enabled: !!activeClinicId && !!user?.id && (activeClinicRole === "doctor" || activeClinicRole === "superadmin"),
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const { handleStartConsultation: startConsultation } = useAppointmentActions();
-  const { canBookAppointment } = usePayments();
   const queryClient = useQueryClient();
 
   // Prepare appointments and patients data - memoized
@@ -124,11 +128,20 @@ const DoctorDashboard = React.memo(function DoctorDashboard() {
 
   const handleStartConsultation = async (appointmentId: string) => {
     try {
-      await startConsultation(appointmentId, canBookAppointment);
-      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.doctor(activeClinic?.clinic_id ?? '', user?.id ?? '') });
+      if (!activeClinicId) return;
+      const result = await startConsultation({
+        appointmentId,
+        clinicId: activeClinicId,
+        role: activeClinicRole ?? 'doctor',
+      });
+      if ('error' in result && result.error) {
+        toast.error(result.error);
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.doctor(activeClinicId, user?.id ?? '') });
       router.push(`/today?selectedAppointment=${appointmentId}`);
-    } catch {
-      // Error toast already shown by useAppointmentActions
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to start consultation');
     }
   };
 

@@ -1,5 +1,4 @@
 // components/pharmacy/ProcurementHistoryTab.tsx
-import { useProcurements } from "@/hooks/useProcurements";
 import {
   Table,
   TableBody,
@@ -11,15 +10,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Spinner } from '@/components/ui/loading';
 
-export function ProcurementsHistoryTab() {
-  const { data: procurements, isLoading } = useProcurements();
+import type { DbProcurement } from '@/types/core';
 
-  if (isLoading) {
-    return <div className="p-8 flex justify-center"><Spinner size="lg" /></div>;
-  }
+interface ProcurementsHistoryTabProps {
+  procurements: DbProcurement[];
+}
 
+export function ProcurementsHistoryTab({ procurements }: ProcurementsHistoryTabProps) {
   return (
     <>
       {/* Mobile Card View */}

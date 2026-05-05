@@ -1,11 +1,11 @@
 // hooks/consultation/useConsultationData.ts
 "use client";
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppState } from '@/contexts/AppStateContext';
 import { getSupabase } from '@/integrations/supabase/client';
 import { ConsultationNotes } from '@/lib/consultationNotesSchemas';
 import type { AppointmentWithDetails } from '@/types/appointments';
-import type { PatientDetail } from '@/hooks/usePatientDetail';
+import type { PatientDetail } from '@/types/core';
 
 interface UseConsultationDataOptions {
   appointmentId: string | undefined;
@@ -49,13 +49,13 @@ export const useConsultationData = ({
   appointment: prefillAppointment,
   patientDetail,
 }: UseConsultationDataOptions) => {
-  const { activeClinic } = useAuth();
+  const { activeClinicId } = useAppState();
   const supabase = getSupabase();
 
   const consultationDataQuery = useQuery({
-    queryKey: ['consultation-data', appointmentId, activeClinic?.clinic_id],
+    queryKey: ['consultation-data', appointmentId, activeClinicId],
     queryFn: async () => {
-      if (!appointmentId || !activeClinic?.clinic_id) return null;
+      if (!appointmentId || !activeClinicId) return null;
 
       const patientId = prefillAppointment?.patient_id;
       const doctorUserId = prefillAppointment?.user_id;
@@ -79,7 +79,7 @@ export const useConsultationData = ({
               .from('consultations')
               .select(`*, appointment:appointments(date, time)`)
               .eq('patient_id', patientId)
-              .eq('clinic_id', activeClinic.clinic_id)
+              .eq('clinic_id', activeClinicId)
               .neq('appointment_id', appointmentId)
               .order('created_at', { ascending: false })
               .limit(5)
@@ -90,17 +90,17 @@ export const useConsultationData = ({
               .from('prescriptions')
               .select('*')
               .eq('patient_id', patientId)
-              .eq('clinic_id', activeClinic.clinic_id)
+              .eq('clinic_id', activeClinicId)
               .order('created_at', { ascending: false })
               .limit(3)
           : Promise.resolve({ data: [], error: null }),
 
-        doctorUserId && activeClinic?.clinic_id
+        doctorUserId && activeClinicId
           ? supabase
               .from('clinic_members')
               .select(`department_id, clinic_departments(department_types(name))`)
               .eq('user_id', doctorUserId)
-              .eq('clinic_id', activeClinic.clinic_id)
+              .eq('clinic_id', activeClinicId)
               .single()
           : Promise.resolve({ data: null, error: null }),
       ]);
@@ -146,7 +146,7 @@ export const useConsultationData = ({
         departmentInfo,
       };
     },
-    enabled: !!appointmentId && !!activeClinic?.clinic_id,
+    enabled: !!appointmentId && !!activeClinicId,
     staleTime: 2 * 60 * 1000,
   });
 

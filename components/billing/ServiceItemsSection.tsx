@@ -7,8 +7,10 @@ import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@
 import { Spinner } from '@/components/ui/loading';
 import { cn } from '@/lib/utils';
 import { useDebounce } from 'use-debounce';
-import { useMedicineSearch } from '@/hooks/useMedicineSearch';
-import { useInventory, type InventoryItemWithMedicine } from '@/hooks/useInventory';
+import { useQuery } from '@tanstack/react-query';
+import { queryMedicineSearch, queryInventory } from '@/lib/queries/pharmacy';
+import { useAppState } from '@/contexts/AppStateContext';
+import type { InventoryItemWithMedicine } from '@/types/core';
 import type { Medicine } from '@/types/prescriptions';
 import type { ServiceItem } from '@/hooks/useBilling';
 
@@ -50,9 +52,20 @@ export const ServiceItemsSection: React.FC<ServiceItemsSectionProps> = ({
   const [pickerIndex, setPickerIndex] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery] = useDebounce(searchQuery, 300);
+  const { activeClinicId } = useAppState();
 
-  const { medicines, isLoading: medicinesLoading } = useMedicineSearch(debouncedQuery);
-  const { inventory } = useInventory();
+  const { data: medicines = [], isLoading: medicinesLoading } = useQuery({
+    queryKey: ['medicines', 'search', debouncedQuery],
+    queryFn: () => queryMedicineSearch(debouncedQuery),
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const { data: inventory = [] } = useQuery({
+    queryKey: ['pharmacy_inventory', activeClinicId],
+    queryFn: () => queryInventory(activeClinicId!),
+    enabled: !!activeClinicId,
+    staleTime: 2 * 60 * 1000,
+  });
 
   const inventoryByMedicineId = React.useMemo(() => {
     const map = new Map<number, InventoryItemWithMedicine[]>();

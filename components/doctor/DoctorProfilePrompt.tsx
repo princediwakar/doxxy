@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { useDoctorProfile } from "@/hooks/useDoctorProfile";
+import { useAppState } from "@/contexts/AppStateContext";
+import { useQuery } from "@tanstack/react-query";
+import { queryDoctorProfile } from "@/lib/queries/profile";
+import { queryKeys } from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Stethoscope, X } from "lucide-react";
 
 export function DoctorProfilePrompt() {
-  const { user, activeClinic, activeClinicRole } = useAuth();
+  const { user, activeClinicId, activeClinicRole } = useAppState();
   const router = useRouter();
   const [dismissed, setDismissed] = useState(false);
 
-  const { data: doctorProfile, isLoading } = useDoctorProfile(
-    user?.id,
-    activeClinic?.clinic_id
-  );
+  const { data: doctorProfile, isLoading } = useQuery({
+    queryKey: queryKeys.profile.doctor(user?.id ?? "", activeClinicId ?? ""),
+    queryFn: () => queryDoctorProfile(user!.id!, activeClinicId!),
+    enabled: !!user?.id && !!activeClinicId,
+    staleTime: 5 * 60 * 1000,
+  });
 
   if (dismissed || isLoading || activeClinicRole !== "doctor" || !doctorProfile) {
     return null;

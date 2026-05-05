@@ -4,60 +4,46 @@ import { useEffect, useRef, Suspense, useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useTodayStore } from "@/stores/todayStore";
-import type { AppointmentWithDetails } from "@/types/appointments";
+import type { DbPatientByClinic } from "@/types/core";
 import type { AppointmentForBilling, BillWithDetails } from "@/types/billing";
-import type { DbPatient, DbPatientByClinic } from "@/types/core";
-import type { Patient, AppointmentData } from "@/types/patients";
+import type { DbPatient } from "@/types/core";
+import type { Patient } from "@/types/patients";
 
 const ConsultationViewModal = dynamic(() =>
-  import("@/components/consultation/ConsultationViewModal").then((m) => m.ConsultationViewModal)
+  import("@/components/consultation/ConsultationViewModal").then(
+    (m) => m.ConsultationViewModal,
+  ),
 );
 const BillingModal = dynamic(() =>
-  import("@/components/billing/BillingModal").then((m) => m.BillingModal)
+  import("@/components/billing/BillingModal").then((m) => m.BillingModal),
 );
 const AppointmentModal = dynamic(() =>
-  import("@/components/appointments/AppointmentModal").then((m) => m.AppointmentModal)
+  import("@/components/appointments/AppointmentModal").then(
+    (m) => m.AppointmentModal,
+  ),
 );
 const PatientModal = dynamic(() =>
-  import("@/components/patients/PatientModal").then((m) => m.PatientModal)
+  import("@/components/patients/PatientModal").then((m) => m.PatientModal),
 );
 
 interface TodayModalsProps {
-  selectedAppointment: AppointmentWithDetails | null;
-  setSelectedAppointment: (app: AppointmentWithDetails | null) => void;
-  isAppointmentModalOpen: boolean;
-  setAppointmentModalOpen: (open: boolean) => void;
-  appointmentModalPatient: Patient | null;
-  billPatient?: DbPatientByClinic | null;
-  editPatient?: DbPatientByClinic | null;
-  selectedBill?: BillWithDetails | null;
-  setSelectedBill?: (bill: BillWithDetails | null) => void;
-  historyAppointment?: AppointmentData | null;
-  setHistoryAppointment?: (app: AppointmentData | null) => void;
+  editPatient: DbPatientByClinic | null;
   onRefetch: () => void;
-  onPatientCreated: (patient: Patient) => void;
 }
 
-export function TodayModals({
-  selectedAppointment,
-  setSelectedAppointment,
-  isAppointmentModalOpen,
-  setAppointmentModalOpen,
-  appointmentModalPatient,
-  billPatient,
-  editPatient,
-  selectedBill,
-  setSelectedBill,
-  historyAppointment,
-  setHistoryAppointment,
-  onRefetch,
-  onPatientCreated,
-}: TodayModalsProps) {
+export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
   const activeModal = useTodayStore((s) => s.activeModal);
   const closeModal = useTodayStore((s) => s.closeModal);
+  const selectedAppointment = useTodayStore((s) => s.selectedAppointment);
+  const selectedBill = useTodayStore((s) => s.selectedBill);
+  const billPatient = useTodayStore((s) => s.billPatient);
+  const historyAppointment = useTodayStore((s) => s.historyAppointment);
+  const appointmentModalPatient = useTodayStore((s) => s.appointmentModalPatient);
+  const appointmentModalOpen = useTodayStore((s) => s.appointmentModalOpen);
   const shakeTrigger = useTodayStore((s) => s.shakeTrigger);
   const dirtyFormGuard = useTodayStore((s) => s.dirtyFormGuard);
   const setDirtyFormGuard = useTodayStore((s) => s.setDirtyFormGuard);
+  const patientCreated = useTodayStore((s) => s.patientCreated);
 
   const billModalRef = useRef<HTMLDivElement>(null);
   const [billViewMode, setBillViewMode] = useState<"view" | "edit">("view");
@@ -74,7 +60,7 @@ export function TodayModals({
 
   const handleDirtyChange = useCallback(
     (dirty: boolean) => setDirtyFormGuard(dirty),
-    [setDirtyFormGuard]
+    [setDirtyFormGuard],
   );
 
   const handleBillClose = useCallback(
@@ -86,22 +72,33 @@ export function TodayModals({
         }
         closeModal();
         onRefetch();
-        setSelectedAppointment(null);
-        setSelectedBill?.(null);
       }
     },
-    [dirtyFormGuard, closeModal, onRefetch, setSelectedAppointment, setSelectedBill]
+    [dirtyFormGuard, closeModal, onRefetch],
   );
 
   const handleBillViewClose = useCallback(
     (open: boolean) => {
       if (!open) {
         closeModal();
-        setSelectedBill?.(null);
         setBillViewMode("view");
       }
     },
-    [closeModal, setSelectedBill]
+    [closeModal],
+  );
+
+  const handleConsultClose = useCallback(() => {
+    closeModal();
+  }, [closeModal]);
+
+  const handleAppointmentModalClose = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        useTodayStore.setState({ appointmentModalOpen: false });
+        onRefetch();
+      }
+    },
+    [onRefetch],
   );
 
   return (
@@ -111,10 +108,7 @@ export function TodayModals({
           <ConsultationViewModal
             open={true}
             onOpenChange={(open) => {
-              if (!open) {
-                closeModal();
-                setHistoryAppointment?.(null);
-              }
+              if (!open) handleConsultClose();
             }}
             appointment={historyAppointment}
           />
@@ -126,10 +120,7 @@ export function TodayModals({
           <ConsultationViewModal
             open={true}
             onOpenChange={(open) => {
-              if (!open) {
-                closeModal();
-                setSelectedAppointment(null);
-              }
+              if (!open) handleConsultClose();
             }}
             appointment={selectedAppointment}
           />
@@ -166,11 +157,8 @@ export function TodayModals({
       </Suspense>
 
       <AppointmentModal
-        open={isAppointmentModalOpen}
-        onOpenChange={(open) => {
-          setAppointmentModalOpen(open);
-          if (!open) onRefetch();
-        }}
+        open={appointmentModalOpen}
+        onOpenChange={handleAppointmentModalClose}
         appointment={selectedAppointment}
         patient={appointmentModalPatient}
       />
@@ -183,7 +171,7 @@ export function TodayModals({
               if (!open) closeModal();
             }}
             patient={null}
-            onPatientCreated={onPatientCreated}
+            onPatientCreated={patientCreated as (patient: Patient) => void}
           />
         )}
       </Suspense>
@@ -196,7 +184,7 @@ export function TodayModals({
               if (!open) closeModal();
             }}
             patient={editPatient ?? null}
-            onPatientCreated={onPatientCreated}
+            onPatientCreated={patientCreated as (patient: Patient) => void}
           />
         )}
       </Suspense>

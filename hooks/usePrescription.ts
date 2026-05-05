@@ -5,10 +5,11 @@ import { useState, useCallback, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAppState } from "@/contexts/AppStateContext";
+import { createPrescription } from "@/actions/prescriptions";
 import type { Database } from "@/integrations/supabase/types";
 import type {
   PrescriptionFormValues,
@@ -49,8 +50,7 @@ export const usePrescription = ({
   patientId: initialPatientId,
   onOpenChange
 }: UsePrescriptionProps) => {
-  const { activeClinic } = useAuth();
-  const queryClient = useQueryClient();
+  const { activeClinicId } = useAppState();
   const [shouldClose, setShouldClose] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(appointment?.id || null);
   const [manualDoctorId, setManualDoctorId] = useState<string | null>(initialDoctorId || null);
@@ -73,48 +73,48 @@ export const usePrescription = ({
 
   // Fetch appointments for dropdown with detailed info
   const { data: appointmentsForSelect = [], isLoading: isLoadingAppointments } = useQuery({
-    queryKey: ['appointments-detailed', activeClinic?.clinic_id],
+    queryKey: ['appointments-detailed', activeClinicId],
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinicId) return [];
       const { data, error } = await supabase.rpc('get_appointments_with_details_by_clinic', { 
-        clinic_id: activeClinic.clinic_id 
+        clinic_id: activeClinicId 
       });
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinicId,
     staleTime: 5 * 60 * 1000,
   });
 
   // Fetch doctors for manual selection
   const { data: doctors = [], isLoading: isLoadingDoctors } = useQuery({
-    queryKey: ['doctors', activeClinic?.clinic_id],
+    queryKey: ['doctors', activeClinicId],
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinicId) return [];
       const { data, error } = await supabase.rpc('get_doctors_by_clinic', { 
-        clinic_id: activeClinic.clinic_id 
+        clinic_id: activeClinicId 
       });
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinicId,
     staleTime: 5 * 60 * 1000,
   });
 
   // Fetch patients for manual selection
   const { data: patients = [], isLoading: isLoadingPatients } = useQuery({
-    queryKey: ['patients', activeClinic?.clinic_id],
+    queryKey: ['patients', activeClinicId],
     queryFn: async () => {
-      if (!activeClinic?.clinic_id) return [];
+      if (!activeClinicId) return [];
       const { data, error } = await supabase
         .from('patients')
         .select('id, name, phone')
-        .eq('clinic_id', activeClinic.clinic_id)
+        .eq('clinic_id', activeClinicId)
         .order('name');
       if (error) throw error;
       return data || [];
     },
-    enabled: open && !!activeClinic?.clinic_id,
+    enabled: open && !!activeClinicId,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -187,66 +187,62 @@ export const usePrescription = ({
     }
   }, [form]);
 
-  // Save mutation
-  const savePrescriptionMutation = useMutation({
-    mutationFn: async (formData: PrescriptionFormValues) => {
-      if (!activeClinic?.clinic_id) {
-        throw new Error('No active clinic');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const onSubmit = useCallback(async (values: PrescriptionFormValues) => {
+    if (!activeClinicId) {
+      toast.error('No active clinic');
+      return;
+    }
+
+    const finalDoctorId = manualDoctorId;
+    const finalPatientId = manualPatientId;
+    const finalConsultationId = manualConsultationId;
+
+    if (!finalDoctorId || !finalPatientId) {
+      toast.error('Doctor ID and Patient ID are required');
+      return;
+    }
+
+    const medications = values.medications
+      .filter(med => med.name?.trim())
+      .map(med => ({
+        name: med.name!.trim(),
+        dosage: med.dosage || null,
+        frequency: med.frequency || null,
+        duration: med.duration || null,
+        instructions: med.instructions || null,
+      }));
+
+    if (medications.length === 0) {
+      toast.error('At least one medication is required');
+      return;
+    }
+
+    const prescriptionData: Database['public']['Tables']['prescriptions']['Insert'] = {
+      clinic_id: activeClinicId,
+      doctor_id: finalDoctorId,
+      patient_id: finalPatientId,
+      consultation_id: finalConsultationId,
+      medications,
+    };
+
+    setIsSaving(true);
+    try {
+      const result = await createPrescription(prescriptionData);
+      if (result.error) {
+        toast.error(`Error saving prescription: ${result.error}`);
+      } else {
+        toast.success("Prescription saved successfully!");
+        setShouldClose(true);
       }
-
-      const finalDoctorId = manualDoctorId;
-      const finalPatientId = manualPatientId;
-      const finalConsultationId = manualConsultationId;
-
-      if (!finalDoctorId || !finalPatientId) {
-        throw new Error('Doctor ID and Patient ID are required');
-      }
-
-      const prescriptionData: Database['public']['Tables']['prescriptions']['Insert'] = {
-        clinic_id: activeClinic.clinic_id,
-        doctor_id: finalDoctorId,
-        patient_id: finalPatientId,
-        consultation_id: finalConsultationId,
-        medications: formData.medications
-          .filter(med => med.name?.trim())
-          .map(med => ({
-            name: med.name!.trim(),
-            dosage: med.dosage || null,
-            frequency: med.frequency || null,
-            duration: med.duration || null,
-            instructions: med.instructions || null,
-          })),
-        
-      };
-
-      if ((prescriptionData.medications as Array<unknown>).length === 0) {
-        throw new Error('At least one medication is required');
-      }
-
-      const { data, error } = await supabase
-        .from('prescriptions')
-        .insert(prescriptionData)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Prescription saved successfully!");
-      setShouldClose(true);
-      queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
-      queryClient.invalidateQueries({ queryKey: ['consultations'] });
-    },
-    onError: (error: Error) => {
-      logger.error('Error saving prescription:', error);
-      toast.error(`Error saving prescription: ${error.message}`);
-    },
-  });
-
-  const onSubmit = useCallback((values: PrescriptionFormValues) => {
-    savePrescriptionMutation.mutate(values);
-  }, [savePrescriptionMutation]);
+    } catch (err) {
+      logger.error('Error saving prescription:', err);
+      toast.error(`Error saving prescription: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [activeClinicId, manualDoctorId, manualPatientId, manualConsultationId]);
 
   const handleOpenChange = useCallback((newOpen: boolean) => {
     if (!newOpen && form.formState.isDirty && !shouldClose) {
@@ -300,6 +296,6 @@ export const usePrescription = ({
     
     // Loading states
     isLoading,
-    isSaving: savePrescriptionMutation.isPending,
+    isSaving,
   };
 }; 

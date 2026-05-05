@@ -1,392 +1,121 @@
-"use client";
+import { ContactForm } from '@/components/public/ContactForm';
+import { Button } from '@/components/ui/button';
+import SignupCTA from '@/components/SignupCTA';
+import SiteFooter from '@/components/SiteFooter';
+import { Mail, Phone, Calendar } from 'lucide-react';
 
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Mail,
-  Phone,
-  CheckCircle,
-  Calendar,
-} from 'lucide-react';
-import SignupCTA from "@/components/SignupCTA";
-import SiteFooter from "@/components/SiteFooter";
-import { useSubmitContactForm } from "@/hooks/useSubmitContactForm";
-import { logger } from "@/lib/logger";
+const contactInfo = [
+  {
+    icon: Phone,
+    title: 'Call Us',
+    details: ['+91 7388890554'],
+    description: 'Speak directly with our team during business hours',
+  },
+  {
+    icon: Mail,
+    title: 'Email Us',
+    details: ['doxxyapp@gmail.com'],
+    description: 'Get in touch via email for support or sales inquiries',
+  },
+];
 
+const faqs = [
+  {
+    question: 'How quickly can I get started with Doxxy?',
+    answer: 'Most practices are up and running within 15 minutes. Our onboarding team will guide you through the entire setup process.',
+  },
+  {
+    question: 'Do you offer data migration services?',
+    answer: 'Yes, we provide free data migration from most popular healthcare management systems. Our technical team handles the entire process.',
+  },
+  {
+    question: 'What kind of support do you provide?',
+    answer: 'We offer 24/7 technical support, dedicated account managers for Enterprise clients, and comprehensive training resources.',
+  },
+  {
+    question: 'Is Doxxy suitable for small practices?',
+    answer: 'Absolutely! Our Practice Essentials plan is free for your first 100 appointments and specifically designed for solo practitioners and small clinics.',
+  },
+];
 
-// --- REUSABLE COMPONENTS ---
-
-interface SectionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface SectionTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Section = ({ children, className = '' }: SectionProps) => (
-  <section className={`py-24 md:py-32 ${className}`}>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {children}
-    </div>
-  </section>
-);
-
-const SectionTitle = ({ children, className = '' }: SectionTitleProps) => (
-  <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
-    {children}
-  </h2>
-);
-
-interface SectionSubtitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const SectionSubtitle = ({ children, className = '' }: SectionSubtitleProps) => (
-  <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
-    {children}
-  </p>
-);
-
-// --- MODULAR SUBCOMPONENTS ---
-
-const HeroSection = () => (
-  <Section className="text-center !pt-28 md:!pt-40">
-    <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
-      We're Here to Help.
-    </h1>
-    <SectionSubtitle>
-      Have questions about Doxxy? Our team of healthcare technology experts is ready to help you transform your practice.
-    </SectionSubtitle>
-  </Section>
-);
-
-interface ThankYouMessageProps {
-  onSendAnother: () => void;
-}
-
-const ThankYouMessage = ({ onSendAnother }: ThankYouMessageProps) => (
-  <div className="max-w-md mx-auto text-center p-8 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/75 dark:border-gray-700/50">
-    <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center mx-auto mb-6">
-      <CheckCircle className="h-7 w-7 text-blue-600 dark:text-blue-400" />
-    </div>
-    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-      Thank You!
-    </h3>
-    <p className="text-gray-600 dark:text-gray-300 mb-6">
-      We've received your message and will get back to you within 24 hours.
-    </p>
-    <Button onClick={onSendAnother} className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold">
-      Send Another Message
-    </Button>
-  </div>
-);
-
-interface ContactFormProps {
-  formData: {
-    message: string;
-    name: string;
-    email: string;
-    phone: string;
-    company: string;
-    city: string;
-  };
-  handleChange: (field: string, value: string) => void;
-  handleSubmit: (e: React.FormEvent) => void;
-  isSubmitting: boolean;
-  error: string | null;
-}
-
-const ContactForm = ({ formData, handleChange, handleSubmit, isSubmitting, error }: ContactFormProps) => (
-  <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50">
-    <h3 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-2">Send us a Message</h3>
-    <p className="text-gray-600 dark:text-gray-300 text-center mb-8">Fill out the form below and we'll get back to you within 24 hours.</p>
-    
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Message *</label>
-        <Textarea
-          id="message"
-          required
-          rows={5}
-          value={formData.message}
-          onChange={(e) => handleChange('message', e.target.value)}
-          placeholder="Tell us more about your practice and how we can help..."
-          className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
-        />
-      </div>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name *</label>
-          <Input
-            id="name"
-            required
-            value={formData.name}
-            onChange={(e) => handleChange('name', e.target.value)}
-            placeholder="Dr. John Smith"
-            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
-          />
-        </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address *</label>
-          <Input
-            id="email"
-            type="email"
-            required
-            value={formData.email}
-            onChange={(e) => handleChange('email', e.target.value)}
-            placeholder="john@example.com"
-            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
-          />
-        </div>
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
-          <Input
-            id="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => handleChange('phone', e.target.value)}
-            placeholder="+91 80-1234-5678"
-            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
-          />
-        </div>
-        <div>
-          <label htmlFor="company" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Practice/Organization Name</label>
-          <Input
-            id="company"
-            value={formData.company}
-            onChange={(e) => handleChange('company', e.target.value)}
-            placeholder="ABC Medical Center"
-            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
-          />
-        </div>
-        <div>
-          <label htmlFor="city" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">City</label>
-          <Input
-            id="city"
-            value={formData.city}
-            onChange={(e) => handleChange('city', e.target.value)}
-            placeholder="Bengaluru"
-            className="bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700 rounded-lg p-3"
-          />
-        </div>
-      </div>
-      {error && (
-        <div className="text-red-500 dark:text-red-400 mb-4 text-sm">
-          {error}
-        </div>
-      )}
-      <Button 
-        type="submit" 
-        size="lg" 
-        className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? 'Sending...' : 'Send Message'}
-      </Button>
-    </form>
-  </div>
-);
-
-interface ContactInfoCardProps {
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  title: string;
-  details: string[];
-  description: string;
-}
-
-const ContactInfoCard = ({ icon: Icon, title, details, description }: ContactInfoCardProps) => (
-  <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
-    <div className="flex items-start space-x-4">
-      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
-        <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-      </div>
-      <div className="flex-1">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{title}</h3>
-        {details.map((detail: string, idx: number) => (
-          <p key={idx} className="text-gray-700 dark:text-gray-300 font-medium">{detail}</p>
-        ))}
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{description}</p>
-      </div>
-    </div>
-  </div>
-);
-
-
-interface FAQItemProps {
-  question: string;
-  answer: string;
-}
-
-const FAQItem = ({ question, answer }: FAQItemProps) => (
-  <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
-    <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-2">{question}</h3>
-    <p className="text-gray-600 dark:text-gray-300">{answer}</p>
-  </div>
-);
-
-// --- MAIN PAGE COMPONENT ---
-
-const ContactClient = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    company: '',
-    city: '',
-    message: '',
-  });
-
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const submitContactForm = useSubmitContactForm();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    try {
-      const data = await submitContactForm.mutateAsync(formData);
-      logger.log('Contact form submitted successfully with ID:', data);
-
-      setIsSubmitted(true);
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        company: '',
-        city: '',
-        message: '',
-      });
-    } catch (err) {
-      logger.error('Contact form error:', err);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    }
-  };
-
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const contactInfo = [
-      {
-        icon: Phone,
-        title: "Call Us",
-        details: ["+91 7388890554"],
-        description: "Speak directly with our team during business hours"
-      },
-    {
-      icon: Mail,
-      title: "Email Us",
-      details: ["doxxyapp@gmail.com"],
-      description: "Get in touch via email for support or sales inquiries"
-    },
-    
-  ];
-
-
-  const faqs = [
-    {
-      question: "How quickly can I get started with Doxxy?",
-      answer: "Most practices are up and running within 15 minutes. Our onboarding team will guide you through the entire setup process."
-    },
-    {
-      question: "Do you offer data migration services?",
-      answer: "Yes, we provide free data migration from most popular healthcare management systems. Our technical team handles the entire process."
-    },
-    {
-      question: "What kind of support do you provide?",
-      answer: "We offer 24/7 technical support, dedicated account managers for Enterprise clients, and comprehensive training resources."
-    },
-    {
-      question: "Is Doxxy suitable for small practices?",
-      answer: "Absolutely! Our Practice Essentials plan is free for your first 100 appointments and specifically designed for solo practitioners and small clinics."
-    }
-  ];
-
+export default function ContactPage() {
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
-      {isSubmitted ? (
-        <ThankYouMessage onSendAnother={() => {
-          setFormData({
-            name: '',
-            email: '',
-            phone: '',
-            company: '',
-            city: '',
-            message: '',
-          });
-          setIsSubmitted(false);
-        }} />
-      ) : (
-        <>
-          <HeroSection />
-          <Section className="bg-gray-50 dark:bg-gray-800/50">
-            <div className="grid lg:grid-cols-3 gap-8">
-              <ContactForm 
-                formData={formData}
-                handleChange={handleChange}
-                handleSubmit={handleSubmit}
-                isSubmitting={submitContactForm.isPending}
-                error={error}
-              />
-              <div className="space-y-8">
-                {contactInfo.map((info, index: number) => (
-                  <ContactInfoCard key={index} {...info} />
-                ))}
-                {/* Quick Demo CTA */}
-                <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50 text-center">
-                  <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="h-7 w-7 text-blue-600 dark:text-blue-400" />
+      <section className="py-24 md:py-32 text-center !pt-28 md:!pt-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+            We&apos;re Here to Help.
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center">
+            Have questions about Doxxy? Our team of healthcare technology experts is ready to help you transform your practice.
+          </p>
+        </div>
+      </section>
+
+      <section className="py-24 md:py-32 bg-gray-50 dark:bg-gray-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-3 gap-8">
+            <ContactForm />
+
+            <div className="space-y-8">
+              {contactInfo.map((info, index) => {
+                const Icon = info.icon;
+                return (
+                  <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <Icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{info.title}</h3>
+                        {info.details.map((detail, idx) => (
+                          <p key={idx} className="text-gray-700 dark:text-gray-300 font-medium">{detail}</p>
+                        ))}
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">{info.description}</p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Book a Demo</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    See Doxxy in action with a personalized demo
-                  </p>
-                  <Button size="lg" className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold">
-                    Schedule Now
-                  </Button>
+                );
+              })}
+
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50 text-center">
+                <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="h-7 w-7 text-blue-600 dark:text-blue-400" />
                 </div>
+                <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Book a Demo</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                  See Doxxy in action with a personalized demo
+                </p>
+                <Button size="lg" className="w-full bg-blue-600 text-white hover:bg-blue-700 rounded-xl py-3 text-base font-semibold">
+                  Schedule Now
+                </Button>
               </div>
             </div>
-          </Section>
+          </div>
+        </div>
+      </section>
 
-          {/* Global Offices (Commented) */}
-          {/* <Section>
-            <SectionTitle>Our Global Offices</SectionTitle>
-            <SectionSubtitle className="mt-4">Visit us in person or reach out to our local teams.</SectionSubtitle>
-            <div className="grid md:grid-cols-2 gap-8 mt-16">
-              {offices.map((office, index) => (
-                <OfficeCard key={index} {...office} />
-              ))}
-            </div>
-          </Section> */}
+      <section className="py-24 md:py-32 bg-gray-50 dark:bg-gray-800/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center">
+            Frequently Asked Questions.
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center mt-4">
+            Quick answers to common questions about Doxxy.
+          </p>
+          <div className="max-w-3xl mx-auto mt-16 space-y-8">
+            {faqs.map((faq, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-lg mb-2">{faq.question}</h3>
+                <p className="text-gray-600 dark:text-gray-300">{faq.answer}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <Section className="bg-gray-50 dark:bg-gray-800/50">
-            <SectionTitle>Frequently Asked Questions.</SectionTitle>
-            <SectionSubtitle className="mt-4">Quick answers to common questions about Doxxy.</SectionSubtitle>
-            <div className="max-w-3xl mx-auto mt-16 space-y-8">
-              {faqs.map((faq, index: number) => (
-                <FAQItem key={index} {...faq} />
-              ))}
-            </div>
-          </Section>
-        </>
-      )}
       <SignupCTA />
       <SiteFooter />
     </div>
   );
-};
-
-const Contact = () => {
-  return <ContactClient />;
-};
-
-export default Contact;
+}

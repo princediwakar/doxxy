@@ -1,76 +1,55 @@
 // components/today/TodayDetailPanel.tsx
 "use client";
 
-import { useCallback, memo } from "react";
 import { User } from "lucide-react";
 import { Spinner } from "@/components/ui/loading";
+import { useTodayStore } from "@/stores/todayStore";
 import { useConsultationPermissions } from "@/hooks/consultation/useConsultationPermissions";
 import { EncounterCanvas } from "./EncounterCanvas";
 import { PatientHeader } from "./PatientHeader";
 import { AdministrativeFooter } from "./AdministrativeFooter";
 import type { AppointmentWithDetails } from "@/types/appointments";
-import type { PatientDetail } from "@/hooks/usePatientDetail";
+import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
 
 interface TodayDetailPanelProps {
   patientAppointments: AppointmentWithDetails[];
   patientDetail: PatientDetail | undefined;
   isLoadingDetail: boolean;
-  isLoadingQueue: boolean;
   selectedPatientId: string | null;
   selectedAppointmentId: string | null;
-  onCreateBill: (app: AppointmentWithDetails) => void;
-  onCreateBillForPatient: () => void;
-  onScheduleAppointment: () => void;
-  onEditAppointment: (app: AppointmentWithDetails) => void;
-  onEditPatient: () => void;
-  onViewBill: (bill: BillWithDetails) => void;
-  onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
+  patientBills: BillWithDetails[];
+  isLoadingBills: boolean;
   onRefreshNeeded: () => void;
-  deepLinkedAppointment?: AppointmentWithDetails | null;
 }
 
-const TodayDetailPanelInner = ({
+export function TodayDetailPanel({
   patientAppointments,
   patientDetail,
   isLoadingDetail,
-  isLoadingQueue,
   selectedPatientId,
   selectedAppointmentId,
-  onCreateBill,
-  onScheduleAppointment,
-  onCreateBillForPatient,
-  onEditPatient,
-  onEditAppointment,
-  onViewBill,
-  onViewConsultationFromHistory,
+  patientBills,
+  isLoadingBills,
   onRefreshNeeded,
-  deepLinkedAppointment,
-}: TodayDetailPanelProps) => {
+}: TodayDetailPanelProps) {
+  const createBill = useTodayStore((s) => s.createBill);
+  const createBillForPatient = useTodayStore((s) => s.createBillForPatient);
+  const scheduleAppointment = useTodayStore((s) => s.scheduleAppointment);
+  const editAppointment = useTodayStore((s) => s.editAppointment);
+  const editPatient = useTodayStore((s) => s.editPatient);
+  const viewBill = useTodayStore((s) => s.viewBill);
+  const viewConsultation = useTodayStore((s) => s.viewConsultation);
 
   const selectedAppointment = selectedAppointmentId
-    ? patientAppointments.find((a) => a.id === selectedAppointmentId) ??
-      (deepLinkedAppointment && deepLinkedAppointment.id === selectedAppointmentId
-        ? deepLinkedAppointment
-        : null)
+    ? patientAppointments.find((a) => a.id === selectedAppointmentId) ?? null
     : null;
 
   const { canEditConsultation } = useConsultationPermissions({
     appointment: selectedAppointment ?? undefined,
   });
 
-  const handleComplete = useCallback(() => {
-    onRefreshNeeded();
-  }, [onRefreshNeeded]);
-
   if (!selectedPatientId) {
-    if (isLoadingQueue) {
-      return (
-        <div className="flex items-center justify-center py-20">
-          <Spinner size="lg" />
-        </div>
-      );
-    }
     return (
       <div className="hidden lg:flex items-center justify-center h-full text-muted-foreground">
         <div className="text-center">
@@ -91,15 +70,28 @@ const TodayDetailPanelInner = ({
           isLoadingDetail={isLoadingDetail}
           appointmentStatus={selectedAppointment?.status}
           departmentName={selectedAppointment?.department_name}
-          onSchedule={onScheduleAppointment}
-          onBill={selectedAppointment ? () => onCreateBill(selectedAppointment) : onCreateBillForPatient}
-          onEditPatient={onEditPatient}
-          onEditAppointment={() => selectedAppointment && onEditAppointment(selectedAppointment)}
+          patientBills={patientBills}
+          isLoadingBills={isLoadingBills}
+          onSchedule={() =>
+            patientDetail?.patient &&
+            scheduleAppointment(patientDetail.patient)
+          }
+          onBill={
+            selectedAppointment
+              ? () => createBill(selectedAppointment)
+              : () =>
+                  patientDetail?.patient &&
+                  createBillForPatient(patientDetail.patient)
+          }
+          onEditPatient={editPatient}
+          onEditAppointment={() =>
+            selectedAppointment && editAppointment(selectedAppointment)
+          }
           canEditConsultation={canEditConsultation}
-          onViewBill={onViewBill}
-          onViewConsultationFromHistory={onViewConsultationFromHistory}
+          onViewBill={viewBill}
+          onViewConsultationFromHistory={viewConsultation}
           appointment={selectedAppointment}
-          onComplete={handleComplete}
+          onComplete={onRefreshNeeded}
         />
       ) : (
         <div className="space-y-4">
@@ -108,11 +100,24 @@ const TodayDetailPanelInner = ({
               name={patientDetail.patient.name}
               age={patientDetail.patient.age}
               gender={patientDetail.patient.gender}
+              medicalId={patientDetail.patient.medical_id}
               variant="staff"
-              onSchedule={onScheduleAppointment}
-              onBill={selectedAppointment ? () => onCreateBill(selectedAppointment) : onCreateBillForPatient}
-              onEditPatient={onEditPatient}
-              onEditAppointment={() => selectedAppointment && onEditAppointment(selectedAppointment)}
+              appointmentType={selectedAppointment?.type}
+              appointmentTime={selectedAppointment?.time}
+              departmentName={selectedAppointment?.department_name}
+              notes={selectedAppointment?.notes}
+              onSchedule={() =>
+                scheduleAppointment(patientDetail!.patient!)
+              }
+              onBill={
+                selectedAppointment
+                  ? () => createBill(selectedAppointment)
+                  : () => createBillForPatient(patientDetail!.patient!)
+              }
+              onEditPatient={editPatient}
+              onEditAppointment={() =>
+                selectedAppointment && editAppointment(selectedAppointment)
+              }
             />
           )}
           <AdministrativeFooter
@@ -120,15 +125,15 @@ const TodayDetailPanelInner = ({
             isLoadingDetail={isLoadingDetail}
             selectedPatientId={selectedPatientId}
             currentAppointmentId={null}
+            patientBills={patientBills}
+            isLoadingBills={isLoadingBills}
             defaultExpandBills
             defaultExpandHistory
-            onViewBill={onViewBill}
-            onViewConsultationFromHistory={onViewConsultationFromHistory}
+            onViewBill={viewBill}
+            onViewConsultationFromHistory={viewConsultation}
           />
         </div>
       )}
     </div>
   );
-};
-
-export const TodayDetailPanel = memo(TodayDetailPanelInner);
+}
