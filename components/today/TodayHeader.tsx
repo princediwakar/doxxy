@@ -17,8 +17,10 @@ export function TodayHeader() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const openModal = useTodayStore((s) => s.openModal);
+  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
 
-  const activeFilter = (searchParams.get("filter") as ActiveFilter) || "queue";
+  const hasFilterParams = !!(searchParams.get("gender") || searchParams.get("age_group"));
+  const activeFilter = (searchParams.get("filter") as ActiveFilter) || (hasFilterParams ? "all" : "queue");
 
   const pushSearch = useDebouncedCallback((value: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -34,6 +36,9 @@ export function TodayHeader() {
   const handleFilterChange = (value: ActiveFilter) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("filter", value);
+    params.delete("patient");
+    params.delete("appointment");
+    setMobileDetailOpen(false);
     if (value === "queue") {
       params.delete("q");
     }

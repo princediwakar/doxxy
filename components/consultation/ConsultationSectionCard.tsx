@@ -55,7 +55,7 @@ export const ConsultationSectionCard = ({
         <CollapsibleTrigger asChild>
           <div className="cursor-pointer transition-colors py-2">
             <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-1.5 text-sm font-medium uppercase">
+              <div className="flex items-center gap-1.5 text-base font-medium uppercase">
                 <span>{section.title}</span>
                 {hasContent && (
                   <span

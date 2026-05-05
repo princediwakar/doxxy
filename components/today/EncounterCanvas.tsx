@@ -99,7 +99,7 @@ export function EncounterCanvas({
         onEditAppointment={onEditAppointment}
       />
 
-      {appointmentStatus !== "Completed" && canEditConsultation && (
+      {appointment && appointmentStatus !== "Completed" && canEditConsultation && (
         <DictationZone
           onStructured={handleStructured}
           onOpenNotes={handleScrollToForm}

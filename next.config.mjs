@@ -40,7 +40,7 @@ const nextConfig = {
   },
 
   // Trailing Slash for better compatibility
-  trailingSlash: true,
+  trailingSlash: false,
 }
 
 export default bundleAnalyzer(nextConfig)

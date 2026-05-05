@@ -15,6 +15,23 @@ import { ReflexExaminationField } from './ReflexExaminationField';
 import type { FieldConfig, FieldValue, TabularEyeValue, MotorExaminationValue, ReflexExaminationValue, VitalSignsData } from '@/types/consultation';
 import { useState, useRef, useEffect, useMemo, memo, useCallback } from 'react';
 
+function hasFieldValue(value: FieldValue): boolean {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim().length > 0 && value !== 'NOT_SPECIFIED';
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === 'object') {
+    return Object.values(value).some(v => {
+      if (typeof v === 'string') return v.trim().length > 0 && v !== 'NOT_SPECIFIED';
+      if (Array.isArray(v)) return v.length > 0;
+      if (typeof v === 'object' && v !== null) return Object.keys(v).length > 0;
+      return false;
+    });
+  }
+  return false;
+}
+
+const filledDot = <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />;
+
 interface ConsultationFormFieldProps {
   fieldConfig: FieldConfig;
   fieldIndex: number;
@@ -63,6 +80,7 @@ export const ConsultationFormField = memo(({
     return CHARACTER_LIMITS.input.default;
   }, [fieldConfig.type]);
 
+  const hasValue = useMemo(() => hasFieldValue(value), [value]);
 
   // --- COMPLEX FIELD RENDERING ---
   
@@ -82,6 +100,7 @@ export const ConsultationFormField = memo(({
               <Activity className="h-4 w-4 text-muted-foreground" />
               {fieldConfig.label}
               {isMandatory && <span className="text-destructive">*</span>}
+              {hasValue && filledDot}
             </Label>
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
           </div>
@@ -112,6 +131,7 @@ export const ConsultationFormField = memo(({
             <Label className="font-medium flex items-center gap-2">
               {fieldConfig.label}
               {isMandatory && <span className="text-destructive">*</span>}
+              {hasValue && filledDot}
             </Label>
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
           </div>
@@ -200,6 +220,7 @@ export const ConsultationFormField = memo(({
       <Label className="font-medium flex items-center gap-2">
         {fieldConfig.label}
         {isMandatory && <span className="text-destructive">*</span>}
+        {hasValue && filledDot}
       </Label>
       {!isMandatory && (
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />

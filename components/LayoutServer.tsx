@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import type { User } from '@supabase/supabase-js';
 import type { ClinicMemberWithClinic } from '@/types/core';
 import { AppStateProvider } from '@/contexts/AppStateContext';
-import { AppSidebar } from '@/components/AppSidebar';
+import { SidebarLayout } from '@/components/SidebarLayout';
 import { MobileHeader } from '@/components/MobileHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { FloatingActionButton } from '@/components/ui/floating-action-button';
@@ -38,19 +38,13 @@ const LayoutServer = ({
       serverActiveClinicId={serverActiveClinicId}
     >
       <div className="flex min-h-screen bg-muted/90">
-        <div className="hidden lg:flex lg:flex-col lg:w-72 fixed left-0 top-0 h-screen z-40">
-          <AppSidebar />
-        </div>
-
         <MobileHeader />
 
-        <div className="flex-1 mt-14 lg:mt-4 lg:ml-72 pb-24 lg:pb-0 min-w-0 overflow-hidden">
-          <main className="bg-white rounded-xl shadow-sm p-4 md:p-6 mx-auto min-h-[calc(100vh-3rem)] md:min-h-[calc(100vh-4rem)] max-w-full overflow-x-hidden">
-            <Suspense fallback={<PageLoader />}>
-              {children}
-            </Suspense>
-          </main>
-        </div>
+        <SidebarLayout>
+          <Suspense fallback={<PageLoader />}>
+            {children}
+          </Suspense>
+        </SidebarLayout>
 
         <FloatingActionButton actions={fabActions} />
 

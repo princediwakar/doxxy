@@ -163,9 +163,6 @@ export function AnalyticsPage() {
     }
   }, [error]);
 
-  const isDoctor = activeClinicRole === "doctor";
-  const isSuperadmin = activeClinicRole === "superadmin";
-  const isStaff = activeClinicRole === "staff";
   const showClinicWide = isSuperadmin || isStaff;
   const showPractice = isDoctor || (isSuperadmin && hasDoctorProfile);
 

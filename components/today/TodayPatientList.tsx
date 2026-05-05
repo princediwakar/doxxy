@@ -122,9 +122,11 @@ export function TodayPatientList({
   const router = useRouter();
   const dirtyFormGuard = useTodayStore((s) => s.dirtyFormGuard);
   const triggerShake = useTodayStore((s) => s.triggerShake);
+  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
   const { activeClinicId } = useAppState();
 
-  const activeFilter = searchParams.get("filter") || "queue";
+  const hasFilterParams = !!(searchParams.get("gender") || searchParams.get("age_group"));
+  const activeFilter = searchParams.get("filter") || (hasFilterParams ? "all" : "queue");
   const selectedAppointmentId = searchParams.get("appointment") || null;
   const selectedPatientId = searchParams.get("patient") || null;
   const searchQuery = activeFilter === "all" ? searchParams.get("q") || "" : "";
@@ -172,8 +174,9 @@ export function TodayPatientList({
       params.set("appointment", app.id);
       router.push(`/today?${params.toString()}`, { scroll: false });
       onAppointmentClick(app);
+      setMobileDetailOpen(true);
     },
-    [dirtyFormGuard, triggerShake, router, searchParams, onAppointmentClick],
+    [dirtyFormGuard, triggerShake, router, searchParams, onAppointmentClick, setMobileDetailOpen],
   );
 
   const handleSearchPatientClick = useCallback(
@@ -188,8 +191,9 @@ export function TodayPatientList({
       const params = new URLSearchParams(searchParams.toString());
       params.set("patient", patientId);
       router.push(`/today?${params.toString()}`, { scroll: false });
+      setMobileDetailOpen(true);
     },
-    [dirtyFormGuard, triggerShake, router, searchParams],
+    [dirtyFormGuard, triggerShake, router, searchParams, setMobileDetailOpen],
   );
 
   const totalToday =
