@@ -54,6 +54,7 @@ export const useAuthFlow = () => {
         email: email.trim(),
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth`,
         },
       });
 
@@ -96,6 +97,7 @@ export const useAuthFlow = () => {
         email: email.trim(),
         options: {
           shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/auth`,
         },
       });
 
