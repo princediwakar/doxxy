@@ -81,7 +81,11 @@
     "zustand": "^5.0.12",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.11",
-    "autoprefixer": "^10.4.21"
+    "autoprefixer": "^10.4.21",
+    "typescript": "^5.5.3",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/node": "^22.5.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.0",
@@ -94,9 +98,6 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/lodash-es": "^4.17.12",
-    "@types/node": "^22.5.5",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
     "dotenv": "^16.6.1",
     "dotenv-cli": "^8.0.0",
     "eslint": "^9.32.0",
@@ -113,7 +114,6 @@
     "terser": "^5.43.1",
     "ts-jest": "^29.4.6",
     "tsx": "^4.20.3",
-    "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "uuid": "^11.1.0"
   }
