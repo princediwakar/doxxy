@@ -128,8 +128,8 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         toast.error(result.error);
         return;
       }
-      queryClient.invalidateQueries({ queryKey: ['profile', 'user', user.id] });
-      queryClient.invalidateQueries({ queryKey: ['profile', 'doctor', user.id, activeClinicId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile.user(user.id) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile.doctor(user.id, activeClinicId) });
       queryClient.invalidateQueries({ queryKey: ['userHasDoctorProfile'] });
       toast.success('Medical profile ready! You can now start accepting appointments.');
       onSuccess();

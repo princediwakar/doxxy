@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "@/lib/query-keys";
 import {
   Card,
   CardContent,
@@ -51,6 +52,7 @@ export default function ProfilePageClient({
   doctorProfile,
   userProfile,
 }: ProfilePageClientProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [isBasicModalOpen, setIsBasicModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
@@ -108,10 +110,10 @@ export default function ProfilePageClient({
 
   const handleRefetch = () => {
     queryClient.invalidateQueries({
-      queryKey: ["doctorProfile", user.id, activeClinicId],
+      queryKey: queryKeys.profile.doctor(user.id, activeClinicId),
     });
     queryClient.invalidateQueries({
-      queryKey: ["userProfile", user.id],
+      queryKey: queryKeys.profile.user(user.id),
     });
   };
 
@@ -324,6 +326,7 @@ export default function ProfilePageClient({
           onClose={() => setIsOnboardingModalOpen(false)}
           onSuccess={() => {
             setIsOnboardingModalOpen(false);
+            router.refresh();
             handleRefetch();
           }}
         />

@@ -7,14 +7,14 @@ export default async function ProfilePage() {
   const clinic = await getActiveClinic(user.id);
 
   const [doctorProfile, userProfile] = await Promise.all([
-    clinic ? getDoctorProfile(user.id, clinic.id) : null,
+    clinic ? getDoctorProfile(user.id, clinic.clinic_id) : null,
     getUserProfile(user.id),
   ]);
 
   return (
     <ProfilePageClient
       user={user}
-      activeClinicId={clinic?.id ?? ""}
+      activeClinicId={clinic?.clinic_id ?? ""}
       activeClinicRole={clinic?.role ?? "staff"}
       activeClinicName={clinic?.clinic_name ?? "Unknown Clinic"}
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

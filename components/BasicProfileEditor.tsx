@@ -11,6 +11,7 @@ import { useAppState } from '@/contexts/AppStateContext';
 import { updateProfileEditor } from '@/actions/profile';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSupabase } from '@/integrations/supabase/client';
+import { queryKeys } from '@/lib/query-keys';
 import { showErrorToast } from '@/lib/error-utils';
 import { toast } from 'sonner';
 import {
@@ -49,7 +50,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   const supabase = getSupabase();
 
   const { data: profileData, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', 'user', user?.id],
+    queryKey: queryKeys.profile.user(user?.id ?? ""),
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
@@ -154,9 +155,9 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         return;
       }
 
-      queryClient.invalidateQueries({ queryKey: ['profile', 'user', user.id] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile.user(user.id) });
       if (activeClinicId) {
-        queryClient.invalidateQueries({ queryKey: ['profile', 'doctor', user.id, activeClinicId] });
+        queryClient.invalidateQueries({ queryKey: queryKeys.profile.doctor(user.id, activeClinicId) });
       }
 
       toast.success('Profile updated successfully!', {
