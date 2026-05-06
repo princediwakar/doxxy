@@ -25,7 +25,7 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const pathname = usePathname();
 
   const role = activeClinicRole;
-  const topItems = navItems.filter(item => item.topGroup);
+  const topItems = navItems.filter(item => item.topGroup && item.sidebar !== false);
   const bottomItems = navItems.filter(item => !item.topGroup && (role ? item.roles.includes(role) : true));
 
   const renderNavItem = (item: (typeof navItems)[number]) => {

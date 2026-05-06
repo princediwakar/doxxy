@@ -71,6 +71,21 @@ export function getCurrentTimeIST(): string {
 }
 
 /**
+ * Gets the current date in IST formatted as YYYY-MM-DD
+ */
+export function getCurrentDateStringIST(): string {
+  const now = new Date();
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now.getTime() + istOffset);
+  
+  const year = istTime.getUTCFullYear();
+  const month = (istTime.getUTCMonth() + 1).toString().padStart(2, '0');
+  const date = istTime.getUTCDate().toString().padStart(2, '0');
+  
+  return `${year}-${month}-${date}`;
+}
+
+/**
  * Returns age from a date string, with appropriate units for infants
  * 
  * @param dateOfBirth - Date string (YYYY-MM-DD or ISO format)

@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Plus, Stethoscope } from "lucide-react";
+import { Plus, Search, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -78,13 +78,20 @@ export function TodayHeader({
         </SelectContent>
       </Select>
 
-      <Button
-        onClick={handleNewPatient}
-        className="hidden lg:inline-flex shrink-0"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        New Patient
-      </Button>
+      <div className="hidden lg:flex items-center gap-3">
+        <Button
+          variant="outline"
+          onClick={() => document.dispatchEvent(new Event("open-command-palette"))}
+          className="rounded-lg text-muted-foreground hover:text-foreground"
+        >
+          <Search className="h-4 w-4 mr-2" />
+          Search patients...
+        </Button>
+        <Button onClick={handleNewPatient}>
+          <Plus className="h-4 w-4 mr-2" />
+          New Patient
+        </Button>
+      </div>
     </div>
   );
 }
