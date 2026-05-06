@@ -1,11 +1,5 @@
 /** @type {import('next').NextConfig} */
 
-import withBundleAnalyzer from '@next/bundle-analyzer'
-
-const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === 'true',
-})
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async redirects() {
@@ -43,4 +37,15 @@ const nextConfig = {
   trailingSlash: false,
 }
 
-export default bundleAnalyzer(nextConfig)
+let config = nextConfig
+
+if (process.env.ANALYZE === 'true') {
+  try {
+    const { default: withBundleAnalyzer } = await import('@next/bundle-analyzer')
+    config = withBundleAnalyzer({ enabled: true })(nextConfig)
+  } catch {
+    // @next/bundle-analyzer not installed, skip
+  }
+}
+
+export default config
