@@ -1,4 +1,3 @@
--- Add No-Show to appointment_status enum for analytics tracking
 DO $$
 BEGIN
   IF NOT EXISTS (

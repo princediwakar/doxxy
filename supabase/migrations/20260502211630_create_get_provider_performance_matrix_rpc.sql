@@ -1,6 +1,3 @@
--- RPC: get_provider_performance_matrix
--- Returns per-doctor appointment metrics for a clinic within a date range.
--- UI computes completion rate, no-show rate, and utilization % from these counts.
 CREATE OR REPLACE FUNCTION public.get_provider_performance_matrix(
   _clinic_id uuid,
   _start_date date,

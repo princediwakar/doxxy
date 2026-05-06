@@ -1,8 +1,3 @@
--- Fix: daily_breakdown LEFT JOIN comparison between appointments.date (text)
--- and generate_series dates. appointments.date stores mixed formats:
--- plain "2026-05-02" or full "2026-05-02 00:00:00+05:30".
--- Cast both sides to date type for reliable comparison.
-
 CREATE OR REPLACE FUNCTION public.get_clinic_analytics(
   _clinic_id uuid,
   _start_date date,
@@ -45,7 +40,7 @@ BEGIN
          COUNT(a.id) FILTER (WHERE a.status = 'Cancelled')::bigint as cancelled,
          COUNT(a.id)::bigint as total
        FROM generate_series(_start_date, _end_date, '1 day'::interval) d(date)
-       LEFT JOIN appointments a ON a.clinic_id = _clinic_id AND a.date::date = d.date
+       LEFT JOIN appointments a ON a.clinic_id = _clinic_id AND a.date LIKE d.date::text || '%'
        GROUP BY d.date
        ORDER BY d.date
      ) t) as daily_breakdown;
@@ -94,7 +89,7 @@ BEGIN
          COUNT(a.id) FILTER (WHERE a.status = 'Cancelled')::bigint as cancelled,
          COUNT(a.id)::bigint as total
        FROM generate_series(_start_date, _end_date, '1 day'::interval) d(date)
-       LEFT JOIN appointments a ON a.doctor_id = _doctor_id AND a.date::date = d.date
+       LEFT JOIN appointments a ON a.doctor_id = _doctor_id AND a.date LIKE d.date::text || '%'
        GROUP BY d.date
        ORDER BY d.date
      ) t) as daily_breakdown;

@@ -1,5 +1,3 @@
--- RPC: get_clinic_analytics
--- Returns clinic-wide appointment metrics for a date range with daily breakdown
 CREATE OR REPLACE FUNCTION public.get_clinic_analytics(
   _clinic_id uuid,
   _start_date date,

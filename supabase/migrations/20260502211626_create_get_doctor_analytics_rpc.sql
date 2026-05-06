@@ -1,5 +1,3 @@
--- RPC: get_doctor_analytics
--- Returns doctor-specific appointment metrics for a date range with daily breakdown
 CREATE OR REPLACE FUNCTION public.get_doctor_analytics(
   _doctor_id uuid,
   _start_date date,

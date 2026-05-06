@@ -1,3 +1,4 @@
+
 -- SECURITY DEFINER function to verify invitation tokens.
 -- Bypasses RLS so anonymous users can look up their invitation before signing in.
 CREATE OR REPLACE FUNCTION verify_invitation_token(p_token text, p_email text)

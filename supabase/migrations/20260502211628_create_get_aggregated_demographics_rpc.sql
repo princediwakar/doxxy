@@ -1,7 +1,3 @@
--- RPC: get_aggregated_demographics
--- Returns age group and gender distribution for patients.
--- When _doctor_id is provided, scoped to patients who have appointments with that doctor.
--- When null, returns clinic-wide demographics.
 CREATE OR REPLACE FUNCTION public.get_aggregated_demographics(
   _clinic_id uuid,
   _doctor_id uuid DEFAULT NULL

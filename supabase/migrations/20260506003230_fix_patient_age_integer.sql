@@ -1,6 +1,5 @@
--- Migration: Add optional doctor_id filter to get_appointments_with_details_by_clinic RPC
--- Allows filtering today's queue to a specific doctor's patients
--- Note: billing_status was intentionally removed from this function in 20260502000001 since it was never consumed
+DROP FUNCTION IF EXISTS public.get_appointments_with_details_by_clinic(uuid, uuid);
+DROP FUNCTION IF EXISTS public.get_appointments_with_details_by_clinic(uuid);
 
 CREATE OR REPLACE FUNCTION public.get_appointments_with_details_by_clinic(clinic_id uuid, filter_doctor_id uuid DEFAULT NULL)
  RETURNS TABLE(id text, patient_id text, doctor_id text, date text, "time" text, type appointment_type, status appointment_status, notes text, created_at text, patient_name text, doctor_name text, department_name text, user_id text, doctor_avatar_url text, patient_gender text, patient_age integer)
