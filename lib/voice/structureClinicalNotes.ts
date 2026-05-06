@@ -51,6 +51,26 @@ SPECIAL INSTRUCTIONS EXTRACTION:
 - "for fever" / "for pain" / "if needed" → note the condition
 - If no special instruction is given, set instructions to "NOT_SPECIFIED"`;
 
+const NARRATIVE_FIELD_MAPPING = `
+NARRATIVE-TO-FIELD MAPPING:
+When the doctor dictates in narrative form, carefully map each section to the correct schema fields:
+- "History" / "History of Present Illness" / "HPI" → history_of_present_illness
+- "Past History" / "Past Medical History" / "PMH" → past_medical_history
+- "Family History" → family_history
+- "Current Medications" / "Drug History" → medications
+- "Allergies" → allergies
+- "Examination" / "Physical Exam" / "On examination" / "O/E" → physical_exam AND systemic_examination
+- "Vital Signs" / "Vitals" → vital_signs (extract numeric values into sub-fields)
+- "Investigations" / "Labs" / "Previous Tests" / "Reports" → previous_investigations
+- "Assessment" / "Impression" / "Clinical Impression" → assessment
+- "Diagnosis" / "Diagnoses" → diagnosis
+- "Plan" / "Treatment" / "Management" → treatment
+- "Investigations Planned" / "Tests to Order" / "Order" → planned_investigations
+- "Follow-Up" / "Follow up" / "Review" → follow_up
+- "Referrals" / "Refer to" / "Consult" → referrals
+- "Prognosis" / "Expected Course" → prognosis
+If a single narrative section contains information relevant to multiple fields, populate ALL of them. Do not condense or skip — capture the full detail the doctor provided.`;
+
 function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): string {
   const fieldList = fields
     .map((f) => {
@@ -59,7 +79,7 @@ function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): st
     })
     .join('\n');
 
-  return `You are a clinical AI that converts voice transcripts into structured consultation notes for Indian clinics.
+  return `You are a clinical AI that converts voice transcripts into structured consultation notes for Indian clinics. Your task is to thoroughly analyze the entire transcript and extract ALL available clinical information into every relevant field below. Do not skip sections — if the doctor mentioned it, it belongs in the output.
 
 ${INDIAN_SHORTHAND_REFERENCE}
 
@@ -68,11 +88,16 @@ DEPARTMENT: ${department}
 FIELDS TO EXTRACT:
 ${fieldList}
 
+${NARRATIVE_FIELD_MAPPING}
+
 INSTRUCTIONS:
-1. Extract all fields listed above from the transcript. Set any field you cannot determine to "NOT_SPECIFIED".
-2. For the prescriptions array, extract each medication with its name, dosage, frequency, duration, route, and instructions.
-3. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
-4. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in name.
+1. Read the entire transcript carefully. Extract ALL clinical information into the matching fields listed above. Populate every field that has any corresponding content in the transcript — do not be conservative or lazy.
+2. Map narrative sections to schema fields using the mapping guide above. If a section maps to multiple fields (e.g., "Examination" maps to both physical_exam and systemic_examination), populate all of them with the relevant content.
+3. Preserve the doctor's wording, detail, and clinical nuance. Do not summarize or truncate.
+4. Set any field you truly cannot determine to "NOT_SPECIFIED".
+5. For the prescriptions array, extract each medication with its name, dosage, frequency, duration, route, and instructions.
+6. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
+7. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in name.
 
 ${ROUTE_DETECTION}
 
@@ -227,9 +252,9 @@ export async function structureClinicalNotes(
         Authorization: `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4o',
         temperature: 0.1,
-        max_tokens: 4096,
+        max_tokens: 16384,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Transcribe and structure this clinical dictation:\n\n${transcript}` },

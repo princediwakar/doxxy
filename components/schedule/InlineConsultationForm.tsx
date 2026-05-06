@@ -90,8 +90,21 @@ export function InlineConsultationForm({
     if (!aiStructuredData) return;
 
     const currentSpecialtyData = (form.getValues().specialty_data || {}) as Record<string, unknown>;
+
+    // Clean rawFields: filter out NOT_SPECIFIED, null, undefined, and empty strings.
+    // Preserve nested objects (e.g. vital_signs) as-is — their sub-fields are handled
+    // by the form's field renderers.
+    const cleanedRawFields: Record<string, unknown> = {};
+    if (aiStructuredData.rawFields) {
+      for (const [key, value] of Object.entries(aiStructuredData.rawFields)) {
+        if (value === 'NOT_SPECIFIED' || value === null || value === undefined || value === '') continue;
+        cleanedRawFields[key] = value;
+      }
+    }
+
     const merged: Record<string, unknown> = {
       ...currentSpecialtyData,
+      ...cleanedRawFields,
       chief_complaint:
         aiStructuredData.symptoms !== "NOT_SPECIFIED"
           ? aiStructuredData.symptoms
@@ -103,7 +116,7 @@ export function InlineConsultationForm({
       treatment:
         aiStructuredData.advice !== "NOT_SPECIFIED"
           ? aiStructuredData.advice
-          : currentSpecialtyData.treatment || "",
+          : (cleanedRawFields.treatment as string) || currentSpecialtyData.treatment || "",
       prescriptions: aiStructuredData.prescriptions
         .filter((p) => p.drug_name !== "NOT_SPECIFIED")
         .map((p) => ({
