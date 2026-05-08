@@ -54,26 +54,27 @@ export function TodayPageClient({
   const selectedPatientId = searchParams.get("patient") || null;
   const selectedAppointmentId = searchParams.get("appointment") || null;
 
-  // ── FAB action handler ──
+  // ── Store ──
   const openModal = useTodayStore((s) => s.openModal);
+  const mobileDetailOpen = useTodayStore((s) => s.mobileDetailOpen);
+  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
+  const selectAppointment = useTodayStore((s) => s.selectAppointment);
+
+  // ── FAB action handler ──
   const fabHandled = useRef(false);
   useEffect(() => {
-    if (searchParams.get("action") === "new-patient" && !fabHandled.current) {
+    const action = searchParams.get("action");
+    if (action === "new-patient" && !fabHandled.current) {
       fabHandled.current = true;
       openModal("patient-new");
       const next = new URLSearchParams(searchParams.toString());
       next.delete("action");
       const qs = next.toString();
       router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
-    } else if (searchParams.get("action") !== "new-patient") {
+    } else if (action !== "new-patient") {
       fabHandled.current = false;
     }
   }, [searchParams, router, openModal]);
-
-  // ── Store ──
-  const mobileDetailOpen = useTodayStore((s) => s.mobileDetailOpen);
-  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
-  const selectAppointment = useTodayStore((s) => s.selectAppointment);
 
   // ── Patient detail ──
   const isInitialPatient =
@@ -116,6 +117,46 @@ export function TodayPageClient({
   const patientAppointments = selectedPatientId
     ? appointmentsByPatient.get(selectedPatientId) ?? []
     : [];
+
+  // ── View-consult action handler ──
+  const consultHandled = useRef(false);
+  useEffect(() => {
+    const action = searchParams.get("action");
+    if (action === "view-consult" && !consultHandled.current && selectedAppointmentId && selectedPatientId) {
+      consultHandled.current = true;
+      const doctorId = searchParams.get("doctor_id") || "";
+      const doctorName = searchParams.get("doctor_name") || undefined;
+      const date = searchParams.get("date") || "";
+      const time = searchParams.get("time") || "";
+      // Set historyAppointment directly — the appointment may not be in today's queue
+      useTodayStore.setState({
+        selectedAppointment: null,
+        selectedBill: null,
+        historyAppointment: {
+          id: selectedAppointmentId,
+          patient_id: selectedPatientId,
+          doctor_id: doctorId,
+          doctor_name: doctorName,
+          date,
+          time,
+          type: "Walk-in",
+          status: "Completed",
+          created_at: "",
+        },
+        activeModal: "consult",
+      });
+      const next = new URLSearchParams(searchParams.toString());
+      next.delete("action");
+      next.delete("doctor_id");
+      next.delete("doctor_name");
+      next.delete("date");
+      next.delete("time");
+      const qs = next.toString();
+      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
+    } else if (action !== "view-consult") {
+      consultHandled.current = false;
+    }
+  }, [searchParams, router, selectedAppointmentId, selectedPatientId]);
 
   const handleRefetch = () => {
     if (selectedPatientId) {

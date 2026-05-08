@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
-import { User, AlertCircle, Loader2 } from "lucide-react";
+import { User, AlertCircle, Loader2, ArrowLeft, Search } from "lucide-react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -23,7 +23,16 @@ export function CommandPalette() {
   const [results, setResults] = useState<DbPatientByClinic[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [query, setQuery] = useState(""); // Track query state for zero-state rendering
+  const [query, setQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023px)");
+    setIsMobile(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
 
   const search = useDebouncedCallback(async (value: string) => {
     if (!activeClinicId || !value.trim()) {
@@ -31,10 +40,10 @@ export function CommandPalette() {
       setError(false);
       return;
     }
-    
+
     setLoading(true);
     setError(false);
-    
+
     try {
       const { patients } = await queryPatientSearch(activeClinicId, value);
       setResults(patients.slice(0, 8));
@@ -70,17 +79,111 @@ export function CommandPalette() {
   const handleSelect = useCallback(
     (patientId: string) => {
       setOpen(false);
-      setQuery(""); // Reset on close
+      setQuery("");
       router.push(`/patients/${patientId}`);
     },
     [router],
   );
 
-  // Get initials for the avatar (e.g., "John Doe" -> "JD")
+  const handleClose = useCallback(() => {
+    setOpen(false);
+    setQuery("");
+  }, []);
+
   const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .substring(0, 2)
+      .toUpperCase();
   };
 
+  // ─── Mobile: Full-Screen Takeover ───────────────────────────────────────
+  if (isMobile && open) {
+    return (
+      <div className="fixed inset-0 z-[60] bg-background flex flex-col animate-in fade-in-0 duration-200">
+        {/* Header with integrated search input */}
+        <div className="flex items-center gap-3 px-3 pt-safe h-14 border-b shrink-0">
+          <button
+            onClick={handleClose}
+            className="inline-flex items-center justify-center h-10 w-10 rounded-full hover:bg-muted touch-manipulation shrink-0"
+            aria-label="Close search"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div className="flex-1 flex items-center gap-2 rounded-full border bg-muted/50 px-4 h-10">
+            <Search className="h-4 w-4 shrink-0 opacity-50" />
+            <input
+              type="text"
+              placeholder="Search patients..."
+              value={query}
+              onChange={(e) => handleInputChange(e.target.value)}
+              autoFocus
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            />
+            {loading && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground shrink-0" />
+            )}
+          </div>
+        </div>
+
+        {/* Results */}
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-safe">
+          {error ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-destructive text-sm">
+              <AlertCircle className="h-4 w-4" /> Failed to fetch results.
+            </div>
+          ) : loading && results.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Searching…
+            </div>
+          ) : query.trim() === "" ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              Start typing to search…
+            </div>
+          ) : results.length === 0 ? (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              No patients found.
+            </div>
+          ) : (
+            <div className="p-2">
+              <div className="px-3 py-2 text-xs font-medium text-muted-foreground">
+                Patients
+              </div>
+              {results.map((patient) => (
+                <button
+                  key={patient.id}
+                  onClick={() => handleSelect(patient.id)}
+                  className="flex items-center gap-4 w-full rounded-lg px-3 py-3 text-left hover:bg-accent active:bg-accent touch-manipulation transition-colors"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm">
+                    {patient.name ? (
+                      getInitials(patient.name)
+                    ) : (
+                      <User className="h-5 w-5" />
+                    )}
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-semibold truncate">
+                      {patient.name}
+                    </span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {[patient.gender, patient.age ? `${patient.age}y` : null, patient.phone]
+                        .filter(Boolean)
+                        .join(" • ")}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Desktop: CommandDialog ─────────────────────────────────────────────
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
       <div className="relative">
@@ -90,7 +193,6 @@ export function CommandPalette() {
           value={query}
           autoFocus
         />
-        {/* Subtle loading indicator inside the input area */}
         {loading && (
           <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
         )}
@@ -103,11 +205,11 @@ export function CommandPalette() {
               <AlertCircle className="h-4 w-4" /> Failed to fetch results.
             </span>
           ) : loading ? (
-             "Searching..." 
+            "Searching..."
           ) : query.trim() !== "" ? (
-             "No patients found."
+            "No patients found."
           ) : (
-             "Start typing to search..." // Or render your "Recent Patients" component here
+            "Start typing to search..."
           )}
         </CommandEmpty>
 
@@ -116,28 +218,27 @@ export function CommandPalette() {
             {results.map((patient) => (
               <CommandItem
                 key={patient.id}
-                /* CRITICAL FIX: Index everything the user might type */
                 value={`${patient.name} ${patient.id} ${patient.phone || ""} ${patient.email || ""}`}
                 onSelect={() => handleSelect(patient.id)}
-                className="flex items-center justify-between py-3" // Larger hit area
+                className="flex items-center justify-between py-3"
               >
                 <div className="flex items-center gap-4">
-                  {/* Visual anchor: Replace generic icon with identity */}
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-xs">
-                    {patient.name ? getInitials(patient.name) : <User className="h-4 w-4" />}
+                    {patient.name ? (
+                      getInitials(patient.name)
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">{patient.name}</span>
                     <span className="text-xs text-muted-foreground">
-                      {[
-                        patient.gender, 
-                        patient.age ? `${patient.age}y` : null,
-                        patient.phone
-                      ].filter(Boolean).join(" • ")}
+                      {[patient.gender, patient.age ? `${patient.age}y` : null, patient.phone]
+                        .filter(Boolean)
+                        .join(" • ")}
                     </span>
                   </div>
                 </div>
-                {/* Optional: Add a quick-action button or status pill on the far right here later */}
               </CommandItem>
             ))}
           </CommandGroup>

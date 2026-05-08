@@ -35,7 +35,7 @@ interface AdministrativeFooterProps {
   defaultExpandBills?: boolean;
   defaultExpandHistory?: boolean;
   onViewBill: (bill: BillWithDetails) => void;
-  onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
+  onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
 }
 
 function extractSpecialtyField(row: Record<string, unknown>, field: string): string | undefined {
@@ -165,7 +165,10 @@ export function AdministrativeFooter({
                             onViewConsultationFromHistory(
                               c.appointments!.id!,
                               selectedPatientId,
-                              c.appointments!.doctor_id ?? ""
+                              c.appointments!.doctor_id ?? "",
+                              c.appointments!.date,
+                              c.appointments!.time,
+                              c.appointments!.doctors?.name
                             )
                           }
                         >

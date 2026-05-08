@@ -172,6 +172,11 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
                         const params = new URLSearchParams();
                         params.set("patient", patient.id);
                         params.set("appointment", c.appointments!.id!);
+                        params.set("action", "view-consult");
+                        if (c.appointments!.doctor_id) params.set("doctor_id", c.appointments!.doctor_id);
+                        if (c.appointments!.doctors?.name) params.set("doctor_name", c.appointments!.doctors.name);
+                        if (c.appointments!.date) params.set("date", c.appointments!.date);
+                        if (c.appointments!.time) params.set("time", c.appointments!.time);
                         router.push(`/schedule?${params.toString()}`);
                       }}
                     >
