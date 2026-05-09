@@ -53,8 +53,7 @@ interface AIMatchResult {
 
 const GEMINI_MODELS = [
   'gemini-2.5-flash-lite',
-  'gemini-3.1-flash-lite-preview',
-  'gemini-3-flash-preview',
+  'gemini-2.5-flash',
   'gemini-flash-latest',
 ];
 
@@ -104,15 +103,10 @@ async function callGemini(
     if (!res.ok) {
       // 404 = model not found → try next
       // 400 = bad request → log and try next
-      // 429 = quota → stop trying
-      // 503 = service unavailable → stop trying
+      // 429 = quota → try next model (different models may have separate quotas)
+      // 503 = service unavailable → try next model
       lastError = `Model ${model} → HTTP ${res.status}: ${responseText.slice(0, 300)}`;
       logger.error('Gemini model error:', lastError);
-
-      if (res.status === 429 || res.status === 503) {
-        throw new Error(`Gemini quota/unavailable (${res.status}): ${responseText.slice(0, 200)}`);
-      }
-      // 404/400 → try next model
       continue;
     }
 
