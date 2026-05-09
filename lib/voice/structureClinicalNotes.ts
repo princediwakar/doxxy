@@ -94,10 +94,12 @@ INSTRUCTIONS:
 1. Read the entire transcript carefully. Extract ALL clinical information into the matching fields listed above. Populate every field that has any corresponding content in the transcript — do not be conservative or lazy.
 2. Map narrative sections to schema fields using the mapping guide above. If a section maps to multiple fields (e.g., "Examination" maps to both physical_exam and systemic_examination), populate all of them with the relevant content.
 3. Preserve the doctor's wording, detail, and clinical nuance. Do not summarize or truncate.
-4. Set any field you truly cannot determine to "NOT_SPECIFIED".
-5. For the prescriptions array, extract each medication with its name, dosage, frequency, duration, route, and instructions.
-6. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
-7. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in name.
+4. For diagnosis: infer the most likely clinical diagnosis from the symptoms, examination findings, and treatment described. If the doctor did not explicitly name it, synthesize one from the clinical picture (e.g., "Migraine", "Hypertensive urgency", "Upper respiratory tract infection"). Never leave diagnosis as NOT_SPECIFIED when there is enough clinical information to form one.
+5. For assessment: provide a brief clinical reasoning that connects the symptoms to the diagnosis and justifies the treatment plan. If the doctor didn't explicitly state one, infer it from the available data.
+6. Set a field to "NOT_SPECIFIED" only when the transcript contains zero information relevant to it.
+7. For the prescriptions array, extract each medication with its name, dosage, frequency, duration, route, and instructions.
+8. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
+9. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in name.
 
 ${ROUTE_DETECTION}
 
@@ -127,6 +129,7 @@ function mapStructuredOutput(
 
   const symptoms = String(aiOutput.chief_complaint ?? 'NOT_SPECIFIED');
   const diagnosis = String(aiOutput.diagnosis ?? 'NOT_SPECIFIED');
+  const advice = String(aiOutput.treatment ?? aiOutput.therapy_plan ?? 'NOT_SPECIFIED');
 
   const prescriptions = (() => {
     const raw = aiOutput.prescriptions;
@@ -143,7 +146,7 @@ function mapStructuredOutput(
     return [];
   })();
 
-  return { symptoms, diagnosis, prescriptions, advice: 'NOT_SPECIFIED', rawFields };
+  return { symptoms, diagnosis, prescriptions, advice, rawFields };
 }
 
 export function stripNotSpecified(obj: unknown): unknown {

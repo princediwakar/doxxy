@@ -35,7 +35,10 @@ function mergeStructured(
       existing.diagnosis === "NOT_SPECIFIED" || !existing.diagnosis
         ? incoming.diagnosis
         : existing.diagnosis,
-    advice: 'NOT_SPECIFIED',
+    advice:
+      existing.advice === "NOT_SPECIFIED" || !existing.advice
+        ? incoming.advice
+        : existing.advice,
     prescriptions: [...existing.prescriptions, ...incoming.prescriptions],
     rawFields: {
       ...existing.rawFields,
