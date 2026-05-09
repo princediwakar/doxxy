@@ -19,6 +19,7 @@ interface PatientSelectProps {
   value: string;
   onSelect: (patientId: string) => void;
   onCreateNew: (name: string) => void;
+  fallbackName?: string;
 }
 
 // Helper moved inside or imported
@@ -35,20 +36,27 @@ export const PatientSelect: React.FC<PatientSelectProps> = ({
   value,
   onSelect,
   onCreateNew,
+  fallbackName,
 }) => {
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const commandRef = useRef<HTMLDivElement>(null);
 
-  // Sync input text with selected value
+  // Sync input text with selected value, using fallback when patient not in loaded list
   useEffect(() => {
     if (value && patients) {
       const selected = patients.find((p) => p.id === value);
-      if (selected) setInputValue(selected.name);
+      if (selected) {
+        setInputValue(selected.name);
+      } else if (!isLoading && fallbackName) {
+        setInputValue(fallbackName);
+      }
+    } else if (value && isLoading && fallbackName) {
+      setInputValue(fallbackName);
     } else if (!value) {
-        setInputValue("");
+      setInputValue("");
     }
-  }, [value, patients]);
+  }, [value, patients, isLoading, fallbackName]);
 
   // Handle outside click to close dropdown
   useEffect(() => {

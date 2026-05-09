@@ -169,11 +169,12 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
               render={({ field }) => (
                 <FormItem className="md:col-span-2 flex flex-col">
                   <FormLabel>Patient</FormLabel>
-                  <PatientSelect 
+                  <PatientSelect
                     patients={patients}
                     isLoading={isLoadingPatients}
                     value={field.value}
                     onSelect={field.onChange}
+                    fallbackName={patient?.name}
                     onCreateNew={(name) => {
                       setNewPatientName(name);
                       setIsPatientModalOpen(true);

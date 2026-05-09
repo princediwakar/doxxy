@@ -3,7 +3,10 @@
 import { useEffect, useRef, Suspense, useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTodayStore } from "@/stores/todayStore";
+import { useAppState } from "@/contexts/AppStateContext";
+import { queryKeys } from "@/lib/query-keys";
 import type { DbPatientByClinic } from "@/types/core";
 import type { AppointmentForBilling, BillWithDetails } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
@@ -45,6 +48,8 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
   const setDirtyFormGuard = useTodayStore((s) => s.setDirtyFormGuard);
   const patientCreated = useTodayStore((s) => s.patientCreated);
 
+  const queryClient = useQueryClient();
+  const { activeClinicId } = useAppState();
   const billModalRef = useRef<HTMLDivElement>(null);
   const [billViewMode, setBillViewMode] = useState<"view" | "edit">("view");
 
@@ -171,7 +176,12 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
               if (!open) closeModal();
             }}
             patient={null}
-            onPatientCreated={patientCreated as (patient: Patient) => void}
+            onPatientCreated={(newPatient) => {
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.patients.byClinic(activeClinicId ?? ""),
+              });
+              patientCreated(newPatient);
+            }}
           />
         )}
       </Suspense>
