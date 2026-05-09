@@ -78,11 +78,8 @@ export async function createSarvamJob(): Promise<string> {
         body: JSON.stringify({
           job_parameters: {
             model: 'saaras:v3',
-            // ✅ FIX: 'codemix' is a MODE, not a language_code.
-            // language_code must be a BCP-47 code or 'unknown' for auto-detect.
-            // 'unknown' is ideal for multilingual Indian clinical audio (Hinglish, etc.)
-            language_code: 'unknown',
-            mode: 'codemix',
+            language_code: 'en-IN',
+            mode: 'transcribe',
           },
         }),
       },
