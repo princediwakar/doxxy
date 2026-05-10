@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useConsultationData, useConsultationForm } from "@/hooks/consultation";
-import { ConsultationSectionCard } from "@/components/consultation/ConsultationSectionCard";
+import { ConsultationSectionCard, isFieldFilled } from "@/components/consultation/ConsultationSectionCard";
 import { mapDepartmentName } from "@/components/consultation/constants";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import type { PatientDetail } from "@/types/core";
@@ -84,6 +84,24 @@ export function InlineConsultationForm({
     departmentType,
     canEditConsultation: canEditConsultationOverride,
   });
+
+  const specialtyData = form.watch("specialty_data");
+
+  useEffect(() => {
+    if (!specialtyData || typeof specialtyData !== "object") return;
+    const data = specialtyData as Record<string, unknown>;
+
+    setExpandedSections((prev) => {
+      const next = { ...prev };
+      for (const section of specialtySections) {
+        if (prev[section.title] === undefined && section.fields.some((f) => isFieldFilled(data[f.name]))) {
+          next[section.title] = true;
+        }
+      }
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specialtyData, specialtySections]);
 
   // AI injection
   useEffect(() => {

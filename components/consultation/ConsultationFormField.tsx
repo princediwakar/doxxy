@@ -50,7 +50,8 @@ export const ConsultationFormField = memo(({
   autoFocus = false
 }: ConsultationFormFieldProps) => {
   const isMandatory = fieldConfig.mandatory || false;
-  const [isExpanded, setIsExpanded] = useState(isMandatory || fieldIndex === 0);
+  const hasValue = useMemo(() => hasFieldValue(value), [value]);
+  const [isExpanded, setIsExpanded] = useState(isMandatory || fieldIndex === 0 || hasValue);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -75,12 +76,18 @@ export const ConsultationFormField = memo(({
     }
   }, [autoFocus, isReadOnly, focusInput]);
 
+  const prevHasValue = useRef(hasValue);
+  useEffect(() => {
+    if (hasValue && !prevHasValue.current && !isReadOnly) {
+      setIsExpanded(true);
+    }
+    prevHasValue.current = hasValue;
+  }, [hasValue, isReadOnly]);
+
   const characterLimit = useMemo(() => {
     if (fieldConfig.type === 'textarea') return CHARACTER_LIMITS.textarea.default;
     return CHARACTER_LIMITS.input.default;
   }, [fieldConfig.type]);
-
-  const hasValue = useMemo(() => hasFieldValue(value), [value]);
 
   // --- COMPLEX FIELD RENDERING ---
   

@@ -12,7 +12,7 @@ import type { ConsultationFormValues, FieldValue } from "@/types/consultation";
 import type { FieldSection, NoteFieldConfig } from "@/lib/schemaUtils";
 import { ConsultationFormField } from "./ConsultationFormField";
 
-function isFieldFilled(value: unknown): boolean {
+export function isFieldFilled(value: unknown): boolean {
   if (value === undefined || value === null) return false;
   if (typeof value === "string") return value.trim().length > 0 && value !== "NOT_SPECIFIED";
   if (Array.isArray(value)) return value.length > 0;
