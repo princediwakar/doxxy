@@ -249,9 +249,8 @@ async function retryWithBackoff<T>(
     } catch (error) {
       lastError = error;
       if (attempt === retries) break;
-      // Don't retry auth errors or bad requests
+      // Don't retry auth errors
       if (error instanceof Error && error.message.includes('401')) break;
-      if (error instanceof Error && error.message.includes('400')) break;
       const delay = RETRY_BASE_DELAY * Math.pow(2, attempt);
       logger.warn(`OpenAI ${label} attempt ${attempt + 1} failed, retrying in ${delay}ms`);
       await new Promise((resolve) => setTimeout(resolve, delay));
@@ -304,7 +303,7 @@ export async function structureClinicalNotes(
     if (!response.ok) {
       const errText = await response.text();
       logger.error('OpenAI error:', response.status, errText);
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status} — ${errText.slice(0, 300)}`);
     }
 
     const data = await response.json();
