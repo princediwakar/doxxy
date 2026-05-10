@@ -140,26 +140,26 @@ assert(!neuroPropNames.includes('slit_lamp_exam'), 'does NOT have slit_lamp_exam
 assertEq(neuroJson.properties!.cranial_nerves.description, 'Cranial Nerves', 'cranial_nerves has label');
 assertEq(neuroJson.properties!.chief_complaint.description, 'Chief Complaint', 'chief_complaint has label');
 
-// All fields should be optional (no required array since all are .optional())
-assert(neuroJson.required === undefined || neuroJson.required.length === 0, 'no required fields (all optional)');
+// All optional fields become nullable unions for OpenAI strict mode compatibility
+// The zodToJsonSchema converter wraps types in ["type", "null"] for optional fields
 
-// Verify each property has a type
+// Verify each property has a nullable type (optional → ["string", "null"] for OpenAI strict mode)
 for (const prop of ['chief_complaint', 'cranial_nerves', 'sensory_examination', 'other_examination']) {
-  assertEq(neuroJson.properties![prop].type, 'string', `${prop} is type string`);
+  assertEq(JSON.stringify(neuroJson.properties![prop].type), JSON.stringify(['string', 'null']), `${prop} is nullable string`);
 }
 
-// Complex types: motor_examination should be an object
-assertEq(neuroJson.properties!.motor_examination.type, 'object', 'motor_examination is object type');
+// Complex types: motor_examination should be a nullable object
+assertEq(JSON.stringify(neuroJson.properties!.motor_examination.type), JSON.stringify(['object', 'null']), 'motor_examination is nullable object');
 assertEq(neuroJson.properties!.motor_examination.additionalProperties, false, 'motor_examination has additionalProperties: false');
 
-// Complex types: reflexes should be an object
-assertEq(neuroJson.properties!.reflexes.type, 'object', 'reflexes is object type');
+// Complex types: reflexes should be a nullable object
+assertEq(JSON.stringify(neuroJson.properties!.reflexes.type), JSON.stringify(['object', 'null']), 'reflexes is nullable object');
 
-// Complex types: prescriptions should be an array
-assertEq(neuroJson.properties!.prescriptions.type, 'array', 'prescriptions is array type');
+// Complex types: prescriptions should be a nullable array
+assertEq(JSON.stringify(neuroJson.properties!.prescriptions.type), JSON.stringify(['array', 'null']), 'prescriptions is nullable array');
 
-// Complex types: vital_signs should be an object
-assertEq(neuroJson.properties!.vital_signs.type, 'object', 'vital_signs is object type');
+// Complex types: vital_signs should be a nullable object
+assertEq(JSON.stringify(neuroJson.properties!.vital_signs.type), JSON.stringify(['object', 'null']), 'vital_signs is nullable object');
 
 // ============================================================================
 // 4. JSON SCHEMA CONVERSION — Ophthalmology
@@ -189,13 +189,13 @@ assert(!ophthPropNames.includes('cranial_nerves'), 'does NOT have cranial_nerves
 assert(!ophthPropNames.includes('motor_examination'), 'does NOT have motor_examination (neuro field)');
 assert(!ophthPropNames.includes('reflexes'), 'does NOT have reflexes (neuro field)');
 
-// Verify eye fields are objects with left/right/notes structure
+// Verify eye fields are nullable objects with left/right/notes structure
 const eyeField = ophthJson.properties!.visual_acuity;
-assertEq(eyeField.type, 'object', 'visual_acuity is object (tabular_eye)');
+assertEq(JSON.stringify(eyeField.type), JSON.stringify(['object', 'null']), 'visual_acuity is nullable object (tabular_eye)');
 assert(eyeField.properties!.left !== undefined, 'visual_acuity has left property');
 assert(eyeField.properties!.right !== undefined, 'visual_acuity has right property');
 assert(eyeField.properties!.notes !== undefined, 'visual_acuity has notes property');
-assertEq(eyeField.properties!.left.type, 'string', 'visual_acuity.left is string');
+assertEq(JSON.stringify(eyeField.properties!.left.type), JSON.stringify(['string', 'null']), 'visual_acuity.left is nullable string');
 
 // ============================================================================
 // 5. SYSTEM PROMPT GENERATION

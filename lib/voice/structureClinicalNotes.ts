@@ -69,6 +69,16 @@ For every medication the doctor prescribes, create an object in the prescription
 
 IMPORTANT: Extract EVERY medication mentioned. If the doctor says "prescribe X, Y, and Z", create three separate objects in the array. If no medications are prescribed, return an empty array []. Do NOT invent or guess medications that were not mentioned.`;
 
+const EYE_EXAMINATION_GUIDE = `
+EYE EXAMINATION FIELDS:
+Each eye examination field (type: tabular_eye) is an object with { left, right, notes }. Populate as follows:
+  - left — Findings for the left eye (OS). Set to null if not specifically examined.
+  - right — Findings for the right eye (OD). Set to null if not specifically examined.
+  - notes — Bilateral observations, general remarks, or additional detail about the finding. Set to null if nothing to add.
+If the doctor did not examine this structure at all (e.g., no mention of cornea, no mention of fundus), set the entire field to null — NOT an object filled with "NOT_SPECIFIED" strings.
+If the doctor examined the structure but only mentioned one eye, populate just that side and leave the other as null.
+If the doctor described findings without specifying left/right, put the description in notes and set left/right to null.`;
+
 const NARRATIVE_FIELD_MAPPING = `
 NARRATIVE-TO-FIELD MAPPING:
 When the doctor dictates in narrative form, carefully map each section to the correct schema fields:
@@ -101,6 +111,8 @@ function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): st
         subFields = ' [sub-fields per medication: name, dosage, frequency, duration, route, instructions — see Prescription Extraction Guide]';
       } else if (f.type === 'vital_signs') {
         subFields = ' [sub-fields: temperature, pulse, blood_pressure_systolic, blood_pressure_diastolic, respiratory_rate, oxygen_saturation, height, weight, bmi]';
+      } else if (f.type === 'tabular_eye') {
+        subFields = ' [sub-fields: left, right, notes — set to null if not examined, see Eye Examination Fields below]';
       }
       return `  - ${f.name}: ${f.label}${hint}${subFields}`;
     })
@@ -131,7 +143,9 @@ ${ROUTE_DETECTION}
 
 ${SPECIAL_INSTRUCTIONS}
 
-${PRESCRIPTION_EXTRACTION_GUIDE}`;
+${PRESCRIPTION_EXTRACTION_GUIDE}
+
+${EYE_EXAMINATION_GUIDE}`;
 }
 
 function buildFieldMetadata(fields: NoteFieldConfig[]): Record<string, { label: string }> {

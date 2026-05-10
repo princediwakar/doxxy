@@ -30,8 +30,8 @@ export const zField = <T extends z.ZodTypeAny>(
  * Factory for creating eye examination fields with consistent metadata
  */
 export const createEyeField = (
-  label: string,
-  placeholder?: string
+  name: string,
+  label: string
 ) => {
   return zField(
     z.object({
@@ -42,7 +42,7 @@ export const createEyeField = (
     {
       label,
       type: "tabular_eye",
-      placeholder: placeholder || `Enter ${label.toLowerCase()} findings`,
+      placeholder: `Enter ${label.toLowerCase()} findings`,
     }
   );
 };
