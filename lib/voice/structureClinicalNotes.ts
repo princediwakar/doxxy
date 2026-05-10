@@ -59,11 +59,11 @@ For every medication the doctor prescribes, create an object in the prescription
 
   dosage — The strength with unit. Examples: "500mg", "10mg", "650mg", "5ml", "10mcg". If the doctor says "Paracetamol 650", dosage is "650mg". If no dosage mentioned, set to "NOT_SPECIFIED".
 
-  frequency — How often to take the medication. Valid values are ONLY: OD, BD, TDS, QID, PRN, Q4H, Q6H, Q8H, Q12H, SOS. Map the doctor's words to the closest matching value (e.g., "twice a day" → "BD", "as needed" → "PRN", "every 8 hours" → "Q8H"). See Indian Shorthand Reference above for mappings. If no frequency mentioned, set to "NOT_SPECIFIED".
+  frequency — How often to take the medication. Must be one of: OD, BD, TDS, QID, PRN, Q4H, Q6H, Q8H, Q12H, SOS. Map the doctor's words to the closest matching value (e.g., "twice a day" → "BD", "as needed" → "PRN", "every 8 hours" → "Q8H"). See Indian Shorthand Reference above for mappings. If no frequency mentioned, set to null. IMPORTANT: Because this field has a restricted set of allowed values, you MUST use one of the enum values or null. Never use "NOT_SPECIFIED" here.
 
   duration — How long the medication should be taken. Examples: "5 days", "1 week", "10 days", "until finished". If no duration mentioned, set to "NOT_SPECIFIED".
 
-  route — How the medication is administered. Valid values are ONLY: Oral, Topical, IV, IM, Eye Drops, Subcutaneous, Inhaled. See Prescription Route Detection above for mapping rules. If no route mentioned and the drug is a tablet/capsule/syrup, default to "Oral". If uncertain, set to "NOT_SPECIFIED".
+  route — How the medication is administered. Must be one of: Oral, Topical, IV, IM, Eye Drops, Subcutaneous, Inhaled. See Prescription Route Detection above for mapping rules. If no route mentioned and the drug is a tablet/capsule/syrup, default to "Oral". If uncertain, set to null. IMPORTANT: Because this field has a restricted set of allowed values, you MUST use one of the enum values or null. Never use "NOT_SPECIFIED" here.
 
   instructions — Any special directions for taking the medication. Examples: "Take after food", "Take before food", "Take at bedtime", "Complete the full course", "Apply thinly". See Special Instructions Extraction above. If no special instructions, set to "NOT_SPECIFIED".
 
