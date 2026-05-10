@@ -65,6 +65,7 @@ export function TodayDetailPanel({
     <div className="relative">
       {canEditConsultation ? (
         <EncounterCanvas
+          key={selectedPatientId}
           patientId={selectedPatientId}
           patientDetail={patientDetail}
           isLoadingDetail={isLoadingDetail}

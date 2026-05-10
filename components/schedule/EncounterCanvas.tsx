@@ -113,6 +113,7 @@ export function EncounterCanvas({
 
       {appointment && (
         <InlineConsultationForm
+          key={appointment.id}
           formRef={formRef}
           appointmentId={appointment.id}
           appointment={appointment as unknown as DbAppointment}

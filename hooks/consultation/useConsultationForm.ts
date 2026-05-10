@@ -128,6 +128,7 @@ export const useConsultationForm = ({
       form.reset({ specialty_data: data });
       setBaseline({ specialty_data: data });
     } else {
+      form.reset(defaultValues);
       setBaseline(defaultValues);
     }
 

@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       if (sarvamError instanceof SarvamBatchError && sarvamError.statusCode === 403) {
         return NextResponse.json({ error: 'Speech-to-text authentication failed' }, { status: 502 });
       }
-      return NextResponse.json({ error: 'Speech-to-text service unavailable' }, { status: 502 });
+      return NextResponse.json({ error: `Speech-to-text service unavailable: ${msg}` }, { status: 502 });
     }
 
     // Update job with Sarvam task ID and move to transcribing

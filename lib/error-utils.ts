@@ -22,6 +22,7 @@ export type ErrorType =
   | 'NOT_FOUND_ERROR'
   | 'PERMISSION_ERROR'
   | 'BUSINESS_LOGIC_ERROR'
+  | 'SERVICE_ERROR'
   | 'UNKNOWN_ERROR';
 
 export interface ClassifiedError {
@@ -79,6 +80,16 @@ const RATE_LIMIT_PATTERNS = [
   'quota exceeded',
 ];
 
+// Service error patterns (Sarvam STT, OpenAI, etc.)
+const SERVICE_ERROR_PATTERNS = [
+  'speech-to-text',
+  'transcription',
+  'transcribe',
+  'structure clinical notes',
+  'sarvam',
+  'openai api error',
+];
+
 /**
  * Classify an error based on its message, code, or type
  */
@@ -106,6 +117,11 @@ export function getErrorType(error: unknown): ErrorType {
   // Check for rate limit errors
   if (RATE_LIMIT_PATTERNS.some(pattern => errorString.includes(pattern.toLowerCase()))) {
     return 'RATE_LIMIT_ERROR';
+  }
+
+  // Check for external service errors (Sarvam STT, OpenAI, etc.)
+  if (SERVICE_ERROR_PATTERNS.some(pattern => errorString.includes(pattern.toLowerCase()))) {
+    return 'SERVICE_ERROR';
   }
 
   // Check for database errors
@@ -168,6 +184,12 @@ export function classifyError(error: unknown): ClassifiedError {
         ...baseConfig,
         userMessage: buildValidationErrorMessage(errorObj, baseConfig.userMessage),
       };
+    case 'SERVICE_ERROR':
+      return {
+        ...baseConfig,
+        userMessage: errorMessage,
+        shouldRetry: true,
+      };
     default:
       return baseConfig;
   }
@@ -207,6 +229,7 @@ function getDefaultUserMessage(type: ErrorType): string {
     NOT_FOUND_ERROR: 'The requested resource was not found.',
     PERMISSION_ERROR: 'You don\'t have permission to perform this action.',
     BUSINESS_LOGIC_ERROR: 'Unable to complete this action due to business rules.',
+    SERVICE_ERROR: 'The external service encountered an error. Please try again.',
     UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
   };
 
@@ -291,6 +314,10 @@ export function formatErrorForDisplay(error: unknown): {
     case 'VALIDATION_ERROR':
       title = 'Validation Error';
       severity = 'low';
+      break;
+    case 'SERVICE_ERROR':
+      title = 'Service Error';
+      severity = 'medium';
       break;
   }
 

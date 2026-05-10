@@ -134,10 +134,11 @@ export async function GET(request: NextRequest) {
 
         // Sarvam job failed
         if (isJobFailed(sarvamStatus.job_state)) {
+          const sarvaErrorDetail = sarvamStatus.error_message || 'No details from Sarvam';
           logger.error(
             'Sarvam job failed:',
             job.sarvam_task_id,
-            sarvamStatus.error_message,
+            sarvaErrorDetail,
           );
 
           // If stale, try re-submitting once
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
             .update({ status: 'failed' })
             .eq('id', job.id);
 
-          return NextResponse.json({ status: 'error', error: 'Speech-to-text processing failed' });
+          return NextResponse.json({ status: 'error', error: `Speech-to-text processing failed: ${sarvaErrorDetail}` });
         }
 
         // Sarvam job completed — download transcript

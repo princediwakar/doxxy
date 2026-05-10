@@ -106,6 +106,8 @@ async function executeTranscriptionJob(
 
     const pollStart = Date.now();
     const MAX_POLL_MS = 10 * 60 * 1000;
+    let consecutiveFailures = 0;
+    const MAX_CONSECUTIVE_FAILURES = 5;
 
     await new Promise<void>((resolve, reject) => {
       const interval = setInterval(async () => {
@@ -122,7 +124,20 @@ async function executeTranscriptionJob(
 
           const pollResponse = await fetch(`/api/voice/status?jobId=${serverJobId}`);
 
-          if (!pollResponse.ok) return;
+          if (!pollResponse.ok) {
+            consecutiveFailures++;
+            if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+              clearInterval(interval);
+              const err = new Error('Transcription service is unavailable. Please try again later.');
+              patchJob({ status: 'error', error: err.message });
+              showErrorToast(err);
+              options?.onError?.(err);
+              resolve();
+            }
+            return;
+          }
+
+          consecutiveFailures = 0;
 
           const pollData = await pollResponse.json();
 
@@ -147,7 +162,15 @@ async function executeTranscriptionJob(
             resolve();
           }
         } catch {
-          // keep polling on network errors
+          consecutiveFailures++;
+          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+            clearInterval(interval);
+            const err = new Error('Transcription service is unavailable. Please try again later.');
+            patchJob({ status: 'error', error: err.message });
+            showErrorToast(err);
+            options?.onError?.(err);
+            resolve();
+          }
         }
       }, 3000);
     });

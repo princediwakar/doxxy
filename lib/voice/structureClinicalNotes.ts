@@ -51,6 +51,24 @@ SPECIAL INSTRUCTIONS EXTRACTION:
 - "for fever" / "for pain" / "if needed" → note the condition
 - If no special instruction is given, set instructions to "NOT_SPECIFIED"`;
 
+const PRESCRIPTION_EXTRACTION_GUIDE = `
+PRESCRIPTION EXTRACTION GUIDE:
+For every medication the doctor prescribes, create an object in the prescriptions array with ALL of these sub-fields:
+
+  name — The drug name exactly as spoken. Keep brand names (e.g., "Dolo", "Crocin", "Augmentin"). If the doctor says a generic name, use that (e.g., "Paracetamol", "Amoxicillin").
+
+  dosage — The strength with unit. Examples: "500mg", "10mg", "650mg", "5ml", "10mcg". If the doctor says "Paracetamol 650", dosage is "650mg". If no dosage mentioned, set to "NOT_SPECIFIED".
+
+  frequency — How often to take the medication. Valid values are ONLY: OD, BD, TDS, QID, PRN, Q4H, Q6H, Q8H, Q12H, SOS. Map the doctor's words to the closest matching value (e.g., "twice a day" → "BD", "as needed" → "PRN", "every 8 hours" → "Q8H"). See Indian Shorthand Reference above for mappings. If no frequency mentioned, set to "NOT_SPECIFIED".
+
+  duration — How long the medication should be taken. Examples: "5 days", "1 week", "10 days", "until finished". If no duration mentioned, set to "NOT_SPECIFIED".
+
+  route — How the medication is administered. Valid values are ONLY: Oral, Topical, IV, IM, Eye Drops, Subcutaneous, Inhaled. See Prescription Route Detection above for mapping rules. If no route mentioned and the drug is a tablet/capsule/syrup, default to "Oral". If uncertain, set to "NOT_SPECIFIED".
+
+  instructions — Any special directions for taking the medication. Examples: "Take after food", "Take before food", "Take at bedtime", "Complete the full course", "Apply thinly". See Special Instructions Extraction above. If no special instructions, set to "NOT_SPECIFIED".
+
+IMPORTANT: Extract EVERY medication mentioned. If the doctor says "prescribe X, Y, and Z", create three separate objects in the array. If no medications are prescribed, return an empty array []. Do NOT invent or guess medications that were not mentioned.`;
+
 const NARRATIVE_FIELD_MAPPING = `
 NARRATIVE-TO-FIELD MAPPING:
 When the doctor dictates in narrative form, carefully map each section to the correct schema fields:
@@ -59,7 +77,7 @@ When the doctor dictates in narrative form, carefully map each section to the co
 - "Family History" → family_history
 - "Current Medications" / "Drug History" → medications
 - "Allergies" → allergies
-- "Examination" / "Physical Exam" / "On examination" / "O/E" → physical_exam AND systemic_examination
+- "Examination" / "Physical Exam" / "On examination" / "O/E" → physical_exam. Also populate systemic_examination and any specialty-specific examination fields ONLY if the transcript contains distinct organ-system findings (CNS, CVS, RS, abdomen, etc.) that are separate from the general physical exam. Never copy the same content into multiple fields.
 - "Vital Signs" / "Vitals" → vital_signs (extract numeric values into sub-fields)
 - "Investigations" / "Labs" / "Previous Tests" / "Reports" → previous_investigations
 - "Assessment" / "Impression" / "Clinical Impression" → assessment
@@ -69,13 +87,22 @@ When the doctor dictates in narrative form, carefully map each section to the co
 - "Follow-Up" / "Follow up" / "Review" → follow_up
 - "Referrals" / "Refer to" / "Consult" → referrals
 - "Prognosis" / "Expected Course" → prognosis
-If a single narrative section contains information relevant to multiple fields, populate ALL of them. Do not condense or skip — capture the full detail the doctor provided.`;
+- "Prescriptions" / "Medications" / "Rx" / "Treatment" → prescriptions (extract each medication as an object with sub-fields: name, dosage, frequency, duration, route, instructions — see PRESCRIPTION EXTRACTION GUIDE below)
+If a single narrative section contains information relevant to multiple distinct fields, split the content appropriately — each finding goes into the most specific field that matches it. Never duplicate the same text across fields.`;
+
+
 
 function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): string {
   const fieldList = fields
     .map((f) => {
       const hint = f.placeholder ? ` — ${f.placeholder}` : '';
-      return `  - ${f.name}: ${f.label}${hint}`;
+      let subFields = '';
+      if (f.type === 'prescription') {
+        subFields = ' [sub-fields per medication: name, dosage, frequency, duration, route, instructions — see Prescription Extraction Guide]';
+      } else if (f.type === 'vital_signs') {
+        subFields = ' [sub-fields: temperature, pulse, blood_pressure_systolic, blood_pressure_diastolic, respiratory_rate, oxygen_saturation, height, weight, bmi]';
+      }
+      return `  - ${f.name}: ${f.label}${hint}${subFields}`;
     })
     .join('\n');
 
@@ -92,18 +119,19 @@ ${NARRATIVE_FIELD_MAPPING}
 
 INSTRUCTIONS:
 1. Read the entire transcript carefully. Extract ALL clinical information into the matching fields listed above. Populate every field that has any corresponding content in the transcript — do not be conservative or lazy.
-2. Map narrative sections to schema fields using the mapping guide above. If a section maps to multiple fields (e.g., "Examination" maps to both physical_exam and systemic_examination), populate all of them with the relevant content.
+2. Map narrative sections to schema fields using the mapping guide above. Distribute content intelligently across fields — each finding should appear in exactly ONE field. Never copy identical text into multiple fields. If a finding could go in a specialty-specific field (e.g., cardiac_examination, respiratory_examination), put it there instead of the generic physical_exam or systemic_examination. Use physical_exam and systemic_examination only for findings that don't fit into a more specific field.
 3. Preserve the doctor's wording, detail, and clinical nuance. Do not summarize or truncate.
 4. For diagnosis: infer the most likely clinical diagnosis from the symptoms, examination findings, and treatment described. If the doctor did not explicitly name it, synthesize one from the clinical picture (e.g., "Migraine", "Hypertensive urgency", "Upper respiratory tract infection"). Never leave diagnosis as NOT_SPECIFIED when there is enough clinical information to form one.
 5. For assessment: provide a brief clinical reasoning that connects the symptoms to the diagnosis and justifies the treatment plan. If the doctor didn't explicitly state one, infer it from the available data.
 6. Set a field to "NOT_SPECIFIED" only when the transcript contains zero information relevant to it.
-7. For the prescriptions array, extract each medication with its name, dosage, frequency, duration, route, and instructions.
+7. For prescriptions: follow the Prescription Extraction Guide below. Extract each medication with ALL sub-fields populated. Use ONLY the valid enum values for frequency and route.
 8. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
-9. Drug names: if a brand name is used (e.g., "Dolo", "Crocin"), keep the brand name in name.
 
 ${ROUTE_DETECTION}
 
-${SPECIAL_INSTRUCTIONS}`;
+${SPECIAL_INSTRUCTIONS}
+
+${PRESCRIPTION_EXTRACTION_GUIDE}`;
 }
 
 function buildFieldMetadata(fields: NoteFieldConfig[]): Record<string, { label: string }> {
