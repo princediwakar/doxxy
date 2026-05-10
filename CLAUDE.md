@@ -4,26 +4,88 @@
 
 **CURRENT STATE MANDATE:** We are executing a strict migration to a Server-First, Next.js App Router architecture. Eradicate client-side waterfalls, heavy global state, and prop-drilling. Prioritize server components, URL-driven state, and strict decoupling. Do not generate code for new features unless explicitly overridden by the user.
 
+These behavioral rules apply to every task unless explicitly overridden.
+Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
+
 ---
 
 ## TIER 1: BEHAVIORAL CORE (How You Operate)
 
-### 1. Think Like a Systems Architect
+### Rule 1 — Think Before Coding
 **Don't just write code; design the data flow.**
-- State your assumptions explicitly. If uncertain, STOP and ask.
+- State assumptions explicitly. If uncertain, STOP and ask rather than guess.
+- Present multiple interpretations when ambiguity exists.
 - Always ask: "Can this be done on the server instead of the client?"
 - If a simpler, less abstract approach exists, push back and suggest it.
+- Stop when confused. Name what's unclear.
 
-### 2. Simplicity & Deletion
+### Rule 2 — Simplicity & Deletion
 **Code is a liability. The best PR is a negative line count.**
-- No abstractions for single-use code.
+- Minimum code that solves the problem. Nothing speculative.
+- No abstractions for single-use code. No features beyond what was asked.
 - If you see `useEffect` being used to sync data or mirror state, delete it and refactor to a single source of truth.
 - Match existing style perfectly, even if you disagree with it, but mercilessly delete dead code, unused imports, and orphaned functions that *your* changes create.
+- Test: would a senior engineer say this is overcomplicated? If yes, simplify.
 
-### 3. Goal-Driven Execution
+### Rule 3 — Surgical Changes
+**Touch only what you must.**
+- Clean up only your own mess. Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor what isn't broken. Match existing style.
+
+### Rule 4 — Goal-Driven Execution
 **Define success criteria. Loop until verified.**
-- Transform tasks into verifiable goals (e.g., "Move fetching to server" → "Remove 'use client', fetch in page component, pass static props to child").
+- Don't follow steps blindly. Define success and iterate.
 - For multi-step tasks, state a brief checklist before executing.
+- Strong success criteria let you loop independently.
+
+### Rule 5 — Use the Model Only for Judgment Calls
+**Don't make the model do non-language work.**
+- Use Claude for: classification, drafting, summarization, extraction from unstructured text.
+- Do NOT use Claude for: routing, retries, status-code handling, deterministic transforms.
+- If a status code or plain code already answers the question, use code — not a prompt.
+
+### Rule 6 — Token Budgets Are Not Advisory
+**Every loop has a chance to spiral. Hard limits prevent it.**
+- Per-task budget: 4,000 tokens. Per-session budget: 30,000 tokens.
+- If approaching budget, summarize and start fresh. Do not push through.
+- Surface the breach explicitly. Do not silently overrun.
+
+### Rule 7 — Surface Conflicts, Don't Average Them
+**When two parts of the codebase disagree, don't blend them.**
+- Pick one pattern (the more recent / more tested), explain why, and flag the other for cleanup.
+- "Average" code that satisfies two conflicting rules is the worst code.
+- This applies to error-handling patterns, state patterns, and component conventions alike.
+
+### Rule 8 — Read Before You Write
+**Understand adjacent code before adding to it.**
+- Before adding code in a file, read the file's exports, the immediate caller, and any obvious shared utilities.
+- If you don't understand why existing code is structured the way it is, ask before adding to it.
+- "Looks orthogonal to me" is the most dangerous phrase in this codebase.
+
+### Rule 9 — Tests Verify Intent, Not Just Behavior
+**"Tests pass" is not the same as "feature works."**
+- Every test must encode WHY the behavior matters, not just WHAT it does.
+- A test that cannot fail when business logic changes is wrong.
+- If you can't write a test that would fail when business logic changes, the function is wrong.
+
+### Rule 10 — Checkpoint After Every Significant Step
+**Multi-step tasks need checkpoints. One wrong turn shouldn't lose all progress.**
+- After completing each step: summarize what was done, what's verified, what's left.
+- Don't continue from a state you can't describe back clearly.
+- If you lose track, stop and restate before proceeding.
+
+### Rule 11 — Match the Codebase's Conventions, Even If You Disagree
+**Conformance beats taste inside an existing codebase.**
+- If the codebase uses a pattern you'd do differently: match the codebase.
+- Disagreement is a separate conversation. Don't fork conventions silently.
+- If you genuinely think a convention is harmful, surface it explicitly.
+
+### Rule 12 — Fail Loud
+**The most expensive failures are the ones that look like success.**
+- "Completed" is wrong if anything was skipped silently.
+- "Tests pass" is wrong if any were skipped or are trivially vacuous.
+- "Feature works" is wrong if you didn't verify the edge case that was asked about.
+- Default to surfacing uncertainty, not hiding it.
 
 ---
 
@@ -33,7 +95,7 @@
 ### A. The Server-First Mandate
 - **Pages are Server Components:** `page.tsx` files MUST NOT have `"use client"`. Pages are orchestrators. They fetch data securely on the server and pass minimal, serializable JSON down to client components.
 - **Client Components are Leaves, Not Roots:** `"use client"` is strictly reserved for components that require interactivity (e.g., `onClick`, `useState`, browser APIs like `window`). Push client boundaries as far down the component tree as possible.
-- **No Client-Side Waterfalls:** Do not fetch initial data in `useEffect` or client-side React Query hooks unless explicitly required for polling or high-frequency updates. 
+- **No Client-Side Waterfalls:** Do not fetch initial data in `useEffect` or client-side React Query hooks unless explicitly required for polling or high-frequency updates.
 
 ### B. Mutations via Server Actions
 - **No Client-Side Supabase Mutations:** Stop writing database `insert`/`update` logic in React components.
@@ -60,12 +122,12 @@
 - **Toasts:** Strictly use `sonner` (`toast.success()`, `toast.error()`).
 - **Spinners:** Use `<Spinner/>` from `components/ui/loading.tsx`.
 - **Error Visibility:** Use `showErrorToast()` from `lib/error-utils.ts` for all catch blocks in client code. Return standard error objects `{ error: string }` from Server Actions.
-- **No Silent Failures:** Never use `.catch(() => ({}))`.
+- **No Silent Failures:** Never use `.catch(() => ({}))`. This is a Rule 12 violation.
 
 ---
 
 ## TIER 4: THE PRE-FLIGHT PROTOCOL
-Before outputting any code block modifying the system, you MUST output a brief, 3-point compliance check proving you have read the invariants. 
+Before outputting any code block modifying the system, you MUST output a brief compliance check proving you have read the invariants.
 
 *Example format:*
 `> Pre-flight Check: 1. Component moved to Server. 2. URL used as state instead of Zustand. 3. Mutation extracted to Server Action.`
