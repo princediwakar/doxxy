@@ -3,7 +3,7 @@ import React from 'react';
 import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
 import type { FieldValue, ClinicInfo, DoctorInfo, ConsultationFormValues, MotorExamData, ReflexExamData } from '@/types/consultation';
 import { FieldValueRenderer } from './ConsultationRenderers';
-import { ConsultationHeader, ConcisePatientInfo, PrintStyles } from './ConsultationParts';
+import { ConsultationHeader, ConcisePatientInfo, PrintStyles, ConsultationSignatureFooter } from './ConsultationParts';
 import type { DbAppointment, DbPatient } from '@/types/core';
 
 interface Field {
@@ -286,80 +286,88 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
 }) => {
   const sections = specialtySections || specialtyFieldSections[departmentType] || specialtyFieldSections.General;
 
-  return (
-    <div className={`max-w-4xl mx-auto bg-white min-h-screen ${className}`}>
-      {showPrintStyles && <PrintStyles />}
+return (
+    <div className={`max-w-4xl mx-auto bg-white min-h-screen print:block print:min-h-0 print:h-auto print:max-w-none ${className}`}>
+      
+      {/* The master table structure */}
+      <table className="w-full border-collapse border-0">
+        <tbody>
+          <tr>
+            <td className="p-0 align-top border-0">
+              
+              {/* Header */}
+              <ConsultationHeader clinicInfo={clinicInfo} doctorInfo={doctorInfo} />
 
-      {/* Header */}
-      <ConsultationHeader clinicInfo={clinicInfo} doctorInfo={doctorInfo} />
+              {/* Patient Info */}
+              <ConcisePatientInfo
+                patient={patient}
+                appointment={appointment}
+              />
 
-      {/* Patient Info - Always show concise version */}
-      <ConcisePatientInfo
-        patient={patient}
-        appointment={appointment}
-      />
+              {/* Consultation Content */}
+              <div className="space-y-4 print:space-y-3">
+                {sections.map((section: Section, sectionIndex: number) => {
+                  const fieldsWithContent = section.fields.filter((field: Field) => {
+                    const value = consultationData?.[field.name as keyof typeof consultationData] as FieldValue;
+                    if (field.type === 'motor_examination' || field.name === 'reflexes') return true;
+                    if (!value) return false;
+                    if (typeof value === 'string') return value.trim().length > 0;
+                    if (Array.isArray(value)) return value.length > 0;
+                    if (typeof value === 'object' && value !== null) {
+                      const obj = value as Record<string, unknown>;
+                      return Object.values(obj).some(val => {
+                        if (typeof val === 'string') return val.trim().length > 0;
+                        if (Array.isArray(val)) return val.length > 0;
+                        if (typeof val === 'object' && val !== null) {
+                          return Object.values(val as Record<string, unknown>).some(
+                            nestedVal => typeof nestedVal === 'string' && nestedVal.trim().length > 0
+                          );
+                        }
+                        return false;
+                      });
+                    }
+                    return true;
+                  });
 
-      {/* Consultation Content */}
-      <div className="space-y-4 print:space-y-3">
-        {sections.map((section: Section, sectionIndex: number) => {
-          const fieldsWithContent = section.fields.filter((field: Field) => {
-            const value = consultationData?.[field.name as keyof typeof consultationData] as FieldValue;
+                  if (fieldsWithContent.length === 0) return null;
+                  const groupedFields = groupRelatedFields(fieldsWithContent as Field[], consultationData);
 
-            // Always show motor and reflex examination fields (they have default values of 5 and 2)
-            if (field.type === 'motor_examination' || field.name === 'reflexes') {
-              return true;
-            }
-
-            // Hide other fields if they're empty
-            if (!value) return false;
-
-            if (typeof value === 'string') return value.trim().length > 0;
-            if (Array.isArray(value)) return value.length > 0;
-
-            // For objects, check if they have any meaningful content
-            if (typeof value === 'object' && value !== null) {
-              const obj = value as Record<string, unknown>;
-              return Object.values(obj).some(val => {
-                if (typeof val === 'string') return val.trim().length > 0;
-                if (Array.isArray(val)) return val.length > 0;
-                if (typeof val === 'object' && val !== null) {
-                  return Object.values(val as Record<string, unknown>).some(
-                    nestedVal => typeof nestedVal === 'string' && nestedVal.trim().length > 0
+                  return (
+                    <div key={sectionIndex} className="mb-4 print:mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 print:mb-1 break-after-avoid">
+                        {section.title}
+                      </h3>
+                      <div className="space-y-2 print:space-y-1">
+                        {groupedFields.map((fieldGroup, groupIndex) => (
+                          <FieldGroup
+                            key={groupIndex}
+                            fields={fieldGroup}
+                            consultationData={consultationData}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   );
-                }
-                return false;
-              });
-            }
-
-            return true;
-          });
-
-          if (fieldsWithContent.length === 0) return null;
-
-          // Group related small fields
-          const groupedFields = groupRelatedFields(fieldsWithContent as Field[], consultationData);
-
-          return (
-            <div
-              key={sectionIndex}
-              className="break-inside-avoid print:break-inside-avoid"
-            >
-              <h3 className="text-lg font-semibold text-gray-900 mb-2 print:mb-1 break-after-avoid">
-                {section.title}
-              </h3>
-              <div className="space-y-2 print:space-y-1">
-                {groupedFields.map((fieldGroup, groupIndex) => (
-                  <FieldGroup
-                    key={groupIndex}
-                    fields={fieldGroup}
-                    consultationData={consultationData}
-                  />
-                ))}
+                })}
               </div>
-            </div>
-          );
-        })}
-      </div>
+
+            </td>
+          </tr>
+        </tbody>
+
+        {/* The Table Footer - Automatically repeats and reserves space natively */}
+        <tfoot className="print:table-footer-group">
+          <tr>
+            <td className="p-0 border-0 align-bottom">
+              {/* Spacer to guarantee the text never rides exactly on the signature line */}
+              <div className="h-4 print:h-8"></div>
+              <ConsultationSignatureFooter signature={doctorInfo?.signature} />
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
     </div>
   );
+
 };

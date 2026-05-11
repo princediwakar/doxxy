@@ -92,9 +92,10 @@ export async function updateProfileEditor(params: {
   avatarUrl?: string;
   userEmail?: string;
   activeClinicId?: string;
+  signature?: string;
 }) {
   const supabase = await createServerSupabase();
-  const { userId, name, phone, avatarUrl, userEmail, activeClinicId } = params;
+  const { userId, name, phone, avatarUrl, userEmail, activeClinicId, signature } = params;
 
   const { error: authError } = await supabase.auth.updateUser({
     data: {
@@ -145,6 +146,7 @@ export async function updateProfileEditor(params: {
       .update({
         name,
         phone: phone || null,
+        signature: signature ?? null,
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId);

@@ -293,6 +293,7 @@ export interface DoctorInfo {
   qualification: string;
   specialization: string;
   registration_number?: string;
+  signature?: string | null;
   [key: string]: unknown; // Index signature for compatibility
 }
 

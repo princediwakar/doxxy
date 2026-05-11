@@ -88,6 +88,7 @@ export const ConsultationPreviewModal = ({
     phone: doctorDetails?.phone || user?.phone || "",
     email: doctorDetails?.email || user?.email || "",
     bio: doctorDetails?.bio || "",
+    signature: doctorDetails?.signature || "",
   };
 
   const handlePrint = async () => {

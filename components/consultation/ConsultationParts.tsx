@@ -15,7 +15,7 @@ export const PrintStyles: React.FC = () => (
     dangerouslySetInnerHTML={{
       __html: `
     @media print {
-      @page { margin: 10mm; size: A4; }
+      @page { margin: 45mm 20mm 20mm 20mm; size: A4; }
       body { 
         font-size: 12px !important; 
         -webkit-print-color-adjust: exact !important; 
@@ -159,6 +159,25 @@ export const ConsultationHeader: React.FC<{
     </div>
   );
 };
+
+
+export const ConsultationSignatureFooter: React.FC<{
+  signature?: string | null;
+}> = ({ signature }) => {
+  if (!signature) return null;
+  
+  return (
+    <div className="w-[250px] mt-4 pt-4 border-t border-gray-300 print:mt-4 print:pt-2 break-inside-avoid">
+      <div className="text-left">
+        
+        <div className="text-sm text-gray-800 whitespace-pre-line leading-relaxed font-semibold">
+          {signature}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 
 
 export const ConcisePatientInfo: React.FC<{

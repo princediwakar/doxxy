@@ -6,7 +6,6 @@ import { createRoot } from 'react-dom/client';
 import { ConsultationLayout } from './ConsultationLayout';
 import React from 'react';
 
-// Flexible doctor type that works with both profiles and doctors table
 type DoctorInfo = {
   name?: string | null;
   email?: string | null;
@@ -25,7 +24,6 @@ type SupabaseUser = {
   user_metadata?: { full_name?: string };
 };
 
-// Helper function to generate proper filename
 function generateConsultationFilename (
   patient: DbPatient,
   appointment: AppointmentRow | null,
@@ -38,11 +36,8 @@ function generateConsultationFilename (
 };
 
 // --- CONFIGURATION ---
-// Adjust this value to match the height of your physical paper's letterhead.
 const PRINT_TOP_MARGIN = '45mm'; 
-// Adjust this to prevent content from hitting the bottom edge or physical footer.
-const PRINT_BOTTOM_MARGIN = '20mm'; 
-// Side margins (Standard professional margin is usually around 20mm-25mm)
+const PRINT_BOTTOM_MARGIN = '20mm'; // Back to standard. The table natively creates the gap.
 const PRINT_LEFT_MARGIN = '20mm';
 const PRINT_RIGHT_MARGIN = '20mm';
 // ---------------------
@@ -60,14 +55,12 @@ export const generatePrintContent = (
   const container = document.createElement('div');
   const root = createRoot(container);
   
-
   root.render(
     React.createElement(ConsultationLayout, {
       patient,
       appointment,
-      // Pass null to hide the digital letterhead
-      clinicInfo: null, 
-      doctorInfo: null, 
+      clinicInfo: null,
+      doctorInfo: _doctorDetails ? { name: '', qualification: '', specialization: '', signature: _doctorDetails.signature as string } : null,
       consultationData: formData,
       departmentType,
       showPrintStyles: true,
@@ -77,7 +70,6 @@ export const generatePrintContent = (
 
   return new Promise<string>((resolve) => {
     setTimeout(() => {
-      // CSS explanation: margin: TOP RIGHT BOTTOM LEFT
       const html = `
     <!DOCTYPE html>
     <html>
@@ -89,34 +81,8 @@ export const generatePrintContent = (
           <script src="https://cdn.tailwindcss.com"></script>
       <style>
             @page { 
-              margin: ${PRINT_TOP_MARGIN} ${PRINT_RIGHT_MARGIN} ${PRINT_BOTTOM_MARGIN} ${PRINT_LEFT_MARGIN};
-              size: A4; 
-            }
-            * { 
-              box-sizing: border-box;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-        body { 
-          font-family: 'Inter', sans-serif;
-          line-height: 1.5; 
-              color: #374151;
-              background: white;
-          font-size: 12px;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            
-            @media print {
-              @page { 
-                margin: ${PRINT_TOP_MARGIN} ${PRINT_RIGHT_MARGIN} ${PRINT_BOTTOM_MARGIN} ${PRINT_LEFT_MARGIN};
-                size: A4; 
-              }
-            }
-            
-            @page { 
               margin: ${PRINT_TOP_MARGIN} ${PRINT_RIGHT_MARGIN} ${PRINT_BOTTOM_MARGIN} ${PRINT_LEFT_MARGIN} !important;
-              size: A4 !important;
+              size: A4 !important; 
               @top-left { content: "" !important; }
               @top-center { content: "" !important; }
               @top-right { content: "" !important; }
@@ -125,25 +91,70 @@ export const generatePrintContent = (
               @bottom-right { content: "" !important; }
             }
             
+            * { 
+              box-sizing: border-box;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            
+            body { 
+              font-family: 'Inter', sans-serif;
+              line-height: 1.5; 
+              color: #374151;
+              background: white;
+              font-size: 12px;
+            }
+            
             @media print {
-              body { 
-                margin: 0 !important;
-                padding: 0 !important;
-              }
-              .max-w-4xl { 
-                max-width: 100% !important; 
-                margin: 0 !important;
-                padding: 0 !important;
-              }
-              .mx-auto { margin-left: 0 !important; margin-right: 0 !important; }
-              .no-print { display: none !important; }
-              
-              .letterhead { 
-                display: none !important;
-                margin: 0 !important;
-                padding: 0 !important; 
-              }
-              
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important; 
+    min-height: 100% !important; 
+  }
+  
+  .max-w-4xl {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .mx-auto { margin-left: 0 !important; margin-right: 0 !important; }
+  .no-print { display: none !important; }
+  .letterhead { display: none !important; }
+
+  .print-layout {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  /* Table rules to trigger the repeating footer */
+  table { width: 100%; }
+  tfoot { display: table-footer-group; }
+
+  .space-y-6 > * + * { margin-top: 0.75rem !important; }
+  .space-y-4 > * + * { margin-top: 0.5rem !important; }
+  .section-notes { margin-bottom: 0.75rem !important; }
+
+  .print-grid-3-cols {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+  
+  .print-grid-2-cols {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+  }
+
+  .print-grid-3-cols > div, .print-grid-2-cols > div { min-width: 0; }
+  .flex { display: flex !important; }
+  .flex-1 { flex: 1 !important; }
+  .items-start { align-items: flex-start !important; }
+  .gap-2 { gap: 0.5rem !important; }
+}
               .space-y-6 > * + * { margin-top: 0.75rem !important; }
               .space-y-4 > * + * { margin-top: 0.5rem !important; }
               .section-notes { margin-bottom: 0.75rem !important; }
@@ -165,22 +176,10 @@ export const generatePrintContent = (
                 min-width: 0;
               }
 
-              /* Ensure compact fields display properly in print */
-              .flex {
-                display: flex !important;
-              }
-
-              .flex-1 {
-                flex: 1 !important;
-              }
-
-              .items-start {
-                align-items: flex-start !important;
-              }
-
-              .gap-2 {
-                gap: 0.5rem !important;
-              }
+              .flex { display: flex !important; }
+              .flex-1 { flex: 1 !important; }
+              .items-start { align-items: flex-start !important; }
+              .gap-2 { gap: 0.5rem !important; }
             }
       </style>
     </head>
@@ -206,13 +205,13 @@ export const printConsultation = async (
 ) => {
   try {
     const printContent = await generatePrintContent(
-    formData,
-    patient,
-    appointment,
-    _clinicDetails,
-    _doctorDetails,
-    _user,
-    departmentType
+      formData,
+      patient,
+      appointment,
+      _clinicDetails,
+      _doctorDetails,
+      _user,
+      departmentType
     );
 
     const filename = generateConsultationFilename(patient, appointment, departmentType);
@@ -225,94 +224,14 @@ export const printConsultation = async (
     printWindow.document.title = filename;
     try {
       printWindow.history.replaceState({}, '', '');
-    } catch {
-      // Ignore history replace errors
-    }
+    } catch {}
     
     printWindow.document.write(printContent);
     printWindow.document.close();
     printWindow.focus();
     
-    const additionalCSS = printWindow.document.createElement('style');
-    // Applied unified margins
-    additionalCSS.textContent = `
-      @page {
-        margin: ${PRINT_TOP_MARGIN} ${PRINT_RIGHT_MARGIN} ${PRINT_BOTTOM_MARGIN} ${PRINT_LEFT_MARGIN} !important;
-        size: A4 !important;
-        @top-left { content: "" !important; }
-        @top-center { content: "" !important; }
-        @top-right { content: "" !important; }
-        @bottom-left { content: "" !important; }
-        @bottom-center { content: "" !important; }
-        @bottom-right { content: "" !important; }
-      }
-      @media print {
-        @page {
-          margin: ${PRINT_TOP_MARGIN} ${PRINT_RIGHT_MARGIN} ${PRINT_BOTTOM_MARGIN} ${PRINT_LEFT_MARGIN} !important;
-          size: A4 !important;
-          @top-left { content: "" !important; }
-          @top-center { content: "" !important; }
-          @top-right { content: "" !important; }
-          @bottom-left { content: "" !important; }
-          @bottom-center { content: "" !important; }
-          @bottom-right { content: "" !important; }
-        }
-        html::before, html::after,
-        body::before, body::after {
-          display: none !important;
-          content: "" !important;
-        }
-        
-        .space-y-6 > * + * { margin-top: 0.75rem !important; }
-        .space-y-4 > * + * { margin-top: 0.5rem !important; }
-        .section-notes { margin-bottom: 0.75rem !important; }
-
-        .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 {
-          grid-template-columns: 1fr 1fr 1fr !important;
-        }
-
-        /* Ensure compact fields display properly in print */
-        .flex {
-          display: flex !important;
-        }
-
-        .flex-1 {
-          flex: 1 !important;
-        }
-
-        .items-start {
-          align-items: flex-start !important;
-        }
-
-        .gap-2 {
-          gap: 0.5rem !important;
-        }
-      }
-    `;
-    printWindow.document.head.appendChild(additionalCSS);
-    
-    const script = printWindow.document.createElement('script');
-    // Applied unified margins
-    script.textContent = `
-      window.addEventListener('beforeprint', function() {
-        document.title = '${filename}';
-        const extraStyle = document.createElement('style');
-        extraStyle.textContent = \`
-          @page {
-            margin: ${PRINT_TOP_MARGIN} ${PRINT_RIGHT_MARGIN} ${PRINT_BOTTOM_MARGIN} ${PRINT_LEFT_MARGIN} !important;
-            size: A4 !important;
-            @top-left { content: "" !important; }
-            @top-center { content: "" !important; }
-            @top-right { content: "" !important; }
-            @bottom-left { content: "" !important; }
-            @bottom-center { content: "" !important; }
-            @bottom-right { content: "" !important; }
-          }
-        \`;
-        document.head.appendChild(extraStyle);
-      });
-    `;
-    printWindow.document.head.appendChild(script);
+    // Cleaned up the redundant CSS injection. 
+    // The iframe/window will respect the styles built into the HTML string perfectly.
     
     setTimeout(() => {
       printWindow.print();

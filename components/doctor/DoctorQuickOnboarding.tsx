@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAppState } from "@/contexts/AppStateContext";
@@ -38,6 +39,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     selectedDepartment: '',
     primarySpecialization: '',
     consultation_fee: '',
+    signature: '',
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -81,6 +83,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         selectedDepartment: existingDoctorProfile.department_id || '',
         primarySpecialization: existingDoctorProfile.primary_specialization || '',
         consultation_fee: existingDoctorProfile.consultation_fee?.toString() || '',
+        signature: existingDoctorProfile.signature || '',
       }));
     }
   }, [profileData, existingDoctorProfile, user]);
@@ -123,6 +126,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         userPhone: user?.phone,
         clinicId: activeClinicId,
         existingDoctorProfile: !!existingDoctorProfile,
+        signature: formData.signature || undefined,
       });
       if ('error' in result && result.error) {
         toast.error(result.error);
@@ -193,7 +197,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
             {formErrors.name && (
               <p className="text-destructive text-sm">{formErrors.name}</p>
             )}
-            <p className="text-xs text-muted-foreground">Your professional name as it will appear to patients</p>
+            {/* <p className="text-xs text-muted-foreground">Your professional name as it will appear to patients</p> */}
           </div>
 
           {/* Department Selection */}
@@ -201,8 +205,8 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
             <Label htmlFor="department" className="text-sm font-medium">
               Department <span className="text-destructive">*</span>
             </Label>
-            <Select 
-              value={formData.selectedDepartment} 
+            <Select
+              value={formData.selectedDepartment}
               onValueChange={(value) => {
                 setFormData(prev => ({ ...prev, selectedDepartment: value }));
                 if (formErrors.selectedDepartment) {
@@ -224,7 +228,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
             {formErrors.selectedDepartment && (
               <p className="text-destructive text-sm">{formErrors.selectedDepartment}</p>
             )}
-            <p className="text-xs text-muted-foreground">This helps with appointment categorization</p>
           </div>
 
           {/* Specialization */}
@@ -243,10 +246,9 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
               }}
               placeholder="e.g., Cardiology, Neurology, General Medicine"
             />
-             {formErrors.primarySpecialization && (
+            {formErrors.primarySpecialization && (
               <p className="text-destructive text-sm">{formErrors.primarySpecialization}</p>
             )}
-            <p className="text-xs text-muted-foreground">Your area of medical expertise</p>
           </div>
 
           {/* Consultation Fee */}
@@ -270,7 +272,25 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
             {formErrors.consultation_fee && (
               <p className="text-destructive text-sm">{formErrors.consultation_fee}</p>
             )}
-            <p className="text-xs text-muted-foreground">Base consultation fee (you can adjust this later)</p>
+          </div>
+
+          {/* Professional Signature */}
+          <div className="space-y-2">
+            <Label htmlFor="signature" className="text-sm font-medium">
+              Professional Signature
+            </Label>
+            <Textarea
+              id="signature"
+              value={formData.signature}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, signature: e.target.value }));
+              }}
+placeholder={"Dr. Firstname Lastname\nDegree 1, Degree 2 (Institution)\nSpecialty (Institution)\nNotable Achievement (e.g., Gold Medalist)"}              rows={4}
+              className="resize-y"
+            />
+            <p className="text-xs text-muted-foreground">
+              This appears at the bottom of printed consultation notes. Include your qualifications, registrations, and achievements.
+            </p>
           </div>
 
           {/* Action Buttons */}

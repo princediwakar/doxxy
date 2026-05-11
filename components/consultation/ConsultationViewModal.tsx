@@ -169,6 +169,7 @@ export function ConsultationViewModal({
     qualification: "", // Default qualification
     specialization: firstDoctor?.department_name || departmentType,
     registration_number: "", // Not available in current database schema
+    signature: firstDoctor?.signature || "",
   };
 
   // Get field sections for the department

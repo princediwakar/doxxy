@@ -13,6 +13,7 @@ export async function quickOnboardDoctor(params: {
   userPhone?: string | null;
   clinicId: string;
   existingDoctorProfile: boolean;
+  signature?: string;
 }) {
   const supabase = await createServerSupabase();
   const {
@@ -25,6 +26,7 @@ export async function quickOnboardDoctor(params: {
     userPhone,
     clinicId,
     existingDoctorProfile,
+    signature,
   } = params;
 
   const trimmedName = name.trim();
@@ -68,6 +70,7 @@ export async function quickOnboardDoctor(params: {
       ? `Medical professional specializing in ${specialization}`
       : 'Medical professional',
     is_active: true,
+    signature: signature ?? null,
     updated_at: new Date().toISOString(),
   };
 

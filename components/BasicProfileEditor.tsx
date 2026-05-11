@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -31,17 +32,18 @@ interface BasicProfileEditorProps {
   onProfileUpdate?: () => void;
 }
 
-export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({ 
+export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   open,
   onClose,
-  user, 
-  onProfileUpdate 
+  user,
+  onProfileUpdate
 }) => {
   const { activeClinicId } = useAppState();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editedName, setEditedName] = useState(user?.user_metadata?.name || '');
   const [editedPhone, setEditedPhone] = useState('');
+  const [editedSignature, setEditedSignature] = useState('');
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState(user?.user_metadata?.avatar_url || '');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -64,6 +66,22 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
     enabled: !!user?.id && open,
   });
 
+  const { data: doctorProfileData } = useQuery({
+    queryKey: queryKeys.profile.doctor(user?.id ?? "", activeClinicId ?? ""),
+    queryFn: async () => {
+      if (!user?.id || !activeClinicId) return null;
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('id, signature')
+        .eq('user_id', user.id)
+        .eq('clinic_id', activeClinicId)
+        .maybeSingle();
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!user?.id && !!activeClinicId && open,
+  });
+
   const [isUpdating, setIsUpdating] = useState(false);
 
   React.useEffect(() => {
@@ -74,6 +92,12 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       setEditedPhone(profileData.phone);
     }
   }, [profileData]);
+
+  React.useEffect(() => {
+    if (doctorProfileData?.signature) {
+      setEditedSignature(doctorProfileData.signature);
+    }
+  }, [doctorProfileData]);
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -148,6 +172,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
         avatarUrl,
         userEmail: user?.email,
         activeClinicId,
+        signature: editedSignature || undefined,
       });
 
       if ('error' in result && result.error) {
@@ -205,8 +230,8 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
           <div className="pt-6 space-y-6">
             <div className="flex items-center gap-4">
               <Avatar className="w-16 h-16 border-2 border-border">
-                <AvatarImage 
-                  src={photoPreview} 
+                <AvatarImage
+                  src={photoPreview}
                   className="object-cover"
                 />
                 <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
@@ -275,6 +300,25 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   <p className="text-destructive text-sm">{formErrors.phone}</p>
                 )}
               </div>
+
+              {doctorProfileData && (
+                <div className="space-y-2">
+                  <Label htmlFor="signature" className="text-sm font-medium">
+                    Professional Signature
+                  </Label>
+                  <Textarea
+                    id="signature"
+                    value={editedSignature}
+                    onChange={(e) => setEditedSignature(e.target.value)}
+                    placeholder={"Dr. John Doe\nMBBS, MD Medicine (RIMS)\nDM Neurology (AIIMS)\nGold Medalist"}
+                    rows={4}
+                    className="resize-y"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This appears at the bottom of printed consultation notes.
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Profile Photo</Label>

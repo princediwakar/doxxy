@@ -17,7 +17,7 @@ export async function queryCurrentDoctorDetails(clinicId: string, doctorId: stri
 
   const { data: fallbackData, error: fallbackError } = await supabase
     .from('doctors')
-    .select('id, name, primary_specialization, phone, email, bio')
+    .select('id, name, primary_specialization, phone, email, bio, signature')
     .eq('clinic_id', clinicId)
     .eq('is_active', true);
 
@@ -30,6 +30,7 @@ export async function queryCurrentDoctorDetails(clinicId: string, doctorId: stri
     phone: doctor.phone,
     email: doctor.email,
     bio: doctor.bio,
+    signature: doctor.signature,
   }));
 
   const doctor = transformedData.find((d) => d.id === doctorId);
@@ -47,6 +48,7 @@ export async function queryCurrentDoctorByUserId(
   email?: string | null;
   bio?: string | null;
   user_id?: string;
+  signature?: string | null;
 } | null> {
   const supabase = await createServerSupabase();
 
@@ -66,7 +68,7 @@ export async function queryCurrentDoctorByUserId(
 
   const { data, error } = await supabase
     .from('doctors')
-    .select('id, name, primary_specialization, phone, email, bio, user_id')
+    .select('id, name, primary_specialization, phone, email, bio, user_id, signature')
     .eq('user_id', userId)
     .eq('clinic_id', clinicId)
     .eq('is_active', true)

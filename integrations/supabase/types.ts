@@ -532,6 +532,7 @@ export type Database = {
           name: string
           phone: string | null
           primary_specialization: string | null
+          signature: string | null
           updated_at: string | null
           user_id: string
         }
@@ -546,6 +547,7 @@ export type Database = {
           name: string
           phone?: string | null
           primary_specialization?: string | null
+          signature?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -560,6 +562,7 @@ export type Database = {
           name?: string
           phone?: string | null
           primary_specialization?: string | null
+          signature?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -1132,6 +1135,7 @@ export type Database = {
           created_at: string
           department: string
           id: string
+          previous_transcript: string | null
           sarvam_task_id: string | null
           status: Database["public"]["Enums"]["transcription_job_status"]
           storage_path: string
@@ -1143,6 +1147,7 @@ export type Database = {
           created_at?: string
           department?: string
           id?: string
+          previous_transcript?: string | null
           sarvam_task_id?: string | null
           status?: Database["public"]["Enums"]["transcription_job_status"]
           storage_path: string
@@ -1154,6 +1159,7 @@ export type Database = {
           created_at?: string
           department?: string
           id?: string
+          previous_transcript?: string | null
           sarvam_task_id?: string | null
           status?: Database["public"]["Enums"]["transcription_job_status"]
           storage_path?: string
@@ -1235,6 +1241,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      cleanup_transcription_jobs: { Args: never; Returns: undefined }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
         Returns: Json
@@ -1309,8 +1316,8 @@ export type Database = {
           doctor_name: string
           id: string
           notes: string
-          patient_age: number | null
-          patient_gender: string | null
+          patient_age: number
+          patient_gender: string
           patient_id: string
           patient_name: string
           status: Database["public"]["Enums"]["appointment_status"]
@@ -1452,6 +1459,7 @@ export type Database = {
           id: string
           name: string
           phone: string
+          signature: string
           user_id: string
         }[]
       }
@@ -1572,28 +1580,10 @@ export type Database = {
       get_user_clinic_memberships: {
         Args: { user_id: string }
         Returns: {
+          clinic_data: Json
           clinic_id: string
-          clinic_data: {
-            accreditations: string[] | null
-            address: string | null
-            clinic_images: string[] | null
-            created_at: string | null
-            created_by: string | null
-            description: string | null
-            email: string | null
-            established_year: number | null
-            id: string
-            is_public: boolean | null
-            license_number: string | null
-            name: string
-            operating_hours: Json | null
-            phone: string | null
-            slug: string | null
-            social_media: Json | null
-            website: string | null
-          }
           created_at: string
-          department_id: string | null
+          department_id: string
           member_id: string
           member_user_id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -1955,4 +1945,3 @@ export const Constants = {
     },
   },
 } as const
-
