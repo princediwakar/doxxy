@@ -119,7 +119,7 @@ export const ConsultationPreviewModal = ({
               Consultation Preview
             </DialogTitle>
             <DialogDescription>
-              Review your consultation notes before saving or printing
+              Review your consultation notes
             </DialogDescription>
             <Button size="sm" onClick={handlePrint}>
               <Printer className="h-4 w-4 mr-2" />
