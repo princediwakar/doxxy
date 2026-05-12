@@ -27,6 +27,7 @@ interface EncounterCanvasProps {
   canEditConsultation: boolean;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
+  onCreateBill?: () => void;
   appointment: AppointmentWithDetails | null;
   onComplete: () => void;
 }
@@ -46,6 +47,7 @@ export function EncounterCanvas({
   canEditConsultation,
   onViewBill,
   onViewConsultationFromHistory,
+  onCreateBill,
   appointment,
   onComplete,
 }: EncounterCanvasProps) {
@@ -135,6 +137,7 @@ export function EncounterCanvas({
         isLoadingBills={isLoadingBills}
         onViewBill={onViewBill}
         onViewConsultationFromHistory={onViewConsultationFromHistory}
+        onCreateBill={onCreateBill}
       />
     </div>
   );

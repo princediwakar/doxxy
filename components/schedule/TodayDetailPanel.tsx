@@ -91,6 +91,11 @@ export function TodayDetailPanel({
           canEditConsultation={canEditConsultation}
           onViewBill={viewBill}
           onViewConsultationFromHistory={viewConsultation}
+          onCreateBill={
+            selectedAppointment
+              ? () => createBill(selectedAppointment)
+              : () => patientDetail?.patient && createBillForPatient(patientDetail.patient)
+          }
           appointment={selectedAppointment}
           onComplete={onRefreshNeeded}
         />
@@ -132,6 +137,11 @@ export function TodayDetailPanel({
             defaultExpandHistory
             onViewBill={viewBill}
             onViewConsultationFromHistory={viewConsultation}
+            onCreateBill={
+              selectedAppointment
+                ? () => createBill(selectedAppointment)
+                : () => patientDetail?.patient && createBillForPatient(patientDetail.patient)
+            }
           />
         </div>
       )}

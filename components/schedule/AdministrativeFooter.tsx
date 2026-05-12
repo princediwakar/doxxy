@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Eye } from "lucide-react";
+import { ChevronDown, ChevronUp, Eye, Receipt } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { formatTimeIST } from "@/lib/utils";
 import { Spinner } from "@/components/ui/loading";
@@ -36,6 +36,7 @@ interface AdministrativeFooterProps {
   defaultExpandHistory?: boolean;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
+  onCreateBill?: () => void;
 }
 
 function extractSpecialtyField(row: Record<string, unknown>, field: string): string | undefined {
@@ -55,6 +56,7 @@ export function AdministrativeFooter({
   defaultExpandHistory = false,
   onViewBill,
   onViewConsultationFromHistory,
+  onCreateBill,
 }: AdministrativeFooterProps) {
   const [billsOpen, setBillsOpen] = useState(defaultExpandBills);
   const [historyOpen, setHistoryOpen] = useState(defaultExpandHistory);
@@ -91,7 +93,15 @@ export function AdministrativeFooter({
                 <Spinner size="sm" />
               </div>
             ) : patientBills.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">No bills for this patient.</p>
+              <div className="text-center py-4 space-y-2">
+                <p className="text-sm text-muted-foreground">No bills for this patient.</p>
+                {onCreateBill && (
+                  <Button size="sm" variant="outline" onClick={onCreateBill}>
+                    <Receipt className="h-3.5 w-3.5 mr-1.5" />
+                    Create Bill
+                  </Button>
+                )}
+              </div>
             ) : (
               patientBills.map((bill) => (
                 <button

@@ -168,6 +168,7 @@ export function StaffWorkflow({
         defaultExpandHistory
         onViewBill={viewBill}
         onViewConsultationFromHistory={viewConsultation}
+        onCreateBill={handleGenerateBill}
       />
     </div>
   );

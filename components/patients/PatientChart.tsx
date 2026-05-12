@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, Suspense } from "react";
+import { useCallback, Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { format, parseISO } from "date-fns";
@@ -27,6 +27,9 @@ const AppointmentModal = dynamic(() =>
 );
 const PatientModal = dynamic(() =>
   import("@/components/patients/PatientModal").then((m) => m.PatientModal),
+);
+const BillingModal = dynamic(() =>
+  import("@/components/billing/BillingModal").then((m) => m.BillingModal),
 );
 
 type ConsultationRow = {
@@ -58,6 +61,8 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
   const selectedAppointment = useTodayStore((s) => s.selectedAppointment);
   const activeModal = useTodayStore((s) => s.activeModal);
   const patientCreated = useTodayStore((s) => s.patientCreated);
+
+  const [showCreateBillModal, setShowCreateBillModal] = useState(false);
 
   const patient = patientDetail.patient!;
   const consultations = (patientDetail.consultations ?? []) as ConsultationRow[];
@@ -210,9 +215,17 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
           Billing History ({bills.length})
         </h3>
         {bills.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            No past bills.
-          </p>
+          <div className="text-center py-8 space-y-3">
+            <p className="text-sm text-muted-foreground">No past bills.</p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowCreateBillModal(true)}
+            >
+              <Receipt className="h-3.5 w-3.5 mr-1.5" />
+              Create Bill
+            </Button>
+          </div>
         ) : (
           <div className="space-y-3">
             {bills.map((b) => (
@@ -268,6 +281,15 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
             onPatientCreated={patientCreated as (p: Patient) => void}
           />
         )}
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <BillingModal
+          open={showCreateBillModal}
+          onOpenChange={setShowCreateBillModal}
+          patient={patient as unknown as import("@/types/core").DbPatient}
+          mode="create"
+        />
       </Suspense>
     </div>
   );
