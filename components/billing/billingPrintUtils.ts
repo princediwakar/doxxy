@@ -221,7 +221,14 @@ export const printBill = async (
     const printContent = generateBillPrintContent(billData, patient, clinic);
 
     const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
+    iframe.style.position = 'fixed';
+    iframe.style.top = '0';
+    iframe.style.left = '0';
+    iframe.style.width = '100%';
+    iframe.style.height = '100%';
+    iframe.style.zIndex = '99999';
+    iframe.style.border = 'none';
+    iframe.style.background = 'white';
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -236,17 +243,17 @@ export const printBill = async (
     doc.write(printContent);
     doc.close();
 
-    setTimeout(() => {
-      iframe.contentWindow?.focus();
-      iframe.contentWindow?.print();
-      iframe.contentWindow?.addEventListener('afterprint', () => {
-        setTimeout(() => document.body.removeChild(iframe), 100);
-      }, { once: true });
-      // Fallback cleanup in case afterprint doesn't fire
+    iframe.onload = () => {
       setTimeout(() => {
-        if (iframe.parentNode) document.body.removeChild(iframe);
-      }, 60000);
-    }, 500);
+        iframe.contentWindow?.print();
+        iframe.contentWindow?.addEventListener('afterprint', () => {
+          document.body.removeChild(iframe);
+        }, { once: true });
+        setTimeout(() => {
+          if (iframe.parentNode) document.body.removeChild(iframe);
+        }, 60000);
+      }, 500);
+    };
     
   } catch (error) {
     logger.error('Error generating print content:', error); toast.error("Failed to generate print content. Please try again.");
