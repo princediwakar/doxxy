@@ -207,19 +207,6 @@ export const generateBillPrintContent = (
         </div>
       </div>
       
-      <script>
-        window.onafterprint = function() {
-          window.close();
-        };
-
-        window.onload = function() {
-           // Small delay to ensure styles are loaded
-           setTimeout(function() {
-             window.focus(); 
-             window.print();
-           }, 500);
-        };
-      </script>
     </body>
     </html>
   `;
@@ -232,19 +219,34 @@ export const printBill = async (
 ) => {
   try {
     const printContent = generateBillPrintContent(billData, patient, clinic);
-    const filename = generateBillFilename(billData, patient, clinic?.name);
 
-    // Standard A4 dimensions for popup preview (optional)
-    const printWindow = window.open('', '_blank', 'width=900,height=1200');
-    if (!printWindow) {
-      logger.error("Popup blocked"); toast.error("Unable to open print window. Please allow popups for this site.");
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) {
+      logger.error('Could not access print iframe');
+      document.body.removeChild(iframe);
+      toast.error("Unable to open print dialog");
       return;
     }
 
-    printWindow.document.write(printContent);
-    printWindow.document.title = filename;
-    printWindow.document.close();
-    printWindow.focus();
+    doc.open();
+    doc.write(printContent);
+    doc.close();
+
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      iframe.contentWindow?.addEventListener('afterprint', () => {
+        setTimeout(() => document.body.removeChild(iframe), 100);
+      }, { once: true });
+      // Fallback cleanup in case afterprint doesn't fire
+      setTimeout(() => {
+        if (iframe.parentNode) document.body.removeChild(iframe);
+      }, 60000);
+    }, 500);
     
   } catch (error) {
     logger.error('Error generating print content:', error); toast.error("Failed to generate print content. Please try again.");

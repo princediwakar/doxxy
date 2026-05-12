@@ -214,28 +214,31 @@ export const printConsultation = async (
       departmentType
     );
 
-    const filename = generateConsultationFilename(patient, appointment, departmentType);
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      logger.error('Could not open print window');
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) {
+      logger.error('Could not access print iframe');
+      document.body.removeChild(iframe);
       return;
     }
 
-    printWindow.document.title = filename;
-    try {
-      printWindow.history.replaceState({}, '', '');
-    } catch {}
-    
-    printWindow.document.write(printContent);
-    printWindow.document.close();
-    printWindow.focus();
-    
-    // Cleaned up the redundant CSS injection. 
-    // The iframe/window will respect the styles built into the HTML string perfectly.
-    
+    doc.open();
+    doc.write(printContent);
+    doc.close();
+
     setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      iframe.contentWindow?.addEventListener('afterprint', () => {
+        setTimeout(() => document.body.removeChild(iframe), 100);
+      }, { once: true });
+      // Fallback cleanup in case afterprint doesn't fire
+      setTimeout(() => {
+        if (iframe.parentNode) document.body.removeChild(iframe);
+      }, 60000);
     }, 500);
   } catch (error) {
     logger.error('Error generating print content:', error);
