@@ -35,11 +35,9 @@ export const PrintStyles: React.FC = () => (
       .page-break { page-break-before: always; }
       .avoid-break { page-break-inside: avoid; }
       
-      /* ... keep your existing styles below ... */
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       .max-w-4xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
       
-      /* ... rest of your existing styles ... */
 
       /* Grid layout for consultation content */
       .consultation-content .grid {

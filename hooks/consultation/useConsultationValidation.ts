@@ -2,7 +2,7 @@
 
 import { useCallback } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import type { ConsultationFormValues, PrescriptionMedication } from "@/types/consultation";
+import type { ConsultationFormValues } from "@/types/consultation";
 import { getMandatoryFieldsForDepartment } from "@/lib/consultationNotesSchemas";
 
 export interface UseConsultationValidationParams {
@@ -44,7 +44,7 @@ export const useConsultationValidation = ({
 
       if (fieldName === 'prescriptions') {
         if (!Array.isArray(fieldValue) || fieldValue.length === 0 ||
-            !fieldValue.some((med: PrescriptionMedication) => med.name && med.name.trim().length > 0)) {
+            !fieldValue.some((med: { name?: string | null }) => med.name && med.name.trim().length > 0)) {
           errors.push('Prescriptions');
         }
       } else {

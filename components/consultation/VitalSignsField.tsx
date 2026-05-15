@@ -5,15 +5,15 @@ import { Input } from '@/components/ui/input';
 import { useEffect, useCallback } from 'react';
 
 interface VitalSignsValue {
-  temperature?: string;
-  pulse?: string;
-  blood_pressure_systolic?: string;
-  blood_pressure_diastolic?: string;
-  respiratory_rate?: string;
-  oxygen_saturation?: string;
-  height?: string;
-  weight?: string;
-  bmi?: string;
+  temperature: string | null;
+  pulse: string | null;
+  blood_pressure_systolic: string | null;
+  blood_pressure_diastolic: string | null;
+  respiratory_rate: string | null;
+  oxygen_saturation: string | null;
+  height: string | null;
+  weight: string | null;
+  bmi: string | null;
 }
 
 interface VitalSignsFieldProps {

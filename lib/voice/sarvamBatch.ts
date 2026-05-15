@@ -30,8 +30,12 @@ async function retryWithBackoff<T>(
     } catch (error) {
       lastError = error;
       if (attempt === retries) break;
-      // Don't retry 400 (bad request) — the payload is invalid
-      if (error instanceof SarvamBatchError && error.statusCode === 400) break;
+      // Don't retry 400 (bad request) — the payload is invalid, EXCEPT for known Sarvam consistency bugs
+      if (error instanceof SarvamBatchError && error.statusCode === 400) {
+        if (!error.responseBody?.includes('COMPLETED')) {
+          break;
+        }
+      }
       const delay = baseDelay * Math.pow(2, attempt);
       logger.warn(`[Sarvam] ${label} attempt ${attempt + 1} failed, retrying in ${delay}ms`);
       await new Promise((resolve) => setTimeout(resolve, delay));

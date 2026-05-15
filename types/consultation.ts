@@ -31,10 +31,10 @@ export type PatientWithClinic = DbPatient & {
 /** Doctor with user profile relationship */
 export type DoctorWithProfile = DbDoctor & {
   profile?: {
-    first_name?: string;
-    last_name?: string;
-    display_name?: string;
-    email?: string;
+    first_name: string | null;
+    last_name: string | null;
+    display_name: string | null;
+    email: string | null;
   };
 };
 
@@ -76,111 +76,114 @@ export interface FieldConfig {
 
 /** Eye examination data */
 export interface EyeData {
-  left?: string;
-  right?: string;
-  notes?: string;
+  left: string | null;
+  right: string | null;
+  notes: string | null;
 }
 
 /** Vital signs data */
 export interface VitalSignsData {
-  temperature?: string;
-  pulse?: string;
-  blood_pressure_systolic?: string;
-  blood_pressure_diastolic?: string;
-  respiratory_rate?: string;
-  oxygen_saturation?: string;
-  height?: string;
-  weight?: string;
-  bmi?: string;
+  temperature: string | null;
+  pulse: string | null;
+  blood_pressure_systolic: string | null;
+  blood_pressure_diastolic: string | null;
+  respiratory_rate: string | null;
+  oxygen_saturation: string | null;
+  height: string | null;
+  weight: string | null;
+  bmi: string | null;
 }
 
 /** Motor examination data */
 export interface MotorExamData {
-  shoulder_left?: string;
-  shoulder_right?: string;
-  elbow_left?: string;
-  elbow_right?: string;
-  wrist_left?: string;
-  wrist_right?: string;
-  hip_left?: string;
-  hip_right?: string;
-  knee_left?: string;
-  knee_right?: string;
-  ankle_left?: string;
-  ankle_right?: string;
-  muscle_tone?: string;
-  muscle_bulk?: string;
-  involuntary_movements?: string;
-  coordination?: string;
-  notes?: string;
+  shoulder_left: string | null;
+  shoulder_right: string | null;
+  elbow_left: string | null;
+  elbow_right: string | null;
+  wrist_left: string | null;
+  wrist_right: string | null;
+  hip_left: string | null;
+  hip_right: string | null;
+  knee_left: string | null;
+  knee_right: string | null;
+  ankle_left: string | null;
+  ankle_right: string | null;
+  muscle_tone: string | null;
+  muscle_bulk: string | null;
+  involuntary_movements: string | null;
+  coordination: string | null;
+  notes: string | null;
 }
 
 /** Reflex examination data */
 export interface ReflexExamData {
-  biceps_left?: string;
-  biceps_right?: string;
-  triceps_left?: string;
-  triceps_right?: string;
-  supinator_left?: string;
-  supinator_right?: string;
-  knee_left?: string;
-  knee_right?: string;
-  ankle_left?: string;
-  ankle_right?: string;
-  plantar_right?: string;
-  plantar_left?: string;
-  abdominal_left?: string;
-  abdominal_right?: string;
-  clonus?: string;
-  hoffmann?: string;
-  notes?: string;
+  biceps_left: string | null;
+  biceps_right: string | null;
+  triceps_left: string | null;
+  triceps_right: string | null;
+  supinator_left: string | null;
+  supinator_right: string | null;
+  knee_left: string | null;
+  knee_right: string | null;
+  ankle_left: string | null;
+  ankle_right: string | null;
+  plantar_right: string | null;
+  plantar_left: string | null;
+  abdominal_left: string | null;
+  abdominal_right: string | null;
+  clonus: string | null;
+  hoffmann: string | null;
+  notes: string | null;
 }
 
 /** Tabular eye examination data */
 export interface TabularEyeValue {
   // Visual function tests
-  visual_acuity_left?: string;
-  visual_acuity_right?: string;
-  refraction_left?: string;
-  refraction_right?: string;
+  visual_acuity_left: string | null;
+  visual_acuity_right: string | null;
+  refraction_left: string | null;
+  refraction_right: string | null;
 
   // Anterior segment
-  extraocular_movements_left?: string;
-  extraocular_movements_right?: string;
-  lids_left?: string;
-  lids_right?: string;
-  conjunctiva_left?: string;
-  conjunctiva_right?: string;
-  cornea_left?: string;
-  cornea_right?: string;
-  anterior_chamber_left?: string;
-  anterior_chamber_right?: string;
-  iris_left?: string;
-  iris_right?: string;
-  pupil_examination_left?: string;
-  pupil_examination_right?: string;
-  lens_left?: string;
-  lens_right?: string;
-  intraocular_pressure_left?: string;
-  intraocular_pressure_right?: string;
+  extraocular_movements_left: string | null;
+  extraocular_movements_right: string | null;
+  lids_left: string | null;
+  lids_right: string | null;
+  conjunctiva_left: string | null;
+  conjunctiva_right: string | null;
+  cornea_left: string | null;
+  cornea_right: string | null;
+  anterior_chamber_left: string | null;
+  anterior_chamber_right: string | null;
+  iris_left: string | null;
+  iris_right: string | null;
+  pupil_examination_left: string | null;
+  pupil_examination_right: string | null;
+  lens_left: string | null;
+  lens_right: string | null;
+  intraocular_pressure_left: string | null;
+  intraocular_pressure_right: string | null;
 
   // Posterior segment
-  fundus_exam_left?: string;
-  fundus_exam_right?: string;
+  fundus_exam_left: string | null;
+  fundus_exam_right: string | null;
 
   // Additional findings
-  notes?: string;
+  notes: string | null;
 }
 
 /** Union type for all possible field values */
 export type FieldValue =
   | string
+  | string[]
   | PrescriptionMedication[]
+  | ConsultationMedication[]
   | EyeData
   | VitalSignsData
   | MotorExamData
   | ReflexExamData
-  | TabularEyeValue;
+  | TabularEyeValue
+  | null;
 
 // ============================================================================
 // COMPONENT-SPECIFIC TYPES
@@ -292,7 +295,7 @@ export interface DoctorInfo {
   name: string;
   qualification: string;
   specialization: string;
-  registration_number?: string;
+  registration_number: string | null;
   signature?: string | null;
   [key: string]: unknown; // Index signature for compatibility
 }
@@ -300,10 +303,10 @@ export interface DoctorInfo {
 /** Clinic information for printing */
 export interface ClinicInfo {
   name: string;
-  address?: string;
-  phone?: string;
-  email?: string;
-  website?: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
 }
 
 // ============================================================================
@@ -313,7 +316,7 @@ export interface ClinicInfo {
 /** Department information */
 export type DepartmentInfo = {
   name: string;
-  description?: string;
+  description: string | null;
   clinic_departments?: {
     department_types?: {
       name: string;
@@ -326,12 +329,12 @@ export interface TransformedDoctorData {
   id: string;
   name: string;
   department_name: string;
-  phone?: string;
-  email?: string;
-  bio?: string;
-  user_id?: string;
-  qualification?: string;
-  specialization?: string;
+  phone: string | null;
+  email: string | null;
+  bio: string | null;
+  user_id: string | null;
+  qualification: string | null;
+  specialization: string | null;
 }
 
 // ============================================================================

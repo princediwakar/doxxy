@@ -16,8 +16,8 @@ interface ConsultationTableProps {
   title: string;
   headers: string[];
   rows: { key: string; label: string }[];
-  // Accepts either motor or reflex data
-  data: MotorExamData | ReflexExamData;
+  // Accepts motor, reflex, or tabular eye data
+  data: MotorExamData | ReflexExamData | TabularEyeValue;
   // Default value logic: 5 for motor, 2 for reflexes
   defaultValue: string;
 }
@@ -31,10 +31,10 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
 }) => {
   // Cast to Record<string, string> to allow dynamic access (e.g., `${row.key}_left`)
   // This is safe because we know the structure matches the logic below
-  const safeData = data as Record<string, string | undefined>;
+  const safeData = data as unknown as Record<string, string | null>;
 
   // Helper function to get value with default
-  const getValueWithDefault = (value: string | undefined): string => {
+  const getValueWithDefault = (value: string | null): string => {
     // If value is explicitly set to empty string, return empty string
     // Otherwise return current value or default value
     if (value === '') {
@@ -107,7 +107,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
 
 // --- Shared Sub-Components ---
 
-const AdditionalNotes: React.FC<{ notes?: string }> = ({ notes }) => {
+const AdditionalNotes: React.FC<{ notes: string | null }> = ({ notes }) => {
   if (!notes) return null;
   return (
     <div className="space-y-1">
@@ -289,7 +289,7 @@ export const MotorExaminationDisplay: React.FC<{ data: MotorExamData }> = ({
       />
 
       <div className="space-y-2">
-        <AdditionalFields fields={additionalFields} data={data as Record<string, unknown>} />
+        <AdditionalFields fields={additionalFields} data={data as unknown as Record<string, unknown>} />
         <AdditionalNotes notes={data.notes} />
       </div>
     </div>
@@ -334,7 +334,7 @@ export const ReflexExaminationDisplay: React.FC<{ data: ReflexExamData }> = ({
       />
 
       <div className="space-y-2">
-        <AdditionalFields fields={additional} data={data as Record<string, unknown>} />
+        <AdditionalFields fields={additional} data={data as unknown as Record<string, unknown>} />
         <AdditionalNotes notes={data.notes} />
       </div>
     </div>
@@ -393,7 +393,7 @@ const isPrescriptionData = (value: unknown): value is PrescriptionMedication[] =
 
 const isVitalSignsData = (value: unknown): value is VitalSignsData => {
   if (typeof value !== 'object' || value === null) return false;
-  const data = value as Record<string, unknown>;
+  const data = value as unknown as Record<string, unknown>;
   return (
     'temperature' in data ||
     'pulse' in data ||
@@ -409,7 +409,7 @@ const isVitalSignsData = (value: unknown): value is VitalSignsData => {
 
 const isEyeData = (value: unknown): value is EyeData => {
   if (typeof value !== 'object' || value === null) return false;
-  const data = value as Record<string, unknown>;
+  const data = value as unknown as Record<string, unknown>;
   // Eye data has simple left/right fields without side suffixes
   return (
     ('left' in data || 'right' in data) &&
@@ -421,7 +421,7 @@ const isEyeData = (value: unknown): value is EyeData => {
 
 const isMotorExamData = (value: unknown): value is MotorExamData => {
   if (typeof value !== 'object' || value === null) return false;
-  const data = value as Record<string, unknown>;
+  const data = value as unknown as Record<string, unknown>;
   return (
     'shoulder_left' in data ||
     'shoulder_right' in data ||
@@ -432,7 +432,7 @@ const isMotorExamData = (value: unknown): value is MotorExamData => {
 
 const isReflexExamData = (value: unknown): value is ReflexExamData => {
   if (typeof value !== 'object' || value === null) return false;
-  const data = value as Record<string, unknown>;
+  const data = value as unknown as Record<string, unknown>;
   return (
     'biceps_left' in data ||
     'biceps_right' in data ||
@@ -444,7 +444,7 @@ const isReflexExamData = (value: unknown): value is ReflexExamData => {
 
 const isTabularEyeData = (value: unknown): value is TabularEyeValue => {
   if (typeof value !== 'object' || value === null) return false;
-  const data = value as Record<string, unknown>;
+  const data = value as unknown as Record<string, unknown>;
   return (
     'visual_acuity_left' in data ||
     'visual_acuity_right' in data ||
@@ -470,7 +470,7 @@ export const FieldValueRenderer: React.FC<{
 
   // Type Guard: Objects
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-    const data = value as Record<string, unknown>;
+    const data = value as unknown as Record<string, unknown>;
 
     // Simple check: if object has no properties at all, don't render
     if (Object.keys(data).length === 0) return null;

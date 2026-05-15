@@ -1,7 +1,7 @@
+import * as dotenv from 'dotenv';
 import { execSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as dotenv from 'dotenv';
 
 // Load environment variables for Supabase and OpenAI
 dotenv.config({ path: '.env.local' });
@@ -34,6 +34,9 @@ async function run() {
   execSync(`say -o "${audioFile}" --data-format=LEI16@16000 "${textToSpeak}"`);
   
   const audioBuffer = fs.readFileSync(audioFile);
+  if (typeof Blob === 'undefined') {
+    throw new Error('Blob is not available. Use Node.js 18+ (≥18.0.0) or a Blob polyfill.');
+  }
   const audioBlob = new Blob([audioBuffer], { type: 'audio/wav' });
   const fileName = 'test-dictation.wav';
 
@@ -69,7 +72,7 @@ async function run() {
           downloadRes = await getDownloadUrls(sarvamJobId, outputFiles);
           break;
         } catch (e: any) {
-          if (e.statusCode === 400 && e.message.includes("COMPLETED")) {
+          if (e.statusCode === 400 && e.responseBody?.includes("COMPLETED")) {
             await sleep(2000);
           } else {
             throw e;
@@ -98,51 +101,42 @@ async function run() {
   console.log(`[5] Structuring Clinical Notes (Department: ${department})...`);
   const structured = await structureClinicalNotes(transcript, department);
 
-  console.log(`[6] Matching Medicines with local database...`);
-  const { createClient } = await import('@supabase/supabase-js');
-  const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!
-  );
+  console.log(`[6] Validating structured output shape...`);
+  const { output } = structured;
+  const issues: string[] = [];
 
-  if (structured.prescriptions && structured.prescriptions.length > 0) {
-    const searchQueries = structured.prescriptions
-      .filter(p => p.drug_name && p.drug_name !== 'NOT_SPECIFIED')
-      .map(p => {
-        let term = p.drug_name;
-        if (p.dosage && p.dosage !== 'NOT_SPECIFIED') {
-          term += ` ${p.dosage}`;
-        }
-        return { original_name: p.drug_name, search_term: term };
-      });
-
-    if (searchQueries.length > 0) {
-      const terms = searchQueries.map(q => q.search_term);
-      const { data: matches } = await supabaseAdmin.rpc('match_invoice_items_bulk', { search_terms: terms });
-      if (Array.isArray(matches)) {
-        const matchMap = new Map(matches.map((m: any) => [m.original_search_term, m.matched_id]));
-        
-        // Fallback for unmatched
-        for (const term of terms) {
-          if (!matchMap.get(term)) {
-            const { data: singleMatch } = await supabaseAdmin.rpc('match_invoice_item_single', { search_term: term });
-            if (singleMatch && singleMatch[0] && singleMatch[0].matched_id) {
-              matchMap.set(term, singleMatch[0].matched_id);
-            }
-          }
-        }
-
-        structured.prescriptions = structured.prescriptions.map(p => {
-          const query = searchQueries.find(q => q.original_name === p.drug_name);
-          return {
-            ...p,
-            medicine_id: query ? (matchMap.get(query.search_term) || null) : null,
-          };
-        });
-      }
-    }
+  if (typeof output.symptoms !== 'string') issues.push('symptoms: expected string');
+  if (typeof output.diagnosis !== 'string') issues.push('diagnosis: expected string');
+  if (typeof output.advice !== 'string') issues.push('advice: expected string');
+  if (!Array.isArray(output.prescriptions)) {
+    issues.push('prescriptions: expected array');
+  } else {
+    output.prescriptions.forEach((p, i) => {
+      if (typeof p.drug_name !== 'string') issues.push(`prescriptions[${i}].drug_name: expected string`);
+      if (typeof p.dosage !== 'string') issues.push(`prescriptions[${i}].dosage: expected string`);
+      if (typeof p.frequency !== 'string') issues.push(`prescriptions[${i}].frequency: expected string`);
+      if (typeof p.duration !== 'string') issues.push(`prescriptions[${i}].duration: expected string`);
+      if (typeof p.route !== 'string') issues.push(`prescriptions[${i}].route: expected string`);
+      if (typeof p.instructions !== 'string') issues.push(`prescriptions[${i}].instructions: expected string`);
+    });
   }
-  
+  if (output.differential_diagnosis !== undefined && !Array.isArray(output.differential_diagnosis)) {
+    issues.push('differential_diagnosis: expected array if present');
+  }
+  if (output.discontinued_medications !== undefined && !Array.isArray(output.discontinued_medications)) {
+    issues.push('discontinued_medications: expected array if present');
+  }
+  if (output.rawFields !== undefined && typeof output.rawFields !== 'object') {
+    issues.push('rawFields: expected object if present');
+  }
+
+  if (issues.length > 0) {
+    console.error('Schema validation FAILED:');
+    issues.forEach(i => console.error(`  - ${i}`));
+  } else {
+    console.log('Schema validation PASSED.');
+  }
+
   console.log('\n[RESULT] Structured Output:');
   console.log(JSON.stringify(structured, null, 2));
   

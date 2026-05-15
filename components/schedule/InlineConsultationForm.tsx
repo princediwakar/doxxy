@@ -1,7 +1,7 @@
 // components/schedule/InlineConsultationForm.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
 import { Eye, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,10 @@ interface InlineConsultationFormProps {
   formRef: React.RefObject<HTMLDivElement>;
 }
 
+// Global utility for strict sanitization.
+const isBlank = (v: unknown): boolean =>
+  v === null || v === undefined || v === "" || v === "NOT_SPECIFIED";
+
 export function InlineConsultationForm({
   appointmentId,
   appointment,
@@ -48,6 +52,12 @@ export function InlineConsultationForm({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [savedVisible, setSavedVisible] = useState(false);
 
+  // TODO: Fix underlying interface divergence. 
+  // Centralizing type assertions here so the UI tree doesn't rely on scattered blind casting.
+  const mappedAppointmentDetails = appointment as unknown as AppointmentWithDetails | null;
+  const mappedPatientWithClinic = patient as unknown as PatientWithClinic;
+  const mappedDbAppointment = appointment as unknown as DbAppointment;
+
   const {
     previousConsultations,
     recentPrescriptions,
@@ -55,7 +65,7 @@ export function InlineConsultationForm({
     departmentInfo,
   } = useConsultationData({
     appointmentId,
-    appointment: appointment as unknown as AppointmentWithDetails | null,
+    appointment: mappedAppointmentDetails,
     patientDetail: patientDetail ?? null,
   });
 
@@ -87,35 +97,34 @@ export function InlineConsultationForm({
 
   const specialtyData = form.watch("specialty_data");
 
+  // Section Expansion Optimization: Bails out if no state change occurs, preventing keystroke re-renders.
   useEffect(() => {
     if (!specialtyData || typeof specialtyData !== "object") return;
     const data = specialtyData as Record<string, unknown>;
 
     setExpandedSections((prev) => {
+      let changed = false;
       const next = { ...prev };
       for (const section of specialtySections) {
         if (prev[section.title] === undefined && section.fields.some((f) => isFieldFilled(data[f.name]))) {
           next[section.title] = true;
+          changed = true;
         }
       }
-      return next;
+      return changed ? next : prev;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [specialtyData, specialtySections]);
 
-  // AI injection
+  // AI Injection Protocol
   useEffect(() => {
     if (!aiStructuredData) return;
 
     const currentSpecialtyData = (form.getValues().specialty_data || {}) as Record<string, unknown>;
 
-    // Clean rawFields: filter out NOT_SPECIFIED, null, undefined, and empty strings.
-    // Preserve nested objects (e.g. vital_signs) as-is — their sub-fields are handled
-    // by the form's field renderers.
     const cleanedRawFields: Record<string, unknown> = {};
     if (aiStructuredData.rawFields) {
       for (const [key, value] of Object.entries(aiStructuredData.rawFields)) {
-        if (value === 'NOT_SPECIFIED' || value === null || value === undefined || value === '') continue;
+        if (isBlank(value)) continue;
         cleanedRawFields[key] = value;
       }
     }
@@ -123,40 +132,49 @@ export function InlineConsultationForm({
     const merged: Record<string, unknown> = {
       ...currentSpecialtyData,
       ...cleanedRawFields,
-      chief_complaint:
-        aiStructuredData.symptoms !== "NOT_SPECIFIED"
-          ? aiStructuredData.symptoms
-          : currentSpecialtyData.chief_complaint || "",
-      diagnosis:
-        aiStructuredData.diagnosis !== "NOT_SPECIFIED"
-          ? aiStructuredData.diagnosis
-          : currentSpecialtyData.diagnosis || "",
-      treatment:
-        aiStructuredData.advice !== "NOT_SPECIFIED"
-          ? aiStructuredData.advice
-          : (cleanedRawFields.treatment as string) || currentSpecialtyData.treatment || "",
+      chief_complaint: !isBlank(aiStructuredData.symptoms)
+        ? aiStructuredData.symptoms
+        : currentSpecialtyData.chief_complaint || "",
+      diagnosis: !isBlank(aiStructuredData.diagnosis)
+        ? aiStructuredData.diagnosis
+        : currentSpecialtyData.diagnosis || "",
+      treatment: !isBlank(aiStructuredData.advice)
+        ? aiStructuredData.advice
+        : (cleanedRawFields.treatment as string) || currentSpecialtyData.treatment || "",
       prescriptions: aiStructuredData.prescriptions
-        .filter((p) => p.drug_name !== "NOT_SPECIFIED")
+        .filter((p) => !isBlank(p.drug_name))
         .map((p) => ({
           name: p.drug_name,
-          medicine_id: p.medicine_id ?? null,
-          dosage: p.dosage !== "NOT_SPECIFIED" ? p.dosage : "",
-          frequency: p.frequency !== "NOT_SPECIFIED" ? p.frequency : "",
-          duration: p.duration !== "NOT_SPECIFIED" ? p.duration : "",
-          route: p.route !== "NOT_SPECIFIED" ? p.route : "",
-          instructions: p.instructions !== "NOT_SPECIFIED" ? p.instructions : "",
+          // medicine_id removed. Let the prescription lookup widget resolve DB ties.
+          dosage: !isBlank(p.dosage) ? p.dosage : "",
+          frequency: !isBlank(p.frequency) ? p.frequency : undefined,
+          duration: !isBlank(p.duration) ? p.duration : "",
+          route: !isBlank(p.route) ? p.route : undefined,
+          instructions: !isBlank(p.instructions) ? p.instructions : "",
         })),
     };
 
     form.setValue("specialty_data", merged as ConsultationFormValues["specialty_data"]);
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    
+    // Defer scroll to next frame so React can paint the injected data first.
+    requestAnimationFrame(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    
     onAiDataConsumed();
-  }, [aiStructuredData]);
+  }, [aiStructuredData, form, formRef, onAiDataConsumed]); 
+  // Deps explicitly declared. Ensure onAiDataConsumed is stable in the parent hook.
 
+  const hasCompletedAlerted = useRef(false);
   useEffect(() => {
-    if (!justCompleted) return;
-    toast.success("Consultation completed");
-    onComplete();
+    if (justCompleted && !hasCompletedAlerted.current) {
+      hasCompletedAlerted.current = true;
+      toast.success("Consultation completed");
+      onComplete();
+    } else if (!justCompleted) {
+      hasCompletedAlerted.current = false;
+    }
+    // onComplete intentionally included. hasCompletedAlerted guards duplicate fires on identity change.
   }, [justCompleted, onComplete]);
 
   useEffect(() => {
@@ -220,8 +238,8 @@ export function InlineConsultationForm({
         showPreview={showPreview}
         setShowPreview={setShowPreview}
         form={form}
-        patient={patient as unknown as PatientWithClinic}
-        appointment={appointment as unknown as DbAppointment}
+        patient={mappedPatientWithClinic}
+        appointment={mappedDbAppointment}
         specialtySections={specialtySections}
         departmentType={departmentType}
       />

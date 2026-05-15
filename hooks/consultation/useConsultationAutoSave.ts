@@ -5,7 +5,7 @@ import { useEffect, useCallback, useRef } from "react";
 import { useMutation, useQueryClient, UseMutationResult } from "@tanstack/react-query";
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { ConsultationFormValues, PrescriptionMedication } from "@/types/consultation";
+import type { ConsultationFormValues } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase, DbJson } from "@/types/core";
 import type { UseFormReturn } from "react-hook-form";
 import type { ClinicMemberWithClinic } from "@/types/core";
@@ -67,9 +67,9 @@ async function saveConsultation(
     throw new Error('Unexpected response from consultation update');
   }
 
-  if (data.specialty_data.prescriptions !== undefined) {
+  if (data.specialty_data.prescriptions != null) {
     const validPrescriptions = data.specialty_data.prescriptions.filter(
-      (med: PrescriptionMedication) => med.name && med.name.trim().length > 0
+      (med) => med.name && med.name.trim().length > 0
     );
 
     if (validPrescriptions.length > 0) {

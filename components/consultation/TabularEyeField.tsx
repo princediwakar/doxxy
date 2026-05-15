@@ -43,7 +43,7 @@ export const TabularEyeField = ({
       // If hiding notes and no notes exist, remove the notes field
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { notes, ...rest } = value;
-      onChange(rest);
+      onChange({ ...rest, notes: null });
     }
   };
 

@@ -1,7 +1,7 @@
 // File: components/consultation/ConsultationLayout.tsx
 import React from 'react';
 import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
-import type { FieldValue, ClinicInfo, DoctorInfo, ConsultationFormValues, MotorExamData, ReflexExamData } from '@/types/consultation';
+import type { FieldValue, ClinicInfo, DoctorInfo, MotorExamData, ReflexExamData } from '@/types/consultation';
 import { FieldValueRenderer } from './ConsultationRenderers';
 import { ConsultationHeader, ConcisePatientInfo, PrintStyles, ConsultationSignatureFooter } from './ConsultationParts';
 import type { DbAppointment, DbPatient } from '@/types/core';
@@ -20,7 +20,6 @@ interface Section {
 // Utility function to populate default values for motor and reflex examination data
 const populateDefaultValues = (fieldName: string, value: FieldValue | undefined): FieldValue | undefined => {
   if (!value) {
-    // If value is undefined/null, create default data structure
     if (fieldName === 'motor_examination') {
       const defaultMotorData: MotorExamData = {
         shoulder_left: '5',
@@ -34,7 +33,12 @@ const populateDefaultValues = (fieldName: string, value: FieldValue | undefined)
         knee_left: '5',
         knee_right: '5',
         ankle_left: '5',
-        ankle_right: '5'
+        ankle_right: '5',
+        muscle_tone: null,
+        muscle_bulk: null,
+        involuntary_movements: null,
+        coordination: null,
+        notes: null,
       };
       return defaultMotorData;
     }
@@ -50,7 +54,14 @@ const populateDefaultValues = (fieldName: string, value: FieldValue | undefined)
         knee_left: '2',
         knee_right: '2',
         ankle_left: '2',
-        ankle_right: '2'
+        ankle_right: '2',
+        plantar_right: null,
+        plantar_left: null,
+        abdominal_left: null,
+        abdominal_right: null,
+        clonus: null,
+        hoffmann: null,
+        notes: null,
       };
       return defaultReflexData;
     }
@@ -60,7 +71,7 @@ const populateDefaultValues = (fieldName: string, value: FieldValue | undefined)
 };
 
 // Field grouping logic with improved side-by-side layout
-const groupRelatedFields = (fields: Field[], consultationData: ConsultationFormValues['specialty_data']) => {
+const groupRelatedFields = (fields: Field[], consultationData: Record<string, FieldValue> | undefined) => {
   const groups: Field[][] = [];
   let currentGroup: Field[] = [];
 
@@ -177,7 +188,7 @@ const shouldStartNewGroup = (field: Field, currentGroup: Field[]): boolean => {
 };
 
 // Field group component with fresh implementation
-const FieldGroup: React.FC<{ fields: Field[], consultationData: ConsultationFormValues['specialty_data'] }> = ({ fields, consultationData }) => {
+const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, FieldValue> | undefined }> = ({ fields, consultationData }) => {
   const isSingleField = fields.length === 1;
   const field = fields[0];
   const rawValue = consultationData?.[field.name as keyof typeof consultationData];
@@ -314,7 +325,7 @@ return (
                     if (typeof value === 'string') return value.trim().length > 0;
                     if (Array.isArray(value)) return value.length > 0;
                     if (typeof value === 'object' && value !== null) {
-                      const obj = value as Record<string, unknown>;
+                      const obj = value as unknown as Record<string, unknown>;
                       return Object.values(obj).some(val => {
                         if (typeof val === 'string') return val.trim().length > 0;
                         if (Array.isArray(val)) return val.length > 0;

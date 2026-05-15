@@ -88,6 +88,7 @@ export interface PrescriptionMedication {
   name?: string;
   medicine_id?: number | null;
   dosage?: string;
+  formulation?: string;
   frequency?: string;
   duration?: string;
   route?: string;

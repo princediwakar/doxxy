@@ -10,6 +10,7 @@ export type VoiceRecordingState =
 export interface AIExtractedPrescription {
   drug_name: string;
   dosage: string;
+  formulation: string | null;
   frequency: string;
   duration: string;
   route: string;
@@ -21,6 +22,8 @@ export interface AIStructuredOutput {
   symptoms: string;
   diagnosis: string;
   prescriptions: AIExtractedPrescription[];
+  differential_diagnosis?: string[];
+  discontinued_medications?: string[];
   advice: string;
   rawFields?: Record<string, unknown>;
 }

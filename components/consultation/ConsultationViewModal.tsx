@@ -105,7 +105,7 @@ export function ConsultationViewModal({
       if (typeof value === "string" && value.trim().length > 0) {
         cleaned[key] = value;
       } else if (Array.isArray(value) && value.length > 0) {
-        cleaned[key] = value;
+        cleaned[key] = value as FieldValue;
       } else if (typeof value === "object" && value !== null) {
         const obj = value as Record<string, unknown>;
         const hasContent = Object.values(obj).some((val) => {
@@ -121,7 +121,7 @@ export function ConsultationViewModal({
         });
 
         if (hasContent) {
-          cleaned[key] = value;
+          cleaned[key] = value as FieldValue;
         }
       }
     });
@@ -156,6 +156,7 @@ export function ConsultationViewModal({
         address: clinicDetails.address || "",
         phone: clinicDetails.phone || "",
         email: clinicDetails.email || "",
+        website: clinicDetails.website || null,
       }
     : null;
 

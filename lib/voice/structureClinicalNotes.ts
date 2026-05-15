@@ -1,10 +1,23 @@
-// lib/voice/structureClinicalNotes.ts
-import { logger } from '@/lib/logger';
-import { getSchemaForDepartment } from '@/lib/consultationNotesSchemas';
-import { mapDepartmentName } from '@/components/consultation/constants';
-import { zodToJsonSchema, getAllFieldsFromSchema } from '@/lib/schemaUtils';
-import type { NoteFieldConfig } from '@/lib/schemaUtils';
-import type { AIStructuredOutput, FieldConfidence } from '@/types/voice';
+// src/lib/voice/structureClinicalNotes.ts
+import OpenAI from "openai";
+import { zodResponseFormat } from "openai/helpers/zod";
+import { logger } from "@/lib/logger";
+import { getSchemaForDepartment } from "@/lib/consultationNotesSchemas";
+import { mapDepartmentName } from "@/components/consultation/constants";
+import { getAllFieldsFromSchema, safeString, BRIEF_THRESHOLD } from "@/lib/schemaUtils";
+import type { NoteFieldConfig } from "@/lib/schemaUtils";
+import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
+
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (!OPENAI_API_KEY) {
+  throw new Error("[structureClinicalNotes] OPENAI_API_KEY is not set.");
+}
+
+// Instantiate official client. It natively handles rate limits (429) and network retries with backoff.
+const openai = new OpenAI({
+  apiKey: OPENAI_API_KEY,
+  maxRetries: 3, 
+});
 
 const INDIAN_SHORTHAND_REFERENCE = `
 INDIAN CLINICAL SHORTHAND REFERENCE:
@@ -25,10 +38,10 @@ INDIAN CLINICAL SHORTHAND REFERENCE:
 | Crocin | Paracetamol (brand) | drug_name |
 | Azithral | Azithromycin (brand) | drug_name |
 | Augmentin | Amoxicillin + Clavulanic Acid (brand) | drug_name |
-
+ 
 When transcribing, preserve the doctor's shorthand in the frequency field exactly as spoken (e.g., "BD", "TDS").
 `;
-
+ 
 const ROUTE_DETECTION = `
 PRESCRIPTION ROUTE DETECTION:
 - "Tab" / "tablet" / "cap" / "capsule" / "syrup" / "by mouth" / no route mentioned for oral drugs → "Oral"
@@ -38,6 +51,7 @@ PRESCRIPTION ROUTE DETECTION:
 - "Inhaler" / "inhale" / "puff" / "nebulizer" → "Inhaled"
 - "Subcutaneous" / "SC" / "under skin" → "Subcutaneous"
 `;
+ 
 
 const SPECIAL_INSTRUCTIONS = `
 SPECIAL INSTRUCTIONS EXTRACTION:
@@ -49,25 +63,25 @@ SPECIAL INSTRUCTIONS EXTRACTION:
 - "apply thinly" / "apply twice daily" → note the application instruction
 - "avoid alcohol" / "no alcohol" → "Avoid alcohol"
 - "for fever" / "for pain" / "if needed" → note the condition
-- If no special instruction is given, set instructions to "NOT_SPECIFIED"`;
+- If no special instruction is given, output null.`;
 
 const PRESCRIPTION_EXTRACTION_GUIDE = `
-PRESCRIPTION EXTRACTION GUIDE:
-For every medication the doctor prescribes, create an object in the prescriptions array with ALL of these sub-fields:
+PRESCRIPTION EXTRACTION GUIDE & NEGATIVE LOGIC:
+1. ACTIVE PRESCRIPTIONS: For every medication the doctor ACTIVELY prescribes or continues, create an object in the \`prescriptions\` array.
+   - Separate the drug name from its physical form. (e.g., name: "Amoxicillin", formulation: "oral suspension", dosage: "400mg per 5mL").
+   - Output null for any missing sub-fields (duration, route, etc). DO NOT output "NOT_SPECIFIED".
 
-  name — The drug name exactly as spoken. Keep brand names (e.g., "Dolo", "Crocin", "Augmentin"). If the doctor says a generic name, use that (e.g., "Paracetamol", "Amoxicillin").
+2. CRITICAL NEGATION RULE: Doctors often "think out loud", change their minds, or explicitly deny patient requests.
+   - If the doctor mentions a drug but says "scratch that", "instead of", "stop taking", or "no [drug class] will be prescribed" — DO NOT put it in the \`prescriptions\` array.
+   - ALL negated, discontinued, or replaced drugs MUST be placed as simple strings in the \`discontinued_medications\` array.
+   - Example: "I was going to give Ibuprofen, but let's do Celebrex. Also no opioids." -> prescriptions: [{name: "Celebrex"}], discontinued_medications: ["Ibuprofen", "opioids"].
+`;
 
-  dosage — The strength with unit. Examples: "500mg", "10mg", "650mg", "5ml", "10mcg". If the doctor says "Paracetamol 650", dosage is "650mg". If no dosage mentioned, set to "NOT_SPECIFIED".
-
-  frequency — How often to take the medication. Must be one of: OD, BD, TDS, QID, PRN, Q4H, Q6H, Q8H, Q12H, SOS. Map the doctor's words to the closest matching value (e.g., "twice a day" → "BD", "as needed" → "PRN", "every 8 hours" → "Q8H"). See Indian Shorthand Reference above for mappings. If no frequency mentioned, set to null. IMPORTANT: Because this field has a restricted set of allowed values, you MUST use one of the enum values or null. Never use "NOT_SPECIFIED" here.
-
-  duration — How long the medication should be taken. Examples: "5 days", "1 week", "10 days", "until finished". If no duration mentioned, set to "NOT_SPECIFIED".
-
-  route — How the medication is administered. Must be one of: Oral, Topical, IV, IM, Eye Drops, Subcutaneous, Inhaled. See Prescription Route Detection above for mapping rules. If no route mentioned and the drug is a tablet/capsule/syrup, default to "Oral". If uncertain, set to null. IMPORTANT: Because this field has a restricted set of allowed values, you MUST use one of the enum values or null. Never use "NOT_SPECIFIED" here.
-
-  instructions — Any special directions for taking the medication. Examples: "Take after food", "Take before food", "Take at bedtime", "Complete the full course", "Apply thinly". See Special Instructions Extraction above. If no special instructions, set to "NOT_SPECIFIED".
-
-IMPORTANT: Extract EVERY medication mentioned. If the doctor says "prescribe X, Y, and Z", create three separate objects in the array. If no medications are prescribed, return an empty array []. Do NOT invent or guess medications that were not mentioned.`;
+const DIAGNOSTIC_UNCERTAINTY_GUIDE = `
+DIAGNOSTIC UNCERTAINTY:
+- If a diagnosis is confirmed, put it in \`diagnosis\`.
+- If the doctor expresses uncertainty (e.g., "leaning towards", "could be", "rule out"), place those suspected conditions in the \`differential_diagnosis\` array.
+`;
 
 const EYE_EXAMINATION_GUIDE = `
 EYE EXAMINATION FIELDS:
@@ -78,7 +92,7 @@ Each eye examination field (type: tabular_eye) is an object with { left, right, 
 If the doctor did not examine this structure at all (e.g., no mention of cornea, no mention of fundus), set the entire field to null — NOT an object filled with "NOT_SPECIFIED" strings.
 If the doctor examined the structure but only mentioned one eye, populate just that side and leave the other as null.
 If the doctor described findings without specifying left/right, put the description in notes and set left/right to null.`;
-
+ 
 const FEW_SHOT_EXAMPLES = `
 EXAMPLE 1 (General dictation):
 Input: "Patient is a 45-year-old male presenting with a 3-day history of severe throbbing headache and nausea. No photophobia. BP is 140/90. Past medical history of hypertension. Prescribe Paracetamol 650mg SOS for pain, review after 5 days. Diagnosis is tension headache."
@@ -88,9 +102,9 @@ Expected Output Mapping:
 - vital_signs.blood_pressure_diastolic: "90"
 - past_medical_history: "Hypertension"
 - diagnosis: "Tension headache"
-- prescriptions: [{ "name": "Paracetamol", "dosage": "650mg", "frequency": "SOS", "duration": "NOT_SPECIFIED", "route": "Oral", "instructions": "For pain" }]
+- prescriptions: [{ "name": "Paracetamol", "dosage": "650mg", "frequency": "SOS", "duration": null, "route": "Oral", "instructions": "For pain", "formulation": null }]
 - follow_up: "Review after 5 days"
-
+ 
 EXAMPLE 2 (Specialty specific - Ophthalmology):
 Input: "Right eye vision is 6/6, left eye 6/18. Slit lamp shows mild cataract in the left eye. Cornea is clear bilaterally. Start Moxifloxacin eye drops QID right eye for 1 week."
 Expected Output Mapping:
@@ -98,22 +112,9 @@ Expected Output Mapping:
 - visual_acuity.left: "6/18"
 - lens.left: "Mild cataract"
 - cornea.notes: "Clear bilaterally"
-- prescriptions: [{ "name": "Moxifloxacin", "dosage": "NOT_SPECIFIED", "frequency": "QID", "duration": "1 week", "route": "Eye Drops", "instructions": "Right eye" }]
+- prescriptions: [{ "name": "Moxifloxacin", "dosage": null, "frequency": "QID", "duration": "1 week", "route": "Eye Drops", "instructions": "Right eye", "formulation": null }]
 `;
-
-function getSpecialtyInstructions(department: string): string {
-  switch (department) {
-    case 'Ophthalmology':
-      return `- Format visual acuity strictly as standard fractions (e.g., 6/6, 20/20, 6/18) and never as decimals.\n- Separate eye findings cleanly into left and right sub-fields. Use 'notes' only for bilateral statements.`;
-    case 'Cardiology':
-      return `- Extract exact BP, heart rate, and any murmur gradings directly into examination fields.\n- Clearly differentiate between historical heart conditions and current presentation.`;
-    case 'Neurology':
-      return `- Format motor power strictly as standard grades (e.g., 5/5, 4/5).\n- Ensure left/right specificity for all reflexes and motor tone.`;
-    default:
-      return `- Ensure measurements, dosages, and timelines are accurately preserved exactly as stated.`;
-  }
-}
-
+ 
 const NARRATIVE_FIELD_MAPPING = `
 NARRATIVE-TO-FIELD MAPPING:
 When the doctor dictates in narrative form, carefully map each section to the correct schema fields:
@@ -127,37 +128,54 @@ When the doctor dictates in narrative form, carefully map each section to the co
 - "Investigations" / "Labs" / "Previous Tests" / "Reports" → previous_investigations
 - "Assessment" / "Impression" / "Clinical Impression" → assessment
 - "Diagnosis" / "Diagnoses" → diagnosis
+- "Differential Diagnosis" / "Rule Out" / "Suspected" / "Could be" → differential_diagnosis (list each suspected condition as a string)
 - "Plan" / "Treatment" / "Management" → treatment
 - "Investigations Planned" / "Tests to Order" / "Order" → planned_investigations
 - "Follow-Up" / "Follow up" / "Review" → follow_up
 - "Referrals" / "Refer to" / "Consult" → referrals
 - "Prognosis" / "Expected Course" → prognosis
-- "Prescriptions" / "Medications" / "Rx" / "Treatment" → prescriptions (extract each medication as an object with sub-fields: name, dosage, frequency, duration, route, instructions — see PRESCRIPTION EXTRACTION GUIDE below)
+- "Prescriptions" / "Medications" / "Rx" / "Treatment" → prescriptions (extract each medication as an object with sub-fields: name, dosage, frequency, duration, route, instructions, formulation — see PRESCRIPTION EXTRACTION GUIDE below)
+- "Discontinued" / "Stopped" / "Stop taking" / "No [drug]" → discontinued_medications (list each negated or stopped drug as a string)
 If a single narrative section contains information relevant to multiple distinct fields, split the content appropriately — each finding goes into the most specific field that matches it. Never duplicate the same text across fields.`;
 
 
+const STATIC_PROMPT_SECTIONS = [
+  INDIAN_SHORTHAND_REFERENCE,
+  ROUTE_DETECTION,
+  SPECIAL_INSTRUCTIONS,
+  PRESCRIPTION_EXTRACTION_GUIDE,
+  DIAGNOSTIC_UNCERTAINTY_GUIDE,
+  EYE_EXAMINATION_GUIDE,
+  FEW_SHOT_EXAMPLES,
+].join("\n\n");
+
+function getSpecialtyInstructions(department: string): string {
+  switch (department) {
+    case "Ophthalmology":
+      return (
+        "- Format visual acuity strictly as standard fractions (e.g., 6/6, 20/20, 6/18) and never as decimals.\n" +
+        "- Separate eye findings cleanly into left and right sub-fields. Use 'notes' only for bilateral statements."
+      );
+    case "Cardiology":
+      return (
+        "- Extract exact BP, heart rate, and any murmur gradings directly into examination fields.\n" +
+        "- Clearly differentiate between historical heart conditions and current presentation."
+      );
+    case "Neurology":
+      return (
+        "- Format motor power strictly as standard grades (e.g., 5/5, 4/5).\n" +
+        "- Ensure left/right specificity for all reflexes and motor tone."
+      );
+    default:
+      return "- Ensure measurements, dosages, and timelines are accurately preserved exactly as stated.";
+  }
+}
 
 function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): string {
-  const fieldList = fields
-    .map((f) => {
-      const hint = f.placeholder ? ` — ${f.placeholder}` : '';
-      let subFields = '';
-      if (f.type === 'prescription') {
-        subFields = ' [sub-fields per medication: name, dosage, frequency, duration, route, instructions — see Prescription Extraction Guide]';
-      } else if (f.type === 'vital_signs') {
-        subFields = ' [sub-fields: temperature, pulse, blood_pressure_systolic, blood_pressure_diastolic, respiratory_rate, oxygen_saturation, height, weight, bmi]';
-      } else if (f.type === 'tabular_eye') {
-        subFields = ' [sub-fields: left, right, notes — set to null if not examined, see Eye Examination Fields below]';
-      }
-      return `  - ${f.name}: ${f.label}${hint}${subFields}`;
-    })
-    .join('\n');
-
+  const fieldList = fields.map((f) => `  - ${f.name}: ${f.label}`).join("\n");
   const specialtyRules = getSpecialtyInstructions(department);
 
-  return `You are a clinical AI that converts voice transcripts into structured consultation notes for Indian clinics. Your task is to thoroughly analyze the entire transcript and extract ALL available clinical information into every relevant field below. Do not skip sections — if the doctor mentioned it, it belongs in the output.
-
-${INDIAN_SHORTHAND_REFERENCE}
+  return `You are a clinical AI that converts voice transcripts into structured consultation notes for Indian clinics.
 
 DEPARTMENT: ${department}
 SPECIALTY-SPECIFIC RULES:
@@ -169,67 +187,123 @@ ${fieldList}
 ${NARRATIVE_FIELD_MAPPING}
 
 INSTRUCTIONS:
-1. Read the entire transcript carefully. Extract ALL clinical information into the matching fields listed above. Populate every field that has any corresponding content in the transcript — do not be conservative or lazy.
-2. Map narrative sections to schema fields using the mapping guide above. Distribute content intelligently across fields — each finding should appear in exactly ONE field. Never copy identical text into multiple fields. If a finding could go in a specialty-specific field (e.g., cardiac_examination, respiratory_examination), put it there instead of the generic physical_exam or systemic_examination. Use physical_exam and systemic_examination only for findings that don't fit into a more specific field.
-3. Preserve the doctor's wording, detail, and clinical nuance. Do not summarize or truncate.
-4. For diagnosis: infer the most likely clinical diagnosis from the symptoms, examination findings, and treatment described. If the doctor did not explicitly name it, synthesize one from the clinical picture (e.g., "Migraine", "Hypertensive urgency", "Upper respiratory tract infection"). Never leave diagnosis as NOT_SPECIFIED when there is enough clinical information to form one.
-5. For assessment: provide a brief clinical reasoning that connects the symptoms to the diagnosis and justifies the treatment plan. If the doctor didn't explicitly state one, infer it from the available data.
-6. Set a field to "NOT_SPECIFIED" only when the transcript contains zero information relevant to it.
-7. For prescriptions: follow the Prescription Extraction Guide below. Extract each medication with ALL sub-fields populated. Use ONLY the valid enum values for frequency and route.
-8. For prescription frequency, preserve the doctor's shorthand exactly as spoken (e.g., "BD", "TDS", "OD").
+1. Extract ALL clinical information into the matching fields.
+2. Set a field to null ONLY when the transcript contains zero information relevant to it. DO NOT USE "NOT_SPECIFIED".
+3. Preserve wording and clinical nuance. Do not summarize.
+4. For prescriptions: output null for any missing sub-fields (duration, route, etc).
 
-${ROUTE_DETECTION}
-
-${SPECIAL_INSTRUCTIONS}
-
-${PRESCRIPTION_EXTRACTION_GUIDE}
-
-${EYE_EXAMINATION_GUIDE}
-
-${FEW_SHOT_EXAMPLES}`;
+${STATIC_PROMPT_SECTIONS}`;
 }
 
-function buildFieldMetadata(fields: NoteFieldConfig[]): Record<string, { label: string }> {
-  const meta: Record<string, { label: string }> = {};
-  for (const f of fields) {
-    meta[f.name] = { label: f.label };
+const MAX_TRANSCRIPT_CHARS = 80_000;
+
+export async function structureClinicalNotes(
+  transcript: string,
+  department: string,
+): Promise<{ output: AIStructuredOutput; confidence: FieldConfidence[] }> {
+  
+  const safeTranscript = transcript.length > MAX_TRANSCRIPT_CHARS 
+    ? transcript.slice(0, MAX_TRANSCRIPT_CHARS) 
+    : transcript;
+
+  if (transcript.length > MAX_TRANSCRIPT_CHARS) {
+    logger.warn(`Transcript truncated from ${transcript.length} to ${MAX_TRANSCRIPT_CHARS} chars.`);
   }
-  return meta;
+
+  const dept = department ? mapDepartmentName(department) : "General";
+  const schema = getSchemaForDepartment(dept);
+  const fields = getAllFieldsFromSchema(schema);
+  const systemPrompt = generateSystemPrompt(dept, fields);
+
+  try {
+    // The SDK handles JSON parsing, validation against Zod, and retries natively.
+const response = await openai.chat.completions.parse({
+      model: "gpt-5.4-mini",
+      temperature: 0.0,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Transcribe and structure this clinical dictation:\n\n${safeTranscript}` },
+      ],
+      response_format: zodResponseFormat(schema, "clinical_note"),
+    });
+
+    const parsedData = response.choices[0]?.message?.parsed;
+    
+    if (!parsedData) {
+      throw new Error(`OpenAI refusal or empty response: ${response.choices[0]?.message?.refusal || "Unknown"}`);
+    }
+
+    return mapAndScoreOutput(parsedData, fields);
+    
+  } catch (error) {
+    logger.error("[structureClinicalNotes] Failed to structure clinical notes.", error);
+    throw new Error(`Failed to structure clinical notes: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
-function mapStructuredOutput(
+// Single-pass mapping and confidence scoring
+function mapAndScoreOutput(
   aiOutput: Record<string, unknown>,
   fields: NoteFieldConfig[],
-): AIStructuredOutput {
+): { output: AIStructuredOutput; confidence: FieldConfidence[] } {
   const rawFields: Record<string, unknown> = {};
+  const confidence: FieldConfidence[] = [];
 
-  for (const field of fields) {
-    if (field.name === 'chief_complaint' || field.name === 'diagnosis' || field.name === 'prescriptions') continue;
-    if (field.name in aiOutput) {
-      rawFields[field.name] = aiOutput[field.name];
+  function assessConfidence(value: string | null, fieldName: string) {
+    if (value === null || value.trim() === "") {
+      confidence.push({ field: fieldName, level: "low", reason: "Missing data" });
+    } else if (value.length < BRIEF_THRESHOLD) {
+      confidence.push({ field: fieldName, level: "medium", reason: `Brief extraction (${value.length} chars)` });
     }
   }
 
-  const symptoms = String(aiOutput.chief_complaint ?? 'NOT_SPECIFIED');
-  const diagnosis = String(aiOutput.diagnosis ?? 'NOT_SPECIFIED');
-  const advice = String(aiOutput.treatment ?? aiOutput.therapy_plan ?? 'NOT_SPECIFIED');
-
-  const prescriptions = (() => {
-    const raw = aiOutput.prescriptions;
-    if (Array.isArray(raw)) {
-      return raw.map((p: Record<string, unknown>) => ({
-        drug_name: String(p.name ?? 'NOT_SPECIFIED'),
-        dosage: String(p.dosage ?? 'NOT_SPECIFIED'),
-        frequency: String(p.frequency ?? 'NOT_SPECIFIED'),
-        duration: String(p.duration ?? 'NOT_SPECIFIED'),
-        route: String(p.route ?? 'NOT_SPECIFIED'),
-        instructions: String(p.instructions ?? 'NOT_SPECIFIED'),
-      }));
+  for (const field of fields) {
+    if (["chief_complaint", "diagnosis", "prescriptions"].includes(field.name)) continue;
+    
+    if (field.name in aiOutput && aiOutput[field.name] !== null) {
+      const val = aiOutput[field.name];
+      rawFields[field.name] = val;
+      if (typeof val === "string") {
+        assessConfidence(val, field.name);
+      }
     }
-    return [];
-  })();
+  }
 
-  return { symptoms, diagnosis, prescriptions, advice, rawFields };
+  const symptoms = safeString(aiOutput.chief_complaint) as string;
+  const diagnosis = safeString(aiOutput.diagnosis) as string;
+  const advice = safeString(aiOutput.treatment ?? aiOutput.therapy_plan) as string;
+
+  assessConfidence(safeString(aiOutput.chief_complaint), "symptoms");
+  assessConfidence(safeString(aiOutput.diagnosis), "diagnosis");
+
+  const rawPrescriptions = Array.isArray(aiOutput.prescriptions) ? aiOutput.prescriptions : [];
+  const rawDifferential = Array.isArray(aiOutput.differential_diagnosis) ? aiOutput.differential_diagnosis : [];
+  const differential_diagnosis = rawDifferential.filter((d): d is string => typeof d === "string");
+  const rawDiscontinued = Array.isArray(aiOutput.discontinued_medications) ? aiOutput.discontinued_medications : [];
+  const discontinued_medications = rawDiscontinued.filter((d): d is string => typeof d === "string");
+  const prescriptions = rawPrescriptions.map((p: any, index: number) => {
+    const prefix = `prescriptions[${index}].`;
+    
+    assessConfidence(p.name, `${prefix}drug_name`);
+    assessConfidence(p.dosage, `${prefix}dosage`);
+    assessConfidence(p.frequency, `${prefix}frequency`);
+    assessConfidence(p.route, `${prefix}route`);
+
+    return {
+      drug_name: safeString(p.name) as string,
+      dosage: safeString(p.dosage) as string,
+      formulation: safeString(p.formulation) as string | null,
+      frequency: safeString(p.frequency) as string,
+      duration: safeString(p.duration) as string,
+      route: safeString(p.route) as string,
+      instructions: safeString(p.instructions) as string,
+    };
+  });
+
+  return {
+    output: { symptoms, diagnosis, prescriptions, differential_diagnosis, discontinued_medications, advice, rawFields },
+    confidence,
+  };
 }
 
 export function stripNotSpecified(obj: unknown): unknown {
@@ -254,15 +328,12 @@ export function stripNotSpecified(obj: unknown): unknown {
   return obj;
 }
 
-const BRIEF_THRESHOLD = 4;
-
 export function computeFieldConfidence(output: AIStructuredOutput): FieldConfidence[] {
   const results: FieldConfidence[] = [];
 
-  function assessTextField(value: string, field: string, label?: string) {
-    const display = label ?? field;
-    if (value === 'NOT_SPECIFIED' || value.trim() === '') {
-      results.push({ field, level: 'low', reason: 'NOT_SPECIFIED' });
+  function assessTextField(value: string | null, field: string) {
+    if (value === null || value === 'NOT_SPECIFIED' || value.trim() === '') {
+      results.push({ field, level: 'low', reason: 'Missing data' });
     } else if (value.length < BRIEF_THRESHOLD) {
       results.push({ field, level: 'medium', reason: `Brief extraction (${value.length} chars)` });
     }
@@ -270,6 +341,7 @@ export function computeFieldConfidence(output: AIStructuredOutput): FieldConfide
 
   assessTextField(output.symptoms, 'symptoms');
   assessTextField(output.diagnosis, 'diagnosis');
+  assessTextField(output.advice, 'advice');
 
   for (const [key, value] of Object.entries(output.rawFields || {})) {
     if (typeof value === 'string') {
@@ -280,139 +352,11 @@ export function computeFieldConfidence(output: AIStructuredOutput): FieldConfide
   for (let i = 0; i < output.prescriptions.length; i++) {
     const p = output.prescriptions[i];
     const prefix = `prescriptions[${i}].`;
-    if (p.drug_name === 'NOT_SPECIFIED') results.push({ field: `${prefix}drug_name`, level: 'low', reason: 'NOT_SPECIFIED' });
-    if (p.dosage === 'NOT_SPECIFIED') results.push({ field: `${prefix}dosage`, level: 'low', reason: 'NOT_SPECIFIED' });
-    if (p.frequency === 'NOT_SPECIFIED') results.push({ field: `${prefix}frequency`, level: 'low', reason: 'NOT_SPECIFIED' });
-    if (p.route === 'NOT_SPECIFIED') results.push({ field: `${prefix}route`, level: 'low', reason: 'NOT_SPECIFIED' });
+    assessTextField(p.drug_name, `${prefix}drug_name`);
+    assessTextField(p.dosage, `${prefix}dosage`);
+    assessTextField(p.frequency, `${prefix}frequency`);
+    assessTextField(p.route, `${prefix}route`);
   }
 
   return results;
-}
-
-const MAX_RETRIES = 3;
-const RETRY_BASE_DELAY = 1000;
-
-class RateLimitError extends Error {
-  retryAfterMs?: number;
-  constructor(message: string, retryAfterMs?: number) {
-    super(message);
-    this.name = 'RateLimitError';
-    this.retryAfterMs = retryAfterMs;
-  }
-}
-
-async function retryWithBackoff<T>(
-  fn: () => Promise<T>,
-  label: string,
-  retries = MAX_RETRIES,
-): Promise<T> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      return await fn();
-    } catch (error) {
-      lastError = error;
-      if (attempt === retries) break;
-      // Don't retry auth errors
-      if (error instanceof Error && error.message.includes('401')) break;
-      
-      let delay = RETRY_BASE_DELAY * Math.pow(2, attempt);
-      if (error instanceof RateLimitError && error.retryAfterMs) {
-        delay = error.retryAfterMs;
-      }
-      
-      logger.warn(`OpenAI ${label} attempt ${attempt + 1} failed, retrying in ${delay}ms`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-  }
-  throw lastError;
-}
-
-export async function structureClinicalNotes(
-  transcript: string,
-  department: string,
-): Promise<AIStructuredOutput> {
-  const openaiKey = process.env.OPENAI_API_KEY;
-  if (!openaiKey) {
-    throw new Error('OpenAI API key not configured');
-  }
-
-  const dept = department ? mapDepartmentName(department) : 'General';
-  const schema = getSchemaForDepartment(dept);
-  const fields = getAllFieldsFromSchema(schema);
-  const jsonSchema = zodToJsonSchema(schema);
-  const systemPrompt = generateSystemPrompt(dept, fields);
-
-  let aiOutput: Record<string, unknown>;
-  try {
-    aiOutput = await retryWithBackoff(async () => {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-2024-08-06',
-          temperature: 0.0,
-          max_tokens: 16384,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Transcribe and structure this clinical dictation:\n\n${transcript}` },
-          ],
-          response_format: {
-            type: 'json_schema',
-            json_schema: {
-              name: 'clinical_note',
-              strict: true,
-              schema: jsonSchema,
-            },
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        logger.error('OpenAI error:', response.status, errText);
-        if (response.status === 429) {
-          const retryAfter = response.headers.get('retry-after');
-          let delayMs: number | undefined;
-          if (retryAfter) {
-            const parsed = parseInt(retryAfter, 10);
-            if (!isNaN(parsed)) {
-               delayMs = parsed * 1000;
-            } else {
-               const date = new Date(retryAfter).getTime();
-               if (!isNaN(date)) delayMs = Math.max(0, date - Date.now());
-            }
-          }
-          throw new RateLimitError(`OpenAI API error: 429`, delayMs);
-        }
-        throw new Error(`OpenAI API error: ${response.status} — ${errText.slice(0, 300)}`);
-      }
-
-      const data = await response.json();
-
-      if (data.choices?.[0]?.message?.refusal) {
-        throw new Error(`OpenAI refusal: ${data.choices[0].message.refusal}`);
-      }
-
-      const content = data.choices?.[0]?.message?.content;
-      if (!content) {
-        throw new Error('OpenAI returned empty response');
-      }
-
-      try {
-        return JSON.parse(content);
-      } catch (parseError) {
-        logger.error('Failed to parse OpenAI JSON output:', parseError);
-        throw new Error('Invalid JSON received from OpenAI');
-      }
-    }, 'structure clinical notes');
-  } catch (error) {
-    logger.error('All retries failed for structureClinicalNotes. Falling back to raw transcript.', error);
-    aiOutput = { chief_complaint: transcript };
-  }
-
-  return mapStructuredOutput(aiOutput, fields);
 }

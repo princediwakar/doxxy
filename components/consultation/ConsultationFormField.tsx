@@ -12,7 +12,7 @@ import { TabularEyeField } from './TabularEyeField';
 import { VitalSignsField } from './VitalSignsField';
 import { MotorExaminationField } from './MotorExaminationField';
 import { ReflexExaminationField } from './ReflexExaminationField';
-import type { FieldConfig, FieldValue, TabularEyeValue, MotorExaminationValue, ReflexExaminationValue, VitalSignsData } from '@/types/consultation';
+import type { FieldConfig, FieldValue, PrescriptionMedication, TabularEyeValue, MotorExaminationValue, ReflexExaminationValue, VitalSignsData } from '@/types/consultation';
 import { useState, useRef, useEffect, useMemo, memo, useCallback } from 'react';
 
 function hasFieldValue(value: FieldValue): boolean {
@@ -114,7 +114,7 @@ export const ConsultationFormField = memo(({
           <CollapsibleContent>
             <div className="pt-2">
               <PrescriptionField
-                value={Array.isArray(value) ? value : []}
+                value={Array.isArray(value) ? value as PrescriptionMedication[] : []}
                 onChange={onChange}
                 isReadOnly={isReadOnly}
               />

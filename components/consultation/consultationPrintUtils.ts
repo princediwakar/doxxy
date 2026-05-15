@@ -1,5 +1,5 @@
 import { logger } from "@/lib/logger";
-import { ConsultationFormValues } from '@/types/consultation';
+import { FieldValue } from '@/types/consultation';
 import { DbPatient, DbAppointment, DbClinic } from '@/types/core';
 import { createRoot } from 'react-dom/client';
 import { ConsultationLayout } from './ConsultationLayout';
@@ -41,7 +41,7 @@ const PRINT_LEFT_MARGIN = '20mm';
 const PRINT_RIGHT_MARGIN = '20mm';
 
 export const generatePrintContent = async (
-  formData: ConsultationFormValues['specialty_data'],
+  formData: Record<string, FieldValue>,
   patient: DbPatient,
   appointment: AppointmentRow | null,
   _clinicDetails: Clinic | null | undefined,
@@ -58,11 +58,12 @@ export const generatePrintContent = async (
       patient,
       appointment,
       clinicInfo: null,
-      doctorInfo: _doctorDetails ? { 
-        name: '', 
-        qualification: '', 
-        specialization: '', 
-        signature: _doctorDetails.signature as string 
+      doctorInfo: _doctorDetails ? {
+        name: '',
+        qualification: '',
+        specialization: '',
+        registration_number: null,
+        signature: _doctorDetails.signature as string
       } : null,
       consultationData: formData,
       departmentType,
@@ -123,7 +124,7 @@ export const generatePrintContent = async (
 };
 
 export const printConsultation = async (
-  formData: ConsultationFormValues['specialty_data'],
+  formData: Record<string, FieldValue>,
   patient: DbPatient,
   appointment: AppointmentRow | null,
   _clinicDetails: Clinic | null | undefined,

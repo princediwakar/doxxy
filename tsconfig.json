@@ -42,6 +42,7 @@
     "node_modules",
     "supabase/functions",
     "test-voice-pipeline.ts",
-    "scratch-*.ts"
+    "scratch-*.ts",
+    "scripts/"
   ]
 }
