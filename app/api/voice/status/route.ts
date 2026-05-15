@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { structureClinicalNotes, computeFieldConfidence } from '@/lib/voice/structureClinicalNotes';
+import { structureClinicalNotes, computeFieldConfidence, TranscriptTooLongError } from '@/lib/voice/structureClinicalNotes';
 import type { AIStructuredOutput } from '@/types/voice';
 import {
   getJobStatus,
@@ -68,7 +68,8 @@ export async function GET(request: NextRequest) {
         await supabaseAdmin
           .from('transcription_jobs')
           .update({ status: 'failed' })
-          .eq('id', job.id);
+          .eq('id', job.id)
+          .eq('status', 'pending');
         return NextResponse.json({ status: 'error', error: 'Transcription timed out' });
       }
       return NextResponse.json({ status: 'processing' });
@@ -81,7 +82,8 @@ export async function GET(request: NextRequest) {
         await supabaseAdmin
           .from('transcription_jobs')
           .update({ status: 'failed' })
-          .eq('id', job.id);
+          .eq('id', job.id)
+          .eq('status', 'structuring');
         return NextResponse.json({ status: 'error', error: 'Transcription data missing' });
       }
 
@@ -101,7 +103,8 @@ export async function GET(request: NextRequest) {
             status: 'completed',
             structured_data: structured.output as unknown as Json,
           })
-          .eq('id', job.id);
+          .eq('id', job.id)
+          .eq('status', 'structuring');
 
         await supabaseAdmin.storage
           .from('voice-recordings')
@@ -115,10 +118,23 @@ export async function GET(request: NextRequest) {
         });
       } catch (structuringError) {
         logger.error('Structuring retry failed for job:', job.id, structuringError);
+        if (structuringError instanceof TranscriptTooLongError) {
+          await supabaseAdmin
+            .from('transcription_jobs')
+            .update({ status: 'failed' })
+            .eq('id', job.id)
+            .eq('status', 'structuring');
+          return NextResponse.json({
+            status: 'error',
+            error: 'CONSULTATION_TOO_LONG',
+            details: 'The dictation exceeds the processing limit. Please review and structure the raw transcript manually.',
+          });
+        }
         await supabaseAdmin
           .from('transcription_jobs')
           .update({ status: 'failed' })
-          .eq('id', job.id);
+          .eq('id', job.id)
+          .eq('status', 'structuring');
         return NextResponse.json({ status: 'error', error: 'Failed to structure clinical notes' });
       }
     }
@@ -150,7 +166,8 @@ export async function GET(request: NextRequest) {
           await supabaseAdmin
             .from('transcription_jobs')
             .update({ status: 'failed' })
-            .eq('id', job.id);
+            .eq('id', job.id)
+            .eq('status', 'transcribing');
 
           return NextResponse.json({ status: 'error', error: `Speech-to-text processing failed: ${sarvaErrorDetail}` });
         }
@@ -172,7 +189,8 @@ export async function GET(request: NextRequest) {
             await supabaseAdmin
               .from('transcription_jobs')
               .update({ status: 'failed' })
-              .eq('id', job.id);
+              .eq('id', job.id)
+              .eq('status', 'transcribing');
             return NextResponse.json({ status: 'error', error: 'No transcription output' });
           }
 
@@ -199,7 +217,8 @@ export async function GET(request: NextRequest) {
             await supabaseAdmin
               .from('transcription_jobs')
               .update({ status: 'completed', transcript: '', structured_data: null })
-              .eq('id', job.id);
+              .eq('id', job.id)
+              .eq('status', 'transcribing');
 
             await supabaseAdmin.storage
               .from('voice-recordings')
@@ -212,7 +231,8 @@ export async function GET(request: NextRequest) {
           await supabaseAdmin
             .from('transcription_jobs')
             .update({ status: 'structuring', transcript })
-            .eq('id', job.id);
+            .eq('id', job.id)
+            .eq('status', 'transcribing');
 
           // Structure with OpenAI
           let structured;
@@ -220,10 +240,23 @@ export async function GET(request: NextRequest) {
             structured = await structureClinicalNotes(transcript, job.department);
           } catch (structuringError) {
             logger.error('Structuring failed for job:', job.id, structuringError);
+            if (structuringError instanceof TranscriptTooLongError) {
+              await supabaseAdmin
+                .from('transcription_jobs')
+                .update({ status: 'failed' })
+                .eq('id', job.id)
+                .eq('status', 'structuring');
+              return NextResponse.json({
+                status: 'error',
+                error: 'CONSULTATION_TOO_LONG',
+                details: 'The dictation exceeds the processing limit. Please review and structure the raw transcript manually.',
+              });
+            }
             await supabaseAdmin
               .from('transcription_jobs')
               .update({ status: 'failed' })
-              .eq('id', job.id);
+              .eq('id', job.id)
+              .eq('status', 'structuring');
             return NextResponse.json({ status: 'error', error: 'Failed to structure clinical notes' });
           }
 
@@ -234,7 +267,8 @@ export async function GET(request: NextRequest) {
               status: 'completed',
               structured_data: structured.output as unknown as Json,
             })
-            .eq('id', job.id);
+            .eq('id', job.id)
+            .eq('status', 'structuring');
 
           await supabaseAdmin.storage
             .from('voice-recordings')

@@ -197,17 +197,24 @@ ${STATIC_PROMPT_SECTIONS}`;
 
 const MAX_TRANSCRIPT_CHARS = 80_000;
 
+export class TranscriptTooLongError extends Error {
+  constructor(
+    public length: number,
+    public limit: number,
+  ) {
+    super(`Transcript length (${length}) exceeds the clinical safety limit of ${limit} characters.`);
+    this.name = 'TranscriptTooLongError';
+  }
+}
+
 export async function structureClinicalNotes(
   transcript: string,
   department: string,
 ): Promise<{ output: AIStructuredOutput; confidence: FieldConfidence[] }> {
-  
-  const safeTranscript = transcript.length > MAX_TRANSCRIPT_CHARS 
-    ? transcript.slice(0, MAX_TRANSCRIPT_CHARS) 
-    : transcript;
 
   if (transcript.length > MAX_TRANSCRIPT_CHARS) {
-    logger.warn(`Transcript truncated from ${transcript.length} to ${MAX_TRANSCRIPT_CHARS} chars.`);
+    logger.error(`[structureClinicalNotes] REJECTED: Transcript too long (${transcript.length} chars).`);
+    throw new TranscriptTooLongError(transcript.length, MAX_TRANSCRIPT_CHARS);
   }
 
   const dept = department ? mapDepartmentName(department) : "General";
@@ -222,7 +229,7 @@ const response = await openai.chat.completions.parse({
       temperature: 0.0,
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "user", content: `Transcribe and structure this clinical dictation:\n\n${safeTranscript}` },
+        { role: "user", content: `Transcribe and structure this clinical dictation:\n\n${transcript}` },
       ],
       response_format: zodResponseFormat(schema, "clinical_note"),
     });

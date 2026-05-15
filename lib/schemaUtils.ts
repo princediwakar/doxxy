@@ -16,18 +16,33 @@ export type FieldSection = {
   fields: NoteFieldConfig[];
 };
 
+// Registry for full UI configs, keyed by field name.
+// Separated from Zod .describe() so that OpenAI's zodResponseFormat only sees clean semantic metadata.
+const fieldUIRegistry = new Map<string, NoteFieldConfig>();
+
+export function registerFieldUI(config: NoteFieldConfig): void {
+  fieldUIRegistry.set(config.name, config);
+}
+
 /**
  * Enhanced Zod field with UI metadata.
+ * Stores only { label, description } in .describe() for the LLM.
+ * Registers the full UI config (type, rows, section, placeholder) in the fieldUIRegistry.
  */
 export const zField = <T extends z.ZodTypeAny>(
+  name: string,
   schema: T,
   config: Omit<NoteFieldConfig, "name">,
 ): T => {
-  return schema.describe(JSON.stringify(config));
+  const fullConfig: NoteFieldConfig = { name, ...config };
+  registerFieldUI(fullConfig);
+
+  const llmDescription = config.placeholder || config.label;
+  return schema.describe(JSON.stringify({ label: config.label, description: llmDescription }));
 };
 
 /**
- * Factory for textarea/text fields. 
+ * Factory for textarea/text fields.
  * Switched to .nullable() for native OpenAI strict mode compatibility.
  */
 export const textField = (
@@ -37,7 +52,7 @@ export const textField = (
   rows: number,
   placeholder: string,
 ) => {
-  return zField(z.string().nullable(), { label, section, type: "textarea", rows, placeholder });
+  return zField(name, z.string().nullable(), { label, section, type: "textarea", rows, placeholder });
 };
 
 /**
@@ -49,6 +64,7 @@ export const createEyeField = (
   section = "Examination",
 ) => {
   return zField(
+    name,
     z.object({
       left: z.string().nullable(),
       right: z.string().nullable(),
@@ -64,23 +80,13 @@ export const createEyeField = (
 };
 
 /**
- * Extract UI configuration from Zod schema metadata.
- * LOUD FAILURE: We no longer silently swallow JSON parse errors.
+ * Extract UI configuration for a field. Reads from the fieldUIRegistry.
  */
 export const extractFieldConfig = (
   fieldName: string,
-  schema: z.ZodTypeAny,
+  _schema?: z.ZodTypeAny,
 ): NoteFieldConfig | null => {
-  const description = schema.description;
-  if (!description) return null;
-
-  try {
-    const config = JSON.parse(description) as Omit<NoteFieldConfig, "name">;
-    return { name: fieldName, ...config };
-  } catch (err) {
-    console.error(`[Schema Error] Failed to parse UI config for field '${fieldName}'. Did you use a standard string description instead of zField?`, description, err);
-    return null; // The UI will drop this field, but the console will scream.
-  }
+  return fieldUIRegistry.get(fieldName) ?? null;
 };
 
 export const getSectionsFromSchema = (
@@ -130,7 +136,7 @@ export const getMandatoryFieldsFromSchema = (
 export const BRIEF_THRESHOLD = 10;
 
 /**
- * Safe string coercion. 
+ * Safe string coercion.
  * Fallback is now null, not "NOT_SPECIFIED".
  */
 export function safeString(val: unknown, fallback: string | null = null): string | null {

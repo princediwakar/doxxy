@@ -30,21 +30,23 @@ export const medicationSchema = z.object({
 
 // Vital Signs (Section: Examination)
 const vitalSignsSchema = zField(
+  "vital_signs",
   z.object({
-    temperature: zField(z.string().nullable(), { label: "Temperature", type: "input" }),
-    pulse: zField(z.string().nullable(), { label: "Pulse", type: "input" }),
-    blood_pressure_systolic: zField(z.string().nullable(), { label: "BP Systolic", type: "input" }),
-    blood_pressure_diastolic: zField(z.string().nullable(), { label: "BP Diastolic", type: "input" }),
-    respiratory_rate: zField(z.string().nullable(), { label: "Respiratory Rate", type: "input" }),
-    oxygen_saturation: zField(z.string().nullable(), { label: "Oxygen Saturation", type: "input" }),
-    height: zField(z.string().nullable(), { label: "Height", type: "input" }),
-    weight: zField(z.string().nullable(), { label: "Weight", type: "input" }),
-    bmi: zField(z.string().nullable(), { label: "BMI", type: "input" }),
+    temperature: zField("temperature", z.string().nullable(), { label: "Temperature", type: "input" }),
+    pulse: zField("pulse", z.string().nullable(), { label: "Pulse", type: "input" }),
+    blood_pressure_systolic: zField("blood_pressure_systolic", z.string().nullable(), { label: "BP Systolic", type: "input" }),
+    blood_pressure_diastolic: zField("blood_pressure_diastolic", z.string().nullable(), { label: "BP Diastolic", type: "input" }),
+    respiratory_rate: zField("respiratory_rate", z.string().nullable(), { label: "Respiratory Rate", type: "input" }),
+    oxygen_saturation: zField("oxygen_saturation", z.string().nullable(), { label: "Oxygen Saturation", type: "input" }),
+    height: zField("height", z.string().nullable(), { label: "Height", type: "input" }),
+    weight: zField("weight", z.string().nullable(), { label: "Weight", type: "input" }),
+    bmi: zField("bmi", z.string().nullable(), { label: "BMI", type: "input" }),
   }).nullable(),
   { label: "Vital Signs", type: "vital_signs", section: "Examination", placeholder: "Enter vital signs" },
 );
 // Neurology Sub-Schemas
 const motorExaminationSchema = zField(
+  "motor_examination",
   z.object({
     shoulder_left: z.string().nullable(),
     shoulder_right: z.string().nullable(),
@@ -73,6 +75,7 @@ const motorExaminationSchema = zField(
 );
 
 const reflexExaminationSchema = zField(
+  "reflexes",
   z.object({
     biceps_left: z.string().nullable(),
     biceps_right: z.string().nullable(),
@@ -141,7 +144,7 @@ export const baseNotesSchema = z.object({
 
   // --- MANAGEMENT ---
   diagnosis: textField("diagnosis", "Primary Diagnosis", "Management", 3, "Enter confirmed diagnosis"),
-  differential_diagnosis: zField(z.array(z.string()).nullable(), {
+  differential_diagnosis: zField("differential_diagnosis", z.array(z.string()).nullable(), {
     label: "Differential Diagnosis",
     section: "Management",
     type: "input",
@@ -156,13 +159,13 @@ export const baseNotesSchema = z.object({
     "Enter planned investigations",
   ),
   treatment: textField("treatment", "Treatment", "Management", 4, "Describe treatment plan"),
-  prescriptions: zField(z.array(medicationSchema).nullable(), {
+  prescriptions: zField("prescriptions", z.array(medicationSchema).nullable(), {
     label: "Active Prescriptions",
     section: "Management",
     type: "prescription",
     placeholder: "Enter prescriptions",
   }),
-  discontinued_medications: zField(z.array(z.string()).nullable(), {
+  discontinued_medications: zField("discontinued_medications", z.array(z.string()).nullable(), {
     label: "Discontinued / Negated Medications",
     section: "Management",
     type: "input",
