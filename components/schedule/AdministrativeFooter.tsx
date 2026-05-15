@@ -79,13 +79,36 @@ export function AdministrativeFooter({
     <div className="space-y-2">
       {/* Bills Accordion */}
       <div className="rounded-lg border">
-        <button
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setBillsOpen(!billsOpen)}
-          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 rounded-lg transition-colors"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setBillsOpen(!billsOpen);
+            }
+          }}
+          className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
         >
           <span>Bills ({patientBills.length})</span>
-          {billsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
+          <div className="flex items-center gap-2">
+            {onCreateBill && patientBills.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCreateBill();
+                }}
+              >
+                <Receipt className="h-3.5 w-3.5 mr-1.5" />
+                Create Bill
+              </Button>
+            )}
+            {billsOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </div>
+        </div>
         {billsOpen && (
           <div className="px-4 pb-4 space-y-2">
             {isLoadingBills ? (

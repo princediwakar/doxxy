@@ -19,6 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTodayStore } from "@/stores/todayStore";
 import type { PatientDetail } from "@/types/core";
 import type { Patient } from "@/types/patients";
+import type { Bill } from "@/types/billing";
 
 const AppointmentModal = dynamic(() =>
   import("@/components/appointments/AppointmentModal").then(
@@ -63,16 +64,12 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
   const patientCreated = useTodayStore((s) => s.patientCreated);
 
   const [showCreateBillModal, setShowCreateBillModal] = useState(false);
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [selectedBillMode, setSelectedBillMode] = useState<"create" | "view" | "edit">("view");
 
   const patient = patientDetail.patient!;
   const consultations = (patientDetail.consultations ?? []) as ConsultationRow[];
-  const bills = (patientDetail.bills ?? []) as Array<{
-    id: string;
-    total_amount?: number;
-    status?: string;
-    created_at?: string;
-    invoice_number?: string;
-  }>;
+  const bills = (patientDetail.bills ?? []) as Bill[];
 
   const handleSchedule = useCallback(() => {
     scheduleAppointment(patient as unknown as Patient);
@@ -211,9 +208,21 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
 
       {/* Past Bills */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">
-          Billing History ({bills.length})
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">
+            Billing History ({bills.length})
+          </h3>
+          {bills.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setShowCreateBillModal(true)}
+            >
+              <Receipt className="h-3.5 w-3.5 mr-1.5" />
+              Create Bill
+            </Button>
+          )}
+        </div>
         {bills.length === 0 ? (
           <div className="text-center py-8 space-y-3">
             <p className="text-sm text-muted-foreground">No past bills.</p>
@@ -231,7 +240,11 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
             {bills.map((b) => (
               <div
                 key={b.id}
-                className="border rounded-lg p-4 flex items-center justify-between"
+                className="border rounded-lg p-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => {
+                  setSelectedBill(b);
+                  setSelectedBillMode("view");
+                }}
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
@@ -248,9 +261,9 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
                     </p>
                   </div>
                 </div>
-                {b.total_amount != null && (
+                {b.amount != null && (
                   <span className="text-sm font-medium">
-                    ₹{b.total_amount.toLocaleString()}
+                    ₹{Number(b.amount).toLocaleString()}
                   </span>
                 )}
               </div>
@@ -289,6 +302,21 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
           onOpenChange={setShowCreateBillModal}
           patient={patient as unknown as import("@/types/core").DbPatient}
           mode="create"
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <BillingModal
+          open={selectedBill !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedBill(null);
+              setSelectedBillMode("view");
+            }
+          }}
+          bill={selectedBill}
+          mode={selectedBillMode}
+          onModeChange={setSelectedBillMode}
         />
       </Suspense>
     </div>
