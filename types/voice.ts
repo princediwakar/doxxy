@@ -14,6 +14,7 @@ export interface AIExtractedPrescription {
   duration: string;
   route: string;
   instructions: string;
+  medicine_id?: number | null;
 }
 
 export interface AIStructuredOutput {

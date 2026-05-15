@@ -139,6 +139,7 @@ export function InlineConsultationForm({
         .filter((p) => p.drug_name !== "NOT_SPECIFIED")
         .map((p) => ({
           name: p.drug_name,
+          medicine_id: p.medicine_id ?? null,
           dosage: p.dosage !== "NOT_SPECIFIED" ? p.dosage : "",
           frequency: p.frequency !== "NOT_SPECIFIED" ? p.frequency : "",
           duration: p.duration !== "NOT_SPECIFIED" ? p.duration : "",

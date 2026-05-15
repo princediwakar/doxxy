@@ -86,6 +86,7 @@ export type DbConsultation = Omit<DbConsultationBase, 'specialty_data'> & {
 /** Prescription medication — canonical definition used by both consultation forms and prescription records */
 export interface PrescriptionMedication {
   name?: string;
+  medicine_id?: number | null;
   dosage?: string;
   frequency?: string;
   duration?: string;

@@ -97,6 +97,51 @@ async function run() {
   
   console.log(`[5] Structuring Clinical Notes (Department: ${department})...`);
   const structured = await structureClinicalNotes(transcript, department);
+
+  console.log(`[6] Matching Medicines with local database...`);
+  const { createClient } = await import('@supabase/supabase-js');
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SECRET_KEY!
+  );
+
+  if (structured.prescriptions && structured.prescriptions.length > 0) {
+    const searchQueries = structured.prescriptions
+      .filter(p => p.drug_name && p.drug_name !== 'NOT_SPECIFIED')
+      .map(p => {
+        let term = p.drug_name;
+        if (p.dosage && p.dosage !== 'NOT_SPECIFIED') {
+          term += ` ${p.dosage}`;
+        }
+        return { original_name: p.drug_name, search_term: term };
+      });
+
+    if (searchQueries.length > 0) {
+      const terms = searchQueries.map(q => q.search_term);
+      const { data: matches } = await supabaseAdmin.rpc('match_invoice_items_bulk', { search_terms: terms });
+      if (Array.isArray(matches)) {
+        const matchMap = new Map(matches.map((m: any) => [m.original_search_term, m.matched_id]));
+        
+        // Fallback for unmatched
+        for (const term of terms) {
+          if (!matchMap.get(term)) {
+            const { data: singleMatch } = await supabaseAdmin.rpc('match_invoice_item_single', { search_term: term });
+            if (singleMatch && singleMatch[0] && singleMatch[0].matched_id) {
+              matchMap.set(term, singleMatch[0].matched_id);
+            }
+          }
+        }
+
+        structured.prescriptions = structured.prescriptions.map(p => {
+          const query = searchQueries.find(q => q.original_name === p.drug_name);
+          return {
+            ...p,
+            medicine_id: query ? (matchMap.get(query.search_term) || null) : null,
+          };
+        });
+      }
+    }
+  }
   
   console.log('\n[RESULT] Structured Output:');
   console.log(JSON.stringify(structured, null, 2));

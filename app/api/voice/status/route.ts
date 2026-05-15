@@ -24,6 +24,57 @@ function isStale(createdAt: string, thresholdMs: number): boolean {
   return age > thresholdMs;
 }
 
+async function enrichWithMedicineIds(structured: AIStructuredOutput): Promise<AIStructuredOutput> {
+  if (!structured.prescriptions || structured.prescriptions.length === 0) return structured;
+
+  const searchQueries = structured.prescriptions
+    .filter(p => p.drug_name && p.drug_name !== 'NOT_SPECIFIED')
+    .map(p => {
+      let term = p.drug_name;
+      if (p.dosage && p.dosage !== 'NOT_SPECIFIED') {
+        term += ` ${p.dosage}`;
+      }
+      return { original_name: p.drug_name, search_term: term };
+    });
+
+  if (searchQueries.length === 0) return structured;
+
+  try {
+    const terms = searchQueries.map(q => q.search_term);
+    const { data: matches, error } = await supabaseAdmin.rpc('match_invoice_items_bulk', { search_terms: terms });
+    if (error) {
+      logger.error('Error in bulk medicine match:', error);
+      return structured;
+    }
+
+    if (Array.isArray(matches)) {
+      const matchMap = new Map(matches.map((m: any) => [m.original_search_term, m.matched_id]));
+      
+      // Fallback for unmatched
+      for (const term of terms) {
+        if (!matchMap.get(term)) {
+          const { data: singleMatch } = await supabaseAdmin.rpc('match_invoice_item_single', { search_term: term });
+          if (singleMatch && singleMatch[0] && singleMatch[0].matched_id) {
+            matchMap.set(term, singleMatch[0].matched_id);
+          }
+        }
+      }
+
+      structured.prescriptions = structured.prescriptions.map(p => {
+        const query = searchQueries.find(q => q.original_name === p.drug_name);
+        return {
+          ...p,
+          medicine_id: query ? (matchMap.get(query.search_term) || null) : null,
+        };
+      });
+    }
+  } catch (err) {
+    logger.error('Failed to match medicines:', err);
+  }
+
+  return structured;
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -92,7 +143,8 @@ export async function GET(request: NextRequest) {
       logger.warn('Retrying stalled structuring for job:', job.id);
 
       try {
-        const structured = await structureClinicalNotes(job.transcript, job.department);
+        let structured = await structureClinicalNotes(job.transcript, job.department);
+        structured = await enrichWithMedicineIds(structured);
 
         await supabaseAdmin
           .from('transcription_jobs')
@@ -217,6 +269,7 @@ export async function GET(request: NextRequest) {
           let structured;
           try {
             structured = await structureClinicalNotes(transcript, job.department);
+            structured = await enrichWithMedicineIds(structured);
           } catch (structuringError) {
             logger.error('Structuring failed for job:', job.id, structuringError);
             await supabaseAdmin
