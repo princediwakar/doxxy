@@ -27,6 +27,19 @@ export const zField = <T extends z.ZodTypeAny>(
 };
 
 /**
+ * Factory for textarea/text fields to reduce boilerplate
+ */
+export const textField = (
+  name: string,
+  label: string,
+  section: string,
+  rows: number,
+  placeholder: string
+) => {
+  return zField(z.string().optional(), { label, section, type: "textarea", rows, placeholder });
+};
+
+/**
  * Factory for creating eye examination fields with consistent metadata
  */
 export const createEyeField = (
@@ -175,6 +188,10 @@ function zodToJsonSchemaInner(schema: z.ZodTypeAny): JsonSchema {
     // Convert type to nullable union: "string" → ["string", "null"]
     if (innerResult.type && !Array.isArray(innerResult.type)) {
       innerResult.type = [innerResult.type, 'null'];
+    }
+    // If it's an enum, we MUST add null to the enum array so OpenAI accepts it as a valid choice
+    if (innerResult.enum && !innerResult.enum.includes(null as any)) {
+      innerResult.enum.push(null as any);
     }
     return innerResult;
   }

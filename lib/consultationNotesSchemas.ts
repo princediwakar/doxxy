@@ -1,10 +1,11 @@
 import * as z from "zod";
-import { 
-  zField, 
-  createEyeField, 
-  getSectionsFromSchema, 
-  FieldSection, 
-  NoteFieldConfig 
+import {
+  zField,
+  createEyeField,
+  textField,
+  getSectionsFromSchema,
+  FieldSection,
+  NoteFieldConfig
 } from "./schemaUtils";
 
 // ============================================================================
@@ -90,65 +91,33 @@ const reflexExaminationSchema = zField(
 
 export const baseNotesSchema = z.object({
   // --- HISTORY ---
-  chief_complaint: zField(z.string().optional(), {
-    label: "Chief Complaint", section: "History", type: "textarea", rows: 3, placeholder: "Enter chief complaint"
-  }),
-  history_of_present_illness: zField(z.string().optional(), {
-    label: "History of Present Illness", section: "History", type: "textarea", rows: 3, placeholder: "Describe history of present illness"
-  }),
-  past_medical_history: zField(z.string().optional(), {
-    label: "Past Medical History", section: "History", type: "textarea", rows: 3, placeholder: "List past medical history"
-  }),
-  family_history: zField(z.string().optional(), {
-    label: "Family History", section: "History", type: "textarea", rows: 3, placeholder: "Enter family history"
-  }),
-  medications: zField(z.string().optional(), {
-    label: "Current Medications", section: "History", type: "textarea", rows: 3, placeholder: "List current medications"
-  }),
-  allergies: zField(z.string().optional(), {
-    label: "Allergies", section: "History", type: "textarea", rows: 2, placeholder: "List allergies"
-  }),
+  chief_complaint: textField("chief_complaint", "Chief Complaint", "History", 3, "Enter chief complaint"),
+  history_of_present_illness: textField("history_of_present_illness", "History of Present Illness", "History", 3, "Describe history of present illness"),
+  past_medical_history: textField("past_medical_history", "Past Medical History", "History", 3, "List past medical history"),
+  family_history: textField("family_history", "Family History", "History", 3, "Enter family history"),
+  medications: textField("medications", "Current Medications", "History", 3, "List current medications"),
+  allergies: textField("allergies", "Allergies", "History", 2, "List allergies"),
 
   // --- EXAMINATION ---
   vital_signs: vitalSignsSchema,
-  physical_exam: zField(z.string().optional(), {
-    label: "General Physical Exam", section: "Examination", type: "textarea", rows: 4, placeholder: "Enter physical exam findings"
-  }),
-  systemic_examination: zField(z.string().optional(), {
-    label: "Systemic Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Enter systemic examination findings"
-  }),
+  physical_exam: textField("physical_exam", "General Physical Exam", "Examination", 4, "Enter physical exam findings"),
+  systemic_examination: textField("systemic_examination", "Systemic Examination", "Examination", 4, "Enter systemic examination findings"),
 
   // --- PREVIOUS INVESTIGATIONS ---
-  previous_investigations: zField(z.string().optional(), {
-    label: "Investigations", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter investigation results"
-  }),
+  previous_investigations: textField("previous_investigations", "Investigations", "Previous Investigations", 3, "Enter investigation results"),
 
   // --- MANAGEMENT ---
   // Note: 'diagnosis' was in the legacy config but not in the Zod schema. Adding it now.
-  diagnosis: zField(z.string().optional(), {
-    label: "Diagnosis", section: "Management", type: "textarea", rows: 3, placeholder: "Enter diagnosis"
-  }),
-  assessment: zField(z.string().optional(), {
-    label: "Assessment", section: "Management", type: "textarea", rows: 3, placeholder: "Enter assessment"
-  }),
-  planned_investigations: zField(z.string().optional(), {
-    label: "Planned Investigations", section: "Management", type: "textarea", rows: 3, placeholder: "Enter planned investigations"
-  }),
-  treatment: zField(z.string().optional(), {
-    label: "Treatment", section: "Management", type: "textarea", rows: 4, placeholder: "Describe treatment plan"
-  }),
+  diagnosis: textField("diagnosis", "Diagnosis", "Management", 3, "Enter diagnosis"),
+  assessment: textField("assessment", "Assessment", "Management", 3, "Enter assessment"),
+  planned_investigations: textField("planned_investigations", "Planned Investigations", "Management", 3, "Enter planned investigations"),
+  treatment: textField("treatment", "Treatment", "Management", 4, "Describe treatment plan"),
   prescriptions: zField(z.array(medicationSchema).optional(), {
     label: "Prescriptions", section: "Management", type: "prescription", placeholder: "Enter prescriptions"
   }),
-  prognosis: zField(z.string().optional(), {
-    label: "Prognosis", section: "Management", type: "textarea", rows: 2, placeholder: "Enter prognosis"
-  }),
-  follow_up: zField(z.string().optional(), {
-    label: "Follow-Up Plan", section: "Management", type: "textarea", rows: 2, placeholder: "Enter follow-up plan"
-  }),
-  referrals: zField(z.string().optional(), {
-    label: "Referrals", section: "Management", type: "textarea", rows: 2, placeholder: "Enter referrals"
-  }),
+  prognosis: textField("prognosis", "Prognosis", "Management", 2, "Enter prognosis"),
+  follow_up: textField("follow_up", "Follow-Up Plan", "Management", 2, "Enter follow-up plan"),
+  referrals: textField("referrals", "Referrals", "Management", 2, "Enter referrals"),
 });
 
 // ============================================================================
@@ -182,272 +151,120 @@ export const ophthalmologyNotesSchema = baseNotesSchema.extend({
 });
 
 export const neurologyNotesSchema = baseNotesSchema.extend({
-  cranial_nerves: zField(z.string().optional(), { 
-    label: "Cranial Nerves", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe cranial nerve examination" 
-  }),
+  cranial_nerves: textField("cranial_nerves", "Cranial Nerves", "Examination", 4, "Describe cranial nerve examination"),
   motor_examination: motorExaminationSchema,
-  sensory_examination: zField(z.string().optional(), { 
-    label: "Sensory Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe sensory examination" 
-  }),
+  sensory_examination: textField("sensory_examination", "Sensory Examination", "Examination", 3, "Describe sensory examination"),
   reflexes: reflexExaminationSchema,
-  cerebellar_examination: zField(z.string().optional(), { 
-    label: "Cerebellar Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe cerebellar examination" 
-  }),
-  gait_coordination: zField(z.string().optional(), { 
-    label: "Gait & Coordination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe gait and coordination" 
-  }),
-  other_examination: zField(z.string().optional(), { 
-    label: "Other Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe other examination findings" 
-  }),
+  cerebellar_examination: textField("cerebellar_examination", "Cerebellar Examination", "Examination", 3, "Describe cerebellar examination"),
+  gait_coordination: textField("gait_coordination", "Gait & Coordination", "Examination", 3, "Describe gait and coordination"),
+  other_examination: textField("other_examination", "Other Examination", "Examination", 3, "Describe other examination findings"),
 });
 
 export const cardiologyNotesSchema = baseNotesSchema.extend({
-  cardiac_examination: zField(z.string().optional(), { 
-    label: "Cardiac Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Enter cardiac exam findings" 
-  }),
-  ecg_findings: zField(z.string().optional(), { 
-    label: "ECG Findings", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter ECG results" 
-  }),
-  echocardiogram: zField(z.string().optional(), { 
-    label: "Echocardiogram", section: "Previous Investigations", type: "textarea", rows: 4, placeholder: "Describe echocardiogram findings" 
-  }),
-  stress_test: zField(z.string().optional(), { 
-    label: "Stress Test", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter stress test results" 
-  }),
-  cardiac_catheterization: zField(z.string().optional(), { 
-    label: "Cardiac Catheterization", section: "Previous Investigations", type: "textarea", rows: 4, placeholder: "Describe cardiac catheterization" 
-  }),
-  rhythm_assessment: zField(z.string().optional(), { 
-    label: "Rhythm Assessment", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter rhythm assessment" 
-  }),
+  cardiac_examination: textField("cardiac_examination", "Cardiac Examination", "Examination", 4, "Enter cardiac exam findings"),
+  ecg_findings: textField("ecg_findings", "ECG Findings", "Previous Investigations", 3, "Enter ECG results"),
+  echocardiogram: textField("echocardiogram", "Echocardiogram", "Previous Investigations", 4, "Describe echocardiogram findings"),
+  stress_test: textField("stress_test", "Stress Test", "Previous Investigations", 3, "Enter stress test results"),
+  cardiac_catheterization: textField("cardiac_catheterization", "Cardiac Catheterization", "Previous Investigations", 4, "Describe cardiac catheterization"),
+  rhythm_assessment: textField("rhythm_assessment", "Rhythm Assessment", "Previous Investigations", 3, "Enter rhythm assessment"),
 });
 
 export const dermatologyNotesSchema = baseNotesSchema.extend({
-  skin_examination: zField(z.string().optional(), { 
-    label: "Skin Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe skin examination" 
-  }),
-  lesion_description: zField(z.string().optional(), { 
-    label: "Lesion Description", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe lesions" 
-  }),
-  dermoscopy_findings: zField(z.string().optional(), { 
-    label: "Dermoscopy Findings", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter dermoscopy findings" 
-  }),
-  skin_type: zField(z.string().optional(), { 
-    label: "Skin Type", section: "Examination", type: "textarea", rows: 2, placeholder: "Enter skin type" 
-  }),
-  distribution_pattern: zField(z.string().optional(), { 
-    label: "Distribution Pattern", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe distribution pattern" 
-  }),
-  biopsy_results: zField(z.string().optional(), { 
-    label: "Biopsy Results", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter biopsy results" 
-  }),
+  skin_examination: textField("skin_examination", "Skin Examination", "Examination", 4, "Describe skin examination"),
+  lesion_description: textField("lesion_description", "Lesion Description", "Examination", 3, "Describe lesions"),
+  dermoscopy_findings: textField("dermoscopy_findings", "Dermoscopy Findings", "Examination", 3, "Enter dermoscopy findings"),
+  skin_type: textField("skin_type", "Skin Type", "Examination", 2, "Enter skin type"),
+  distribution_pattern: textField("distribution_pattern", "Distribution Pattern", "Examination", 3, "Describe distribution pattern"),
+  biopsy_results: textField("biopsy_results", "Biopsy Results", "Previous Investigations", 3, "Enter biopsy results"),
 });
 
 export const orthopedicsNotesSchema = baseNotesSchema.extend({
-  musculoskeletal_exam: zField(z.string().optional(), { 
-    label: "Musculoskeletal Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe musculoskeletal exam" 
-  }),
-  range_of_motion: zField(z.string().optional(), { 
-    label: "Range of Motion", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter range of motion" 
-  }),
-  joint_examination: zField(z.string().optional(), { 
-    label: "Joint Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe joint examination" 
-  }),
-  stability_tests: zField(z.string().optional(), { 
-    label: "Stability Tests", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter stability test results" 
-  }),
-  functional_assessment: zField(z.string().optional(), { 
-    label: "Functional Assessment", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe functional assessment" 
-  }),
-  imaging_findings: zField(z.string().optional(), { 
-    label: "Imaging Findings", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter imaging findings" 
-  }),
+  musculoskeletal_exam: textField("musculoskeletal_exam", "Musculoskeletal Examination", "Examination", 4, "Describe musculoskeletal exam"),
+  range_of_motion: textField("range_of_motion", "Range of Motion", "Examination", 3, "Enter range of motion"),
+  joint_examination: textField("joint_examination", "Joint Examination", "Examination", 3, "Describe joint examination"),
+  stability_tests: textField("stability_tests", "Stability Tests", "Examination", 3, "Enter stability test results"),
+  functional_assessment: textField("functional_assessment", "Functional Assessment", "Examination", 3, "Describe functional assessment"),
+  imaging_findings: textField("imaging_findings", "Imaging Findings", "Previous Investigations", 3, "Enter imaging findings"),
 });
 
 export const psychiatryNotesSchema = baseNotesSchema.extend({
-  mental_status_exam: zField(z.string().optional(), { 
-    label: "Mental Status Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe mental status exam" 
-  }),
-  mood_assessment: zField(z.string().optional(), { 
-    label: "Mood Assessment", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter mood assessment" 
-  }),
-  cognitive_assessment: zField(z.string().optional(), { 
-    label: "Cognitive Assessment", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter cognitive assessment" 
-  }),
-  risk_assessment: zField(z.string().optional(), { 
-    label: "Risk Assessment", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter risk assessment" 
-  }),
-  psychosocial_factors: zField(z.string().optional(), { 
-    label: "Psychosocial Factors", section: "Management", type: "textarea", rows: 3, placeholder: "Describe psychosocial factors" 
-  }),
-  therapy_plan: zField(z.string().optional(), { 
-    label: "Therapy Plan", section: "Management", type: "textarea", rows: 3, placeholder: "Enter therapy plan" 
-  }),
+  mental_status_exam: textField("mental_status_exam", "Mental Status Examination", "Examination", 4, "Describe mental status exam"),
+  mood_assessment: textField("mood_assessment", "Mood Assessment", "Examination", 3, "Enter mood assessment"),
+  cognitive_assessment: textField("cognitive_assessment", "Cognitive Assessment", "Examination", 3, "Enter cognitive assessment"),
+  risk_assessment: textField("risk_assessment", "Risk Assessment", "Examination", 3, "Enter risk assessment"),
+  psychosocial_factors: textField("psychosocial_factors", "Psychosocial Factors", "Management", 3, "Describe psychosocial factors"),
+  therapy_plan: textField("therapy_plan", "Therapy Plan", "Management", 3, "Enter therapy plan"),
 });
 
 export const pediatricsNotesSchema = baseNotesSchema.extend({
-  developmental_milestones: zField(z.string().optional(), { 
-    label: "Developmental Milestones", section: "History", type: "textarea", rows: 3, placeholder: "Enter developmental milestones" 
-  }),
-  feeding_history: zField(z.string().optional(), { 
-    label: "Feeding History", section: "History", type: "textarea", rows: 3, placeholder: "Describe feeding history" 
-  }),
-  parental_concerns: zField(z.string().optional(), { 
-    label: "Parental Concerns", section: "History", type: "textarea", rows: 3, placeholder: "Enter parental concerns" 
-  }),
-  growth_parameters: zField(z.string().optional(), { 
-    label: "Growth Parameters", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter growth parameters" 
-  }),
-  behavioral_assessment: zField(z.string().optional(), { 
-    label: "Behavioral Assessment", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe behavioral assessment" 
-  }),
-  vaccination_status: zField(z.string().optional(), { 
-    label: "Vaccination Status", section: "Management", type: "textarea", rows: 3, placeholder: "Enter vaccination status" 
-  }),
+  developmental_milestones: textField("developmental_milestones", "Developmental Milestones", "History", 3, "Enter developmental milestones"),
+  feeding_history: textField("feeding_history", "Feeding History", "History", 3, "Describe feeding history"),
+  parental_concerns: textField("parental_concerns", "Parental Concerns", "History", 3, "Enter parental concerns"),
+  growth_parameters: textField("growth_parameters", "Growth Parameters", "Examination", 3, "Enter growth parameters"),
+  behavioral_assessment: textField("behavioral_assessment", "Behavioral Assessment", "Examination", 3, "Describe behavioral assessment"),
+  vaccination_status: textField("vaccination_status", "Vaccination Status", "Management", 3, "Enter vaccination status"),
 });
 
 export const entNotesSchema = baseNotesSchema.extend({
-  otoscopy: zField(z.string().optional(), { 
-    label: "Otoscopy", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter otoscopy findings" 
-  }),
-  rhinoscopy: zField(z.string().optional(), { 
-    label: "Rhinoscopy", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter rhinoscopy findings" 
-  }),
-  throat_examination: zField(z.string().optional(), { 
-    label: "Throat Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe throat examination" 
-  }),
-  nasal_examination: zField(z.string().optional(), { 
-    label: "Nasal Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe nasal examination" 
-  }),
-  hearing_assessment: zField(z.string().optional(), { 
-    label: "Hearing Assessment", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter hearing assessment" 
-  }),
-  laryngoscopy: zField(z.string().optional(), { 
-    label: "Laryngoscopy", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter laryngoscopy findings" 
-  }),
+  otoscopy: textField("otoscopy", "Otoscopy", "Examination", 3, "Enter otoscopy findings"),
+  rhinoscopy: textField("rhinoscopy", "Rhinoscopy", "Examination", 3, "Enter rhinoscopy findings"),
+  throat_examination: textField("throat_examination", "Throat Examination", "Examination", 3, "Describe throat examination"),
+  nasal_examination: textField("nasal_examination", "Nasal Examination", "Examination", 3, "Describe nasal examination"),
+  hearing_assessment: textField("hearing_assessment", "Hearing Assessment", "Examination", 3, "Enter hearing assessment"),
+  laryngoscopy: textField("laryngoscopy", "Laryngoscopy", "Examination", 3, "Enter laryngoscopy findings"),
 });
 
 export const gynecologyNotesSchema = baseNotesSchema.extend({
-  menstrual_history: zField(z.string().optional(), { 
-    label: "Menstrual History", section: "History", type: "textarea", rows: 3, placeholder: "Enter menstrual history" 
-  }),
-  obstetric_history: zField(z.string().optional(), { 
-    label: "Obstetric History", section: "History", type: "textarea", rows: 3, placeholder: "Enter obstetric history" 
-  }),
-  gynecological_exam: zField(z.string().optional(), { 
-    label: "Gynecological Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe gynecological exam" 
-  }),
-  breast_examination: zField(z.string().optional(), { 
-    label: "Breast Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe breast examination" 
-  }),
-  pap_smear: zField(z.string().optional(), { 
-    label: "Pap Smear", section: "Management", type: "textarea", rows: 3, placeholder: "Enter Pap smear results" 
-  }),
-  contraceptive_counseling: zField(z.string().optional(), { 
-    label: "Contraceptive Counseling", section: "Management", type: "textarea", rows: 3, placeholder: "Enter contraceptive counseling details" 
-  }),
+  menstrual_history: textField("menstrual_history", "Menstrual History", "History", 3, "Enter menstrual history"),
+  obstetric_history: textField("obstetric_history", "Obstetric History", "History", 3, "Enter obstetric history"),
+  gynecological_exam: textField("gynecological_exam", "Gynecological Examination", "Examination", 4, "Describe gynecological exam"),
+  breast_examination: textField("breast_examination", "Breast Examination", "Examination", 3, "Describe breast examination"),
+  pap_smear: textField("pap_smear", "Pap Smear", "Management", 3, "Enter Pap smear results"),
+  contraceptive_counseling: textField("contraceptive_counseling", "Contraceptive Counseling", "Management", 3, "Enter contraceptive counseling details"),
 });
 
 export const pulmonologyNotesSchema = baseNotesSchema.extend({
-  smoking_history: zField(z.string().optional(), { 
-    label: "Smoking History", section: "History", type: "textarea", rows: 3, placeholder: "Enter smoking history" 
-  }),
-  respiratory_examination: zField(z.string().optional(), { 
-    label: "Respiratory Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe respiratory exam" 
-  }),
-  oxygen_saturation: zField(z.string().optional(), { 
-    label: "Oxygen Saturation", section: "Examination", type: "textarea", rows: 2, placeholder: "Enter oxygen saturation" 
-  }),
-  spirometry: zField(z.string().optional(), { 
-    label: "Spirometry", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter spirometry results" 
-  }),
-  chest_imaging: zField(z.string().optional(), { 
-    label: "Chest Imaging", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter chest imaging findings" 
-  }),
-  dyspnea_assessment: zField(z.string().optional(), { 
-    label: "Dyspnea Assessment", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Describe dyspnea assessment" 
-  }),
+  smoking_history: textField("smoking_history", "Smoking History", "History", 3, "Enter smoking history"),
+  respiratory_examination: textField("respiratory_examination", "Respiratory Examination", "Examination", 4, "Describe respiratory exam"),
+  oxygen_saturation: textField("oxygen_saturation", "Oxygen Saturation", "Examination", 2, "Enter oxygen saturation"),
+  spirometry: textField("spirometry", "Spirometry", "Previous Investigations", 3, "Enter spirometry results"),
+  chest_imaging: textField("chest_imaging", "Chest Imaging", "Previous Investigations", 3, "Enter chest imaging findings"),
+  dyspnea_assessment: textField("dyspnea_assessment", "Dyspnea Assessment", "Previous Investigations", 3, "Describe dyspnea assessment"),
 });
 
 export const dentalNotesSchema = baseNotesSchema.extend({
-  dental_history: zField(z.string().optional(), { 
-    label: "Past Dental History", section: "History", type: "textarea", rows: 3, placeholder: "Enter past dental history" 
-  }),
-  oral_hygiene_status: zField(z.string().optional(), { 
-    label: "Oral Hygiene Status", section: "Examination", type: "textarea", rows: 2, placeholder: "Enter oral hygiene status" 
-  }),
-  extraoral_examination: zField(z.string().optional(), { 
-    label: "Extraoral Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe extraoral examination" 
-  }),
-  intraoral_examination: zField(z.string().optional(), { 
-    label: "Intraoral Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe intraoral examination" 
-  }),
-  tooth_charting: zField(z.string().optional(), { 
-    label: "Tooth Charting", section: "Examination", type: "textarea", rows: 6, placeholder: "Enter tooth charting details" 
-  }),
-  radiographic_findings: zField(z.string().optional(), { 
-    label: "Radiographic Findings", section: "Examination", type: "textarea", rows: 4, placeholder: "Enter radiographic findings" 
-  }),
+  dental_history: textField("dental_history", "Past Dental History", "History", 3, "Enter past dental history"),
+  oral_hygiene_status: textField("oral_hygiene_status", "Oral Hygiene Status", "Examination", 2, "Enter oral hygiene status"),
+  extraoral_examination: textField("extraoral_examination", "Extraoral Examination", "Examination", 3, "Describe extraoral examination"),
+  intraoral_examination: textField("intraoral_examination", "Intraoral Examination", "Examination", 4, "Describe intraoral examination"),
+  tooth_charting: textField("tooth_charting", "Tooth Charting", "Examination", 6, "Enter tooth charting details"),
+  radiographic_findings: textField("radiographic_findings", "Radiographic Findings", "Examination", 4, "Enter radiographic findings"),
 });
 
 export const urologyNotesSchema = baseNotesSchema.extend({
-  urological_exam: zField(z.string().optional(), { 
-    label: "Urological Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe urological exam" 
-  }),
-  prostate_examination: zField(z.string().optional(), { 
-    label: "Prostate Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe prostate examination" 
-  }),
-  bladder_function: zField(z.string().optional(), { 
-    label: "Bladder Function", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter bladder function details" 
-  }),
-  uroflowmetry: zField(z.string().optional(), { 
-    label: "Uroflowmetry", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter uroflowmetry results" 
-  }),
-  urinalysis: zField(z.string().optional(), { 
-    label: "Urinalysis", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter urinalysis results" 
-  }),
-  imaging_findings: zField(z.string().optional(), { 
-    label: "Imaging Findings", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter imaging findings" 
-  }),
+  urological_exam: textField("urological_exam", "Urological Examination", "Examination", 4, "Describe urological exam"),
+  prostate_examination: textField("prostate_examination", "Prostate Examination", "Examination", 3, "Describe prostate examination"),
+  bladder_function: textField("bladder_function", "Bladder Function", "Examination", 3, "Enter bladder function details"),
+  uroflowmetry: textField("uroflowmetry", "Uroflowmetry", "Previous Investigations", 3, "Enter uroflowmetry results"),
+  urinalysis: textField("urinalysis", "Urinalysis", "Previous Investigations", 3, "Enter urinalysis results"),
+  imaging_findings: textField("imaging_findings", "Imaging Findings", "Previous Investigations", 3, "Enter imaging findings"),
 });
 
 export const endocrinologyNotesSchema = baseNotesSchema.extend({
-  endocrine_exam: zField(z.string().optional(), { 
-    label: "Endocrine Examination", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe endocrine exam" 
-  }),
-  thyroid_examination: zField(z.string().optional(), { 
-    label: "Thyroid Examination", section: "Examination", type: "textarea", rows: 3, placeholder: "Describe thyroid examination" 
-  }),
-  glucose_monitoring: zField(z.string().optional(), { 
-    label: "Glucose Monitoring", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter glucose monitoring results" 
-  }),
-  hormone_levels: zField(z.string().optional(), { 
-    label: "Hormone Levels", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter hormone level results" 
-  }),
-  metabolic_assessment: zField(z.string().optional(), { 
-    label: "Metabolic Assessment", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Describe metabolic assessment" 
-  }),
-  bone_health: zField(z.string().optional(), { 
-    label: "Bone Health", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter bone health assessment" 
-  }),
+  endocrine_exam: textField("endocrine_exam", "Endocrine Examination", "Examination", 4, "Describe endocrine exam"),
+  thyroid_examination: textField("thyroid_examination", "Thyroid Examination", "Examination", 3, "Describe thyroid examination"),
+  glucose_monitoring: textField("glucose_monitoring", "Glucose Monitoring", "Previous Investigations", 3, "Enter glucose monitoring results"),
+  hormone_levels: textField("hormone_levels", "Hormone Levels", "Previous Investigations", 3, "Enter hormone level results"),
+  metabolic_assessment: textField("metabolic_assessment", "Metabolic Assessment", "Previous Investigations", 3, "Describe metabolic assessment"),
+  bone_health: textField("bone_health", "Bone Health", "Previous Investigations", 3, "Enter bone health assessment"),
 });
 
 export const emergencyMedicineNotesSchema = baseNotesSchema.extend({
-  triage_assessment: zField(z.string().optional(), { 
-    label: "Triage Assessment", section: "Examination", type: "textarea", rows: 3, placeholder: "Enter triage assessment" 
-  }),
-  trauma_assessment: zField(z.string().optional(), { 
-    label: "Trauma Assessment", section: "Examination", type: "textarea", rows: 4, placeholder: "Describe trauma assessment" 
-  }),
-  diagnostic_imaging: zField(z.string().optional(), { 
-    label: "Diagnostic Imaging", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Enter diagnostic imaging results" 
-  }),
-  acute_interventions: zField(z.string().optional(), { 
-    label: "Acute Interventions", section: "Previous Investigations", type: "textarea", rows: 3, placeholder: "Describe acute interventions" 
-  }),
-  resuscitation_status: zField(z.string().optional(), { 
-    label: "Resuscitation Status", section: "Management", type: "textarea", rows: 3, placeholder: "Enter resuscitation status" 
-  }),
+  triage_assessment: textField("triage_assessment", "Triage Assessment", "Examination", 3, "Enter triage assessment"),
+  trauma_assessment: textField("trauma_assessment", "Trauma Assessment", "Examination", 4, "Describe trauma assessment"),
+  diagnostic_imaging: textField("diagnostic_imaging", "Diagnostic Imaging", "Previous Investigations", 3, "Enter diagnostic imaging results"),
+  acute_interventions: textField("acute_interventions", "Acute Interventions", "Previous Investigations", 3, "Describe acute interventions"),
+  resuscitation_status: textField("resuscitation_status", "Resuscitation Status", "Management", 3, "Enter resuscitation status"),
 });
 
 // ============================================================================
@@ -499,23 +316,16 @@ export const consultationNotesSchema = z.object({
 export type ConsultationNotes = z.infer<typeof consultationNotesSchema>;
 export type ConsultationMedication = z.infer<typeof medicationSchema>;
 
+const SECTION_ORDER = ["History", "Examination", "Previous Investigations", "Management"] as const;
+const SECTION_MAPPING: Record<string, string[]> = Object.fromEntries(
+  SECTION_ORDER.map((sec) => [sec, []])
+);
+
 // THE BRIDGE: Reconstruct the legacy array format from the Zod Metadata
 // This ensures existing UI components work without modification.
-export const specialtyFieldSections: Record<string, FieldSection[]> = 
+export const specialtyFieldSections: Record<string, FieldSection[]> =
   Object.keys(schemasByDepartment).reduce((acc, dept) => {
-    // Define the valid sections and their order for this department
-    const sectionOrder = [
-      "History", 
-      "Examination", 
-      "Previous Investigations", 
-      "Management"
-    ];
-    
-    // Map section names to an empty array to seed the order
-    const sectionMapping = sectionOrder.reduce((map, sec) => ({ ...map, [sec]: [] }), {});
-
-    // Use the bridge function to extract fields and group them
-    acc[dept] = getSectionsFromSchema(schemasByDepartment[dept], sectionMapping);
+    acc[dept] = getSectionsFromSchema(schemasByDepartment[dept], { ...SECTION_MAPPING });
     return acc;
   }, {} as Record<string, FieldSection[]>);
 
@@ -524,13 +334,6 @@ export const specialtyFieldSections: Record<string, FieldSection[]> =
 export const getSpecialtyFields = (departmentType: string): NoteFieldConfig[] =>
   (specialtyFieldSections[departmentType] || specialtyFieldSections["General"])
     .flatMap((section) => section.fields);
-
-// Legacy field configs map
-export const specialtyNoteFieldConfigs: Record<string, NoteFieldConfig[]> =
-  Object.keys(specialtyFieldSections).reduce(
-    (acc, key) => ({ ...acc, [key]: getSpecialtyFields(key) }),
-    {} as Record<string, NoteFieldConfig[]>
-  );
 
 // Helper function to get mandatory fields
 export const getMandatoryFieldsForDepartment = (departmentType: string): string[] =>

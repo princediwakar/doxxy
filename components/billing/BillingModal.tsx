@@ -1,5 +1,5 @@
 // src/components/billing/BillingModal.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Edit, Printer, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -88,17 +88,16 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   // Show error toasts for failed queries
   useEffect(() => {
     if (appointmentsError) toast.error('Failed to load appointments');
-  }, [appointmentsError]);
-  useEffect(() => {
     if (patientsError) toast.error('Failed to load patients');
-  }, [patientsError]);
-  useEffect(() => {
     if (doctorFeeError) toast.error('Failed to load doctor fee information');
-  }, [doctorFeeError]);
+  }, [appointmentsError, patientsError, doctorFeeError]);
 
   useEffect(() => {
     onDirtyChange?.(form.formState.isDirty);
   }, [form.formState.isDirty, onDirtyChange]);
+
+  const billRef = useRef(bill);
+  billRef.current = bill;
 
   const { activeClinicName } = useAppState();
   const queryClient = useQueryClient();
@@ -119,34 +118,30 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     }
   };
 
-  const handlePrint = async () => {
-    if (!bill) return;
-
+  const buildCurrentBillData = (): Bill | null => {
+    const currentBill = billRef.current;
+    if (!currentBill) return null;
     const formServiceItems = form.watch("service_items");
-    const billData: Bill = {
-      ...bill,
+    return {
+      ...currentBill,
       service_items:
         formServiceItems && formServiceItems.length > 0
           ? formServiceItems
           : null,
     };
+  };
 
+  const handlePrint = async () => {
+    const billData = buildCurrentBillData();
+    if (!billData) return;
     await printBill(billData, patient || null, null);
   };
 
   const handleDownload = async () => {
-    if (!bill) return;
+    const billData = buildCurrentBillData();
+    if (!billData) return;
 
     try {
-      const formServiceItems = form.watch("service_items");
-      const billData: Bill = {
-        ...bill,
-        service_items:
-          formServiceItems && formServiceItems.length > 0
-            ? formServiceItems
-            : null,
-      };
-
       const html = generateBillPrintContent(billData, patient || null, null);
 
       const [jsPDFModule, html2canvasModule] = await Promise.all([

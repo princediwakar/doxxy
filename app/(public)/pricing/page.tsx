@@ -14,6 +14,7 @@ import {
 import Link from "next/link"
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -177,45 +178,6 @@ const faqs = [
       "Yes, you can cancel your subscription at any time. We don't believe in long-term contracts or cancellation fees.",
   },
 ];
-
-// --- REUSABLE COMPONENTS ---
-
-interface SectionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface SectionTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface SectionSubtitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Section = ({ children, className = "" }: SectionProps) => (
-  <section className={`py-24 md:py-32 ${className}`}>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
-  </section>
-);
-
-const SectionTitle = ({ children, className = "" }: SectionTitleProps) => (
-  <h2
-    className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}
-  >
-    {children}
-  </h2>
-);
-
-const SectionSubtitle = ({ children, className = "" }: SectionSubtitleProps) => (
-  <p
-    className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}
-  >
-    {children}
-  </p>
-);
 
 // --- PAGE SECTIONS ---
 

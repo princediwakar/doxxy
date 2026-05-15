@@ -79,6 +79,41 @@ If the doctor did not examine this structure at all (e.g., no mention of cornea,
 If the doctor examined the structure but only mentioned one eye, populate just that side and leave the other as null.
 If the doctor described findings without specifying left/right, put the description in notes and set left/right to null.`;
 
+const FEW_SHOT_EXAMPLES = `
+EXAMPLE 1 (General dictation):
+Input: "Patient is a 45-year-old male presenting with a 3-day history of severe throbbing headache and nausea. No photophobia. BP is 140/90. Past medical history of hypertension. Prescribe Paracetamol 650mg SOS for pain, review after 5 days. Diagnosis is tension headache."
+Expected Output Mapping:
+- history_of_present_illness: "45-year-old male presenting with a 3-day history of severe throbbing headache and nausea. No photophobia."
+- vital_signs.blood_pressure_systolic: "140"
+- vital_signs.blood_pressure_diastolic: "90"
+- past_medical_history: "Hypertension"
+- diagnosis: "Tension headache"
+- prescriptions: [{ "name": "Paracetamol", "dosage": "650mg", "frequency": "SOS", "duration": "NOT_SPECIFIED", "route": "Oral", "instructions": "For pain" }]
+- follow_up: "Review after 5 days"
+
+EXAMPLE 2 (Specialty specific - Ophthalmology):
+Input: "Right eye vision is 6/6, left eye 6/18. Slit lamp shows mild cataract in the left eye. Cornea is clear bilaterally. Start Moxifloxacin eye drops QID right eye for 1 week."
+Expected Output Mapping:
+- visual_acuity.right: "6/6"
+- visual_acuity.left: "6/18"
+- lens.left: "Mild cataract"
+- cornea.notes: "Clear bilaterally"
+- prescriptions: [{ "name": "Moxifloxacin", "dosage": "NOT_SPECIFIED", "frequency": "QID", "duration": "1 week", "route": "Eye Drops", "instructions": "Right eye" }]
+`;
+
+function getSpecialtyInstructions(department: string): string {
+  switch (department) {
+    case 'Ophthalmology':
+      return `- Format visual acuity strictly as standard fractions (e.g., 6/6, 20/20, 6/18) and never as decimals.\n- Separate eye findings cleanly into left and right sub-fields. Use 'notes' only for bilateral statements.`;
+    case 'Cardiology':
+      return `- Extract exact BP, heart rate, and any murmur gradings directly into examination fields.\n- Clearly differentiate between historical heart conditions and current presentation.`;
+    case 'Neurology':
+      return `- Format motor power strictly as standard grades (e.g., 5/5, 4/5).\n- Ensure left/right specificity for all reflexes and motor tone.`;
+    default:
+      return `- Ensure measurements, dosages, and timelines are accurately preserved exactly as stated.`;
+  }
+}
+
 const NARRATIVE_FIELD_MAPPING = `
 NARRATIVE-TO-FIELD MAPPING:
 When the doctor dictates in narrative form, carefully map each section to the correct schema fields:
@@ -118,11 +153,15 @@ function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): st
     })
     .join('\n');
 
+  const specialtyRules = getSpecialtyInstructions(department);
+
   return `You are a clinical AI that converts voice transcripts into structured consultation notes for Indian clinics. Your task is to thoroughly analyze the entire transcript and extract ALL available clinical information into every relevant field below. Do not skip sections — if the doctor mentioned it, it belongs in the output.
 
 ${INDIAN_SHORTHAND_REFERENCE}
 
 DEPARTMENT: ${department}
+SPECIALTY-SPECIFIC RULES:
+${specialtyRules}
 
 FIELDS TO EXTRACT:
 ${fieldList}
@@ -145,7 +184,9 @@ ${SPECIAL_INSTRUCTIONS}
 
 ${PRESCRIPTION_EXTRACTION_GUIDE}
 
-${EYE_EXAMINATION_GUIDE}`;
+${EYE_EXAMINATION_GUIDE}
+
+${FEW_SHOT_EXAMPLES}`;
 }
 
 function buildFieldMetadata(fields: NoteFieldConfig[]): Record<string, { label: string }> {
@@ -251,6 +292,15 @@ export function computeFieldConfidence(output: AIStructuredOutput): FieldConfide
 const MAX_RETRIES = 3;
 const RETRY_BASE_DELAY = 1000;
 
+class RateLimitError extends Error {
+  retryAfterMs?: number;
+  constructor(message: string, retryAfterMs?: number) {
+    super(message);
+    this.name = 'RateLimitError';
+    this.retryAfterMs = retryAfterMs;
+  }
+}
+
 async function retryWithBackoff<T>(
   fn: () => Promise<T>,
   label: string,
@@ -265,7 +315,12 @@ async function retryWithBackoff<T>(
       if (attempt === retries) break;
       // Don't retry auth errors
       if (error instanceof Error && error.message.includes('401')) break;
-      const delay = RETRY_BASE_DELAY * Math.pow(2, attempt);
+      
+      let delay = RETRY_BASE_DELAY * Math.pow(2, attempt);
+      if (error instanceof RateLimitError && error.retryAfterMs) {
+        delay = error.retryAfterMs;
+      }
+      
       logger.warn(`OpenAI ${label} attempt ${attempt + 1} failed, retrying in ${delay}ms`);
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
@@ -288,47 +343,76 @@ export async function structureClinicalNotes(
   const jsonSchema = zodToJsonSchema(schema);
   const systemPrompt = generateSystemPrompt(dept, fields);
 
-  const openaiData = await retryWithBackoff(async () => {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${openaiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        temperature: 0.1,
-        max_tokens: 16384,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Transcribe and structure this clinical dictation:\n\n${transcript}` },
-        ],
-        response_format: {
-          type: 'json_schema',
-          json_schema: {
-            name: 'clinical_note',
-            strict: true,
-            schema: jsonSchema,
-          },
+  let aiOutput: Record<string, unknown>;
+  try {
+    aiOutput = await retryWithBackoff(async () => {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openaiKey}`,
         },
-      }),
-    });
+        body: JSON.stringify({
+          model: 'gpt-4o-2024-08-06',
+          temperature: 0.0,
+          max_tokens: 16384,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Transcribe and structure this clinical dictation:\n\n${transcript}` },
+          ],
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'clinical_note',
+              strict: true,
+              schema: jsonSchema,
+            },
+          },
+        }),
+      });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      logger.error('OpenAI error:', response.status, errText);
-      throw new Error(`OpenAI API error: ${response.status} — ${errText.slice(0, 300)}`);
-    }
+      if (!response.ok) {
+        const errText = await response.text();
+        logger.error('OpenAI error:', response.status, errText);
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('retry-after');
+          let delayMs: number | undefined;
+          if (retryAfter) {
+            const parsed = parseInt(retryAfter, 10);
+            if (!isNaN(parsed)) {
+               delayMs = parsed * 1000;
+            } else {
+               const date = new Date(retryAfter).getTime();
+               if (!isNaN(date)) delayMs = Math.max(0, date - Date.now());
+            }
+          }
+          throw new RateLimitError(`OpenAI API error: 429`, delayMs);
+        }
+        throw new Error(`OpenAI API error: ${response.status} — ${errText.slice(0, 300)}`);
+      }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) {
-      throw new Error('OpenAI returned empty response');
-    }
+      const data = await response.json();
 
-    return { data, content };
-  }, 'structure clinical notes');
+      if (data.choices?.[0]?.message?.refusal) {
+        throw new Error(`OpenAI refusal: ${data.choices[0].message.refusal}`);
+      }
 
-  const aiOutput = JSON.parse(openaiData.content);
+      const content = data.choices?.[0]?.message?.content;
+      if (!content) {
+        throw new Error('OpenAI returned empty response');
+      }
+
+      try {
+        return JSON.parse(content);
+      } catch (parseError) {
+        logger.error('Failed to parse OpenAI JSON output:', parseError);
+        throw new Error('Invalid JSON received from OpenAI');
+      }
+    }, 'structure clinical notes');
+  } catch (error) {
+    logger.error('All retries failed for structureClinicalNotes. Falling back to raw transcript.', error);
+    aiOutput = { chief_complaint: transcript };
+  }
+
   return mapStructuredOutput(aiOutput, fields);
 }

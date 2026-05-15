@@ -13,11 +13,10 @@ interface PatientInfo {
 interface SpecialtyData {
   chief_complaint?: string;
   history_of_present_illness?: string;
-  physical_examination?: string;
+  physical_exam?: string;
   assessment?: string;
-  plan?: string;
+  treatment?: string;
   visual_acuity?: string;
-  neurological_findings?: string;
   [key: string]: unknown;
 }
 
@@ -126,17 +125,27 @@ export class MedicalRecordPDFExporter {
     }
   }
 
+  private setBold(size: number): void {
+    this.ensurePDFInitialized();
+    this.pdf!.setFontSize(size);
+    this.pdf!.setFont('helvetica', 'bold');
+  }
+
+  private setNormal(size: number): void {
+    this.ensurePDFInitialized();
+    this.pdf!.setFontSize(size);
+    this.pdf!.setFont('helvetica', 'normal');
+  }
+
   private addHeader(clinicName: string = 'Medical Clinic'): void {
     this.ensurePDFInitialized();
 
     // Clinic Header
-    this.pdf!.setFontSize(20);
-    this.pdf!.setFont('helvetica', 'bold');
+    this.setBold(20);
     this.pdf!.text(clinicName, this.margin, this.currentY);
 
     this.currentY += 10;
-    this.pdf!.setFontSize(12);
-    this.pdf!.setFont('helvetica', 'normal');
+    this.setNormal(12);
     this.pdf!.text('Medical Records Report', this.margin, this.currentY);
 
     this.currentY += 5;
@@ -152,13 +161,11 @@ export class MedicalRecordPDFExporter {
   private addPatientInfo(patient: PatientInfo): void {
     this.checkPageBreak(30);
 
-    this.pdf!.setFontSize(16);
-    this.pdf!.setFont('helvetica', 'bold');
+    this.setBold(16);
     this.pdf!.text('PATIENT INFORMATION', this.margin, this.currentY);
     this.currentY += 10;
 
-    this.pdf!.setFontSize(11);
-    this.pdf!.setFont('helvetica', 'normal');
+    this.setNormal(11);
 
     const patientData = [
       ['Name:', patient.name],
@@ -188,8 +195,7 @@ export class MedicalRecordPDFExporter {
 
     this.checkPageBreak(20);
 
-    this.pdf!.setFontSize(16);
-    this.pdf!.setFont('helvetica', 'bold');
+    this.setBold(16);
     this.pdf!.text('CONSULTATION HISTORY', this.margin, this.currentY);
     this.currentY += 10;
 
@@ -197,15 +203,13 @@ export class MedicalRecordPDFExporter {
       this.checkPageBreak(40);
 
       // Consultation header
-      this.pdf!.setFontSize(12);
-      this.pdf!.setFont('helvetica', 'bold');
+      this.setBold(12);
       const consultationTitle = `Consultation #${index + 1}`;
       this.pdf!.text(consultationTitle, this.margin, this.currentY);
       this.currentY += 8;
 
       // Basic info
-      this.pdf!.setFontSize(10);
-      this.pdf!.setFont('helvetica', 'normal');
+      this.setNormal(10);
 
       const basicInfo = [
         `Date: ${consultation.appointment.date ? format(parseISO(consultation.appointment.date), 'PPP') : 'Unknown'}`,
@@ -236,16 +240,16 @@ export class MedicalRecordPDFExporter {
           this.addSection('History of Present Illness:', data.history_of_present_illness);
         }
 
-        if (data.physical_examination) {
-          this.addSection('Physical Examination:', data.physical_examination);
+        if (data.physical_exam) {
+          this.addSection('Physical Exam:', data.physical_exam);
         }
 
         if (data.assessment) {
           this.addSection('Assessment:', data.assessment);
         }
 
-        if (data.plan) {
-          this.addSection('Plan:', data.plan);
+        if (data.treatment) {
+          this.addSection('Treatment:', data.treatment);
         }
 
         // Add specialty-specific fields
@@ -253,9 +257,7 @@ export class MedicalRecordPDFExporter {
           this.addSection('Visual Acuity:', data.visual_acuity);
         }
 
-        if (data.neurological_findings) {
-          this.addSection('Neurological Findings:', data.neurological_findings);
-        }
+
       }
 
       this.currentY += 8;
@@ -271,8 +273,7 @@ export class MedicalRecordPDFExporter {
 
     this.checkPageBreak(20);
 
-    this.pdf!.setFontSize(16);
-    this.pdf!.setFont('helvetica', 'bold');
+    this.setBold(16);
     this.pdf!.text('PRESCRIPTION HISTORY', this.margin, this.currentY);
     this.currentY += 10;
 
@@ -280,15 +281,13 @@ export class MedicalRecordPDFExporter {
       this.checkPageBreak(30);
 
       // Prescription header
-      this.pdf!.setFontSize(12);
-      this.pdf!.setFont('helvetica', 'bold');
+      this.setBold(12);
       const prescriptionTitle = `Prescription #${index + 1}`;
       this.pdf!.text(prescriptionTitle, this.margin, this.currentY);
       this.currentY += 8;
 
       // Basic info
-      this.pdf!.setFontSize(10);
-      this.pdf!.setFont('helvetica', 'normal');
+      this.setNormal(10);
 
       const basicInfo = [
         `Date: ${prescription.created_at ? format(parseISO(prescription.created_at), 'PPP') : 'Unknown'}`,
@@ -352,8 +351,7 @@ export class MedicalRecordPDFExporter {
 
     for (let i = 1; i <= pageCount; i++) {
       this.pdf!.setPage(i);
-      this.pdf!.setFontSize(8);
-      this.pdf!.setFont('helvetica', 'normal');
+      this.setNormal(8);
       this.pdf!.text(
         `Page ${i} of ${pageCount}`,
         210 - this.margin - 20,
@@ -415,39 +413,4 @@ export class MedicalRecordPDFExporter {
     this.pdf!.save(filename);
   }
 
-  public async exportFromElement(element: HTMLElement, filename: string): Promise<void> {
-    await this.ensureLibrariesLoaded();
-
-    if (!this.html2canvas || !this.jsPDF) {
-      throw new Error('PDF libraries not loaded');
-    }
-
-    const canvas = await this.html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new this.jsPDF();
-
-    const imgWidth = 210;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-
-    pdf.save(filename);
-  }
 }

@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Script from 'next/script';
@@ -20,6 +18,7 @@ import {
 } from "lucide-react";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import { APP_URL } from '@/lib/constants';
 
 
@@ -149,17 +148,17 @@ const specialties = [
   },
   {
     name: "Pulmonology",
-    description: "Oral health & hygiene",
+    description: "Lungs & respiratory",
     image:
       "https://images.unsplash.com/photo-1743767587847-08c42b31cdec?w=400&h=400&fit=crop",
-    alt: "3D Tooth Illustration",
+    alt: "3D Lung Illustration",
   },
   {
     name: "ENT",
     description: "Ear, nose & throat",
     image:
       "https://images.unsplash.com/photo-1715111641804-f8af88e93b01?w=400&h=400&fit=crop",
-    alt: "3D Tooth Illustration",
+    alt: "3D Ear Illustration",
   },
 ];
 
@@ -191,33 +190,6 @@ const testimonials = [
 ];
 
 // --- MODULAR COMPONENTS ---
-
-interface SectionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Section = ({ children, className = "" }: SectionProps) => (
-  <section className={`py-24 md:py-32 ${className}`}>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
-  </section>
-);
-
-const SectionTitle = ({ children, className = "" }: SectionProps) => (
-  <h2
-    className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}
-  >
-    {children}
-  </h2>
-);
-
-const SectionSubtitle = ({ children, className = "" }: SectionProps) => (
-  <p
-    className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}
-  >
-    {children}
-  </p>
-);
 
 const HeroSection = () => (
   <section className="py-28 md:py-40 text-center">
@@ -302,47 +274,46 @@ const PainPoints = ({ points }: PainPointsProps) => (
   </Section>
 );
 
-const ProductShowcase = () => {
-  interface ShowcaseCardProps {
-    title: string;
-    description: string;
-    items: string[];
-  }
+interface ShowcaseCardProps {
+  title: string;
+  description: string;
+  items: string[];
+}
 
-  const ShowcaseCard = ({ title, description, items }: ShowcaseCardProps) => (
-    <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-8 h-full flex flex-col">
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
-        {title}
-      </h3>
-      <p className="text-gray-600 dark:text-gray-300 mb-6 flex-grow">
-        {description}
-      </p>
-      <div className="space-y-3">
-        {items.map((item: string, i: number) => (
-          <div key={i} className="flex items-center gap-3">
-            <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
-            <span>{item}</span>
-          </div>
-        ))}
-      </div>
+const ShowcaseCard = ({ title, description, items }: ShowcaseCardProps) => (
+  <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-8 h-full flex flex-col">
+    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+      {title}
+    </h3>
+    <p className="text-gray-600 dark:text-gray-300 mb-6 flex-grow">
+      {description}
+    </p>
+    <div className="space-y-3">
+      {items.map((item: string, i: number) => (
+        <div key={i} className="flex items-center gap-3">
+          <CheckCircle className="h-5 w-5 text-blue-500 flex-shrink-0" />
+          <span>{item}</span>
+        </div>
+      ))}
     </div>
-  );
+  </div>
+);
 
-  interface MockupCardProps {
-    children: React.ReactNode;
-    className?: string;
-  }
+interface MockupCardProps {
+  children: React.ReactNode;
+  className?: string;
+}
 
-  const MockupCard = ({ children, className = "" }: MockupCardProps) => (
-    <div
-      className={`bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 shadow-sm border border-gray-200/75 dark:border-gray-700/50 ${className}`}
-    >
-      {children}
-    </div>
-  );
+const MockupCard = ({ children, className = "" }: MockupCardProps) => (
+  <div
+    className={`bg-gray-50 dark:bg-gray-800/50 rounded-xl p-2 shadow-sm border border-gray-200/75 dark:border-gray-700/50 ${className}`}
+  >
+    {children}
+  </div>
+);
 
-  return (
-    <Section>
+const ProductShowcase = () => (
+  <Section>
       <SectionTitle>See Doxxy in Action.</SectionTitle>
       <SectionSubtitle className="mt-4">
         This is how modern healthcare software should look and feel—powerful,
@@ -553,7 +524,6 @@ const ProductShowcase = () => {
       </div>
     </Section>
   );
-};
 
 interface Specialty {
   name: string;

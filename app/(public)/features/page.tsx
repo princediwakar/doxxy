@@ -20,6 +20,7 @@ import {
 import Link from 'next/link';
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
+import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -137,43 +138,6 @@ const additionalFeatures = [
   { icon: Database, title: "Data Migration", description: "Seamless migration from existing systems with zero downtime." },
   { icon: Settings, title: "Custom Workflows", description: "Configurable workflows to match your unique practice style." },
 ];
-
-// --- REUSABLE COMPONENTS ---
-
-interface SectionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface SectionTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface SectionSubtitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Section = ({ children, className = '' }: SectionProps) => (
-  <section className={`py-24 md:py-32 ${className}`}>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {children}
-    </div>
-  </section>
-);
-
-const SectionTitle = ({ children, className = '' }: SectionTitleProps) => (
-  <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
-    {children}
-  </h2>
-);
-
-const SectionSubtitle = ({ children, className = '' }: SectionSubtitleProps) => (
-  <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
-    {children}
-  </p>
-);
 
 // --- PAGE SECTIONS ---
 

@@ -25,6 +25,9 @@ import type { User } from '@supabase/supabase-js';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/loading';
 
+const getInitials = (name?: string | null): string =>
+  name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '';
+
 interface BasicProfileEditorProps {
   open: boolean;
   onClose: () => void;
@@ -47,6 +50,14 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState(user?.user_metadata?.avatar_url || '');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const clearFormError = (field: string) => {
+    setFormErrors(prev => {
+      const newErrors = { ...prev };
+      delete newErrors[field];
+      return newErrors;
+    });
+  };
 
   const queryClient = useQueryClient();
   const supabase = getSupabase();
@@ -112,11 +123,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
       }
 
       setProfilePhoto(file);
-      setFormErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors.photo;
-        return newErrors;
-      });
+      clearFormError('photo');
 
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -207,7 +214,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
   };
 
   if (!open) return null;
-  if (profileLoading) return null;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -226,6 +232,12 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
           </DialogTitle>
         </DialogHeader>
 
+        {profileLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Spinner size="lg" />
+          </div>
+        ) : (
+        <>
         <div className="flex-1 overflow-y-auto pr-2">
           <div className="pt-6 space-y-6">
             <div className="flex items-center gap-4">
@@ -235,7 +247,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   className="object-cover"
                 />
                 <AvatarFallback className="bg-primary/10 text-primary text-lg font-semibold">
-                  {editedName?.split(' ').map((n: string) => n[0]).join('') || (user?.user_metadata?.name ? user.user_metadata.name.split(' ').map((n: string) => n[0]).join('') : '') || 'U'}
+                  {getInitials(editedName) || getInitials(user?.user_metadata?.name) || 'U'}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1">
@@ -259,13 +271,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   value={editedName}
                   onChange={(e) => {
                     setEditedName(e.target.value);
-                    if (formErrors.name) {
-                      setFormErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.name;
-                        return newErrors;
-                      });
-                    }
+                    if (formErrors.name) clearFormError('name');
                   }}
                   placeholder="Enter your full name"
                   className="h-11"
@@ -285,13 +291,7 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                   value={editedPhone}
                   onChange={(e) => {
                     setEditedPhone(e.target.value);
-                    if (formErrors.phone) {
-                      setFormErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.phone;
-                        return newErrors;
-                      });
-                    }
+                    if (formErrors.phone) clearFormError('phone');
                   }}
                   placeholder="Enter your phone number"
                   className="h-11"
@@ -389,6 +389,8 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
             </Button>
           </div>
         </div>
+        </>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -21,7 +21,6 @@ export type ErrorType =
   | 'RATE_LIMIT_ERROR'
   | 'NOT_FOUND_ERROR'
   | 'PERMISSION_ERROR'
-  | 'BUSINESS_LOGIC_ERROR'
   | 'SERVICE_ERROR'
   | 'UNKNOWN_ERROR';
 
@@ -149,7 +148,7 @@ export function classifyError(error: unknown): ClassifiedError {
     type,
     message: errorMessage,
     originalError: error,
-    userMessage: getDefaultUserMessage(type),
+    userMessage: 'An unexpected error occurred. Please try again.',
     shouldRetry: type === 'NETWORK_ERROR' || type === 'RATE_LIMIT_ERROR',
     retryAfter: type === 'RATE_LIMIT_ERROR' ? 60 : undefined, // 60 seconds for rate limits
   };
@@ -182,7 +181,7 @@ export function classifyError(error: unknown): ClassifiedError {
     case 'VALIDATION_ERROR':
       return {
         ...baseConfig,
-        userMessage: buildValidationErrorMessage(errorObj, baseConfig.userMessage),
+        userMessage: buildValidationErrorMessage(errorObj),
       };
     case 'SERVICE_ERROR':
       return {
@@ -195,45 +194,25 @@ export function classifyError(error: unknown): ClassifiedError {
   }
 }
 
-function buildValidationErrorMessage(errorObj: ErrorLike, fallback: string): string {
+const CONSTRAINT_MESSAGES: Record<string, string> = {
+  medical_id: 'A patient with this Medical ID already exists in your clinic. Please use a different Medical ID.',
+  email: 'A patient with this email already exists in your clinic.',
+  phone: 'A patient with this phone number already exists in your clinic.',
+};
+
+function buildValidationErrorMessage(errorObj: ErrorLike): string {
   if (errorObj?.code === '23505' || errorObj?.message?.includes('duplicate key')) {
     const details = errorObj?.details || errorObj?.message || '';
     const constraintMatch = details.match(/constraint\s+"(\w+)"/);
     if (constraintMatch) {
       const constraint = constraintMatch[1];
-      if (constraint.includes('medical_id')) {
-        return 'A patient with this Medical ID already exists in your clinic. Please use a different Medical ID.';
-      }
-      if (constraint.includes('email')) {
-        return 'A patient with this email already exists in your clinic.';
-      }
-      if (constraint.includes('phone')) {
-        return 'A patient with this phone number already exists in your clinic.';
+      for (const [key, message] of Object.entries(CONSTRAINT_MESSAGES)) {
+        if (constraint.includes(key)) return message;
       }
       return 'A record with this value already exists. Please use a different value.';
     }
   }
-  return fallback;
-}
-
-/**
- * Get default user-friendly message for error type
- */
-function getDefaultUserMessage(type: ErrorType): string {
-  const messages: Record<ErrorType, string> = {
-    NETWORK_ERROR: 'Unable to connect to the server. Please check your internet connection.',
-    AUTH_ERROR: 'Authentication failed. Please sign in again.',
-    VALIDATION_ERROR: 'There was an issue with the data provided. Please check and try again.',
-    DATABASE_ERROR: 'We\'re experiencing database issues. Our team has been notified.',
-    RATE_LIMIT_ERROR: 'Too many requests. Please wait a moment before trying again.',
-    NOT_FOUND_ERROR: 'The requested resource was not found.',
-    PERMISSION_ERROR: 'You don\'t have permission to perform this action.',
-    BUSINESS_LOGIC_ERROR: 'Unable to complete this action due to business rules.',
-    SERVICE_ERROR: 'The external service encountered an error. Please try again.',
-    UNKNOWN_ERROR: 'An unexpected error occurred. Please try again.',
-  };
-
-  return messages[type];
+  return 'There was an issue with the data provided. Please check and try again.';
 }
 
 /**

@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from '@/components/SignupCTA';
+import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 
 export const metadata: Metadata = {
   title: 'Doxxy Comparisons - Clinic Management Software vs Competitors',
@@ -79,43 +80,6 @@ const whyCompareItems = [
     { icon: Zap, title: "Assess Implementation Ease", description: "Understand the time and effort required to get up and running." },
     { icon: MessageSquare, title: "Read User Experiences", description: "Learn from healthcare professionals who have already made the switch." },
 ];
-
-// --- REUSABLE COMPONENTS ---
-
-interface SectionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface SectionTitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-interface SectionSubtitleProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Section = ({ children, className = '' }: SectionProps) => (
-  <section className={`py-24 md:py-32 ${className}`}>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {children}
-    </div>
-  </section>
-);
-
-const SectionTitle = ({ children, className = '' }: SectionTitleProps) => (
-  <h2 className={`text-4xl md:text-5xl font-bold text-gray-900 dark:text-white text-center ${className}`}>
-    {children}
-  </h2>
-);
-
-const SectionSubtitle = ({ children, className = '' }: SectionSubtitleProps) => (
-  <p className={`text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center ${className}`}>
-    {children}
-  </p>
-);
 
 // --- PAGE SECTIONS ---
 

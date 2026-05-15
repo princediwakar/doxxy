@@ -61,7 +61,7 @@ async function callGemini(
   prompt: string,
   imageBase64?: string,
   mimeType?: string
-): Promise<unknown> {
+): Promise<{ data: unknown; model: string }> {
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!geminiKey) throw new Error('GEMINI_API_KEY not configured in environment variables');
 
@@ -146,14 +146,14 @@ async function callGemini(
     try {
       const parsed = JSON.parse(text);
       logger.log(`Gemini success with model: ${model} (finishReason=${finishReason})`);
-      return parsed;
+      return { data: parsed, model };
     } catch {
       // Strip accidental markdown fences as safety net
       const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
       try {
         const parsed = JSON.parse(cleaned);
         logger.log(`Gemini success with model: ${model} (after fence strip)`);
-        return parsed;
+        return { data: parsed, model };
       } catch (parseErr) {
         lastError = `Model ${model} JSON parse failed (finishReason=${finishReason}). Raw: ${text.slice(0, 300)}`;
         logger.error(lastError, parseErr);
@@ -307,27 +307,28 @@ async function aiMatch(
   const result = new Map<string, { matched_id: number | null; matched_name: string | null }>();
   if (unmatchedTerms.length === 0) return result;
 
-  const taskLines: string[] = [];
-  for (const term of unmatchedTerms) {
-    const brandPrefix = term.split(' ')[0];
-    const { data } = await supabase
-      .from('medicines')
-      .select('id, name')
-      .ilike('name', `${brandPrefix}%`)
-      .eq('is_discontinued', false)
-      .limit(20);
+  const candidateResults = await Promise.all(
+    unmatchedTerms.map(async (term) => {
+      const brandPrefix = term.split(' ')[0];
+      const { data } = await supabase
+        .from('medicines')
+        .select('id, name')
+        .ilike('name', `${brandPrefix}%`)
+        .eq('is_discontinued', false)
+        .limit(20);
+      return { term, candidates: (data as MedicineLookup[]) ?? [] };
+    })
+  );
 
-    const candidates = (data as MedicineLookup[]) ?? [];
-    taskLines.push(
-      `Term: "${term}"\nCandidates:\n${candidates.length
-        ? candidates.map((c) => `  - id:${c.id} "${c.name}"`).join('\n')
-        : '  (none found)'
-      }`
-    );
-  }
+  const taskLines = candidateResults.map(({ term, candidates }) =>
+    `Term: "${term}"\nCandidates:\n${candidates.length
+      ? candidates.map((c) => `  - id:${c.id} "${c.name}"`).join('\n')
+      : '  (none found)'
+    }`
+  );
 
   try {
-    const matches = await callGemini(buildMatchingPrompt(taskLines.join('\n\n')));
+    const { data: matches } = await callGemini(buildMatchingPrompt(taskLines.join('\n\n')));
 
     if (Array.isArray(matches)) {
       for (const m of matches as AIMatchResult[]) {
@@ -362,6 +363,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Image URL is required' }, { status: 400, headers: CACHE_HEADERS });
     }
 
+    // Validate URL to prevent SSRF — only allow Supabase storage URLs
+    try {
+      const urlObj = new URL(imageUrl);
+      const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
+        ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+        : null;
+      if (!supabaseHost || urlObj.hostname !== supabaseHost) {
+        return NextResponse.json({ error: 'Invalid image URL source' }, { status: 400, headers: CACHE_HEADERS });
+      }
+    } catch {
+      return NextResponse.json({ error: 'Invalid image URL format' }, { status: 400, headers: CACHE_HEADERS });
+    }
+
     // 1. Download image
     const imageRes = await fetch(imageUrl);
     if (!imageRes.ok) {
@@ -378,9 +392,12 @@ export async function POST(request: Request) {
       total_amount: number;
       items: ExtractedItem[];
     };
+    let usedModel = 'unknown';
 
     try {
-      extractedData = await callGemini(EXTRACTION_PROMPT, imageBase64, mimeType) as typeof extractedData;
+      const geminiResult = await callGemini(EXTRACTION_PROMPT, imageBase64, mimeType);
+      extractedData = geminiResult.data as typeof extractedData;
+      usedModel = geminiResult.model;
       logger.log('Extraction complete:', extractedData.items?.length, 'items');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -426,7 +443,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { data: extractedData, provider: 'google', model: 'gemini-2.5-flash-lite' },
+      { data: extractedData, provider: 'google', model: usedModel },
       { headers: CACHE_HEADERS }
     );
 

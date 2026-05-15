@@ -43,11 +43,9 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
     return value || defaultValue;
   };
 
-  // Always show motor and reflex examination tables with default values
-  if (defaultValue === '5' || defaultValue === '2') {
-    // Force showing the table even if no explicit data
-  } else {
-    // For other tables, check if there's any data
+  // Motor and reflex tables always show (they have meaningful defaults)
+  const alwaysShow = defaultValue === '5' || defaultValue === '2';
+  if (!alwaysShow) {
     const hasData = rows.some(
       (row) => {
         const left = getValueWithDefault(safeData[`${row.key}_left`]);
@@ -55,7 +53,6 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
         return left !== '' || right !== '';
       }
     );
-
     if (!hasData && defaultValue === '') return null;
   }
 
@@ -107,6 +104,41 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
     </div>
   );
 };
+
+// --- Shared Sub-Components ---
+
+const AdditionalNotes: React.FC<{ notes?: string }> = ({ notes }) => {
+  if (!notes) return null;
+  return (
+    <div className="space-y-1">
+      <div className="text-gray-700 font-semibold">Additional Notes</div>
+      <div className="text-gray-700">{notes}</div>
+    </div>
+  );
+};
+
+interface AdditionalFieldItem {
+  key: string;
+  label: string;
+}
+
+const AdditionalFields: React.FC<{
+  fields: AdditionalFieldItem[];
+  data: Record<string, unknown>;
+}> = ({ fields, data }) => (
+  <>
+    {fields.map((field) => {
+      const val = data[field.key];
+      if (!val) return null;
+      return (
+        <div key={field.key} className="flex items-center gap-2">
+          <span className="text-gray-700 font-medium">{field.label}:</span>
+          <span>{String(val)}</span>
+        </div>
+      );
+    })}
+  </>
+);
 
 // --- Specific Renderers ---
 
@@ -222,12 +254,7 @@ export const EyeFieldDisplay: React.FC<{ data: EyeData }> = ({ data }) => {
           )}
         </div>
       )}
-      {data.notes && (
-        <div className="space-y-1">
-          <div className="text-gray-700 font-semibold">Additional Notes</div>
-          <div className="text-gray-700">{data.notes}</div>
-        </div>
-      )}
+      <AdditionalNotes notes={data.notes} />
     </div>
   );
 };
@@ -262,22 +289,8 @@ export const MotorExaminationDisplay: React.FC<{ data: MotorExamData }> = ({
       />
 
       <div className="space-y-2">
-        {additionalFields.map((field) => {
-          const val = data[field.key];
-          if (!val) return null;
-          return (
-            <div key={field.key} className="flex items-center gap-2">
-              <span className="text-gray-700 font-medium">{field.label}:</span>
-              <span>{val}</span>
-            </div>
-          );
-        })}
-        {data.notes && (
-          <div className="space-y-1">
-            <div className="text-gray-700 font-semibold">Additional Notes</div>
-            <div className="text-gray-700">{data.notes}</div>
-          </div>
-        )}
+        <AdditionalFields fields={additionalFields} data={data as Record<string, unknown>} />
+        <AdditionalNotes notes={data.notes} />
       </div>
     </div>
   );
@@ -321,50 +334,36 @@ export const ReflexExaminationDisplay: React.FC<{ data: ReflexExamData }> = ({
       />
 
       <div className="space-y-2">
-        {additional.map((field) => {
-          const val = data[field.key];
-          if (!val) return null;
-          return (
-            <div key={field.key} className="flex items-center gap-2">
-              <span className="text-gray-700 font-medium">{field.label}:</span>
-              <span>{val}</span>
-            </div>
-          );
-        })}
-        {data.notes && (
-          <div className="space-y-1">
-            <div className="text-gray-700 font-semibold">Additional Notes</div>
-            <div className="text-gray-700">{data.notes}</div>
-          </div>
-        )}
+        <AdditionalFields fields={additional} data={data as Record<string, unknown>} />
+        <AdditionalNotes notes={data.notes} />
       </div>
     </div>
   );
 };
 
+const allEyeExaminations = [
+  // Visual Function Tests
+  { key: "visual_acuity", label: "Visual Acuity" },
+  { key: "refraction", label: "Refraction" },
+
+  // Anterior Segment Examination
+  { key: "extraocular_movements", label: "Extraocular Movements" },
+  { key: "lids", label: "Lids" },
+  { key: "conjunctiva", label: "Conjunctiva" },
+  { key: "cornea", label: "Cornea" },
+  { key: "anterior_chamber", label: "Anterior Chamber" },
+  { key: "iris", label: "Iris" },
+  { key: "pupil_examination", label: "Pupil" },
+  { key: "lens", label: "Lens" },
+  { key: "intraocular_pressure", label: "Intraocular Pressure" },
+
+  // Posterior Segment Examination
+  { key: "fundus_exam", label: "Fundus Examination" },
+];
+
 export const TabularEyeExaminationDisplay: React.FC<{
   data: TabularEyeValue;
 }> = ({ data }) => {
-  const allEyeExaminations = [
-    // Visual Function Tests
-    { key: "visual_acuity", label: "Visual Acuity" },
-    { key: "refraction", label: "Refraction" },
-
-    // Anterior Segment Examination
-    { key: "extraocular_movements", label: "Extraocular Movements" },
-    { key: "lids", label: "Lids" },
-    { key: "conjunctiva", label: "Conjunctiva" },
-    { key: "cornea", label: "Cornea" },
-    { key: "anterior_chamber", label: "Anterior Chamber" },
-    { key: "iris", label: "Iris" },
-    { key: "pupil_examination", label: "Pupil" },
-    { key: "lens", label: "Lens" },
-    { key: "intraocular_pressure", label: "Intraocular Pressure" },
-
-    // Posterior Segment Examination
-    { key: "fundus_exam", label: "Fundus Examination" },
-  ];
-
   return (
     <div className="tabular-eye-examination-display space-y-3">
       <ConsultationTable
@@ -375,12 +374,7 @@ export const TabularEyeExaminationDisplay: React.FC<{
         defaultValue=""
       />
 
-      {data.notes && (
-        <div className="space-y-1">
-          <div className="text-gray-700 font-semibold">Additional Notes</div>
-          <div className="text-gray-700">{data.notes}</div>
-        </div>
-      )}
+      <AdditionalNotes notes={data.notes} />
     </div>
   );
 };

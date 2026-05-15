@@ -75,6 +75,22 @@ const doctorProfileSchema = z.object({
 });
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
+const StepIndicator = ({ step }: { step: 1 | 2 | 3 }) => (
+  <div className="flex justify-center mb-6">
+    <div className={`flex items-center space-x-2 text-sm font-medium ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`}>
+      1. Clinic Details
+    </div>
+    <div className="mx-2">→</div>
+    <div className={`flex items-center space-x-2 text-sm font-medium ${step === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
+      2. Departments
+    </div>
+    <div className="mx-2">→</div>
+    <div className={`flex items-center space-x-2 text-sm font-medium ${step === 3 ? 'text-primary' : 'text-muted-foreground'}`}>
+      3. Your Role
+    </div>
+  </div>
+);
+
 const CreateClinicPage = () => {
   const { user, setActiveClinicId } = useAppState();
   const router = useRouter();
@@ -86,15 +102,15 @@ const CreateClinicPage = () => {
     phone: "",
     website: "",
   });
-  const [departments, setDepartments] = React.useState<string[]>([]);
-  const [doctorProfile] = React.useState<DoctorProfileForm>({
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const DEFAULT_DOCTOR_PROFILE: DoctorProfileForm = {
     isDoctor: 'no',
     bio: '',
     phone: '',
     selectedDepartment: '',
     consultationFee: 0,
-  });
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  };
 
   // Fetch department types
   const { data: departmentTypes, isLoading: isLoadingDepartmentTypes, error: departmentTypesError } = useQuery({
@@ -117,30 +133,30 @@ const CreateClinicPage = () => {
   // Step 2 form
   const departmentsForm = useForm<DepartmentsForm>({
     resolver: zodResolver(departmentsSchema),
-    defaultValues: { departments },
+    defaultValues: { departments: [] },
     mode: "onTouched",
   });
 
   // Step 3 form
   const doctorForm = useForm<DoctorProfileForm>({
     resolver: zodResolver(doctorProfileSchema),
-    defaultValues: doctorProfile,
+    defaultValues: DEFAULT_DOCTOR_PROFILE,
     mode: "onTouched",
   });
 
   // Keep forms in sync with state
   React.useEffect(() => {
+    if (step !== 1) return;
     detailsForm.reset(clinicDetails);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step === 1]);
+  }, [step, clinicDetails, detailsForm]);
   React.useEffect(() => {
-    departmentsForm.reset({ departments });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step === 2, departmentTypes]);
+    if (step !== 2) return;
+    departmentsForm.reset({ departments: [] });
+  }, [step, departmentTypes, departmentsForm]);
   React.useEffect(() => {
-    doctorForm.reset(doctorProfile);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step === 3]);
+    if (step !== 3) return;
+    doctorForm.reset(DEFAULT_DOCTOR_PROFILE);
+  }, [step, doctorForm]);
 
   // Step 1: Next
   const handleNext: SubmitHandler<ClinicDetailsForm> = (data) => {
@@ -150,7 +166,6 @@ const CreateClinicPage = () => {
 
   // Step 2: Next
   const handleDepartmentsNext: SubmitHandler<DepartmentsForm> = (data) => {
-    setDepartments(data.departments);
     setStep(3);
   };
 
@@ -178,7 +193,7 @@ const CreateClinicPage = () => {
         website: clinicDetails.website,
         userId: user.id,
         userPhone: user.phone,
-        departments,
+        departments: departmentsForm.getValues('departments'),
         isDoctor: data.isDoctor === 'yes',
         doctorBio: data.bio,
         doctorPhone: data.phone,
@@ -209,28 +224,11 @@ const CreateClinicPage = () => {
     }
   };
 
-  // Step indicator
-  const StepIndicator = () => (
-    <div className="flex justify-center mb-6">
-      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 1 ? 'text-primary' : 'text-muted-foreground'}`}>
-        1. Clinic Details
-      </div>
-      <div className="mx-2">→</div>
-      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 2 ? 'text-primary' : 'text-muted-foreground'}`}>
-        2. Departments
-      </div>
-      <div className="mx-2">→</div>
-      <div className={`flex items-center space-x-2 text-sm font-medium ${step === 3 ? 'text-primary' : 'text-muted-foreground'}`}>
-        3. Your Role
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-background">
       <div className="w-full max-w-md medical-card p-6 border-4 border-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-2 text-center text-foreground">Create New Clinic</h1>
-        <StepIndicator />
+        <StepIndicator step={step} />
         
         {/* Step 1: Clinic Details */}
         {step === 1 && (
@@ -350,7 +348,6 @@ const CreateClinicPage = () => {
                                 } else {
                                   field.onChange((field.value || []).filter((id: string) => id !== dept.id));
                                 }
-                                setDepartments(field.value || []);
                               }}
                             />
                             <Label htmlFor={`department-${dept.id}`} className="text-foreground">{dept.name}</Label>
@@ -463,7 +460,7 @@ const CreateClinicPage = () => {
                             </FormControl>
                             <SelectContent>
                               {(departmentTypes as DbDepartmentType[])
-                                ?.filter(dt => departments.includes(dt.id))
+                                ?.filter(dt => departmentsForm.watch('departments').includes(dt.id))
                                 .map((dept) => (
                                   <SelectItem key={dept.id} value={dept.id}>
                                     {dept.name}

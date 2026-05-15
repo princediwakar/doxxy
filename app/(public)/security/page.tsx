@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import SignupCTA from "@/components/SignupCTA";
 import SiteFooter from "@/components/SiteFooter";
+import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -190,33 +191,6 @@ const dataHandling = [
     ]
   }
 ];
-
-// --- MODULAR COMPONENTS ---
-
-interface SectionProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-const Section = ({ children, className = '' }: SectionProps) => (
-  <section className={`py-20 md:py-28 ${className}`}>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      {children}
-    </div>
-  </section>
-);
-
-const SectionTitle = ({ children, className = '' }: SectionProps) => (
-    <h2 className={`text-4xl lg:text-5xl font-semibold text-gray-900 text-center tracking-tight ${className}`}>
-        {children}
-    </h2>
-);
-
-const SectionSubtitle = ({ children, className = '' }: SectionProps) => (
-    <p className={`mt-4 text-lg text-gray-600 max-w-3xl mx-auto text-center leading-relaxed ${className}`}>
-        {children}
-    </p>
-);
 
 const SecurityHeroSection = () => (
   <Section className="bg-white pt-32 pb-20 md:pt-40 md:pb-28">
