@@ -141,7 +141,6 @@ export type Database = {
           discount_percentage: number | null
           id: string
           invoice_number: string
-          items: Json | null
           notes: string | null
           patient_id: string
           service_items: Json | null
@@ -158,7 +157,6 @@ export type Database = {
           discount_percentage?: number | null
           id?: string
           invoice_number: string
-          items?: Json | null
           notes?: string | null
           patient_id: string
           service_items?: Json | null
@@ -175,7 +173,6 @@ export type Database = {
           discount_percentage?: number | null
           id?: string
           invoice_number?: string
-          items?: Json | null
           notes?: string | null
           patient_id?: string
           service_items?: Json | null
@@ -325,13 +322,6 @@ export type Database = {
           },
           {
             foreignKeyName: "clinic_members_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_clinic_members_profiles"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -576,13 +566,6 @@ export type Database = {
           },
           {
             foreignKeyName: "doctors_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_doctors_profiles"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -999,6 +982,7 @@ export type Database = {
           quantity: number
           total_price: number
           unit_price: number
+          updated_at: string
         }
         Insert: {
           batch_number?: string | null
@@ -1011,6 +995,7 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit_price?: number
+          updated_at?: string
         }
         Update: {
           batch_number?: string | null
@@ -1023,6 +1008,7 @@ export type Database = {
           quantity?: number
           total_price?: number
           unit_price?: number
+          updated_at?: string
         }
         Relationships: [
           {
@@ -1141,6 +1127,7 @@ export type Database = {
           storage_path: string
           structured_data: Json | null
           transcript: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
@@ -1153,6 +1140,7 @@ export type Database = {
           storage_path: string
           structured_data?: Json | null
           transcript?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
@@ -1165,6 +1153,7 @@ export type Database = {
           storage_path?: string
           structured_data?: Json | null
           transcript?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
