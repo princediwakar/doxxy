@@ -43,6 +43,8 @@
     "supabase/functions",
     "test-voice-pipeline.ts",
     "scratch-*.ts",
-    "scripts/"
+    "scripts/",
+    "jest.setup.ts",
+    "jest.config.cjs"
   ]
 }
