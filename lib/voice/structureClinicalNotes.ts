@@ -225,7 +225,7 @@ export async function structureClinicalNotes(
   try {
     // The SDK handles JSON parsing, validation against Zod, and retries natively.
 const response = await openai.chat.completions.parse({
-      model: "gpt-5.4-mini",
+      model: process.env.OPENAI_MODEL || "gpt-5.4-mini",
       temperature: 0.0,
       messages: [
         { role: "system", content: systemPrompt },
@@ -257,7 +257,7 @@ function mapAndScoreOutput(
   const confidence: FieldConfidence[] = [];
 
   function assessConfidence(value: string | null, fieldName: string) {
-    if (value === null || value.trim() === "") {
+    if (typeof value !== "string" || value === "NOT_SPECIFIED" || value.trim() === "") {
       confidence.push({ field: fieldName, level: "low", reason: "Missing data" });
     } else if (value.length < BRIEF_THRESHOLD) {
       confidence.push({ field: fieldName, level: "medium", reason: `Brief extraction (${value.length} chars)` });
@@ -291,10 +291,10 @@ function mapAndScoreOutput(
   const prescriptions = rawPrescriptions.map((p: any, index: number) => {
     const prefix = `prescriptions[${index}].`;
     
-    assessConfidence(p.name, `${prefix}drug_name`);
-    assessConfidence(p.dosage, `${prefix}dosage`);
-    assessConfidence(p.frequency, `${prefix}frequency`);
-    assessConfidence(p.route, `${prefix}route`);
+    assessConfidence(safeString(p.name), `${prefix}drug_name`);
+    assessConfidence(safeString(p.dosage), `${prefix}dosage`);
+    assessConfidence(safeString(p.frequency), `${prefix}frequency`);
+    assessConfidence(safeString(p.route), `${prefix}route`);
 
     return {
       drug_name: safeString(p.name) as string,
@@ -333,37 +333,4 @@ export function stripNotSpecified(obj: unknown): unknown {
     return Object.keys(result).length === 0 ? null : result;
   }
   return obj;
-}
-
-export function computeFieldConfidence(output: AIStructuredOutput): FieldConfidence[] {
-  const results: FieldConfidence[] = [];
-
-  function assessTextField(value: string | null, field: string) {
-    if (value === null || value === 'NOT_SPECIFIED' || value.trim() === '') {
-      results.push({ field, level: 'low', reason: 'Missing data' });
-    } else if (value.length < BRIEF_THRESHOLD) {
-      results.push({ field, level: 'medium', reason: `Brief extraction (${value.length} chars)` });
-    }
-  }
-
-  assessTextField(output.symptoms, 'symptoms');
-  assessTextField(output.diagnosis, 'diagnosis');
-  assessTextField(output.advice, 'advice');
-
-  for (const [key, value] of Object.entries(output.rawFields || {})) {
-    if (typeof value === 'string') {
-      assessTextField(value, key);
-    }
-  }
-
-  for (let i = 0; i < output.prescriptions.length; i++) {
-    const p = output.prescriptions[i];
-    const prefix = `prescriptions[${i}].`;
-    assessTextField(p.drug_name, `${prefix}drug_name`);
-    assessTextField(p.dosage, `${prefix}dosage`);
-    assessTextField(p.frequency, `${prefix}frequency`);
-    assessTextField(p.route, `${prefix}route`);
-  }
-
-  return results;
 }

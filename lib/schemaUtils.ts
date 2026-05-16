@@ -16,18 +16,13 @@ export type FieldSection = {
   fields: NoteFieldConfig[];
 };
 
-// Registry for full UI configs, keyed by field name.
-// Separated from Zod .describe() so that OpenAI's zodResponseFormat only sees clean semantic metadata.
-const fieldUIRegistry = new Map<string, NoteFieldConfig>();
-
-export function registerFieldUI(config: NoteFieldConfig): void {
-  fieldUIRegistry.set(config.name, config);
-}
+const FIELD_CONFIG = Symbol('fieldConfig');
 
 /**
  * Enhanced Zod field with UI metadata.
  * Stores only { label, description } in .describe() for the LLM.
- * Registers the full UI config (type, rows, section, placeholder) in the fieldUIRegistry.
+ * Attaches the full UI config (type, rows, section, placeholder) via a Symbol on the returned schema,
+ * scoping it to the schema instance rather than a global namespace.
  */
 export const zField = <T extends z.ZodTypeAny>(
   name: string,
@@ -35,10 +30,11 @@ export const zField = <T extends z.ZodTypeAny>(
   config: Omit<NoteFieldConfig, "name">,
 ): T => {
   const fullConfig: NoteFieldConfig = { name, ...config };
-  registerFieldUI(fullConfig);
 
   const llmDescription = config.placeholder || config.label;
-  return schema.describe(JSON.stringify({ label: config.label, description: llmDescription }));
+  const finalizedSchema = schema.describe(JSON.stringify({ label: config.label, description: llmDescription }));
+  (finalizedSchema as any)[FIELD_CONFIG] = fullConfig;
+  return finalizedSchema;
 };
 
 /**
@@ -79,14 +75,11 @@ export const createEyeField = (
   );
 };
 
-/**
- * Extract UI configuration for a field. Reads from the fieldUIRegistry.
- */
 export const extractFieldConfig = (
-  fieldName: string,
-  _schema?: z.ZodTypeAny,
+  _fieldName: string,
+  schema: z.ZodTypeAny,
 ): NoteFieldConfig | null => {
-  return fieldUIRegistry.get(fieldName) ?? null;
+  return ((schema as any)[FIELD_CONFIG] as NoteFieldConfig) ?? null;
 };
 
 export const getSectionsFromSchema = (

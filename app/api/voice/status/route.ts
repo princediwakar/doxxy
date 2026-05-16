@@ -2,8 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { structureClinicalNotes, computeFieldConfidence, TranscriptTooLongError } from '@/lib/voice/structureClinicalNotes';
-import type { AIStructuredOutput } from '@/types/voice';
+import { structureClinicalNotes, TranscriptTooLongError } from '@/lib/voice/structureClinicalNotes';
 import {
   getJobStatus,
   getDownloadUrls,
@@ -50,9 +49,7 @@ export async function GET(request: NextRequest) {
         status: 'done',
         transcript: job.transcript,
         structured: job.structured_data,
-        fieldConfidence: job.structured_data
-          ? computeFieldConfidence(job.structured_data as unknown as AIStructuredOutput)
-          : [],
+        fieldConfidence: (job.structured_data as Record<string, unknown> | null)?.confidence ?? [],
       });
     }
 
@@ -101,7 +98,7 @@ export async function GET(request: NextRequest) {
           .from('transcription_jobs')
           .update({
             status: 'completed',
-            structured_data: structured.output as unknown as Json,
+            structured_data: { ...structured.output, confidence: structured.confidence } as unknown as Json,
           })
           .eq('id', job.id)
           .eq('status', 'structuring');
@@ -265,7 +262,7 @@ export async function GET(request: NextRequest) {
             .from('transcription_jobs')
             .update({
               status: 'completed',
-              structured_data: structured.output as unknown as Json,
+              structured_data: { ...structured.output, confidence: structured.confidence } as unknown as Json,
             })
             .eq('id', job.id)
             .eq('status', 'structuring');

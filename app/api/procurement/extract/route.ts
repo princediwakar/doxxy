@@ -51,11 +51,7 @@ interface AIMatchResult {
 // Tries each model in order until one works.
 // Add/remove model strings here as Gemini updates their API.
 
-const GEMINI_MODELS = [
-  'gemini-2.5-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-flash-latest',
-];
+const GEMINI_MODELS = (process.env.GEMINI_MODELS || 'gemini-2.5-flash-lite,gemini-2.5-flash,gemini-flash-latest').split(',');
 
 async function callGemini(
   prompt: string,
