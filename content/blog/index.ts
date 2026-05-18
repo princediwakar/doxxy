@@ -65,5 +65,20 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
   }
 }
 
-// For backward compatibility - returns empty array (use getBlogPosts() instead)
-export const blogPosts: BlogPost[] = []; 
+function stripMarkdown(md: string): string {
+  return md
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/!\[.*?\]\(.*?\)/g, "")
+    .replace(/\[([^\]]*)\]\(.*?\)/g, "$1")
+    .replace(/[*_~`>]/g, "")
+    .replace(/---+/g, "")
+    .replace(/\n{2,}/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function getExcerpt(content: string, maxLen = 160): string {
+  const clean = stripMarkdown(content);
+  if (clean.length <= maxLen) return clean;
+  return clean.substring(0, clean.lastIndexOf(" ", maxLen)) + "...";
+}

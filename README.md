@@ -1,15 +1,15 @@
-#  Clinic Management Platform
+# Doxxy — Clinic Management Platform
 
 ## Overview
 
- is a multi-tenant web application for Neurology and Ophthalmology clinics. It provides robust management of appointments, patients, medical records, billing, and notifications, with strict data isolation and role-based access.
+Doxxy is a multi-tenant web application for Neurology and Ophthalmology clinics. It provides end-to-end management of appointments, patients, medical records, pharmacy inventory, billing, and AI-powered clinical tools — with strict data isolation and role-based access.
 
 ## Features
 
 ### Multi-Tenancy & Security
 - **Clinic Isolation:** All data is partitioned by `clinic_id` with Row-Level Security (RLS) enforced at the database level.
 - **Role-Based Access:** Supports `superadmin`, `staff`, and `doctor` roles, each with tailored permissions and UI.
-- **Google OAuth:** Secure authentication and session management.
+- **Google OAuth:** Secure authentication and session management via Supabase Auth.
 
 ### User & Member Management
 - **Unified Member Invitation:** Invite any user (doctor, staff, superadmin) to a clinic via the `invite-member` Edge Function. Handles user creation, clinic membership, and doctor profile setup.
@@ -22,108 +22,116 @@
 
 ### Appointments & Consultations
 - **Appointment Scheduling:** Book, view, and manage appointments with status tracking.
-- **Consultations:** Record clinical notes and specialty data, linked to appointments.
+- **AI-Powered Consultation Notes:** Voice-to-text clinical note generation using Sarvam AI. Capture structured consultation notes with automatic formatting.
+- **Specialty Data:** Store ophthalmology and neurology-specific clinical data linked to consultations.
 
 ### Patients & Medical Records
 - **Patient Profiles:** Add, edit, and view patient information.
 - **Medical Records:** Manage diagnoses, treatment plans, and prescriptions.
 
-### Billing
+### Pharmacy & Inventory
+- **Medicine Auto-complete:** Smart search across 31+ medicines by name, manufacturer, or composition with real-time debounced filtering, pricing (₹), and pack information.
+- **AI-Based Stock Management:** Intelligent procurement extraction and inventory tracking with OpenAI fallback when Gemini is unavailable.
+- **Inventory Management:** Track medicine stock levels, manufacturers, and pricing.
+
+### Billing & Payments
 - **Bill Management:** Create, update, and track bills and payment status.
+- **Razorpay Integration:** Online payment collection via Razorpay with server-side verification Edge Functions.
 
 ### Dashboards
 - **Role-Specific Dashboards:** Superadmin, Staff, and Doctor dashboards with relevant stats, charts, and quick actions.
+- **Analytics:** Clinic-wide analytics and insights.
 
 ### UI/UX
-- **Modern Interface:** Built with Next.js, React, TypeScript, Tailwind CSS, and shadcn/ui.
-- **React Query:** Efficient data fetching and caching.
-- **Form Validation:** All forms use zod for validation.
-- **Notifications:** User feedback via toast notifications.
+- **Server-First Next.js App Router:** Server Components by default. Client components only where interactivity is required. URL-driven state for filters, search, and pagination.
+- **Modern Interface:** Built with React, TypeScript, Tailwind CSS, and shadcn/ui.
+- **React Query:** Efficient data fetching and caching via `@tanstack/react-query`.
+- **Form Validation:** All forms use `zod` schemas with `react-hook-form`.
+- **Notifications:** Toast feedback via `sonner`.
+- **PWA Support:** Full Progressive Web App with manifest, service worker, and app icons for installable mobile experience.
 
-### Integrations
-- **Supabase:** Database, authentication, and Edge Functions.
-- **Twilio & Resend:** WhatsApp and email notifications (planned/partial).
-- **Vitest:** Comprehensive testing for components and API.
+### Public Site
+- **Marketing Pages:** Landing page, features, pricing, blog, FAQ, comparisons, security, privacy, terms, and contact page.
+- **Contact Form:** Public contact form with server-side email delivery via Edge Function.
 
-### Medicine Auto-complete System
-**Advanced pharmaceutical search and prescription assistance**
-
-- **Smart Search**: Auto-complete across 31+ medicines by name, manufacturer, or composition
-- **Real-time Filtering**: Debounced search with visual highlighting of matching terms
-- **Rich Medicine Information**: 
-  - ₹ Pricing in Indian Rupees (₹15.50 - ₹245.50 range)
-  - Manufacturer details (GlaxoSmithKline, Abbott, Cipla, etc.)
-  - Pack information (strips, bottles, tubes, vials)
-  - Active compositions with combination drug support
-- **Professional UI**: Medical-grade interface with color-coded information
-- **Performance Optimized**: React Query caching with 5-minute stale time
-
-#### Usage Examples:
-```typescript
-// Search "paracetamol" finds:
-// - Panadol 500mg Tablet (₹15.50)
-// - Crocin Advance Tablet (₹18.20) 
-// - Dolo 650 Tablet (₹22.15)
-
-// Search "glaxo" finds all GlaxoSmithKline medicines
-// Search "inhaler" finds Ventolin Inhaler (₹125.80)
-```
+### Architecture
+- **Server Actions:** All database mutations go through Next.js Server Actions in `actions/`. No client-side Supabase writes.
+- **URL as State:** Filters, search queries, pagination, and active tabs live in the URL via `searchParams`.
+- **Minimal Client State:** Zustand used only for transient cross-component UI state (e.g., dashboard date selection).
 
 ## Security: Row Level Security (RLS)
 
-- RLS is **enabled** on the `doctors` table.
-- Policies enforce strict multi-tenancy and role-based access:
-  - Users can only view/edit their own doctor profile.
-  - Clinic members can view all doctors in their clinic.
-  - No cross-clinic access is possible.
-- See migration: `supabase/migrations/20240608_enable_rls_doctors.sql`
+- RLS is enabled on all tenant-scoped tables.
+- Policies enforce strict multi-tenancy and role-based access.
+- No cross-clinic data access is possible.
 - This is critical for security and compliance in a multi-tenant environment.
 
 ## Developer Guide
 
+### Prerequisites
+- Node.js 18+
+- Supabase project (local or cloud)
+
 ### Setup
 
 ```sh
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+git clone <repo-url>
+cd doxxy
 npm install
-cp .env.example .env.local # Add your Supabase keys
-npm run dev
+cp .env.local.example .env.local  # Add your Supabase keys and other env vars
+npm run dev                        # Starts custom server via tsx server.ts
 ```
+
+### Environment Variables
+
+See `.env.local` for the full set of required environment variables, including Supabase project credentials, Google OAuth keys, and AI provider API keys.
 
 ### Deployment
 
-- **Frontend:** Deploy on Vercel.
-- **Backend:** Use Supabase CLI for migrations and Edge Function deployment.
-- **Edge Functions:** Deploy with `supabase functions deploy invite-member`.
+- **App:** Deploy on Vercel (configured for `bom1` region).
+- **Database:** Use Supabase CLI for migrations (`supabase/migrations/`).
+- **Edge Functions:** Deploy with `supabase functions deploy <name>`.
 
-### Member Invitation Flow
+### Edge Functions
 
-The process for inviting and adding any member (doctor, staff, superadmin) to a clinic is handled by the `invite-member` Edge Function. The frontend calls this function directly, passing the user's email, role, department, and other details. The Edge Function is responsible for user creation/lookup, adding to `clinic_members`, and adding/updating the `doctors` table entry if the role is doctor.
+- `invite-member` — Handles member invitation, user creation, and clinic membership setup.
+- `create-razorpay-order` — Creates Razorpay payment orders server-side.
+- `verify-razorpay-payment` — Verifies payment signatures server-side.
+- `send-contact-email` — Delivers contact form submissions via email.
 
 ### Code Structure
 
-- `components/`: All UI components, including role-based dashboards, modals, and management screens.
-- `app/`: Next.js App Router pages and API routes.
-- `contexts/`: Context providers (e.g., AuthContext).
-- `hooks/`: Custom React hooks for data fetching and logic.
-- `integrations/supabase/`: Supabase client and generated types.
-- `lib/`: Shared utilities and constants.
-- `types/`: TypeScript type definitions.
-- `supabase/functions/`: Edge Functions (notably `invite-member`).
-- `supabase/migrations/`, `supabase/migrations_2/`: Database migrations.
+| Directory | Purpose |
+|---|---|
+| `actions/` | Server Actions for all database mutations |
+| `app/` | Next.js App Router — `(app)` for authenticated routes, `(public)` for marketing, `api/` for route handlers |
+| `components/` | UI components — server components by default, `"use client"` only for interactive leaves |
+| `config/` | App configuration constants |
+| `contexts/` | React Context providers |
+| `hooks/` | Custom React hooks |
+| `integrations/supabase/` | Supabase client, server client, and generated types |
+| `lib/` | Shared utilities and helpers |
+| `stores/` | Zustand stores (minimal, transient state only) |
+| `styles/` | Global styles and Tailwind config |
+| `types/` | TypeScript type definitions (core domain types in `types/core.ts`) |
+| `utils/` | Pure utility functions |
+| `content/` | Blog and static content |
+| `supabase/functions/` | Deno Edge Functions |
+| `supabase/migrations/` | Database migration files |
 
 ### Testing
 
-- Run all tests with `npm run test`.
-- Target 80%+ coverage for components, hooks, and API.
+- **Unit/Integration:** `npm test` (Jest + React Testing Library)
+- **Watch mode:** `npm run test:watch`
+- **Coverage:** `npm run test:coverage`
+- **E2E:** `npm run test:e2e` (Playwright)
 
 ### Contributing
 
 - Follow code style enforced by ESLint and Prettier.
-- Document all major changes in `development-log.md`.
-- Update `README.md` and `.env.example` as needed.
+- Match existing conventions — server-first architecture, Server Actions for mutations, URL-driven state.
+- Update this README if adding significant new capabilities.
 
 ---
 
-For more details, see the project rules in `.cursor/rules/project-rules.mdc` and the full codebase.
+For architectural standards and code quality rules, see `CLAUDE.md`.

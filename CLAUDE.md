@@ -113,6 +113,8 @@ Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 ### A. Component Design
 - **Stop Prop Drilling:** If you are passing more than 4 props down multiple levels, stop. Use React Context, or better yet, use Component Composition (pass `<Child/>` as `children` to `<Parent/>`).
 - **Hook Limits:** Maximum 5 `useState`/`useEffect` combinations per file. If larger, the component is doing too much. Split it.
+- **Co-locate single-use client components:** When a client component is only used by one page, co-locate it in that page's directory (e.g., `app/(public)/blog/[slug]/ShareButtons.tsx`). Shared components live in `components/`.
+- **Content modules:** Markdown or file-based content lives under `content/<domain>/`. Export async data-fetching functions (e.g., `getBlogPosts()`) plus any domain-appropriate helpers (excerpt, strip-markdown) from a barrel `index.ts`. Pages import from the barrel, never from individual `.md` files.
 
 ### B. Type Safety (Strict Adherence)
 - **Central Hub:** `types/core.ts` is the master file. Domain types live here.
