@@ -4,7 +4,7 @@ import { zodResponseFormat } from "openai/helpers/zod";
 import { logger } from "@/lib/logger";
 import { getSchemaForDepartment } from "@/lib/consultationNotesSchemas";
 import { mapDepartmentName } from "@/components/consultation/constants";
-import { getAllFieldsFromSchema, safeString, BRIEF_THRESHOLD } from "@/lib/schemaUtils";
+import { getAllFieldsFromSchema, safeString, BRIEF_THRESHOLD, isBlank } from "@/lib/schemaUtils";
 import type { NoteFieldConfig } from "@/lib/schemaUtils";
 import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
 
@@ -51,7 +51,9 @@ Ask yourself: "Am I summarizing, or am I extracting?" If you are summarizing, yo
 **Define certainty. Null is better than wrong.**
 - If an anatomical side (Left/Right) is required by the specialty schema but not stated, leave it null. Do not guess.
 - If a duration or frequency for a prescription is missing, leave it null. Do not assume "OD" or "5 days" just because it is standard clinical practice.
-- Correct obvious STT phonetic errors using clinical context (e.g., "fragile fatigue" -> "brain fog"), but ONLY if the correction is clinically undeniable. If nonsensical and unresolvable, capture the exact phonetic string in quotes in \`additional_clinical_findings\`.`;
+- Correct obvious STT phonetic errors using clinical context (e.g., "fragile fatigue" -> "brain fog"), but ONLY if the correction is clinically undeniable. If nonsensical and unresolvable, capture the exact phonetic string in quotes in \`additional_clinical_findings\`.
+- **STRICT NULL HANDLING:** If a value is unknown, missing, or ruled out, you MUST omit the field entirely or use strict JSON \`null\`. You are STRICTLY FORBIDDEN from outputting stringified nulls. NEVER output \"null\", \":null\", \"/null\", \"N/A\", or \"NOT_SPECIFIED\".`;
+
 
 
 
@@ -244,17 +246,15 @@ for (const field of fields) {
   };
 }
 
+
 export function stripNotSpecified(obj: unknown): unknown {
-  if (obj === null || obj === undefined) return null;
-  if (typeof obj === 'string') {
-    const trimmed = obj.trim();
-    if (trimmed === '' || trimmed === 'NOT_SPECIFIED' || trimmed === 'null') return null;
-    return obj;
-  }
+  if (isBlank(obj)) return null;
+  
   if (Array.isArray(obj)) {
     const cleaned = obj.map(stripNotSpecified).filter((v) => v !== null);
     return cleaned.length === 0 ? null : cleaned;
   }
+  
   if (typeof obj === 'object') {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {

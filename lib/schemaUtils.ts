@@ -118,6 +118,27 @@ export const getAllFieldsFromSchema = (
     .filter((config): config is NoteFieldConfig => config !== null);
 };
 
+
+// src/lib/schemaUtils.ts (or similar core utils file)
+
+export function isBlank(v: unknown): v is null | undefined | "" {
+  if (v === null || v === undefined || v === "") return true;
+  if (typeof v === "string") {
+    const trimmed = v.trim().toUpperCase();
+    return [
+      "NOT_SPECIFIED", 
+      "NULL", 
+      ":NULL", 
+      "/NULL", 
+      ":NULL,",
+      "N/A", 
+      "NONE"
+    ].includes(trimmed);
+  }
+  return false;
+}
+
+
 export const getMandatoryFieldsFromSchema = (
   schema: z.ZodObject<z.ZodRawShape>,
 ): string[] => {

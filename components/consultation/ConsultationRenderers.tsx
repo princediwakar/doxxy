@@ -9,6 +9,7 @@ import {
   ReflexExamData,
   TabularEyeValue,
 } from "@/types/consultation";
+import { isBlank } from "@/lib/schemaUtils";
 
 // --- Helper: Neuro Table (Shared by Motor & Reflex) ---
 
@@ -34,11 +35,11 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
   const safeData = data as unknown as Record<string, string | null>;
 
   // Helper function to get value with default
-  const getValueWithDefault = (value: string | null): string => {
-    if (value === '' || value === 'null') {
+  const getValueWithDefault = (value: unknown): string => {
+    if (isBlank(value)) {
       return '';
     }
-    return value || defaultValue;
+    return String(value) || defaultValue;
   };
 
   // Motor and reflex tables always show (they have meaningful defaults)
@@ -120,6 +121,7 @@ interface AdditionalFieldItem {
   label: string;
 }
 
+
 const AdditionalFields: React.FC<{
   fields: AdditionalFieldItem[];
   data: Record<string, unknown>;
@@ -127,7 +129,7 @@ const AdditionalFields: React.FC<{
   <>
     {fields.map((field) => {
       const val = data[field.key];
-      if (!val) return null;
+      if (isBlank(val)) return null; // Use isBlank here
       return (
         <div key={field.key} className="flex items-center gap-2">
           <span className="text-gray-700 font-medium">{field.label}:</span>

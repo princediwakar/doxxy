@@ -16,6 +16,7 @@ import type { AIStructuredOutput } from "@/types/voice";
 import type { PatientWithClinic, ConsultationFormValues } from "@/types/consultation";
 import type { AppointmentWithDetails } from "@/types/appointments";
 import type { DbAppointment, DbPatientByClinic } from "@/types/core";
+import { isBlank } from "@/lib/schemaUtils";
 
 const ConsultationPreviewModal = dynamic(
   () => import("@/components/consultation/ConsultationPreviewModal").then((m) => m.ConsultationPreviewModal),
@@ -33,16 +34,7 @@ interface InlineConsultationFormProps {
   formRef: React.RefObject<HTMLDivElement>;
 }
 
-// Global utility for strict sanitization.
-// Global utility for strict sanitization.
-const isBlank = (v: unknown): v is null | undefined | "" | "NOT_SPECIFIED" => {
-  if (v === null || v === undefined || v === "") return true;
-  if (typeof v === "string") {
-    const trimmed = v.trim().toUpperCase();
-    return trimmed === "NOT_SPECIFIED" || trimmed === "NULL" || trimmed === ":NULL";
-  }
-  return false;
-};
+
 export function InlineConsultationForm({
   appointmentId,
   appointment,

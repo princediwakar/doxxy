@@ -1,3 +1,4 @@
+// hooks/encounter/useEncounterCompletion.ts
 "use client";
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -10,6 +11,7 @@ import { APPOINTMENT_STATUS } from '@/types/appointments';
 import { stripNotSpecified } from '@/lib/voice/structureClinicalNotes';
 import type { AIStructuredOutput } from '@/types/core';
 import type { Json } from '@/integrations/supabase/types';
+import { isBlank } from '@/lib/schemaUtils';
 
 const supabase = getSupabase();
 
@@ -35,8 +37,8 @@ export function useEncounterCompletion() {
       const cleanedRawFields = stripNotSpecified(aiData.rawFields) as Record<string, unknown> | null;
 
       const specialtyData: Record<string, unknown> = {
-        chief_complaint: aiData.symptoms !== 'NOT_SPECIFIED' ? aiData.symptoms : '',
-        diagnosis: aiData.diagnosis !== 'NOT_SPECIFIED' ? aiData.diagnosis : '',
+        chief_complaint: !isBlank(aiData.symptoms) ? aiData.symptoms : '',
+        diagnosis: !isBlank(aiData.diagnosis) ? aiData.diagnosis : '',
         ...(cleanedRawFields || {}),
       };
       const specialtyJson = specialtyData as Json;
@@ -120,19 +122,19 @@ export function useEncounterCompletion() {
         };
 
         const medications = await Promise.all(
-          validPrescriptions.map(async (p) => {
-            const resolved = await resolveMedicine(p.drug_name!, p.formulation);
-            return {
-              name: p.drug_name,
-              dosage: p.dosage !== 'NOT_SPECIFIED' ? p.dosage : '',
-              frequency: p.frequency !== 'NOT_SPECIFIED' ? p.frequency : '',
-              duration: p.duration !== 'NOT_SPECIFIED' ? p.duration : '',
-              route: p.route !== 'NOT_SPECIFIED' ? p.route : '',
-              instructions: p.instructions !== 'NOT_SPECIFIED' ? p.instructions : '',
-              formulation: p.formulation !== 'NOT_SPECIFIED' ? p.formulation : '',
-              ...(resolved
-                ? { medicine_id: resolved.id, medicine_name: resolved.name }
-                : {}),
+        validPrescriptions.map(async (p) => {
+          const resolved = await resolveMedicine(p.drug_name!, p.formulation);
+          return {
+            name: p.drug_name,
+            dosage: !isBlank(p.dosage) ? p.dosage : '',
+            frequency: !isBlank(p.frequency) ? p.frequency : '',
+            duration: !isBlank(p.duration) ? p.duration : '',
+            route: !isBlank(p.route) ? p.route : '',
+            instructions: !isBlank(p.instructions) ? p.instructions : '',
+            formulation: !isBlank(p.formulation) ? p.formulation : '',
+            ...(resolved
+              ? { medicine_id: resolved.id, medicine_name: resolved.name }
+              : {}),
             };
           }),
         );
