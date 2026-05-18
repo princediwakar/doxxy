@@ -1,0 +1,118 @@
+---
+title: "How to Manage Pharmacy Inventory and Stock"
+description: "View medicine stock levels, add new stock entries, record procurements, and use AI-powered procurement extraction from invoices."
+role: "Superadmin"
+sortOrder: 7
+---
+
+## Prerequisites
+
+- You must be logged in to Doxxy. Both **Superadmin** and **Staff** roles can access the pharmacy.
+- A clinic must be selected.
+- Medicines must have been added to inventory (via procurement or manual stock entry).
+
+## The Goal
+
+Maintain accurate medicine inventory for your clinic's pharmacy — track stock levels, add new stock batches, record purchases (procurements), and use AI to extract procurement data from supplier invoices.
+
+## Step-by-Step UI Instructions
+
+### From the Pharmacy page (`/pharmacy`):
+
+The page header shows **"Pharmacy Store"** with the subtitle *"Manage medicine stock, track expiry dates, and add new purchases."* and an **"Add Stock"** button (blue, with a + icon).
+
+The page has two tabs:
+
+### Tab 1: Stock (Inventory)
+
+This tab displays the current medicine inventory in a table or card list. Each item shows:
+
+- **Medicine Name:** The brand or generic name.
+- **Stock Level:** Current quantity available.
+- **Expiry Date:** When the batch expires.
+- **Price & Pack Size:** Unit price and pack information.
+- **Low Stock Alerts:** Items with critically low quantities are visually highlighted.
+
+**Searching and filtering:**
+- Use the search bar within the tab to find a specific medicine by name.
+- Low-stock items typically float to the top or are marked with a warning indicator.
+
+### Tab 2: Purchase Records (Procurements)
+
+This tab displays the procurement history — all past stock purchases. Each record shows:
+
+- **Date of purchase.**
+- **Supplier details.**
+- **Medicines purchased and quantities.**
+- **Total cost.**
+
+### Adding New Stock
+
+3. Click the **"Add Stock"** button. The **Procurement Entry Sheet** slides open from the side.
+
+4. Fill in the procurement details:
+   - **Supplier information.**
+   - **Invoice number and date.**
+   - **Medicines:** Add each medicine with name, quantity, batch number, expiry date, unit price, and pack size.
+   - **AI Extraction (optional):** Use the AI-powered extraction to automatically parse medicine details from an uploaded invoice image or text. Click the AI extraction button, upload or paste the invoice content, and the system populates the medicine list automatically.
+
+5. Review the extracted or manually entered data for accuracy.
+
+6. Click the submit/save button. The stock is added to inventory and the procurement record is saved.
+
+7. A success toast confirms the entry. The Stock tab refreshes with updated quantities.
+
+### AI Procurement Extraction
+
+8. Within the Procurement Entry Sheet, look for the AI extraction option.
+
+9. Upload a photo or scan of the supplier invoice, or paste the invoice text.
+
+10. The AI (Gemini, with OpenAI fallback) parses the invoice and extracts:
+    - Medicine names.
+    - Quantities.
+    - Batch numbers.
+    - Expiry dates.
+    - Unit prices and pack sizes.
+
+11. Review the extracted data carefully. AI extraction is a time-saver but may misread handwritten or poorly printed invoices. Correct any errors before saving.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Stock Level Monitoring
+- Set a minimum stock threshold for frequently dispensed medicines. Check the Stock tab daily to identify items nearing their reorder point.
+- Low-stock items are highlighted in the inventory view. Restock before reaching zero to avoid patient inconvenience.
+
+### Expiry Date Tracking
+- Always enter the correct expiry date when adding stock. The inventory view shows expiry dates prominently.
+- Implement a First Expiry First Out (FEFO) dispensing policy: dispense medicines with the earliest expiry dates first.
+- Run a weekly check for medicines expiring within 30 days and either prioritize their use or initiate returns to the supplier.
+
+### Batch Number Recording
+- Always record the batch number for each procurement. In case of a drug recall or quality issue, batch numbers are essential for tracing affected stock.
+- Batch numbers should match the supplier's invoice exactly.
+
+### AI Extraction Best Practices
+- Use clear, well-lit photos of invoices for best AI results. Avoid shadows, glare, and skewed angles.
+- The AI model (Gemini primary, OpenAI fallback) works best with printed/typed invoices. Handwritten invoices may have lower accuracy.
+- Always verify AI-extracted data before saving. Never save procurement data directly from AI output without human review.
+- If the AI extraction fails or returns incomplete data, enter the medicines manually.
+
+### Procurement Records
+- Keep procurement records for audit and reconciliation. The Purchase Records tab serves as your digital purchase ledger.
+- Cross-reference procurement records with supplier bills to ensure accuracy.
+
+### Access Control
+- Both superadmins and staff can access the pharmacy. If you want to restrict pharmacy access to specific staff members, this must be managed through role assignments.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Inventory tab is empty** | No medicines have been added yet. Click "Add Stock" to make your first procurement entry. |
+| **AI extraction failed or returned empty data** | The Gemini API may have failed. The system automatically falls back to OpenAI. If both fail, enter the medicines manually. Ensure the invoice image is clear and readable. |
+| **"Add Stock" button not responding** | Check your internet connection. The Procurement Entry Sheet is a client-side slide-over and should open instantly. |
+| **Stock levels not updating after entry** | Switch to the Stock tab and verify. If quantities haven't changed, the procurement may not have saved — check for an error toast. |
+| **Expired medicine still showing in stock** | The system does not automatically remove expired stock. Manually adjust or remove expired items, or flag them for return. |
+| **Duplicate medicine entries in inventory** | Different batches of the same medicine appear as separate entries (since they have different batch numbers and expiry dates). This is intentional. |
+| **Cannot find a specific medicine** | Use the search bar in the Stock tab. If the medicine doesn't exist, add it via the Procurement Entry Sheet. |

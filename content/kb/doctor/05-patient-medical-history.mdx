@@ -1,0 +1,104 @@
+---
+title: "How to Review a Patient's Medical History"
+description: "Access the patient chart — view past consultations, prescriptions, bills, and the full medical timeline — from the encounter canvas or the Patients page."
+role: "Doctor"
+sortOrder: 5
+---
+
+## Prerequisites
+
+- You must be logged in with a **Doctor** or **Superadmin** role in the active clinic.
+- The patient must have past consultations, prescriptions, or bills in the system.
+- You can access history from the Schedule page (via the encounter canvas) or from the patient's dedicated page at `/patients/[id]`.
+
+## The Goal
+
+Review a patient's complete medical history before, during, or after a consultation. Access past consultation notes, see previously prescribed medications, view billing history, and understand the patient's full clinical timeline.
+
+## Step-by-Step UI Instructions
+
+### From the Encounter Canvas (Schedule page):
+
+When a patient is selected in the queue, the encounter canvas shows the **Administrative Footer** at the bottom with two expandable accordions:
+
+### Viewing Previous Consultations
+
+1. Click the **"Previous Consultations (N)"** accordion header to expand it. N is the count of completed past consultations for this patient.
+
+2. Each past consultation row shows:
+   - **"Consultation · [Date]"** — The date of the visit (e.g., "Consultation · May 15, 2026").
+   - **Time, Doctor, and Status** — e.g., "10:30 AM · Doctor: Dr. Sharma · Completed".
+   - A snippet of the **chief complaint** from that visit (if recorded).
+   - A **"View Notes"** button (eye icon).
+
+3. Click **"View Notes"** on any past consultation to open it. The consultation opens (typically in a modal or the current view updates) showing the complete structured note from that visit — all specialty-specific fields, diagnoses, prescriptions, and treatment plan.
+
+4. Up to **5 recent consultations** are shown expanded. If the patient has more than 5 past visits, the most recent 5 are displayed.
+
+### Viewing Bills
+
+5. Click the **"Bills (N)"** accordion header to expand it. N is the count of bills for this patient.
+
+6. Each bill row shows:
+   - **Invoice number** (e.g., "INV-a1b2c3d4").
+   - **Date** (e.g., "May 15, 2026").
+   - **Amount** in rupees (₹).
+   - An **eye icon** that appears on hover.
+
+7. Click any bill row to view its full details — service items, discounts, taxes, and total amount.
+
+### From the Patient Chart Page (`/patients/[id]`):
+
+8. You can also navigate to the patient's dedicated page. This shows the full Patient Chart with:
+   - **Patient demographics** — Name, age, gender, MRN, phone, address.
+   - **Medical History Timeline** — A chronological view of all consultations, prescriptions, and bills.
+   - **Appointment scheduling** — Buttons to book new appointments.
+   - **Patient editing** — Update patient details.
+
+9. The Patient Chart is accessible from multiple places:
+   - Click **"Edit Patient"** from the Patient Header menu (three-dot menu), then navigate to the patient page.
+   - Search for the patient from the Command Palette (Cmd+K / Ctrl+K).
+   - Click on a patient link from anywhere the patient's name appears as a hyperlink.
+
+### Information Available in History
+
+For each past consultation, you can review:
+- Chief complaint and history.
+- Vital signs (if recorded).
+- Physical examination findings.
+- Diagnosis (primary and differential).
+- Treatment plan and advice.
+- All prescribed medications (drug, dosage, frequency, duration).
+- Additional clinical findings.
+- Ruled-out conditions.
+
+## Recommended Clinic Policy & Edge Cases
+
+### When to Review History
+- **Before the consultation:** Skim the most recent 1-2 visits and the chief complaint to understand the patient's ongoing issues.
+- **During the consultation:** Reference past prescriptions to check what was previously prescribed and whether it was effective.
+- **After the consultation:** Review older history if you need to confirm a past diagnosis or track a chronic condition's progression.
+
+### Continuity of Care
+- Past consultations from other doctors in the same clinic are visible. This supports continuity when a patient sees different doctors.
+- If you are covering for a colleague, reviewing their past notes helps you understand the patient's context without a verbal handoff.
+
+### Data Completeness
+- Historical data is permanent. Even if a doctor leaves the clinic, their consultation notes remain in the patient's record.
+- Prescriptions from past visits are visible even if the medicine is no longer in the pharmacy inventory.
+- Bills show financial history but not the clinical details — use the consultation notes for clinical context.
+
+### What History Does NOT Show
+- The patient history does not currently pull from external sources (other clinics, labs, imaging centres). It only shows data recorded within this Doxxy clinic.
+- There is no allergy or problem list separate from consultation notes. Any known allergies should be documented in the consultation notes of each visit.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Previous Consultations accordion shows 0** | This patient has no past completed consultations. This may be their first visit. |
+| **"View Notes" doesn't open** | The consultation viewer requires the appointment and doctor IDs. If these are missing from the record, the view may not work. Try accessing the patient chart page instead. |
+| **Bills accordion is empty** | No bills have been generated for this patient. Bills are separate from consultations — a visit may have a consultation note but no bill if billing hasn't been processed yet. |
+| **Patient Chart page shows a spinner** | The patient data is loading from the server. If it persists, the patient ID may be incorrect or the patient may not exist. |
+| **Only 5 consultations are shown** | The accordion shows the 5 most recent consultations to keep the view compact. Access the full Patient Chart page for the complete history. |
+| **Chief complaint shows but no other details** | The consultation may have been started but not completed, or the doctor filled only the chief complaint field. Incomplete notes show whatever was saved via auto-save. |

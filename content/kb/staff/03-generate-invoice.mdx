@@ -1,0 +1,133 @@
+---
+title: "How to Generate an Invoice and Process Payment"
+description: "Create a bill from a consultation — add service items, apply discounts and taxes, generate a print-ready invoice, and mark payment as received."
+role: "Staff"
+sortOrder: 3
+---
+
+## Prerequisites
+
+- You must be logged in with a **Staff** or **Superadmin** role in the active clinic.
+- The patient must have a consultation (completed or in progress).
+- A clinic must be selected.
+
+## The Goal
+
+Generate a professional invoice for a patient's visit — add billable service items (consultation fee, procedures, medicines), apply discounts and taxes, generate a formatted invoice with an invoice number, and mark the payment as received. The invoice can be printed for the patient and is recorded in the clinic's financial records.
+
+## Step-by-Step UI Instructions
+
+### Opening the Billing Modal
+
+1. From the **Schedule page**, select a patient from the queue. The encounter canvas opens in the right panel.
+
+2. Click the **"Bill"** button on the Patient Header (visible in the staff variant with direct action buttons: Bill, Schedule, Edit).
+
+3. Alternatively, from the doctor's three-dot menu on the Patient Header, select **"Bill"**.
+
+4. The **Billing Modal** opens. It is pre-populated with the patient and consultation context.
+
+### Adding Service Items
+
+5. In the **Service Items** section, add each billable item:
+
+   - **Description:** The name of the service or item (e.g., "Consultation - General Medicine", "Blood Test - CBC", "Paracetamol 500mg").
+   - **Quantity:** The number of units (default 1).
+   - **Unit Price (₹):** The price per unit.
+   - **Total:** Auto-calculated as Quantity × Unit Price.
+
+6. Click **"+ Add Item"** to add more line items. Use the X button on any row to remove it.
+
+### Applying Discounts and Taxes
+
+7. Add a **Discount** — either as a percentage or a fixed rupee amount. The discount is subtracted from the subtotal.
+
+8. Add **Tax** if applicable (e.g., GST). Enter the tax percentage. The tax amount is calculated on the discounted subtotal.
+
+### Reviewing the Invoice
+
+9. The modal shows a running calculation:
+   - **Subtotal:** Sum of all service items.
+   - **Discount:** Amount subtracted.
+   - **Tax:** Amount added.
+   - **Grand Total:** Final amount payable.
+
+10. Review all line items, discount, and tax before saving.
+
+### Generating the Invoice
+
+11. Click the **save/generate button** (typically "Create Bill" or "Generate Invoice").
+
+12. The invoice is created with:
+    - A unique **invoice number** (auto-generated, e.g., "INV-a1b2c3d4").
+    - The current date and time.
+    - The patient's name and details.
+    - The clinic's name, address, and contact info.
+    - All service items, discount, tax, and grand total.
+
+13. A green toast confirms: *"Bill created successfully"* (or similar).
+
+### Processing Payment
+
+14. After the invoice is generated, mark the payment as received. The billing flow may include a payment collection step where you record:
+    - Payment method (Cash, Card, UPI, etc.).
+    - Amount received (full or partial payment).
+
+15. Once payment is marked, the bill is recorded in the financials and the patient's bill history.
+
+### Printing the Invoice
+
+16. From the bill view, use the print function. The `billingPrintUtils` module formats the invoice for clean, professional printing — suitable for handing to the patient or filing.
+
+17. Use Cmd+P / Ctrl+P to print, or the print button if available in the bill detail view.
+
+### Viewing Past Bills
+
+18. In the encounter canvas, expand the **"Bills (N)"** accordion in the Administrative Footer to see all bills for this patient.
+
+19. Click any bill row to view its full details.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Standard Billing Workflow
+1. Doctor completes the consultation.
+2. Front desk opens the Billing Modal from the Patient Header.
+3. Add service items: consultation fee (as per the doctor's profile), any procedures, medicines dispensed.
+4. Apply any applicable discounts (e.g., senior citizen discount, staff discount).
+5. Apply tax if GST is applicable.
+6. Generate the invoice and print a copy for the patient.
+7. Collect payment and mark it as received.
+
+### Consultation Fee Alignment
+- The doctor's consultation fee (set in their profile) should be used as the consultation line item price. Staff should verify the fee rather than manually entering it from memory.
+- If the doctor charges different rates for different visit types (initial consultation vs. follow-up), the billing staff should know the rate schedule.
+
+### Discount Policies
+- Establish a written discount policy. Common discounts: senior citizens (age 60+), clinic staff and their dependents, economically disadvantaged patients.
+- Document the reason for any discount on the invoice or in the notes.
+- Large or unusual discounts should require superadmin approval.
+
+### Partial Payments
+- If a patient cannot pay the full amount upfront, record the partial payment and note the balance due.
+- The system tracks completed and pending payments. Follow up on outstanding balances per clinic policy.
+
+### GST and Tax Compliance
+- Ensure the clinic's GST number and tax settings are correctly configured (typically set up by the superadmin in clinic details).
+- Tax applies based on the service type and local regulations. Consult with your accountant on correct tax rates.
+
+### Invoice Integrity
+- Once generated, an invoice should not be modified (except to correct genuine errors). If an invoice needs correction, void it and create a new one rather than editing the original.
+- All invoices are permanently recorded and contribute to financial reports.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Billing Modal won't open** | Ensure a patient is selected in the queue. The Bill button is on the Patient Header. |
+| **Service items total doesn't match expected** | Check each line item's quantity and unit price. The subtotal is auto-calculated. |
+| **Discount not applying correctly** | Verify whether the discount is a percentage or fixed amount. Check that it's being subtracted from the subtotal, not the grand total. |
+| **Tax calculation seems off** | Tax is calculated on the discounted subtotal. Verify the tax percentage entered. |
+| **Invoice number is not showing** | The invoice number is auto-generated when the bill is created. If missing, the bill may not have been saved. |
+| **Print layout is cut off** | Use the browser's print dialog and ensure the page size is set to A4. Adjust margins if needed. |
+| **Bill created but not appearing in financials** | Refresh the Financials page. Financial data is fetched server-side, and a newly created bill should appear. |
+| **"Create Bill" button not visible** | The Bills accordion in the Administrative Footer shows a "Create Bill" button when bills exist. If no bills exist, a "Create Bill" button may appear in the empty state. Alternatively, use the Patient Header Bill button. |

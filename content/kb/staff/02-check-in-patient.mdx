@@ -1,0 +1,98 @@
+---
+title: "How to Check In a Patient"
+description: "Move a patient from 'Scheduled' to 'In Progress' when they arrive at the clinic, updating the queue so the doctor knows they are ready to be seen."
+role: "Staff"
+sortOrder: 2
+---
+
+## Prerequisites
+
+- You must be logged in with a **Staff** or **Superadmin** role.
+- The patient must have a **Scheduled** appointment for today (visible in the queue on the Schedule page).
+- You should be on the Schedule page (`/schedule`) with the patient selected in the queue.
+
+## The Goal
+
+Move a patient from "Scheduled" to "In Progress" when they physically arrive at the clinic. This updates the live queue so the doctor can see the patient is ready, and the front desk can track the patient's journey through the clinic.
+
+## Step-by-Step UI Instructions
+
+1. **Navigate to the Schedule page** (`/schedule`). Today's date is selected by default in the Date Carousel.
+
+2. **Locate the patient in the left-side queue.** The queue is organized into three color-coded sections:
+   - **In Progress** (yellow dot) — patients currently with the doctor.
+   - **Waiting** (blue dot) — patients who are scheduled but have not yet been seen.
+   - **Completed** (green dot) — patients who have finished their visit.
+
+3. **Click on the patient's name** in the **Waiting** section. The detail panel opens on the right, showing:
+   - The **Patient Header** card with the patient's name, age, gender, medical ID, appointment type, and time.
+   - A status section showing **"Current Status: Scheduled"**.
+
+4. Click the **"Check In / Assign Room"** button (blue button with a checkmark icon).
+
+5. A green toast notification confirms: *"Patient checked in"*.
+
+6. The patient automatically moves from the **Waiting** section to the **In Progress** section of the queue.
+
+7. The status section now shows **"Current Status: In Progress"** and displays a new button: **"Mark Completed"**.
+
+### After Check-In
+
+- The doctor can now see the patient in their "In Progress" queue and begin the consultation.
+- If your clinic collects consultation fees upfront, click **"Collect Copay"** in the status action area to generate a bill immediately after check-in.
+- If you need to generate a standard bill, click **"Generate Bill"** in the same area.
+
+### To mark an appointment as completed:
+
+- When the patient's visit is finished, return to their detail panel and click **"Mark Completed"**. The patient moves to the **Completed** section. (The doctor may also complete the encounter from their view, which has the same effect.)
+
+## Recommended Clinic Policy & Edge Cases
+
+### Standard Check-In Workflow
+1. Patient arrives at the front desk and provides their name.
+2. Front desk staff locates the patient in the Waiting section of the queue.
+3. Staff verifies the patient's identity (confirm phone number or ask for name/dob match).
+4. Click **"Check In / Assign Room"**.
+5. Collect any pending documentation (previous reports, ID proof if required by clinic policy).
+6. If consultation fees are collected upfront, click **"Collect Copay"** to generate the bill.
+7. Direct the patient to the waiting area. The doctor's queue updates in real time.
+
+### Late Arrival
+- **0-15 minutes late:** Check in normally. No special action needed.
+- **15-30 minutes late:** Check in, but verbally inform the patient they may have a longer wait as on-time patients will be seen first.
+- **30-60 minutes late:** Do NOT check in immediately. Ask the patient if they are willing to wait. If yes, check them in but add a note to the appointment (click **"Edit Appointment"** → add to Notes: *"Arrived 45 min late"*). Inform them their wait may be significant.
+- **Over 60 minutes late:** The appointment slot is effectively lost. Offer to reschedule to a later time today (if available) or a future date. Do NOT check in a patient who is over an hour late without the treating doctor's approval — the doctor may have already left or be fully booked.
+
+### Walk-In Patient Without an Appointment
+- If a patient arrives without an appointment:
+  1. First, search for the patient using the **"Search patients..."** button or create a new patient record via **"New Patient"**.
+  2. Book a new appointment as "Walk-in" type with status "In Progress" (see [How to Book a New Appointment](/kb/staff/booking-appointment)).
+  3. Inform the patient of the estimated wait time based on the current queue depth.
+  4. If the clinic policy is "no walk-ins after 7 PM" or during a designated lunch hour, politely inform the patient and offer the next available slot.
+- **Critical rule:** Never turn away a patient with an emergency. Escalate to the senior-most doctor available immediately.
+
+### Patient Not Found in System
+- If a patient claims they have an appointment but is not in the queue:
+  1. Check if they are at the correct clinic location (use the **Clinic Switcher** if your organization manages multiple locations).
+  2. Check if the appointment was booked for a different date (use the **Date Carousel** to check yesterday or tomorrow).
+  3. If still not found, treat them as a walk-in: register them via **"New Patient"** and book a new appointment.
+  4. If the patient insists they booked online, process them as a walk-in to avoid conflict and investigate the online booking sync later.
+
+### Verifying Patient Information
+- If the patient's name is misspelled or phone number is outdated, click **"Edit Patient"** on the Patient Header to update their record during check-in.
+- Make it a habit to verify the phone number at every visit — it is critical for SMS/WhatsApp reminders.
+
+### Queue Transparency
+- If wait times exceed 30 minutes, front desk staff should proactively inform waiting patients of the estimated delay.
+- A simple "Doctor is running approximately 20 minutes behind" prevents frustration and walk-outs.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Failed to update appointment" toast on check-in** | Network issue. The server action failed to update the appointment status. Check your internet connection and try clicking **"Check In / Assign Room"** again. |
+| **Patient is not in the Waiting section** | They may already be checked in (look under "In Progress"), already completed (look under "Completed"), or their appointment is for a different date. Use the **Date Carousel** to check surrounding dates. |
+| **"Check In / Assign Room" button is missing** | The button only appears when the appointment status is "Scheduled". If the patient is already "In Progress" or "Completed", no check-in button is shown. |
+| **Checked in the wrong patient** | Click **"Edit Appointment"** on the Patient Header and change the status back to "Scheduled". Or ask a superadmin to do so. |
+| **Patient checked in but doctor can't see them** | The doctor may have a doctor filter active on their Schedule view (e.g., "My Patients"). Ask the doctor to switch the doctor filter dropdown to "All Doctors" or verify the correct doctor is assigned to the appointment. |
+| **Multiple patients with the same name** | Use the age/gender badge and phone number shown in the queue list to verify identity before check-in. |

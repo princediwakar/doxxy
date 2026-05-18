@@ -1,0 +1,100 @@
+---
+title: "How to Navigate Your Daily Appointment Queue"
+description: "View today's scheduled and in-progress patients, filter by doctor, and select a patient to begin the consultation encounter."
+role: "Doctor"
+sortOrder: 1
+---
+
+## Prerequisites
+
+- You must be logged in with a **Doctor** or **Superadmin** role in the active clinic.
+- You must have a doctor profile set up (via Clinic Settings → Staff → Create Doctor Profile).
+- Appointments must exist for today's date.
+
+## The Goal
+
+Navigate the daily schedule, see your patient queue organized by status, select a patient, and open their encounter canvas to begin or continue the consultation.
+
+## Step-by-Step UI Instructions
+
+### From the Schedule page (`/schedule`):
+
+The page loads with today's date selected by default in the Date Carousel at the top.
+
+### Understanding the Queue Layout
+
+The left panel displays the patient queue, organized into three colour-coded sections:
+
+1. **In Progress** (yellow dot) — Patients currently being seen or checked in. These are your active consultations.
+
+2. **Waiting** (blue dot) — Patients with "Scheduled" status who have not yet been checked in or started.
+
+3. **Completed** (green dot) — Patients whose visits are finished for the day. Their encounter is signed off.
+
+Each section header shows the section name and the count of patients in it (e.g., "WAITING (5)").
+
+### Selecting a Patient
+
+4. Click on any patient's name in the queue. The patient row highlights with a ring/border to show it is selected.
+
+5. The right-side detail panel opens, showing the **Encounter Canvas** with:
+   - The **Patient Header** card with the patient's name, age, gender, MRN (Medical Record Number), department name, appointment time, and status badge.
+   - The three-dot **more menu** (⋮) for additional actions (Schedule, Bill, Edit Patient, Edit Appointment).
+   - The **Dictation Zone** (if the appointment is not yet completed and you can edit).
+   - The **Inline Consultation Form** with specialty-specific sections.
+   - The **Administrative Footer** with Bills and Previous Consultations accordions.
+
+### Filtering by Doctor
+
+6. Use the **Doctor filter dropdown** at the top of the Schedule page to switch between:
+   - **"All Doctors"** — View every patient in the clinic today.
+   - **"My Patients"** — View only patients assigned to you.
+
+7. If you can't see a patient you expect, check the doctor filter — you may have "All Doctors" filtered to someone else, or you may be viewing only your own patients while the appointment is assigned to a colleague.
+
+### Date Navigation
+
+8. Use the **Date Carousel** at the top to switch between dates. Click left/right arrows or tap a specific date to view that day's queue.
+
+9. Today's date is highlighted. Appointments from past and future dates are viewable but may have limited actions (e.g., you cannot edit a completed encounter from last week).
+
+### Patient Row Information
+
+Each patient row in the queue shows:
+- **Patient name** and age.
+- **Gender** (M/F).
+- **Appointment time** (e.g., "10:30 AM").
+- **Appointment type** badge (Walk-in or Digital).
+- **Status** indicator via the section they appear in.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Starting Your Day
+1. Arrive at the clinic, log in to Doxxy, and navigate to the Schedule page.
+2. Set the doctor filter to **"My Patients"** to see only your queue.
+3. Review the Waiting section to understand your morning workload.
+4. When ready for your first patient, ask the front desk to check them in. They appear in "In Progress".
+5. Click the patient's name to open the encounter canvas and begin.
+
+### Handling Walk-Ins Between Appointments
+- Walk-in patients added by staff will appear in your queue immediately.
+- If a walk-in is marked "In Progress", they are ready for you now. If "Waiting", the front desk has booked them but hasn't checked them in yet.
+- Prioritize scheduled patients at their appointed time. Walk-ins can be seen between scheduled slots.
+
+### Managing Your Queue Depth
+- If your Waiting list is long and you're running behind, inform the front desk so they can update waiting patients.
+- Use the queue counts to gauge your pace. A growing In Progress list with no movement to Completed means patients are waiting in rooms.
+
+### Viewing Past Dates
+- You can navigate to past dates to review completed consultations. The Date Carousel allows this, and clicking a patient opens their completed encounter in read-only mode (unless you have edit permissions).
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Queue is empty or shows no patients** | Check the Date Carousel — you may be on a date with no appointments. Switch to today. Also check the doctor filter — "My Patients" may show nothing if no patients are assigned to you today. |
+| **Patient I'm seeing isn't in "In Progress"** | The front desk may not have checked them in yet. Ask them to click "Check In / Assign Room". |
+| **Cannot see a colleague's patient** | Set the doctor filter to "All Doctors" to view the full clinic queue. |
+| **Encounter canvas shows a loading skeleton** | Patient detail is still loading from the server. Wait a moment. If it persists, refresh the page. |
+| **"Completed" patients are still visible** | Yes — completed patients remain visible for the day so you can review or re-open their notes if needed. |
+| **Date Carousel not responding** | The dates are generated client-side. Check that the component loaded. Try refreshing the page. |

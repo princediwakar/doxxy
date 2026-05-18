@@ -1,0 +1,114 @@
+---
+title: "How to Dictate a Clinical Note Using Sarvam AI"
+description: "Use the microphone to capture consultation notes via voice-to-text, which auto-structures into SOAP format using Sarvam AI with specialty-specific fields."
+role: "Doctor"
+sortOrder: 2
+---
+
+## Prerequisites
+
+- You must be logged in with a **Doctor** role and have an active, non-completed appointment selected in the encounter canvas.
+- Your device must have a working microphone.
+- Your browser must grant microphone permission to Doxxy.
+- You should be in a reasonably quiet environment for best transcription accuracy.
+
+## The Goal
+
+Use voice dictation during or immediately after a patient consultation to capture clinical notes hands-free. The system transcribes your speech to text in real time using Sarvam AI (with WebSocket streaming), then structures the transcript into specialty-specific SOAP fields (chief complaint, diagnosis, treatment, prescriptions, and additional findings) using an LLM structuring step.
+
+## Step-by-Step UI Instructions
+
+### From the Encounter Canvas (right panel on the Schedule page):
+
+The **Dictation Zone** appears below the Patient Header and above the Inline Consultation Form. It shows a large button labelled **"Tap to Dictate"** with a microphone icon.
+
+### Starting Dictation
+
+1. Click **"Tap to Dictate"**. The system requests microphone permission if this is your first time.
+
+2. Once permission is granted, the Dictation Zone transitions to the **recording state**:
+   - A **timer** displays elapsed recording time (e.g., "2:35").
+   - The recording area has a red-tinted border.
+   - Three buttons appear: **Cancel**, **Pause**, **Done**.
+   - As you speak, a live transcript buffer appears above the timer, showing your words in real time.
+
+### During Recording
+
+3. Speak naturally. Describe:
+   - The patient's **chief complaint** and history of present illness.
+   - Your **physical examination findings**.
+   - Your **diagnosis** or differential diagnoses.
+   - The **treatment plan** and advice.
+   - Any **prescriptions** (drug name, dosage, frequency, duration).
+   - Any **additional findings** or **ruled-out conditions**.
+
+4. You can **Pause** at any time — useful if the patient asks a question or you need to perform an examination. Click **Continue** to resume recording on the same session.
+
+5. The system performs **background lookahead structuring** during long recordings — approximately every 50 words of new speech after a 2.5-second pause. This silently pre-processes your dictation so the final structuring is faster.
+
+### Ending Dictation
+
+6. Click **Done** (the square stop button). The system:
+   - Finalizes the transcript from the streaming session.
+   - Runs the transcript through the AI structuring service (`structureTranscript`).
+   - Maps the structured output to your department's specialty-specific form fields.
+
+7. On success, a green toast appears: *"Consultation notes ready!"* with a **"View"** button that scrolls to the consultation form.
+
+8. The consultation form auto-scrolls into view, populated with the structured data. Review and edit before completing the encounter.
+
+### If Dictation Fails
+
+9. If the AI structuring fails, a red toast shows the error message. The consultation form is NOT populated. You can still fill it out manually.
+
+10. If the microphone or streaming fails, the Dictation Zone shows an error state with a **"Edit Consultation Notes"** button to open the manual form.
+
+### Recording Additional Notes
+
+11. After your first dictation, the Dictation Zone shows a **"Record Additional Notes"** button. Click it to capture more information.
+
+12. Additional dictations are merged with existing structured data: new prescriptions are appended, and blank fields are filled while already-filled fields are preserved.
+
+### Handling Connection Issues
+
+13. If the WebSocket connection is interrupted during recording, a yellow warning banner appears: *"Connection interrupted. Audio saved locally — continue speaking."* The recording continues in **degraded mode**.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Dictation Best Practices
+- Speak clearly and at a moderate pace. The streaming STT model works best with natural, conversational speech — don't slow down artificially.
+- Use structured language: "The patient reports a three-day history of fever and cough" rather than "So, um, fever, yeah, three days."
+- State drug names clearly when prescribing. Spell uncommon drug names if the system misinterprets them.
+- Pause between sections (complaint, exam findings, diagnosis, plan) to help the AI structure the output correctly.
+
+### Privacy and Environment
+- Dictate in a private setting. The microphone captures all ambient audio. Avoid dictating sensitive information in hallways or waiting areas.
+- Background noise reduces accuracy. Close the consulting room door. If using a laptop microphone, position the device close to you.
+- The transcript is processed server-side. No audio recordings are permanently stored — only the final transcript and structured output are saved to the consultation record.
+
+### Language Support
+- The Sarvam AI integration supports Indian languages. Check with your clinic administrator about configured language options.
+- The system supports language selection at the start of dictation.
+
+### When NOT to Use Dictation
+- In extremely noisy environments, skip dictation and use the manual consultation form.
+- For very short consultations (e.g., a quick follow-up or vaccine administration), manual entry may be faster.
+- If the internet connection is unstable, use manual entry. The streaming WebSocket requires a stable connection for real-time transcription.
+
+### Review Before Signing
+- AI-generated notes are a *draft*. Always review and correct the populated form fields before completing the encounter.
+- Pay special attention to drug names and dosages — STT errors in these fields can have clinical consequences.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Microphone permission denied** | Your browser blocked mic access. Click the lock/site settings icon in the address bar and allow microphone access for Doxxy. Then refresh the page. |
+| **"Requesting mic..." spinner shows indefinitely** | The browser is waiting for you to approve the permission prompt. Check for a permission dialog. If none appears, check your browser's site settings. |
+| **Recording starts but no text appears** | Your microphone may be muted, not working, or not selected. Check your system's sound input settings. Try speaking louder. |
+| **Timer runs but transcript is garbled** | Background noise, strong accent, or poor audio quality. Try moving closer to the mic, reducing ambient noise, or speaking more clearly. |
+| **"Connection interrupted" warning** | Internet connectivity issue. The recording continues locally, but real-time transcription is paused. Wait for reconnection or finish and hope the final transcript is complete. |
+| **"Failed to process dictation" error toast** | The structuring service failed. Your transcript was captured but could not be structured. Open the manual form and enter notes there. |
+| **Structured notes are incomplete or wrong** | AI structuring is not perfect. The transcript is not displayed, but you can manually correct any fields in the consultation form. |
+| **Done button spins indefinitely** | The structuring API is slow or timing out. Wait up to 30 seconds. If it persists, cancel and use manual entry. |
+| **Browser doesn't support recording** | Doxxy requires a modern browser (Chrome, Edge, or Firefox) with MediaRecorder API support. Safari may have limitations. |

@@ -1,0 +1,105 @@
+---
+title: "How to View Practice-Wide Analytics"
+description: "Use the analytics dashboard — appointment trends, doctor performance rankings, patient demographics, and no-show tracking."
+role: "Superadmin"
+sortOrder: 8
+---
+
+## Prerequisites
+
+- You must be logged in with a **Superadmin** or **Staff** role in the active clinic.
+- The clinic must have recorded appointments for data to appear.
+- A clinic must be selected.
+
+## The Goal
+
+Monitor clinic-wide performance through the analytics dashboard: track appointment volumes, completion rates, no-show rates, patient demographics (age and gender distribution), individual doctor performance, and weekly appointment trends.
+
+## Step-by-Step UI Instructions
+
+### From the Overview page (`/analytics`):
+
+The page header shows **"Overview"** with the subtitle *"Clinic-wide analytics & provider performance"* (for superadmins/staff) or *"Your practice analytics"* (for doctors). A period toggle offers **7D** and **30D** buttons to switch the time window.
+
+### Period Selection
+
+1. Click **7D** to view analytics for the last 7 days, or **30D** for the last 30 days. The selection is highlighted. All stat cards and charts update to reflect the selected period.
+
+### Clinic-Wide Stat Cards (Superadmin/Staff view)
+
+Five cards display key metrics, each with a trend indicator comparing the current period to the previous equal-length period:
+
+2. **Patients Seen:** Total unique patients seen in the period. Trend shows whether patient volume is up or down.
+
+3. **Appointments:** Total appointments (all statuses) in the period. Clickable — does not navigate but provides the appointment count.
+
+4. **Completed:** Successfully completed appointments. Trend with a green up arrow is positive (more completions). **Click this card** to jump to the Schedule page filtered by completed status.
+
+5. **No-Shows:** Appointments where the patient did not arrive. An *increase* in no-shows is shown as a red down arrow (because more no-shows is a negative trend). **Click this card** to jump to the Schedule page filtered by no-show status.
+
+6. **Pending:** Appointments still in "Scheduled" or "In Progress" status. Shows the trend direction.
+
+### Weekly Appointments Chart
+
+Below the stat cards, a **bar chart** displays appointment counts for each day in the selected period:
+- Each bar represents one day, split by appointment status (completed, pending, cancelled, no-show) in different colours.
+- **Click any bar** to navigate to the Schedule page for that specific date, where you can see the detailed queue.
+- Hover over a bar to see the exact breakdown per status.
+
+### Patient Demographics
+
+A side panel (or card next to the chart in the 3-column layout) shows:
+- **Age Distribution:** A breakdown of patients by age group (e.g., 0-18, 19-35, 36-50, 51-65, 65+).
+- **Gender Distribution:** Male/Female/Other split, typically shown as a pie or donut chart.
+
+Use this to understand your patient base and tailor services accordingly.
+
+### Doctor Performance Table
+
+Below the chart and demographics, a table ranks each doctor in the clinic by:
+- **Doctor Name** and department.
+- **Total Appointments** in the period.
+- **Completed**, **Pending**, **Cancelled**, and **No-Show** counts.
+- **Completion Rate:** Percentage of appointments successfully completed.
+
+This table helps identify top performers, doctors with high no-show rates (which may indicate scheduling issues rather than doctor performance), and workload distribution across the practice.
+
+### Superadmin with Doctor Profile
+
+If you are a superadmin who also has a doctor profile, you see both the clinic-wide view AND a **"My Practice"** section with your personal stats — patients seen, appointments, completed, no-shows, and pending — mirroring the clinic-wide cards but scoped to your own consultations.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Interpreting No-Show Rates
+- A clinic-wide no-show rate above 10-15% warrants investigation. Check if reminders are being sent (requires Clinical Excellence plan with SMS/WhatsApp), if wait times are excessive, or if specific doctors have disproportionate no-shows.
+- The no-show trend is inverted: an *increase* in no-shows displays as a "down" trend (red, negative) because higher no-shows are worse for the practice.
+
+### Using the Doctor Performance Table
+- Don't use this table punitively. A doctor with a high no-show rate may simply have a patient demographic that struggles with attendance (e.g., elderly patients, or walk-in-heavy practice).
+- Look for outliers: one doctor with significantly different metrics from peers may need support, a schedule adjustment, or a review of their patient communication practices.
+- Completion rate is a proxy for efficiency but can be misleading — a doctor seeing complex cases may have longer consultations and fewer completions per day.
+
+### Demographics for Business Decisions
+- If your patient base skews elderly, consider adding geriatric-specific services or mobility accommodations.
+- If a large percentage of patients are children (0-18), ensure paediatric medicines and equipment are stocked.
+- Gender distribution can inform whether to add services like obstetrics/gynaecology or to ensure female staff availability for patients who prefer it.
+
+### Period Comparison
+- The trend percentages compare the current period to the immediately preceding equal-length period (e.g., last 7 days vs. the 7 days before that).
+- A 0% trend with no arrow means the previous period also had zero for that metric — common for new clinics.
+
+### Data Freshness
+- Analytics data is fetched client-side via React Query with a 5-minute stale time. Recent changes (e.g., just completing an appointment) may take a moment to reflect.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Spinner shows indefinitely** | The clinic or role hasn't loaded yet. If it persists for more than a few seconds, refresh the page. |
+| **Stat cards all show 0** | No appointments exist in the selected period. Switch to 30D for a wider view, or check that the clinic has been operational during the period. |
+| **Chart shows no bars** | The daily breakdown data is empty — no appointments in the period. Verify appointments exist on the Schedule page. |
+| **Doctor Performance Table is empty** | No doctors have appointments in the selected period, or the data is still loading. |
+| **Demographics panel shows no data** | Patient demographic data depends on completed consultations. If the clinic is new, demographics populate after the first few patient visits. |
+| **Trend shows "0%" for everything** | The previous comparison period had zero activity, so trends cannot be calculated. Wait until you have data in two consecutive periods. |
+| **Clicking a stat card doesn't navigate** | Only "Completed" and "No-Shows" cards are clickable and navigate to `/schedule` with the respective status filter. Patients Seen, Appointments, and Pending are display-only. |
+| **My Practice section missing (superadmin with doctor profile)** | Ensure your doctor profile exists (check Staff page). If your doctor ID is not found, the My Practice section is hidden. |

@@ -1,0 +1,98 @@
+---
+title: "How to Book a New Appointment"
+description: "Schedule an appointment for a patient — selecting the doctor, date, time, and appointment type — so it appears in today's queue and future date views."
+role: "Staff"
+sortOrder: 1
+---
+
+## Prerequisites
+
+- You must be logged in to Doxxy with a **Staff** or **Superadmin** role in the active clinic.
+- At least one doctor must be added to the clinic (via Clinic Settings → Staff).
+- The patient should ideally already exist in the system. (If not, you can create them mid-flow — see Step 3.)
+
+## The Goal
+
+Schedule an appointment for a patient so it appears in the queue for the selected date, with the correct doctor, time slot, and appointment type.
+
+## Step-by-Step UI Instructions
+
+### From the Schedule page (`/schedule`):
+
+1. **Open the appointment form:**
+   - Click the **[Schedule]** button on the Patient Header card of any patient in the queue.
+   - *Where:* The blue-tinted header card at the top of the right-side detail panel. The **[Schedule]** button sits among the action buttons on that card.
+   - Alternatively, after creating a new patient, the appointment modal opens automatically with the patient pre-selected.
+
+2. The **"New Appointment"** dialog opens.
+
+3. **Select the Patient:**
+   - Click into the **"Type name to search..."** input field. Start typing the patient's name. Matching patients appear in a dropdown with their name, age/gender badge, and phone number.
+   - Click on the correct patient to select them.
+   - *If the patient does not exist:* Type their full name and click the **"Create [name]"** button at the bottom of the dropdown. A **"New Patient"** modal opens — fill in **Name**, Gender (tap the **Male** or **Female** pill button), **Age**, **Phone**, **Email**, and **Address**. Click **"Create Patient"**. The new patient is auto-selected in the appointment form.
+
+4. **Select the Doctor:**
+   - Click the **Doctor** dropdown and choose from the list. Each doctor shows their name and department (e.g., "Dr. Sharma (Cardiology)").
+
+5. **Pick a Date:**
+   - Click the date button (shows today's date by default, e.g., "May 18th, 2026"). A calendar popover opens. Click the desired date.
+
+6. **Pick a Time:**
+   - Click the **Time** dropdown and select from the available slots. Slots are generated in 15-minute increments from 8:00 AM to 8:00 PM.
+
+7. **Set Appointment Type:**
+   - In the **Type** dropdown, select:
+     - **"Walk-in"** — Patient arrived at the clinic without a prior booking.
+     - **"Digital"** — Appointment was booked online by the patient or scheduled in advance.
+
+8. **Set Status:**
+   - Default is **"Scheduled"**. You can also set to **"In Progress"** (immediate room assignment) or leave as Scheduled.
+
+9. **Add Notes (optional):**
+   - Use the **Notes** textarea to add any special instructions (e.g., "Patient requested evening slot", "Bring previous lab reports").
+
+10. Click **"Create Appointment"**.
+    - A green toast notification confirms: *"Appointment created!"*
+    - The appointment now appears in the queue for the selected date.
+
+### To reschedule or edit an existing appointment:
+
+- Click the **[Edit Appointment]** button on the Patient Header. The same dialog opens, pre-filled with the appointment's current details. Make changes and click **"Update Appointment"**.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Walk-in Policy
+- Walk-in patients should be accommodated on a **first-come, first-served basis** between scheduled appointments.
+- Set the appointment Type to "Walk-in" and Status to "In Progress" to immediately assign them to the current queue.
+- If all doctors are fully booked, offer the patient two choices: (a) wait for the next available slot (use the Time dropdown to pick the earliest open slot), or (b) book a Digital appointment for a future date.
+
+### Late Arrival Policy
+- If a scheduled patient arrives **more than 30 minutes late:**
+  - Do NOT cancel the appointment immediately. Keep the status as **"Scheduled"** with a note: *"Arrived late — [actual arrival time]"*.
+  - Inform the patient they will be seen after the current in-progress and on-time patients.
+  - If the patient cannot wait, offer to reschedule: use the same appointment modal, change the date/time, and click **"Update Appointment"**.
+
+### No-Show Policy
+- If a patient has not arrived within **1 hour** of their scheduled time and has not called:
+  - Update the appointment status to **"Cancelled"** and add a note: *"No-show — [date]"*.
+  - If the clinic uses SMS/WhatsApp reminders (Clinical Excellence plan), check if a reminder was delivered before marking as no-show.
+  - After **2 consecutive no-shows**, flag the patient by adding an internal note. Front desk should call the patient before confirming their next appointment.
+
+### Double-Booking Prevention
+- The system does not currently enforce automatic conflict detection at the UI level. Before booking, manually check the queue for the selected doctor and time to avoid overlaps. If you see a conflict, pick the next available time slot.
+
+### Patient Data Collection Standard
+- Minimum required fields for a new patient: **Name** and **Phone number**. Age and Gender are strongly recommended for clinical context.
+- Always ask for a phone number — it is required for SMS/WhatsApp reminders on the Clinical Excellence plan.
+- If a phone number is not available (e.g., elderly patient accompanied by family), enter a family member's number and note the relationship in the Address field.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Patient is required" error** | You have not selected a patient. Click into the patient search field and select or create one. |
+| **"Doctor is required" error** | The Doctor dropdown is empty or unselected. If no doctors appear, ask your superadmin to add doctors via Clinic Settings → Staff. |
+| **"Failed to create appointment" toast** | Check your internet connection. The server action may have failed due to a network error. Try again. If the error persists, note the patient details and contact support. |
+| **Patient not appearing in dropdown** | The search matches against patient names. Try typing the first few letters of their name. If they still don't appear, they may not be registered — create them using the "Create [name]" option. |
+| **Time slot looks wrong** | All times are displayed in **IST (Indian Standard Time)**. Slots run from 8:00 AM to 8:00 PM in 15-minute increments. |
+| **Need to book for a different date** | Use the **Date Carousel** at the top of the Schedule page to switch to the target date first, then follow the booking steps above. The appointment appears on that date's queue. |

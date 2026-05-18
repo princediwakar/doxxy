@@ -1,0 +1,116 @@
+---
+title: "How to Write a Digital Prescription"
+description: "Add medications with auto-complete medicine search, dosage, frequency, duration, route, and special instructions within the consultation form."
+role: "Doctor"
+sortOrder: 4
+---
+
+## Prerequisites
+
+- You must be logged in with a **Doctor** role and have an active consultation open.
+- The consultation must not be completed (or you must have edit permissions on completed consultations).
+- The Prescriptions section must be available in your specialty's form (it is standard across all departments).
+
+## The Goal
+
+Prescribe medications digitally within the consultation form. Each prescription includes the drug name (with autocomplete lookup), dosage, frequency, duration, route, and special instructions. Prescriptions appear in the printed consultation summary and can be referenced by the pharmacy for dispensing.
+
+## Step-by-Step UI Instructions
+
+### Within the Consultation Form:
+
+1. Scroll to or expand the **Prescriptions** section in the Inline Consultation Form.
+
+### Adding a Medication
+
+2. Click **"+ Add Medication"** (Plus icon button). A new blank medication row appears.
+
+3. **Medicine Name (autocomplete):**
+   - Click into the medicine name field. Start typing the drug name (e.g., "para", "amox", "cetirizine").
+   - A dropdown appears with matching medicines from the system's medicine database. Each result shows the medicine name.
+   - Click on the correct medicine. The system may **auto-fill** the typical dosage and route for that medicine.
+   - If the medicine is not in the database, type the full name free-text and press Enter or click away.
+
+4. **Dosage:**
+   - Enter the strength and form (e.g., "500mg", "10mg", "1 tab", "5ml", "2 puffs").
+   - If auto-filled from the medicine selection, verify it is correct for this patient.
+
+5. **Frequency:**
+   - Select from the dropdown:
+     - **OD** — Once daily
+     - **BD** — Twice daily
+     - **TDS** — Three times daily
+     - **QID** — Four times daily
+     - **HS** — At bedtime
+     - **SOS** — As needed
+     - **STAT** — Immediately
+   - Default is **BD** (twice daily).
+
+6. **Duration:**
+   - Enter the treatment duration (e.g., "5 days", "2 weeks", "1 month", "until review").
+
+7. **Route (optional):**
+   - Select the route of administration:
+     - Oral, IV (Intravenous), IM (Intramuscular), SC (Subcutaneous), Topical, Inhalation, Sublingual, Rectal, etc.
+   - Auto-filled from medicine selection if available.
+
+8. **Instructions (optional):**
+   - Free-text field for special instructions (e.g., "Take after food", "Take on an empty stomach", "Apply thinly to affected area twice daily", "Complete the full course even if symptoms resolve").
+
+### Adding More Medications
+
+9. Click **"+ Add Medication"** again for each additional drug. There is no hard limit on the number of prescriptions per consultation.
+
+### Removing a Medication
+
+10. Click the **X button** on the right side of any medication row to remove it from the prescription.
+
+### Editing a Medication
+
+11. Modify any field directly — the auto-save captures changes. To change the medicine name, either type in the field or clear it and search again.
+
+### Clearing a Medicine Selection
+
+12. To clear a selected medicine name (and reset auto-filled fields), use the clear/delete function on the autocomplete input. The dosage and frequency are reset to defaults.
+
+### Prescriptions in Preview and Print
+
+13. Click **"Preview"** to see how the prescriptions appear in the formatted consultation note. They are listed clearly with all details for the patient and pharmacy.
+
+14. When the consultation is completed, the prescriptions are saved with the encounter and appear when viewing the patient's medical history.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Prescription Legality and Clarity
+- Digital prescriptions are part of the medicolegal record. Write legibly and completely.
+- Always include dosage, frequency, AND duration. A prescription with only "Paracetamol 500mg" is incomplete.
+- For controlled substances or Schedule H drugs, follow your local regulatory requirements for additional documentation.
+
+### Using the Medicine Autocomplete
+- The autocomplete pulls from your clinic's pharmacy medicine database. If a medicine isn't listed, it hasn't been added to the pharmacy inventory yet.
+- You can still prescribe unlisted medicines by typing free-text. The pharmacy staff should add them to inventory when processing the prescription.
+- Selecting from the autocomplete is preferred — it ensures the pharmacy can identify and dispense the exact product.
+
+### Dosage Precision
+- Use standard abbreviations that are widely understood: mg, mcg, g, ml, IU, mEq.
+- For paediatric patients, include weight-based dosing rationale in the instructions (e.g., "10mg/kg/dose").
+- Avoid trailing zeros (write "5mg" not "5.0mg") and always use leading zeros (write "0.5mg" not ".5mg") to prevent dosing errors.
+
+### Polypharmacy
+- Review all medications before completing the consultation. Check for interactions — the system does not currently have an interaction checker.
+- For elderly patients, consider the Beers criteria and deprescribe where appropriate. Document the rationale for discontinuing any medication.
+
+### PRN and SOS Medications
+- For SOS (as needed) prescriptions, always include the maximum daily dose in the instructions (e.g., "Max 4 doses in 24 hours").
+- For long-term medications that continue from previous prescriptions, note "Continue" or "Refill" in the instructions.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"+ Add Medication" button doesn't work** | The consultation may be in read-only mode (completed and you lack edit permissions). |
+| **Medicine autocomplete shows no results** | The medicine may not be in the database. Type the full name manually. The pharmacy can add it to inventory later. |
+| **Auto-filled dosage is wrong** | The auto-fill is a suggestion based on the medicine's typical dosing. Override it with the correct dosage for this patient. |
+| **Prescription row won't delete (X button unresponsive)** | The form is in read-only mode. If the consultation is completed, you may not be able to remove prescriptions. |
+| **Frequency dropdown is missing an option** | The options are standard medical abbreviations: OD, BD, TDS, QID, HS, SOS, STAT. If you need a different frequency, write it in the Instructions field. |
+| **Prescribed medicine not showing in pharmacy** | The medicine was typed free-text and doesn't exist in the pharmacy inventory. Ask pharmacy staff to add it via the Procurement Entry Sheet. |

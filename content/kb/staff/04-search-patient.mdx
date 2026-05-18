@@ -1,0 +1,82 @@
+---
+title: "How to Search for a Patient"
+description: "Use the search bar to find patients by name, phone number, or medical ID. Covers the Command Palette and patient search results."
+role: "Staff"
+sortOrder: 4
+---
+
+## Prerequisites
+
+- You must be logged in to Doxxy with any role in the active clinic.
+- Patients must exist in the clinic's database.
+
+## The Goal
+
+Quickly locate a patient by name, phone number, or medical record number (MRN) to view their chart, book an appointment, or check their history. The search helps front desk staff identify patients who call, walk in, or need their records pulled up.
+
+## Step-by-Step UI Instructions
+
+### Using the Command Palette (Keyboard Shortcut)
+
+1. Press **Cmd+K** (Mac) or **Ctrl+K** (Windows/Linux) anywhere in Doxxy to open the **Command Palette**.
+
+2. The Command Palette is a global search overlay. Start typing the patient's:
+   - **Name** (full or partial, e.g., "Sharma", "Rahul").
+   - **Phone number** (e.g., "98765").
+   - **Medical ID / MRN** (if known).
+
+3. Matching patients appear in the dropdown with their name, age/gender badge, and phone number.
+
+4. Click on the desired patient to navigate to their Patient Chart page (`/patients/[id]`).
+
+### Using the Navigation Search
+
+5. The sidebar/header navigation includes a **Search** navigation item (configured in `config/navigation.ts`).
+
+6. Click the Search icon in the navigation to open a search interface where you can search for patients.
+
+### What You Can Do From Search Results
+
+7. Once you locate a patient, you can:
+   - Click to open their full **Patient Chart** with medical history, past consultations, bills, and prescriptions.
+   - From the Patient Chart, click **"Schedule"** to book a new appointment.
+   - Click **"Edit"** to update the patient's details (name, phone, address, etc.).
+   - Click **"Bill"** to view or create bills.
+
+### Search Tips
+
+8. The search matches against the patient name field. Type the first few letters for the best results.
+
+9. If you type a full name that doesn't exist, the system may offer to create a new patient (see [How to Register a New Patient](/kb/staff/register-patient)).
+
+10. The search is scoped to the active clinic. Patients from other clinics in your organization are not shown unless you switch clinics.
+
+## Recommended Clinic Policy & Edge Cases
+
+### When to Search
+- **Patient calls for an appointment:** Search by name or phone to pull up their record, then book.
+- **Patient walks in without an appointment:** Search to verify they are registered. If not, register them first.
+- **Patient calls with a billing question:** Search to find their record and review past bills.
+- **Duplicate name check:** Before registering a new patient, search to ensure they don't already exist under a slightly different name.
+
+### Handling Duplicate Names
+- If multiple patients share the same name, use the age/gender badge and phone number shown in search results to identify the correct one.
+- If a patient appears twice (genuine duplicate records), flag this for the superadmin to merge or resolve.
+
+### Phone Number Search
+- Searching by phone number is useful when a patient calls and you don't catch their name clearly, or when a patient has a common name.
+- Enter at least 4-5 digits of the phone number for meaningful results.
+
+### Privacy Considerations
+- The search is available to all clinic staff. Be mindful when displaying patient information on screen in view of other patients in the waiting area.
+- The Command Palette is a quick-access tool — it's fast but may expose patient names in a busy front desk environment. Position screens away from public view.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Command Palette doesn't open** | Cmd+K / Ctrl+K may be intercepted by the browser or OS. Try clicking the Search icon in the sidebar navigation instead. |
+| **Search returns no results** | The patient may not be registered, or may have a name different from what you typed. Try searching by phone number. Try fewer characters. |
+| **Wrong patient keeps appearing** | Multiple patients with similar names. Use additional identifiers (age, gender, phone) from the search result details to pick the correct one. |
+| **Search is slow** | The Command Palette queries are client-side and should be instant. If slow, check your browser performance or refresh the page. |
+| **Navigated to Patient Chart but it's empty** | The patient ID may be invalid, or the data fetch failed. Go back and search again, or try navigating via the Schedule page. |

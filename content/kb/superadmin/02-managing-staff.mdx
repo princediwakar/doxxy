@@ -1,0 +1,110 @@
+---
+title: "How to Add and Manage Staff Members"
+description: "Invite doctors and staff to your clinic, assign roles (doctor/staff/superadmin), manage department assignments, and create doctor profiles for existing members."
+role: "Superadmin"
+sortOrder: 2
+---
+
+## Prerequisites
+
+- You must be logged in with a **Superadmin** role in the active clinic.
+- You must have at least one clinic created and selected.
+- You need the invitee's email address and name. A phone number is recommended but optional.
+
+## The Goal
+
+Add members to your clinic by inviting them via email, assign them appropriate roles and departments, and manage their access over time — including removing members, changing roles, and creating doctor profiles.
+
+## Step-by-Step UI Instructions
+
+### From the Staff page (`/clinic/staff`):
+
+The page displays a header with the member count badge, a search bar, a role filter dropdown, and the member list.
+
+### Inviting a New Member
+
+1. Click the **"Invite"** button (top-right, with a + icon).
+
+2. The **"Invite New Member"** dialog opens with fields: Name, Email, Phone (optional), and a Role dropdown.
+
+3. **Fill in the invitee's details:**
+   - **Name:** The person's full name.
+   - **Email:** Must be a valid email address. This is where the invitation is sent.
+   - **Phone:** Optional. Recommended for staff who will interact with patients.
+   - **Role:** Select from the dropdown — **Staff**, **Doctor**, or **Superadmin**.
+
+4. Click **"Send Invite"**. A success toast appears.
+
+5. If the email delivery fails, an extended toast notification shows the invitation link. Click **"Copy Link"** to copy it and share it manually with the invitee (e.g., via WhatsApp).
+
+### Creating a Doctor Profile for an Existing Member
+
+6. Find the member in the list. Each member card shows their name, email, role badge, and department.
+
+7. Click the **stethoscope icon button** on the member's card. The **"Create Doctor Profile"** dialog opens.
+
+8. Fill in:
+   - **Name** and **Email** (pre-filled from the member's profile).
+   - **Primary Specialization:** e.g., "General Physician", "Cardiologist".
+   - **Consultation Fee (₹):** The doctor's per-visit fee.
+   - **Bio:** A short professional bio.
+   - **Department:** Select from the clinic's active departments.
+
+9. Click **"Create Doctor Profile"**. A success toast confirms the profile was created. The doctor now appears in appointment booking lists.
+
+### Editing a Member's Role or Department
+
+10. Click the **pencil/edit icon** on the member's card. The **"Edit Member"** dialog opens.
+
+11. Change the **Role** dropdown and/or **Department** dropdown as needed.
+    - If you change the role to **Staff**, the department is automatically cleared (since departments are for doctors).
+
+12. Click **"Update Member"**. The member's access is updated immediately.
+
+### Removing a Member
+
+13. Click the **trash/delete icon** on the member's card.
+
+14. The member is removed from the clinic. Their user account is not deleted — they simply lose access to this clinic. They can be re-invited later.
+
+### Searching and Filtering
+
+15. Use the **Search members...** input at the top to filter by name or email. The list updates as you type.
+
+16. Use the **Role filter dropdown** (default "All Roles") to show only Superadmins, Doctors, or Staff.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Role Assignment Guidelines
+- **Superadmin:** Grant only to clinic owners or senior administrators. Superadmins can manage members, departments, clinic details, financials, and all sensitive data.
+- **Doctor:** Assign to any medical professional who sees patients. They need a doctor profile to appear in appointment lists.
+- **Staff:** Assign to front desk, billing, pharmacy, and administrative personnel. Staff can book appointments, check in patients, manage billing, and view the pharmacy.
+
+### Invitation Expiry
+- Invitation links expire after a set period (determined by Supabase Auth). If an invitee hasn't accepted within 24 hours, consider resending the invitation by removing and re-inviting them.
+
+### Offboarding a Member
+- When a doctor or staff member leaves the clinic:
+  1. Remove them from the clinic via the delete button on the Staff page.
+  2. Their historical data (consultations, bills, appointments) remains intact for audit purposes.
+  3. If the departing member was a doctor, any future appointments assigned to them should be reassigned to another doctor.
+
+### Multiple Clinics
+- A single user account can be a member of multiple clinics with different roles in each. Removing them from one clinic does not affect their membership in others.
+
+### Department Assignment for Doctors
+- A doctor can be assigned to only one department at a time. If a doctor practices across multiple specialties, assign them to their primary department and note the others in their bio.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Email and name are required" error** | Both Name and Email fields must be filled before sending the invite. |
+| **"Invalid email format" error** | The email address is malformed. Check for typos (e.g., missing @ or domain). |
+| **"Failed to invite member" error** | The Supabase Edge Function may have failed. Check your internet connection and try again. If persistent, use the manual link sharing fallback. |
+| **Invitee did not receive the email** | Check the toast message — if it shows an invitation link, the email delivery failed. Copy the link and share it manually. Ask the invitee to check their spam folder. |
+| **"Failed to create doctor profile" error** | Ensure all required fields are filled (Name, Email). The member must already exist in the clinic. |
+| **"Failed to update member" error** | Network issue or server action failure. Try again. |
+| **"Access Denied" message shown** | You are not a superadmin in this clinic. Only superadmins can manage members. |
+| **Member list is empty after inviting** | The page data may be cached. Refresh the page. The new member appears once they accept the invitation and sign in. |
+| **Cannot remove the last superadmin** | Every clinic must have at least one superadmin. Promote another member to superadmin before removing yourself. |

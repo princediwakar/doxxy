@@ -1,0 +1,117 @@
+---
+title: "How to Fill Out a Consultation Note (Manual Entry)"
+description: "Complete the structured consultation form manually — chief complaint, vital signs, physical exam, diagnosis, treatment plan, and prescriptions — organized by specialty-specific sections."
+role: "Doctor"
+sortOrder: 3
+---
+
+## Prerequisites
+
+- You must be logged in with a **Doctor** role.
+- A patient must be selected from the queue, with an active appointment.
+- The encounter canvas must be open in the right-side detail panel.
+
+## The Goal
+
+Document a patient consultation completely and accurately using the structured, specialty-specific form. Each field maps to standard SOAP note components and is customized based on the clinic department (e.g., Ophthalmology has eye-specific fields; Cardiology has heart-specific fields).
+
+## Step-by-Step UI Instructions
+
+### From the Encounter Canvas:
+
+Below the Dictation Zone, the **Inline Consultation Form** displays a series of expandable **section cards**, each containing fields relevant to the department's specialty.
+
+### Understanding the Form Structure
+
+The form is organized into specialty-specific sections. For example, a General Medicine consultation might have:
+- **Chief Complaint & History** — Presenting problem and history of present illness.
+- **Vital Signs** — BP, pulse, temperature, SpO2, respiratory rate.
+- **Physical Examination** — General appearance, system-specific findings.
+- **Diagnosis** — Primary and differential diagnoses.
+- **Treatment Plan** — Medications, procedures, advice, follow-up.
+- **Prescriptions** — Drugs with dosage, frequency, duration, route, and special instructions.
+
+For specialty departments (Ophthalmology, Cardiology, etc.), additional or different sections appear based on the department type.
+
+### Filling Out the Form
+
+1. The **first section** is expanded by default. Click a section header to expand or collapse it.
+
+2. Fill in each field. Fields vary by type:
+   - **Text inputs:** Free text (e.g., chief complaint).
+   - **Textareas:** Longer text (e.g., physical exam findings).
+   - **Select/dropdowns:** Predefined options (e.g., frequency: OD, BD, TDS, QID).
+   - **Medicine autocomplete:** Start typing a drug name and matching medicines appear from the system's medicine database. Select one to auto-fill dosage and route.
+
+3. The form **auto-saves** as you type. A small "Saving..." or "Saved" indicator appears in the footer bar. No manual save button is needed for draft preservation.
+
+### Adding Prescriptions
+
+4. In the **Prescriptions** section, click **"+ Add Medication"** to add a new prescription row.
+
+5. For each medication:
+   - **Medicine Name:** Use the autocomplete search. Start typing the drug name and select from the dropdown. Selecting a known medicine auto-fills the typical dosage and route.
+   - **Dosage:** e.g., "500mg", "10mg", "1 tab".
+   - **Frequency:** Select from the dropdown — OD (once daily), BD (twice daily), TDS (three times daily), QID (four times daily), HS (at bedtime), SOS (as needed), STAT (immediately).
+   - **Duration:** e.g., "5 days", "2 weeks", "1 month".
+   - **Route:** Optional — Oral, IV, IM, SC, Topical, etc.
+   - **Instructions:** Free text for special instructions (e.g., "Take after food", "Apply thinly").
+
+6. Click the **X button** on any medication row to remove it.
+
+### Previewing the Note
+
+7. Click **"Preview"** (eye icon button in the bottom bar). The **Consultation Preview Modal** opens, showing the complete structured note as a formatted document. This is the view that gets printed or exported as PDF.
+
+8. Review all sections in the preview. Close it to return to editing.
+
+### Discarding Changes
+
+9. If you've made unwanted edits and the consultation hasn't been completed, click **"Discard Changes"** in the bottom bar. The form resets to the last saved state. (The auto-save preserves the last stable version.)
+
+### Completing the Consultation
+
+10. When all mandatory fields are filled, the **"Finish Visit"** button becomes enabled (if it's greyed out, check that required fields in every section are filled).
+
+11. Click **"Finish Visit"** to sign off the encounter. A green toast confirms: *"Consultation completed"*.
+
+12. The form enters read-only mode. The patient moves to the "Completed" section of the queue.
+
+### Updating a Completed Note
+
+13. If you have edit permissions on completed consultations (typically doctors and superadmins), re-open the completed patient. The form loads with existing data. Edit any field and click **"Update Notes"** to save changes.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Documentation Standards
+- Complete the chief complaint for every visit. This is the minimum for clinical documentation.
+- Record vital signs when clinically relevant. For follow-ups where vitals aren't taken, note "Not recorded" or skip.
+- Write the diagnosis in clear, professional terms. Avoid abbreviations that could be misinterpreted.
+- Document negative findings that are clinically significant (e.g., "No neck stiffness" when ruling out meningitis).
+
+### Prescription Guidelines
+- Prescriptions are part of the legal medical record. Write dosages clearly and verify before completing.
+- Use the medicine autocomplete to ensure the drug exists in the pharmacy inventory. This helps the front desk dispense correctly.
+- If a medicine is not in the autocomplete, you can still type it free-text. The pharmacy staff can add it to inventory later.
+- Include duration for all prescriptions. "5 days" is better than leaving it blank.
+
+### Specialty-Specific Sections
+- The form adapts to your department. An ophthalmologist sees fields for visual acuity, IOP, slit lamp findings, and fundus exam.
+- If a section is not relevant to the current visit, leave it blank or collapsed. Only filled fields are included in the printed note.
+- The department mapping is based on your assigned department. If you practice across specialties, your primary department's form loads.
+
+### Concurrent Editing
+- Auto-save keeps your draft safe if you accidentally close the browser, but it does not support real-time collaborative editing. If two people open the same consultation, the last save wins.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Form fields are greyed out / not editable** | The consultation is completed and you lack edit permissions. Only the completing doctor or a superadmin can edit completed notes. |
+| **"Finish Visit" button is disabled** | Required (mandatory) fields are not all filled. Expand each section and check for highlighted empty required fields. |
+| **"Saving..." indicator persists** | The auto-save mutation is pending. Wait a moment. If it persists for over 30 seconds, check your internet connection. |
+| **Medicine autocomplete returns no results** | The medicine may not be in the system's database. Type the full name free-text. Pharmacy staff can add it later. |
+| **Preview modal is empty or incomplete** | Only filled fields appear in the preview. Expand all sections and verify the data is entered. |
+| **Changes lost after page refresh** | Auto-save should preserve your draft. If data is lost, the auto-save may not have triggered. Re-enter the data. |
+| **Wrong department's form is showing** | Your doctor profile's department assignment determines the form. Ask a superadmin to update your department in Staff settings. |
+| **Discard Changes button is not visible** | It only appears when the form has unsaved changes (isFormDirty) and the consultation hasn't been completed. |

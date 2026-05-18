@@ -1,0 +1,119 @@
+---
+title: "How to Manage the Appointment Queue"
+description: "Navigate the daily schedule — view in-progress, waiting, and completed appointments. Switch dates with the Date Carousel and filter by doctor."
+role: "Staff"
+sortOrder: 6
+---
+
+## Prerequisites
+
+- You must be logged in with a **Staff** or **Superadmin** role in the active clinic.
+- Appointments must exist for the selected date.
+- A clinic must be selected.
+
+## The Goal
+
+Monitor and manage the daily appointment queue — see which patients are waiting, in progress with the doctor, or completed. Switch between dates to manage future or past queues, filter by doctor, and take action on appointments (check in, bill, reschedule).
+
+## Step-by-Step UI Instructions
+
+### From the Schedule page (`/schedule`):
+
+The page loads with today's date selected in the Date Carousel. The left panel shows the queue, and the right panel shows the detail/encounter view for the selected patient.
+
+### Understanding the Queue
+
+The queue is organized into three sections, each with a coloured dot indicator and patient count:
+
+1. **In Progress** (yellow dot) — Patients currently being seen. Their status is "In Progress" (checked in). Clicking one opens the encounter canvas.
+
+2. **Waiting** (blue dot, labelled "WAITING") — Patients with "Scheduled" status who haven't been checked in yet. These are upcoming for the day.
+
+3. **Completed** (green dot) — Patients whose visits are done. Their encounter is signed off.
+
+Each patient row shows: patient name, age, gender, appointment time, and appointment type (Walk-in or Digital).
+
+### Navigating Dates
+
+4. Use the **Date Carousel** at the top of the page to switch dates:
+   - Click the **left/right arrows** to move one day back or forward.
+   - Click a specific date pill to jump directly to that date.
+   - Today's date is visually highlighted.
+
+5. Past dates show historical queues — completed, cancelled, and no-show appointments. Future dates show scheduled appointments.
+
+### Filtering by Doctor
+
+6. Use the **Doctor filter dropdown** at the top:
+   - **"All Doctors"** — Shows all patients in the clinic for the selected date.
+   - **Doctor-specific options** — Filter to see only appointments for a specific doctor.
+
+7. Use this to answer questions like "How many patients does Dr. Sharma have this afternoon?" or to manage the queue for a specific doctor.
+
+### Actions on a Patient
+
+8. Click a patient's name in the queue to select them. The right-side detail panel opens showing the Patient Header with:
+   - Patient name, age, gender, MRN, department, appointment time.
+   - Status badge (Scheduled, In Progress, Completed, Cancelled).
+   - Action buttons for staff: **Bill**, **Schedule**, **Edit** (Patient), plus the appointment edit button.
+
+9. From here, you can:
+   - **Check In** the patient (see [How to Check In a Patient](/kb/staff/check-in-patient)).
+   - **Generate a Bill** (see [How to Generate an Invoice and Process Payment](/kb/staff/generate-invoice)).
+   - **Edit Appointment** — Change date, time, doctor, or status.
+   - **Edit Patient** — Update patient details.
+
+### Monitoring Queue Health
+
+10. Keep an eye on:
+    - **Waiting count:** A large number means long wait times. Inform patients.
+    - **In Progress count:** Should be 1 per doctor (patients actively being seen). If In Progress is growing without movement to Completed, check if doctors are available.
+    - **Completed count:** Tracks throughput for the day.
+
+### Managing No-Shows and Cancellations
+
+11. If a patient hasn't arrived well past their appointment time, you can update their appointment status:
+    - Click the patient → Click **Edit Appointment** (stethoscope icon in the three-dot menu).
+    - Change status to **"Cancelled"** and add a note: *"No-show — [date]"*.
+
+12. Cancelled appointments remain visible in the queue for audit purposes.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Queue Monitoring Cadence
+- Front desk staff should check the queue at regular intervals (every 15-30 minutes) to:
+  - Identify patients who have been waiting too long.
+  - Spot checked-in patients with no doctor assignment.
+  - Track completion rates throughout the day.
+
+### Managing Wait Times
+- If the waiting list is long (> 5 patients per doctor), proactively inform patients in the waiting area of estimated delays.
+- A simple announcement — "Dr. Sharma is running about 30 minutes behind schedule" — prevents frustration and walk-outs.
+- If a specific doctor is consistently behind, flag this to the superadmin for scheduling review.
+
+### End-of-Day Queue Review
+- At the end of the day, review the queue:
+  - All patients should be in Completed, Cancelled, or No-Show status.
+  - A leftover "Scheduled" patient who never arrived should be marked No-Show.
+  - A leftover "In Progress" patient may indicate a consultation was never completed — follow up with the doctor.
+- Clean end-of-day queues ensure accurate analytics (no phantom pending or in-progress appointments).
+
+### Walk-In Management
+- Walk-in patients appear in the queue with type "Walk-in". They may not have a specific time slot.
+- Fit walk-ins between scheduled appointments. Do not bump scheduled patients without informing them.
+- If walk-in volume is high, consider designating specific walk-in hours.
+
+### Communicating with Doctors
+- If a doctor's queue is backing up, use the Doctor filter to see only their patients, then message them with the current count.
+- Doctors see the same queue from their login. They can self-manage, but front desk coordination helps.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Queue shows no patients** | Check the Date Carousel — you may be on a date with no appointments. Check the doctor filter — it may be filtering to a doctor with no appointments. |
+| **Patient is in the wrong section** | The status may need to be updated. Use Edit Appointment to change the status. |
+| **Date Carousel not switching dates** | The carousel is client-side rendered. If unresponsive, refresh the page. |
+| **Doctor filter dropdown is empty** | No doctors have been added to the clinic. A superadmin must create doctor profiles from the Staff page. |
+| **Completed section is very long** | Completed patients are shown for the entire day. The list may grow long by evening. This is normal — all completed visits are visible for the day. |
+| **Patient count doesn't match expected** | Refresh the page. The queue data is fetched from the server and may not reflect very recent changes. |

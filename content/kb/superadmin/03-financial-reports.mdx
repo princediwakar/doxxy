@@ -1,0 +1,86 @@
+---
+title: "How to View Financial Reports and Revenue Analytics"
+description: "Access the financials dashboard — total revenue, collection rates, bill counts, monthly trends, and daily revenue charts."
+role: "Superadmin"
+sortOrder: 3
+---
+
+## Prerequisites
+
+- You must be logged in with a **Superadmin** role in the active clinic.
+- The clinic must have processed at least some bills and payments for data to appear.
+- A clinic must be selected (the page shows a prompt if no clinic is active).
+
+## The Goal
+
+Review the clinic's financial performance: current month revenue, bill counts, average bill size, month-over-month trends, revenue charts for the past 12 months, and daily revenue breakdown for the current month.
+
+## Step-by-Step UI Instructions
+
+### From the Financials page (`/clinic/financials`):
+
+The page opens with a header labelled **"Financials"** and a subtitle *"Revenue trends and analytics"*.
+
+### Understanding the Stat Cards
+
+The top row displays four summary cards:
+
+1. **This Month:** Shows the current month's total revenue in rupees (formatted as ₹X.XK or ₹X.XL). Below it, a trend badge shows the month-over-month percentage change — green with an up arrow for increase, red with a down arrow for decrease, or neutral if unchanged.
+
+2. **Bill Count:** The number of bills generated this month, with a month-over-month trend badge.
+
+3. **Avg Bill:** The average bill amount this month (total revenue divided by bill count). Includes a trend badge comparing to last month's average.
+
+4. **Best Month:** Displays the month name with the highest revenue on record, plus that month's revenue amount.
+
+### Revenue Trend Chart
+
+Below the stat cards, the **"Revenue Trend"** card shows a bar chart of the **last 12 months** of revenue. Each bar represents one month's total revenue. Hover over a bar to see the exact amount and month label.
+
+- Months with zero revenue are shown as empty bars.
+- This chart helps identify seasonal patterns, growth trends, or declining months.
+
+### Daily Revenue Chart
+
+The **"Daily Revenue"** card displays a bar chart for each day of the **current month**, showing revenue per day. The month and year are displayed above the chart.
+
+- Use this to see which days of the month are busiest and track day-to-day revenue consistency.
+
+### At a Glance Summary
+
+The **"At a Glance"** card provides four quick-reference metrics:
+
+- **Monthly Avg Revenue:** Average monthly revenue across all months that have recorded revenue.
+- **Avg Bills / Month:** Average number of bills per month.
+- **Best Month:** The highest-grossing month and its revenue.
+- **Months with Revenue:** How many of the last 12 months had at least some revenue activity.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Interpreting Revenue Trends
+- A consistent month-over-month increase (green trend badges) indicates practice growth.
+- A decline (red trend badges) may indicate seasonal patterns, patient attrition, or billing issues.
+- Compare the **Bill Count** trend with the **Avg Bill** trend: if bill count drops but avg bill rises, you might be seeing fewer but higher-value consultations.
+
+### Zero-Revenue Months
+- Months with zero revenue (e.g., a newly opened clinic, or a clinic that was closed for a period) are excluded from the average calculations to avoid skewing the data.
+- The "Months with Revenue" counter in At a Glance tells you how many active months are in the 12-month window.
+
+### Data Freshness
+- Financial data is fetched server-side on every page load. If a bill was just generated, refresh the page to see it reflected.
+- Revenue includes all completed payments and billed amounts. Pending payments may not be reflected until marked as received.
+
+### Using Financial Data for Business Decisions
+- Use the daily revenue chart to identify your busiest days of the week and plan staffing accordingly.
+- Track the 12-month trend to evaluate growth targets and marketing ROI.
+- Compare your average bill against industry benchmarks for your specialty and location.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Select a clinic to view financials" message** | No clinic is currently active. Use the Clinic Switcher in the top navigation to select a clinic. |
+| **All stat cards show zero** | No bills or payments have been recorded yet. Financial data populates as consultations are billed and payments are processed. |
+| **Monthly trend chart is empty** | The clinic may be new with less than one month of revenue data. Check back after a full billing cycle. |
+| **Daily revenue chart shows no bars** | No bills have been generated in the current month. Start processing bills from the Schedule page. |
+| **Trend badges show no change** | The previous month had zero revenue, so percentage change cannot be calculated. This is common for new clinics. |

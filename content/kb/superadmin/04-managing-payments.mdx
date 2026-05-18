@@ -1,0 +1,90 @@
+---
+title: "How to Manage Payment Transactions"
+description: "Review all payment transactions, monitor credit balances, track usage, and purchase credit packs for the clinic."
+role: "Superadmin"
+sortOrder: 4
+---
+
+## Prerequisites
+
+- You must be logged in with a **Superadmin** role in the active clinic.
+- A clinic must be selected.
+- The clinic uses Doxxy's credit-based billing system.
+
+## The Goal
+
+Monitor the clinic's credit balance, review the transaction history (credit purchases and bill payments), understand credit usage, and purchase additional credit packs when needed.
+
+## Step-by-Step UI Instructions
+
+### From the Payments page (`/clinic/payments`):
+
+The page header shows **"Payments"** with the subtitle *"Credits and transaction history"* and an **"Add Credits"** button.
+
+### Understanding the Stats Cards
+
+Three cards sit at the top:
+
+1. **Available Balance:** Shows the current credit balance. Displayed in green when healthy (10+ credits), in red when low (below 10 credits).
+
+2. **Total Usage:** The total number of credits consumed (appointments billed). Each appointment consumes credits from the balance.
+
+3. **Account Status:** A badge showing either **"Active"** (green) when credits are available or **"Low Credits"** (red/destructive) when the balance reaches zero.
+
+### Credit Usage Progress Bar
+
+If credits have been purchased, a progress bar shows:
+- The percentage of total purchased credits that have been used.
+- The bar is blue under 90% usage, orange when above 90% (warning zone).
+- Below the bar: "X used of Y total purchased."
+
+### Transaction History
+
+The **"Transaction History"** card lists all payment transactions, newest first. Each row shows:
+
+- **Status Icon:** Green checkmark for completed, red X for failed, yellow clock for pending.
+- **Transaction Type:** "Credit Top-up" or "Bill Payment".
+- **Date & Time:** Formatted as "MMM dd, yyyy • h:mm AM/PM".
+- **Credits:** For top-ups, a blue badge showing "+X credits".
+- **Amount:** The transaction amount in rupees (₹).
+- **Status Badge:** Coloured badge — green "completed", red "failed", yellow "pending".
+
+If there are no transactions, an empty state shows: *"No transactions found."* with a link to purchase the first credit pack.
+
+### Purchasing Credits
+
+5. Click the **"Add Credits"** button (top-right, blue).
+
+6. The **Credit Purchase Modal** opens. Select a credit pack and complete the payment.
+
+7. After a successful purchase, the balance updates and the transaction appears in the history.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Monitoring Credit Levels
+- Set a personal threshold (e.g., 20 credits) at which you purchase more. Running out of credits during clinic hours disrupts the billing workflow.
+- The "Low Credits" status appears when the balance is 0, but plan ahead — purchase before hitting zero.
+
+### Understanding Credit Consumption
+- Each completed bill/consultation typically consumes 1 credit from the balance.
+- The "Total Usage" number equals the number of billed consultations processed through Doxxy.
+- Monitor the usage rate: if you go through 50 credits per week, plan to purchase packs that cover at least 2-4 weeks.
+
+### Transaction Record Keeping
+- All transactions (both credit purchases and bill payments) are permanently recorded. Use the transaction history for reconciliation with your accounting records.
+- Failed transactions are logged and visible — investigate any red "failed" entries to ensure no revenue is lost.
+
+### Credit Packs and Pricing
+- Credit packs come in fixed bundles. The per-credit cost decreases with larger packs.
+- Purchased credits do not expire. They remain available until consumed.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Balance shows 0 but you recently purchased** | Refresh the page. If still 0, check the transaction history for a "failed" status on your recent purchase. |
+| **"Low Credits" badge showing** | Purchase credits immediately to avoid interruption. Click "Add Credits". |
+| **Transaction shows "pending" status** | Some payment methods take time to confirm. Wait a few minutes and refresh. If pending for more than 1 hour, contact Doxxy support. |
+| **"Failed" transaction in history** | The payment did not go through. Try purchasing again. If it fails repeatedly, check with your payment provider or bank. |
+| **Credit Purchase Modal does not open** | Check for browser pop-up blockers. Ensure your internet connection is stable. |
+| **Usage seems higher than expected** | Each completed bill consumes a credit. Check if any bills were generated for cancelled or no-show appointments, which may indicate billing process issues. |

@@ -1,0 +1,88 @@
+---
+title: "How to Set Up Clinic Departments"
+description: "Add, remove, and configure department types (Cardiology, Neurology, General Medicine, etc.) for your clinic."
+role: "Superadmin"
+sortOrder: 5
+---
+
+## Prerequisites
+
+- You must be logged in with a **Superadmin** role in the active clinic.
+- A clinic must be selected.
+- Department types must exist in the Doxxy system catalog. If a needed specialty is missing, contact support.
+
+## The Goal
+
+Activate the departments your clinic offers by adding them from the system catalog. Only activated departments appear in doctor profiles, appointment booking, and consultation forms.
+
+## Step-by-Step UI Instructions
+
+### From the Departments page (`/clinic/departments`):
+
+The page header shows **"Departments"** with the subtitle *"Manage clinic departments"* and two badges: the number of **Active** departments and the number of **Available** (not yet activated) departments.
+
+### Viewing Departments
+
+The page is split into two sections:
+
+1. **Active Departments** (top section, marked with a green checkmark icon): These departments are currently active in your clinic. Each card shows:
+   - A department-specific icon (brain for Neurology, eye for Ophthalmology, heart for Cardiology, smile for Dental, stethoscope for General Medicine/Internal Medicine, activity pulse for others).
+   - The department name and an **"Active"** badge.
+   - An **X button** to remove/deactivate the department.
+
+2. **Available Departments** (bottom section, marked with a + icon): These are system-level department types not yet active in your clinic. Each card shows:
+   - A department icon.
+   - The department name and an **"Available"** badge.
+   - A **+ button** to add/activate the department.
+
+### Adding a Department
+
+3. Locate the department you want to add in the **Available Departments** section.
+
+4. Use the **search bar** at the top if you have many departments — type part of the name (e.g., "cardio") to filter.
+
+5. Click the **+ button** on the department card. A green toast confirms: *"Department added successfully"*.
+
+6. The department card moves from "Available" to "Active".
+
+### Removing a Department
+
+7. Locate the department in the **Active Departments** section.
+
+8. Click the **X button** on the department card. A toast confirms: *"Department removed successfully"*.
+
+9. The department card moves from "Active" back to "Available".
+
+   - Removing a department does NOT delete historical data. Existing consultations and doctor assignments linked to this department remain intact.
+   - Doctors assigned to the removed department will need to be reassigned via the Staff page.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Department Naming and Icons
+- Departments are system-defined types, not custom names. You cannot rename them or upload custom icons.
+- If your clinic uses a specialty not in the list (e.g., Rheumatology, Nephrology), contact Doxxy support to request its addition.
+
+### Activating Only What You Operate
+- Activate only departments you actively offer. Extraneous departments clutter the doctor assignment dropdowns and appointment booking doctor lists.
+- Multi-specialty clinics should activate all relevant departments so each doctor can be assigned correctly.
+
+### When Removing a Department
+- Before removing a department, check if any doctors are assigned to it (Staff page → filter by role "Doctor").
+- Reassign those doctors to a different department first. Removing a department does not automatically reassign its doctors.
+- If you accidentally remove a department, simply re-add it — the toggle is immediate.
+
+### Regional and Specialty Considerations
+- Some department types may be more common in certain regions. The system catalog covers a broad range of medical specialties.
+- A "General Medicine" or "Internal Medicine" department is recommended as a catch-all for general practitioners.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Access Denied" message** | You are not a superadmin in this clinic. Only superadmins can manage departments. |
+| **"Failed to add department" toast** | The server action failed. Check your internet connection and try clicking the + button again. |
+| **"Failed to remove department" error** | The server action failed. Try again. |
+| **Department not appearing in the list** | Use the search bar to filter. If still not found, the department type may not exist in the system catalog. Contact support. |
+| **"No departments match your search"** | Try different search terms. The search matches against department names. |
+| **"No departments found" (both sections empty)** | No department types exist in the system. Contact Doxxy support. |
+| **Removed department still shows for doctors** | Doctor department assignments are separate from clinic department activation. Update the doctor's department from the Staff page. |

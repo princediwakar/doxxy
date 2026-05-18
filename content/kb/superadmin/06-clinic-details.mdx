@@ -1,0 +1,96 @@
+---
+title: "How to Configure Clinic Details and Settings"
+description: "Update clinic name, address, email, phone number, and website. Changes appear on invoices, prescriptions, and patient-facing documents."
+role: "Superadmin"
+sortOrder: 6
+---
+
+## Prerequisites
+
+- You must be logged in with a **Superadmin** role in the active clinic.
+- A clinic must be selected (the page shows a prompt if no clinic is active).
+
+## The Goal
+
+Keep your clinic's basic information accurate and up to date. These details appear on patient invoices, prescriptions, and in the system header. Accurate details ensure patients and staff can reach the clinic and that legal/billing documents are correct.
+
+## Step-by-Step UI Instructions
+
+### From the About Clinic page (`/clinic/about`):
+
+The page header shows **"About Clinic"** with the subtitle *"Basic info and contact details"*. A status badge on the right shows either **"Saved"** (green checkmark — all changes saved) or **"Unsaved"** (orange alert — you have pending changes).
+
+### Editing Clinic Details
+
+The form contains five fields arranged in a two-column layout, plus a full-width address field:
+
+1. **Clinic Name** (required): The display name of your clinic. This appears in the header, on invoices, and on prescriptions. Maximum 100 characters.
+
+2. **Email Address** (required): The clinic's contact email. Must be a valid email format. Used for patient communication and system notifications.
+
+3. **Phone Number** (required): The primary phone number. Must contain only digits, spaces, dashes, parentheses, or + prefix. This appears on patient-facing documents.
+
+4. **Website** (optional): Your clinic's website. Can be a full URL (https://www.example.com) or a domain (www.example.com). Leave blank if you don't have one.
+
+5. **Address** (required, full width): The clinic's physical address. Maximum 200 characters. Be precise — this appears on invoices and may be used for regulatory documents.
+
+### Saving Changes
+
+6. Make your edits to any field. As soon as you type, the status badge changes to **"Unsaved"** and the **"Save Changes"** button becomes enabled.
+
+7. Click **"Save Changes"** (bottom-right of the form, with a Save icon).
+
+8. On success:
+   - A green toast confirms: *"Clinic details updated"*.
+   - The status badge changes back to **"Saved"**.
+   - The Save button is disabled again.
+
+9. On validation error:
+   - A red toast: *"Please fix validation errors"*.
+   - Each invalid field shows a red border and an error message below it (e.g., "Invalid email address", "Clinic name is required").
+   - Fix the errors and click Save again.
+
+### Field-Level Validation
+
+- **Clinic Name:** Cannot be empty. Max 100 characters.
+- **Address:** Cannot be empty. Max 200 characters.
+- **Email:** Must be a valid email format (e.g., contact@clinic.com).
+- **Phone:** Cannot be empty. Must contain only valid phone characters (digits, +, -, spaces, parentheses).
+- **Website:** Optional. If provided, must be a valid domain or URL.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Keeping Details Current
+- Review clinic details at least quarterly. Outdated phone numbers lead to missed patient calls. Wrong addresses on invoices can cause payment delays.
+- After relocating the clinic, update the address immediately. Historical invoices retain the old address from when they were generated.
+
+### Email Best Practices
+- Use a generic clinic email (e.g., info@clinic.com, frontdesk@clinic.com) rather than a personal email. This ensures continuity if staff changes.
+- The email is used in system notifications and may receive patient inquiries. Ensure someone monitors this inbox.
+
+### Phone Number Format
+- Enter the primary landline or reception number. Avoid using a doctor's personal mobile unless it is the official clinic contact.
+- International format example: +91 98765 43210. Local format example: 9876543210.
+
+### Website
+- If you don't have a website, leave this field empty. A blank website does not affect any functionality.
+- If you have a Google My Business listing or Facebook page, consider adding it here for patient reference.
+
+### Unsaved Changes
+- The **"Unsaved"** badge is your signal that changes are pending. Navigating away without saving will lose your edits.
+- The form does not auto-save. Always click **"Save Changes"** before leaving the page.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Access Denied" message** | You are not a superadmin in this clinic. Only superadmins can edit clinic details. |
+| **"No clinic selected" message** | No clinic is currently active. Use the Clinic Switcher to select a clinic first. |
+| **"Please fix validation errors" toast** | Check each field for red-bordered inputs and error messages. Fix all before saving. |
+| **"Clinic name is required"** | The name field is empty. Enter the clinic name. |
+| **"Invalid email address"** | The email format is wrong. Ensure it has @ and a domain (e.g., @clinic.com). |
+| **"Phone number is required" / "Invalid phone format"** | The phone field is empty or contains invalid characters. Use only digits, +, -, spaces, and parentheses. |
+| **"Address is required"** | The address field is empty. Enter the clinic's physical address. |
+| **"Name too long" / "Address too long"** | Shorten the text. Max 100 characters for name, 200 for address. |
+| **"Failed to update clinic details" toast** | Server error. Check your internet connection and try again. |
+| **Save button stays disabled after edits** | The form is loading clinic data. Wait a moment for the fields to populate. If it persists, refresh the page. |

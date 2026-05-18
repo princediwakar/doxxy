@@ -1,0 +1,95 @@
+---
+title: "How to Create a New Clinic"
+description: "Walk through the multi-step clinic creation wizard — clinic details, departments, and assigning yourself as superadmin or doctor."
+role: "Superadmin"
+sortOrder: 1
+---
+
+## Prerequisites
+
+- You must be logged in to Doxxy. If this is your first time using Doxxy after signup, you will not yet belong to any clinic.
+- You should know the basic details of the clinic you want to create: name, address, contact information.
+
+## The Goal
+
+Create a new clinic in Doxxy and set yourself up as either a practicing doctor or an administrator-only superadmin. Once created, the clinic becomes your active workspace and you can begin inviting staff, adding patients, and scheduling appointments.
+
+## Step-by-Step UI Instructions
+
+### From the Create Clinic page (`/create-clinic`):
+
+The wizard has three steps, shown at the top of the form: **1. Clinic Details → 2. Departments → 3. Your Role**.
+
+### Step 1: Clinic Details
+
+1. **Enter the Clinic Name** in the first field (e.g., "Neurovision"). This is required and must be at least 2 characters.
+
+2. **Fill in the Clinic Address** (optional but recommended). Enter the full street address (e.g., "123, Connaught Place, New Delhi").
+
+3. **Enter the Clinic Email** (optional). Use a valid email format (e.g., "email@clinic.com"). This is the clinic's public-facing contact email.
+
+4. **Enter the Clinic Phone** (optional). The clinic's primary contact number (e.g., "9876543210").
+
+5. **Enter the Website** (optional). You can enter a full URL (e.g., "https://www.clinic.com") or just a domain (e.g., "www.clinic.com").
+
+6. Click **"Next: Select Departments"**. The form validates your inputs and advances to Step 2.
+
+### Step 2: Departments
+
+7. **Select the departments your clinic offers.** A list of available department types loads from the system (e.g., Cardiology, Neurology, Ophthalmology, Dental, General Medicine). Each department appears with a checkbox.
+
+8. Check the box next to each department your clinic will operate. You must select at least one department.
+
+   - If the department list fails to load, you will see an error message with a **"Try Again"** button to reload.
+   - If no department types exist in the system, you will see "No departments found."
+
+9. Click **"Next: Your Role"** to proceed, or **"Back"** to return to clinic details.
+
+### Step 3: Your Role
+
+10. **Choose whether you are a practicing doctor or an administrator only:**
+    - Select **"Yes, I'm a practicing doctor"** if you will see patients and appear in appointment lists. This opens additional fields.
+    - Select **"No, I'm an administrator only"** if you will manage the clinic but not see patients.
+
+11. **If you selected "Yes, I'm a practicing doctor":**
+    - **Primary Department (required):** Choose your primary department from the dropdown. Only departments you selected in Step 2 appear here.
+    - **Consultation Fee (₹):** Enter your consultation fee in rupees (e.g., 500). You can adjust this later from your profile.
+
+12. Click **"Create Clinic"**. The button shows "Creating Clinic..." while the server action runs.
+
+13. On success:
+    - A green toast notification confirms: *"Clinic [name] created successfully."*
+    - You are automatically redirected to the Schedule page (`/schedule`) with the new clinic set as your active clinic.
+    - Your role (superadmin or doctor) is assigned based on your selection.
+
+14. On failure: A red toast shows the error message. Check the inputs and try again.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Naming Your Clinic
+- Use the clinic's legal or brand name consistently. This name appears on invoices, prescriptions, and patient-facing documents.
+- Avoid special characters that may cause issues in printed documents.
+
+### Department Selection Strategy
+- Select only the departments you actively operate. You can add or remove departments later from Clinic Settings → Departments.
+- If a department type you need is not in the list, contact Doxxy support to have it added to the system's department catalog.
+
+### Administrator-Only vs. Doctor
+- If you select "No, I'm an administrator only," you will have full superadmin privileges but will NOT appear in the doctor selection dropdown when booking appointments.
+- You can create a separate doctor profile later via Clinic Settings → Staff if you decide to practice later.
+- This choice cannot be undone from this wizard, but a superadmin can always have a doctor profile created for them by another superadmin.
+
+### Multiple Clinics
+- If your organization manages multiple clinic locations, repeat this process for each location. Use the Clinic Switcher in the top navigation to move between clinics.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Clinic name must be at least 2 characters" error** | The name field is empty or too short. Enter the full clinic name. |
+| **"Invalid email address" error** | The email field contains an improperly formatted email. Correct it or leave it empty. |
+| **"Select at least one department" error** | You must check at least one department checkbox before proceeding. |
+| **"Select at least one department when registering as a doctor" error** | In Step 3, you selected "Yes, I'm a practicing doctor" but did not pick your primary department from the dropdown. |
+| **Department list is empty or shows an error** | Click "Try Again" to reload. If the problem persists, check your internet connection. |
+| **"Creating Clinic..." hangs indefinitely** | The server action may have timed out. Refresh the page and try again. Your clinic details from Step 1 are preserved in the form. |
+| **Redirected to wrong page after creation** | You should land on `/schedule`. If redirected elsewhere, manually navigate to `/schedule`. |

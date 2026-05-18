@@ -1,0 +1,109 @@
+---
+title: "How to Complete and Sign Off an Encounter"
+description: "Finalize a consultation — review notes in the preview, mark the appointment as completed, and print or export the consultation summary as PDF."
+role: "Doctor"
+sortOrder: 6
+---
+
+## Prerequisites
+
+- You must be logged in with a **Doctor** role.
+- A patient must be selected with an active (non-completed) consultation.
+- All mandatory fields in the consultation form must be filled.
+- You must have edit permission on the consultation (typically the assigned doctor or a superadmin).
+
+## The Goal
+
+Review and finalize the consultation — verify the clinical note is accurate and complete, sign off the encounter (which changes the appointment status to "Completed"), and optionally generate the bill. The completed note becomes part of the patient's permanent medical record and appears in their history.
+
+## Step-by-Step UI Instructions
+
+### From the Encounter Canvas:
+
+### Step 1: Review the Note
+
+1. Expand all sections of the consultation form and verify each field is accurate:
+   - Chief complaint matches what the patient reported.
+   - Vital signs are correctly recorded.
+   - Physical exam findings are complete.
+   - Diagnosis is clear and specific.
+   - Treatment plan and advice are actionable.
+   - Prescriptions have correct drug names, dosages, frequencies, and durations.
+
+2. Click **"Preview"** (eye icon, bottom bar). The **Consultation Preview Modal** opens showing the fully formatted note as it will appear when printed or saved.
+
+3. Review the preview thoroughly. This is your last chance to catch errors before signing off.
+
+4. Close the preview to return to editing, or proceed if everything looks correct.
+
+### Step 2: Complete the Encounter
+
+5. Ensure the **"Finish Visit"** button at the bottom-right is enabled. If it's greyed out:
+   - Mandatory fields are not all filled. Look for highlighted empty required fields across all sections.
+   - The auto-save mutation may be pending — wait for "Saved" to appear.
+
+6. Click **"Finish Visit"**.
+
+7. A green toast confirms: *"Consultation completed"*.
+
+8. The changes after completion:
+   - The consultation form enters **read-only mode**. A **"Completed"** badge appears in the bottom bar.
+   - The patient automatically moves from "In Progress" to the **"Completed"** section of the queue.
+   - The appointment status changes to "Completed".
+   - The note is permanently saved and becomes visible in the patient's medical history.
+
+### Step 3: Generate a Bill (if needed)
+
+9. After completing, you or the front desk staff can generate a bill:
+   - From the Patient Header, click **"Bill"** (three-dot menu → Bill).
+   - Or from the Administrative Footer, expand the **Bills** accordion and click **"Create Bill"**.
+   - The **Billing Modal** opens pre-populated with the consultation details.
+
+10. Fill in service items, apply any discounts or taxes, and save the bill. See [How to Generate an Invoice and Process Payment](/kb/staff/generate-invoice).
+
+### Updating a Completed Note
+
+11. If you need to edit a completed note (e.g., to add a late-arriving lab result), re-open the patient from the Completed section of the queue.
+
+12. The form loads with existing data and the button changes to **"Update Notes"**. Make your edits and click it.
+
+13. The note is updated. The patient remains in "Completed" status.
+
+### Printing and Exporting
+
+14. From the Preview modal, use your browser's print function (Cmd+P / Ctrl+P) to print the consultation summary as a PDF or physical copy.
+
+15. The consultation print layout is formatted for professional presentation — suitable for giving to the patient, filing in physical records, or sending to a referring doctor.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Before Signing Off
+- **Verify prescriptions:** Wrong dosage or frequency on a signed prescription is a medicolegal risk. Double-check all medication details.
+- **Check for completeness:** At minimum, every completed consultation should have a chief complaint, a diagnosis (or differential), and a treatment plan.
+- **Review with the patient:** Briefly summarize your findings and plan to the patient before finalizing. This catches misunderstandings and builds trust.
+
+### When NOT to Complete an Encounter
+- If the patient needs to return with lab results before a diagnosis can be made, leave the encounter "In Progress" (or use the status workflow) and add a note. Complete it on the follow-up visit.
+- If you are waiting for a senior doctor's opinion, leave the note in draft. The auto-save preserves your work.
+- If the patient was a no-show, do NOT complete a consultation. Change the appointment status to "Cancelled" or "No-Show" instead.
+
+### Amending Completed Notes
+- Completed notes can be updated if you have edit permissions. Each update overwrites the previous version — there is no version history.
+- For significant amendments (e.g., changing a diagnosis), consider adding an addendum note in the treatment plan or advice section explaining the change.
+- Medico-legally, it's better to add a new note than to materially alter a signed note without explanation.
+
+### Bill at or After Completion
+- The bill can be generated either before or after completing the consultation. If billing before, the consultation note may still change.
+- Best practice: complete the note first, then generate the bill so the invoice reflects the final consultation.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **"Finish Visit" is disabled (greyed out)** | Mandatory fields are incomplete. Expand every section and check for red-highlighted required fields. The auto-save may also be pending — wait for "Saved". |
+| **Toast says "Consultation completed" but patient didn't move** | The queue refresh may be delayed. Wait a moment or manually refresh the page. The appointment status has been updated server-side. |
+| **Completed consultation shows empty fields** | Auto-save may not have captured your last edits before completion. If critical data is missing, use "Update Notes" to add it. |
+| **"Update Notes" button is greyed out** | You lack edit permissions. Only the original doctor or a superadmin can update completed notes. |
+| **Preview modal shows nothing** | Only filled fields appear in the preview. If all fields are empty, the consultation form hasn't been filled out. |
+| **Browser print dialog doesn't show the note** | The print layout is embedded in the preview. Make sure the Preview modal is open when you print. |
+| **Double-completion concern** | The button changes to "Update Notes" after completion. You cannot accidentally "complete" an already-completed consultation. |

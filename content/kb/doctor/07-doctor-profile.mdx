@@ -1,0 +1,80 @@
+---
+title: "How to Set Up Your Doctor Profile"
+description: "Update your name, specialization, qualification, consultation fee, bio, and digital signature from the Profile page."
+role: "Doctor"
+sortOrder: 7
+---
+
+## Prerequisites
+
+- You must be logged in to Doxxy with any role.
+- Your doctor profile must have been initially created by a superadmin (via Clinic Settings → Staff → Create Doctor Profile).
+- A clinic must be selected.
+
+## The Goal
+
+Keep your professional profile up to date — your name, medical qualifications, specialization, consultation fee, bio, and digital signature. This information appears in appointment booking lists, on prescriptions, and in printed consultation summaries.
+
+## Step-by-Step UI Instructions
+
+### From the Profile page (`/profile`):
+
+The page loads with your profile information fetched from the server. A superadmin or the profile owner can edit the details.
+
+### Editing Your Profile
+
+1. The **Profile Page** is rendered by the `ProfilePageClient` component, which contains your:
+   - **Basic profile editor** (name, contact info) from the user's account.
+   - **Doctor-specific fields** (specialization, qualification, consultation fee, bio, signature).
+
+2. **Update Basic Information:**
+   - Your **name** and contact details come from your Supabase Auth user profile.
+   - Edit these in the Basic Profile Editor section.
+
+3. **Update Medical Details:**
+   - **Primary Specialization:** Your medical specialty (e.g., "General Physician", "Cardiologist", "Ophthalmologist").
+   - **Qualification:** Your degree(s) — e.g., "MBBS, MD (General Medicine)".
+   - **Consultation Fee (₹):** Your per-visit charge. This appears when staff book appointments for you.
+   - **Bio:** A short professional summary. This appears in your profile and may be shown to patients.
+   - **Digital Signature:** Upload or create a signature image that appears on printed prescriptions and consultation summaries.
+
+4. Click **"Save"** (or the equivalent save action) to persist your changes.
+
+5. A green toast confirms: *"Profile updated successfully"* (or similar message).
+
+### What Your Profile Affects
+
+- **Appointment Booking:** Your name, department, and consultation fee appear in the doctor selection dropdown when staff book appointments.
+- **Prescriptions & Printouts:** Your name, qualification, and digital signature appear on printed consultation summaries and prescriptions.
+- **Queue Display:** Your name appears on the appointment queue for patients assigned to you.
+- **Analytics:** Your consultation and appointment metrics appear in the Doctor Performance table.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Keeping Your Profile Current
+- Update your qualification whenever you achieve a new certification or degree. This appears on medicolegal documents.
+- Review your consultation fee periodically. Fee changes take effect immediately for new bills.
+- Upload a clear digital signature — it appears on prescriptions and official documents.
+
+### Consultation Fee Considerations
+- Your fee is set per consultation and is used as the default when generating bills.
+- If you offer different rates for different services (e.g., procedure vs. consultation), inform the billing staff. They can override the default fee in the Billing Modal.
+- Fee changes do NOT retroactively affect past bills.
+
+### Bio Content
+- Keep your bio professional and concise. Typical content: years of experience, areas of clinical interest, languages spoken.
+- Avoid personal contact information in the bio — patients should contact the clinic, not you directly.
+
+### Profile Visibility
+- Your profile is visible to all clinic staff (superadmins, other doctors, and staff members).
+- Patients do not log into Doxxy, so your profile is internal-only unless printed on patient-facing documents.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Profile page shows incomplete data** | The page fetches both your user profile and doctor profile. If one fails, partial data may display. Refresh the page. |
+| **Cannot edit doctor-specific fields** | Your doctor profile may not have been created. Ask a superadmin to create it from Staff → your member card → Create Doctor Profile. |
+| **Digital signature not appearing on printouts** | Ensure the signature was saved successfully. The signature is included in the consultation print layout. |
+| **Consultation fee not updating** | Changes take effect server-side. If the old fee still shows, refresh the page and verify the save was successful. |
+| **Name change not reflected** | Your display name comes from Supabase Auth. Changes to the user profile may require re-authentication to take effect. |

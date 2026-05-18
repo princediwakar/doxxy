@@ -1,0 +1,110 @@
+---
+title: "How to Check Pharmacy Stock Levels"
+description: "Browse the pharmacy inventory, check stock levels, view medicine details (price, manufacturer, pack size), and identify low-stock alerts."
+role: "Staff"
+sortOrder: 7
+---
+
+## Prerequisites
+
+- You must be logged in with a **Staff** or **Superadmin** role in the active clinic.
+- Medicines must have been added to inventory via procurement entries.
+- A clinic must be selected.
+
+## The Goal
+
+Check the clinic's pharmacy inventory — see which medicines are in stock, their quantities, prices, pack sizes, and expiry dates. Identify low-stock items that need reordering and verify medicine availability before dispensing or prescribing.
+
+## Step-by-Step UI Instructions
+
+### From the Pharmacy page (`/pharmacy`):
+
+The page header shows **"Pharmacy Store"** with the subtitle *"Manage medicine stock, track expiry dates, and add new purchases."* and an **"Add Stock"** button.
+
+### Viewing Stock Levels
+
+1. The page defaults to the **"Stock"** tab (the other tab is "Purchase Records").
+
+2. The **Inventory Tab** displays all medicines currently in stock. Each item shows:
+   - **Medicine Name:** The brand or generic name.
+   - **Current Stock:** Quantity available.
+   - **Expiry Date:** When this batch expires.
+   - **Price:** Per-unit price.
+   - **Pack Size:** How the medicine is packaged (e.g., strip of 10, bottle of 100ml).
+   - **Manufacturer:** The pharmaceutical company.
+
+3. **Low-stock items** are visually highlighted — typically with a warning colour or badge. These are medicines that have fallen below the minimum threshold and need reordering.
+
+### Searching for a Specific Medicine
+
+4. Use the **search bar** within the Stock tab to find a specific medicine. Type part of the name (e.g., "para", "amox", "cetirizine").
+
+5. The list filters as you type, showing only matching medicines.
+
+### Understanding Stock Information
+
+6. For each medicine, note:
+   - **Quantity on hand** — How many units are available for dispensing.
+   - **Expiry date** — Medicines expiring soon should be used first (FEFO: First Expiry First Out).
+   - **Batch number** — Important for traceability in case of recalls.
+   - **Price** — The unit price used for billing when this medicine is dispensed.
+
+### Viewing Purchase Records
+
+7. Switch to the **"Purchase Records"** tab to see the procurement history:
+   - All past stock additions (procurements).
+   - Supplier details.
+   - Date of purchase.
+   - Medicines purchased and their quantities.
+   - Total cost of each procurement.
+
+### Adding Stock (if authorized)
+
+8. Click **"Add Stock"** to open the Procurement Entry Sheet. See [How to Manage Pharmacy Inventory and Stock](/kb/superadmin/pharmacy-inventory) for detailed steps.
+
+### Cross-Referencing with Prescriptions
+
+9. When a doctor prescribes a medicine, check the Stock tab to confirm:
+   - The medicine is in stock.
+   - The prescribed dosage form matches what's available.
+   - The quantity needed is available.
+
+10. If the prescribed medicine is out of stock, inform the doctor so they can prescribe an alternative, or inform the patient that they need to purchase it externally.
+
+## Recommended Clinic Policy & Edge Cases
+
+### Daily Stock Check
+- Front desk or pharmacy staff should check stock levels at the start of each day, focusing on:
+  - **Fast-moving items** (common antibiotics, analgesics, antihistamines).
+  - **Low-stock alerts** — items flagged by the system.
+  - **Expiring items** — medicines expiring within 30 days.
+
+### Expiry Date Management
+- Always check the expiry date before dispensing. Never dispense expired medicines.
+- Implement FEFO (First Expiry First Out): dispense the batch with the earliest expiry date first.
+- Flag expired stock to the superadmin for removal and disposal per pharmaceutical waste guidelines.
+
+### Stock-Out Procedure
+- If a prescribed medicine is out of stock:
+  1. Check if an equivalent generic or alternative brand is available.
+  2. Inform the prescribing doctor if no alternative is in stock.
+  3. Offer the patient a prescription to fill at an external pharmacy.
+  4. Log the stock-out so the superadmin can prioritize reordering.
+
+### Medicine Pricing for Billing
+- The pharmacy price listed in inventory is used as the default when adding the medicine as a service item on a bill.
+- If the purchase price changes (new procurement at a different rate), the billing price should be updated accordingly in the inventory.
+
+### Access Control
+- Both staff and superadmins can view the pharmacy. If you need to restrict who can add stock or adjust inventory, this is managed through role assignments.
+
+## Troubleshooting
+
+| Issue | What to do |
+|---|---|
+| **Stock tab shows no medicines** | No medicines have been added to inventory yet. A superadmin or authorized staff member needs to add stock via the Procurement Entry Sheet. |
+| **Medicine I know exists isn't showing** | Use the search bar — the list may be long. If still not found, the medicine may be out of stock (quantity zero) or never added. Check Purchase Records. |
+| **Stock quantity seems wrong** | Stock levels are updated when procurements are entered and when medicines are dispensed (via bills). If a discrepancy exists, flag it for a physical inventory count. |
+| **Low-stock alert not showing for a depleted item** | The low-stock threshold may not be configured for that medicine. Report to the superadmin. |
+| **Expired medicine still showing in stock** | The system does not auto-remove expired stock. Manually adjust quantities or flag for disposal. |
+| **Cannot switch to Purchase Records tab** | The tabs are client-side and should switch instantly. If unresponsive, refresh the page. |
