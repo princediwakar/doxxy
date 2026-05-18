@@ -12,7 +12,13 @@ export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
   title: 'Doxxy - Clinic Management',
   description: 'Modern clinic management software for healthcare providers',
+  manifest: '/manifest.json',
   verification: { google: '6XTorYQy4TdZB9Z3EF6fNyU4BcWaTma53piGhXir-Tc' },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Doxxy',
+  },
   openGraph: {
     title: 'Doxxy - Clinic Management',
     description: 'Modern clinic management software for healthcare providers',
@@ -42,7 +48,7 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1.0,
   maximumScale: 5.0,
-  themeColor: '#3b82f6',
+  themeColor: '#1f8fff',
 }
 
 export default function RootLayout({
@@ -56,6 +62,21 @@ export default function RootLayout({
         <Providers>
           {children}
         </Providers>
+
+        {/* Register Service Worker for PWA */}
+        <Script
+          id="register-sw"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
+        />
 
         {/* Tawk.to Script (commented out for now) */}
         {/* <Script
