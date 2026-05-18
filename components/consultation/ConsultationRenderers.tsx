@@ -361,6 +361,7 @@ const allEyeExaminations = [
   { key: "pupil_examination", label: "Pupil" },
   { key: "lens", label: "Lens" },
   { key: "intraocular_pressure", label: "Intraocular Pressure" },
+  { key: "slit_lamp_exam", label: "Slit Lamp Exam" },
 
   // Posterior Segment Examination
   { key: "fundus_exam", label: "Fundus Examination" },
@@ -485,6 +486,10 @@ export const FieldValueRenderer: React.FC<{
       return <VitalSignsDisplay data={value} />;
     }
 
+    if (isTabularEyeData(value)) {
+      return <TabularEyeExaminationDisplay data={value} />;
+    }
+
     if (isEyeData(value)) {
       return <EyeFieldDisplay data={value} />;
     }
@@ -498,11 +503,6 @@ export const FieldValueRenderer: React.FC<{
       return <ReflexExaminationDisplay data={value} />;
     }
 
-
-    if (isTabularEyeData(value)) {
-      return <TabularEyeExaminationDisplay data={value} />;
-    }
-
     // Fallback for unhandled object types
     try {
       const stringified = JSON.stringify(value);
@@ -514,6 +514,19 @@ export const FieldValueRenderer: React.FC<{
     } catch {
       return <span className="text-gray-500 italic">[Complex data]</span>;
     }
+  }
+
+  // Type Guard: String arrays
+  if (Array.isArray(value) && value.every((item): item is string => typeof item === 'string')) {
+    const items = value.filter(s => s.trim().length > 0);
+    if (items.length === 0) return null;
+    return (
+      <ul className="list-disc list-inside space-y-1">
+        {items.map((item, i) => (
+          <li key={i} className="text-sm text-gray-700">{item}</li>
+        ))}
+      </ul>
+    );
   }
 
   // Type Guard: String

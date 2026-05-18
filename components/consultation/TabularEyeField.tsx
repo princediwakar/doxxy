@@ -62,6 +62,7 @@ export const TabularEyeField = ({
     { key: "pupil_examination", label: "Pupil" },
     { key: "lens", label: "Lens" },
     { key: "intraocular_pressure", label: "Intraocular Pressure" },
+    { key: "slit_lamp_exam", label: "Slit Lamp Exam" },
 
     // Posterior Segment Examination
     { key: "fundus_exam", label: "Fundus Examination" },

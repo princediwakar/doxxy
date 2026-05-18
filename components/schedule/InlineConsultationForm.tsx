@@ -85,6 +85,8 @@ export function InlineConsultationForm({
     handleCompleteConsultation,
     mandatoryFieldsStatus,
     justCompleted,
+    resetForm,
+    isFormDirty,
   } = useConsultationForm({
     appointmentId,
     appointment,
@@ -225,6 +227,18 @@ export function InlineConsultationForm({
           </span>
         )}
 
+        {isFormDirty && canEditConsultation && !isConsultationCompleted && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              resetForm();
+              toast.success("Changes discarded");
+            }}
+          >
+            Discard Changes
+          </Button>
+        )}
         <Button onClick={() => setShowPreview(true)} variant="ghost" size="sm">
           <Eye className="h-4 w-4 mr-1" />Preview
         </Button>

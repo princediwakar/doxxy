@@ -235,6 +235,43 @@ export const ConsultationFormField = memo(({
     </div>
   );
 
+  // String array fields: render as textarea, one item per line
+  const ARRAY_FIELD_NAMES = ['additional_clinical_findings', 'discontinued_medications', 'ruled_out_findings'];
+  if (ARRAY_FIELD_NAMES.includes(fieldConfig.name)) {
+    const items: string[] = Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+    const textValue = items.join('\n');
+
+    return (
+      <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+          {header}
+          <CollapsibleContent>
+            <div className="space-y-3 px-1 pt-2">
+              <Textarea
+                ref={textareaRef}
+                placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
+                value={textValue}
+                onChange={(e) => {
+                  if (isReadOnly) return;
+                  const raw = e.target.value;
+                  const sanitized = raw
+                    .split('\n')
+                    .map(s => s.trim())
+                    .filter(s => s.length > 0);
+                  onChange(sanitized.length > 0 ? sanitized : null);
+                }}
+                rows={fieldConfig.rows || 4}
+                className={`min-h-[80px] resize-none ${isReadOnly ? "bg-muted/30 cursor-not-allowed opacity-70" : ""}`}
+                readOnly={isReadOnly}
+                disabled={isReadOnly}
+              />
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+    );
+  }
+
   return (
     <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>

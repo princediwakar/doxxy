@@ -16,7 +16,7 @@ if (!OPENAI_API_KEY) {
 // Instantiate official client. It natively handles rate limits (429) and network retries with backoff.
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
-  maxRetries: 3, 
+  maxRetries: 3,
 });
 
 // src/lib/voice/structureClinicalNotes.ts
@@ -57,10 +57,14 @@ Ask yourself: "Am I summarizing, or am I extracting?" If you are summarizing, yo
 
 
 
+// src/lib/voice/structureClinicalNotes.ts
+
 function getSpecialtyInstructions(department: string): string {
   switch (department) {
     case "Ophthalmology":
-      return "- Format visual acuity strictly as standard fractions (e.g., 6/6, 20/20). Left/Right specificity is absolute.";
+      return `- Format visual acuity strictly as standard fractions (e.g., '20/20', '6/6'). 
+- CRITICAL: STT will often output phonetic fractions like '20 by 20' or '6 by 6'. You MUST translate these into the standard slash format (e.g., '20/20') before mapping.
+- Left/Right specificity is absolute. Do not guess if not explicitly stated.`;
     case "Neurology":
       return "- Format motor power as standard grades (e.g., 5/5). Map eponyms (Patellar, Babinski) to exact anatomical fields. If 'bilateral', duplicate to left and right.";
     case "Cardiology":
@@ -72,7 +76,7 @@ function getSpecialtyInstructions(department: string): string {
 
 function generateSystemPrompt(department: string): string {
   const specialtyRules = getSpecialtyInstructions(department);
-  
+
   return `${SURGICAL_SYSTEM_PROMPT}
 
 DEPARTMENT FOCUS: ${department}
@@ -105,11 +109,11 @@ export async function structureClinicalNotes(
   const dept = department ? mapDepartmentName(department) : "General";
   const schema = getSchemaForDepartment(dept);
   const fields = getAllFieldsFromSchema(schema);
-  
+
   // Note: We no longer pass 'fields' into generateSystemPrompt. Zod handles the schema context.
   const systemPrompt = generateSystemPrompt(dept);
 
-try {
+  try {
     const response = await openai.chat.completions.parse({
       model: process.env.OPENAI_MODEL || "gpt-4o-2024-08-06",
       temperature: 0.0,
@@ -121,7 +125,7 @@ try {
     });
 
     const parsedData = response.choices[0]?.message?.parsed;
-    
+
     if (!parsedData) {
       throw new Error(`OpenAI refusal or empty response: ${response.choices[0]?.message?.refusal || "Unknown"}`);
     }
@@ -133,7 +137,7 @@ try {
     // ------------------------------
 
     return mapAndScoreOutput(parsedData, fields);
-    
+
   } catch (error) {
     logger.error("[structureClinicalNotes] Failed to structure clinical notes.", error);
     throw new Error(`Failed to structure clinical notes: ${error instanceof Error ? error.message : String(error)}`);
@@ -170,7 +174,7 @@ function mapAndScoreOutput(
       confidence.push({ field: fieldName, level: "low", reason: "Non-numeric value in vital sign field" });
       return;
     }
-    if (fieldName === "visual_acuity" && !VISUAL_ACUITY_PATTERN.test(trimmed)) {
+    if (fieldName.startsWith("visual_acuity_") && !VISUAL_ACUITY_PATTERN.test(trimmed)) {
       confidence.push({ field: fieldName, level: "low", reason: "Invalid visual acuity format" });
       return;
     }
@@ -182,30 +186,38 @@ function mapAndScoreOutput(
       confidence.push({ field: fieldName, level: "medium", reason: `Brief extraction (${trimmed.length} chars)` });
     }
   }
+  // Inside mapAndScoreOutput()
 
-for (const field of fields) {
+  for (const field of fields) {
     if (["chief_complaint", "diagnosis", "prescriptions"].includes(field.name)) continue;
-    
+
     if (field.name in aiOutput && aiOutput[field.name] !== null) {
-      let val = aiOutput[field.name];
-      
-      // Catch stringified nulls from the LLM before they hit the frontend
-      if (typeof val === "string") {
-        const trimmed = val.trim().toUpperCase();
-        if (trimmed === "NULL" || trimmed === ":NULL" || trimmed === "NOT_SPECIFIED") {
-           val = null;
-        }
-      }
+
+      // 1. Actually utilize your recursive cleaner to scrub nested stringified nulls
+      let val = stripNotSpecified(aiOutput[field.name]);
 
       if (val !== null) {
         rawFields[field.name] = val;
+
+        // 2. Traverse nested objects for accurate validation and confidence scoring
         if (typeof val === "string") {
           assessConfidence(val, field.name);
+        } else if (typeof val === "object" && !Array.isArray(val)) {
+          for (const [key, innerVal] of Object.entries(val)) {
+            if (typeof innerVal === "string") {
+              // Route eye fields back to their parent name (e.g., 'visual_acuity') 
+              // so your VISUAL_ACUITY_PATTERN regex triggers correctly. 
+              // Let vitals and motor exams use their explicit keys.
+              const isEyeField = ["left", "right", "notes"].includes(key);
+              const targetName = isEyeField ? field.name : key;
+
+              assessConfidence(innerVal, targetName);
+            }
+          }
         }
       }
     }
   }
-
   const symptoms = safeString(aiOutput.chief_complaint);
   const diagnosis = safeString(aiOutput.diagnosis);
   const advice = safeString(aiOutput.treatment ?? aiOutput.therapy_plan);
@@ -220,7 +232,7 @@ for (const field of fields) {
   const additional_clinical_findings = rawAdditional.filter((d): d is string => typeof d === "string");
   const rawRuledOut = Array.isArray(aiOutput.ruled_out_findings) ? aiOutput.ruled_out_findings : [];
   const ruled_out_findings = rawRuledOut.filter((d): d is string => typeof d === "string");
-  
+
   const prescriptions = rawPrescriptions.map((p: Record<string, unknown>, index: number) => {
     const prefix = `prescriptions[${index}].`;
 
@@ -249,12 +261,12 @@ for (const field of fields) {
 
 export function stripNotSpecified(obj: unknown): unknown {
   if (isBlank(obj)) return null;
-  
+
   if (Array.isArray(obj)) {
     const cleaned = obj.map(stripNotSpecified).filter((v) => v !== null);
     return cleaned.length === 0 ? null : cleaned;
   }
-  
+
   if (typeof obj === 'object') {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {

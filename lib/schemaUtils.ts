@@ -51,30 +51,6 @@ export const textField = (
   return zField(name, z.string().nullable(), { label, section, type: "textarea", rows, placeholder });
 };
 
-/**
- * Factory for eye examination fields.
- */
-export const createEyeField = (
-  name: string,
-  label: string,
-  section = "Examination",
-) => {
-  return zField(
-    name,
-    z.object({
-      left: z.string().nullable(),
-      right: z.string().nullable(),
-      notes: z.string().nullable(),
-    }).nullable(),
-    {
-      label,
-      type: "tabular_eye",
-      section,
-      placeholder: `Enter ${label.toLowerCase()} findings`,
-    },
-  );
-};
-
 export const extractFieldConfig = (
   _fieldName: string,
   schema: z.ZodTypeAny,

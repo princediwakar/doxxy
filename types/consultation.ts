@@ -163,6 +163,8 @@ export interface TabularEyeValue {
   lens_right: string | null;
   intraocular_pressure_left: string | null;
   intraocular_pressure_right: string | null;
+  slit_lamp_exam_left: string | null;
+  slit_lamp_exam_right: string | null;
 
   // Posterior segment
   fundus_exam_left: string | null;

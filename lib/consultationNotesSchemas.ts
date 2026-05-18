@@ -2,7 +2,6 @@
 import * as z from "zod";
 import {
   zField,
-  createEyeField,
   textField,
   getSectionsFromSchema,
   type FieldSection,
@@ -200,30 +199,39 @@ export const baseNotesSchema = z.object({
 export const generalNotesSchema = baseNotesSchema;
 
 export const ophthalmologyNotesSchema = baseNotesSchema.extend({
-  // Visual Function
-  // FIX: createEyeField now forwards `section` (defaults to "Examination"),
-  // so all of these fields will appear in the UI. Previously they were all
-  // dropped by getSectionsFromSchema because section was undefined.
-  visual_acuity: createEyeField("visual_acuity", "Visual Acuity"),
-  refraction: createEyeField("refraction", "Refraction"),
-
-  // Anterior Segment
-  extraocular_movements: createEyeField("extraocular_movements", "Extraocular Movements"),
-  lids: createEyeField("lids", "Lids & Adnexa"),
-  conjunctiva: createEyeField("conjunctiva", "Conjunctiva"),
-  cornea: createEyeField("cornea", "Cornea"),
-  anterior_chamber: createEyeField("anterior_chamber", "Anterior Chamber"),
-  iris: createEyeField("iris", "Iris"),
-  pupil_examination: createEyeField("pupil_examination", "Pupils"),
-  lens: createEyeField("lens", "Lens"),
-  slit_lamp_exam: createEyeField("slit_lamp_exam", "Slit Lamp Exam (Summary)"),
-  intraocular_pressure: createEyeField("intraocular_pressure", "Intraocular Pressure"),
-
-  // Posterior Segment
-  fundus_exam: createEyeField("fundus_exam", "Fundus Examination"),
-
-  // Legacy fallback
-  eye_examination: createEyeField("eye_examination", "Ocular Examination"),
+  eye_examination: zField(
+    "eye_examination",
+    z.object({
+      visual_acuity_left: z.string().nullable().describe("Left eye (OS) visual acuity. MUST be standard fraction e.g., 20/20 or 6/6"),
+      visual_acuity_right: z.string().nullable().describe("Right eye (OD) visual acuity. MUST be standard fraction e.g., 20/20 or 6/6"),
+      refraction_left: z.string().nullable(),
+      refraction_right: z.string().nullable(),
+      extraocular_movements_left: z.string().nullable(),
+      extraocular_movements_right: z.string().nullable(),
+      lids_left: z.string().nullable(),
+      lids_right: z.string().nullable(),
+      conjunctiva_left: z.string().nullable(),
+      conjunctiva_right: z.string().nullable(),
+      cornea_left: z.string().nullable(),
+      cornea_right: z.string().nullable(),
+      anterior_chamber_left: z.string().nullable(),
+      anterior_chamber_right: z.string().nullable(),
+      iris_left: z.string().nullable(),
+      iris_right: z.string().nullable(),
+      pupil_examination_left: z.string().nullable(),
+      pupil_examination_right: z.string().nullable(),
+      lens_left: z.string().nullable(),
+      lens_right: z.string().nullable(),
+      slit_lamp_exam_left: z.string().nullable(),
+      slit_lamp_exam_right: z.string().nullable(),
+      intraocular_pressure_left: z.string().nullable(),
+      intraocular_pressure_right: z.string().nullable(),
+      fundus_exam_left: z.string().nullable(),
+      fundus_exam_right: z.string().nullable(),
+      notes: z.string().nullable(),
+    }).nullable(),
+    { label: "Eye Examination", type: "tabular_eye", section: "Examination", placeholder: "Enter eye examination findings" },
+  ),
 });
 
 export const neurologyNotesSchema = baseNotesSchema.extend({

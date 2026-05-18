@@ -82,6 +82,7 @@ export function DictationZone({
     pauseCapture,
     resumeCapture,
     stopCapture,
+    resetCapture,
   } = useDualCapture();
 
   const [isStructuring, setIsStructuring] = useState(false);
@@ -184,6 +185,17 @@ export function DictationZone({
     }
   }, [stopCapture, departmentName, existingStructured, onStructured, scrollToReview]);
 
+  const cancelRecording = useCallback(() => {
+    resetCapture();
+    setIsStructuring(false);
+    hasCalledStartRef.current = false;
+    lastLookaheadWordCountRef.current = 0;
+    if (lookaheadTimerRef.current) {
+      clearTimeout(lookaheadTimerRef.current);
+      lookaheadTimerRef.current = null;
+    }
+  }, [resetCapture]);
+
   if (captureState === "error") {
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-center space-y-2">
@@ -218,6 +230,9 @@ export function DictationZone({
             {formatTimer(elapsedSeconds)}
           </p>
           <div className="flex items-center justify-center gap-2">
+            <Button size="sm" variant="ghost" onClick={cancelRecording}>
+              Cancel
+            </Button>
             <Button size="sm" variant="outline" onClick={resumeCapture}>
               <Play className="h-4 w-4 mr-1" />Continue
             </Button>
@@ -260,6 +275,9 @@ export function DictationZone({
             {formatTimer(elapsedSeconds)}
           </p>
           <div className="flex items-center justify-center gap-2">
+            <Button size="sm" variant="ghost" onClick={cancelRecording}>
+              Cancel
+            </Button>
             <Button size="sm" variant="outline" onClick={pauseCapture}>
               <Pause className="h-4 w-4 mr-1" />Pause
             </Button>

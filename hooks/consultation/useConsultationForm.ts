@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UseMutationResult } from "@tanstack/react-query";
@@ -14,6 +14,7 @@ import { useConsultationPermissions } from "./useConsultationPermissions";
 import { useConsultationAutoSave } from "./useConsultationAutoSave";
 import { useConsultationValidation } from "./useConsultationValidation";
 import { useConsultationCompletion } from "./useConsultationCompletion";
+import { isDeepEqual } from "./utils";
 
 export interface UseConsultationFormParams {
   appointmentId: string | undefined;
@@ -50,6 +51,8 @@ export interface UseConsultationFormReturn {
     validationMessage: string;
   };
   justCompleted: boolean;
+  resetForm: () => void;
+  isFormDirty: boolean;
 }
 
 export const useConsultationForm = ({
@@ -119,6 +122,16 @@ export const useConsultationForm = ({
       validateMandatoryFields,
     });
 
+  // Snapshot initial DB values for reset/discard
+  const initialValuesRef = useRef<ConsultationFormValues>(defaultValues);
+
+  const isFormDirty = !isDeepEqual(initialValuesRef.current, formValues);
+
+  const resetForm = useCallback(() => {
+    form.reset(initialValuesRef.current);
+    setBaseline(initialValuesRef.current);
+  }, [form, setBaseline]);
+
   // Effect: sync form baseline and manage auto-save readiness
   useEffect(() => {
     setAutoSaveReady(false);
@@ -147,5 +160,7 @@ export const useConsultationForm = ({
     getMandatoryFieldsStatus,
     mandatoryFieldsStatus,
     justCompleted,
+    resetForm,
+    isFormDirty,
   };
 };
