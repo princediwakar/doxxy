@@ -1,3 +1,4 @@
+// components/pharmacy/ProcurementItemsTable.tsx
 "use client";
 import { type UseFormReturn, type FieldArrayWithId, Controller } from "react-hook-form";
 import { ProcurementFormValues, ProcurementItemFormValues } from "@/types/pharmacy";

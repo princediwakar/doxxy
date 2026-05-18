@@ -48,8 +48,6 @@ interface AIMatchResult {
 }
 
 // ─── Model fallback chain ─────────────────────────────────────────────────────
-// Tries each model in order until one works.
-// Add/remove model strings here as Gemini updates their API.
 
 const GEMINI_MODELS = (process.env.GEMINI_MODELS || 'gemini-2.5-flash-lite,gemini-2.5-flash,gemini-flash-latest').split(',');
 
@@ -71,7 +69,7 @@ async function callGemini(
     generationConfig: {
       temperature: 0.1,
       topP: 0.8,
-      maxOutputTokens: 65536, // was 8192 — invoice JSON was being truncated mid-response
+      maxOutputTokens: 65536,
       responseMimeType: 'application/json',
     },
   });
@@ -97,16 +95,11 @@ async function callGemini(
     const responseText = await res.text();
 
     if (!res.ok) {
-      // 404 = model not found → try next
-      // 400 = bad request → log and try next
-      // 429 = quota → try next model (different models may have separate quotas)
-      // 503 = service unavailable → try next model
       lastError = `Model ${model} → HTTP ${res.status}: ${responseText.slice(0, 300)}`;
       logger.error('Gemini model error:', lastError);
       continue;
     }
 
-    // Parse response
     let data: unknown;
     try {
       data = JSON.parse(responseText);
@@ -127,10 +120,8 @@ async function callGemini(
     }
 
     if (finishReason === 'MAX_TOKENS') {
-      // Response was truncated — JSON will be broken. Raise tokens and retry next model slot.
       lastError = `Model ${model} hit MAX_TOKENS — JSON truncated at ${text.length} chars. Raise maxOutputTokens.`;
       logger.error(lastError);
-      // Don't try to parse truncated JSON — skip to next model
       continue;
     }
 
@@ -138,14 +129,12 @@ async function callGemini(
       logger.warn(`Model ${model} finishReason=${finishReason} — attempting parse anyway`);
     }
 
-    // Parse JSON content
     try {
       const parsed = JSON.parse(text);
       logger.log(`Gemini success with model: ${model} (finishReason=${finishReason})`);
       return { data: parsed, model };
     } catch {
-      // Strip accidental markdown fences as safety net
-      const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
       try {
         const parsed = JSON.parse(cleaned);
         logger.log(`Gemini success with model: ${model} (after fence strip)`);
@@ -159,6 +148,90 @@ async function callGemini(
   }
 
   throw new Error(`All Gemini models failed. Last error: ${lastError}`);
+}
+
+async function callOpenAI(
+  prompt: string,
+  imageBase64?: string,
+  mimeType?: string
+): Promise<{ data: unknown; model: string }> {
+  const openAiKey = process.env.OPENAI_API_KEY;
+  if (!openAiKey) throw new Error('OPENAI_API_KEY not configured');
+
+  const model = process.env.OPENAI_MODEL || 'gpt-4o'; 
+
+  const content: any[] = [{ type: 'text', text: prompt }];
+  
+  if (imageBase64 && mimeType) {
+    if (mimeType === 'application/pdf') {
+      // OpenAI Chat Completions API: file input for PDFs
+      content.push({
+        type: 'file',
+        file: {
+          file_data: `data:${mimeType};base64,${imageBase64}`,
+          filename: 'document.pdf',
+        },
+      });
+    } else {
+      // OpenAI payload for Images
+      content.push({
+        type: 'image_url',
+        image_url: { url: `data:${mimeType};base64,${imageBase64}` }
+      });
+    }
+  }
+
+  const body = {
+    model,
+    messages: [{ role: 'user', content }],
+    temperature: 0.1,
+  };
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${openAiKey}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  const responseText = await res.text();
+  if (!res.ok) {
+    throw new Error(`OpenAI HTTP ${res.status}: ${responseText.slice(0, 300)}`);
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(responseText);
+  } catch (err) {
+    throw new Error(`OpenAI returned invalid JSON root: ${responseText.slice(0, 200)}`);
+  }
+
+  const text = parsed.choices?.[0]?.message?.content;
+  if (!text) {
+    throw new Error(`OpenAI empty content: ${responseText.slice(0, 200)}`);
+  }
+
+  const cleaned = text.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim();
+  try {
+    return { data: JSON.parse(cleaned), model };
+  } catch (parseErr) {
+    throw new Error(`OpenAI JSON parse failed. Raw: ${text.slice(0, 300)}`);
+  }
+}
+
+async function callAI(
+  prompt: string,
+  imageBase64?: string,
+  mimeType?: string
+): Promise<{ data: unknown; model: string }> {
+  try {
+    return await callGemini(prompt, imageBase64, mimeType);
+  } catch (geminiError) {
+    logger.warn('Gemini failed, executing OpenAI fallback:', geminiError instanceof Error ? geminiError.message : geminiError);
+    return await callOpenAI(prompt, imageBase64, mimeType);
+  }
 }
 
 // ─── Prompts ──────────────────────────────────────────────────────────────────
@@ -324,7 +397,7 @@ async function aiMatch(
   );
 
   try {
-    const { data: matches } = await callGemini(buildMatchingPrompt(taskLines.join('\n\n')));
+    const { data: matches } = await callAI(buildMatchingPrompt(taskLines.join('\n\n')));
 
     if (Array.isArray(matches)) {
       for (const m of matches as AIMatchResult[]) {
@@ -380,7 +453,7 @@ export async function POST(request: Request) {
     const mimeType = imageRes.headers.get('content-type') || 'image/jpeg';
     const imageBase64 = Buffer.from(await imageRes.arrayBuffer()).toString('base64');
 
-    // 2. Extract with Gemini (vision) — real error surfaced to client
+    // 2. Extract with AI fallback loop 
     let extractedData: {
       supplier_name: string;
       invoice_number: string;
@@ -391,10 +464,10 @@ export async function POST(request: Request) {
     let usedModel = 'unknown';
 
     try {
-      const geminiResult = await callGemini(EXTRACTION_PROMPT, imageBase64, mimeType);
-      extractedData = geminiResult.data as typeof extractedData;
-      usedModel = geminiResult.model;
-      logger.log('Extraction complete:', extractedData.items?.length, 'items');
+      const aiResult = await callAI(EXTRACTION_PROMPT, imageBase64, mimeType);
+      extractedData = aiResult.data as typeof extractedData;
+      usedModel = aiResult.model;
+      logger.log(`Extraction complete via ${usedModel}:`, extractedData.items?.length, 'items');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return NextResponse.json({ error: msg }, { status: 503, headers: CACHE_HEADERS });
@@ -439,7 +512,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { data: extractedData, provider: 'google', model: usedModel },
+      { 
+        data: extractedData, 
+        provider: usedModel.includes('gpt') ? 'openai' : 'google', 
+        model: usedModel 
+      },
       { headers: CACHE_HEADERS }
     );
 
