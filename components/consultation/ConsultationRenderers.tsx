@@ -35,9 +35,7 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
 
   // Helper function to get value with default
   const getValueWithDefault = (value: string | null): string => {
-    // If value is explicitly set to empty string, return empty string
-    // Otherwise return current value or default value
-    if (value === '') {
+    if (value === '' || value === 'null') {
       return '';
     }
     return value || defaultValue;
@@ -186,10 +184,10 @@ export const VitalSignsDisplay: React.FC<{ data: VitalSignsData }> = ({
 }) => {
   const renderItem = (
     label: string,
-    value: string | undefined,
+    value: string | undefined | null,
     unit: string = ""
   ) => {
-    if (!value) return null;
+    if (!value || value === "null") return null;
     return (
       <div key={label} className="flex items-center gap-1">
         <span className="text-gray-700 font-medium text-sm">{label}:</span>
@@ -201,18 +199,23 @@ export const VitalSignsDisplay: React.FC<{ data: VitalSignsData }> = ({
   };
 
   const items = [];
-  if (data.temperature) items.push(renderItem("Temp", data.temperature, "°C"));
-  if (data.pulse) items.push(renderItem("Pulse", data.pulse, "bpm"));
+  if (data.temperature && data.temperature !== "null") items.push(renderItem("Temp", data.temperature, "°C"));
+  if (data.pulse && data.pulse !== "null") items.push(renderItem("Pulse", data.pulse, "bpm"));
   if (data.blood_pressure_systolic || data.blood_pressure_diastolic) {
-    items.push(
-      <div key="bp" className="flex items-center gap-1">
-        <span className="text-gray-700 font-medium text-sm">B.P.:</span>
-        <span className="text-sm">
-          {data.blood_pressure_systolic}/
-          {data.blood_pressure_diastolic} mmHg
-        </span>
-      </div>
-    );
+    const bpParts = [
+      data.blood_pressure_systolic,
+      data.blood_pressure_diastolic,
+    ].filter((v) => v && v !== "null");
+    if (bpParts.length > 0) {
+      items.push(
+        <div key="bp" className="flex items-center gap-1">
+          <span className="text-gray-700 font-medium text-sm">B.P.:</span>
+          <span className="text-sm">
+            {bpParts.join("/")} mmHg
+          </span>
+        </div>
+      );
+    }
   }
   if (data.respiratory_rate)
     items.push(renderItem("Resp. Rate", data.respiratory_rate, "/min"));

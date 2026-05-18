@@ -8,23 +8,24 @@ export type VoiceRecordingState =
   | 'error';
 
 export interface AIExtractedPrescription {
-  drug_name: string;
-  dosage: string;
+  drug_name: string | null;
+  dosage: string | null;
   formulation: string | null;
-  frequency: string;
-  duration: string;
-  route: string;
-  instructions: string;
+  frequency: string | null;
+  duration: string | null;
+  route: string | null;
+  instructions: string | null;
   medicine_id?: number | null;
 }
 
 export interface AIStructuredOutput {
-  symptoms: string;
-  diagnosis: string;
+  symptoms: string | null;
+  diagnosis: string | null;
   prescriptions: AIExtractedPrescription[];
-  differential_diagnosis?: string[];
   discontinued_medications?: string[];
-  advice: string;
+  additional_clinical_findings?: string[];
+  ruled_out_findings?: string[];
+  advice: string | null;
   rawFields?: Record<string, unknown>;
 }
 

@@ -34,9 +34,15 @@ interface InlineConsultationFormProps {
 }
 
 // Global utility for strict sanitization.
-const isBlank = (v: unknown): boolean =>
-  v === null || v === undefined || v === "" || v === "NOT_SPECIFIED";
-
+// Global utility for strict sanitization.
+const isBlank = (v: unknown): v is null | undefined | "" | "NOT_SPECIFIED" => {
+  if (v === null || v === undefined || v === "") return true;
+  if (typeof v === "string") {
+    const trimmed = v.trim().toUpperCase();
+    return trimmed === "NOT_SPECIFIED" || trimmed === "NULL" || trimmed === ":NULL";
+  }
+  return false;
+};
 export function InlineConsultationForm({
   appointmentId,
   appointment,
@@ -145,13 +151,18 @@ export function InlineConsultationForm({
         .filter((p) => !isBlank(p.drug_name))
         .map((p) => ({
           name: p.drug_name,
-          // medicine_id removed. Let the prescription lookup widget resolve DB ties.
           dosage: !isBlank(p.dosage) ? p.dosage : "",
           frequency: !isBlank(p.frequency) ? p.frequency : undefined,
           duration: !isBlank(p.duration) ? p.duration : "",
           route: !isBlank(p.route) ? p.route : undefined,
           instructions: !isBlank(p.instructions) ? p.instructions : "",
         })),
+      additional_clinical_findings: aiStructuredData.additional_clinical_findings?.length
+        ? aiStructuredData.additional_clinical_findings
+        : undefined,
+      ruled_out_findings: aiStructuredData.ruled_out_findings?.length
+        ? aiStructuredData.ruled_out_findings
+        : undefined,
     };
 
     form.setValue("specialty_data", merged as ConsultationFormValues["specialty_data"]);

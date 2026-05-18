@@ -19,183 +19,66 @@ const openai = new OpenAI({
   maxRetries: 3, 
 });
 
-const INDIAN_SHORTHAND_REFERENCE = `
-INDIAN CLINICAL SHORTHAND REFERENCE:
-| Shorthand | Meaning | Category |
-|-----------|---------|----------|
-| OD / OD | Once daily | frequency |
-| BD / BID | Twice a day | frequency |
-| TDS / TID | Three times a day | frequency |
-| QID | Four times a day | frequency |
-| SOS / PRN | As needed | frequency |
-| HS | At bedtime | frequency |
-| PC | After meals | frequency |
-| AC | Before meals | frequency |
-| STAT | Immediately | frequency |
-| Q4H / Q6H / Q8H / Q12H | Every N hours | frequency |
-| Dolo | Paracetamol 650mg (brand) | drug_name |
-| Meftal | Mefenamic Acid (brand) | drug_name |
-| Crocin | Paracetamol (brand) | drug_name |
-| Azithral | Azithromycin (brand) | drug_name |
-| Augmentin | Amoxicillin + Clavulanic Acid (brand) | drug_name |
- 
-When transcribing, preserve the doctor's shorthand in the frequency field exactly as spoken (e.g., "BD", "TDS").
-`;
- 
-const ROUTE_DETECTION = `
-PRESCRIPTION ROUTE DETECTION:
-- "Tab" / "tablet" / "cap" / "capsule" / "syrup" / "by mouth" / no route mentioned for oral drugs → "Oral"
-- "Inj" / "injection" / "inject" → default to "IM" unless "IV" is specified
-- "Oint" / "ointment" / "cream" / "gel" / "apply" / "lotion" → "Topical"
-- "Eye drops" / "eye" → "Eye Drops"
-- "Inhaler" / "inhale" / "puff" / "nebulizer" → "Inhaled"
-- "Subcutaneous" / "SC" / "under skin" → "Subcutaneous"
-`;
- 
+// src/lib/voice/structureClinicalNotes.ts
 
-const SPECIAL_INSTRUCTIONS = `
-SPECIAL INSTRUCTIONS EXTRACTION:
-- "after food" / "after meals" / "PC" → "Take after food"
-- "before food" / "before meals" / "AC" → "Take before food"
-- "at bedtime" / "HS" → "Take at bedtime"
-- "with milk" / "with water" → note the specific instruction
-- "complete the course" → "Complete the full course"
-- "apply thinly" / "apply twice daily" → note the application instruction
-- "avoid alcohol" / "no alcohol" → "Avoid alcohol"
-- "for fever" / "for pain" / "if needed" → note the condition
-- If no special instruction is given, output null.`;
+const SURGICAL_SYSTEM_PROMPT = `You are an expert clinical extraction engine. Your sole objective is to map chaotic, rapid-fire, mixed-language dictation into a pristine structured schema. 
 
-const PRESCRIPTION_EXTRACTION_GUIDE = `
-PRESCRIPTION EXTRACTION GUIDE & NEGATIVE LOGIC:
-1. ACTIVE PRESCRIPTIONS: For every medication the doctor ACTIVELY prescribes or continues, create an object in the \`prescriptions\` array.
-   - Separate the drug name from its physical form. (e.g., name: "Amoxicillin", formulation: "oral suspension", dosage: "400mg per 5mL").
-   - Output null for any missing sub-fields (duration, route, etc). DO NOT output "NOT_SPECIFIED".
+**Tradeoff:** These guidelines heavily bias toward CAUTION and FIDELITY over completeness. Do not hallucinate data to fill empty fields.
 
-2. CRITICAL NEGATION RULE: Doctors often "think out loud", change their minds, or explicitly deny patient requests.
-   - If the doctor mentions a drug but says "scratch that", "instead of", "stop taking", or "no [drug class] will be prescribed" — DO NOT put it in the \`prescriptions\` array.
-   - ALL negated, discontinued, or replaced drugs MUST be placed as simple strings in the \`discontinued_medications\` array.
-   - Example: "I was going to give Ibuprofen, but let's do Celebrex. Also no opioids." -> prescriptions: [{name: "Celebrex"}], discontinued_medications: ["Ibuprofen", "opioids"].
-`;
+## 1. Think Before Mapping (Chain of Thought)
+**Surface ambiguity. Resolve mid-sentence chaos logically.**
+Before populating the clinical fields, you MUST use the \`_clinical_reasoning\` field to explicitly state your logic for:
+- Resolving mid-sentence doctor corrections (e.g., "Start Pan-D... wait, make it Omez" -> Log that Pan-D was a verbal misfire, not a discontinuation, and Omez is the prescription).
+- Deciding why a symptom belongs in \`chief_complaint\` vs. \`additional_clinical_findings\`.
+- Translating Hinglish terms to clinical English based on the surrounding context.
 
-const DIAGNOSTIC_UNCERTAINTY_GUIDE = `
-DIAGNOSTIC UNCERTAINTY:
-- If a diagnosis is confirmed, put it in \`diagnosis\`.
-- If the doctor expresses uncertainty (e.g., "leaning towards", "could be", "rule out"), place those suspected conditions in the \`differential_diagnosis\` array.
-`;
+## 2. Minimalist Extraction (Simplicity First)
+**Extract exactly what was said. Nothing speculative.**
+- **No medical inflation:** If the doctor says "pain", do not output "severe acute pain". 
+- **No inferring diagnoses:** If the doctor lists symptoms but no explicit diagnosis, leave \`diagnosis\` null. 
+- **Preserve temporal exactness:** 3 days is 3 days. Do not convert to "acute". 
+- **Brand names are sacred:** Do not substitute Indian brand names (e.g., "Augmentin 625") for generics unless explicitly dictated.
 
-const EYE_EXAMINATION_GUIDE = `
-EYE EXAMINATION FIELDS:
-Each eye examination field (type: tabular_eye) is an object with { left, right, notes }. Populate as follows:
-  - left — Findings for the left eye (OS). Set to null if not specifically examined.
-  - right — Findings for the right eye (OD). Set to null if not specifically examined.
-  - notes — Bilateral observations, general remarks, or additional detail about the finding. Set to null if nothing to add.
-If the doctor did not examine this structure at all (e.g., no mention of cornea, no mention of fundus), set the entire field to null — NOT an object filled with "NOT_SPECIFIED" strings.
-If the doctor examined the structure but only mentioned one eye, populate just that side and leave the other as null.
-If the doctor described findings without specifying left/right, put the description in notes and set left/right to null.`;
- 
-const FEW_SHOT_EXAMPLES = `
-EXAMPLE 1 (General dictation):
-Input: "Patient is a 45-year-old male presenting with a 3-day history of severe throbbing headache and nausea. No photophobia. BP is 140/90. Past medical history of hypertension. Prescribe Paracetamol 650mg SOS for pain, review after 5 days. Diagnosis is tension headache."
-Expected Output Mapping:
-- history_of_present_illness: "45-year-old male presenting with a 3-day history of severe throbbing headache and nausea. No photophobia."
-- vital_signs.blood_pressure_systolic: "140"
-- vital_signs.blood_pressure_diastolic: "90"
-- past_medical_history: "Hypertension"
-- diagnosis: "Tension headache"
-- prescriptions: [{ "name": "Paracetamol", "dosage": "650mg", "frequency": "SOS", "duration": null, "route": "Oral", "instructions": "For pain", "formulation": null }]
-- follow_up: "Review after 5 days"
- 
-EXAMPLE 2 (Specialty specific - Ophthalmology):
-Input: "Right eye vision is 6/6, left eye 6/18. Slit lamp shows mild cataract in the left eye. Cornea is clear bilaterally. Start Moxifloxacin eye drops QID right eye for 1 week."
-Expected Output Mapping:
-- visual_acuity.right: "6/6"
-- visual_acuity.left: "6/18"
-- lens.left: "Mild cataract"
-- cornea.notes: "Clear bilaterally"
-- prescriptions: [{ "name": "Moxifloxacin", "dosage": null, "frequency": "QID", "duration": "1 week", "route": "Eye Drops", "instructions": "Right eye", "formulation": null }]
-`;
- 
-const NARRATIVE_FIELD_MAPPING = `
-NARRATIVE-TO-FIELD MAPPING:
-When the doctor dictates in narrative form, carefully map each section to the correct schema fields:
-- "History" / "History of Present Illness" / "HPI" → history_of_present_illness
-- "Past History" / "Past Medical History" / "PMH" → past_medical_history
-- "Family History" → family_history
-- "Current Medications" / "Drug History" → medications
-- "Allergies" → allergies
-- "Examination" / "Physical Exam" / "On examination" / "O/E" → physical_exam. Also populate systemic_examination and any specialty-specific examination fields ONLY if the transcript contains distinct organ-system findings (CNS, CVS, RS, abdomen, etc.) that are separate from the general physical exam. Never copy the same content into multiple fields.
-- "Vital Signs" / "Vitals" → vital_signs (extract numeric values into sub-fields)
-- "Investigations" / "Labs" / "Previous Tests" / "Reports" → previous_investigations
-- "Assessment" / "Impression" / "Clinical Impression" → assessment
-- "Diagnosis" / "Diagnoses" → diagnosis
-- "Differential Diagnosis" / "Rule Out" / "Suspected" / "Could be" → differential_diagnosis (list each suspected condition as a string)
-- "Plan" / "Treatment" / "Management" → treatment
-- "Investigations Planned" / "Tests to Order" / "Order" → planned_investigations
-- "Follow-Up" / "Follow up" / "Review" → follow_up
-- "Referrals" / "Refer to" / "Consult" → referrals
-- "Prognosis" / "Expected Course" → prognosis
-- "Prescriptions" / "Medications" / "Rx" / "Treatment" → prescriptions (extract each medication as an object with sub-fields: name, dosage, frequency, duration, route, instructions, formulation — see PRESCRIPTION EXTRACTION GUIDE below)
-- "Discontinued" / "Stopped" / "Stop taking" / "No [drug]" → discontinued_medications (list each negated or stopped drug as a string)
-If a single narrative section contains information relevant to multiple distinct fields, split the content appropriately — each finding goes into the most specific field that matches it. Never duplicate the same text across fields.`;
+Ask yourself: "Am I summarizing, or am I extracting?" If you are summarizing, you are hallucinating. Stop.
+
+## 3. Surgical Schema Placement
+**Touch only the correct fields. Clean up the spillover.**
+- **Explicit Negations:** "No chest pain", "Lungs clear", "unremarkable" belong strictly in \`ruled_out_findings\`. They are NOT diagnoses or general history.
+- **True Discontinuations:** Only populate \`discontinued_medications\` if the doctor explicitly stops a *previously taken* drug. 
+- **The Spillover Protocol:** Use \`additional_clinical_findings\` ONLY if a clinical fact fundamentally cannot be mapped to the provided schema fields. Do not force data where it doesn't belong.
+
+## 4. Goal-Driven Safety (Zero-Shot Verification)
+**Define certainty. Null is better than wrong.**
+- If an anatomical side (Left/Right) is required by the specialty schema but not stated, leave it null. Do not guess.
+- If a duration or frequency for a prescription is missing, leave it null. Do not assume "OD" or "5 days" just because it is standard clinical practice.
+- Correct obvious STT phonetic errors using clinical context (e.g., "fragile fatigue" -> "brain fog"), but ONLY if the correction is clinically undeniable. If nonsensical and unresolvable, capture the exact phonetic string in quotes in \`additional_clinical_findings\`.`;
 
 
-const STATIC_PROMPT_SECTIONS = [
-  INDIAN_SHORTHAND_REFERENCE,
-  ROUTE_DETECTION,
-  SPECIAL_INSTRUCTIONS,
-  PRESCRIPTION_EXTRACTION_GUIDE,
-  DIAGNOSTIC_UNCERTAINTY_GUIDE,
-  EYE_EXAMINATION_GUIDE,
-  FEW_SHOT_EXAMPLES,
-].join("\n\n");
 
 function getSpecialtyInstructions(department: string): string {
   switch (department) {
     case "Ophthalmology":
-      return (
-        "- Format visual acuity strictly as standard fractions (e.g., 6/6, 20/20, 6/18) and never as decimals.\n" +
-        "- Separate eye findings cleanly into left and right sub-fields. Use 'notes' only for bilateral statements."
-      );
-    case "Cardiology":
-      return (
-        "- Extract exact BP, heart rate, and any murmur gradings directly into examination fields.\n" +
-        "- Clearly differentiate between historical heart conditions and current presentation."
-      );
+      return "- Format visual acuity strictly as standard fractions (e.g., 6/6, 20/20). Left/Right specificity is absolute.";
     case "Neurology":
-      return (
-        "- Format motor power strictly as standard grades (e.g., 5/5, 4/5).\n" +
-        "- Ensure left/right specificity for all reflexes and motor tone."
-      );
+      return "- Format motor power as standard grades (e.g., 5/5). Map eponyms (Patellar, Babinski) to exact anatomical fields. If 'bilateral', duplicate to left and right.";
+    case "Cardiology":
+      return "- Differentiate strictly between historical cardiac events and current presentation vitals/murmurs.";
     default:
-      return "- Ensure measurements, dosages, and timelines are accurately preserved exactly as stated.";
+      return "";
   }
 }
 
-function generateSystemPrompt(department: string, fields: NoteFieldConfig[]): string {
-  const fieldList = fields.map((f) => `  - ${f.name}: ${f.label}`).join("\n");
+function generateSystemPrompt(department: string): string {
   const specialtyRules = getSpecialtyInstructions(department);
+  
+  return `${SURGICAL_SYSTEM_PROMPT}
 
-  return `You are a clinical AI that converts voice transcripts into structured consultation notes for Indian clinics.
-
-DEPARTMENT: ${department}
-SPECIALTY-SPECIFIC RULES:
-${specialtyRules}
-
-FIELDS TO EXTRACT:
-${fieldList}
-
-${NARRATIVE_FIELD_MAPPING}
-
-INSTRUCTIONS:
-1. Extract ALL clinical information into the matching fields.
-2. Set a field to null ONLY when the transcript contains zero information relevant to it. DO NOT USE "NOT_SPECIFIED".
-3. Preserve wording and clinical nuance. Do not summarize.
-4. For prescriptions: output null for any missing sub-fields (duration, route, etc).
-
-${STATIC_PROMPT_SECTIONS}`;
+DEPARTMENT FOCUS: ${department}
+${specialtyRules ? `SPECIALTY RULES:\n${specialtyRules}` : ""}`;
 }
 
 const MAX_TRANSCRIPT_CHARS = 80_000;
+
 
 export class TranscriptTooLongError extends Error {
   constructor(
@@ -220,12 +103,13 @@ export async function structureClinicalNotes(
   const dept = department ? mapDepartmentName(department) : "General";
   const schema = getSchemaForDepartment(dept);
   const fields = getAllFieldsFromSchema(schema);
-  const systemPrompt = generateSystemPrompt(dept, fields);
+  
+  // Note: We no longer pass 'fields' into generateSystemPrompt. Zod handles the schema context.
+  const systemPrompt = generateSystemPrompt(dept);
 
-  try {
-    // The SDK handles JSON parsing, validation against Zod, and retries natively.
-const response = await openai.chat.completions.parse({
-      model: process.env.OPENAI_MODEL || "gpt-5.4-mini",
+try {
+    const response = await openai.chat.completions.parse({
+      model: process.env.OPENAI_MODEL || "gpt-4o-2024-08-06",
       temperature: 0.0,
       messages: [
         { role: "system", content: systemPrompt },
@@ -239,6 +123,12 @@ const response = await openai.chat.completions.parse({
     if (!parsedData) {
       throw new Error(`OpenAI refusal or empty response: ${response.choices[0]?.message?.refusal || "Unknown"}`);
     }
+
+    // --- ADD THIS LOGGING BLOCK ---
+    if ('_clinical_reasoning' in parsedData && typeof parsedData._clinical_reasoning === 'string') {
+      logger.log(`[AI Reasoning] ${parsedData._clinical_reasoning}`);
+    }
+    // ------------------------------
 
     return mapAndScoreOutput(parsedData, fields);
     
@@ -256,59 +146,100 @@ function mapAndScoreOutput(
   const rawFields: Record<string, unknown> = {};
   const confidence: FieldConfidence[] = [];
 
+  const VITAL_SIGN_PATTERN = /^\d{2,3}(\/\d{2,3})?$/;
+  const VISUAL_ACUITY_PATTERN = /^(6|20)\/\d{1,2}$/;
+  const MOTOR_POWER_PATTERN = /^\d\/5$/;
+  const MOTOR_JOINT_NAMES = new Set([
+    "shoulder_left", "shoulder_right",
+    "elbow_left", "elbow_right",
+    "wrist_left", "wrist_right",
+    "hip_left", "hip_right",
+    "knee_left", "knee_right",
+    "ankle_left", "ankle_right",
+  ]);
+
   function assessConfidence(value: string | null, fieldName: string) {
     if (typeof value !== "string" || value === "NOT_SPECIFIED" || value.trim() === "") {
       confidence.push({ field: fieldName, level: "low", reason: "Missing data" });
-    } else if (value.length < BRIEF_THRESHOLD) {
-      confidence.push({ field: fieldName, level: "medium", reason: `Brief extraction (${value.length} chars)` });
+      return;
+    }
+    const trimmed = value.trim();
+    if (fieldName.includes("blood_pressure") && !VITAL_SIGN_PATTERN.test(trimmed)) {
+      confidence.push({ field: fieldName, level: "low", reason: "Non-numeric value in vital sign field" });
+      return;
+    }
+    if (fieldName === "visual_acuity" && !VISUAL_ACUITY_PATTERN.test(trimmed)) {
+      confidence.push({ field: fieldName, level: "low", reason: "Invalid visual acuity format" });
+      return;
+    }
+    if (MOTOR_JOINT_NAMES.has(fieldName) && !MOTOR_POWER_PATTERN.test(trimmed)) {
+      confidence.push({ field: fieldName, level: "low", reason: "Non-numeric value in motor power field" });
+      return;
+    }
+    if (trimmed.length < BRIEF_THRESHOLD) {
+      confidence.push({ field: fieldName, level: "medium", reason: `Brief extraction (${trimmed.length} chars)` });
     }
   }
 
-  for (const field of fields) {
+for (const field of fields) {
     if (["chief_complaint", "diagnosis", "prescriptions"].includes(field.name)) continue;
     
     if (field.name in aiOutput && aiOutput[field.name] !== null) {
-      const val = aiOutput[field.name];
-      rawFields[field.name] = val;
+      let val = aiOutput[field.name];
+      
+      // Catch stringified nulls from the LLM before they hit the frontend
       if (typeof val === "string") {
-        assessConfidence(val, field.name);
+        const trimmed = val.trim().toUpperCase();
+        if (trimmed === "NULL" || trimmed === ":NULL" || trimmed === "NOT_SPECIFIED") {
+           val = null;
+        }
+      }
+
+      if (val !== null) {
+        rawFields[field.name] = val;
+        if (typeof val === "string") {
+          assessConfidence(val, field.name);
+        }
       }
     }
   }
 
-  const symptoms = safeString(aiOutput.chief_complaint) as string;
-  const diagnosis = safeString(aiOutput.diagnosis) as string;
-  const advice = safeString(aiOutput.treatment ?? aiOutput.therapy_plan) as string;
+  const symptoms = safeString(aiOutput.chief_complaint);
+  const diagnosis = safeString(aiOutput.diagnosis);
+  const advice = safeString(aiOutput.treatment ?? aiOutput.therapy_plan);
 
   assessConfidence(safeString(aiOutput.chief_complaint), "symptoms");
   assessConfidence(safeString(aiOutput.diagnosis), "diagnosis");
 
   const rawPrescriptions = Array.isArray(aiOutput.prescriptions) ? aiOutput.prescriptions : [];
-  const rawDifferential = Array.isArray(aiOutput.differential_diagnosis) ? aiOutput.differential_diagnosis : [];
-  const differential_diagnosis = rawDifferential.filter((d): d is string => typeof d === "string");
   const rawDiscontinued = Array.isArray(aiOutput.discontinued_medications) ? aiOutput.discontinued_medications : [];
   const discontinued_medications = rawDiscontinued.filter((d): d is string => typeof d === "string");
-  const prescriptions = rawPrescriptions.map((p: any, index: number) => {
+  const rawAdditional = Array.isArray(aiOutput.additional_clinical_findings) ? aiOutput.additional_clinical_findings : [];
+  const additional_clinical_findings = rawAdditional.filter((d): d is string => typeof d === "string");
+  const rawRuledOut = Array.isArray(aiOutput.ruled_out_findings) ? aiOutput.ruled_out_findings : [];
+  const ruled_out_findings = rawRuledOut.filter((d): d is string => typeof d === "string");
+  
+  const prescriptions = rawPrescriptions.map((p: Record<string, unknown>, index: number) => {
     const prefix = `prescriptions[${index}].`;
-    
+
     assessConfidence(safeString(p.name), `${prefix}drug_name`);
     assessConfidence(safeString(p.dosage), `${prefix}dosage`);
     assessConfidence(safeString(p.frequency), `${prefix}frequency`);
     assessConfidence(safeString(p.route), `${prefix}route`);
 
     return {
-      drug_name: safeString(p.name) as string,
-      dosage: safeString(p.dosage) as string,
-      formulation: safeString(p.formulation) as string | null,
-      frequency: safeString(p.frequency) as string,
-      duration: safeString(p.duration) as string,
-      route: safeString(p.route) as string,
-      instructions: safeString(p.instructions) as string,
+      drug_name: safeString(p.name),
+      dosage: safeString(p.dosage),
+      formulation: safeString(p.formulation),
+      frequency: safeString(p.frequency),
+      duration: safeString(p.duration),
+      route: safeString(p.route),
+      instructions: safeString(p.instructions),
     };
   });
 
   return {
-    output: { symptoms, diagnosis, prescriptions, differential_diagnosis, discontinued_medications, advice, rawFields },
+    output: { symptoms, diagnosis, prescriptions, discontinued_medications, additional_clinical_findings, ruled_out_findings, advice, rawFields },
     confidence,
   };
 }
@@ -316,7 +247,9 @@ function mapAndScoreOutput(
 export function stripNotSpecified(obj: unknown): unknown {
   if (obj === null || obj === undefined) return null;
   if (typeof obj === 'string') {
-    return obj === 'NOT_SPECIFIED' || obj.trim() === '' ? null : obj;
+    const trimmed = obj.trim();
+    if (trimmed === '' || trimmed === 'NOT_SPECIFIED' || trimmed === 'null') return null;
+    return obj;
   }
   if (Array.isArray(obj)) {
     const cleaned = obj.map(stripNotSpecified).filter((v) => v !== null);

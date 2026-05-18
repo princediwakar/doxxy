@@ -120,9 +120,6 @@ async function run() {
       if (typeof p.instructions !== 'string') issues.push(`prescriptions[${i}].instructions: expected string`);
     });
   }
-  if (output.differential_diagnosis !== undefined && !Array.isArray(output.differential_diagnosis)) {
-    issues.push('differential_diagnosis: expected array if present');
-  }
   if (output.discontinued_medications !== undefined && !Array.isArray(output.discontinued_medications)) {
     issues.push('discontinued_medications: expected array if present');
   }

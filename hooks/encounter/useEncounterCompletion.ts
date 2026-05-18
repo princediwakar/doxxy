@@ -74,14 +74,68 @@ export function useEncounterCompletion() {
       );
 
       if (validPrescriptions.length > 0) {
-        const medications = validPrescriptions.map((p) => ({
-          name: p.drug_name,
-          dosage: p.dosage !== 'NOT_SPECIFIED' ? p.dosage : '',
-          frequency: p.frequency !== 'NOT_SPECIFIED' ? p.frequency : '',
-          duration: p.duration !== 'NOT_SPECIFIED' ? p.duration : '',
-          route: p.route !== 'NOT_SPECIFIED' ? p.route : '',
-          instructions: p.instructions !== 'NOT_SPECIFIED' ? p.instructions : '',
-        }));
+        const medicineCache = new Map<string, { id: number; name: string } | null>();
+
+        const resolveMedicine = async (
+          drugName: string,
+          formulation?: string | null,
+        ): Promise<{ id: number; name: string } | null> => {
+          const cacheKey = `${drugName}|${formulation ?? ''}`;
+          if (medicineCache.has(cacheKey)) return medicineCache.get(cacheKey) ?? null;
+
+          try {
+            const searchTerm = formulation
+              ? `${drugName} ${formulation}`
+              : drugName;
+
+            const { data: results } = await supabase.rpc('search_medicines', {
+              search_term: searchTerm,
+              limit_count: 1,
+            });
+
+            if (results && results.length > 0 && results[0].id) {
+              const match = { id: results[0].id, name: results[0].name };
+              medicineCache.set(cacheKey, match);
+              return match;
+            }
+
+            const { data: created, error: insertError } = await supabase
+              .from('medicines')
+              .insert({ name: drugName, is_auto_created: true })
+              .select('id, name')
+              .single();
+
+            if (insertError || !created) {
+              medicineCache.set(cacheKey, null);
+              return null;
+            }
+
+            const match = { id: created.id, name: created.name };
+            medicineCache.set(cacheKey, match);
+            return match;
+          } catch {
+            medicineCache.set(cacheKey, null);
+            return null;
+          }
+        };
+
+        const medications = await Promise.all(
+          validPrescriptions.map(async (p) => {
+            const resolved = await resolveMedicine(p.drug_name!, p.formulation);
+            return {
+              name: p.drug_name,
+              dosage: p.dosage !== 'NOT_SPECIFIED' ? p.dosage : '',
+              frequency: p.frequency !== 'NOT_SPECIFIED' ? p.frequency : '',
+              duration: p.duration !== 'NOT_SPECIFIED' ? p.duration : '',
+              route: p.route !== 'NOT_SPECIFIED' ? p.route : '',
+              instructions: p.instructions !== 'NOT_SPECIFIED' ? p.instructions : '',
+              formulation: p.formulation !== 'NOT_SPECIFIED' ? p.formulation : '',
+              ...(resolved
+                ? { medicine_id: resolved.id, medicine_name: resolved.name }
+                : {}),
+            };
+          }),
+        );
 
         const { error: rxError } = await supabase
           .from('prescriptions')

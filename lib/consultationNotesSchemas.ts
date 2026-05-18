@@ -19,10 +19,16 @@ export const medicationSchema = z.object({
   dosage: z.string().nullable(),
   formulation: z.string().nullable(),
   route: z
-    .enum(["Oral", "Topical", "IV", "IM", "Eye Drops", "Subcutaneous", "Inhaled"])
+    .union([
+      z.enum(["Oral", "Topical", "IV", "IM", "Eye Drops", "Subcutaneous", "Inhaled"]),
+      z.string(),
+    ])
     .nullable(),
   frequency: z
-    .enum(["OD", "BD", "TDS", "QID", "PRN", "Q4H", "Q6H", "Q8H", "Q12H", "SOS"])
+    .union([
+      z.enum(["OD", "BD", "TDS", "QID", "PRN", "Q4H", "Q6H", "Q8H", "Q12H", "SOS"]),
+      z.string(),
+    ])
     .nullable(),
   duration: z.string().nullable(),
   instructions: z.string().nullable(),
@@ -108,6 +114,11 @@ const reflexExaminationSchema = zField(
 // ============================================================================
 
 export const baseNotesSchema = z.object({
+  _clinical_reasoning: z
+    .string()
+    .describe(
+      "Chain of thought: Explain logic for resolving ambiguities, corrections, and translations BEFORE populating any clinical fields."
+    ),
   // --- HISTORY ---
   chief_complaint: textField("chief_complaint", "Chief Complaint", "History", 3, "Enter chief complaint"),
   history_of_present_illness: textField(
@@ -144,12 +155,6 @@ export const baseNotesSchema = z.object({
 
   // --- MANAGEMENT ---
   diagnosis: textField("diagnosis", "Primary Diagnosis", "Management", 3, "Enter confirmed diagnosis"),
-  differential_diagnosis: zField("differential_diagnosis", z.array(z.string()).nullable(), {
-    label: "Differential Diagnosis",
-    section: "Management",
-    type: "input",
-    placeholder: "Enter ruled out or suspected conditions",
-  }),
   assessment: textField("assessment", "Assessment", "Management", 3, "Enter clinical reasoning"),
   planned_investigations: textField(
     "planned_investigations",
@@ -170,6 +175,18 @@ export const baseNotesSchema = z.object({
     section: "Management",
     type: "input",
     placeholder: "Medications stopped, refused, or changed",
+  }),
+  additional_clinical_findings: zField("additional_clinical_findings", z.array(z.string()).nullable(), {
+    label: "Additional Clinical Findings",
+    section: "Management",
+    type: "input",
+    placeholder: "Findings that did not map to any department field",
+  }),
+  ruled_out_findings: zField("ruled_out_findings", z.array(z.string()).nullable(), {
+    label: "Ruled Out / Negated Findings",
+    section: "Management",
+    type: "input",
+    placeholder: "Findings explicitly ruled out by the doctor",
   }),
   prognosis: textField("prognosis", "Prognosis", "Management", 2, "Enter prognosis"),
   follow_up: textField("follow_up", "Follow-Up Plan", "Management", 2, "Enter follow-up plan"),
