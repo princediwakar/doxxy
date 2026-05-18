@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { APP_URL } from "@/lib/constants";
 import { ShareButtons } from "./ShareButtons";
 import { ReadingProgress } from "@/components/ReadingProgress";
@@ -171,7 +172,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             prose-strong:text-gray-900 dark:prose-strong:text-white
             prose-hr:border-gray-200 dark:prose-hr:border-gray-700
           ">
-            <ReactMarkdown>{post.content}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
           </article>
 
           {/* Share Section */}
