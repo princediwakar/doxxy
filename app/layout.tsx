@@ -63,20 +63,22 @@ export default function RootLayout({
           {children}
         </Providers>
 
-        {/* Register Service Worker for PWA */}
-        <Script
-          id="register-sw"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
-            `,
-          }}
-        />
+        {/* Register Service Worker for PWA — production only */}
+        {process.env.NODE_ENV === 'production' && (
+          <Script
+            id="register-sw"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                if ('serviceWorker' in navigator) {
+                  window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js');
+                  });
+                }
+              `,
+            }}
+          />
+        )}
 
         {/* Tawk.to Script (commented out for now) */}
         {/* <Script
