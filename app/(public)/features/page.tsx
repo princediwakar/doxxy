@@ -18,7 +18,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
-import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
@@ -302,7 +301,6 @@ const Features = () => {
       <PatientInterface />
       <AdditionalFeaturesSection />
       <SignupCTA />
-      <SiteFooter />
     </div>
   );
 };

@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, X, ArrowRight, Shield, Globe } from 'lucide-react';
 import Link from 'next/link';
-import SiteFooter from '@/components/SiteFooter';
 import SignupCTA from '@/components/SignupCTA';
 import type { ComparisonConfig } from '@/config/comparisons/types';
 
@@ -310,7 +309,6 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
 
       {/* CTA Section */}
       <SignupCTA />
-      <SiteFooter />
     </div>
   );
 };

@@ -16,7 +16,6 @@ import {
   DollarSign,
   AlertTriangle,
 } from "lucide-react";
-import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import { APP_URL } from '@/lib/constants';
@@ -762,7 +761,6 @@ export default function LandingPageContent() {
       <BenefitsSection />
       <TestimonialsSection testimonials={testimonials} />
       <SignupCTA />
-      <SiteFooter />
       <Script
         id="structured-data"
         type="application/ld+json"

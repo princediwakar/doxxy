@@ -2,7 +2,6 @@ import { getBlogPosts, getExcerpt } from "@/content/blog";
 import Link from "next/link";
 import { Calendar, User, Clock, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import type { Metadata } from 'next';
 
@@ -186,9 +185,6 @@ export default async function BlogPage() {
 
       {/* CTA Section */}
       <SignupCTA />
-
-      {/* Footer */}
-      <SiteFooter />
     </div>
   );
 }

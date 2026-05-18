@@ -12,7 +12,6 @@ import {
   BarChart3,
 } from "lucide-react";
 import Link from "next/link"
-import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
@@ -392,7 +391,6 @@ const Pricing = () => {
       <TrustIndicatorsSection />
       <FaqSection />
       <SignupCTA />
-      <SiteFooter />
     </div>
   );
 };

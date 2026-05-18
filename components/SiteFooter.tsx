@@ -53,6 +53,9 @@ const SiteFooter = () => {
                 <Link href="/faq" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
                   FAQ
                 </Link>
+                <Link href="/help" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                  Knowledge Base
+                </Link>
               </div>
             </div>
 

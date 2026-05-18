@@ -1,7 +1,6 @@
 import { FAQInteractive } from '@/components/public/FAQInteractive';
 import { Button } from '@/components/ui/button';
 import SignupCTA from '@/components/SignupCTA';
-import SiteFooter from '@/components/SiteFooter';
 import Script from 'next/script';
 import Link from 'next/link';
 import { MessageSquare, Phone, BookOpen } from 'lucide-react';
@@ -87,7 +86,6 @@ export default function FAQPage() {
       </section>
 
       <SignupCTA />
-      <SiteFooter />
       <Script
         id="faq-structured-data"
         type="application/ld+json"

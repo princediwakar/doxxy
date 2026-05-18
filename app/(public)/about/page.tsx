@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import SignupCTA from "@/components/SignupCTA";
-import SiteFooter from "@/components/SiteFooter";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
@@ -228,7 +227,6 @@ const About = () => {
       </section> */}
 
       <SignupCTA />
-      <SiteFooter />
     </div>
   );
 };

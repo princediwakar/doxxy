@@ -1,7 +1,6 @@
 import { ContactForm } from '@/components/public/ContactForm';
 import { Button } from '@/components/ui/button';
 import SignupCTA from '@/components/SignupCTA';
-import SiteFooter from '@/components/SiteFooter';
 import { Mail, Phone, Calendar } from 'lucide-react';
 
 const contactInfo = [
@@ -115,7 +114,6 @@ export default function ContactPage() {
       </section>
 
       <SignupCTA />
-      <SiteFooter />
     </div>
   );
 }

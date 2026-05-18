@@ -20,7 +20,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import SignupCTA from "@/components/SignupCTA";
-import SiteFooter from "@/components/SiteFooter";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
@@ -48,25 +47,25 @@ export const metadata: Metadata = {
 // --- DATA ---
 const certifications = [
   {
-    icon: <Award className="h-6 w-6 text-gray-500" />,
+    icon: <Award className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
     title: "HIPAA Compliant",
     description: "Adherence to US healthcare data privacy and security regulations",
     status: "Certified"
   },
   {
-    icon: <Shield className="h-6 w-6 text-gray-500" />,
+    icon: <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
     title: "SOC 2 Type 2",
     description: "Independent audit of security, availability, processing integrity, confidentiality, and privacy",
     status: "Certified"
   },
   {
-    icon: <Globe className="h-6 w-6 text-gray-500" />,
+    icon: <Globe className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
     title: "GDPR Compliant",
     description: "European data protection regulation compliance",
     status: "Certified"
   },
   {
-    icon: <Lock className="h-6 w-6 text-gray-500" />,
+    icon: <Lock className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
     title: "ISO 27001",
     description: "International security management standard",
     status: "In Progress"
@@ -193,22 +192,22 @@ const dataHandling = [
 ];
 
 const SecurityHeroSection = () => (
-  <Section className="bg-white pt-32 pb-20 md:pt-40 md:pb-28">
+  <Section className="!pt-28 md:!pt-40">
     <div className="max-w-4xl mx-auto text-center">
-      <Badge variant="outline" className="mb-4 px-4 py-1.5 text-sm font-medium text-gray-600 border-gray-300 rounded-full">
+      <Badge variant="outline" className="mb-4 px-4 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 rounded-full">
         Security & Compliance
       </Badge>
-      <h1 className="text-5xl lg:text-7xl font-semibold text-gray-900 mb-6 leading-tight tracking-tight">
-        Your Data is <span className="text-gray-900">Secure</span>
+      <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+        Your Data is <span className="text-blue-600 dark:text-blue-400">Secure</span>
       </h1>
-      <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
+      <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
         Doxxy implements enterprise-grade security measures to protect your practice and patient data with the highest level of security.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button size="lg" asChild className="bg-gray-900 text-white hover:bg-gray-700 rounded-lg px-8 py-3 text-base font-medium transition-colors">
+        <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-colors">
           <Link href="/contact">Security Consultation</Link>
         </Button>
-        <Button variant="outline" size="lg" className="border-gray-300 text-gray-900 hover:bg-gray-100 rounded-lg px-8 py-3 text-base font-medium transition-colors">
+        <Button variant="outline" size="lg" className="border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl px-8 py-3 text-base font-semibold transition-colors">
           Download Security Whitepaper
         </Button>
       </div>
@@ -228,26 +227,26 @@ interface SecurityCertificationsSectionProps {
 }
 
 const SecurityCertificationsSection = ({ certifications }: SecurityCertificationsSectionProps) => (
-  <Section className="bg-gray-50">
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
     <SectionTitle>Security Certifications</SectionTitle>
     <SectionSubtitle>We maintain industry-leading certifications to ensure the highest standards of security and compliance.</SectionSubtitle>
 
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
       {certifications.map((cert: Certification, index: number) => (
-        <Card key={index} className="p-6 text-center bg-white border border-gray-200 rounded-xl">
+        <Card key={index} className="p-6 text-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
           <CardHeader className="p-0 mb-4">
             <div className="mx-auto mb-3 flex items-center justify-center">
               {cert.icon}
             </div>
-            <CardTitle className="text-lg font-medium text-gray-900">{cert.title}</CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">{cert.title}</CardTitle>
             <Badge
-              className={`mt-2 mx-auto px-3 py-1 rounded-full text-xs font-medium ${cert.status === "Certified" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
+              className={`mt-2 mx-auto px-3 py-1 rounded-full text-xs font-medium ${cert.status === "Certified" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"}`}
             >
               {cert.status}
             </Badge>
           </CardHeader>
           <CardContent className="p-0">
-            <p className="text-gray-600 text-sm leading-relaxed">
+            <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
               {cert.description}
             </p>
           </CardContent>
@@ -268,20 +267,20 @@ interface SecurityFeaturesSectionProps {
 }
 
 const SecurityFeaturesSection = ({ features }: SecurityFeaturesSectionProps) => (
-  <Section className="bg-white">
+  <Section className="bg-white dark:bg-gray-900">
     <SectionTitle>Comprehensive Security Features</SectionTitle>
     <SectionSubtitle>Comprehensive security controls protecting your data at every level.</SectionSubtitle>
 
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
       {features.map((feature: SecurityFeature, index: number) => (
-        <Card key={index} className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
+        <Card key={index} className="p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
           <div className="flex items-start space-x-4">
-            <div className="p-2 bg-gray-200 rounded-lg text-gray-600 flex-shrink-0">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600 dark:text-blue-400 flex-shrink-0">
               {feature.icon}
             </div>
             <div className="flex-1">
-              <h3 className="font-medium text-gray-900 mb-1">{feature.title}</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
+              <h3 className="font-medium text-gray-900 dark:text-white mb-1">{feature.title}</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
                 {feature.description}
               </p>
             </div>
@@ -302,21 +301,21 @@ interface HIPAAComplianceSectionProps {
 }
 
 const HIPAAComplianceSection = ({ safeguards }: HIPAAComplianceSectionProps) => (
-  <Section className="bg-gray-50">
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
     <SectionTitle>HIPAA Compliance</SectionTitle>
     <SectionSubtitle>Doxxy is fully compliant with HIPAA regulations, ensuring the utmost privacy and security for patient health information.</SectionSubtitle>
     <div className="grid md:grid-cols-3 gap-6 mt-16">
       {safeguards.map((category: HIPAAComplianceCategory, index: number) => (
-        <Card key={index} className="p-6 bg-white border border-gray-200 rounded-xl">
+        <Card key={index} className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
           <CardHeader className="p-0 mb-4">
-            <CardTitle className="text-lg font-medium text-gray-900">{category.title}</CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-900 dark:text-white">{category.title}</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <ul className="space-y-2">
               {category.items.map((item: string, idx: number) => (
                 <li key={idx} className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-gray-400 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-600 leading-relaxed">{item}</span>
+                  <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{item}</span>
                 </li>
               ))}
             </ul>
@@ -338,26 +337,26 @@ interface DataHandlingLifecycleSectionProps {
 }
 
 const DataHandlingLifecycleSection = ({ dataHandlingPhases }: DataHandlingLifecycleSectionProps) => (
-  <Section className="bg-white">
+  <Section className="bg-white dark:bg-gray-900">
     <SectionTitle>Secure Data Lifecycle</SectionTitle>
     <SectionSubtitle>Every stage of data handling is secured with multiple layers of protection.</SectionSubtitle>
 
     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
       {dataHandlingPhases.map((phase: DataHandlingPhase, index: number) => (
-        <Card key={index} className="p-6 bg-gray-50 border border-gray-200 rounded-xl">
+        <Card key={index} className="p-6 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl">
           <CardHeader className="p-0 mb-4">
-            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-700 font-medium text-lg mx-auto mb-4">
+            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 font-medium text-lg mx-auto mb-4">
               {index + 1}
             </div>
-            <CardTitle className="text-lg font-medium text-center text-gray-900">{phase.phase}</CardTitle>
-            <CardDescription className="text-center text-sm text-gray-600 leading-relaxed">{phase.description}</CardDescription>
+            <CardTitle className="text-lg font-medium text-center text-gray-900 dark:text-white">{phase.phase}</CardTitle>
+            <CardDescription className="text-center text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{phase.description}</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <ul className="space-y-2">
               {phase.controls.map((control: string, idx: number) => (
                 <li key={idx} className="flex items-start space-x-2">
-                  <CheckCircle className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-xs text-gray-600 leading-relaxed">{control}</span>
+                  <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <span className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">{control}</span>
                 </li>
               ))}
             </ul>
@@ -369,47 +368,47 @@ const DataHandlingLifecycleSection = ({ dataHandlingPhases }: DataHandlingLifecy
 );
 
 const SecurityMonitoringSection = () => (
-  <Section className="bg-gray-50">
+  <Section className="bg-gray-50 dark:bg-gray-800/50">
     <div className="grid lg:grid-cols-2 gap-12 items-center">
       <div>
         <SectionTitle className="!text-left !text-4xl">24/7 Security Monitoring</SectionTitle>
-        <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+        <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
           Our Security Operations Center (SOC) provides round-the-clock monitoring
           and threat detection to protect your practice from evolving cyber threats.
         </p>
 
         <div className="space-y-6">
           <div className="flex items-start gap-4">
-            <div className="p-2 bg-gray-200 rounded-lg">
-              <Zap className="h-5 w-5 text-gray-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+              <Zap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-1">Real-time Threat Detection</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <h3 className="font-medium text-gray-900 dark:text-white mb-1">Real-time Threat Detection</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                 Advanced AI-powered monitoring identifies and responds to threats in real-time.
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-4">
-            <div className="p-2 bg-gray-200 rounded-lg">
-              <Users className="h-5 w-5 text-gray-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+              <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-1">Expert Security Team</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <h3 className="font-medium text-gray-900 dark:text-white mb-1">Expert Security Team</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                 Certified security professionals monitor and respond to incidents 24/7.
               </p>
             </div>
           </div>
 
           <div className="flex items-start gap-4">
-            <div className="p-2 bg-gray-200 rounded-lg">
-              <FileText className="h-5 w-5 text-gray-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+              <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <h3 className="font-medium text-gray-900 mb-1">Incident Response</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
+              <h3 className="font-medium text-gray-900 dark:text-white mb-1">Incident Response</h3>
+              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                 Rapid incident response with detailed forensics and remediation plans.
               </p>
             </div>
@@ -419,17 +418,17 @@ const SecurityMonitoringSection = () => (
 
       <div className="relative">
         <Image
-        src="https://images.unsplash.com/photo-1551808525-51a94da548ce?w=600&h=500&fit=crop"
-        alt="Security monitoring dashboard"
-        width={800}
-        height={600}
-        className="rounded-xl border border-gray-200"
-        unoptimized
-      />
-        <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-xl border border-gray-200">
+          src="https://images.unsplash.com/photo-1551808525-51a94da548ce?w=600&h=500&fit=crop"
+          alt="Security monitoring dashboard"
+          width={800}
+          height={600}
+          className="rounded-xl border border-gray-200 dark:border-gray-700"
+          unoptimized
+        />
+        <div className="absolute -bottom-6 -right-6 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-lg">
           <div className="text-center">
-            <div className="text-2xl font-semibold text-gray-900">99.9%</div>
-            <div className="text-sm text-gray-600">Threat Detection Rate</div>
+            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">99.9%</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">Threat Detection Rate</div>
           </div>
         </div>
       </div>
@@ -441,7 +440,7 @@ const SecurityMonitoringSection = () => (
 
 const Security = () => {
   return (
-    <div className="font-sans antialiased text-gray-900">
+    <div className="bg-white dark:bg-gray-900">
       <SecurityHeroSection />
       <SecurityCertificationsSection certifications={certifications} />
       <SecurityFeaturesSection features={securityFeatures} />
@@ -449,7 +448,6 @@ const Security = () => {
       <DataHandlingLifecycleSection dataHandlingPhases={dataHandling} />
       <SecurityMonitoringSection />
       <SignupCTA />
-      <SiteFooter />
     </div>
   );
 };

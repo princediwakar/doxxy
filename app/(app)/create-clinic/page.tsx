@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -228,6 +229,11 @@ const CreateClinicPage = () => {
     <div className="flex items-center justify-center min-h-screen p-4 bg-background">
       <div className="w-full max-w-md medical-card p-6 border-4 border-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-2 text-center text-foreground">Create New Clinic</h1>
+        <div className="text-center mb-2">
+          <Link href="/help/superadmin" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
+            Need help? Read our guide
+          </Link>
+        </div>
         <StepIndicator step={step} />
         
         {/* Step 1: Clinic Details */}

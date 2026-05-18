@@ -1,5 +1,6 @@
 // app/(public)/layout.tsx
 import { AppHeader } from '@/components/AppHeader'
+import SiteFooter from '@/components/SiteFooter'
 import Script from 'next/script'
 import type { Metadata } from 'next'
 
@@ -57,6 +58,7 @@ export default function PublicLayout({
 
       <AppHeader />
       {children}
+      <SiteFooter />
     </>
   )
 }

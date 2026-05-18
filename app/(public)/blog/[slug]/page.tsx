@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Calendar, User, Clock, ArrowLeft, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import SiteFooter from "@/components/SiteFooter";
 import SignupCTA from "@/components/SignupCTA";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -213,8 +212,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* CTA Section */}
       <SignupCTA />
 
-      {/* Footer */}
-      <SiteFooter />
       <Script
         id="article-structured-data"
         type="application/ld+json"

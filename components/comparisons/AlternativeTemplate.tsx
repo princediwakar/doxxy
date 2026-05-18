@@ -3,7 +3,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Check, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import SiteFooter from '@/components/SiteFooter';
 import SignupCTA from '@/components/SignupCTA';
 import type { AlternativeConfig } from '@/config/comparisons/types';
 
@@ -183,7 +182,6 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       <SignupCTA />
-      <SiteFooter />
     </div>
   );
 };

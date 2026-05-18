@@ -1,4 +1,4 @@
-import { Search, Calendar, Pill, BarChart3, Settings, User2 } from "lucide-react";
+import { Search, Calendar, Pill, BarChart3, Settings, User2, HelpCircle } from "lucide-react";
 
 export const navItems = [
   { icon: Search, label: "Search", path: "#", roles: ["superadmin", "staff", "doctor"], bottomNav: true, topGroup: true, sidebar: true },
@@ -7,6 +7,7 @@ export const navItems = [
   { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["superadmin"], bottomNav: true, topGroup: true },
   { icon: User2, label: "Profile", path: "/profile", roles: ["superadmin", "staff", "doctor"], bottomNav: false, topGroup: false },
   { icon: Settings, label: "Clinic Settings", path: "/clinic", roles: ["superadmin"], bottomNav: true, topGroup: false },
+  { icon: HelpCircle, label: "Help", path: "/help", roles: ["superadmin", "staff", "doctor"], bottomNav: false, topGroup: false },
 ];
 
 export function isActiveLink(location: string, path: string) {

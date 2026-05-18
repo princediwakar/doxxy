@@ -9,6 +9,11 @@ const nextConfig = {
         destination: "/schedule?selectedAppointment=:id",
         permanent: false,
       },
+      {
+        source: "/kb/:path*",
+        destination: "/help/:path*",
+        permanent: true,
+      },
     ];
   },
 

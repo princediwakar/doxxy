@@ -12,7 +12,8 @@ import {
   CreditCard,
   Phone,
   BarChart3,
-  BookOpen
+  BookOpen,
+  HelpCircle,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -58,6 +59,7 @@ export const AppHeader = memo(() => {
     { href: "/pricing", label: "Pricing", icon: CreditCard },
     { href: "/comparisons", label: "Comparisons", icon: BarChart3 },
     { href: "/blog", label: "Blog", icon: BookOpen },
+    { href: "/help", label: "Help", icon: HelpCircle },
     { href: "/contact", label: "Contact", icon: Phone },
   ];
 
