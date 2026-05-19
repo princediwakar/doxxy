@@ -6,9 +6,8 @@ import { SidebarLayout } from '@/components/SidebarLayout';
 import { CommandPalette } from '@/components/CommandPalette';
 import { MobileHeader } from '@/components/MobileHeader';
 import { BottomNav } from '@/components/BottomNav';
-import { FloatingActionButton } from '@/components/ui/floating-action-button';
+import { AppFAB } from '@/components/AppFAB';
 import { PageLoader } from '@/components/ui/loading';
-import { User as UserIcon } from 'lucide-react';
 
 const LayoutServer = ({
   children,
@@ -23,14 +22,6 @@ const LayoutServer = ({
   serverProfileName: string | null;
   serverActiveClinicId: string | null;
 }) => {
-  const role = (serverClinics[0]?.role ?? serverClinics[0]?.role ?? null) as "staff" | "doctor" | "superadmin" | null;
-  const fabActions = role ? [{
-    id: "new-patient",
-    icon: <UserIcon className="w-5 h-5" />,
-    label: "New Patient",
-    href: "/schedule?action=new-patient",
-  }] : [];
-
   return (
     <AppStateProvider
       serverUser={serverUser}
@@ -49,7 +40,7 @@ const LayoutServer = ({
 
         <CommandPalette />
 
-        <FloatingActionButton actions={fabActions} />
+        <AppFAB />
 
         <BottomNav />
       </div>

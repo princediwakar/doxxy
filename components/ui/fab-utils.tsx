@@ -1,6 +1,3 @@
-import React from "react";
-import { User } from "lucide-react";
-
 export type FABAction = {
   id: string;
   icon: React.ReactNode;
@@ -9,14 +6,3 @@ export type FABAction = {
   action?: () => void;
   color?: string;
 };
-
-export function getDefaultFABActions(role: "staff" | "doctor" | "superadmin"): FABAction[] {
-  return [
-    {
-      id: "new-patient",
-      icon: <User className="w-5 h-5" />,
-      label: "New Patient",
-      href: "/schedule?action=new-patient",
-    },
-  ];
-}

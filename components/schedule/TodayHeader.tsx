@@ -38,7 +38,7 @@ export function TodayHeader({
   const handleDoctorChange = (value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "all") {
-      params.delete("doctor");
+      params.set("doctor", "all");
     } else {
       params.set("doctor", value);
     }

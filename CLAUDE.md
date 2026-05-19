@@ -11,7 +11,7 @@ Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 
 ## TIER 1: BEHAVIORAL CORE (How You Operate)
 
-### Rule 1 — Think Before Coding
+### Rule 1 — Think 5 Times Before Coding
 **Don't just write code; design the data flow.**
 - State assumptions explicitly. If uncertain, STOP and ask rather than guess.
 - Present multiple interpretations when ambiguity exists.

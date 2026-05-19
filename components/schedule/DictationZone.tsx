@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useEffect, useState } from "react";
-import { Mic, MicOff, Square, FileText, Pause, Play, AlertTriangle } from "lucide-react";
+import { Mic, MicOff, Square, FileText, Pause, Play, AlertTriangle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/loading";
 import { toast } from "sonner";
@@ -76,6 +76,7 @@ export function DictationZone({
     captureState,
     elapsedSeconds,
     errorMessage,
+    permissionSettingsUrl,
     transcriptBuffer,
     isDegraded,
     startCapture,
@@ -197,13 +198,29 @@ export function DictationZone({
   }, [resetCapture]);
 
   if (captureState === "error") {
+    const openSettings = permissionSettingsUrl
+      ? () => {
+          window.location.href = permissionSettingsUrl;
+        }
+      : undefined;
+
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-center space-y-2">
+      <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-center space-y-3">
         <MicOff className="h-8 w-8 mx-auto text-destructive/60" />
-        <p className="text-sm text-destructive">{errorMessage}</p>
-        <Button variant="outline" size="sm" onClick={onOpenNotes}>
-          <FileText className="h-3 w-3 mr-1" />{secondaryLabel}
-        </Button>
+        <p className="text-sm text-destructive whitespace-pre-wrap">{errorMessage}</p>
+        <div className="flex items-center justify-center gap-2 flex-wrap">
+          {openSettings && (
+            <Button variant="default" size="sm" onClick={openSettings}>
+              <Settings className="h-3 w-3 mr-1" />Open Settings
+            </Button>
+          )}
+          <Button variant={openSettings ? "outline" : "default"} size="sm" onClick={beginRecording}>
+            <Mic className="h-3 w-3 mr-1" />Try Again
+          </Button>
+          <Button variant="outline" size="sm" onClick={onOpenNotes}>
+            <FileText className="h-3 w-3 mr-1" />{secondaryLabel}
+          </Button>
+        </div>
       </div>
     );
   }

@@ -36,7 +36,10 @@ export default async function TodayPage({
   const userDoctorId = await resolveUserDoctor(user.id, clinicId);
   const doctorFilterParam =
     typeof params.doctor === 'string' ? params.doctor : undefined;
-  const effectiveDoctorFilter = doctorFilterParam ?? userDoctorId ?? null;
+  const effectiveDoctorFilter =
+    doctorFilterParam === 'all'
+      ? null
+      : (doctorFilterParam ?? userDoctorId ?? null);
 
   const [queue, doctors] = await Promise.all([
     getTodayAppointments(clinicId, effectiveDoctorFilter, selectedDate),

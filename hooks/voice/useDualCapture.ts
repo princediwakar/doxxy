@@ -54,6 +54,101 @@ export interface StopResult {
   transcript: string;
 }
 
+// ─── Platform detection for permission re-enable guidance ────────────────────
+
+interface PermissionGuidance {
+  /** Human-readable instructions shown below the error message. */
+  instructions: string;
+  /**
+   * A URL that opens OS-level or browser-level settings where the user can
+   * re-enable microphone permissions. Null when the platform does not support
+   * deep-linking into settings from a web context.
+   */
+  settingsUrl: string | null;
+}
+
+function getPermissionGuidance(): PermissionGuidance {
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const isMac = /Mac/i.test(platform) || /Macintosh/.test(ua);
+  const isWindows = /Win/i.test(platform);
+  const isChrome = /Chrome\//.test(ua) && !/Edge\//.test(ua) && !/OPR\//.test(ua);
+  const isFirefox = /Firefox\//.test(ua);
+  const isSafari = /Safari\//.test(ua) && !/Chrome\//.test(ua);
+  const isBrave = /Brave\//.test(ua);
+  const isEdge = /Edge\//.test(ua);
+
+  const browserName = isBrave
+    ? "Brave"
+    : isEdge
+      ? "Edge"
+      : isChrome
+        ? "Chrome"
+        : isFirefox
+          ? "Firefox"
+          : isSafari
+            ? "Safari"
+            : "your browser";
+
+  // ── Android: deep-link into system settings ──────────────────────────────
+  if (isAndroid) {
+    return {
+      instructions: `Enable Microphone for ${browserName} in Android Settings, then come back and tap Try Again.`,
+      // Opens Android's "App info" page for the browser so the user can
+      // quickly reach the Permissions screen.
+      settingsUrl: "intent://com.android.settings/.Settings#Intent;scheme=android-app;end",
+    };
+  }
+
+  // ── iOS: no deep-link possible from web — show clear manual path ─────────
+  if (isIOS) {
+    return {
+      instructions: `Open the Settings app → ${browserName} → Microphone → Allow. Then come back and tap Try Again.`,
+      settingsUrl: null,
+    };
+  }
+
+  // ── macOS Safari ─────────────────────────────────────────────────────────
+  if (isMac && isSafari) {
+    return {
+      instructions: "Open Safari → Settings for This Website → Microphone → Allow. Then tap Try Again.",
+      settingsUrl: null,
+    };
+  }
+
+  // ── macOS Chrome / Brave / Edge ──────────────────────────────────────────
+  if (isMac && (isChrome || isBrave || isEdge)) {
+    return {
+      instructions: `Open ${browserName} → Settings → Privacy & Security → Site Settings → Microphone → Allow. Then tap Try Again.`,
+      settingsUrl: null,
+    };
+  }
+
+  // ── Windows Chrome / Brave / Edge ────────────────────────────────────────
+  if (isWindows && (isChrome || isBrave || isEdge)) {
+    return {
+      instructions: `In ${browserName}, click the lock/tune icon in the address bar → Site Settings → Microphone → Allow. Then tap Try Again.`,
+      settingsUrl: null,
+    };
+  }
+
+  // ── Firefox (any desktop) ────────────────────────────────────────────────
+  if (isFirefox) {
+    return {
+      instructions: "Click the permissions icon in the address bar, enable Microphone, then refresh and tap Try Again.",
+      settingsUrl: null,
+    };
+  }
+
+  // ── Generic fallback ─────────────────────────────────────────────────────
+  return {
+    instructions: `Enable microphone access for this site in ${browserName} settings, then refresh and tap Try Again.`,
+    settingsUrl: null,
+  };
+}
+
 // ─── Audio format selection ───────────────────────────────────────────────────
 
 function getSupportedMimeType(): string {
@@ -74,6 +169,7 @@ export function useDualCapture() {
   const [captureState, setCaptureState] = useState<CaptureState>("idle");
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [permissionSettingsUrl, setPermissionSettingsUrl] = useState<string | null>(null);
   const [transcriptBuffer, setTranscriptBuffer] = useState("");
   const [isDegraded, setIsDegraded] = useState(false);
 
@@ -140,6 +236,7 @@ export function useDualCapture() {
 
   const startCapture = useCallback(async (): Promise<boolean> => {
     setErrorMessage(null);
+    setPermissionSettingsUrl(null);
     isDegradedRef.current = false;
     setIsDegraded(false);
     transcriptRef.current = "";
@@ -171,9 +268,9 @@ export function useDualCapture() {
         error?.name === "NotAllowedError" ||
         error?.name === "PermissionDeniedError"
       ) {
-        setErrorMessage(
-          "Microphone access denied. Please enable permissions in your browser settings.",
-        );
+        const guidance = getPermissionGuidance();
+        setErrorMessage(`Microphone access denied. ${guidance.instructions}`);
+        setPermissionSettingsUrl(guidance.settingsUrl);
       } else if (error?.name === "NotFoundError") {
         setErrorMessage("No microphone found. Please connect a microphone and try again.");
       } else if (error?.name === "NotSupportedError") {
@@ -428,12 +525,14 @@ export function useDualCapture() {
     setCaptureState("idle");
     setElapsedSeconds(0);
     setErrorMessage(null);
+    setPermissionSettingsUrl(null);
   }, [cleanup]);
 
   return {
     captureState,
     elapsedSeconds,
     errorMessage,
+    permissionSettingsUrl,
     transcriptBuffer,
     isDegraded,
     startCapture,
