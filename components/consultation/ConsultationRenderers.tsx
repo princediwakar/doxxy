@@ -37,9 +37,9 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
   // Helper function to get value with default
   const getValueWithDefault = (value: unknown): string => {
     if (isBlank(value)) {
-      return '';
+      return defaultValue || '';
     }
-    return String(value) || defaultValue;
+    return String(value);
   };
 
   // Motor and reflex tables always show (they have meaningful defaults)
@@ -385,80 +385,6 @@ export const TabularEyeExaminationDisplay: React.FC<{
   );
 };
 
-
-// --- Type Guards for Clean Field Detection ---
-
-const isPrescriptionData = (value: unknown): value is PrescriptionMedication[] => {
-  return Array.isArray(value) &&
-         value.every(item =>
-           typeof item === 'object' &&
-           item !== null &&
-           'name' in item
-         );
-};
-
-const isVitalSignsData = (value: unknown): value is VitalSignsData => {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as unknown as Record<string, unknown>;
-  return (
-    'temperature' in data ||
-    'pulse' in data ||
-    'blood_pressure_systolic' in data ||
-    'blood_pressure_diastolic' in data ||
-    'respiratory_rate' in data ||
-    'oxygen_saturation' in data ||
-    'height' in data ||
-    'weight' in data ||
-    'bmi' in data
-  );
-};
-
-const isEyeData = (value: unknown): value is EyeData => {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as unknown as Record<string, unknown>;
-  // Eye data has simple left/right fields without side suffixes
-  return (
-    ('left' in data || 'right' in data) &&
-    !('shoulder_left' in data) &&
-    !('biceps_left' in data) &&
-    !('visual_acuity_left' in data)
-  );
-};
-
-const isMotorExamData = (value: unknown): value is MotorExamData => {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as unknown as Record<string, unknown>;
-  return (
-    'shoulder_left' in data ||
-    'shoulder_right' in data ||
-    'muscle_tone' in data ||
-    'muscle_bulk' in data
-  );
-};
-
-const isReflexExamData = (value: unknown): value is ReflexExamData => {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as unknown as Record<string, unknown>;
-  return (
-    'biceps_left' in data ||
-    'biceps_right' in data ||
-    'triceps_left' in data ||
-    'clonus' in data ||
-    'hoffmann' in data
-  );
-};
-
-const isTabularEyeData = (value: unknown): value is TabularEyeValue => {
-  if (typeof value !== 'object' || value === null) return false;
-  const data = value as unknown as Record<string, unknown>;
-  return (
-    'visual_acuity_left' in data ||
-    'visual_acuity_right' in data ||
-    'extraocular_movements_left' in data ||
-    'anterior_chamber_left' in data
-  );
-};
-
 // --- Main Switch Export ---
 
 export const FieldValueRenderer: React.FC<{
@@ -467,40 +393,31 @@ export const FieldValueRenderer: React.FC<{
 }> = ({ fieldName, value }) => {
   if (!value) return null;
 
-  // Type Guard: Prescriptions
-  if (fieldName === "prescriptions" && isPrescriptionData(value)) {
-    const validPrescriptions = value.filter((med) => med.name && med.name.trim().length > 0);
+  // 1. Prescriptions
+  if (fieldName === "prescriptions" && Array.isArray(value)) {
+    const validPrescriptions = (value as PrescriptionMedication[]).filter(
+      (med) => med.name && med.name.trim().length > 0
+    );
     if (validPrescriptions.length === 0) return null;
-    return <PrescriptionList value={value} />;
+    return <PrescriptionList value={value as PrescriptionMedication[]} />;
   }
 
-  // Type Guard: Objects
+  // 2. Objects (Tables & Structured Data)
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     const data = value as unknown as Record<string, unknown>;
 
-    // Simple check: if object has no properties at all, don't render
     if (Object.keys(data).length === 0) return null;
 
-    // Clean type detection using explicit type guards
-    if (isVitalSignsData(value)) {
-      return <VitalSignsDisplay data={value} />;
-    }
-
-    if (isTabularEyeData(value)) {
-      return <TabularEyeExaminationDisplay data={value} />;
-    }
-
-    if (isEyeData(value)) {
-      return <EyeFieldDisplay data={value} />;
-    }
-
-    // Always show motor and reflex examination data (they have default values)
-    if (isMotorExamData(value)) {
-      return <MotorExaminationDisplay data={value} />;
-    }
-
-    if (isReflexExamData(value)) {
-      return <ReflexExaminationDisplay data={value} />;
+    // Route strictly by fieldName instead of guessing the shape
+    switch (fieldName) {
+      case "vital_signs":
+        return <VitalSignsDisplay data={value as VitalSignsData} />;
+      case "eye_examination":
+        return <TabularEyeExaminationDisplay data={value as TabularEyeValue} />;
+      case "motor_examination":
+        return <MotorExaminationDisplay data={value as MotorExamData} />;
+      case "reflexes":
+        return <ReflexExaminationDisplay data={value as ReflexExamData} />;
     }
 
     // Fallback for unhandled object types
@@ -516,7 +433,7 @@ export const FieldValueRenderer: React.FC<{
     }
   }
 
-  // Type Guard: String arrays
+  // 3. String arrays (e.g., additional_clinical_findings)
   if (Array.isArray(value) && value.every((item): item is string => typeof item === 'string')) {
     const items = value.filter(s => s.trim().length > 0);
     if (items.length === 0) return null;
@@ -529,14 +446,14 @@ export const FieldValueRenderer: React.FC<{
     );
   }
 
-  // Type Guard: String
+  // 4. Standard Strings
   if (typeof value === "string") {
     const trimmedValue = value.trim();
     if (!trimmedValue) return null;
 
     const lines = trimmedValue.split("\n").filter((line) => line.trim());
-    if (lines.length <= 1)
-      return <span className="text-gray-700">{trimmedValue}</span>;
+    if (lines.length <= 1) return <span className="text-gray-700">{trimmedValue}</span>;
+
     return (
       <div className="text-gray-700">
         {lines.map((line, index) => (
@@ -548,5 +465,6 @@ export const FieldValueRenderer: React.FC<{
     );
   }
 
+  // 5. Ultimate Fallback
   return <span className="text-gray-700">{String(value)}</span>;
 };
