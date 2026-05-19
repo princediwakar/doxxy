@@ -13,62 +13,56 @@ if (!OPENAI_API_KEY) {
   throw new Error("[structureClinicalNotes] OPENAI_API_KEY is not set.");
 }
 
-// Instantiate official client. It natively handles rate limits (429) and network retries with backoff.
 const openai = new OpenAI({
   apiKey: OPENAI_API_KEY,
   maxRetries: 3,
 });
 
-// src/lib/voice/structureClinicalNotes.ts
+const SURGICAL_SYSTEM_PROMPT = `You are an elite clinical extraction engine. Your sole objective is to map chaotic, rapid-fire, mixed-language clinical dictation into a pristine structured schema. 
 
-const SURGICAL_SYSTEM_PROMPT = `You are an expert clinical extraction engine. Your sole objective is to map chaotic, rapid-fire, mixed-language dictation into a pristine structured schema. 
-
-**Tradeoff:** These guidelines heavily bias toward CAUTION and FIDELITY over completeness. Do not hallucinate data to fill empty fields.
+**Core Directive:** You are a transcriber and structural mapper, NOT a summarizer. Extract exactly what was said with absolute clinical fidelity.
 
 ## 1. Think Before Mapping (Chain of Thought)
-**Surface ambiguity. Resolve mid-sentence chaos logically.**
 Before populating the clinical fields, you MUST use the \`_clinical_reasoning\` field to explicitly state your logic for:
-- Resolving mid-sentence doctor corrections (e.g., "Start Pan-D... wait, make it Omez" -> Log that Pan-D was a verbal misfire, not a discontinuation, and Omez is the prescription).
-- Deciding why a symptom belongs in \`chief_complaint\` vs. \`additional_clinical_findings\`.
-- Translating Hinglish terms to clinical English based on the surrounding context.
+- Resolving mid-sentence doctor corrections (e.g., "Start Pan-D... wait, make it Omez").
+- Identifying conditional plans (PRN medications, "if/then" directives).
+- Translating Hinglish or colloquial terms to standard clinical English based on context.
 
-## 2. Minimalist Extraction (Simplicity First)
-**Extract exactly what was said. Nothing speculative.**
-- **No medical inflation:** If the doctor says "pain", do not output "severe acute pain". 
-- **No inferring diagnoses:** If the doctor lists symptoms but no explicit diagnosis, leave \`diagnosis\` null. 
-- **Preserve temporal exactness:** 3 days is 3 days. Do not convert to "acute". 
-- **Brand names are sacred:** Do not substitute Indian brand names (e.g., "Augmentin 625") for generics unless explicitly dictated.
+## 2. Absolute Clinical Fidelity
+- **Preserve Jargon:** NEVER dilute, translate, or simplify precise medical terminology (e.g., "metamorphopsia", "erythema"). Do not dumb down the doctor's vocabulary.
+- **No Medical Inflation:** If the doctor says "pain", do not output "severe acute pain". 
+- **Preserve Exactness:** 3 days is 3 days. Do not convert to "acute". Preserve exact percentiles, fractional units, and standard medical acronyms.
 
-Ask yourself: "Am I summarizing, or am I extracting?" If you are summarizing, you are hallucinating. Stop.
+## 3. Workflow & Conditional Directives (CRITICAL)
+- **Conditional / PRN Prescriptions:** If a doctor prescribes a medication "as needed" or "if symptoms worsen", it IS an active prescription. Map it to \`prescriptions\` and put the condition in the \`instructions\` field. Do not drop it.
+- **Mandatory Workflow:** Return precautions ("call immediately if X"), follow-up timelines ("see back in 2 weeks"), and referral orders MUST be explicitly captured in \`follow_up\` or \`referrals\`. They are hard clinical data. Do not ignore them.
 
-## 3. Surgical Schema Placement
-**Touch only the correct fields. Clean up the spillover.**
-- **Explicit Negations:** "No chest pain", "Lungs clear", "unremarkable" belong strictly in \`ruled_out_findings\`. They are NOT diagnoses or general history.
-- **True Discontinuations:** Only populate \`discontinued_medications\` if the doctor explicitly stops a *previously taken* drug. 
-- **The Spillover Protocol:** Use \`additional_clinical_findings\` ONLY if a clinical fact fundamentally cannot be mapped to the provided schema fields. Do not force data where it doesn't belong.
+## 4. Surgical Schema Placement
+- **Explicit Negations & Risks:** "No chest pain", "Lungs clear" belong strictly in \`ruled_out_findings\`. However, specific risk negations (e.g., "No Suicidal Ideation") must go into their dedicated schema fields (e.g., \`risk_assessment\`) if available.
+- **True Discontinuations:** Only populate \`discontinued_medications\` if a previously taken drug is stopped.
+- **The Spillover Protocol:** Use \`additional_clinical_findings\` ONLY if a clinical fact fundamentally cannot be mapped to the provided schema fields. 
 
-## 4. Goal-Driven Safety (Zero-Shot Verification)
-**Define certainty. Null is better than wrong.**
-- If an anatomical side (Left/Right) is required by the specialty schema but not stated, leave it null. Do not guess.
-- If a duration or frequency for a prescription is missing, leave it null. Do not assume "OD" or "5 days" just because it is standard clinical practice.
-- Correct obvious STT phonetic errors using clinical context (e.g., "fragile fatigue" -> "brain fog"), but ONLY if the correction is clinically undeniable. If nonsensical and unresolvable, capture the exact phonetic string in quotes in \`additional_clinical_findings\`.
-- **STRICT NULL HANDLING:** If a value is unknown, missing, or ruled out, you MUST omit the field entirely or use strict JSON \`null\`. You are STRICTLY FORBIDDEN from outputting stringified nulls. NEVER output \"null\", \":null\", \"/null\", \"N/A\", or \"NOT_SPECIFIED\".`;
-
-
-
-
-// src/lib/voice/structureClinicalNotes.ts
+## 5. Goal-Driven Safety 
+- If an anatomical side (Left/Right) is required but not stated, leave it null. Do not guess.
+- **STRICT NULL HANDLING:** If a value is unknown or missing, use strict JSON \`null\`. You are STRICTLY FORBIDDEN from outputting stringified nulls like "null", ":null}", "N/A", or "NOT_SPECIFIED".`;
 
 function getSpecialtyInstructions(department: string): string {
   switch (department) {
     case "Ophthalmology":
-      return `- Format visual acuity strictly as standard fractions (e.g., '20/20', '6/6'). 
-- CRITICAL: STT will often output phonetic fractions like '20 by 20' or '6 by 6'. You MUST translate these into the standard slash format (e.g., '20/20') before mapping.
-- Left/Right specificity is absolute. Do not guess if not explicitly stated.`;
+      return `- Format visual acuity strictly as standard fractions (e.g., '20/20', '6/6'). Convert STT phonetic fractions (e.g., '20 by 20').
+- Left/Right specificity is absolute. Do not guess.`;
     case "Neurology":
-      return "- Format motor power as standard grades (e.g., 5/5). Map eponyms (Patellar, Babinski) to exact anatomical fields. If 'bilateral', duplicate to left and right.";
-    case "Cardiology":
-      return "- Differentiate strictly between historical cardiac events and current presentation vitals/murmurs.";
+      return `- Format motor power as standard grades (e.g., '5/5'). Map eponyms (Patellar, Babinski) to exact anatomical fields.
+- Deep Tendon Reflexes must be graded (e.g., '2+', '3+').`;
+    case "Psychiatry":
+      return `- CRITICAL: Any mention of Suicidal Ideation (SI) or Homicidal Ideation (HI), even if denied (e.g., 'No SI/HI'), MUST be extracted into the risk_assessment field.`;
+    case "Gynecology":
+      return `- Preserve exact Obstetric History formats (Gravida/Para/Abortus/Live). Correct STT errors (e.g., 'G 2 P to' -> 'G2P2').`;
+    case "Pediatrics":
+      return `- DO NOT round ages. Keep exact months, weeks, or days.
+- Preserve exact growth percentiles.`;
+    case "EmergencyMedicine":
+      return `- Prioritize timing and sequence of acute interventions. Clearly distinguish between what was given in the ER vs what is prescribed for discharge.`;
     default:
       return "";
   }
@@ -76,21 +70,13 @@ function getSpecialtyInstructions(department: string): string {
 
 function generateSystemPrompt(department: string): string {
   const specialtyRules = getSpecialtyInstructions(department);
-
-  return `${SURGICAL_SYSTEM_PROMPT}
-
-DEPARTMENT FOCUS: ${department}
-${specialtyRules ? `SPECIALTY RULES:\n${specialtyRules}` : ""}`;
+  return `${SURGICAL_SYSTEM_PROMPT}\n\nDEPARTMENT FOCUS: ${department}\n${specialtyRules ? `SPECIALTY RULES:\n${specialtyRules}` : ""}`;
 }
 
 const MAX_TRANSCRIPT_CHARS = 80_000;
 
-
 export class TranscriptTooLongError extends Error {
-  constructor(
-    public length: number,
-    public limit: number,
-  ) {
+  constructor(public length: number, public limit: number) {
     super(`Transcript length (${length}) exceeds the clinical safety limit of ${limit} characters.`);
     this.name = 'TranscriptTooLongError';
   }
@@ -102,15 +88,13 @@ export async function structureClinicalNotes(
 ): Promise<{ output: AIStructuredOutput; confidence: FieldConfidence[] }> {
 
   if (transcript.length > MAX_TRANSCRIPT_CHARS) {
-    logger.error(`[structureClinicalNotes] REJECTED: Transcript too long (${transcript.length} chars).`);
+    logger.error(`[structureClinicalNotes] REJECTED: Transcript too long.`);
     throw new TranscriptTooLongError(transcript.length, MAX_TRANSCRIPT_CHARS);
   }
 
   const dept = department ? mapDepartmentName(department) : "General";
   const schema = getSchemaForDepartment(dept);
   const fields = getAllFieldsFromSchema(schema);
-
-  // Note: We no longer pass 'fields' into generateSystemPrompt. Zod handles the schema context.
   const systemPrompt = generateSystemPrompt(dept);
 
   try {
@@ -130,21 +114,18 @@ export async function structureClinicalNotes(
       throw new Error(`OpenAI refusal or empty response: ${response.choices[0]?.message?.refusal || "Unknown"}`);
     }
 
-    // --- ADD THIS LOGGING BLOCK ---
     if ('_clinical_reasoning' in parsedData && typeof parsedData._clinical_reasoning === 'string') {
       logger.log(`[AI Reasoning] ${parsedData._clinical_reasoning}`);
     }
-    // ------------------------------
 
     return mapAndScoreOutput(parsedData, fields);
 
   } catch (error) {
-    logger.error("[structureClinicalNotes] Failed to structure clinical notes.", error);
+    logger.error("[structureClinicalNotes] Failed to structure notes.", error);
     throw new Error(`Failed to structure clinical notes: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
-// Single-pass mapping and confidence scoring
 function mapAndScoreOutput(
   aiOutput: Record<string, unknown>,
   fields: NoteFieldConfig[],
@@ -152,118 +133,136 @@ function mapAndScoreOutput(
   const rawFields: Record<string, unknown> = {};
   const confidence: FieldConfidence[] = [];
 
-  const VITAL_SIGN_PATTERN = /^\d{2,3}(\/\d{2,3})?$/;
+  const VITAL_SIGN_PATTERN = /^\d{2,3}(\.\d{1,2})?(\/\d{2,3})?$/;
   const VISUAL_ACUITY_PATTERN = /^(6|20)\/\d{1,2}$/;
   const MOTOR_POWER_PATTERN = /^\d\/5$/;
   const MOTOR_JOINT_NAMES = new Set([
-    "shoulder_left", "shoulder_right",
-    "elbow_left", "elbow_right",
-    "wrist_left", "wrist_right",
-    "hip_left", "hip_right",
-    "knee_left", "knee_right",
-    "ankle_left", "ankle_right",
+    "shoulder_left", "shoulder_right", "elbow_left", "elbow_right",
+    "wrist_left", "wrist_right", "hip_left", "hip_right",
+    "knee_left", "knee_right", "ankle_left", "ankle_right",
   ]);
 
   function assessConfidence(value: string | null, fieldName: string) {
-    if (typeof value !== "string" || value === "NOT_SPECIFIED" || value.trim() === "") {
+    if (typeof value !== "string" || value.trim() === "") {
       confidence.push({ field: fieldName, level: "low", reason: "Missing data" });
       return;
     }
     const trimmed = value.trim();
     if (fieldName.includes("blood_pressure") && !VITAL_SIGN_PATTERN.test(trimmed)) {
-      confidence.push({ field: fieldName, level: "low", reason: "Non-numeric value in vital sign field" });
+      confidence.push({ field: fieldName, level: "low", reason: "Non-numeric vital sign format" });
       return;
     }
     if (fieldName.startsWith("visual_acuity_") && !VISUAL_ACUITY_PATTERN.test(trimmed)) {
-      confidence.push({ field: fieldName, level: "low", reason: "Invalid visual acuity format" });
+      confidence.push({ field: fieldName, level: "low", reason: "Invalid visual acuity fraction" });
       return;
     }
     if (MOTOR_JOINT_NAMES.has(fieldName) && !MOTOR_POWER_PATTERN.test(trimmed)) {
-      confidence.push({ field: fieldName, level: "low", reason: "Non-numeric value in motor power field" });
+      confidence.push({ field: fieldName, level: "low", reason: "Non-standard motor power grade" });
       return;
     }
     if (trimmed.length < BRIEF_THRESHOLD) {
       confidence.push({ field: fieldName, level: "medium", reason: `Brief extraction (${trimmed.length} chars)` });
     }
   }
-  // Inside mapAndScoreOutput()
 
   for (const field of fields) {
-    if (["chief_complaint", "diagnosis", "prescriptions"].includes(field.name)) continue;
+    if (
+      [
+        "chief_complaint", "diagnosis", "prescriptions",
+        "discontinued_medications", "additional_clinical_findings",
+        "ruled_out_findings", "treatment", "therapy_plan", "follow_up"
+      ].includes(field.name)
+    ) {
+      continue;
+    }
 
     if (field.name in aiOutput && aiOutput[field.name] !== null) {
-
-      // 1. Actually utilize your recursive cleaner to scrub nested stringified nulls
-      let val = stripNotSpecified(aiOutput[field.name]);
+      const val = stripNotSpecified(aiOutput[field.name]);
 
       if (val !== null) {
         rawFields[field.name] = val;
 
-        // 2. Traverse nested objects for accurate validation and confidence scoring
         if (typeof val === "string") {
           assessConfidence(val, field.name);
         } else if (typeof val === "object" && !Array.isArray(val)) {
           for (const [key, innerVal] of Object.entries(val)) {
             if (typeof innerVal === "string") {
-              // Route eye fields back to their parent name (e.g., 'visual_acuity') 
-              // so your VISUAL_ACUITY_PATTERN regex triggers correctly. 
-              // Let vitals and motor exams use their explicit keys.
-              const isEyeField = ["left", "right", "notes"].includes(key);
-              const targetName = isEyeField ? field.name : key;
-
-              assessConfidence(innerVal, targetName);
+              assessConfidence(innerVal, key);
             }
           }
         }
       }
     }
   }
-  const symptoms = safeString(aiOutput.chief_complaint);
-  const diagnosis = safeString(aiOutput.diagnosis);
-  const advice = safeString(aiOutput.treatment ?? aiOutput.therapy_plan);
 
-  assessConfidence(safeString(aiOutput.chief_complaint), "symptoms");
-  assessConfidence(safeString(aiOutput.diagnosis), "diagnosis");
+  const symptoms = safeString(stripNotSpecified(aiOutput.chief_complaint));
+  const diagnosis = safeString(stripNotSpecified(aiOutput.diagnosis));
+  const advice = safeString(stripNotSpecified(aiOutput.treatment ?? aiOutput.therapy_plan));
+  const follow_up = safeString(stripNotSpecified(aiOutput.follow_up));
+
+  if (symptoms) assessConfidence(symptoms, "symptoms");
+  if (diagnosis) assessConfidence(diagnosis, "diagnosis");
+  if (advice) assessConfidence(advice, "advice");
+  if (follow_up) assessConfidence(follow_up, "follow_up");
 
   const rawPrescriptions = Array.isArray(aiOutput.prescriptions) ? aiOutput.prescriptions : [];
   const rawDiscontinued = Array.isArray(aiOutput.discontinued_medications) ? aiOutput.discontinued_medications : [];
-  const discontinued_medications = rawDiscontinued.filter((d): d is string => typeof d === "string");
   const rawAdditional = Array.isArray(aiOutput.additional_clinical_findings) ? aiOutput.additional_clinical_findings : [];
-  const additional_clinical_findings = rawAdditional.filter((d): d is string => typeof d === "string");
   const rawRuledOut = Array.isArray(aiOutput.ruled_out_findings) ? aiOutput.ruled_out_findings : [];
-  const ruled_out_findings = rawRuledOut.filter((d): d is string => typeof d === "string");
 
-  const prescriptions = rawPrescriptions.map((p: Record<string, unknown>, index: number) => {
-    const prefix = `prescriptions[${index}].`;
+  const discontinued_medications = rawDiscontinued.map(stripNotSpecified).filter((d): d is string => typeof d === "string");
+  const additional_clinical_findings = rawAdditional.map(stripNotSpecified).filter((d): d is string => typeof d === "string");
+  const ruled_out_findings = rawRuledOut.map(stripNotSpecified).filter((d): d is string => typeof d === "string");
 
-    assessConfidence(safeString(p.name), `${prefix}drug_name`);
-    assessConfidence(safeString(p.dosage), `${prefix}dosage`);
-    assessConfidence(safeString(p.frequency), `${prefix}frequency`);
-    assessConfidence(safeString(p.route), `${prefix}route`);
+  discontinued_medications.forEach(finding => assessConfidence(finding, "discontinued_medications"));
+  additional_clinical_findings.forEach(finding => assessConfidence(finding, "additional_clinical_findings"));
+  ruled_out_findings.forEach(finding => assessConfidence(finding, "ruled_out_findings"));
 
-    return {
-      drug_name: safeString(p.name),
-      dosage: safeString(p.dosage),
-      formulation: safeString(p.formulation),
-      frequency: safeString(p.frequency),
-      duration: safeString(p.duration),
-      route: safeString(p.route),
-      instructions: safeString(p.instructions),
-    };
-  });
+  const prescriptions = rawPrescriptions
+    .map((p: Record<string, unknown>, index: number) => {
+      const drug_name = safeString(stripNotSpecified(p.name));
+      const dosage = safeString(stripNotSpecified(p.dosage));
+      const formulation = safeString(stripNotSpecified(p.formulation));
+      const frequency = safeString(stripNotSpecified(p.frequency));
+      const duration = safeString(stripNotSpecified(p.duration));
+      const route = safeString(stripNotSpecified(p.route));
+      const instructions = safeString(stripNotSpecified(p.instructions));
+
+      if (!drug_name) return null; // Drop empty drug records
+
+      const prefix = `prescriptions[${index}].`;
+      assessConfidence(drug_name, `${prefix}drug_name`);
+      if (dosage) assessConfidence(dosage, `${prefix}dosage`);
+      if (frequency) assessConfidence(frequency, `${prefix}frequency`);
+
+      return { drug_name, dosage, formulation, frequency, duration, route, instructions };
+    })
+    .filter((p) => p !== null);
 
   return {
-    output: { symptoms, diagnosis, prescriptions, discontinued_medications, additional_clinical_findings, ruled_out_findings, advice, rawFields },
+    output: { 
+      symptoms, diagnosis, prescriptions, discontinued_medications, 
+      additional_clinical_findings, ruled_out_findings, advice, follow_up, rawFields 
+    },
     confidence,
   };
 }
 
-
+// Upgraded Scrubber: Annihilates hallucinated JSON artifacts and empty structures
 export function stripNotSpecified(obj: unknown): unknown {
   if (isBlank(obj)) return null;
 
+  if (typeof obj === 'string') {
+    const trimmed = obj.trim();
+    // Catch common LLM stringification hallucinations
+    if (trimmed === "null" || trimmed === ":null}" || trimmed === "{}" || trimmed === "[]" || trimmed === "N/A" || trimmed.toLowerCase() === "not_specified") {
+      return null;
+    }
+    return trimmed;
+  }
+
   if (Array.isArray(obj)) {
-    const cleaned = obj.map(stripNotSpecified).filter((v) => v !== null);
+    const cleaned = obj.map(stripNotSpecified).filter((v) => v !== null && v !== "");
     return cleaned.length === 0 ? null : cleaned;
   }
 
@@ -271,7 +270,7 @@ export function stripNotSpecified(obj: unknown): unknown {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
       const cleaned = stripNotSpecified(value);
-      if (cleaned !== null) {
+      if (cleaned !== null && cleaned !== "") {
         result[key] = cleaned;
       }
     }
