@@ -27,8 +27,7 @@ import { format } from "date-fns";
 import {
   PatientWithClinic,
   Consultation,
-  DepartmentInfo,
-  ConsultationNotes
+  DepartmentInfo
 } from "@/types/consultation";
 import { DbAppointment } from "@/types/core";
 // Fixed: Import Prescription type
@@ -54,16 +53,18 @@ const ConsultationPreviewModal = ({
 }) => {
   if (!consultation) return null;
 
-  const getConsultationData = (): ConsultationNotes => {
+  const getConsultationData = (): Record<string, unknown> => {
     try {
       if (typeof consultation.specialty_data === "string") {
-        return JSON.parse(consultation.specialty_data) as ConsultationNotes;
+        return JSON.parse(consultation.specialty_data) as Record<string, unknown>;
       }
-      return (consultation.specialty_data || {}) as ConsultationNotes;
+      return (consultation.specialty_data || {}) as Record<string, unknown>;
     } catch {
-      return {} as ConsultationNotes;
+      return {} as Record<string, unknown>;
     }
   };
+
+  const s = (val: unknown): string => (val as string) ?? "";
 
   const getClinicalNotes = () => {
     if (!consultation.clinical_notes) return "";
@@ -94,35 +95,35 @@ const ConsultationPreviewModal = ({
         <ScrollArea className="max-h-[60vh]">
           <div className="space-y-4">
             {/* Chief Complaint */}
-            {consultationData.chief_complaint && (
+            {s(consultationData.chief_complaint) && (
               <div className="p-3 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-900 mb-2">
                   Chief Complaint
                 </h4>
                 <p className="text-sm text-blue-800">
-                  {consultationData.chief_complaint}
+                  {s(consultationData.chief_complaint)}
                 </p>
               </div>
             )}
 
             {/* Assessment */}
-            {consultationData.assessment && (
+            {s(consultationData.assessment) && (
               <div className="p-3 bg-purple-50 rounded-lg">
                 <h4 className="font-medium text-purple-900 mb-2">Assessment</h4>
                 <p className="text-sm text-purple-800">
-                  {consultationData.assessment}
+                  {s(consultationData.assessment)}
                 </p>
               </div>
             )}
 
             {/* Treatment Plan */}
-            {consultationData.treatment && (
+            {s(consultationData.treatment) && (
               <div className="p-3 bg-green-50 rounded-lg">
                 <h4 className="font-medium text-green-900 mb-2">
                   Treatment Plan
                 </h4>
                 <p className="text-sm text-green-800">
-                  {consultationData.treatment}
+                  {s(consultationData.treatment)}
                 </p>
               </div>
             )}
@@ -138,22 +139,22 @@ const ConsultationPreviewModal = ({
             )}
 
             {/* Additional sections if available */}
-            {consultationData.physical_exam && (
+            {s(consultationData.physical_exam) && (
               <div className="p-3 bg-success/10 rounded-lg">
                 <h4 className="font-medium text-success mb-2">
                   Physical Examination
                 </h4>
                 <p className="text-sm text-success/80">
-                  {consultationData.physical_exam}
+                  {s(consultationData.physical_exam)}
                 </p>
               </div>
             )}
 
-            {consultationData.follow_up && (
+            {s(consultationData.follow_up) && (
               <div className="p-3 bg-secondary/10 rounded-lg">
                 <h4 className="font-medium text-secondary mb-2">Follow-up</h4>
                 <p className="text-sm text-secondary/80">
-                  {consultationData.follow_up}
+                  {s(consultationData.follow_up)}
                 </p>
               </div>
             )}

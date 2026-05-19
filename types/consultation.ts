@@ -15,7 +15,6 @@ import {
   PrescriptionMedication,
 } from "./core";
 import {
-  ConsultationNotes,
   ConsultationMedication,
 } from "@/lib/consultationNotesSchemas";
 
@@ -49,7 +48,7 @@ export type ClinicMemberWithDepartment = DbClinicMember & {
 
 /** Consultation form values */
 export interface ConsultationFormValues {
-  specialty_data: ConsultationNotes;
+  specialty_data: Record<string, unknown>;
 }
 
 /** Prescription field component props */
@@ -346,7 +345,7 @@ export interface TransformedDoctorData {
 // Re-export core types for convenience
 export type { Consultation, PrescriptionMedication };
 // Re-export Zod types for convenience
-export type { ConsultationNotes, ConsultationMedication };
+export type { ConsultationMedication };
 
 // Export all types as namespace for easy access
 export * as ConsultationTypes from "./consultation";

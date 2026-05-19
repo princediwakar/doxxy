@@ -34,7 +34,7 @@ async function saveConsultation(
     patient_id: appointment.patient_id || '',
     doctor_id: appointment.doctor_id || userId || '',
     clinic_id: clinicId,
-    specialty_data: data.specialty_data,
+    specialty_data: data.specialty_data as DbJson,
   };
 
   const { data: updateResult, error: updateError } = await supabase
@@ -68,7 +68,8 @@ async function saveConsultation(
   }
 
   if (data.specialty_data.prescriptions != null) {
-    const validPrescriptions = data.specialty_data.prescriptions.filter(
+    const prescriptions = data.specialty_data.prescriptions as Array<{ name?: string; [key: string]: unknown }>;
+    const validPrescriptions = prescriptions.filter(
       (med) => med.name && med.name.trim().length > 0
     );
 

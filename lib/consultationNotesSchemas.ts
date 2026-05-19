@@ -671,10 +671,6 @@ export function getSchemaForDepartment(department: string): z.ZodObject<z.ZodRaw
   return schema ?? generalNotesSchema;
 }
 
-// ============================================================================
-// 5. LEGACY COMPAT LAYER
-// ============================================================================
-
 const SECTION_ORDER = ["History", "Examination", "Previous Investigations", "Management"] as const;
 const SECTION_MAPPING: Record<string, string[]> = Object.fromEntries(
   SECTION_ORDER.map((sec) => [sec, []]),
@@ -699,43 +695,4 @@ export const getMandatoryFieldsForDepartment = (departmentType: string): string[
     .filter((field) => field.mandatory)
     .map((field) => field.name);
 
-// ============================================================================
-// 6. TYPES
-// ============================================================================
-
 export type ConsultationMedication = z.infer<typeof medicationSchema>;
-
-/**
- * @deprecated Do not use this union type for new features.
- *
- * This merged schema exists only so legacy UI components that reference
- * `ConsultationNotes` continue to compile without modification. Every field
- * from every specialty is optional here, which means TypeScript cannot catch
- * you accessing ophthalmology fields on a cardiology note, or vice versa.
- *
- * For new code: import the specific department schema from `schemasByDepartment`
- * and infer its type with `z.infer<typeof thatSchema>`.
- *
- * Migration plan: audit all usages of ConsultationNotes, replace with the
- * specific inferred type, then delete this export.
- */
-export const consultationNotesSchema = z.object({
-  ...generalNotesSchema.shape,
-  ...ophthalmologyNotesSchema.shape,
-  ...neurologyNotesSchema.shape,
-  ...cardiologyNotesSchema.shape,
-  ...dermatologyNotesSchema.shape,
-  ...orthopedicsNotesSchema.shape,
-  ...psychiatryNotesSchema.shape,
-  ...pediatricsNotesSchema.shape,
-  ...entNotesSchema.shape,
-  ...gynecologyNotesSchema.shape,
-  ...pulmonologyNotesSchema.shape,
-  ...dentalNotesSchema.shape,
-  ...urologyNotesSchema.shape,
-  ...endocrinologyNotesSchema.shape,
-  ...emergencyMedicineNotesSchema.shape,
-});
-
-/** @deprecated See consultationNotesSchema above. */
-export type ConsultationNotes = z.infer<typeof consultationNotesSchema>;

@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAppState } from '@/contexts/AppStateContext';
 import { getSupabase } from '@/integrations/supabase/client';
-import { ConsultationNotes } from '@/lib/consultationNotesSchemas';
 import type { AppointmentWithDetails } from '@/types/appointments';
 import type { PatientDetail } from '@/types/core';
 
@@ -31,7 +30,7 @@ function derivePreviousConsultations(
       delete rec.appointments;
       return {
         ...rec,
-        specialty_data: rec.specialty_data as ConsultationNotes | null,
+        specialty_data: rec.specialty_data as Record<string, unknown> | null,
         appointment: apts
           ? {
               date: apts.date as string,
@@ -117,7 +116,7 @@ export const useConsultationData = ({
             const apt = rec.appointment as Record<string, unknown> | undefined;
             return {
               ...rec,
-              specialty_data: rec.specialty_data as ConsultationNotes | null,
+              specialty_data: rec.specialty_data as Record<string, unknown> | null,
               appointment: apt
                 ? {
                     date: apt.date as string,

@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { DbPatient, DbAppointment } from "@/types/core";
 import { UseFormReturn } from "react-hook-form";
-import type { ConsultationFormValues } from "@/types/consultation";
+import type { ConsultationFormValues, FieldValue } from "@/types/consultation";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConsultationLayout } from "./ConsultationLayout";
 import { useAppState } from "@/contexts/AppStateContext";
@@ -53,7 +53,8 @@ export const ConsultationPreviewModal = ({
   const { activeClinicId, activeClinicName, user } = useAppState();
 
   // Get consultation data from form
-  const consultationData = form.watch("specialty_data");
+  // Get consultation data from form
+  const consultationData = form.watch("specialty_data") as Record<string, FieldValue>;
 
   // Get the full clinic object for printing
   const clinicDetails = (activeClinicId && activeClinicName) ? { id: activeClinicId, name: activeClinicName } as any : null;

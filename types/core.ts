@@ -3,7 +3,7 @@
 // Generated from src/integrations/supabase/types.ts
 
 import type { Database } from '@/integrations/supabase/types';
-import type { ConsultationNotes, ConsultationMedication } from '@/lib/consultationNotesSchemas';
+import type { ConsultationMedication } from '@/lib/consultationNotesSchemas';
 
 // ============================================================================
 // DATABASE TABLE WRAPPERS
@@ -80,7 +80,7 @@ export type DbPrescriptionBaseUpdate = Database['public']['Tables']['prescriptio
 
 /** Enhanced consultation type with specialty_data override */
 export type DbConsultation = Omit<DbConsultationBase, 'specialty_data'> & {
-  specialty_data?: ConsultationNotes | null; // Fixed: Allow null
+  specialty_data?: Record<string, unknown> | null;
 };
 
 /** Prescription medication — canonical definition used by both consultation forms and prescription records */

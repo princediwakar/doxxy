@@ -8,7 +8,6 @@ import { z } from "zod";
 import { useAppState } from "@/contexts/AppStateContext";
 import type { ConsultationFormValues } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase } from "@/types/core";
-import { consultationNotesSchema } from "@/lib/consultationNotesSchemas";
 
 import { useConsultationPermissions } from "./useConsultationPermissions";
 import { useConsultationAutoSave } from "./useConsultationAutoSave";
@@ -73,7 +72,7 @@ export const useConsultationForm = ({
   // 2. Form setup
   const defaultValues: ConsultationFormValues = useMemo(
     () => ({
-      specialty_data: (existingConsultation?.specialty_data as z.infer<typeof consultationNotesSchema>) || {},
+      specialty_data: (existingConsultation?.specialty_data as Record<string, unknown>) || {},
     }),
     [existingConsultation?.specialty_data]
   );
@@ -81,7 +80,7 @@ export const useConsultationForm = ({
   const form = useForm<ConsultationFormValues>({
     resolver: zodResolver(
       z.object({
-        specialty_data: consultationNotesSchema,
+        specialty_data: z.record(z.string(), z.unknown()),
       })
     ),
     defaultValues,
@@ -137,7 +136,7 @@ export const useConsultationForm = ({
     setAutoSaveReady(false);
 
     if (existingConsultation?.specialty_data) {
-      const data = existingConsultation.specialty_data as z.infer<typeof consultationNotesSchema>;
+      const data = existingConsultation.specialty_data as Record<string, unknown>;
       form.reset({ specialty_data: data });
       setBaseline({ specialty_data: data });
     } else {

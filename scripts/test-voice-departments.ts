@@ -182,7 +182,7 @@ assert(ophthPropNames.includes('iris'), 'has iris (ophth-specific)');
 assert(ophthPropNames.includes('conjunctiva'), 'has conjunctiva (ophth-specific)');
 assert(ophthPropNames.includes('anterior_chamber'), 'has anterior_chamber (ophth-specific)');
 assert(ophthPropNames.includes('refraction'), 'has refraction (ophth-specific)');
-assert(ophthPropNames.includes('eye_examination'), 'has eye_examination (legacy ophth field)');
+assert(ophthPropNames.includes('eye_examination'), 'has eye_examination');
 
 // Ophthalmology should NOT have neurology-specific fields
 assert(!ophthPropNames.includes('cranial_nerves'), 'does NOT have cranial_nerves (neuro field)');
