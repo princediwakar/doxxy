@@ -146,26 +146,26 @@ export function FAQInteractive() {
     <>
       <section className="py-24 md:py-32 text-center !pt-28 md:!pt-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 dark:text-white mb-6 leading-tight tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-bold text-foreground dark:text-white mb-6 leading-tight tracking-tight">
             Frequently Asked Questions.
           </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-center">
+          <p className="text-lg text-muted-foreground dark:text-gray-300 max-w-3xl mx-auto text-center">
             Find quick answers to common questions about Doxxy. Can&apos;t find what you&apos;re
             looking for? Our support team is here to help.
           </p>
           <div className="relative max-w-2xl mx-auto mt-10">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground h-5 w-5" />
             <Input
               placeholder="Search frequently asked questions..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 py-6 text-lg bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl"
+              className="pl-12 py-6 text-lg bg-background dark:bg-gray-800 border-border dark:border-gray-700 rounded-xl"
             />
           </div>
         </div>
       </section>
 
-      <section className="py-24 md:py-32 bg-white dark:bg-gray-900">
+      <section className="py-24 md:py-32 bg-background dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             {groupedFaqs.length > 0 ? (
@@ -175,7 +175,7 @@ export function FAQInteractive() {
                     <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center flex-shrink-0">
                       <category.icon className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h2 className="text-2xl font-bold text-foreground dark:text-white">
                       {category.name}
                     </h2>
                   </div>
@@ -187,27 +187,27 @@ export function FAQInteractive() {
                       return (
                         <div
                           key={index}
-                          className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/75 dark:border-gray-700/50 overflow-hidden"
+                          className="bg-background dark:bg-gray-800 rounded-xl border border-border/75 dark:border-gray-700/50 overflow-hidden"
                         >
                           <button
                             onClick={() => toggleItem(index)}
-                            className="w-full p-6 text-left transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                            className="w-full p-6 text-left transition-colors duration-200 hover:bg-muted dark:hover:bg-gray-700/50"
                           >
                             <div className="flex items-center justify-between">
-                              <h3 className="font-semibold text-gray-900 dark:text-white pr-4">
+                              <h3 className="font-semibold text-foreground dark:text-white pr-4">
                                 {faq.question}
                               </h3>
                               {isOpen ? (
-                                <ChevronUp className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                                <ChevronUp className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                               ) : (
-                                <ChevronDown className="h-5 w-5 text-gray-500 flex-shrink-0" />
+                                <ChevronDown className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                               )}
                             </div>
                           </button>
 
                           {isOpen && (
                             <div className="px-6 pb-6">
-                              <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                              <p className="text-muted-foreground dark:text-gray-300 leading-relaxed whitespace-pre-line">
                                 {faq.answer}
                               </p>
                             </div>
@@ -220,11 +220,11 @@ export function FAQInteractive() {
               ))
             ) : (
               <div className="text-center py-12">
-                <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                   No results found
                 </h3>
-                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                <p className="text-muted-foreground dark:text-gray-300 mb-6">
                   We couldn&apos;t find any FAQs matching &quot;{searchTerm}&quot;. Try different keywords
                   or contact our support team.
                 </p>

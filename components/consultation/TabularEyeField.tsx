@@ -77,14 +77,14 @@ export const TabularEyeField = ({
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/2">
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/2">
                   EXAMINATION
                 </th>
-                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-left py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   RIGHT
                 </th>
-                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-left py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   LEFT
                 </th>
               </tr>
@@ -93,12 +93,12 @@ export const TabularEyeField = ({
               {allEyeExaminations.map((exam, index) => (
                 <tr
                   key={exam.key}
-                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                  className={index % 2 === 0 ? "bg-background" : "bg-muted"}
                 >
-                  <td className="py-2 px-3 text-sm font-medium text-gray-700 border-b border-gray-200 w-1/2">
+                  <td className="py-2 px-3 text-sm font-medium text-foreground border-b border-border w-1/2">
                     {exam.label}
                   </td>
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Textarea
                         placeholder="Enter findings"
@@ -115,7 +115,7 @@ export const TabularEyeField = ({
                       />
                     </div>
                   </td>
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Textarea
                         placeholder="Enter findings"
@@ -147,7 +147,7 @@ export const TabularEyeField = ({
           disabled={isReadOnly}
           className={`text-sm font-medium transition-colors ${
             isReadOnly
-              ? "text-gray-400 cursor-not-allowed"
+              ? "text-muted-foreground cursor-not-allowed"
               : "text-blue-600 hover:text-blue-700 cursor-pointer"
           }`}
         >

@@ -254,6 +254,7 @@ export function stripNotSpecified(obj: unknown): unknown {
 
   if (typeof obj === 'string') {
     const trimmed = obj.trim();
+    if (trimmed === "") return null;
     // Catch common LLM stringification hallucinations
     if (trimmed === "null" || trimmed === ":null}" || trimmed === "{}" || trimmed === "[]" || trimmed === "N/A" || trimmed.toLowerCase() === "not_specified") {
       return null;

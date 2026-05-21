@@ -67,7 +67,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
 
   if (isReadOnly && displayMedications.length === 0) {
     return (
-      <div className="text-sm text-gray-500 italic p-4 bg-gray-50 rounded-lg">
+      <div className="text-sm text-muted-foreground italic p-4 bg-muted rounded-lg">
         No prescriptions recorded
       </div>
     );
@@ -78,7 +78,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
 
       {displayMedications.map((medication: PrescriptionMedication, index: number) => (
         <div key={index} className={`border rounded-lg p-4 space-y-4 transition-colors ${
-          isReadOnly ? 'bg-gray-50 border-gray-200' : 'bg-white border-gray-200 hover:border-gray-300'
+          isReadOnly ? 'bg-muted border-border' : 'bg-background border-border hover:border-border'
         } ${!medication.name?.trim() && !isReadOnly ? 'border-red-200 bg-red-50' : ''}`}>
           
           {/* Header */}
@@ -87,7 +87,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
               <Badge variant="outline" className="text-xs font-medium">
                 {index + 1}
               </Badge>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-foreground">
                 {medication.name || 'New Medication'}
               </span>
               {isReadOnly && (
@@ -100,7 +100,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
                 variant="ghost"
                 size="sm"
                 onClick={() => removeMedication(index)}
-                className="h-6 w-6 p-0 text-gray-400 hover:text-destructive hover:bg-destructive/10"
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -109,11 +109,11 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
 
           {/* Medicine Name */}
           <div className="space-y-1.5">
-            <Label className={`text-sm font-medium ${isReadOnly ? 'text-gray-500' : 'text-gray-700'}`}>
+            <Label className={`text-sm font-medium ${isReadOnly ? 'text-muted-foreground' : 'text-foreground'}`}>
               Medicine Name
             </Label>
             {isReadOnly ? (
-              <div className="text-sm text-gray-600 p-2 bg-background rounded border">
+              <div className="text-sm text-muted-foreground p-2 bg-background rounded border">
                 {medication.name || 'No medicine specified'}
               </div>
             ) : (
@@ -137,7 +137,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
             {/* Dosage */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <Label className={`text-sm font-medium ${isReadOnly ? 'text-gray-500' : 'text-gray-700'}`}>
+                <Label className={`text-sm font-medium ${isReadOnly ? 'text-muted-foreground' : 'text-foreground'}`}>
                   Dosage
                 </Label>
                 {!isReadOnly && medication.dosage && (
@@ -149,7 +149,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
                 onChange={(e) => updateMedication(index, 'dosage', e.target.value)}
                 placeholder={isReadOnly ? "No dosage" : "e.g., 500mg"}
                 className={`text-sm ${
-                  isReadOnly ? 'bg-gray-50 text-gray-600 border-gray-200' : ''
+                  isReadOnly ? 'bg-muted text-muted-foreground border-border' : ''
                 }`}
                 readOnly={isReadOnly}
                 disabled={isReadOnly}
@@ -159,7 +159,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
             {/* Frequency */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2">
-                <Label className={`text-sm font-medium ${isReadOnly ? 'text-gray-500' : 'text-gray-700'}`}>
+                <Label className={`text-sm font-medium ${isReadOnly ? 'text-muted-foreground' : 'text-foreground'}`}>
                   Frequency
                 </Label>
                 {!isReadOnly && medication.frequency && (
@@ -172,7 +172,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
                 disabled={isReadOnly}
               >
                 <SelectTrigger className={`text-sm ${
-                  isReadOnly ? 'bg-gray-50 text-gray-600 border-gray-200' : ''
+                  isReadOnly ? 'bg-muted text-muted-foreground border-border' : ''
                 }`}>
                   <SelectValue placeholder={isReadOnly ? "No frequency" : "Select"} />
                 </SelectTrigger>
@@ -193,7 +193,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
 
             {/* Duration */}
             <div className="space-y-1.5">
-              <Label className={`text-sm font-medium ${isReadOnly ? 'text-gray-500' : 'text-gray-700'}`}>
+              <Label className={`text-sm font-medium ${isReadOnly ? 'text-muted-foreground' : 'text-foreground'}`}>
                 Duration
               </Label>
               <Input
@@ -201,7 +201,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
                 onChange={(e) => updateMedication(index, 'duration', e.target.value)}
                 placeholder={isReadOnly ? "No duration" : "e.g., 7 days"}
                 className={`text-sm ${
-                  isReadOnly ? 'bg-gray-50 text-gray-600 border-gray-200' : ''
+                  isReadOnly ? 'bg-muted text-muted-foreground border-border' : ''
                 }`}
                 readOnly={isReadOnly}
                 disabled={isReadOnly}
@@ -211,7 +211,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
 
           {/* Instructions */}
           <div className="space-y-1.5">
-            <Label className={`text-sm font-medium ${isReadOnly ? 'text-gray-500' : 'text-gray-700'}`}>
+            <Label className={`text-sm font-medium ${isReadOnly ? 'text-muted-foreground' : 'text-foreground'}`}>
               Special Instructions
             </Label>
             <Textarea
@@ -220,7 +220,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
               placeholder={isReadOnly ? "No special instructions" : "Special instructions for patient..."}
               rows={2}
               className={`text-sm resize-none ${
-                isReadOnly ? 'bg-gray-50 text-gray-600 border-gray-200' : ''
+                isReadOnly ? 'bg-muted text-muted-foreground border-border' : ''
               }`}
               readOnly={isReadOnly}
               disabled={isReadOnly}
@@ -234,7 +234,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
           type="button"
           variant="outline"
           onClick={addMedication}
-          className="w-full h-10 text-sm font-medium border-dashed border-gray-300 text-gray-600 hover:border-primary/30 hover:text-primary hover:bg-primary/10"
+          className="w-full h-10 text-sm font-medium border-dashed border-border text-muted-foreground hover:border-primary/30 hover:text-primary hover:bg-primary/10"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Medication

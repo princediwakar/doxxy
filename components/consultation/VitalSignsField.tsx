@@ -66,7 +66,7 @@ export const VitalSignsField = ({
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {/* Temperature */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">Temperature</Label>
+          <Label className="text-xs font-medium text-foreground">Temperature</Label>
           <div className="flex items-center gap-1">
             <Input
               placeholder="°C"
@@ -76,13 +76,13 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">°C</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">°C</span>
           </div>
         </div>
 
         {/* Pulse */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">Pulse</Label>
+          <Label className="text-xs font-medium text-foreground">Pulse</Label>
           <div className="flex items-center gap-1">
             <Input
               placeholder="bpm"
@@ -92,13 +92,13 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">bpm</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">bpm</span>
           </div>
         </div>
 
         {/* Blood Pressure */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">B.P.</Label>
+          <Label className="text-xs font-medium text-foreground">B.P.</Label>
           <div className="flex items-center gap-1">
             <Input
               placeholder="Systolic"
@@ -108,7 +108,7 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500">/</span>
+            <span className="text-xs text-muted-foreground">/</span>
             <Input
               placeholder="Diastolic"
               value={value.blood_pressure_diastolic || ''}
@@ -117,13 +117,13 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">mmHg</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">mmHg</span>
           </div>
         </div>
 
         {/* Respiratory Rate */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">Resp. Rate</Label>
+          <Label className="text-xs font-medium text-foreground">Resp. Rate</Label>
           <div className="flex items-center gap-1">
             <Input
               placeholder="breaths/min"
@@ -133,13 +133,13 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">/min</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">/min</span>
           </div>
         </div>
 
         {/* Oxygen Saturation */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">O₂ Sat</Label>
+          <Label className="text-xs font-medium text-foreground">O₂ Sat</Label>
           <div className="flex items-center gap-1">
             <Input
               placeholder="%"
@@ -149,13 +149,13 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">%</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">%</span>
           </div>
         </div>
 
         {/* Height */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">Height</Label>
+          <Label className="text-xs font-medium text-foreground">Height</Label>
           <div className="flex items-center gap-1">
             <Input
               placeholder="cm"
@@ -165,13 +165,13 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">cm</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">cm</span>
           </div>
         </div>
 
         {/* Weight */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">Weight</Label>
+          <Label className="text-xs font-medium text-foreground">Weight</Label>
           <div className="flex items-center gap-1">
             <Input
               placeholder="kg"
@@ -181,13 +181,13 @@ export const VitalSignsField = ({
               readOnly={isReadOnly}
               disabled={isReadOnly}
             />
-            <span className="text-xs text-gray-500 whitespace-nowrap">kg</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">kg</span>
           </div>
         </div>
 
         {/* BMI (calculated) */}
         <div className="space-y-1">
-          <Label className="text-xs font-medium text-gray-700">BMI</Label>
+          <Label className="text-xs font-medium text-foreground">BMI</Label>
           <Input
             placeholder="Auto-calculated"
             value={value.bmi || ''}

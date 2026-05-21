@@ -70,8 +70,8 @@ export const ReflexExaminationField = ({
       {/* Deep Tendon Reflexes Table */}
       <div className="pl-6 border-l-2 border-blue-200">
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Deep Tendon Reflexes (0-4+ Scale)</h4>
-          <div className="text-xs text-gray-500 mb-3">
+          <h4 className="text-sm font-medium text-foreground mb-2">Deep Tendon Reflexes (0-4+ Scale)</h4>
+          <div className="text-xs text-muted-foreground mb-3">
             0: Absent, 1+: Diminished, 2+: Normal, 3+: Brisk, 4+: Hyperactive with clonus
           </div>
         </div>
@@ -79,25 +79,25 @@ export const ReflexExaminationField = ({
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/2">
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/2">
                   REFLEX
                 </th>
-                <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-center py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   R
                 </th>
-                <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-center py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   L
                 </th>
               </tr>
             </thead>
             <tbody>
               {deepTendonReflexes.map((reflex, index) => (
-                <tr key={reflex.key} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="py-2 px-3 text-sm font-medium text-gray-700 border-b border-gray-200 w-1/2">
+                <tr key={reflex.key} className={index % 2 === 0 ? 'bg-background' : 'bg-muted'}>
+                  <td className="py-2 px-3 text-sm font-medium text-foreground border-b border-border w-1/2">
                     {reflex.label}
                   </td>
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
@@ -110,7 +110,7 @@ export const ReflexExaminationField = ({
                       />
                     </div>
                   </td>
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
@@ -134,32 +134,32 @@ export const ReflexExaminationField = ({
       {/* Superficial Reflexes Table */}
       <div className="pl-6 border-l-2 border-blue-200">
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Superficial Reflexes</h4>
+          <h4 className="text-sm font-medium text-foreground mb-2">Superficial Reflexes</h4>
         </div>
 
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/2">
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/2">
                   REFLEX
                 </th>
-                <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-center py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   R
                 </th>
-                <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-center py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   L
                 </th>
               </tr>
             </thead>
             <tbody>
               {superficialReflexes.map((reflex, index) => (
-                <tr key={reflex.key} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="py-2 px-3 text-sm font-medium text-gray-700 border-b border-gray-200 w-1/2">
+                <tr key={reflex.key} className={index % 2 === 0 ? 'bg-background' : 'bg-muted'}>
+                  <td className="py-2 px-3 text-sm font-medium text-foreground border-b border-border w-1/2">
                     {reflex.label}
                   </td>
                   
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder="Present / Absent"
@@ -171,7 +171,7 @@ export const ReflexExaminationField = ({
                       />
                     </div>
                   </td>
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder="Present / Absent"
@@ -193,7 +193,7 @@ export const ReflexExaminationField = ({
       {/* Additional Findings */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-6 border-l-2 border-blue-200">
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Clonus</Label>
+          <Label className="text-sm font-medium text-foreground">Clonus</Label>
           <Input
             placeholder="Present / Absent"
             value={value.clonus || ''}
@@ -204,7 +204,7 @@ export const ReflexExaminationField = ({
         </div>
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Hoffmann's Sign</Label>
+          <Label className="text-sm font-medium text-foreground">Hoffmann's Sign</Label>
           <Input
             placeholder="Present / Absent"
             value={value.hoffmann || ''}

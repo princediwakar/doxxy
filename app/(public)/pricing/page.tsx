@@ -229,7 +229,7 @@ const PricingCardsSection = () => (
               {plan.priceSuffix}
             </span>
             {plan.originalPrice && (
-              <span className="text-gray-400 line-through">
+              <span className="text-gray-400 dark:text-gray-500 line-through">
                 {plan.originalPrice}
               </span>
             )}

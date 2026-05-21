@@ -111,8 +111,8 @@ export const MotorExaminationField = memo(({
       {/* Muscle Strength Table */}
       <div className="pl-6 border-l-2 border-blue-200">
         <div className="mb-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Muscle Strength (0-5 Scale)</h4>
-          <div className="text-xs text-gray-500 mb-3">
+          <h4 className="text-sm font-medium text-foreground mb-2">Muscle Strength (0-5 Scale)</h4>
+          <div className="text-xs text-muted-foreground mb-3">
             0: No contraction, 1: Flicker, 2: Movement with gravity eliminated, 3: Movement against gravity,
             4: Movement against some resistance, 5: Normal power
           </div>
@@ -121,26 +121,26 @@ export const MotorExaminationField = memo(({
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/2">
+              <tr className="border-b border-border">
+                <th className="text-left py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/2">
                   POWER
                 </th>
-                <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-center py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   R
                 </th>
-                <th className="text-center py-2 px-3 text-sm font-medium text-gray-700 bg-gray-50 w-1/4">
+                <th className="text-center py-2 px-3 text-sm font-medium text-foreground bg-muted w-1/4">
                   L
                 </th>
               </tr>
             </thead>
             <tbody>
               {muscleGroups.map((muscle, index) => (
-                <tr key={muscle.key} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="py-2 px-3 text-sm font-medium text-gray-700 border-b border-gray-200 w-1/2">
+                <tr key={muscle.key} className={index % 2 === 0 ? 'bg-background' : 'bg-muted'}>
+                  <td className="py-2 px-3 text-sm font-medium text-foreground border-b border-border w-1/2">
                     {muscle.label}
                   </td>
                   
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
@@ -153,7 +153,7 @@ export const MotorExaminationField = memo(({
                       />
                     </div>
                   </td>
-                  <td className="py-2 px-3 border-b border-gray-200 w-1/4">
+                  <td className="py-2 px-3 border-b border-border w-1/4">
                     <div className="flex justify-center">
                       <Input
                         placeholder=""
@@ -176,7 +176,7 @@ export const MotorExaminationField = memo(({
       {/* Additional Findings */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6 border-l-2 border-blue-200">
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-gray-700">Muscle Tone</Label>
+          <Label className="text-sm font-medium text-foreground">Muscle Tone</Label>
           <div className="flex flex-wrap gap-2">
             {muscleToneOptions.map((option) => (
               <Chip
@@ -192,7 +192,7 @@ export const MotorExaminationField = memo(({
         </div>
 
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-gray-700">Muscle Bulk</Label>
+          <Label className="text-sm font-medium text-foreground">Muscle Bulk</Label>
           <div className="flex flex-wrap gap-2">
             {muscleBulkOptions.map((option) => (
               <Chip
@@ -208,7 +208,7 @@ export const MotorExaminationField = memo(({
         </div>
 
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-gray-700">Involuntary Movements</Label>
+          <Label className="text-sm font-medium text-foreground">Involuntary Movements</Label>
           <div className="flex flex-wrap gap-2">
             {involuntaryMovementsOptions.map((option) => (
               <Chip
@@ -224,7 +224,7 @@ export const MotorExaminationField = memo(({
         </div>
 
         <div className="space-y-3">
-          <Label className="text-sm font-medium text-gray-700">Coordination</Label>
+          <Label className="text-sm font-medium text-foreground">Coordination</Label>
           <div className="flex flex-wrap gap-2">
             {coordinationOptions.map((option) => (
               <Chip
@@ -242,7 +242,7 @@ export const MotorExaminationField = memo(({
 
       {/* Notes section */}
       <div className="space-y-2 pl-6 border-l-2 border-blue-200">
-        <Label className="text-sm font-medium text-gray-700">Additional Notes</Label>
+        <Label className="text-sm font-medium text-foreground">Additional Notes</Label>
         <Textarea
           placeholder="Enter additional motor examination findings..."
           value={value.notes || ''}

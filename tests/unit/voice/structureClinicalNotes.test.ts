@@ -35,9 +35,9 @@ describe('stripNotSpecified', () => {
     expect(stripNotSpecified('   ')).toBeNull();
   });
 
-  it('returns the string itself for meaningful content', () => {
+  it('returns trimmed string for meaningful content', () => {
     expect(stripNotSpecified('Headache')).toBe('Headache');
-    expect(stripNotSpecified('  Mild pain  ')).toBe('  Mild pain  ');
+    expect(stripNotSpecified('  Mild pain  ')).toBe('Mild pain');
   });
 
   it('filters null entries from arrays', () => {

@@ -1,3 +1,4 @@
+// Path: components/LayoutServer.tsx
 import { Suspense } from 'react';
 import type { AppUser, ClinicMemberWithClinic } from '@/types/core';
 import { AppStateProvider } from '@/contexts/AppStateContext';

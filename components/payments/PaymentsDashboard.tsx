@@ -127,13 +127,13 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
 
       {/* Progress Bar */}
       {!isLoadingSummary && billingSummary && billingSummary.total_credits_purchased > 0 && (
-        <Card className="bg-slate-50 border-slate-200">
+        <Card className="bg-muted/30 border-border">
           <CardContent className="pt-6">
             <div className="flex justify-between text-sm font-medium mb-2">
               <span>Credit Usage</span>
               <span>{usagePercentage.toFixed(1)}%</span>
             </div>
-            <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
               <div 
                 className={`h-full transition-all duration-500 ${usagePercentage > 90 ? 'bg-orange-500' : 'bg-blue-600'}`}
                 style={{ width: `${usagePercentage}%` }}
@@ -169,7 +169,7 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
               ))}
             </div>
           ) : transactions.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground bg-slate-50 rounded-lg border border-dashed">
+            <div className="text-center py-10 text-muted-foreground bg-muted/30 rounded-lg border border-dashed">
               <CreditCard className="mx-auto h-8 w-8 mb-2 opacity-50" />
               <p>No transactions found.</p>
               <Button variant="link" onClick={() => setIsCreditModalOpen(true)}>
@@ -179,7 +179,7 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
           ) : (
             <div className="space-y-3">
               {transactions.map((tx) => (
-                <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-slate-50 transition-colors">
+                <div key={tx.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg hover:bg-muted/30 transition-colors">
                   <div className="flex items-start gap-3">
                     {/* Status Icon */}
                     {tx.payment_status === 'completed' ? (

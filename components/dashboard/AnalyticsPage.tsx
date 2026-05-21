@@ -158,7 +158,7 @@ export function AnalyticsPage() {
   }
 
   useEffect(() => {
-    if (error) {
+    if (error && (error instanceof Error || (error as Record<string, unknown>).message)) {
       showErrorToast(error);
     }
   }, [error]);

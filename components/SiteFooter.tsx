@@ -3,7 +3,7 @@ import { Mail, Phone } from "lucide-react";
 
 const SiteFooter = () => {
   return (
-    <footer className="bg-gray-50 text-gray-600">
+    <footer className="bg-muted text-muted-foreground">
       <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
@@ -14,11 +14,11 @@ const SiteFooter = () => {
             </p>
             <div className="mt-6 space-y-3">
               <div className="flex items-center text-sm">
-                <Phone className="h-4 w-4 mr-3 text-gray-400" />
+                <Phone className="h-4 w-4 mr-3 text-muted-foreground" />
                 <span>+91 7388890554</span>
               </div>
               <div className="flex items-center text-sm">
-                <Mail className="h-4 w-4 mr-3 text-gray-400" />
+                <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
                 <span>doxxyapp@gmail.com</span>
               </div>
             </div>
@@ -27,45 +27,45 @@ const SiteFooter = () => {
           {/* Navigation Links */}
           <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-8">
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Product</h4>
+              <h4 className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Product</h4>
               <div className="space-y-3">
-                <Link href="/features" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/features" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Features
                 </Link>
-                <Link href="/pricing" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/pricing" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Pricing
                 </Link>
-                <Link href="/comparisons" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/comparisons" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Doxxy vs Others
                 </Link>
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Resources</h4>
+              <h4 className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Resources</h4>
               <div className="space-y-3">
-                <Link href="/about" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/about" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   About Us
                 </Link>
-                <Link href="/contact" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/contact" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Contact Us
                 </Link>
-                <Link href="/faq" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/faq" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   FAQ
                 </Link>
-                <Link href="/help" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/help" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Knowledge Base
                 </Link>
               </div>
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 tracking-wider uppercase mb-4">Legal</h4>
+              <h4 className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Legal</h4>
               <div className="space-y-3">
-                <Link href="/privacy" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/privacy" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Privacy Policy
                 </Link>
-                <Link href="/terms" className="block text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                <Link href="/terms" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Terms of Service
                 </Link>
               </div>
@@ -73,7 +73,7 @@ const SiteFooter = () => {
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-gray-200 text-center text-sm">
+        <div className="mt-16 pt-8 border-t border-border text-center text-sm">
           <p>&copy; {new Date().getFullYear()} Doxxy. All rights reserved.</p>
         </div>
       </div>

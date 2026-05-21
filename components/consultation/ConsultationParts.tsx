@@ -165,10 +165,10 @@ export const ConsultationSignatureFooter: React.FC<{
   if (!signature) return null;
   
   return (
-    <div className="w-[250px] mt-4 pt-4 border-t border-gray-300 print:mt-4 print:pt-2 break-inside-avoid">
+    <div className="w-[250px] mt-4 pt-4 border-t border-border print:mt-4 print:pt-2 break-inside-avoid">
       <div className="text-left">
         
-        <div className="text-sm text-gray-800 whitespace-pre-line leading-relaxed font-semibold">
+        <div className="text-sm text-foreground whitespace-pre-line leading-relaxed font-semibold">
           {signature}
         </div>
       </div>
@@ -183,16 +183,16 @@ export const ConcisePatientInfo: React.FC<{
   appointment: DbAppointment | null;
 }> = ({ patient, appointment }) => {
   return (
-    <div className="concise-patient-info text-sm text-gray-900 mb-3 print:mb-2">
+    <div className="concise-patient-info text-sm text-foreground mb-3 print:mb-2">
       <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <div className="font-semibold text-gray-800">Patient:</div>
+        <div className="font-semibold text-foreground">Patient:</div>
         <div>
           {patient?.name}
           {patient?.age && `, ${patient.age} yrs`}
           {patient?.gender && `, ${patient.gender}`}
         </div>
 
-        <div className="font-semibold text-gray-800">Appointment:</div>
+        <div className="font-semibold text-foreground">Appointment:</div>
         <div>
           {appointment?.date &&
             format(new Date(appointment.date), "MMM d, yyyy")}
@@ -201,7 +201,7 @@ export const ConcisePatientInfo: React.FC<{
 
         {patient?.phone && (
           <>
-            <div className="font-semibold text-gray-800">Phone:</div>
+            <div className="font-semibold text-foreground">Phone:</div>
             <div>{patient.phone}</div>
           </>
         )}

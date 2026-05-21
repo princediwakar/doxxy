@@ -17,15 +17,15 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
   const { competitorName } = config;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-950 dark:via-gray-900 dark:to-green-950">
       {/* Hero */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
         <div className="max-w-7xl mx-auto text-center">
           <Badge variant="outline" className="mb-4 px-4 py-2">Better Alternative</Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Looking for an<span className="text-primary"> {competitorName} Alternative?</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">{config.heroSubtitle}</p>
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">{config.heroSubtitle}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
               <Link href="/auth">Try Doxxy Free<ArrowRight className="ml-2 h-5 w-5" /></Link>
@@ -38,11 +38,11 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       {/* Why Choose */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Why Choose Doxxy Over {competitorName}?</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Doxxy offers a more flexible, cost-effective alternative to {competitorName} with these key advantages:</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Why Choose Doxxy Over {competitorName}?</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Doxxy offers a more flexible, cost-effective alternative to {competitorName} with these key advantages:</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {config.whyChooseItems.map((item, i) => (
@@ -50,7 +50,7 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
                 <CardContent className="pt-6 text-center">
                   <div className="mx-auto mb-4">{item.icon}</div>
                   <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                  <p className="text-gray-600">{item.description}</p>
+                  <p className="text-muted-foreground">{item.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -59,19 +59,19 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       {/* Feature Comparison Table */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Doxxy vs {competitorName}: Feature Comparison</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">See how Doxxy stacks up against {competitorName} across key features.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Doxxy vs {competitorName}: Feature Comparison</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">See how Doxxy stacks up against {competitorName} across key features.</p>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+            <table className="w-full border-collapse bg-background shadow-sm rounded-lg overflow-hidden">
               <thead>
                 <tr className="bg-blue-50">
-                  <th className="py-4 px-6 text-left text-gray-900 font-medium">Feature</th>
+                  <th className="py-4 px-6 text-left text-foreground font-medium">Feature</th>
                   <th className="py-4 px-6 text-center text-primary font-medium">Doxxy</th>
-                  <th className="py-4 px-6 text-center text-gray-600 font-medium">{competitorName}</th>
+                  <th className="py-4 px-6 text-center text-muted-foreground font-medium">{competitorName}</th>
                 </tr>
               </thead>
               <tbody>
@@ -89,11 +89,11 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       {/* Reasons to Switch */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{config.reasonsToSwitch.length} Reasons to Switch from {competitorName}</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Healthcare practices across India are making the switch to Doxxy. Here&apos;s why:</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{config.reasonsToSwitch.length} Reasons to Switch from {competitorName}</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Healthcare practices across India are making the switch to Doxxy. Here&apos;s why:</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {config.reasonsToSwitch.map((reason, i) => (
@@ -101,7 +101,7 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
                 <div className="mr-4 mt-1">{reason.icon}</div>
                 <div>
                   <h3 className="font-semibold text-lg mb-2">{reason.title}</h3>
-                  <p className="text-gray-600">{reason.description}</p>
+                  <p className="text-muted-foreground">{reason.description}</p>
                 </div>
               </div>
             ))}
@@ -110,11 +110,11 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       {/* Migration Process */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Simple Migration Process</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">{config.migrationSubtitle}</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Simple Migration Process</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{config.migrationSubtitle}</p>
           </div>
           <div className="space-y-12">
             {config.migrationSteps.map((step, i) => (
@@ -124,7 +124,7 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
                 </div>
                 <div className="md:ml-8 text-center md:text-left">
                   <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                  <p className="text-gray-600">{step.description}</p>
+                  <p className="text-muted-foreground">{step.description}</p>
                 </div>
               </div>
             ))}
@@ -138,22 +138,22 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Hear from Doctors Who Switched</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">Healthcare professionals who made the switch from {competitorName} to Doxxy share their experiences:</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Hear from Doctors Who Switched</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Healthcare professionals who made the switch from {competitorName} to Doxxy share their experiences:</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             {config.testimonialItems.map((t, i) => (
               <Card key={i} className="bg-blue-50 border-none">
                 <CardContent className="p-8 space-y-4">
-                  <blockquote className="text-lg text-gray-700 italic">&ldquo;{t.quote}&rdquo;</blockquote>
+                  <blockquote className="text-lg text-muted-foreground italic">&ldquo;{t.quote}&rdquo;</blockquote>
                   <div className="flex items-center">
                     <img src={t.photo} alt={t.name} className="w-12 h-12 rounded-full mr-4" />
                     <div>
-                      <p className="font-semibold text-gray-900">{t.name}</p>
-                      <p className="text-gray-600">{t.clinic}</p>
+                      <p className="font-semibold text-foreground">{t.name}</p>
+                      <p className="text-muted-foreground">{t.clinic}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -164,17 +164,17 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       {/* FAQs */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
-            <p className="text-lg text-gray-600">Common questions about switching from {competitorName} to Doxxy.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
+            <p className="text-lg text-muted-foreground">Common questions about switching from {competitorName} to Doxxy.</p>
           </div>
           <div className="space-y-6">
             {config.faqs.map((faq, i) => (
               <Card key={i} className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-3">{faq.question}</h3>
-                <p className="text-gray-600">{faq.answer}</p>
+                <h3 className="font-semibold text-foreground mb-3">{faq.question}</h3>
+                <p className="text-muted-foreground">{faq.answer}</p>
               </Card>
             ))}
           </div>

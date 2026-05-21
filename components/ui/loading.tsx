@@ -31,7 +31,7 @@ const variantClasses: Record<SpinnerVariant, string> = {
   secondary: "text-secondary-foreground",
   muted: "text-muted-foreground",
   white: "text-white",
-  ghost: "text-gray-400/50"
+  ghost: "text-muted-foreground/50"
 }
 
 export const Spinner = ({ 

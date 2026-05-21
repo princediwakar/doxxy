@@ -237,7 +237,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 'relative cursor-pointer transition-all border-2 hover:shadow-md',
                 selectedPackage?.id === pkg.id 
                   ? 'border-blue-600 bg-blue-50/50' 
-                  : 'border-transparent hover:border-gray-200'
+                  : 'border-transparent hover:border-border'
               )}
             >
               {pkg.popular && (
@@ -250,7 +250,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                 <div className="text-xl sm:text-2xl font-bold text-blue-700">₹{pkg.amount}</div>
               </CardHeader>
               <CardContent className="text-center space-y-1 sm:space-y-2">
-                <div className="font-semibold text-gray-900 text-sm">{pkg.credits} Credits</div>
+                <div className="font-semibold text-foreground text-sm">{pkg.credits} Credits</div>
                 <div className="text-xs text-muted-foreground">
                   ₹{Math.round(pkg.amount / pkg.credits)} / appt
                 </div>
@@ -275,7 +275,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             <div className="w-full max-w-sm space-y-2">
               <Label>Enter Amount (Min ₹100)</Label>
               <div className="relative">
-                <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
+                <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
                   type="number"
                   placeholder="e.g. 500"

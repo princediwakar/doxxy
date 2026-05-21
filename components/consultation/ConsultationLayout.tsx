@@ -203,8 +203,8 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, F
     if (isFullWidth) {
       return (
         <div className="w-full">
-          <div className="text-sm font-semibold text-gray-800">{field.label}</div>
-          <div className="text-sm text-gray-900">
+          <div className="text-sm font-semibold text-foreground">{field.label}</div>
+          <div className="text-sm text-foreground">
             <FieldValueRenderer fieldName={field.name} value={value} />
           </div>
         </div>
@@ -214,10 +214,10 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, F
     if (isCompactField) {
       return (
         <div className="flex gap-2 items-start">
-          <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+          <div className="text-sm font-semibold text-foreground whitespace-nowrap">
             {field.label}:
           </div>
-          <div className="text-sm text-gray-900 flex-1">
+          <div className="text-sm text-foreground flex-1">
             <FieldValueRenderer fieldName={field.name} value={value} />
           </div>
         </div>
@@ -226,8 +226,8 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, F
 
     return (
       <div>
-        <div className="text-sm font-semibold text-gray-800">{field.label}</div>
-        <div className="text-sm text-gray-900">
+        <div className="text-sm font-semibold text-foreground">{field.label}</div>
+        <div className="text-sm text-foreground">
           <FieldValueRenderer fieldName={field.name} value={value} />
         </div>
       </div>
@@ -249,10 +249,10 @@ return (
         if (isCompact) {
           return (
             <div key={index} className="flex gap-2 items-start">
-              <div className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+              <div className="text-sm font-semibold text-foreground whitespace-nowrap">
                 {field.label}:
               </div>
-              <div className="text-sm text-gray-900 flex-1">
+              <div className="text-sm text-foreground flex-1">
                 <FieldValueRenderer fieldName={field.name} value={value} />
               </div>
             </div>
@@ -261,8 +261,8 @@ return (
 
         return (
           <div key={index}>
-            <div className="text-sm font-semibold text-gray-800">{field.label}</div>
-            <div className="text-sm text-gray-900">
+            <div className="text-sm font-semibold text-foreground">{field.label}</div>
+            <div className="text-sm text-foreground">
               <FieldValueRenderer fieldName={field.name} value={value} />
             </div>
           </div>
@@ -298,7 +298,7 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
   const sections = specialtySections || specialtyFieldSections[departmentType] || specialtyFieldSections.General;
 
 return (
-    <div className={`max-w-4xl mx-auto bg-white min-h-screen print:block print:min-h-0 print:h-auto print:max-w-none ${className}`}>
+    <div className={`max-w-4xl mx-auto bg-background min-h-screen print:block print:min-h-0 print:h-auto print:max-w-none ${className}`}>
       
       {/* The master table structure */}
       <table className="w-full border-collapse border-0">
@@ -345,7 +345,7 @@ return (
 
                   return (
                     <div key={sectionIndex} className="mb-4 print:mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2 print:mb-1 break-after-avoid">
+                      <h3 className="text-lg font-semibold text-foreground mb-2 print:mb-1 break-after-avoid">
                         {section.title}
                       </h3>
                       <div className="space-y-2 print:space-y-1">

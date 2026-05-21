@@ -1,3 +1,4 @@
+// Path: config/navigation.ts 
 import { Search, Calendar, Pill, BarChart3, Settings, User2, HelpCircle } from "lucide-react";
 
 export const navItems = [

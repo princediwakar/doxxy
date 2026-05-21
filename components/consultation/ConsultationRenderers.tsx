@@ -57,18 +57,18 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
 
   return (
     <div className="space-y-1">
-      <div className="text-gray-700 font-semibold text-xs">{title}</div>
+      <div className="text-foreground font-semibold text-xs">{title}</div>
       <div className="overflow-x-auto">
         <table className="w-auto border-collapse text-xs">
           <thead>
-            <tr className="border-b border-gray-300">
-              <th className="text-left py-0.5 px-1 bg-gray-50 font-medium">
+            <tr className="border-b border-border">
+              <th className="text-left py-0.5 px-1 bg-muted font-medium">
                 {headers[0]}
               </th>
-              <th className="text-left py-0.5 px-1 bg-gray-50 font-medium">
+              <th className="text-left py-0.5 px-1 bg-muted font-medium">
                 {headers[1]}
               </th>
-              <th className="text-left py-0.5 px-1 bg-gray-50 font-medium">
+              <th className="text-left py-0.5 px-1 bg-muted font-medium">
                 {headers[2]}
               </th>
             </tr>
@@ -83,15 +83,15 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
               return (
                 <tr
                   key={row.key}
-                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                  className={index % 2 === 0 ? "bg-background" : "bg-muted"}
                 >
-                  <td className="py-0.5 px-1 border-b border-gray-200">
+                  <td className="py-0.5 px-1 border-b border-border">
                     {row.label}
                   </td>
-                  <td className="py-0.5 px-1 border-b border-gray-200">
+                  <td className="py-0.5 px-1 border-b border-border">
                     {right !== '' ? right : "-"}
                   </td>
-                  <td className="py-0.5 px-1 border-b border-gray-200">
+                  <td className="py-0.5 px-1 border-b border-border">
                     {left !== '' ? left : "-"}
                   </td>
                 </tr>
@@ -110,8 +110,8 @@ const AdditionalNotes: React.FC<{ notes: string | null }> = ({ notes }) => {
   if (!notes) return null;
   return (
     <div className="space-y-1">
-      <div className="text-gray-700 font-semibold">Additional Notes</div>
-      <div className="text-gray-700">{notes}</div>
+      <div className="text-foreground font-semibold">Additional Notes</div>
+      <div className="text-foreground">{notes}</div>
     </div>
   );
 };
@@ -132,7 +132,7 @@ const AdditionalFields: React.FC<{
       if (isBlank(val)) return null; // Use isBlank here
       return (
         <div key={field.key} className="flex items-center gap-2">
-          <span className="text-gray-700 font-medium">{field.label}:</span>
+          <span className="text-foreground font-medium">{field.label}:</span>
           <span>{String(val)}</span>
         </div>
       );
@@ -156,12 +156,12 @@ export const PrescriptionList: React.FC<{
       <div className="prescription-table">
         <table className="w-full text-xs border-collapse">
           <thead>
-            <tr className="border-b border-gray-300">
-              <th className="text-left py-1 px-2 bg-gray-50">Medicine</th>
-              <th className="text-left py-1 px-2 bg-gray-50">Dosage</th>
-              <th className="text-left py-1 px-2 bg-gray-50">Frequency</th>
-              <th className="text-left py-1 px-2 bg-gray-50">Duration</th>
-              <th className="text-left py-1 px-2 bg-gray-50">Instructions</th>
+            <tr className="border-b border-border">
+              <th className="text-left py-1 px-2 bg-muted">Medicine</th>
+              <th className="text-left py-1 px-2 bg-muted">Dosage</th>
+              <th className="text-left py-1 px-2 bg-muted">Frequency</th>
+              <th className="text-left py-1 px-2 bg-muted">Duration</th>
+              <th className="text-left py-1 px-2 bg-muted">Instructions</th>
             </tr>
           </thead>
           <tbody>
@@ -192,7 +192,7 @@ export const VitalSignsDisplay: React.FC<{ data: VitalSignsData }> = ({
     if (!value || value === "null") return null;
     return (
       <div key={label} className="flex items-center gap-1">
-        <span className="text-gray-700 font-medium text-sm">{label}:</span>
+        <span className="text-foreground font-medium text-sm">{label}:</span>
         <span className="text-sm">
           {value} {unit}
         </span>
@@ -211,7 +211,7 @@ export const VitalSignsDisplay: React.FC<{ data: VitalSignsData }> = ({
     if (bpParts.length > 0) {
       items.push(
         <div key="bp" className="flex items-center gap-1">
-          <span className="text-gray-700 font-medium text-sm">B.P.:</span>
+          <span className="text-foreground font-medium text-sm">B.P.:</span>
           <span className="text-sm">
             {bpParts.join("/")} mmHg
           </span>
@@ -243,7 +243,7 @@ export const EyeFieldDisplay: React.FC<{ data: EyeData }> = ({ data }) => {
         <div className="space-y-2 text-sm">
           {data.left && (
             <div className="flex items-start gap-2">
-              <div className="text-gray-700 font-semibold text-sm min-w-[40px] pt-0.5">
+              <div className="text-foreground font-semibold text-sm min-w-[40px] pt-0.5">
                 Left:
               </div>
               <div className="whitespace-pre-wrap">{data.left}</div>
@@ -251,7 +251,7 @@ export const EyeFieldDisplay: React.FC<{ data: EyeData }> = ({ data }) => {
           )}
           {data.right && (
             <div className="flex items-start gap-2">
-              <div className="text-gray-700 font-semibold text-sm min-w-[40px] pt-0.5">
+              <div className="text-foreground font-semibold text-sm min-w-[40px] pt-0.5">
                 Right:
               </div>
               <div className="whitespace-pre-wrap">{data.right}</div>
@@ -424,12 +424,12 @@ export const FieldValueRenderer: React.FC<{
     try {
       const stringified = JSON.stringify(value);
       return stringified.length < 200 ? (
-        <span className="text-gray-700">{stringified}</span>
+        <span className="text-foreground">{stringified}</span>
       ) : (
-        <span className="text-gray-500 italic">[Complex data]</span>
+        <span className="text-muted-foreground italic">[Complex data]</span>
       );
     } catch {
-      return <span className="text-gray-500 italic">[Complex data]</span>;
+      return <span className="text-muted-foreground italic">[Complex data]</span>;
     }
   }
 
@@ -440,7 +440,7 @@ export const FieldValueRenderer: React.FC<{
     return (
       <ul className="list-disc list-inside space-y-1">
         {items.map((item, i) => (
-          <li key={i} className="text-sm text-gray-700">{item}</li>
+          <li key={i} className="text-sm text-foreground">{item}</li>
         ))}
       </ul>
     );
@@ -452,10 +452,10 @@ export const FieldValueRenderer: React.FC<{
     if (!trimmedValue) return null;
 
     const lines = trimmedValue.split("\n").filter((line) => line.trim());
-    if (lines.length <= 1) return <span className="text-gray-700">{trimmedValue}</span>;
+    if (lines.length <= 1) return <span className="text-foreground">{trimmedValue}</span>;
 
     return (
-      <div className="text-gray-700">
+      <div className="text-foreground">
         {lines.map((line, index) => (
           <div key={index} className="mb-1">
             {line}
@@ -466,5 +466,5 @@ export const FieldValueRenderer: React.FC<{
   }
 
   // 5. Ultimate Fallback
-  return <span className="text-gray-700">{String(value)}</span>;
+  return <span className="text-foreground">{String(value)}</span>;
 };

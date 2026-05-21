@@ -142,7 +142,10 @@ export function getErrorType(error: unknown): ErrorType {
 export function classifyError(error: unknown): ClassifiedError {
   const type = getErrorType(error);
   const errorObj = error as ErrorLike;
-  const errorMessage = errorObj?.message || (error instanceof Error ? error.message : String(error));
+  const rawMessage = errorObj?.message || (error instanceof Error ? error.message : String(error));
+  const errorMessage = rawMessage === '[object Object]' || !rawMessage
+    ? 'An unknown error occurred'
+    : rawMessage;
 
   const baseConfig = {
     type,

@@ -22,18 +22,18 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
   const { competitorName } = config;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-950 dark:via-gray-900 dark:to-green-950">
       {/* Hero Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 pt-32">
         <div className="max-w-7xl mx-auto text-center">
           <Badge variant="outline" className="mb-4 px-4 py-2">
             Comparison
           </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
             Doxxy vs
             <span className="text-primary"> {competitorName}</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
             {config.heroSubtitle}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -51,13 +51,13 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
       </section>
 
       {/* Key Differences */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Key Differences
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {config.keyDifferencesSubtitle}
             </p>
           </div>
@@ -65,28 +65,28 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-gray-50">
-                  <th className="py-4 px-6 text-left text-gray-600 font-medium">Feature</th>
+                <tr className="bg-muted">
+                  <th className="py-4 px-6 text-left text-muted-foreground font-medium">Feature</th>
                   <th className="py-4 px-6 text-left text-primary font-medium">Doxxy</th>
-                  <th className="py-4 px-6 text-left text-gray-600 font-medium">{competitorName}</th>
-                  <th className="py-4 px-6 text-left text-gray-600 font-medium">Doxxy Advantage</th>
+                  <th className="py-4 px-6 text-left text-muted-foreground font-medium">{competitorName}</th>
+                  <th className="py-4 px-6 text-left text-muted-foreground font-medium">Doxxy Advantage</th>
                 </tr>
               </thead>
               <tbody>
                 {config.comparisonPoints.map((point, index) => (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                  <tr key={index} className={index % 2 === 0 ? 'bg-background' : 'bg-muted'}>
                     <td className="py-4 px-6 border-t flex items-center">
                       <div className="mr-3">{point.icon}</div>
                       <span className="font-medium">{point.feature}</span>
                     </td>
-                    <td className="py-4 px-6 border-t text-gray-800">
+                    <td className="py-4 px-6 border-t text-foreground">
                       <div className="flex items-start">
                         <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
                         {point.doxxy}
                       </div>
                     </td>
-                    <td className="py-4 px-6 border-t text-gray-600">{point.competitor}</td>
-                    <td className="py-4 px-6 border-t text-gray-600">{point.advantage}</td>
+                    <td className="py-4 px-6 border-t text-muted-foreground">{point.competitor}</td>
+                    <td className="py-4 px-6 border-t text-muted-foreground">{point.advantage}</td>
                   </tr>
                 ))}
               </tbody>
@@ -96,13 +96,13 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
       </section>
 
       {/* Pain Points */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Common Pain Points with {competitorName}
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               How Doxxy solves the most common challenges faced by {competitorName} users.
             </p>
           </div>
@@ -116,13 +116,13 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
                 <CardContent className="space-y-4">
                   <div className="flex items-start">
                     <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                       <span className="font-medium">{competitorName}:</span> {point.competitor}
                     </p>
                   </div>
                   <div className="flex items-start">
                     <Check className="h-5 w-5 text-success mr-2 flex-shrink-0 mt-0.5" />
-                    <p className="text-gray-600">
+                    <p className="text-muted-foreground">
                       <span className="font-medium">Doxxy:</span> {point.doxxy}
                     </p>
                   </div>
@@ -135,13 +135,13 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
 
       {/* Core Differences (optional) */}
       {config.coreDifferences && (
-        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                 {config.coreDifferences.sectionTitle}
               </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 {config.coreDifferences.sectionSubtitle}
               </p>
             </div>
@@ -165,10 +165,10 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
                 </CardContent>
               </Card>
 
-              <Card className="border-gray-200">
-                <CardHeader className="border-b border-gray-100 bg-gray-50">
+              <Card className="border-border">
+                <CardHeader className="border-b border-border bg-muted">
                   <div className="flex items-center mb-2">
-                    <Globe className="h-6 w-6 text-gray-600 mr-2" />
+                    <Globe className="h-6 w-6 text-muted-foreground mr-2" />
                     <CardTitle>{config.coreDifferences.competitor.title}</CardTitle>
                   </div>
                   <CardDescription>{config.coreDifferences.competitor.subtitle}</CardDescription>
@@ -177,7 +177,7 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
                   {config.coreDifferences.competitor.points.map((point, i) => (
                     <div key={i} className="flex items-start">
                       <X className="h-5 w-5 text-destructive mr-2 flex-shrink-0 mt-0.5" />
-                      <p className="text-gray-600">{point}</p>
+                      <p className="text-muted-foreground">{point}</p>
                     </div>
                   ))}
                 </CardContent>
@@ -188,14 +188,14 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
       )}
 
       {/* Migration Process */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+              <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
                 Seamless Migration from {competitorName}
               </h2>
-              <p className="text-lg text-gray-600 mb-6">{config.migrationSubtitle}</p>
+              <p className="text-lg text-muted-foreground mb-6">{config.migrationSubtitle}</p>
               <ul className="space-y-4">
                 {config.migrationSteps.map((step, index) => (
                   <li key={index} className="flex items-start">
@@ -203,8 +203,8 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
                       <Check className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{step.title}</p>
-                      <p className="text-gray-600">{step.description}</p>
+                      <p className="font-medium text-foreground">{step.title}</p>
+                      <p className="text-muted-foreground">{step.description}</p>
                     </div>
                   </li>
                 ))}
@@ -230,13 +230,13 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-background">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               What Doctors Who Switched Say
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Hear from healthcare professionals who switched from {competitorName} to Doxxy.
             </p>
           </div>
@@ -245,7 +245,7 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
             {config.testimonialItems.map((testimonial, index) => (
               <Card key={index} className="p-8">
                 <CardContent className="space-y-4">
-                  <blockquote className="text-lg text-gray-600 italic">
+                  <blockquote className="text-lg text-muted-foreground italic">
                     &ldquo;{testimonial.quote}&rdquo;
                   </blockquote>
                   <div className="flex items-center">
@@ -255,8 +255,8 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
                       className="w-12 h-12 rounded-full mr-4"
                     />
                     <div>
-                      <p className="font-semibold text-gray-900">{testimonial.name}</p>
-                      <p className="text-gray-600">{testimonial.clinic}</p>
+                      <p className="font-semibold text-foreground">{testimonial.name}</p>
+                      <p className="text-muted-foreground">{testimonial.clinic}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -267,24 +267,24 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
       </section>
 
       {/* Feature Comparison */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
               Feature Comparison
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               See how Doxxy and {competitorName} compare across key features.
             </p>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse bg-white shadow-sm rounded-lg overflow-hidden">
+            <table className="w-full border-collapse bg-background shadow-sm rounded-lg overflow-hidden">
               <thead>
                 <tr className="bg-blue-50">
-                  <th className="py-4 px-6 text-left text-gray-900 font-medium">Feature</th>
+                  <th className="py-4 px-6 text-left text-foreground font-medium">Feature</th>
                   <th className="py-4 px-6 text-center text-primary font-medium">Doxxy</th>
-                  <th className="py-4 px-6 text-center text-gray-600 font-medium">
+                  <th className="py-4 px-6 text-center text-muted-foreground font-medium">
                     {competitorName}
                   </th>
                 </tr>

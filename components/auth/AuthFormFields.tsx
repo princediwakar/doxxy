@@ -53,7 +53,7 @@ interface GoogleButtonProps {
 export const GoogleButton: React.FC<GoogleButtonProps> = ({ onClick, loading }) => (
   <Button
     onClick={onClick}
-    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border bg-white hover:bg-muted/20 text-foreground font-medium"
+    className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border bg-background hover:bg-muted/20 text-foreground font-medium"
     variant="outline"
     disabled={loading}
     style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}

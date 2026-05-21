@@ -80,7 +80,7 @@ export function ErrorFallback({ error, errorType, onReset, onRetry }: ErrorFallb
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-muted p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -94,12 +94,12 @@ export function ErrorFallback({ error, errorType, onReset, onRetry }: ErrorFallb
 
         <CardContent>
           {error && process.env.NODE_ENV === 'development' && (
-            <div className="mt-4 p-3 bg-gray-100 rounded-md text-sm font-mono overflow-auto">
+            <div className="mt-4 p-3 bg-muted rounded-md text-sm font-mono overflow-auto">
               <div className="font-semibold mb-1">Error Details (Development Only):</div>
               <div>{error.message}</div>
               {error.stack && (
                 <details className="mt-2">
-                  <summary className="cursor-pointer text-gray-600">Stack Trace</summary>
+                  <summary className="cursor-pointer text-muted-foreground">Stack Trace</summary>
                   <pre className="mt-2 text-xs whitespace-pre-wrap">{error.stack}</pre>
                 </details>
               )}

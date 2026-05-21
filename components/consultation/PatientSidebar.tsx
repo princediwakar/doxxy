@@ -130,11 +130,11 @@ const ConsultationPreviewModal = ({
 
             {/* Clinical Notes */}
             {clinicalNotes && (
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">
+              <div className="p-3 bg-muted rounded-lg">
+                <h4 className="font-medium text-foreground mb-2">
                   Clinical Notes
                 </h4>
-                <p className="text-sm text-gray-700">{clinicalNotes}</p>
+                <p className="text-sm text-foreground">{clinicalNotes}</p>
               </div>
             )}
 

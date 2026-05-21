@@ -43,11 +43,11 @@ interface PrivacyHeaderProps {
 }
 
 const PrivacyHeader = ({ title, effectiveDate }: PrivacyHeaderProps) => (
-  <SectionContainer className="bg-white pt-24 md:pt-32 pb-8 md:pb-12">
-    <h1 className="text-4xl lg:text-5xl font-semibold text-gray-900 mb-4 leading-tight tracking-tight">
+  <SectionContainer className="bg-background pt-24 md:pt-32 pb-8 md:pb-12">
+    <h1 className="text-4xl lg:text-5xl font-semibold text-foreground mb-4 leading-tight tracking-tight">
       {title}
     </h1>
-    <p className="text-sm uppercase tracking-wide text-gray-500">
+    <p className="text-sm uppercase tracking-wide text-muted-foreground">
       Effective Date: {effectiveDate}
     </p>
   </SectionContainer>
@@ -61,16 +61,16 @@ interface PrivacySectionProps {
 }
 
 const PrivacySection = ({ title, children, isList = false }: PrivacySectionProps) => (
-  <SectionContainer className="bg-white border-t border-gray-200">
-    <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-6 leading-snug">
+  <SectionContainer className="bg-background border-t border-border">
+    <h2 className="text-2xl lg:text-3xl font-semibold text-foreground mb-6 leading-snug">
       {title}
     </h2>
     {isList ? (
-      <ul className="list-disc list-inside space-y-4 text-lg text-gray-600 leading-relaxed">
+      <ul className="list-disc list-inside space-y-4 text-lg text-muted-foreground leading-relaxed">
         {children}
       </ul>
     ) : (
-      <p className="text-lg text-gray-600 leading-relaxed">
+      <p className="text-lg text-muted-foreground leading-relaxed">
         {children}
       </p>
     )}
@@ -83,11 +83,11 @@ interface PrivacyContactInfoProps {
 }
 
 const PrivacyContactInfo = ({ children }: PrivacyContactInfoProps) => (
-  <SectionContainer className="bg-white border-t border-gray-200">
-    <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900 mb-6 leading-snug">
+  <SectionContainer className="bg-background border-t border-border">
+    <h2 className="text-2xl lg:text-3xl font-semibold text-foreground mb-6 leading-snug">
       Contact
     </h2>
-    <p className="text-lg text-gray-600 leading-relaxed">
+    <p className="text-lg text-muted-foreground leading-relaxed">
       {children}
     </p>
   </SectionContainer>
@@ -95,7 +95,7 @@ const PrivacyContactInfo = ({ children }: PrivacyContactInfoProps) => (
 
 export default function PrivacyPage() {
   return (
-    <div className="font-sans antialiased text-gray-900">
+    <div className="font-sans antialiased text-foreground">
       <PrivacyHeader
         title="Privacy Policy for Doxxy"
         effectiveDate="08-06-2025"

@@ -54,7 +54,7 @@ export default function KBArticleSearch({
 
   return (
     <div className="relative max-w-xl w-full">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
       <Input
         value={value}
         onChange={(e) => handleChange(e.target.value)}
@@ -64,7 +64,7 @@ export default function KBArticleSearch({
       {value && (
         <button
           onClick={handleClear}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
         >
           <X className="h-4 w-4" />
         </button>

@@ -8,13 +8,13 @@ interface CTAProps {
 }
 
 const CTAHeader = ({ children }: CTAProps) => (
-    <h2 className="text-4xl lg:text-5xl font-semibold text-gray-900 mb-6 leading-tight">
+    <h2 className="text-4xl lg:text-5xl font-semibold text-foreground mb-6 leading-tight">
         {children}
     </h2>
 );
 
 const CTADescription = ({ children }: CTAProps) => (
-    <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
+    <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
         {children}
     </p>
 );
@@ -28,14 +28,14 @@ const CTAButtons = () => (
 );
 
 const CTAAssuranceText = ({ children }: CTAProps) => (
-    <p className="text-sm mt-4 text-gray-500">
+    <p className="text-sm mt-4 text-muted-foreground">
         {children}
     </p>
 );
 
 // --- MAIN COMPONENT ---
 const SignupCTA = () => (
-    <section className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <section className="py-20 md:py-28 px-4 sm:px-6 lg:px-8 bg-muted">
         <div className="max-w-4xl mx-auto text-center">
             <CTAHeader>
                 Ready to Get Started?

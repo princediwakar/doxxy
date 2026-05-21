@@ -36,7 +36,7 @@ export const ConsultationProgress = ({
   }, 0);
 
   return (
-    <Card className="bg-white">
+    <Card className="bg-background">
       <CardContent className="p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">

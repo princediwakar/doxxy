@@ -59,7 +59,7 @@ export function PatientHeader({
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-lg font-semibold truncate">{name}</h2>
-            {status && <Badge className={STATUS_COLORS[status] ?? "bg-gray-100 text-gray-800"}>{status}</Badge>}
+            {status && <Badge className={STATUS_COLORS[status] ?? "bg-muted text-foreground"}>{status}</Badge>}
           </div>
           <p className="text-sm text-muted-foreground truncate">
             {contextParts.join(" · ")}
