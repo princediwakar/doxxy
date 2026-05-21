@@ -10,7 +10,7 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAppState } from "@/contexts/AppStateContext";
 import { createPrescription } from "@/actions/prescriptions";
-import type { Database } from "@/integrations/supabase/types";
+import type { DbPrescriptionBaseInsert } from "@/types/core";
 import type {
   PrescriptionFormValues,
   UsePrescriptionProps
@@ -219,7 +219,7 @@ export const usePrescription = ({
       return;
     }
 
-    const prescriptionData: Database['public']['Tables']['prescriptions']['Insert'] = {
+    const prescriptionData: DbPrescriptionBaseInsert = {
       clinic_id: activeClinicId,
       doctor_id: finalDoctorId,
       patient_id: finalPatientId,

@@ -9,7 +9,7 @@ import type { ConsultationFormValues } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase, DbJson } from "@/types/core";
 import type { UseFormReturn } from "react-hook-form";
 import type { ClinicMemberWithClinic } from "@/types/core";
-import type { User } from "@supabase/supabase-js";
+import type { AppUser } from "@/types/core";
 
 import { isDeepEqual } from "./utils";
 
@@ -115,7 +115,7 @@ export interface UseConsultationAutoSaveParams {
   appointmentId: string | undefined;
   appointment: DbAppointment | null | undefined;
   activeClinicId: string | undefined;
-  user: User | null;
+  user: AppUser | null;
   canEditConsultation: boolean;
   autoSaveReady: boolean;
 }

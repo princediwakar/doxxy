@@ -2,12 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
+import type { DbConsultationBaseInsert, DbConsultationBaseUpdate } from '@/types/core';
 
-type ConsultationInsert = Database['public']['Tables']['consultations']['Insert'];
-type ConsultationUpdate = Database['public']['Tables']['consultations']['Update'];
-
-export async function saveConsultation(data: ConsultationInsert) {
+export async function saveConsultation(data: DbConsultationBaseInsert) {
   const supabase = await createServerSupabase();
 
   const { data: existing } = await supabase
@@ -19,7 +16,7 @@ export async function saveConsultation(data: ConsultationInsert) {
   if (existing) {
     const { error } = await supabase
       .from('consultations')
-      .update(data as ConsultationUpdate)
+      .update(data as DbConsultationBaseUpdate)
       .eq('id', existing.id);
 
     if (error) return { error: error.message };

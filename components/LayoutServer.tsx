@@ -1,6 +1,5 @@
 import { Suspense } from 'react';
-import type { User } from '@supabase/supabase-js';
-import type { ClinicMemberWithClinic } from '@/types/core';
+import type { AppUser, ClinicMemberWithClinic } from '@/types/core';
 import { AppStateProvider } from '@/contexts/AppStateContext';
 import { SidebarLayout } from '@/components/SidebarLayout';
 import { CommandPalette } from '@/components/CommandPalette';
@@ -17,7 +16,7 @@ const LayoutServer = ({
   serverActiveClinicId,
 }: {
   children: React.ReactNode;
-  serverUser: User | null;
+  serverUser: AppUser | null;
   serverClinics: ClinicMemberWithClinic[];
   serverProfileName: string | null;
   serverActiveClinicId: string | null;

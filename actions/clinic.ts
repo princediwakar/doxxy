@@ -2,9 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
+import type { DbClinicMemberInsert, DbClinicMemberUpdate, DbClinicUpdate } from '@/types/core';
 
-export async function inviteClinicMember(data: Database['public']['Tables']['clinic_members']['Insert']) {
+export async function inviteClinicMember(data: DbClinicMemberInsert) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('clinic_members').insert(data);
   if (error) return { error: error.message };
@@ -12,7 +12,7 @@ export async function inviteClinicMember(data: Database['public']['Tables']['cli
   return { success: true };
 }
 
-export async function updateClinicMember(id: string, data: Database['public']['Tables']['clinic_members']['Update']) {
+export async function updateClinicMember(id: string, data: DbClinicMemberUpdate) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('clinic_members').update(data).eq('id', id);
   if (error) return { error: error.message };
@@ -28,7 +28,7 @@ export async function removeClinicMember(id: string) {
   return { success: true };
 }
 
-export async function updateClinic(id: string, data: Database['public']['Tables']['clinics']['Update']) {
+export async function updateClinic(id: string, data: DbClinicUpdate) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('clinics').update(data).eq('id', id);
   if (error) return { error: error.message };

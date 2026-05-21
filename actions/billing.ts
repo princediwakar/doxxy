@@ -2,11 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
-import type { Json } from '@/types/core';
-
-type BillInsert = Database['public']['Tables']['bills']['Insert'];
-type BillUpdate = Database['public']['Tables']['bills']['Update'];
+import type { DbBillInsert, DbBillUpdate, Json } from '@/types/core';
 
 interface SaveBillParams {
   patient_id: string;
@@ -44,7 +40,7 @@ export async function saveBill(
   if (mode === 'edit' && billId) {
     const { data: bill, error } = await supabase
       .from('bills')
-      .update(billData as BillUpdate)
+      .update(billData as DbBillUpdate)
       .eq('id', billId)
       .select()
       .single();
@@ -55,7 +51,7 @@ export async function saveBill(
 
   const { data: bill, error } = await supabase
     .from('bills')
-    .insert(billData as BillInsert)
+    .insert(billData as DbBillInsert)
     .select()
     .single();
   if (error) return { error: error.message };

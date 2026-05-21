@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import type { User } from "@supabase/supabase-js";
+import type { AppUser } from "@/types/core";
 import {
   User as UserIcon,
   Shield,
@@ -36,7 +36,7 @@ type DoctorProfile = Record<string, any> | null;
 type UserProfile = Record<string, any> | null;
 
 interface ProfilePageClientProps {
-  user: User;
+  user: AppUser;
   activeClinicId: string;
   activeClinicRole: string;
   activeClinicName: string;

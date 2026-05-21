@@ -1,7 +1,7 @@
 // File: lib/invitation-utils.ts
 import { logger } from "@/lib/logger";
 import { getSupabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import type { AppUser } from "@/types/core";
 
 const supabase = getSupabase();
 
@@ -17,7 +17,7 @@ export interface InvitationProcessingResult {
  * Explicitly processes pending invitations during profile completion
  * This is called after profile completion to create clinic memberships
  */
-export const processInvitationsOnProfileComplete = async (user: User, userName: string, userPhone?: string): Promise<InvitationProcessingResult> => {
+export const processInvitationsOnProfileComplete = async (user: AppUser, userName: string, userPhone?: string): Promise<InvitationProcessingResult> => {
   logger.log('InvitationUtils: Processing invitations for user:', user.id, user.email);
 
   try {
@@ -279,7 +279,7 @@ export const processInvitationsOnProfileComplete = async (user: User, userName: 
  * Waits for clinic membership to be created (for real-time processing)
  */
 export const waitForClinicMembership = async (
-  user: User,
+  user: AppUser,
   timeoutMs: number = 10000
 ): Promise<boolean> => {
   logger.log('InvitationUtils: Waiting for clinic membership creation');

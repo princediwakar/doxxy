@@ -2,11 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
+import type { DbPrescriptionBaseInsert } from '@/types/core';
 
-type PrescriptionInsert = Database['public']['Tables']['prescriptions']['Insert'];
-
-export async function createPrescription(data: PrescriptionInsert) {
+export async function createPrescription(data: DbPrescriptionBaseInsert) {
   const supabase = await createServerSupabase();
 
   const { data: prescription, error } = await supabase

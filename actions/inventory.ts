@@ -2,9 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
+import type { DbMedicineInsert, DbMedicineUpdate, DbProcurementInsert, DbInventoryItemUpdate, DbProcurementItemInsert } from '@/types/core';
 
-export async function addMedicine(data: Database['public']['Tables']['medicines']['Insert']) {
+export async function addMedicine(data: DbMedicineInsert) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('medicines').insert(data);
   if (error) return { error: error.message };
@@ -12,7 +12,7 @@ export async function addMedicine(data: Database['public']['Tables']['medicines'
   return { success: true };
 }
 
-export async function updateMedicine(id: number, data: Database['public']['Tables']['medicines']['Update']) {
+export async function updateMedicine(id: number, data: DbMedicineUpdate) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('medicines').update(data).eq('id', id);
   if (error) return { error: error.message };
@@ -28,7 +28,7 @@ export async function deleteMedicine(id: number) {
   return { success: true };
 }
 
-export async function createProcurement(data: Database['public']['Tables']['procurements']['Insert']) {
+export async function createProcurement(data: DbProcurementInsert) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('procurements').insert(data);
   if (error) return { error: error.message };
@@ -40,7 +40,7 @@ export async function updateStock(itemId: string, newStock: number) {
   const supabase = await createServerSupabase();
   const { error } = await supabase
     .from('inventory_items')
-    .update({ current_stock: newStock } as Database['public']['Tables']['inventory_items']['Update'])
+    .update({ current_stock: newStock } as DbInventoryItemUpdate)
     .eq('id', itemId);
   if (error) return { error: error.message };
   revalidatePath('/pharmacy');
@@ -60,7 +60,7 @@ export async function updateItem(item: {
   const { id, ...fields } = item;
   const { error } = await supabase
     .from('inventory_items')
-    .update(fields as Database['public']['Tables']['inventory_items']['Update'])
+    .update(fields as DbInventoryItemUpdate)
     .eq('id', id);
   if (error) return { error: error.message };
   revalidatePath('/pharmacy');
@@ -139,7 +139,7 @@ export async function saveFullProcurement(input: SaveFullProcurementInput) {
   }
 
   // 3. Insert procurement_items
-  const itemInserts: Database['public']['Tables']['procurement_items']['Insert'][] = [];
+  const itemInserts: DbProcurementItemInsert[] = [];
   const inventoryUpserts: {
     clinic_id: string;
     medicine_id: number;

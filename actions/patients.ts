@@ -2,12 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
+import type { DbPatientInsert, DbPatientUpdate } from '@/types/core';
 
-type PatientInsert = Database['public']['Tables']['patients']['Insert'];
-type PatientUpdate = Database['public']['Tables']['patients']['Update'];
-
-export async function createPatient(data: PatientInsert) {
+export async function createPatient(data: DbPatientInsert) {
   const supabase = await createServerSupabase();
   const { data: patient, error } = await supabase
     .from('patients')
@@ -21,7 +18,7 @@ export async function createPatient(data: PatientInsert) {
   return { success: true, data: patient };
 }
 
-export async function updatePatient(id: string, data: PatientUpdate) {
+export async function updatePatient(id: string, data: DbPatientUpdate) {
   const supabase = await createServerSupabase();
   const { error } = await supabase
     .from('patients')

@@ -2,9 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
-
-type DoctorUpdate = Database['public']['Tables']['doctors']['Update'];
+import type { DbDoctorUpdate } from '@/types/core';
 
 export async function updateProfile(profileData: {
   full_name?: string;
@@ -21,7 +19,7 @@ export async function updateProfile(profileData: {
   return { success: true };
 }
 
-export async function updateDoctorProfile(doctorId: string, data: DoctorUpdate) {
+export async function updateDoctorProfile(doctorId: string, data: DbDoctorUpdate) {
   const supabase = await createServerSupabase();
   const { error } = await supabase
     .from('doctors')

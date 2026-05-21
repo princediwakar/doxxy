@@ -21,7 +21,7 @@ import {
   X,
   Upload
 } from 'lucide-react';
-import type { User } from '@supabase/supabase-js';
+import type { AppUser } from '@/types/core';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/loading';
 
@@ -31,7 +31,7 @@ const getInitials = (name?: string | null): string =>
 interface BasicProfileEditorProps {
   open: boolean;
   onClose: () => void;
-  user: User;
+  user: AppUser;
   onProfileUpdate?: () => void;
 }
 

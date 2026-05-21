@@ -10,7 +10,7 @@ import { queryKeys } from '@/lib/query-keys';
 import { APPOINTMENT_STATUS } from '@/types/appointments';
 import { stripNotSpecified } from '@/lib/voice/structureClinicalNotes';
 import type { AIStructuredOutput } from '@/types/core';
-import type { Json } from '@/integrations/supabase/types';
+import type { Json } from '@/types/core';
 import { isBlank } from '@/lib/schemaUtils';
 
 const supabase = getSupabase();

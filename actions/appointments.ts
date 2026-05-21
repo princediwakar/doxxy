@@ -2,11 +2,9 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { Database } from '@/integrations/supabase/types';
+import type { DbAppointmentInsert, DbAppointmentUpdate } from '@/types/core';
 
-type AppointmentInsert = Database['public']['Tables']['appointments']['Insert'];
-
-export async function createAppointment(data: AppointmentInsert) {
+export async function createAppointment(data: DbAppointmentInsert) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('appointments').insert(data);
 
@@ -18,7 +16,7 @@ export async function createAppointment(data: AppointmentInsert) {
 
 export async function updateAppointment(
   id: string,
-  data: Database['public']['Tables']['appointments']['Update'],
+  data: DbAppointmentUpdate,
 ) {
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('appointments').update(data).eq('id', id);

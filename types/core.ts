@@ -6,6 +6,21 @@ import type { Database } from '@/integrations/supabase/types';
 import type { ConsultationMedication } from '@/lib/consultationNotesSchemas';
 
 // ============================================================================
+// APPLICATION USER TYPE (lean — only fields we actually use)
+// ============================================================================
+
+export interface AppUser {
+  id: string;
+  email?: string;
+  phone?: string;
+  user_metadata?: {
+    name?: string;
+    full_name?: string;
+    avatar_url?: string;
+  };
+}
+
+// ============================================================================
 // DATABASE TABLE WRAPPERS
 // ============================================================================
 
@@ -261,10 +276,9 @@ export type ClinicDepartmentWithType = DbClinicDepartment & {
 // UTILITY TYPES
 // ============================================================================
 
-/** Generic JSON type for flexible data */
-export type Json = Database['public']['Tables']['clinics']['Row']['operating_hours'];
-
-/** General-purpose JSON type for database jsonb columns — matches Supabase's Json */
+/** General-purpose JSON type for database jsonb columns */
+export type { Json } from '@/integrations/supabase/types';
+/** Alias for Json — kept for backward compatibility */
 export type { Json as DbJson } from '@/integrations/supabase/types';
 
 /** Type for table relationships */

@@ -1,12 +1,11 @@
 'use client';
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
-import type { User } from '@supabase/supabase-js';
-import type { ClinicMemberWithClinic } from '@/types/core';
+import type { AppUser, ClinicMemberWithClinic } from '@/types/core';
 import { signOutAction } from '@/actions/auth';
 
 interface AppState {
-  user: User | null;
+  user: AppUser | null;
   activeClinicId: string | undefined;
   activeClinicRole: string | undefined;
   profileName: string | undefined;
@@ -20,7 +19,7 @@ const AppStateContext = createContext<AppState | undefined>(undefined);
 
 interface AppStateProviderProps {
   children: ReactNode;
-  serverUser: User | null;
+  serverUser: AppUser | null;
   serverClinics: ClinicMemberWithClinic[];
   serverProfileName: string | null;
   serverActiveClinicId: string | null;
@@ -44,7 +43,7 @@ export function AppStateProvider({
   serverProfileName,
   serverActiveClinicId,
 }: AppStateProviderProps) {
-  const [user] = useState<User | null>(serverUser);
+  const [user] = useState<AppUser | null>(serverUser);
   const [userClinics] = useState<ClinicMemberWithClinic[]>(serverClinics);
   const initialClinic = getInitialClinic(serverClinics, serverActiveClinicId);
   const [activeClinicId, setActiveClinicIdState] = useState<string | undefined>(

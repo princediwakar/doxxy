@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuthTokenHandlers } from "./useAuthTokenHandlers";
-import type { User } from "@supabase/supabase-js";
+import type { AppUser } from "@/types/core";
 
 const supabase = getSupabase();
 
@@ -19,7 +19,7 @@ export const useAuthFlow = () => {
   const [authFlow, setAuthFlow] = useState<AuthFlow>("login");
   const [googleLoading, setGoogleLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -30,7 +30,7 @@ export const useAuthFlow = () => {
   // Check session on mount — avoid AppStateProvider dependency since /auth is unauthenticated
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+      setUser(session?.user as AppUser ?? null);
     });
   }, []);
 
