@@ -12,7 +12,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function openCommandPalette() {
   document.dispatchEvent(new Event("open-command-palette"));
@@ -57,14 +56,9 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
     if (isSearch) {
       return (
         <li key={item.path}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button onClick={openCommandPalette} className={className}>
-                {linkContent}
-              </button>
-            </TooltipTrigger>
-            {isCollapsed && <TooltipContent side="right">{item.label}</TooltipContent>}
-          </Tooltip>
+          <button onClick={openCommandPalette} className={className}>
+            {linkContent}
+          </button>
         </li>
       );
     }
@@ -77,12 +71,7 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
 
     return (
       <li key={item.path}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {link}
-          </TooltipTrigger>
-          {isCollapsed && <TooltipContent side="right">{item.label}</TooltipContent>}
-        </Tooltip>
+        {link}
       </li>
     );
   };
@@ -94,7 +83,6 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const visibleBottomItems = bottomItems;
 
   return (
-    <TooltipProvider delayDuration={150}>
     <div className="flex flex-col h-screen sticky top-0 left-0 w-full flex-shrink-0">
       <div className={cn("flex items-center p-3 h-14", isCollapsed ? "justify-center" : "justify-start")}>
         <Link href="/">
@@ -144,21 +132,12 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
                 isCollapsed ? "w-10 px-0 justify-center" : "w-full px-3"
               )}
             >
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Avatar className="h-8 w-8 ring-2 ring-primary/20 flex-shrink-0">
-                    <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                      {user?.email?.[0]?.toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </TooltipTrigger>
-                {isCollapsed && (
-                  <TooltipContent side="right">
-                    {profileName || user?.email}
-                  </TooltipContent>
-                )}
-              </Tooltip>
+              <Avatar className="h-8 w-8 ring-2 ring-primary/20 flex-shrink-0">
+                <AvatarImage src={user?.user_metadata?.avatar_url} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {user?.email?.[0]?.toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               {/* FIX: CSS width transition for the profile text */}
               <div className={cn(
                 "overflow-hidden transition-all duration-300 flex flex-col text-left whitespace-nowrap",
@@ -208,6 +187,5 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
         </Popover>
       </div>
     </div>
-    </TooltipProvider>
   );
 }

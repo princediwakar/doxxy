@@ -8,6 +8,7 @@ import { MobileHeader } from '@/components/MobileHeader';
 import { BottomNav } from '@/components/BottomNav';
 import { AppFAB } from '@/components/AppFAB';
 import { PageLoader } from '@/components/ui/loading';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const LayoutServer = ({
   children,
@@ -29,21 +30,23 @@ const LayoutServer = ({
       serverProfileName={serverProfileName}
       serverActiveClinicId={serverActiveClinicId}
     >
-      <div className="flex min-h-screen bg-muted/90">
-        <MobileHeader />
+      <TooltipProvider delayDuration={150} skipDelayDuration={0} disableHoverableContent>
+        <div className="flex min-h-screen bg-muted/90">
+          <MobileHeader />
 
-        <SidebarLayout>
-          <Suspense fallback={<PageLoader />}>
-            {children}
-          </Suspense>
-        </SidebarLayout>
+          <SidebarLayout>
+            <Suspense fallback={<PageLoader />}>
+              {children}
+            </Suspense>
+          </SidebarLayout>
 
-        <CommandPalette />
+          <CommandPalette />
 
-        <AppFAB />
+          <AppFAB />
 
-        <BottomNav />
-      </div>
+          <BottomNav />
+        </div>
+      </TooltipProvider>
     </AppStateProvider>
   );
 };
