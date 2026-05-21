@@ -171,19 +171,19 @@ export const baseNotesSchema = z.object({
   }),
   discontinued_medications: zField("discontinued_medications", z.array(z.string()).nullable(), {
     label: "Discontinued / Negated Medications",
-    section: "Management",
+    section: "History",
     type: "input",
     placeholder: "Medications stopped, refused, or changed",
   }),
   additional_clinical_findings: zField("additional_clinical_findings", z.array(z.string()).nullable(), {
     label: "Additional Clinical Findings",
-    section: "Management",
+    section: "Examination",
     type: "input",
     placeholder: "Findings that did not map to any department field",
   }),
   ruled_out_findings: zField("ruled_out_findings", z.array(z.string()).nullable(), {
     label: "Ruled Out / Negated Findings",
-    section: "Management",
+    section: "Examination",
     type: "input",
     placeholder: "Findings explicitly ruled out by the doctor",
   }),

@@ -33,6 +33,8 @@ function mergeStructured(
       !existing.diagnosis ? incoming.diagnosis : existing.diagnosis,
     advice:
       !existing.advice ? incoming.advice : existing.advice,
+    follow_up:
+      !existing.follow_up ? incoming.follow_up : existing.follow_up,
     prescriptions: [...existing.prescriptions, ...incoming.prescriptions],
     discontinued_medications: [
       ...(existing.discontinued_medications || []),
