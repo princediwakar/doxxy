@@ -85,12 +85,23 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
   return (
     <div className="flex flex-col h-screen sticky top-0 left-0 w-full flex-shrink-0">
       <div className={cn("flex items-center p-3 h-14", isCollapsed ? "justify-center" : "justify-start")}>
-        <Link href="/">
-          {isCollapsed ? (
-            <span className="text-2xl font-semibold select-none" style={{ color: "#1f8fff", fontFamily: "Georgia, serif" }}>D</span>
-          ) : (
-            <img src="/logo.svg" alt="Doxxy" className="h-10" />
-          )}
+        <Link href="/" className="relative flex items-center">
+          <img
+            src="/logo-icon.svg"
+            alt="Doxxy"
+            className={cn(
+              "h-8 w-8 transition-opacity duration-300",
+              isCollapsed ? "opacity-100" : "opacity-0 absolute"
+            )}
+          />
+          <img
+            src="/logo.svg"
+            alt="Doxxy"
+            className={cn(
+              "h-9 transition-opacity duration-300",
+              isCollapsed ? "opacity-0 absolute" : "opacity-100"
+            )}
+          />
         </Link>
       </div>
 
