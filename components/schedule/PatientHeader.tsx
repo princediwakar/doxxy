@@ -1,6 +1,7 @@
 "use client";
 
 import { MoreVertical, CalendarPlus, Receipt, Edit, Stethoscope } from "lucide-react";
+import { formatTimeIST } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,7 +52,7 @@ export function PatientHeader({
   onEditAppointment,
 }: PatientHeaderProps) {
   const demographic = [gender, age ? `${age}y` : null].filter(Boolean).join(", ") || "N/A";
-  const contextParts = [demographic, medicalId ? `MRN: ${medicalId}` : null, departmentName, appointmentTime].filter(Boolean);
+  const contextParts = [demographic, medicalId ? `MRN: ${medicalId}` : null, departmentName, formatTimeIST(appointmentTime)].filter(Boolean);
 
   return (
     <div className="space-y-2 pb-3 border-b">
