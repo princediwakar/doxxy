@@ -1,6 +1,7 @@
 'use server';
 
 import { createServerSupabase } from '@/integrations/supabase/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 interface ContactFormData {
   name: string;
@@ -25,7 +26,7 @@ export async function submitContactForm(formData: ContactFormData) {
 
   if (rpcError) return { error: rpcError.message };
 
-  supabase.functions.invoke('send-contact-email', {
+  const { error: emailError } = await supabaseAdmin.functions.invoke('send-contact-email', {
     body: {
       record: {
         id: data,
@@ -38,7 +39,11 @@ export async function submitContactForm(formData: ContactFormData) {
         created_at: new Date().toISOString(),
       },
     },
-  }).catch(() => {});
+  });
+
+  if (emailError) {
+    console.error('send-contact-email failed:', emailError);
+  }
 
   return { data: data as string };
 }

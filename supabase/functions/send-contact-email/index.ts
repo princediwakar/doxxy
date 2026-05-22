@@ -71,8 +71,8 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Doxxy Team <doxxy@neurovisionhospital.com>',
-        to: ['doxxyapp@gmail.com'],
+        from: 'Doxxy Team <team@doxxy.in>',
+        to: ['doxxyapp@gmail.com', 'princediwakar25@gmail.com'],
         subject: emailSubject,
         html: emailHtml,
       }),
