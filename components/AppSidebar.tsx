@@ -46,7 +46,7 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
     );
 
     const className = cn(
-      "flex items-center py-3 rounded-lg text-sm transition-all duration-200 group min-h-[48px] w-full border border-transparent overflow-hidden",
+      "flex items-center justify-start py-3 rounded-lg text-sm transition-all duration-200 group min-h-[48px] w-full border border-transparent overflow-hidden",
       isCollapsed ? "px-2" : "px-4",
       isActive
         ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
