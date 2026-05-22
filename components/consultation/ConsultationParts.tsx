@@ -77,39 +77,39 @@ export const ConsultationHeader: React.FC<{
         4. Bottom border separates header from content cleanly.
       */}
 
-      <div className="flex justify-between items-start border-b-[1px] border-slate-300 pb-4">
+      <div className="flex justify-between items-start border-b border-border pb-4">
         {/* LEFT: Clinic Details */}
         <div className="clinic-info max-w-[50%] space-y-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 uppercase tracking-wide leading-none">
+            <h1 className="text-2xl font-bold text-foreground uppercase tracking-wide leading-none">
               {clinicInfo?.name}
             </h1>
             {/* A single thin accent line for branding */}
           </div>
 
-          <div className="text-xs text-slate-600 space-y-1 font-medium">
+          <div className="text-xs text-muted-foreground space-y-1 font-medium">
             {clinicInfo?.address && (
               <div className="flex items-start gap-2">
-                <MapPin className="h-3 w-3 text-slate-400 mt-0.5 shrink-0" />
+                <MapPin className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
                 <span className="leading-tight">{clinicInfo.address}</span>
               </div>
             )}
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {clinicInfo?.phone && (
                 <div className="flex items-center gap-1.5">
-                  <Phone className="h-3 w-3 text-slate-400" />
+                  <Phone className="h-3 w-3 text-muted-foreground" />
                   <span>{clinicInfo.phone}</span>
                 </div>
               )}
               {clinicInfo?.email && (
                 <div className="flex items-center gap-1.5">
-                  <Mail className="h-3 w-3 text-slate-400" />
+                  <Mail className="h-3 w-3 text-muted-foreground" />
                   <span>{clinicInfo.email}</span>
                 </div>
               )}
               {clinicInfo?.website && (
                 <div className="flex items-center gap-1.5">
-                  <Globe className="h-3 w-3 text-slate-400" />
+                  <Globe className="h-3 w-3 text-muted-foreground" />
                   <span>{clinicInfo.website}</span>
                 </div>
               )}
@@ -120,29 +120,29 @@ export const ConsultationHeader: React.FC<{
         {/* RIGHT: Doctor Details */}
         <div className="doctor-info text-right max-w-[45%]">
           <div className="space-y-1">
-            <h2 className="text-xl font-bold text-slate-800">
+            <h2 className="text-xl font-bold text-foreground">
               {doctorInfo?.name}
             </h2>
-            <div className="text-sm font-semibold text-blue-700 uppercase tracking-wider text-[10px]">
+            <div className="text-sm font-semibold text-primary uppercase tracking-wider text-[10px]">
               {doctorInfo?.specialization}
             </div>
           </div>
 
-          <div className="mt-3 space-y-1 text-xs text-slate-500">
+          <div className="mt-3 space-y-1 text-xs text-muted-foreground">
             {doctorInfo?.qualification && (
               <div className="uppercase tracking-tight">
                 {typeof doctorInfo.qualification === 'string' ? doctorInfo.qualification : String(doctorInfo.qualification)}
               </div>
             )}
             {typeof doctorInfo?.registration_number === 'string' && doctorInfo.registration_number && (
-              <div className="font-mono text-slate-400">
+              <div className="font-mono text-muted-foreground">
                 Reg: {doctorInfo.registration_number}
               </div>
             )}
             {typeof doctorInfo?.email === 'string' && doctorInfo.email && (
-              <div className="flex items-center justify-end gap-1.5 mt-1 text-slate-600">
+              <div className="flex items-center justify-end gap-1.5 mt-1 text-muted-foreground">
                 <span>{doctorInfo.email}</span>
-                <Mail className="h-3 w-3 text-slate-400" />
+                <Mail className="h-3 w-3 text-muted-foreground" />
               </div>
             )}
           </div>
