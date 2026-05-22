@@ -108,6 +108,7 @@ export function isBlank(v: unknown): v is null | undefined | "" {
       "/NULL", 
       ":NULL,",
       "N/A", 
+      ":",
       "NONE"
     ].includes(trimmed);
   }
