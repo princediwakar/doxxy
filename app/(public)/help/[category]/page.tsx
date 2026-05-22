@@ -49,6 +49,9 @@ export async function generateMetadata({
   return {
     title: `${config.label} Articles — Doxxy Help`,
     description: config.description,
+    alternates: {
+      canonical: `/help/${category}`,
+    },
   };
 }
 

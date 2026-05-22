@@ -2,6 +2,7 @@ import { logger } from "@/lib/logger";
 // app/sitemap.ts
 import { MetadataRoute } from "next";
 import { getBlogPosts } from "@/content/blog";
+import { getKBArticles } from "@/content/kb";
 import { APP_URL } from "@/lib/constants";
 
 const BASE_URL = APP_URL;
@@ -43,6 +44,11 @@ const PUBLIC_ROUTES_CONFIG = [
     path: "/faq",
     priority: 0.7,
     changeFrequency: "monthly" as const,
+  },
+  {
+    path: "/help",
+    priority: 0.7,
+    changeFrequency: "weekly" as const,
   },
   {
     path: "/comparisons",
@@ -120,9 +126,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
   } catch (error) {
     logger.error("Error fetching blog posts for sitemap:", error);
-    // Continue without blog posts if there's an error
+  }
+
+  // Fetch help articles dynamically
+  let helpArticles: MetadataRoute.Sitemap = [];
+  try {
+    const articles = await getKBArticles();
+    helpArticles = articles.map((article) => ({
+      url: `${BASE_URL}/help/${article.category}/${article.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    }));
+  } catch (error) {
+    logger.error("Error fetching help articles for sitemap:", error);
   }
 
   // Return all routes
-  return [...publicRoutes, ...blogPosts];
+  return [...publicRoutes, ...blogPosts, ...helpArticles];
 }

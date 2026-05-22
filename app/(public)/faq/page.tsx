@@ -1,9 +1,18 @@
+import type { Metadata } from 'next';
 import { FAQInteractive } from '@/components/public/FAQInteractive';
 import { Button } from '@/components/ui/button';
 import SignupCTA from '@/components/SignupCTA';
 import Script from 'next/script';
 import Link from 'next/link';
 import { MessageSquare, Phone, BookOpen } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Frequently Asked Questions — Doxxy',
+  description: 'Common questions about Doxxy clinic management software — pricing, features, support, and getting started.',
+  alternates: {
+    canonical: '/faq',
+  },
+};
 
 const faqStructuredData = {
   '@context': 'https://schema.org',

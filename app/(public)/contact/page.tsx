@@ -1,7 +1,16 @@
+import type { Metadata } from 'next';
 import { ContactForm } from '@/components/public/ContactForm';
 import { Button } from '@/components/ui/button';
 import SignupCTA from '@/components/SignupCTA';
 import { Mail, Phone, Calendar } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'Contact Doxxy — Get in Touch',
+  description: 'Contact the Doxxy team for support, sales, or partnership inquiries. Reach us by phone, email, or book a demo.',
+  alternates: {
+    canonical: '/contact',
+  },
+};
 
 const contactInfo = [
   {

@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Knowledge Base — Doxxy Help",
   description:
     "Browse help articles for doctors, staff, and administrators using Doxxy clinic management software.",
+  alternates: {
+    canonical: "/help",
+  },
   openGraph: {
     title: "Knowledge Base — Doxxy Help",
     description:

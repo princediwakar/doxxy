@@ -37,6 +37,9 @@ export async function generateMetadata({
   return {
     title: `${article.title} — Doxxy Help`,
     description: article.description,
+    alternates: {
+      canonical: `/help/${category}/${slug}`,
+    },
     openGraph: {
       title: article.title,
       description: article.description,

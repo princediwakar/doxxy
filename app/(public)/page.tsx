@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import { createServerSupabase } from '@/integrations/supabase/server';
 import { redirect } from 'next/navigation';
 import LandingPageContent from '@/components/LandingPageContent';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+  },
+};
 
 export default async function LandingPage({
   searchParams,
