@@ -329,23 +329,14 @@ export function useDualCapture() {
       audioContextRef.current = audioCtx;
 
       const source = audioCtx.createMediaStreamSource(stream);
-      // ScriptProcessor is deprecated but remains the only synchronous PCM
-      // path available without Worklet setup complexity.
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
 
-      processor.onaudioprocess = (e: AudioProcessingEvent) => {
+      // Load the AudioWorklet module for PCM processing
+      await audioCtx.audioWorklet.addModule("/pcm-processor.js");
+      const processor = new AudioWorkletNode(audioCtx, "pcm-processor");
+
+      processor.port.onmessage = (e: MessageEvent) => {
         if (isDegradedRef.current) return; // stop pumping if WS is gone
-
-        const float32 = e.inputBuffer.getChannelData(0);
-        const int16 = new Int16Array(float32.length);
-        for (let i = 0; i < float32.length; i++) {
-          const s = Math.max(-1, Math.min(1, float32[i]));
-          int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-        }
-        sttRef.current?.send(int16.buffer);
-        // Silence the output to prevent audio feedback
-        e.outputBuffer.getChannelData(0).fill(0);
+        sttRef.current?.send(e.data); // e.data is the Int16Array buffer
       };
 
       source.connect(processor);

@@ -207,7 +207,7 @@ export function DictationZone({
       : undefined;
 
     return (
-      <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-center space-y-3">
+      <div className="rounded-lg border border-destructive/50 bg-destructive/5 dark:bg-destructive/10 p-4 text-center space-y-3">
         <MicOff className="h-8 w-8 mx-auto text-destructive/60" />
         <p className="text-sm text-destructive whitespace-pre-wrap">{errorMessage}</p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -244,8 +244,8 @@ export function DictationZone({
             <p className="text-sm text-muted-foreground whitespace-pre-wrap">{transcriptBuffer}</p>
           </div>
         )}
-        <div className="rounded-lg border-2 border-amber-400/60 bg-amber-50 p-4 text-center">
-          <p className="text-lg font-mono font-semibold text-amber-700 mb-3">
+        <div className="rounded-lg border-2 border-amber-400/60 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4 text-center">
+          <p className="text-lg font-mono font-semibold text-amber-700 dark:text-amber-300 mb-3">
             {formatTimer(elapsedSeconds)}
           </p>
           <div className="flex items-center justify-center gap-2">
@@ -273,7 +273,7 @@ export function DictationZone({
     return (
       <div className={isCompact ? "space-y-2" : "space-y-3"}>
         {isDegraded && (
-          <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-lg px-3 py-2">
+          <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded-lg px-3 py-2">
             <AlertTriangle className="h-4 w-4" />
             <span>Connection interrupted. Audio saved locally — continue speaking.</span>
           </div>
@@ -285,11 +285,11 @@ export function DictationZone({
         )}
         <div className={`rounded-lg border-2 p-4 text-center ${
           isDegraded
-            ? "border-amber-400/60 bg-amber-50"
-            : "border-destructive/60 bg-destructive/5"
+            ? "border-amber-400/60 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20"
+            : "border-destructive/60 bg-destructive/5 dark:bg-destructive/10"
         }`}>
           <p className={`text-lg font-mono font-semibold mb-3 ${
-            isDegraded ? "text-amber-700" : "text-destructive"
+            isDegraded ? "text-amber-700 dark:text-amber-300" : "text-destructive"
           }`}>
             {formatTimer(elapsedSeconds)}
           </p>
