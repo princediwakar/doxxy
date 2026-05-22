@@ -37,7 +37,7 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
         )} />
         {/* FIX: CSS width animation instead of React unmounting */}
         <div className={cn(
-          "overflow-hidden transition-all duration-300 whitespace-nowrap flex-1",
+          "overflow-hidden transition-all duration-300 whitespace-nowrap flex-1 text-left",
           isCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[200px] opacity-100 ml-3"
         )}>
           <span className="font-medium">{item.label}</span>
