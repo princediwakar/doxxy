@@ -97,7 +97,7 @@ export const AppHeader = memo(() => {
                   size="sm" 
                   className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl shadow-none transition-colors duration-200 ease-in-out"
                 >
-                  Get Started
+                  Login
                 </Button>
               </Link>
             )}
