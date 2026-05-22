@@ -36,18 +36,6 @@ function mergeStructured(
     follow_up:
       !existing.follow_up ? incoming.follow_up : existing.follow_up,
     prescriptions: [...existing.prescriptions, ...incoming.prescriptions],
-    discontinued_medications: [
-      ...(existing.discontinued_medications || []),
-      ...(incoming.discontinued_medications || []),
-    ],
-    additional_clinical_findings: [
-      ...(existing.additional_clinical_findings || []),
-      ...(incoming.additional_clinical_findings || []),
-    ],
-    ruled_out_findings: [
-      ...(existing.ruled_out_findings || []),
-      ...(incoming.ruled_out_findings || []),
-    ],
     rawFields: {
       ...existing.rawFields,
       ...Object.fromEntries(

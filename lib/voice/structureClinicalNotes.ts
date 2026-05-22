@@ -1,4 +1,4 @@
-// src/lib/voice/structureClinicalNotes.ts
+// lib/voice/structureClinicalNotes.ts
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { logger } from "@/lib/logger";
@@ -37,12 +37,18 @@ Before populating the clinical fields, you MUST use the \`_clinical_reasoning\` 
 - **Conditional / PRN Prescriptions:** If a doctor prescribes a medication "as needed" or "if symptoms worsen", it IS an active prescription. Map it to \`prescriptions\` and put the condition in the \`instructions\` field. Do not drop it.
 - **Mandatory Workflow:** Return precautions ("call immediately if X"), follow-up timelines ("see back in 2 weeks"), and referral orders MUST be explicitly captured in \`follow_up\` or \`referrals\`. They are hard clinical data. Do not ignore them.
 
-## 4. Surgical Schema Placement
-- **Explicit Negations & Risks:** "No chest pain", "Lungs clear" belong strictly in \`ruled_out_findings\`. However, specific risk negations (e.g., "No Suicidal Ideation") must go into their dedicated schema fields (e.g., \`risk_assessment\`) if available.
-- **True Discontinuations:** Only populate \`discontinued_medications\` if a previously taken drug is stopped.
-- **The Spillover Protocol:** Use \`additional_clinical_findings\` ONLY if a clinical fact fundamentally cannot be mapped to the provided schema fields. 
+## 4. Surgical Schema Placement & Narrative Split
+- **Chief Complaint vs. HPI:** \`chief_complaint\` MUST remain brief—the core reason for the visit (e.g., "Left knee pain"). \`history_of_present_illness\` (HPI) is the detailed narrative.
+- **Explicit Negations & Risks:** "No chest pain", "Lungs clear" MUST be integrated directly into \`history_of_present_illness\`, or into dedicated examination fields if applicable. Do NOT clutter the chief complaint.
+- **True Discontinuations:** Medications that are stopped MUST be documented in the \`treatment\` or \`therapy_plan\` field.
+- **The Spillover Protocol:** If a clinical fact fundamentally cannot be mapped to the provided specific schema fields, integrate it into \`history_of_present_illness\` (for context/history) or \`treatment\` (for management). Do NOT discard clinical facts.
 
-## 5. Goal-Driven Safety 
+## 5. Global Cohesion & Zero Duplication (CRITICAL)
+- **Holistic Mapping:** Treat the entire JSON schema as a single, unified clinical document. 
+- **Mutual Exclusivity:** A single clinical fact must exist in ONE field only. Do not copy-paste or duplicate information across multiple fields (e.g., do not put "Asthma" in both Past Medical History and Diagnosis, or the same lung findings in both Physical and Systemic Examination).
+- **Field Hierarchy:** Route data to the most specific and clinically appropriate field available. Once placed, move on.
+
+## 6. Goal-Driven Safety 
 - If an anatomical side (Left/Right) is required but not stated, leave it null. Do not guess.
 - **STRICT NULL HANDLING:** If a value is unknown or missing, use strict JSON \`null\`. You are STRICTLY FORBIDDEN from outputting stringified nulls like "null", ":null}", "N/A", or "NOT_SPECIFIED".`;
 
@@ -169,8 +175,7 @@ function mapAndScoreOutput(
     if (
       [
         "chief_complaint", "diagnosis", "prescriptions",
-        "discontinued_medications", "additional_clinical_findings",
-        "ruled_out_findings", "treatment", "therapy_plan", "follow_up"
+        "treatment", "therapy_plan", "follow_up"
       ].includes(field.name)
     ) {
       continue;
@@ -206,17 +211,6 @@ function mapAndScoreOutput(
   if (follow_up) assessConfidence(follow_up, "follow_up");
 
   const rawPrescriptions = Array.isArray(aiOutput.prescriptions) ? aiOutput.prescriptions : [];
-  const rawDiscontinued = Array.isArray(aiOutput.discontinued_medications) ? aiOutput.discontinued_medications : [];
-  const rawAdditional = Array.isArray(aiOutput.additional_clinical_findings) ? aiOutput.additional_clinical_findings : [];
-  const rawRuledOut = Array.isArray(aiOutput.ruled_out_findings) ? aiOutput.ruled_out_findings : [];
-
-  const discontinued_medications = rawDiscontinued.map(stripNotSpecified).filter((d): d is string => typeof d === "string");
-  const additional_clinical_findings = rawAdditional.map(stripNotSpecified).filter((d): d is string => typeof d === "string");
-  const ruled_out_findings = rawRuledOut.map(stripNotSpecified).filter((d): d is string => typeof d === "string");
-
-  discontinued_medications.forEach(finding => assessConfidence(finding, "discontinued_medications"));
-  additional_clinical_findings.forEach(finding => assessConfidence(finding, "additional_clinical_findings"));
-  ruled_out_findings.forEach(finding => assessConfidence(finding, "ruled_out_findings"));
 
   const prescriptions = rawPrescriptions
     .map((p: Record<string, unknown>, index: number) => {
@@ -228,7 +222,7 @@ function mapAndScoreOutput(
       const route = safeString(stripNotSpecified(p.route));
       const instructions = safeString(stripNotSpecified(p.instructions));
 
-      if (!drug_name) return null; // Drop empty drug records
+      if (!drug_name) return null;
 
       const prefix = `prescriptions[${index}].`;
       assessConfidence(drug_name, `${prefix}drug_name`);
@@ -241,8 +235,7 @@ function mapAndScoreOutput(
 
   return {
     output: { 
-      symptoms, diagnosis, prescriptions, discontinued_medications, 
-      additional_clinical_findings, ruled_out_findings, advice, follow_up, rawFields 
+      symptoms, diagnosis, prescriptions, advice, follow_up, rawFields 
     },
     confidence,
   };

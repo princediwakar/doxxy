@@ -1,4 +1,3 @@
-// components/schedule/InlineConsultationForm.tsx
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -34,7 +33,6 @@ interface InlineConsultationFormProps {
   formRef: React.RefObject<HTMLDivElement>;
 }
 
-
 export function InlineConsultationForm({
   appointmentId,
   appointment,
@@ -50,7 +48,6 @@ export function InlineConsultationForm({
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [savedVisible, setSavedVisible] = useState(false);
 
-  // TODO: Fix underlying interface divergence. 
   // Centralizing type assertions here so the UI tree doesn't rely on scattered blind casting.
   const mappedAppointmentDetails = appointment as unknown as AppointmentWithDetails | null;
   const mappedPatientWithClinic = patient as unknown as PatientWithClinic;
@@ -151,12 +148,6 @@ export function InlineConsultationForm({
           route: !isBlank(p.route) ? p.route : undefined,
           instructions: !isBlank(p.instructions) ? p.instructions : "",
         })),
-      additional_clinical_findings: aiStructuredData.additional_clinical_findings?.length
-        ? aiStructuredData.additional_clinical_findings
-        : undefined,
-      ruled_out_findings: aiStructuredData.ruled_out_findings?.length
-        ? aiStructuredData.ruled_out_findings
-        : undefined,
     };
 
     form.setValue("specialty_data", merged as ConsultationFormValues["specialty_data"]);
@@ -168,7 +159,6 @@ export function InlineConsultationForm({
     
     onAiDataConsumed();
   }, [aiStructuredData, form, formRef, onAiDataConsumed]); 
-  // Deps explicitly declared. Ensure onAiDataConsumed is stable in the parent hook.
 
   const hasCompletedAlerted = useRef(false);
   useEffect(() => {
@@ -179,7 +169,6 @@ export function InlineConsultationForm({
     } else if (!justCompleted) {
       hasCompletedAlerted.current = false;
     }
-    // onComplete intentionally included. hasCompletedAlerted guards duplicate fires on identity change.
   }, [justCompleted, onComplete]);
 
   useEffect(() => {
