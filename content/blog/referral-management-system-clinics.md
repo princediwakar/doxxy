@@ -5,7 +5,7 @@ author: "Dr. Arvind Menon"
 publishDate: "2026-05-07"
 readTime: "7 min read"
 category: "Practice Management"
-heroImage: "https://images.unsplash.com/photo-1551601651-2a8555f1a29e?w=1200&h=600&fit=crop"
+heroImage: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?w=1200&h=600&fit=crop"
 ---
 
 A cardiologist in Delhi received roughly 15 patient referrals a month from local general physicians. His referral tracking system was a WhatsApp group and a notebook. When asked how many referred patients actually booked an appointment, he didn't know. When asked which GPs sent the most referrals, he guessed. When asked how many referred patients he sent back to the referring doctor with a treatment summary, he admitted it rarely happened.
