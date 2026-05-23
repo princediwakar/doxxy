@@ -28,48 +28,60 @@ export function getPermissionGuidance(): PermissionGuidance {
 
   if (isAndroid) {
     return {
-      instructions: `Enable Microphone for ${browserName} in Android Settings, then come back and tap Try Again.`,
+      instructions: `Microphone access is blocked for ${browserName}. To re-enable: tap the lock icon in the address bar → Permissions → Microphone → Allow. Then come back and tap Try Again.`,
       settingsUrl: "intent://com.android.settings/.Settings#Intent;scheme=android-app;end",
     };
   }
   if (isIOS) {
     if (isSafari) {
       return {
-        instructions: `Open Settings → Privacy & Security → Microphone → Allow. Then come back and tap Try Again.`,
+        instructions: `Microphone access is blocked for Safari. To re-enable: open the Settings app → Privacy & Security → Microphone → find this website and set to Allow. Then come back and tap Try Again.`,
         settingsUrl: null,
       };
     }
     return {
-      instructions: `Open Settings → Apps → ${browserName} → Microphone → Allow. Then come back and tap Try Again.`,
+      instructions: `Microphone access is blocked for ${browserName}. To re-enable: open the Settings app → Apps → ${browserName} → Microphone → Allow. Then come back and tap Try Again.`,
       settingsUrl: null,
     };
   }
   if (isMac && isSafari) {
     return {
-      instructions: "Open Safari → Settings for This Website → Microphone → Allow. Then tap Try Again.",
+      instructions: `Microphone access is blocked for Safari. To re-enable: in Safari's menu bar → Safari → Settings for This Website → Microphone → Allow. Then tap Try Again.`,
       settingsUrl: null,
     };
   }
   if (isMac && (isChrome || isBrave || isEdge)) {
     return {
-      instructions: `Open ${browserName} → Settings → Privacy & Security → Site Settings → Microphone → Allow. Then tap Try Again.`,
+      instructions: `Microphone access is blocked for ${browserName}. To re-enable: open ${browserName} menu → Settings → Privacy & Security → Site Settings → Microphone → Allow. Then tap Try Again.`,
+      settingsUrl: null,
+    };
+  }
+  if (isMac && isFirefox) {
+    return {
+      instructions: `Microphone access is blocked for Firefox. To re-enable: click the permissions icon in the address bar → enable Microphone for this site. Then refresh and tap Try Again.`,
       settingsUrl: null,
     };
   }
   if (isWindows && (isChrome || isBrave || isEdge)) {
     return {
-      instructions: `In ${browserName}, click the lock/tune icon in the address bar → Site Settings → Microphone → Allow. Then tap Try Again.`,
+      instructions: `Microphone access is blocked for ${browserName}. To re-enable: click the lock/slider icon in the address bar → Site Settings → Microphone → Allow. Then tap Try Again.`,
+      settingsUrl: null,
+    };
+  }
+  if (isWindows && isFirefox) {
+    return {
+      instructions: `Microphone access is blocked for Firefox. To re-enable: click the permissions icon in the address bar → enable Microphone for this site. Then refresh and tap Try Again.`,
       settingsUrl: null,
     };
   }
   if (isFirefox) {
     return {
-      instructions: "Click the permissions icon in the address bar, enable Microphone, then refresh and tap Try Again.",
+      instructions: `Microphone access is blocked for Firefox. To re-enable: click the permissions icon in the address bar → enable Microphone for this site. Then refresh and tap Try Again.`,
       settingsUrl: null,
     };
   }
   return {
-    instructions: `Enable microphone access for this site in ${browserName} settings, then refresh and tap Try Again.`,
+    instructions: `Microphone access is blocked. To re-enable: check ${browserName} site settings → Microphone → Allow. Then refresh and tap Try Again.`,
     settingsUrl: null,
   };
 }

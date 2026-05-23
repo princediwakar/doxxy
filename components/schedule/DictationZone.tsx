@@ -74,7 +74,10 @@ export function DictationZone({
     return (
       <div className="rounded-lg border border-destructive/50 bg-destructive/5 dark:bg-destructive/10 p-4 text-center space-y-3">
         <MicOff className="h-8 w-8 mx-auto text-destructive/60" />
-        <p className="text-sm text-destructive whitespace-pre-wrap">{errorMessage}</p>
+        <div>
+          <p className="text-sm font-semibold">Microphone access needed</p>
+          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed whitespace-pre-wrap">{errorMessage}</p>
+        </div>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           {openSettings && (
             <Button variant="default" size="sm" onClick={openSettings}>
