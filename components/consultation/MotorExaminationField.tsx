@@ -1,3 +1,4 @@
+// components/consultation/MotorExaminationField.tsx
 "use client";
 
 import { Label } from '@/components/ui/label';
@@ -28,14 +29,6 @@ const muscleBulkOptions = [
   'Hypertrophy',
   'Wasting',
   'Pseudohypertrophy'
-];
-
-const coordinationOptions = [
-  'Normal',
-  'Impaired',
-  'Ataxia',
-  'Dysmetria',
-  'Dysdiadochokinesia'
 ];
 
 const involuntaryMovementsOptions = [
@@ -223,21 +216,7 @@ export const MotorExaminationField = memo(({
           </div>
         </div>
 
-        <div className="space-y-3">
-          <Label className="text-sm font-medium text-foreground">Coordination</Label>
-          <div className="flex flex-wrap gap-2">
-            {coordinationOptions.map((option) => (
-              <Chip
-                key={option}
-                selected={value.coordination === option}
-                onClick={() => handleChipSelect('coordination', option)}
-                disabled={isReadOnly}
-              >
-                {option}
-              </Chip>
-            ))}
-          </div>
-        </div>
+
       </div>
 
       {/* Notes section */}

@@ -1,6 +1,38 @@
 // src/lib/schemaUtils.ts
 import * as z from "zod";
 
+/**
+ * Server-Side Sanitizer — the bouncer at the database door.
+ * Intercepts LLM string hallucinations (":null}", "N/A", etc.) and coerces them
+ * to primitive null BEFORE the data reaches the database or the UI.
+ *
+ * This lives here, in the Zod layer, so React components stay completely dumb.
+ */
+const sanitizeLlmString = (val: unknown) => {
+  if (typeof val === "string") {
+    const scrubbed = val.trim().replace(/^[,:;]+|[,:;]+$/g, "").trim();
+    const lower = scrubbed.toLowerCase();
+
+    if (
+      lower === "null" ||
+      lower === "n/a" ||
+      lower === "none" ||
+      lower === "not_specified" ||
+      scrubbed === ""
+    ) {
+      return null;
+    }
+    return scrubbed;
+  }
+  return val;
+};
+
+/**
+ * Base sanitized string field. Use everywhere instead of raw z.string().nullable().
+ * The preprocessor silently converts known LLM hallucination tokens to null.
+ */
+export const getCleanString = () => z.preprocess(sanitizeLlmString, z.string().nullable());
+
 export type NoteFieldConfig = {
   name: string;
   label: string;
@@ -48,7 +80,7 @@ export const textField = (
   rows: number,
   placeholder: string,
 ) => {
-  return zField(name, z.string().nullable(), { label, section, type: "textarea", rows, placeholder });
+  return zField(name, getCleanString(), { label, section, type: "textarea", rows, placeholder });
 };
 
 export const extractFieldConfig = (
@@ -102,12 +134,10 @@ export function isBlank(v: unknown): v is null | undefined | "" {
   if (typeof v === "string") {
     const trimmed = v.trim().toUpperCase();
     return [
-      "NOT_SPECIFIED", 
-      "NULL", 
-      ":NULL", 
-      "/NULL", 
-      ":NULL,",
-      "N/A", 
+      "NOT_SPECIFIED",
+      "NULL",
+      "/NULL",
+      "N/A",
       ":",
       "NONE"
     ].includes(trimmed);
@@ -123,8 +153,6 @@ export const getMandatoryFieldsFromSchema = (
     .filter((field) => field.mandatory)
     .map((field) => field.name);
 };
-
-export const BRIEF_THRESHOLD = 10;
 
 /**
  * Safe string coercion.

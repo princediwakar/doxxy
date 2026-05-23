@@ -3,6 +3,7 @@ import * as z from "zod";
 import {
   zField,
   textField,
+  getCleanString,
   getSectionsFromSchema,
   type FieldSection,
   type NoteFieldConfig,
@@ -14,9 +15,9 @@ import {
 
 // Convert all `.optional()` string fields to `.nullable()` to satisfy Strict JSON Schema requirements natively.
 export const medicationSchema = z.object({
-  name: z.string().nullable(),
-  dosage: z.string().nullable(),
-  formulation: z.string().nullable(),
+  name: getCleanString(),
+  dosage: getCleanString(),
+  formulation: getCleanString(),
   route: z
     .union([
       z.enum(["Oral", "Topical", "IV", "IM", "Eye Drops", "Subcutaneous", "Inhaled"]),
@@ -29,47 +30,67 @@ export const medicationSchema = z.object({
       z.string(),
     ])
     .nullable(),
-  duration: z.string().nullable(),
-  instructions: z.string().nullable(),
+  duration: getCleanString(),
+  instructions: getCleanString(),
 });
 
 // Vital Signs (Section: Examination)
 const vitalSignsSchema = zField(
   "vital_signs",
   z.object({
-    temperature: zField("temperature", z.string().nullable(), { label: "Temperature", type: "input" }),
-    pulse: zField("pulse", z.string().nullable(), { label: "Pulse", type: "input" }),
-    blood_pressure_systolic: zField("blood_pressure_systolic", z.string().nullable(), { label: "BP Systolic", type: "input" }),
-    blood_pressure_diastolic: zField("blood_pressure_diastolic", z.string().nullable(), { label: "BP Diastolic", type: "input" }),
-    respiratory_rate: zField("respiratory_rate", z.string().nullable(), { label: "Respiratory Rate", type: "input" }),
-    oxygen_saturation: zField("oxygen_saturation", z.string().nullable(), { label: "Oxygen Saturation", type: "input" }),
-    height: zField("height", z.string().nullable(), { label: "Height", type: "input" }),
-    weight: zField("weight", z.string().nullable(), { label: "Weight", type: "input" }),
-    bmi: zField("bmi", z.string().nullable(), { label: "BMI", type: "input" }),
+    temperature: zField("temperature", getCleanString().describe("Temperature in Celsius. Numeric value only, e.g., '98.6'."), { label: "Temperature", type: "input" }),
+    pulse: zField("pulse", getCleanString().describe("Pulse/heart rate in beats per minute. Numeric value only, e.g., '72'."), { label: "Pulse", type: "input" }),
+    blood_pressure_systolic: zField("blood_pressure_systolic", getCleanString().describe("Systolic blood pressure. Numeric value only, e.g., '120'."), { label: "BP Systolic", type: "input" }),
+    blood_pressure_diastolic: zField("blood_pressure_diastolic", getCleanString().describe("Diastolic blood pressure. Numeric value only, e.g., '80'."), { label: "BP Diastolic", type: "input" }),
+    respiratory_rate: zField("respiratory_rate", getCleanString().describe("Respiratory rate in breaths per minute. Numeric value only, e.g., '16'."), { label: "Respiratory Rate", type: "input" }),
+    oxygen_saturation: zField("oxygen_saturation", getCleanString().describe("Oxygen saturation percentage. Numeric value only, e.g., '98'."), { label: "Oxygen Saturation", type: "input" }),
+    height: zField("height", getCleanString().describe("Height in centimeters. Numeric value only, e.g., '170'."), { label: "Height", type: "input" }),
+    weight: zField("weight", getCleanString().describe("Weight in kilograms. Numeric value only, e.g., '70'."), { label: "Weight", type: "input" }),
+    bmi: zField("bmi", getCleanString().describe("Body Mass Index. Auto-calculated, numeric value."), { label: "BMI", type: "input" }),
   }).nullable(),
   { label: "Vital Signs", type: "vital_signs", section: "Examination", placeholder: "Enter vital signs" },
 );
 // Neurology Sub-Schemas
+const motorJointDescription =
+  "Muscle power grade out of 5.";
+
 const motorExaminationSchema = zField(
   "motor_examination",
   z.object({
-    shoulder_left: z.string().nullable(),
-    shoulder_right: z.string().nullable(),
-    elbow_left: z.string().nullable(),
-    elbow_right: z.string().nullable(),
-    wrist_left: z.string().nullable(),
-    wrist_right: z.string().nullable(),
-    hip_left: z.string().nullable(),
-    hip_right: z.string().nullable(),
-    knee_left: z.string().nullable(),
-    knee_right: z.string().nullable(),
-    ankle_left: z.string().nullable(),
-    ankle_right: z.string().nullable(),
-    muscle_tone: z.string().nullable(),
-    muscle_bulk: z.string().nullable(),
-    involuntary_movements: z.string().nullable(),
-    coordination: z.string().nullable(),
-    notes: z.string().nullable(),
+    shoulder_left: getCleanString().describe(motorJointDescription),
+    shoulder_right: getCleanString().describe(motorJointDescription),
+    elbow_left: getCleanString().describe(motorJointDescription),
+    elbow_right: getCleanString().describe(motorJointDescription),
+    wrist_left: getCleanString().describe(motorJointDescription),
+    wrist_right: getCleanString().describe(motorJointDescription),
+    hip_left: getCleanString().describe(motorJointDescription),
+    hip_right: getCleanString().describe(motorJointDescription),
+    knee_left: getCleanString().describe(motorJointDescription),
+    knee_right: getCleanString().describe(motorJointDescription),
+    ankle_left: getCleanString().describe(motorJointDescription),
+    ankle_right: getCleanString().describe(motorJointDescription),
+    muscle_tone: z
+      .enum(["Normal", "Increased", "Decreased", "Spastic", "Rigid", "Flaccid"])
+      .nullable()
+      .describe("Muscle tone assessment. Must be exactly one of the enum values."),
+    muscle_bulk: z
+      .enum(["Normal", "Atrophy", "Hypertrophy", "Wasting", "Pseudohypertrophy"])
+      .nullable()
+      .describe("Muscle bulk assessment. Must be exactly one of the enum values."),
+    involuntary_movements: z
+      .enum([
+        "None",
+        "Tremors",
+        "Fasciculations",
+        "Myoclonus",
+        "Chorea",
+        "Athetosis",
+        "Dystonia",
+        "Tics",
+      ])
+      .nullable()
+      .describe("Involuntary movements. Must be exactly one of the enum values."),
+    notes: getCleanString(),
   }).nullable(),
   {
     label: "Motor Examination",
@@ -79,26 +100,29 @@ const motorExaminationSchema = zField(
   },
 );
 
+const dtrDescription =
+  "Deep tendon reflex grade 0 to 4+. Format: '0', '1+', '2+', '3+', '4+'. Maximum 2 characters.";
+
 const reflexExaminationSchema = zField(
   "reflexes",
   z.object({
-    biceps_left: z.string().nullable(),
-    biceps_right: z.string().nullable(),
-    triceps_left: z.string().nullable(),
-    triceps_right: z.string().nullable(),
-    supinator_left: z.string().nullable(),
-    supinator_right: z.string().nullable(),
-    knee_left: z.string().nullable(),
-    knee_right: z.string().nullable(),
-    ankle_left: z.string().nullable(),
-    ankle_right: z.string().nullable(),
-    plantar_left: z.string().nullable(),
-    plantar_right: z.string().nullable(),
-    abdominal_left: z.string().nullable(),
-    abdominal_right: z.string().nullable(),
-    clonus: z.string().nullable(),
-    hoffmann: z.string().nullable(),
-    notes: z.string().nullable(),
+    biceps_left: getCleanString().describe(dtrDescription),
+    biceps_right: getCleanString().describe(dtrDescription),
+    triceps_left: getCleanString().describe(dtrDescription),
+    triceps_right: getCleanString().describe(dtrDescription),
+    supinator_left: getCleanString().describe(dtrDescription),
+    supinator_right: getCleanString().describe(dtrDescription),
+    knee_left: getCleanString().describe(dtrDescription),
+    knee_right: getCleanString().describe(dtrDescription),
+    ankle_left: getCleanString().describe(dtrDescription),
+    ankle_right: getCleanString().describe(dtrDescription),
+    plantar_left: getCleanString(),
+    plantar_right: getCleanString(),
+    abdominal_left: getCleanString(),
+    abdominal_right: getCleanString(),
+    clonus: getCleanString(),
+    hoffmann: getCleanString(),
+    notes: getCleanString(),
   }).nullable(),
   {
     label: "Reflexes",
@@ -163,7 +187,7 @@ export const baseNotesSchema = z.object({
     "Enter planned investigations",
   ),
   treatment: textField("treatment", "Treatment", "Management", 4, "Describe treatment plan"),
-  prescriptions: zField("prescriptions", z.array(medicationSchema).nullable(), {
+  prescriptions: zField("prescriptions", z.array(medicationSchema).nullable().transform(val => val ?? []), {
     label: "Active Prescriptions",
     section: "Management",
     type: "prescription",
@@ -184,33 +208,33 @@ export const ophthalmologyNotesSchema = baseNotesSchema.extend({
   eye_examination: zField(
     "eye_examination",
     z.object({
-      visual_acuity_left: z.string().nullable().describe("Left eye (OS) visual acuity. MUST be standard fraction e.g., 20/20 or 6/6"),
-      visual_acuity_right: z.string().nullable().describe("Right eye (OD) visual acuity. MUST be standard fraction e.g., 20/20 or 6/6"),
-      refraction_left: z.string().nullable(),
-      refraction_right: z.string().nullable(),
-      extraocular_movements_left: z.string().nullable(),
-      extraocular_movements_right: z.string().nullable(),
-      lids_left: z.string().nullable(),
-      lids_right: z.string().nullable(),
-      conjunctiva_left: z.string().nullable(),
-      conjunctiva_right: z.string().nullable(),
-      cornea_left: z.string().nullable(),
-      cornea_right: z.string().nullable(),
-      anterior_chamber_left: z.string().nullable(),
-      anterior_chamber_right: z.string().nullable(),
-      iris_left: z.string().nullable(),
-      iris_right: z.string().nullable(),
-      pupil_examination_left: z.string().nullable(),
-      pupil_examination_right: z.string().nullable(),
-      lens_left: z.string().nullable(),
-      lens_right: z.string().nullable(),
-      slit_lamp_exam_left: z.string().nullable(),
-      slit_lamp_exam_right: z.string().nullable(),
-      intraocular_pressure_left: z.string().nullable(),
-      intraocular_pressure_right: z.string().nullable(),
-      fundus_exam_left: z.string().nullable(),
-      fundus_exam_right: z.string().nullable(),
-      notes: z.string().nullable(),
+      visual_acuity_left: getCleanString().describe("Left eye (OS) visual acuity. MUST be standard fraction e.g., 20/20 or 6/6"),
+      visual_acuity_right: getCleanString().describe("Right eye (OD) visual acuity. MUST be standard fraction e.g., 20/20 or 6/6"),
+      refraction_left: getCleanString(),
+      refraction_right: getCleanString(),
+      extraocular_movements_left: getCleanString(),
+      extraocular_movements_right: getCleanString(),
+      lids_left: getCleanString(),
+      lids_right: getCleanString(),
+      conjunctiva_left: getCleanString(),
+      conjunctiva_right: getCleanString(),
+      cornea_left: getCleanString(),
+      cornea_right: getCleanString(),
+      anterior_chamber_left: getCleanString(),
+      anterior_chamber_right: getCleanString(),
+      iris_left: getCleanString(),
+      iris_right: getCleanString(),
+      pupil_examination_left: getCleanString(),
+      pupil_examination_right: getCleanString(),
+      lens_left: getCleanString(),
+      lens_right: getCleanString(),
+      slit_lamp_exam_left: getCleanString(),
+      slit_lamp_exam_right: getCleanString(),
+      intraocular_pressure_left: getCleanString(),
+      intraocular_pressure_right: getCleanString(),
+      fundus_exam_left: getCleanString(),
+      fundus_exam_right: getCleanString(),
+      notes: getCleanString(),
     }).nullable(),
     { label: "Eye Examination", type: "tabular_eye", section: "Examination", placeholder: "Enter eye examination findings" },
   ),

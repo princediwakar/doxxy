@@ -1,5 +1,6 @@
-// src/components/consultation/ConsultationFormField.tsx
+// components/consultation/ConsultationFormField.tsx
 "use client";
+
 import { ChevronDown, Activity } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,7 @@ function hasFieldValue(value: FieldValue): boolean {
       if (typeof v === 'string') return v.trim().length > 0 && v !== 'NOT_SPECIFIED';
       if (Array.isArray(v)) return v.length > 0;
       if (typeof v === 'object' && v !== null) return Object.keys(v).length > 0;
-      return false;
+      return !!v; // Catch-all for numbers/booleans if they exist
     });
   }
   return false;
@@ -90,7 +91,6 @@ export const ConsultationFormField = memo(({
   }, [fieldConfig.type]);
 
   // --- COMPLEX FIELD RENDERING ---
-  
   const complexHeaderClass = isReadOnly
     ? "bg-muted/30 cursor-not-allowed opacity-70"
     : "hover:bg-muted/50 cursor-pointer";
@@ -125,7 +125,8 @@ export const ConsultationFormField = memo(({
     );
   }
 
-  if (['tabular_eye', 'vital_signs', 'motor_examination', 'reflex_examination'].includes(fieldConfig.type ?? '')) {
+  const complexTypes = ['tabular_eye', 'vital_signs', 'motor_examination', 'reflex_examination'];
+  if (complexTypes.includes(fieldConfig.type ?? '')) {
     const safeObjectValue = (typeof value === 'object' && value !== null && !Array.isArray(value)) ? value : {};
 
     return (
@@ -156,7 +157,6 @@ export const ConsultationFormField = memo(({
   }
 
   // --- STANDARD INPUT FIELDS ---
-
   const readOnlyInputClass = "bg-muted/30 cursor-not-allowed opacity-70";
 
   const renderInput = () => {
@@ -234,43 +234,6 @@ export const ConsultationFormField = memo(({
       )}
     </div>
   );
-
-  // String array fields: render as textarea, one item per line
-  const ARRAY_FIELD_NAMES = ['additional_clinical_findings', 'discontinued_medications', 'ruled_out_findings'];
-  if (ARRAY_FIELD_NAMES.includes(fieldConfig.name)) {
-    const items: string[] = Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
-    const textValue = items.join('\n');
-
-    return (
-      <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>
-        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-          {header}
-          <CollapsibleContent>
-            <div className="space-y-3 px-1 pt-2">
-              <Textarea
-                ref={textareaRef}
-                placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
-                value={textValue}
-                onChange={(e) => {
-                  if (isReadOnly) return;
-                  const raw = e.target.value;
-                  const sanitized = raw
-                    .split('\n')
-                    .map(s => s.trim())
-                    .filter(s => s.length > 0);
-                  onChange(sanitized.length > 0 ? sanitized : null);
-                }}
-                rows={fieldConfig.rows || 4}
-                className={`min-h-[80px] resize-none ${isReadOnly ? "bg-muted/30 cursor-not-allowed opacity-70" : ""}`}
-                readOnly={isReadOnly}
-                disabled={isReadOnly}
-              />
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </div>
-    );
-  }
 
   return (
     <div key={fieldIndex} className="space-y-3" data-field-name={fieldConfig.name}>

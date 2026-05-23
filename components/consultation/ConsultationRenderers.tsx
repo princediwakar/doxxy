@@ -280,7 +280,6 @@ export const MotorExaminationDisplay: React.FC<{ data: MotorExamData }> = ({
     { key: "muscle_tone", label: "Muscle Tone" },
     { key: "muscle_bulk", label: "Muscle Bulk" },
     { key: "involuntary_movements", label: "Involuntary Movements" },
-    { key: "coordination", label: "Coordination" },
   ];
 
   return (

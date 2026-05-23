@@ -37,7 +37,6 @@ const populateDefaultValues = (fieldName: string, value: FieldValue | undefined)
         muscle_tone: null,
         muscle_bulk: null,
         involuntary_movements: null,
-        coordination: null,
         notes: null,
       };
       return defaultMotorData;

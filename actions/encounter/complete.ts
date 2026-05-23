@@ -1,7 +1,7 @@
+// actions/encounter/complete.ts
 "use server";
 
 import { createServerSupabase } from "@/integrations/supabase/server";
-import { stripNotSpecified } from "@/lib/voice/structureUtils";
 import { isBlank } from "@/lib/schemaUtils";
 import type { AIStructuredOutput } from "@/types/voice";
 
@@ -14,16 +14,21 @@ export async function submitEncounter(
 ) {
   const supabase = await createServerSupabase();
 
-  const cleanedRawFields = stripNotSpecified(aiData.rawFields) as Record<string, unknown> | null;
+  // Data is already Zod-validated — just filter out nulls and empties
+  const rawFields = aiData.rawFields ?? {};
+  const cleanedRawFields: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(rawFields)) {
+    if (!isBlank(value)) cleanedRawFields[key] = value;
+  }
 
   const specialtyData: Record<string, unknown> = {
     chief_complaint: !isBlank(aiData.symptoms) ? aiData.symptoms : "",
     diagnosis: !isBlank(aiData.diagnosis) ? aiData.diagnosis : "",
-    ...(cleanedRawFields || {}),
+    ...cleanedRawFields,
   };
 
   const validPrescriptions = (aiData.prescriptions || [])
-    .filter((p) => p.drug_name && p.drug_name !== "NOT_SPECIFIED")
+    .filter((p) => p.drug_name)
     .map((p) => ({
       name: p.drug_name,
       dosage: !isBlank(p.dosage) ? p.dosage : "",

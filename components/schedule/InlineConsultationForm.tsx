@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
-import { Eye, CheckCircle } from "lucide-react";
+import { Eye, CheckCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -50,6 +50,7 @@ export function InlineConsultationForm({
   const [showPreview, setShowPreview] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [savedVisible, setSavedVisible] = useState(false);
+  const [isAiDraft, setIsAiDraft] = useState(false);
 
   // Centralizing type assertions here so the UI tree doesn't rely on scattered blind casting.
   const mappedAppointmentDetails = appointment as unknown as AppointmentWithDetails | null;
@@ -95,13 +96,8 @@ export function InlineConsultationForm({
     canEditConsultation: canEditConsultationOverride,
   });
 
-  const specialtyData = form.watch("specialty_data");
-
-  // Section Expansion Optimization: Bails out if no state change occurs, preventing keystroke re-renders.
-  useEffect(() => {
-    if (!specialtyData || typeof specialtyData !== "object") return;
-    const data = specialtyData as Record<string, unknown>;
-
+  // Expansion is calculated once on mount and on AI injection — not on every keystroke
+  const evaluateExpandedSections = (data: Record<string, unknown>) => {
     setExpandedSections((prev) => {
       let changed = false;
       const next = { ...prev };
@@ -113,13 +109,21 @@ export function InlineConsultationForm({
       }
       return changed ? next : prev;
     });
-  }, [specialtyData, specialtySections]);
+  };
+
+  useEffect(() => {
+    evaluateExpandedSections((form.getValues().specialty_data || {}) as Record<string, unknown>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [specialtySections]);
 
   // AI Injection Protocol
   useEffect(() => {
     if (!aiStructuredData) return;
 
     const currentSpecialtyData = (form.getValues().specialty_data || {}) as Record<string, unknown>;
+    const existingPrescriptions = Array.isArray(currentSpecialtyData.prescriptions)
+      ? currentSpecialtyData.prescriptions
+      : [];
 
     const cleanedRawFields: Record<string, unknown> = {};
     if (aiStructuredData.rawFields) {
@@ -144,27 +148,42 @@ export function InlineConsultationForm({
       follow_up: !isBlank(aiStructuredData.follow_up)
         ? aiStructuredData.follow_up
         : currentSpecialtyData.follow_up || "",
-      prescriptions: aiStructuredData.prescriptions
-        .filter((p) => !isBlank(p.drug_name))
-        .map((p) => ({
-          name: p.drug_name,
-          dosage: !isBlank(p.dosage) ? p.dosage : "",
-          frequency: !isBlank(p.frequency) ? p.frequency : undefined,
-          duration: !isBlank(p.duration) ? p.duration : "",
-          route: !isBlank(p.route) ? p.route : undefined,
-          instructions: !isBlank(p.instructions) ? p.instructions : "",
-        })),
+      prescriptions: [
+        ...existingPrescriptions,
+        ...aiStructuredData.prescriptions
+          .filter((p: any) => !isBlank(p.name))
+          .map((p: any) => ({
+            name: p.name,
+            dosage: !isBlank(p.dosage) ? p.dosage : "",
+            frequency: !isBlank(p.frequency) ? p.frequency : undefined,
+            duration: !isBlank(p.duration) ? p.duration : "",
+            route: !isBlank(p.route) ? p.route : undefined,
+            instructions: !isBlank(p.instructions) ? p.instructions : "",
+          })),
+      ],
     };
 
-    form.setValue("specialty_data", merged as ConsultationFormValues["specialty_data"]);
-    
-    // Defer scroll to next frame so React can paint the injected data first.
+    // Reset with merged data so RHF isDirty goes false; any user edit sets it true
+    form.reset({
+      ...form.getValues(),
+      specialty_data: merged as ConsultationFormValues["specialty_data"],
+    });
+    evaluateExpandedSections(merged);
+    setIsAiDraft(true);
+
     requestAnimationFrame(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-    
+
     onAiDataConsumed();
-  }, [aiStructuredData, form, formRef, onAiDataConsumed]);
+  }, [aiStructuredData, form, formRef, onAiDataConsumed, specialtySections]);
+
+  // Clear AI draft flag when user makes any manual edit
+  useEffect(() => {
+    if (isAiDraft && form.formState.isDirty) {
+      setIsAiDraft(false);
+    }
+  }, [form.formState.isDirty, isAiDraft]);
 
   // Expose live form data to parent for "Record Additional Notes" context
   useEffect(() => {
@@ -197,6 +216,14 @@ export function InlineConsultationForm({
 
   return (
     <div ref={formRef} className="flex flex-col">
+      {isAiDraft && (
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
+          <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+          <p className="text-sm font-medium">
+            AI-Generated Draft. Review all fields, dosages, and instructions for clinical accuracy before signing.
+          </p>
+        </div>
+      )}
       <div className="space-y-4">
         {specialtySections.map((section, index) => (
           <ConsultationSectionCard
@@ -235,6 +262,7 @@ export function InlineConsultationForm({
             size="sm"
             onClick={() => {
               resetForm();
+              setIsAiDraft(false);
               toast.success("Changes discarded");
             }}
           >

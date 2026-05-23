@@ -11,7 +11,7 @@ jest.mock('openai/helpers/zod', () => ({
 }));
 
 import { TranscriptTooLongError } from '@/lib/voice/structureClinicalNotes';
-import { stripNotSpecified } from '@/lib/voice/structureUtils';
+import { mapSchemaToOutput } from '@/lib/voice/structureUtils';
 
 describe('TranscriptTooLongError', () => {
   it('includes the length and limit in the message', () => {
@@ -24,60 +24,78 @@ describe('TranscriptTooLongError', () => {
   });
 });
 
-describe('stripNotSpecified', () => {
-  it('returns null for null/undefined', () => {
-    expect(stripNotSpecified(null)).toBeNull();
-    expect(stripNotSpecified(undefined)).toBeNull();
+describe('mapSchemaToOutput', () => {
+  it('maps chief_complaint → symptoms', () => {
+    const { output } = mapSchemaToOutput({ chief_complaint: 'Headache', _clinical_reasoning: 'test' });
+    expect(output.symptoms).toBe('Headache');
   });
 
-  it('returns null for "NOT_SPECIFIED" and empty/whitespace strings', () => {
-    expect(stripNotSpecified('NOT_SPECIFIED')).toBeNull();
-    expect(stripNotSpecified('')).toBeNull();
-    expect(stripNotSpecified('   ')).toBeNull();
+  it('maps diagnosis → diagnosis', () => {
+    const { output } = mapSchemaToOutput({ diagnosis: 'Migraine', _clinical_reasoning: 'test' });
+    expect(output.diagnosis).toBe('Migraine');
   });
 
-  it('returns trimmed string for meaningful content', () => {
-    expect(stripNotSpecified('Headache')).toBe('Headache');
-    expect(stripNotSpecified('  Mild pain  ')).toBe('Mild pain');
+  it('maps treatment → advice (preferring treatment over therapy_plan)', () => {
+    const { output } = mapSchemaToOutput({
+      treatment: 'Rest and hydration',
+      therapy_plan: 'PT 3x/week',
+      _clinical_reasoning: 'test',
+    });
+    expect(output.advice).toBe('Rest and hydration');
   });
 
-  it('filters null entries from arrays', () => {
-    expect(stripNotSpecified(['NOT_SPECIFIED', 'Valid', '', null])).toEqual(['Valid']);
+  it('maps therapy_plan → advice when treatment is absent', () => {
+    const { output } = mapSchemaToOutput({
+      therapy_plan: 'Physical therapy',
+      _clinical_reasoning: 'test',
+    });
+    expect(output.advice).toBe('Physical therapy');
   });
 
-  it('returns null for an array where every element is stripped', () => {
-    expect(stripNotSpecified(['NOT_SPECIFIED', '', null])).toBeNull();
+  it('maps follow_up → follow_up', () => {
+    const { output } = mapSchemaToOutput({ follow_up: '2 weeks', _clinical_reasoning: 'test' });
+    expect(output.follow_up).toBe('2 weeks');
   });
 
-  it('recursively cleans nested objects', () => {
-    const input = {
-      name: 'John',
-      notes: 'NOT_SPECIFIED',
-      nested: { a: 'ok', b: '' },
-      empty: { x: 'NOT_SPECIFIED' },
-    };
-
-    const result = stripNotSpecified(input) as Record<string, unknown>;
-
-    expect(result.name).toBe('John');
-    expect(result.notes).toBeUndefined();
-    expect(result.nested).toEqual({ a: 'ok' });
-    expect(result.empty).toBeUndefined();
+  it('maps prescriptions → prescriptions', () => {
+    const { output } = mapSchemaToOutput({
+      prescriptions: [{ name: 'Paracetamol', dosage: '500mg' }],
+      _clinical_reasoning: 'test',
+    });
+    expect(output.prescriptions).toEqual([{ name: 'Paracetamol', dosage: '500mg' }]);
   });
 
-  it('returns null for an object where every value is stripped', () => {
-    expect(stripNotSpecified({ a: 'NOT_SPECIFIED', b: '' })).toBeNull();
+  it('routes unknown fields to rawFields, excluding _clinical_reasoning', () => {
+    const { output } = mapSchemaToOutput({
+      chief_complaint: 'Fever',
+      vital_signs: { temperature: '101' },
+      _clinical_reasoning: 'Reasoning here',
+      custom_field: 'value',
+    });
+    expect(output.rawFields).toEqual({
+      vital_signs: { temperature: '101' },
+      custom_field: 'value',
+    });
   });
 
-  it('passes through non-null primitives', () => {
-    expect(stripNotSpecified(42)).toBe(42);
-    expect(stripNotSpecified(true)).toBe(true);
+  it('returns undefined rawFields when there are no extra fields', () => {
+    const { output } = mapSchemaToOutput({
+      chief_complaint: 'Cough',
+      _clinical_reasoning: 'test',
+    });
+    expect(output.rawFields).toBeUndefined();
   });
 
-  it('handles arrays of objects', () => {
-    const input = [{ name: 'OK' }, { name: 'NOT_SPECIFIED' }];
-    const result = stripNotSpecified(input) as Array<Record<string, unknown>>;
-    expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('OK');
+  it('returns null for missing top-level fields', () => {
+    const { output } = mapSchemaToOutput({ _clinical_reasoning: 'test' });
+    expect(output.symptoms).toBeNull();
+    expect(output.diagnosis).toBeNull();
+    expect(output.advice).toBeNull();
+    expect(output.follow_up).toBeNull();
+  });
+
+  it('returns empty confidence array', () => {
+    const { confidence } = mapSchemaToOutput({ _clinical_reasoning: 'test' });
+    expect(confidence).toEqual([]);
   });
 });

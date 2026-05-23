@@ -110,7 +110,6 @@ export interface MotorExamData {
   muscle_tone: string | null;
   muscle_bulk: string | null;
   involuntary_movements: string | null;
-  coordination: string | null;
   notes: string | null;
 }
 
