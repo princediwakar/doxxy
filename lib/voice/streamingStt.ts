@@ -94,6 +94,15 @@ async function fetchSttTicket(): Promise<string> {
   return ticket as string;
 }
 
+function getProxyBaseUrl(): string {
+  if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_STT_PROXY_URL) {
+    return process.env.NEXT_PUBLIC_STT_PROXY_URL;
+  }
+  // Fallback: same-origin for local dev with custom server, or when env var not set
+  const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${wsProto}//${window.location.host}`;
+}
+
 function buildProxyUrl(ticket: string): string {
   const params = new URLSearchParams({
     "language-code": "en-IN",
@@ -108,8 +117,7 @@ function buildProxyUrl(ticket: string): string {
 
   params.set("ticket", ticket);
 
-  const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
-  return `${wsProto}//${window.location.host}${STT_PROXY_PATH}?${params.toString()}`;
+  return `${getProxyBaseUrl()}${STT_PROXY_PATH}?${params.toString()}`;
 }
 
 // ─── Factory ─────────────────────────────────────────────────────────────────
