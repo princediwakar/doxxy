@@ -1,3 +1,4 @@
+// components/schedule/InlineConsultationForm.tsx
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -31,6 +32,7 @@ interface InlineConsultationFormProps {
   onAiDataConsumed: () => void;
   onComplete: () => void;
   formRef: React.RefObject<HTMLDivElement>;
+  registerGetFormData?: (getter: () => Record<string, unknown>) => void;
 }
 
 export function InlineConsultationForm({
@@ -43,6 +45,7 @@ export function InlineConsultationForm({
   onAiDataConsumed,
   onComplete,
   formRef,
+  registerGetFormData,
 }: InlineConsultationFormProps) {
   const [showPreview, setShowPreview] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
@@ -138,6 +141,9 @@ export function InlineConsultationForm({
       treatment: !isBlank(aiStructuredData.advice)
         ? aiStructuredData.advice
         : (cleanedRawFields.treatment as string) || currentSpecialtyData.treatment || "",
+      follow_up: !isBlank(aiStructuredData.follow_up)
+        ? aiStructuredData.follow_up
+        : currentSpecialtyData.follow_up || "",
       prescriptions: aiStructuredData.prescriptions
         .filter((p) => !isBlank(p.drug_name))
         .map((p) => ({
@@ -158,7 +164,14 @@ export function InlineConsultationForm({
     });
     
     onAiDataConsumed();
-  }, [aiStructuredData, form, formRef, onAiDataConsumed]); 
+  }, [aiStructuredData, form, formRef, onAiDataConsumed]);
+
+  // Expose live form data to parent for "Record Additional Notes" context
+  useEffect(() => {
+    if (registerGetFormData) {
+      registerGetFormData(() => (form.getValues("specialty_data") || {}) as Record<string, unknown>);
+    }
+  }, [form, registerGetFormData]);
 
   const hasCompletedAlerted = useRef(false);
   useEffect(() => {

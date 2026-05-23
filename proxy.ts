@@ -1,3 +1,12 @@
+// proxy.ts — Next.js 16 middleware
+//
+// Only responsibility: verify authentication. Redirect to /auth if no session.
+// All data-fetching (profile completion, clinic membership) lives in the App
+// Router layout where it benefits from React cache(), Suspense streaming, and
+// the Node.js runtime (connection pooling, closer to DB).
+//
+// See: https://nextjs.org/docs/app/api-reference/file-conventions/proxy
+
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
@@ -34,47 +43,22 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const session = user ? { user } : null;
-
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PATHS.some((p) => pathname.startsWith(p));
 
-  if (isProtected && !session) {
+  if (isProtected && !user) {
     const redirectUrl = new URL('/auth', request.url);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Enforce profile completion for protected paths (skip complete-profile and create-clinic)
-  if (
-    session?.user &&
-    isProtected &&
-    pathname !== '/complete-profile' &&
-    pathname !== '/create-clinic'
-  ) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('name, phone')
-      .eq('id', session.user.id)
-      .maybeSingle();
-
-    const needsCompletion = !profile || !profile.name || !profile.phone;
-
-    if (needsCompletion) {
-      const redirectUrl = new URL('/complete-profile', request.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-
-    // Check for clinic membership
-    const { data: members } = await supabase.rpc(
-      'get_user_clinic_memberships',
-      { user_id: session.user.id },
-    );
-
-    if (!members || members.length === 0) {
-      const redirectUrl = new URL('/create-clinic', request.url);
-      return NextResponse.redirect(redirectUrl);
-    }
-  }
+  // Pass pathname to layouts so they can conditionally redirect for
+  // profile completion / clinic membership without blocking the middleware
+  // on DB calls.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+  response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 
   return response;
 }

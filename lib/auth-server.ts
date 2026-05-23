@@ -57,14 +57,22 @@ export const getActiveClinic = cache(async (userId: string) => {
   return clinics[0];
 });
 
-export const getProfileName = cache(async (userId: string) => {
+const getProfile = cache(async (userId: string) => {
   const supabase = await createServerSupabase();
-
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name')
+    .select('name, phone')
     .eq('id', userId)
     .maybeSingle();
+  return profile;
+});
 
+export const getProfileName = cache(async (userId: string) => {
+  const profile = await getProfile(userId);
   return profile?.name ?? null;
+});
+
+export const isProfileComplete = cache(async (userId: string) => {
+  const profile = await getProfile(userId);
+  return !!(profile?.name && profile?.phone);
 });

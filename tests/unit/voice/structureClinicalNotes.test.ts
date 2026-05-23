@@ -10,7 +10,8 @@ jest.mock('openai/helpers/zod', () => ({
   zodResponseFormat: jest.fn((schema: unknown, name: string) => ({ schema, name })),
 }));
 
-import { TranscriptTooLongError, stripNotSpecified } from '@/lib/voice/structureClinicalNotes';
+import { TranscriptTooLongError } from '@/lib/voice/structureClinicalNotes';
+import { stripNotSpecified } from '@/lib/voice/structureUtils';
 
 describe('TranscriptTooLongError', () => {
   it('includes the length and limit in the message', () => {

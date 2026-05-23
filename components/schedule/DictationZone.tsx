@@ -1,12 +1,10 @@
+// components/schedule/DictationZone.tsx
 "use client";
 
-import { useCallback, useRef, useEffect, useState } from "react";
-import { Mic, MicOff, Square, FileText, Pause, Play, AlertTriangle, Settings } from "lucide-react";
+import { Mic, MicOff, Square, FileText, Pause, Play, AlertTriangle, Settings, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/loading";
-import { toast } from "sonner";
-import { useDualCapture } from "@/hooks/voice/useDualCapture";
-import { structureTranscript } from "@/actions/voice/structure";
+import { useDictationMachine } from "@/hooks/voice/useDictationMachine";
 import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
 
 type DictationVariant = "active" | "compact";
@@ -18,34 +16,8 @@ interface DictationZoneProps {
   variant?: DictationVariant;
   secondaryLabel: string;
   departmentName?: string;
-  existingStructured?: AIStructuredOutput | null;
+  getLiveFormData?: () => Record<string, unknown>;
   scrollToReview?: () => void;
-}
-
-function mergeStructured(
-  existing: AIStructuredOutput,
-  incoming: AIStructuredOutput,
-): AIStructuredOutput {
-  return {
-    symptoms:
-      !existing.symptoms ? incoming.symptoms : existing.symptoms,
-    diagnosis:
-      !existing.diagnosis ? incoming.diagnosis : existing.diagnosis,
-    advice:
-      !existing.advice ? incoming.advice : existing.advice,
-    follow_up:
-      !existing.follow_up ? incoming.follow_up : existing.follow_up,
-    prescriptions: [...existing.prescriptions, ...incoming.prescriptions],
-    rawFields: {
-      ...existing.rawFields,
-      ...Object.fromEntries(
-        Object.entries(incoming.rawFields || {}).filter(([key]) => {
-          const existingVal = existing.rawFields?.[key];
-          return existingVal === undefined || existingVal === "NOT_SPECIFIED" || existingVal === "";
-        }),
-      ),
-    },
-  };
 }
 
 function formatTimer(seconds: number): string {
@@ -58,8 +30,8 @@ export function DictationZone({
   onRecordingStarted,
   variant = "active",
   secondaryLabel,
-  departmentName,
-  existingStructured,
+  departmentName = "General",
+  getLiveFormData,
   scrollToReview,
 }: DictationZoneProps) {
   const {
@@ -69,123 +41,28 @@ export function DictationZone({
     permissionSettingsUrl,
     transcriptBuffer,
     isDegraded,
-    startCapture,
+    isStructuring,
+    fallbackProgress,
+    hasOrphanedSession,
+    orphanedSession,
+    orphanedSessionPreview,
+    isRecovering,
+    beginRecording,
     pauseCapture,
     resumeCapture,
-    stopCapture,
-    resetCapture,
-  } = useDualCapture();
+    finishRecording,
+    cancelRecording,
+    recoverSession,
+    dismissOrphanedSession,
+  } = useDictationMachine({
+    departmentName,
+    getLiveFormData,
+    onStructured,
+    onRecordingStarted,
+    scrollToReview,
+  });
 
-  const [isStructuring, setIsStructuring] = useState(false);
-  const hasCalledStartRef = useRef(false);
   const isCompact = variant === "compact";
-  const lastLookaheadWordCountRef = useRef(0);
-  const lookaheadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Cost-gated lookahead optimization
-  useEffect(() => {
-    if (captureState !== "capturing" && captureState !== "degraded") return;
-    if (isStructuring) return;
-
-    const words = transcriptBuffer.trim().split(/\s+/).filter(Boolean);
-    const wordCount = words.length;
-    const wordsSinceLastExtraction = wordCount - lastLookaheadWordCountRef.current;
-
-    // Only fire if buffer grew by >= 50 words since last extraction AND pause is >= 2.5s
-    if (wordsSinceLastExtraction < 50) return;
-
-    if (lookaheadTimerRef.current) {
-      clearTimeout(lookaheadTimerRef.current);
-    }
-
-    lookaheadTimerRef.current = setTimeout(async () => {
-      if (captureState !== "capturing" && captureState !== "degraded") return;
-      if (transcriptBuffer.trim().length === 0) return;
-
-      const currentWords = transcriptBuffer.trim().split(/\s+/).filter(Boolean).length;
-      if (currentWords - lastLookaheadWordCountRef.current < 50) return;
-
-      lastLookaheadWordCountRef.current = currentWords;
-
-      try {
-        const result = await structureTranscript(transcriptBuffer, departmentName || "General");
-        if (result.output && !result.error) {
-          const merged = existingStructured
-            ? mergeStructured(existingStructured, result.output)
-            : result.output;
-          // Silent background update — don't trigger full UI resolution yet
-          onStructured(merged, transcriptBuffer, result.confidence);
-        }
-      } catch {
-        // Background extraction failure is silent — don't disturb the doctor
-      }
-    }, 2500);
-
-    return () => {
-      if (lookaheadTimerRef.current) {
-        clearTimeout(lookaheadTimerRef.current);
-      }
-    };
-  }, [captureState, transcriptBuffer, isStructuring, departmentName, existingStructured, onStructured]);
-
-  const beginRecording = useCallback(async () => {
-    const started = await startCapture();
-    if (started && !hasCalledStartRef.current) {
-      hasCalledStartRef.current = true;
-      onRecordingStarted?.();
-    }
-    return started;
-  }, [startCapture, onRecordingStarted]);
-
-  const finishRecording = useCallback(async () => {
-    const result = await stopCapture(departmentName || "General");
-    if (!result.transcript) return;
-
-    setIsStructuring(true);
-
-    try {
-      // stopCapture handles transcription internally (WS + fallback paths).
-      // We only need to structure the transcript.
-      const structured = await structureTranscript(result.transcript, departmentName || "General");
-
-      if (structured.output && !structured.error) {
-        const merged = existingStructured
-          ? mergeStructured(existingStructured, structured.output)
-          : structured.output;
-        onStructured(merged, result.transcript, structured.confidence);
-
-        if (existingStructured) {
-          toast.success("Additional dictation ready — notes updated");
-        } else {
-          toast.success("Consultation notes ready!", {
-            action: { label: "View", onClick: () => scrollToReview?.() },
-            duration: 8000,
-          });
-        }
-      } else if (structured.error) {
-        onStructured(null, result.transcript);
-        toast.error(structured.error);
-      } else {
-        onStructured(null, result.transcript);
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to process dictation";
-      toast.error(msg);
-    } finally {
-      setIsStructuring(false);
-    }
-  }, [stopCapture, departmentName, existingStructured, onStructured, scrollToReview]);
-
-  const cancelRecording = useCallback(() => {
-    resetCapture();
-    setIsStructuring(false);
-    hasCalledStartRef.current = false;
-    lastLookaheadWordCountRef.current = 0;
-    if (lookaheadTimerRef.current) {
-      clearTimeout(lookaheadTimerRef.current);
-      lookaheadTimerRef.current = null;
-    }
-  }, [resetCapture]);
 
   if (captureState === "error") {
     const openSettings = permissionSettingsUrl
@@ -228,8 +105,15 @@ export function DictationZone({
     return (
       <div className={isCompact ? "space-y-2" : "space-y-3"}>
         {transcriptBuffer && (
-          <div className="rounded-lg border bg-muted/30 p-3 max-h-48 overflow-y-auto">
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{transcriptBuffer}</p>
+          <div className="rounded-lg border bg-card p-4 max-h-64 overflow-y-auto shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Live transcription</span>
+            </div>
+            <p className="text-base whitespace-pre-wrap leading-relaxed">{transcriptBuffer}</p>
           </div>
         )}
         <div className="rounded-lg border-2 border-amber-400/60 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4 text-center">
@@ -267,8 +151,15 @@ export function DictationZone({
           </div>
         )}
         {transcriptBuffer && (
-          <div className="rounded-lg border bg-muted/30 p-3 max-h-48 overflow-y-auto">
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{transcriptBuffer}</p>
+          <div className="rounded-lg border bg-card p-4 max-h-64 overflow-y-auto shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500" />
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Live transcription</span>
+            </div>
+            <p className="text-base whitespace-pre-wrap leading-relaxed">{transcriptBuffer}</p>
           </div>
         )}
         <div className={`rounded-lg border-2 p-4 text-center ${
@@ -302,13 +193,105 @@ export function DictationZone({
     );
   }
 
+  if (captureState === "processing") {
+    const progressText = fallbackProgress
+      ? fallbackProgress.phase === "submitting"
+        ? "Submitting recording..."
+        : `Processing offline audio (Attempt ${fallbackProgress.attempt} of ${fallbackProgress.maxAttempts})...`
+      : "Processing recording...";
+
+    return (
+      <div className={isCompact ? "space-y-2" : "space-y-3"}>
+        {transcriptBuffer && (
+          <div className="rounded-lg border bg-card p-4 max-h-64 overflow-y-auto shadow-sm">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+              </span>
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Captured transcript</span>
+            </div>
+            <p className="text-base whitespace-pre-wrap leading-relaxed">{transcriptBuffer}</p>
+          </div>
+        )}
+        <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
+          <div className="flex items-center gap-2">
+            <Spinner size="sm" />
+            <span className="text-sm font-medium">{progressText}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Crash recovery prompt ──────────────────────────────────────────────────
+
+  if (captureState === "idle" && hasOrphanedSession && orphanedSession && !isStructuring) {
+    const minutesAgo = Math.round((Date.now() - orphanedSession.startedAt) / 60_000);
+    const timeLabel = minutesAgo < 1 ? "just now" : minutesAgo < 60 ? `${minutesAgo} min ago` : `${Math.round(minutesAgo / 60)} h ago`;
+
+    return (
+      <div className="rounded-lg border-2 border-amber-400/60 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-900/20 p-4 space-y-3">
+        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+          <AlertTriangle className="h-5 w-5" />
+          <span className="text-sm font-semibold">Recovering unsaved dictation...</span>
+        </div>
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          A dictation from {timeLabel} ({orphanedSession.department}) was interrupted.
+          {orphanedSessionPreview && (
+            <> Last saved: &ldquo;{orphanedSessionPreview.slice(0, 80)}{orphanedSessionPreview.length > 80 ? "..." : ""}&rdquo;</>
+          )}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={dismissOrphanedSession}
+            disabled={isRecovering}
+          >
+            <Trash2 className="h-3 w-3 mr-1" />Discard
+          </Button>
+          <Button
+            size="sm"
+            onClick={recoverSession}
+            disabled={isRecovering}
+          >
+            {isRecovering ? (
+              <Spinner size="sm" />
+            ) : (
+              <RotateCcw className="h-3 w-3 mr-1" />
+            )}
+            Recover
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   // Idle state
   return (
     <div className={isCompact ? "space-y-2" : "space-y-3"}>
       {isStructuring && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Spinner size="sm" />
-          <span>Structuring notes...</span>
+        <div className="space-y-3">
+          {transcriptBuffer && (
+            <div className="rounded-lg border bg-card p-4 max-h-64 overflow-y-auto shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-muted-foreground/40" />
+                </span>
+                <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Captured transcript</span>
+              </div>
+              <p className="text-base whitespace-pre-wrap leading-relaxed">{transcriptBuffer}</p>
+            </div>
+          )}
+          <div className="rounded-lg border bg-card p-4 shadow-sm space-y-2">
+            <div className="flex items-center gap-2">
+              <Spinner size="sm" />
+              <span className="text-sm font-medium">
+                Structuring clinical notes...
+              </span>
+            </div>
+          </div>
         </div>
       )}
 

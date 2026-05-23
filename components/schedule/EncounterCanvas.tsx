@@ -53,12 +53,17 @@ export function EncounterCanvas({
 }: EncounterCanvasProps) {
   const [aiStructuredData, setAiStructuredData] = useState<AIStructuredOutput | null>(null);
   const formRef = useRef<HTMLDivElement>(null!);
+  const getLiveFormDataRef = useRef<(() => Record<string, unknown>) | undefined>(undefined);
+  const hasEverStructuredRef = useRef(false);
 
   const onAiDataConsumed = useCallback(() => setAiStructuredData(null), []);
 
   const handleStructured = useCallback(
     (structured: AIStructuredOutput | null, _transcript: string, _fieldConfidence?: FieldConfidence[]) => {
-      if (structured) setAiStructuredData(structured);
+      if (structured) {
+        hasEverStructuredRef.current = true;
+        setAiStructuredData(structured);
+      }
     },
     [],
   );
@@ -68,6 +73,7 @@ export function EncounterCanvas({
   }, []);
 
   const patient = patientDetail?.patient ?? null;
+  const hasExistingData = hasEverStructuredRef.current || !!aiStructuredData;
 
   if (isLoadingDetail) {
     return (
@@ -105,10 +111,10 @@ export function EncounterCanvas({
         <DictationZone
           onStructured={handleStructured}
           onOpenNotes={handleScrollToForm}
-          variant="active"
+          variant={hasExistingData ? "compact" : "active"}
           secondaryLabel="Edit Consultation Notes"
           departmentName={departmentName}
-          existingStructured={aiStructuredData}
+          getLiveFormData={() => getLiveFormDataRef.current ? getLiveFormDataRef.current() : {}}
           scrollToReview={handleScrollToForm}
         />
       )}
@@ -125,6 +131,9 @@ export function EncounterCanvas({
           aiStructuredData={aiStructuredData}
           onAiDataConsumed={onAiDataConsumed}
           onComplete={onComplete}
+          registerGetFormData={(getter) => {
+            getLiveFormDataRef.current = getter;
+          }}
         />
       )}
 

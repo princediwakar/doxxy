@@ -46,6 +46,7 @@ const STT_PROXY_PATH = "/api/voice/stt-proxy";
 // ─── Public types ────────────────────────────────────────────────────────────
 
 export interface StreamingSttCallbacks {
+  onOpen?: () => void;
   onTranscript: (text: string, isFinal: boolean) => void;
   onError: (error: Error) => void;
   onClose: (code: number, reason: string) => void;
@@ -67,14 +68,33 @@ export interface StreamingSttConnection {
 
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const chunkSize = 8192;
+  const parts: string[] = [];
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    parts.push(String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)) as number[]));
   }
-  return btoa(binary);
+  return btoa(parts.join(""));
 }
 
-function buildProxyUrl(): string {
+// ─── Ticket fetching ──────────────────────────────────────────────────────────
+//
+// Before opening the WebSocket, the client calls POST /api/voice/stt-ticket
+// (JWT in the standard Authorization header) to obtain a short-lived ticket.
+// Only this ticket — not the raw JWT — is placed in the WebSocket URL.
+
+async function fetchSttTicket(): Promise<string> {
+  const res = await fetch("/api/voice/stt-ticket", { method: "POST" });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch STT ticket: ${res.status}`);
+  }
+  const { ticket } = await res.json();
+  if (!ticket) {
+    throw new Error("No ticket in STT ticket response");
+  }
+  return ticket as string;
+}
+
+function buildProxyUrl(ticket: string): string {
   const params = new URLSearchParams({
     "language-code": "en-IN",
     model: "saaras:v3",
@@ -85,6 +105,8 @@ function buildProxyUrl(): string {
     vad_signals: "true",
     flush_signal: "true",
   });
+
+  params.set("ticket", ticket);
 
   const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${wsProto}//${window.location.host}${STT_PROXY_PATH}?${params.toString()}`;
@@ -128,11 +150,24 @@ export function createStreamingSttConnection(
 
   // ── WebSocket lifecycle ────────────────────────────────────────────────────
 
-  function connect(): WebSocket {
-    const ws = new WebSocket(buildProxyUrl());
+  async function connect() {
+    let ticket: string;
+    try {
+      ticket = await fetchSttTicket();
+    } catch (err) {
+      logger.error("[streamingStt] failed to fetch auth ticket, aborting connect");
+      callbacks.onError(new Error("Failed to authenticate STT connection"));
+      return;
+    }
+
+    if (closed) return;
+
+    const ws = new WebSocket(buildProxyUrl(ticket));
+    socket = ws;
 
     ws.onopen = () => {
       logger.log("[streamingStt] connected");
+      callbacks.onOpen?.();
       drainQueue();
     };
 
@@ -208,7 +243,7 @@ export function createStreamingSttConnection(
     return ws;
   }
 
-  socket = connect();
+  connect();
 
   // ── Public interface ───────────────────────────────────────────────────────
 
@@ -216,17 +251,17 @@ export function createStreamingSttConnection(
     send(audioChunk: ArrayBuffer) {
       if (paused || closed) return;
 
-      switch (socket?.readyState) {
-        case WebSocket.OPEN:
-          sendChunk(audioChunk);
-          break;
-        case WebSocket.CONNECTING:
-          // Hold until onopen fires
-          preOpenQueue.push(audioChunk);
-          break;
-        default:
-          // CLOSING or CLOSED — drop; the fallback MediaRecorder has the audio
-          break;
+      if (!socket || socket.readyState === WebSocket.CONNECTING) {
+        preOpenQueue.push(audioChunk);
+        return;
+      }
+
+      if (socket.readyState === WebSocket.OPEN) {
+        if (socket.bufferedAmount > 256 * 1024) {
+          logger.warn("[streamingStt] dropping chunk to prevent memory bloat");
+          return;
+        }
+        sendChunk(audioChunk);
       }
     },
 
