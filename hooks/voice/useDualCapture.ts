@@ -92,6 +92,8 @@ export function useDualCapture() {
   useEffect(() => cleanup, [cleanup]);
   useEffect(() => { initCrypto().catch(console.warn); }, []);
 
+  const visibilityPausedRef = useRef(false);
+
   // Extracted Timer Logic
   const startTicking = useCallback(() => {
     return setInterval(() => {
@@ -119,20 +121,98 @@ export function useDualCapture() {
     }, 1000);
   }, [flushIdbChunks]);
 
+  // ── App-switch / screen-lock handling (mobile) ─────────────────────────────
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        const recorder = mediaRecorderRef.current;
+        if (recorder?.state === "recording") {
+          recorder.pause();
+          sttRef.current?.close();
+          sttRef.current = null;
+          if (timerRef.current) clearInterval(timerRef.current);
+          visibilityPausedRef.current = true;
+          setCaptureState("paused");
+        }
+      } else if (visibilityPausedRef.current) {
+        visibilityPausedRef.current = false;
+        const recorder = mediaRecorderRef.current;
+        if (!recorder || recorder.state === "inactive") {
+          degradeRef.current?.("Recording interrupted while app was in background");
+          return;
+        }
+        recorder.resume();
+        const connectSTT = (): StreamingSttConnection => {
+          return createStreamingSttConnection({
+            onOpen: () => {
+              sttOpenedRef.current = true;
+              disconnectedAtRef.current = null;
+            },
+            onTranscript: (text) => {
+              disconnectedAtRef.current = null;
+              transcriptRef.current = (transcriptRef.current + " " + text).trim();
+              setTranscriptBuffer(transcriptRef.current);
+            },
+            onError: () => {
+              if (!sttOpenedRef.current && !isDegradedRef.current) {
+                isDegradedRef.current = true;
+                setIsDegraded(true);
+                setCaptureState("degraded");
+                toast.warning("Live transcription unavailable. Audio will be processed after you tap Done.");
+              }
+            },
+            onClose: (code) => {
+              if (!isDegradedRef.current && code !== 1000) {
+                disconnectedAtRef.current ??= Date.now();
+              }
+            },
+          });
+        };
+        sttRef.current = connectSTT();
+        setCaptureState(isDegradedRef.current ? "degraded" : "capturing");
+        timerRef.current = startTicking();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [startTicking]);
+
   const setupAudioWorklet = async (audioCtx: AudioContext, stream: MediaStream) => {
     const source = audioCtx.createMediaStreamSource(stream);
+    const inputRate = audioCtx.sampleRate; // iOS Safari ignores constructor sampleRate and uses hardware rate
+    const outputRate = 16000;
+
     const workletCode = `
       class PcmProcessor extends AudioWorkletProcessor {
+        constructor(options) {
+          super();
+          this.inputRate = options.processorOptions.inputSampleRate || 16000;
+          this.outputRate = options.processorOptions.outputSampleRate || 16000;
+          this.ratio = this.inputRate / this.outputRate;
+          this.accumulator = 0;
+        }
+
         process(inputs) {
           const input = inputs[0];
           if (input && input.length > 0) {
             const float32 = input[0];
-            const int16 = new Int16Array(float32.length);
+            const outputSamples = [];
+
             for (let i = 0; i < float32.length; i++) {
-              const s = Math.max(-1, Math.min(1, float32[i]));
-              int16[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+              this.accumulator++;
+              while (this.accumulator >= this.ratio) {
+                const s = Math.max(-1, Math.min(1, float32[i]));
+                outputSamples.push(s < 0 ? s * 0x8000 : s * 0x7fff);
+                this.accumulator -= this.ratio;
+              }
             }
-            this.port.postMessage(int16.buffer, [int16.buffer]);
+
+            if (outputSamples.length > 0) {
+              const int16 = new Int16Array(outputSamples);
+              this.port.postMessage(int16.buffer, [int16.buffer]);
+            }
           }
           return true;
         }
@@ -144,12 +224,15 @@ export function useDualCapture() {
     await audioCtx.audioWorklet.addModule(workletUrl);
     URL.revokeObjectURL(workletUrl);
 
-    const processor = new AudioWorkletNode(audioCtx, "pcm-processor");
+    const processor = new AudioWorkletNode(audioCtx, "pcm-processor", {
+      processorOptions: { inputSampleRate: inputRate, outputSampleRate: outputRate },
+    });
     processor.port.onmessage = (e: MessageEvent) => {
       if (!isDegradedRef.current) sttRef.current?.send(e.data);
     };
     source.connect(processor);
-    processor.connect(audioCtx.destination);
+    // processor only sends PCM to STT WebSocket via port.postMessage —
+    // no need to connect to destination (causes feedback on mobile).
   };
 
   const startCapture = useCallback(async (department = "General"): Promise<boolean> => {
@@ -188,6 +271,8 @@ export function useDualCapture() {
         const guidance = getPermissionGuidance();
         setErrorMessage(`Microphone access denied. ${guidance.instructions}`);
         setPermissionSettingsUrl(guidance.settingsUrl);
+      } else if (err?.name === "NotFoundError") {
+        setErrorMessage("No microphone detected. Please connect a microphone and try again.");
       } else {
         setErrorMessage("Could not start recording. Please check your microphone.");
       }
@@ -246,7 +331,7 @@ export function useDualCapture() {
       };
       sttRef.current = connectSTT();
 
-      const audioCtx = new AudioContext({ sampleRate: 16000 });
+      const audioCtx = new AudioContext();
       audioContextRef.current = audioCtx;
       await setupAudioWorklet(audioCtx, streamRef.current);
     } catch (err) {
@@ -361,6 +446,7 @@ export function useDualCapture() {
 
   const resumeCapture = useCallback(() => {
     if (mediaRecorderRef.current?.state !== "paused") return;
+    visibilityPausedRef.current = false;
     sttRef.current?.resume();
     mediaRecorderRef.current.resume();
     setCaptureState(isDegradedRef.current ? "degraded" : "capturing");
@@ -368,6 +454,19 @@ export function useDualCapture() {
   }, [startTicking]);
 
   const resetCapture = useCallback(() => {
+    if (isStoppingRef.current && stopPromiseRef.current) {
+      // stopCapture is already in flight — it will call completeSession + cleanup.
+      // Wait for it to avoid double-completing the IDB session.
+      stopPromiseRef.current.finally(() => {
+        sessionStorage.removeItem("voice_transcript_recovery");
+        setCaptureState("idle");
+        setElapsedSeconds(0);
+        setErrorMessage(null);
+        setPermissionSettingsUrl(null);
+      });
+      return;
+    }
+
     if (sessionIdRef.current) completeSession(sessionIdRef.current).catch(() => {});
     sessionStorage.removeItem("voice_transcript_recovery");
     cleanup();

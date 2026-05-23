@@ -64,7 +64,6 @@ export function getPermissionGuidance(): PermissionGuidance {
 
 export function getSupportedMimeType(): string {
   const candidates = [
-    "audio/wav",
     "audio/webm;codecs=opus",
     "audio/mp4;codecs=mp4a.40.2",
     "audio/ogg;codecs=opus",
