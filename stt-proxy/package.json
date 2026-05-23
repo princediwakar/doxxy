@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "dotenv -e ../.env.local -- tsx server.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/node": "^22.5.5",
     "@types/ws": "^8.5.12",
+    "dotenv-cli": "^11.0.0",
     "tsx": "^4.20.3",
     "typescript": "^5.5.3"
   }
