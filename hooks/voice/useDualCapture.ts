@@ -238,6 +238,36 @@ export function useDualCapture() {
   const startCapture = useCallback(async (department = "General"): Promise<boolean> => {
     setErrorMessage(null);
     setPermissionSettingsUrl(null);
+    setCaptureState("requesting_permission");
+
+    // ── Call getUserMedia FIRST — must be within the user gesture for iOS ──
+    try {
+      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (err: any) {
+      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
+        // Retry once immediately — some browsers re-prompt on second call
+        // within the same user gesture
+        try {
+          streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (retryErr: any) {
+          const guidance = getPermissionGuidance();
+          setErrorMessage(`Microphone access denied. ${guidance.instructions}`);
+          setPermissionSettingsUrl(guidance.settingsUrl);
+          setCaptureState("error");
+          return false;
+        }
+      } else if (err?.name === "NotFoundError") {
+        setErrorMessage("No microphone detected. Please connect a microphone and try again.");
+        setCaptureState("error");
+        return false;
+      } else {
+        setErrorMessage("Could not start recording. Please check your microphone.");
+        setCaptureState("error");
+        return false;
+      }
+    }
+
+    // ── Permission granted — run setup ────────────────────────────────────
     setIsDegraded(false);
     isDegradedRef.current = false;
     sttOpenedRef.current = false;
@@ -259,26 +289,10 @@ export function useDualCapture() {
     if (!mimeType) {
       setCaptureState("error");
       setErrorMessage("Your browser does not support any compatible audio format.");
+      cleanup();
       return false;
     }
     mimeTypeRef.current = mimeType;
-    setCaptureState("requesting_permission");
-
-    try {
-      streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-    } catch (err: any) {
-      if (err?.name === "NotAllowedError" || err?.name === "PermissionDeniedError") {
-        const guidance = getPermissionGuidance();
-        setErrorMessage(`Microphone access denied. ${guidance.instructions}`);
-        setPermissionSettingsUrl(guidance.settingsUrl);
-      } else if (err?.name === "NotFoundError") {
-        setErrorMessage("No microphone detected. Please connect a microphone and try again.");
-      } else {
-        setErrorMessage("Could not start recording. Please check your microphone.");
-      }
-      setCaptureState("error");
-      return false;
-    }
 
     const recorder = new MediaRecorder(streamRef.current, { mimeType });
     mediaRecorderRef.current = recorder;

@@ -12,11 +12,17 @@ export function getPermissionGuidance(): PermissionGuidance {
   const isAndroid = /Android/.test(ua);
   const isMac = /Mac/i.test(platform) || /Macintosh/.test(ua);
   const isWindows = /Win/i.test(platform);
-  const isChrome = /Chrome\//.test(ua) && !/Edge\//.test(ua) && !/OPR\//.test(ua);
-  const isFirefox = /Firefox\//.test(ua);
-  const isSafari = /Safari\//.test(ua) && !/Chrome\//.test(ua);
-  const isBrave = /Brave\//.test(ua);
-  const isEdge = /Edge\//.test(ua);
+
+  // iOS-specific browser tokens (all iOS browsers use WebKit and include Safari/ in UA)
+  const isCriOS = /CriOS\//.test(ua);
+  const isFxiOS = /FxiOS\//.test(ua);
+  const isEdgiOS = /EdgiOS\//.test(ua);
+
+  const isChrome = (/Chrome\//.test(ua) && !/Edge\//.test(ua) && !/OPR\//.test(ua)) || isCriOS;
+  const isFirefox = /Firefox\//.test(ua) || isFxiOS;
+  const isSafari = /Safari\//.test(ua) && !/Chrome\//.test(ua) && !isCriOS && !isFxiOS && !isEdgiOS && !/\bBrave\b/i.test(ua);
+  const isBrave = /Brave\//.test(ua) || /\bBrave\b/i.test(ua);
+  const isEdge = /Edge\//.test(ua) || isEdgiOS;
 
   const browserName = isBrave ? "Brave" : isEdge ? "Edge" : isChrome ? "Chrome" : isFirefox ? "Firefox" : isSafari ? "Safari" : "your browser";
 
@@ -27,8 +33,14 @@ export function getPermissionGuidance(): PermissionGuidance {
     };
   }
   if (isIOS) {
+    if (isSafari) {
+      return {
+        instructions: `Open Settings → Privacy & Security → Microphone → Allow. Then come back and tap Try Again.`,
+        settingsUrl: null,
+      };
+    }
     return {
-      instructions: `Open the Settings app → ${browserName} → Microphone → Allow. Then come back and tap Try Again.`,
+      instructions: `Open Settings → Apps → ${browserName} → Microphone → Allow. Then come back and tap Try Again.`,
       settingsUrl: null,
     };
   }
