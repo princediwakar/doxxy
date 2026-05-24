@@ -40,7 +40,7 @@ const ClinicMembersManagement = ({
 
   const [showDoctor, setShowDoctor] = useState(false);
   const [doctorMember, setDoctorMember] = useState<MemberWithDetails | null>(null);
-  const [doctorData, setDoctorData] = useState<CreateDoctorData>({ name: '', email: '', primary_specialization: '', consultation_fee: 0, bio: '', department_id: '', google_place_id: '' });
+  const [doctorData, setDoctorData] = useState<CreateDoctorData>({ name: '', email: '', primary_specialization: '', consultation_fee: 0, bio: '', department_id: '', google_place_id: '', google_place_data: undefined });
 
   const [showEdit, setShowEdit] = useState(false);
   const [editMember, setEditMember] = useState<MemberWithDetails | null>(null);
@@ -140,6 +140,7 @@ const ClinicMembersManagement = ({
       bio: '',
       department_id: member.department_id || undefined,
       google_place_id: '',
+      google_place_data: undefined,
     });
     setShowDoctor(true);
   };
@@ -166,6 +167,7 @@ const ClinicMembersManagement = ({
         bio: doctorData.bio,
         departmentId: doctorData.department_id,
         googlePlaceId: doctorData.google_place_id,
+        googlePlaceData: doctorData.google_place_data,
       });
       if ('error' in result && result.error) {
         toast.error(result.error);
@@ -174,7 +176,7 @@ const ClinicMembersManagement = ({
       toast.success('Doctor profile created successfully');
       setShowDoctor(false);
       setDoctorMember(null);
-      setDoctorData({ name: '', email: '', primary_specialization: '', consultation_fee: 0, bio: '', department_id: '', google_place_id: '' });
+      setDoctorData({ name: '', email: '', primary_specialization: '', consultation_fee: 0, bio: '', department_id: '', google_place_id: '', google_place_data: undefined });
     } catch (err) {
       toast.error('Failed to create doctor profile: ' + (err instanceof Error ? err.message : ''));
     } finally {

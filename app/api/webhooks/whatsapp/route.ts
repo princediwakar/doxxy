@@ -6,6 +6,7 @@
 
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
+import { normalizeIndianPhone } from "@/lib/utils";
 
 function getServiceClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -52,12 +53,6 @@ interface WebhookValue {
   }>;
 }
 
-function normalizePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length === 10) return `91${digits}`;
-  return digits;
-}
-
 export async function POST(req: Request) {
   const supabase = getServiceClient();
   if (!supabase) {
@@ -93,7 +88,7 @@ export async function POST(req: Request) {
           const isOptOut = detectOptOut(msg);
           if (!isOptOut) continue;
 
-          const normalizedPhone = normalizePhone(msg.from);
+          const normalizedPhone = normalizeIndianPhone(msg.from);
 
           // Find the clinic by phone_number_id and update patient opt-out
           const { data: connection } = await supabase

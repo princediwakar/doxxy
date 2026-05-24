@@ -24,6 +24,9 @@ import { queryKeys } from "@/lib/query-keys";
 import { createClinicWithAdmin } from "@/actions/clinic";
 import { useQueryClient } from "@tanstack/react-query";
 import { ErrorBoundary } from "@/components/error-boundary/ErrorBoundary";
+import { GooglePlaceAutocomplete } from "@/components/ui/google-place-autocomplete";
+import type { GooglePlaceSelection } from "@/types/google-places";
+import { googlePlaceDataSchema } from "@/types/google-places";
 import {
   Form,
   FormControl,
@@ -49,6 +52,7 @@ const clinicDetailsSchema = z.object({
     return websitePattern.test(val) || domainPattern.test(val);
   }, { message: "Please enter a valid website (example.com or https://example.com)" }),
   google_place_id: z.string().optional(),
+  google_place_data: googlePlaceDataSchema.optional(),
 });
 
 type ClinicDetailsForm = z.infer<typeof clinicDetailsSchema>;
@@ -75,6 +79,7 @@ const doctorProfileSchema = z.object({
   }),
   consultationFee: z.coerce.number().min(0).optional(),
   google_place_id: z.string().optional(),
+  google_place_data: googlePlaceDataSchema.optional(),
 });
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
@@ -105,6 +110,7 @@ const CreateClinicPage = () => {
     phone: "",
     website: "",
     google_place_id: "",
+    google_place_data: undefined,
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -115,6 +121,7 @@ const CreateClinicPage = () => {
     selectedDepartment: '',
     consultationFee: 0,
     google_place_id: '',
+    google_place_data: undefined,
   };
 
   // Fetch department types
@@ -197,6 +204,7 @@ const CreateClinicPage = () => {
         phone: clinicDetails.phone,
         website: clinicDetails.website,
         googlePlaceId: clinicDetails.google_place_id || undefined,
+        googlePlaceData: clinicDetails.google_place_data,
         userId: user.id,
         userPhone: user.phone,
         departments: departmentsForm.getValues('departments'),
@@ -206,6 +214,7 @@ const CreateClinicPage = () => {
         selectedDepartment: data.selectedDepartment,
         consultationFee: data.consultationFee,
         doctorGooglePlaceId: data.google_place_id || undefined,
+        doctorGooglePlaceData: data.google_place_data,
         userName: user.user_metadata?.name,
         userEmail: user.email,
       });
@@ -314,15 +323,35 @@ const CreateClinicPage = () => {
               <FormField
                 control={detailsForm.control}
                 name="google_place_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Google Place ID (Optional)</FormLabel>
-                    <FormControl>
-                      <Input type="text" placeholder="ChIJ..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const placeData = detailsForm.watch('google_place_data');
+                  return (
+                    <FormItem>
+                      <FormLabel>Google Place (Optional)</FormLabel>
+                      <FormControl>
+                        <GooglePlaceAutocomplete
+                          value={
+                            field.value && placeData
+                              ? { place_id: field.value, google_place_data: placeData }
+                              : null
+                          }
+                          onChange={(selection) => {
+                            field.onChange(selection?.place_id ?? '');
+                            detailsForm.setValue('google_place_data', selection?.google_place_data ?? undefined);
+                            if (selection) {
+                              const currentAddress = detailsForm.getValues('address');
+                              if (!currentAddress || currentAddress === '') {
+                                detailsForm.setValue('address', selection.google_place_data.formattedAddress);
+                              }
+                            }
+                          }}
+                          placeholder="Search for your clinic on Google Maps..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
               <Button type="submit" className="w-full" disabled={detailsForm.formState.isSubmitting}>
                 Next: Select Departments
@@ -531,19 +560,33 @@ const CreateClinicPage = () => {
                       )}
                     />
 
-                    {/* Google Place ID */}
+                    {/* Google Place */}
                     <FormField
                       control={doctorForm.control}
                       name="google_place_id"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Google Place ID (Optional)</FormLabel>
-                          <FormControl>
-                            <Input type="text" placeholder="ChIJ..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const placeData = doctorForm.watch('google_place_data');
+                        return (
+                          <FormItem>
+                            <FormLabel>Google Place (Optional)</FormLabel>
+                            <FormControl>
+                              <GooglePlaceAutocomplete
+                                value={
+                                  field.value && placeData
+                                    ? { place_id: field.value, google_place_data: placeData }
+                                    : null
+                                }
+                                onChange={(selection) => {
+                                  field.onChange(selection?.place_id ?? '');
+                                  doctorForm.setValue('google_place_data', selection?.google_place_data ?? undefined);
+                                }}
+                                placeholder="Search for your practice on Google Maps..."
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                   </div>
                 )}

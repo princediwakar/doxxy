@@ -9,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { useAppState } from "@/contexts/AppStateContext";
 import { updateClinic } from "@/actions/clinic";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { GooglePlaceAutocomplete } from "@/components/ui/google-place-autocomplete";
+import type { GooglePlaceData } from "@/types/google-places";
+import { googlePlaceDataSchema } from "@/types/google-places";
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { type DbClinic } from "@/types/core";
@@ -40,6 +43,7 @@ const clinicDetailsSchema = z.object({
     return websitePattern.test(val) || domainPattern.test(val);
   }, { message: "Please enter a valid website (e.g., example.com or https://example.com)" }),
   google_place_id: z.string().optional().or(z.literal("")),
+  google_place_data: googlePlaceDataSchema.optional().nullable(),
 });
 
 type ClinicDetailsForm = z.infer<typeof clinicDetailsSchema>;
@@ -78,6 +82,7 @@ const ClinicDetailsManagement = () => {
     phone: "",
     website: "",
     google_place_id: "",
+    google_place_data: null as GooglePlaceData | null,
   });
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -92,6 +97,7 @@ const ClinicDetailsManagement = () => {
         phone: clinicData.phone || "",
         website: clinicData.website || "",
         google_place_id: clinicData.google_place_id || "",
+        google_place_data: (clinicData as Record<string, unknown>).google_place_data as GooglePlaceData | null ?? null,
       };
       setForm(initialForm);
       setHasUnsavedChanges(false);
@@ -323,19 +329,29 @@ const ClinicDetailsManagement = () => {
                   )}
                 </div>
 
-                {/* Google Place ID */}
+                {/* Google Place */}
                 <div className="space-y-2">
                   <label className="flex items-center text-sm font-medium">
                     <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                    Google Place ID (Optional)
+                    Google Place (Optional)
                   </label>
-                  <Input
-                    name="google_place_id"
-                    type="text"
-                    value={form.google_place_id}
-                    onChange={handleChange}
+                  <GooglePlaceAutocomplete
+                    value={
+                      form.google_place_id && form.google_place_data
+                        ? { place_id: form.google_place_id, google_place_data: form.google_place_data }
+                        : null
+                    }
+                    onChange={(selection) => {
+                      setForm(prev => ({
+                        ...prev,
+                        google_place_id: selection?.place_id ?? '',
+                        google_place_data: selection?.google_place_data ?? null,
+                        address: !prev.address && selection ? selection.google_place_data.formattedAddress : prev.address,
+                      }));
+                      setHasUnsavedChanges(true);
+                    }}
+                    placeholder="Search for your clinic on Google Maps..."
                     disabled={isUpdating}
-                    placeholder="ChIJ..."
                   />
                 </div>
               </div>

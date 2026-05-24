@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import Script from "next/script";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +21,6 @@ declare global {
         opts: Record<string, unknown>,
       ) => void;
     };
-    fbAsyncInit?: () => void;
   }
 }
 
@@ -45,8 +45,7 @@ export default function WhatsAppConnection() {
   const { activeClinicId, activeClinicRole } = useAppState();
   const queryClient = useQueryClient();
   const supabase = getSupabase();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [action, setAction] = useState<"idle" | "connecting" | "disconnecting">("idle");
   const signupRef = useRef<Partial<SignupData>>({});
 
   const { data: connection, isLoading } = useQuery({
@@ -64,25 +63,14 @@ export default function WhatsAppConnection() {
     enabled: !!activeClinicId && activeClinicRole === "superadmin",
   });
 
-  // Load Facebook SDK once
-  useEffect(() => {
-    window.fbAsyncInit = () => {
-      window.FB?.init({
-        appId: "2593115681091436",
-        autoLogAppEvents: true,
-        xfbml: true,
-        version: "v25.0",
-      });
-    };
-
-    if (!document.querySelector('script[src*="connect.facebook.net"]')) {
-      const script = document.createElement("script");
-      script.src = "https://connect.facebook.net/en_US/sdk.js";
-      script.async = true;
-      script.defer = true;
-      script.crossOrigin = "anonymous";
-      document.head.appendChild(script);
-    }
+  // Initialize Facebook SDK when script loads
+  const initFB = useCallback(() => {
+    window.FB?.init({
+      appId: "2593115681091436",
+      autoLogAppEvents: true,
+      xfbml: true,
+      version: "v25.0",
+    });
   }, []);
 
   // Send combined signup data to backend
@@ -106,7 +94,7 @@ export default function WhatsAppConnection() {
       } catch {
         toast.error("Failed to complete connection");
       } finally {
-        setIsConnecting(false);
+        setAction("idle");
         signupRef.current = {};
       }
     },
@@ -165,7 +153,7 @@ export default function WhatsAppConnection() {
       return;
     }
 
-    setIsConnecting(true);
+    setAction("connecting");
     signupRef.current = {};
 
     window.FB.login(
@@ -179,7 +167,7 @@ export default function WhatsAppConnection() {
           }
           // Otherwise the postMessage handler will call completeSignup when it fires
         } else {
-          setIsConnecting(false);
+          setAction("idle");
           signupRef.current = {};
           toast.error("WhatsApp connection was cancelled or failed");
         }
@@ -199,7 +187,7 @@ export default function WhatsAppConnection() {
 
   const handleDisconnect = useCallback(async () => {
     if (!activeClinicId) return;
-    setIsDisconnecting(true);
+    setAction("disconnecting");
     const { error } = await supabase
       .from("clinic_whatsapp_connections")
       .update({ status: "disconnected", updated_at: new Date().toISOString() })
@@ -213,7 +201,7 @@ export default function WhatsAppConnection() {
         queryKey: ["clinic", "whatsapp-connection", activeClinicId],
       });
     }
-    setIsDisconnecting(false);
+    setAction("idle");
   }, [activeClinicId, supabase, queryClient]);
 
   if (isLoading) {
@@ -229,8 +217,9 @@ export default function WhatsAppConnection() {
   const isConnected = connection?.status === "active";
 
   return (
-    <Card>
-      <CardHeader>
+    <>
+      <Card>
+        <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-green-600" />
           WhatsApp Business
@@ -274,16 +263,16 @@ export default function WhatsAppConnection() {
               <Button
                 variant="outline"
                 onClick={launchWhatsAppSignup}
-                disabled={isConnecting}
+                disabled={action === "connecting"}
               >
-                {isConnecting ? "Connecting..." : "Reconnect"}
+                {action === "connecting" ? "Connecting..." : "Reconnect"}
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleDisconnect}
-                disabled={isDisconnecting}
+                disabled={action === "disconnecting"}
               >
-                {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+                {action === "disconnecting" ? "Disconnecting..." : "Disconnect"}
               </Button>
             </div>
           </div>
@@ -295,13 +284,19 @@ export default function WhatsAppConnection() {
               Connect your WhatsApp Business Account to send review requests, bills, and
               prescriptions from your clinic&apos;s own number.
             </p>
-            <Button onClick={launchWhatsAppSignup} disabled={isConnecting}>
+            <Button onClick={launchWhatsAppSignup} disabled={action === "connecting"}>
               <MessageCircle className="mr-2 h-4 w-4" />
-              {isConnecting ? "Connecting..." : "Connect WhatsApp"}
+              {action === "connecting" ? "Connecting..." : "Connect WhatsApp"}
             </Button>
           </div>
         )}
       </CardContent>
     </Card>
+      <Script
+        src="https://connect.facebook.net/en_US/sdk.js"
+        strategy="afterInteractive"
+        onLoad={initFB}
+      />
+    </>
   );
 }

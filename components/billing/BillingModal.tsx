@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Edit, Printer, Download, MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import {
   Dialog,
   DialogContent,
@@ -209,26 +210,14 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
           toast.loading("Transmitting via WhatsApp...", { id: toastId });
 
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/whatsapp-messaging`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                type: "document",
-                to: patient.phone,
-                base64Pdf,
-                filename: `${filename}.pdf`,
-                caption: `Invoice from ${activeClinicName}`,
-                clinicId: activeClinicId,
-              }),
-            },
-          );
-
-          const result = await res.json();
+          const result = await sendWhatsAppMessage({
+            type: "document",
+            to: patient.phone,
+            base64Pdf,
+            filename: `${filename}.pdf`,
+            caption: `Invoice from ${activeClinicName}`,
+            clinicId: activeClinicId,
+          });
 
           if (result.success) {
             toast.success("Sent via WhatsApp successfully", { id: toastId });

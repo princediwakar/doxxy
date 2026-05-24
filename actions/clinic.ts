@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { DbClinicMemberInsert, DbClinicMemberUpdate, DbClinicUpdate } from '@/types/core';
+import type { DbClinicMemberInsert, DbClinicMemberUpdate, DbClinicUpdate, Json } from '@/types/core';
+import type { GooglePlaceData } from '@/types/google-places';
 
 export async function inviteClinicMember(data: DbClinicMemberInsert) {
   const supabase = await createServerSupabase();
@@ -46,9 +47,10 @@ export async function createDoctorForMember(params: {
   bio?: string;
   departmentId?: string;
   googlePlaceId?: string;
+  googlePlaceData?: GooglePlaceData;
 }) {
   const supabase = await createServerSupabase();
-  const { userId, clinicId, name, email, primarySpecialization, consultationFee, bio, googlePlaceId } = params;
+  const { userId, clinicId, name, email, primarySpecialization, consultationFee, bio, googlePlaceId, googlePlaceData } = params;
 
   const { error } = await supabase.from('doctors').insert({
     user_id: userId,
@@ -59,6 +61,7 @@ export async function createDoctorForMember(params: {
     phone: null,
     is_active: true,
     google_place_id: googlePlaceId || null,
+    google_place_data: (googlePlaceData ?? null) as unknown as Json | null,
   });
   if (error) return { error: error.message };
 
@@ -74,6 +77,7 @@ export async function createClinicWithAdmin(params: {
   phone?: string;
   website?: string;
   googlePlaceId?: string;
+  googlePlaceData?: GooglePlaceData;
   userId: string;
   departments: string[];
   isDoctor: boolean;
@@ -82,6 +86,7 @@ export async function createClinicWithAdmin(params: {
   selectedDepartment?: string;
   consultationFee?: number;
   doctorGooglePlaceId?: string;
+  doctorGooglePlaceData?: GooglePlaceData;
   userName?: string;
   userEmail?: string;
 }) {
@@ -107,6 +112,7 @@ export async function createClinicWithAdmin(params: {
       phone: params.phone || null,
       website: params.website || null,
       google_place_id: params.googlePlaceId || null,
+      google_place_data: (params.googlePlaceData ?? null) as unknown as Json | null,
       created_by: params.userId,
     })
     .eq('id', createdClinicId);
@@ -152,6 +158,7 @@ export async function createClinicWithAdmin(params: {
         consultation_fee: params.consultationFee || 0,
         bio: params.doctorBio,
         google_place_id: params.doctorGooglePlaceId || null,
+        google_place_data: (params.doctorGooglePlaceData ?? null) as unknown as Json | null,
         is_active: true,
       },
       { onConflict: 'user_id,clinic_id' },

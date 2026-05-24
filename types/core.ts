@@ -4,6 +4,7 @@
 
 import type { Database } from '@/integrations/supabase/types';
 import type { ConsultationMedication } from '@/lib/consultationNotesSchemas';
+import type { GooglePlaceData } from './google-places';
 
 // ============================================================================
 // APPLICATION USER TYPE (lean — only fields we actually use)
@@ -372,6 +373,7 @@ export interface CreateDoctorData {
   bio?: string;
   department_id?: string;
   google_place_id?: string;
+  google_place_data?: GooglePlaceData;
 }
 
 // ============================================================================

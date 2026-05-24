@@ -392,6 +392,7 @@ export type Database = {
           description: string | null
           email: string | null
           established_year: number | null
+          google_place_data: Json | null
           google_place_id: string | null
           id: string
           is_public: boolean | null
@@ -412,6 +413,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           established_year?: number | null
+          google_place_data?: Json | null
           google_place_id?: string | null
           id?: string
           is_public?: boolean | null
@@ -432,6 +434,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           established_year?: number | null
+          google_place_data?: Json | null
           google_place_id?: string | null
           id?: string
           is_public?: boolean | null
@@ -573,6 +576,7 @@ export type Database = {
           consultation_fee: number | null
           created_at: string | null
           email: string | null
+          google_place_data: Json | null
           google_place_id: string | null
           id: string
           is_active: boolean | null
@@ -589,6 +593,7 @@ export type Database = {
           consultation_fee?: number | null
           created_at?: string | null
           email?: string | null
+          google_place_data?: Json | null
           google_place_id?: string | null
           id?: string
           is_active?: boolean | null
@@ -605,6 +610,7 @@ export type Database = {
           consultation_fee?: number | null
           created_at?: string | null
           email?: string | null
+          google_place_data?: Json | null
           google_place_id?: string | null
           id?: string
           is_active?: boolean | null

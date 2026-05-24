@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
+import type { GooglePlaceData } from '@/types/google-places';
+import type { Json } from '@/types/core';
 
 export async function quickOnboardDoctor(params: {
   name: string;
@@ -15,6 +17,7 @@ export async function quickOnboardDoctor(params: {
   existingDoctorProfile: boolean;
   signature?: string;
   googlePlaceId?: string;
+  googlePlaceData?: GooglePlaceData;
 }) {
   const supabase = await createServerSupabase();
   const {
@@ -29,6 +32,7 @@ export async function quickOnboardDoctor(params: {
     existingDoctorProfile,
     signature,
     googlePlaceId,
+    googlePlaceData,
   } = params;
 
   const trimmedName = name.trim();
@@ -74,6 +78,7 @@ export async function quickOnboardDoctor(params: {
     is_active: true,
     signature: signature ?? null,
     google_place_id: googlePlaceId || null,
+    google_place_data: (googlePlaceData ?? null) as unknown as Json | null,
     updated_at: new Date().toISOString(),
   };
 

@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DbPatient, DbAppointment } from "@/types/core";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { UseFormReturn } from "react-hook-form";
 import type { ConsultationFormValues, FieldValue } from "@/types/consultation";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -186,26 +187,14 @@ export const ConsultationPreviewModal = ({
 
         toast.loading("Sending via WhatsApp...", { id: toastId });
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/whatsapp-messaging`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              type: "document",
-              to: patient.phone,
-              base64Pdf,
-              filename,
-              caption: `Consultation from ${doctorInfo.name || activeClinicName}`,
-              clinicId: activeClinicId,
-            }),
-          },
-        );
-
-        const result = await res.json();
+        const result = await sendWhatsAppMessage({
+          type: "document",
+          to: patient.phone,
+          base64Pdf,
+          filename,
+          caption: `Consultation from ${doctorInfo.name || activeClinicName}`,
+          clinicId: activeClinicId,
+        });
 
         if (result.success) {
           toast.success("Sent via WhatsApp", { id: toastId });

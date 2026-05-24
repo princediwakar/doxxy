@@ -17,6 +17,8 @@ import {
   Stethoscope,
   X,
 } from "lucide-react";
+import { GooglePlaceAutocomplete } from "@/components/ui/google-place-autocomplete";
+import type { GooglePlaceData } from "@/types/google-places";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     consultation_fee: '',
     signature: '',
     google_place_id: '',
+    google_place_data: undefined as GooglePlaceData | undefined,
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -85,6 +88,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         consultation_fee: existingDoctorProfile.consultation_fee?.toString() || '',
         signature: existingDoctorProfile.signature || '',
         google_place_id: existingDoctorProfile.google_place_id || '',
+        google_place_data: (existingDoctorProfile as Record<string, unknown>)['google_place_data'] as GooglePlaceData | undefined,
       }));
     }
   }, [profileData, existingDoctorProfile, user]);
@@ -140,6 +144,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         existingDoctorProfile: !!existingDoctorProfile,
         signature: formData.signature || undefined,
         googlePlaceId: formData.google_place_id || undefined,
+        googlePlaceData: formData.google_place_data,
       });
       if ('error' in result && result.error) {
         toast.error(result.error);
@@ -306,18 +311,25 @@ placeholder={"Dr. Firstname Lastname\nDegree 1, Degree 2 (Institution)\nSpecialt
             </p>
           </div>
 
-          {/* Google Place ID */}
+          {/* Google Place */}
           <div className="space-y-2">
-            <Label htmlFor="google_place_id" className="text-sm font-medium">
-              Google Place ID (Optional)
+            <Label htmlFor="google-place" className="text-sm font-medium">
+              Google Place (Optional)
             </Label>
-            <Input
-              id="google_place_id"
-              value={formData.google_place_id}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, google_place_id: e.target.value }));
+            <GooglePlaceAutocomplete
+              value={
+                formData.google_place_id && formData.google_place_data
+                  ? { place_id: formData.google_place_id, google_place_data: formData.google_place_data }
+                  : null
+              }
+              onChange={(selection) => {
+                setFormData(prev => ({
+                  ...prev,
+                  google_place_id: selection?.place_id ?? '',
+                  google_place_data: selection?.google_place_data,
+                }));
               }}
-              placeholder="ChIJ..."
+              placeholder="Search for your practice on Google Maps..."
             />
             <p className="text-xs text-muted-foreground">
               Used to generate Google review links for patients. Falls back to the clinic's Place ID if not set.

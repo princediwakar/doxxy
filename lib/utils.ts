@@ -157,3 +157,9 @@ export function renderGender(gender?: string | null, withIcon = false): string |
   if (g.startsWith('f')) return 'F';
   return gender;
 }
+
+export function normalizeIndianPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 10) return `91${digits}`;
+  return digits;
+}

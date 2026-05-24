@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAppState } from "@/contexts/AppStateContext";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { Eye, Printer, Download, MessageCircle } from "lucide-react";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import { ConsultationLayout } from "./ConsultationLayout";
@@ -301,26 +302,14 @@ export function ConsultationViewModal({
 
         toast.loading("Sending via WhatsApp...", { id: toastId });
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/whatsapp-messaging`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              type: "document",
-              to: patient.phone,
-              base64Pdf,
-              filename,
-              caption: `Consultation from ${doctorInfo.name || activeClinicName}`,
-              clinicId: activeClinicId,
-            }),
-          },
-        );
-
-        const result = await res.json();
+        const result = await sendWhatsAppMessage({
+          type: "document",
+          to: patient.phone,
+          base64Pdf,
+          filename,
+          caption: `Consultation from ${doctorInfo.name || activeClinicName}`,
+          clinicId: activeClinicId,
+        });
 
         if (result.success) {
           toast.success("Sent via WhatsApp", { id: toastId });

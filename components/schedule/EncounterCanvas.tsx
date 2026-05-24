@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Star, CheckCircle } from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
+import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
 import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
@@ -97,30 +98,19 @@ export function EncounterCanvas({
 
     setReviewState("sending");
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/whatsapp-messaging`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: "template",
-            to: patientPhone,
-            templateName: "review_request",
-            doctorId,
-            appointmentId: appointment?.id,
-            patientId,
-            clinicId: activeClinicId,
-            bodyParams: [
-              { type: "text", text: patientName },
-              { type: "text", text: doctorName },
-            ],
-          }),
-        },
-      );
-      const result = await res.json();
+      const result = await sendWhatsAppMessage({
+        type: "template",
+        to: patientPhone,
+        templateName: "review_request",
+        doctorId,
+        appointmentId: appointment?.id,
+        patientId,
+        clinicId: activeClinicId,
+        bodyParams: [
+          { type: "text", text: patientName },
+          { type: "text", text: doctorName },
+        ],
+      });
 
       if (result.success) {
         setReviewState("sent");

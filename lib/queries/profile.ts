@@ -18,7 +18,7 @@ export async function queryDoctorProfile(userId: string, clinicId: string) {
   const { data, error } = await supabase
     .from('doctors')
     .select(
-      'id, user_id, clinic_id, name, email, phone, bio, primary_specialization, consultation_fee, is_active, created_at, updated_at, signature, google_place_id',
+      'id, user_id, clinic_id, name, email, phone, bio, primary_specialization, consultation_fee, is_active, created_at, updated_at, signature, google_place_id, google_place_data',
     )
     .eq('user_id', userId)
     .eq('clinic_id', clinicId)

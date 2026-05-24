@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Mail, Stethoscope, Edit3, Trash2, Shield, UserCog, Users, Phone, Building2, X } from 'lucide-react';
+import { GooglePlaceAutocomplete } from "@/components/ui/google-place-autocomplete";
 import type { InviteMemberData, CreateDoctorData, MemberWithDetails, DepartmentWithDetails } from '@/types/core';
 import { ButtonLoader } from '@/components/ui/loading';
 import { UserRole } from '@/types/core';
@@ -187,8 +188,23 @@ export const CreateDoctorDialog = ({ open, onOpenChange, data, setData, onSubmit
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="doctor-google-place-id" className="text-sm font-medium">Google Place ID (Optional)</Label>
-          <Input id="doctor-google-place-id" value={data.google_place_id || ''} onChange={e => setData({...data, google_place_id: e.target.value})} placeholder="ChIJ..." />
+          <Label htmlFor="doctor-google-place" className="text-sm font-medium">Google Place (Optional)</Label>
+          <GooglePlaceAutocomplete
+            value={
+              data.google_place_id && data.google_place_data
+                ? { place_id: data.google_place_id, google_place_data: data.google_place_data }
+                : null
+            }
+            onChange={(selection) => {
+              setData({
+                ...data,
+                google_place_id: selection?.place_id ?? '',
+                google_place_data: selection?.google_place_data,
+              });
+            }}
+            placeholder="Search for the doctor's practice on Google Maps..."
+            disabled={isPending}
+          />
         </div>
       </div>
 

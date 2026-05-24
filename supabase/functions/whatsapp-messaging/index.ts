@@ -41,11 +41,15 @@ interface ClinicWhatsAppCredentials {
   token: string;
 }
 
-function normalizePhone(raw: string): string {
+function normalizeIndianPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   if (digits.length === 10) return `91${digits}`;
   return digits;
 }
+
+// ---------------------------------------------------------------------------
+// Database helpers
+// ---------------------------------------------------------------------------
 
 async function resolveClinicCredentials(
   supabase: ReturnType<typeof createClient>,
@@ -103,6 +107,10 @@ async function resolveReviewUrl(
   return `https://search.google.com/local/writereview?placeid=${clinic.google_place_id}`;
 }
 
+// ---------------------------------------------------------------------------
+// Media helpers
+// ---------------------------------------------------------------------------
+
 function base64ToUint8Array(base64: string): Uint8Array {
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
@@ -135,6 +143,10 @@ async function uploadMedia(
   }
   return data.id as string;
 }
+
+// ---------------------------------------------------------------------------
+// Message senders
+// ---------------------------------------------------------------------------
 
 async function sendDocumentMessage(
   phoneNumberId: string,
@@ -213,6 +225,78 @@ async function sendTemplateMessage(
   return data;
 }
 
+// ---------------------------------------------------------------------------
+// Review template handler — auto-constructs review URL, dedup, then sends
+// ---------------------------------------------------------------------------
+
+async function handleReviewTemplate(
+  supabase: ReturnType<typeof createClient> | null,
+  body: TemplateRequest,
+): Promise<{
+  buttonParams?: TemplateRequest["buttonParams"];
+  errorResponse?: Response;
+}> {
+  // Only auto-construct for review_request templates without explicit button params
+  if (body.templateName !== "review_request" || !body.doctorId || body.buttonParams) {
+    return { buttonParams: body.buttonParams };
+  }
+
+  if (!supabase) {
+    return {
+      errorResponse: new Response(
+        JSON.stringify({ success: false, error: "Server misconfiguration: missing Supabase credentials" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      ),
+    };
+  }
+
+  const reviewUrl = await resolveReviewUrl(supabase, body.doctorId);
+  if (!reviewUrl) {
+    return {
+      errorResponse: new Response(
+        JSON.stringify({ success: false, error: "No Google Place ID found for this doctor or clinic" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      ),
+    };
+  }
+
+  // Dedup: atomically insert before sending (UNIQUE on patient_id, google_place_id)
+  const placeId = new URL(reviewUrl).searchParams.get("placeid");
+  if (placeId && body.patientId) {
+    const { error: insertError } = await supabase
+      .from("review_requests")
+      .insert({
+        patient_id: body.patientId,
+        google_place_id: placeId,
+        appointment_id: body.appointmentId,
+      });
+
+    if (insertError) {
+      if (insertError.code === "23505") {
+        return {
+          errorResponse: new Response(
+            JSON.stringify({ success: false, code: "DUPLICATE_REVIEW_REQUEST", error: "Review request already sent to this patient for this place" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          ),
+        };
+      }
+      console.error("Failed to record review_request:", insertError);
+    }
+  }
+
+  return {
+    buttonParams: [{
+      sub_type: "url" as const,
+      index: "0",
+      parameters: [{ type: "text" as const, text: reviewUrl }],
+    }],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Main handler
+// ---------------------------------------------------------------------------
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -271,8 +355,9 @@ serve(async (req: Request) => {
       }
     }
 
-    const normalizedTo = normalizePhone(body.to);
+    const normalizedTo = normalizeIndianPhone(body.to);
 
+    // --- Document (PDF) ---
     if (body.type === "document") {
       if (!body.base64Pdf || !body.filename) {
         return new Response(
@@ -280,6 +365,7 @@ serve(async (req: Request) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+
       let pdfBytes: Uint8Array;
       try {
         pdfBytes = base64ToUint8Array(body.base64Pdf);
@@ -289,6 +375,7 @@ serve(async (req: Request) => {
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+
       const mediaId = await uploadMedia(phoneNumberId, token, pdfBytes, body.filename);
       const result = await sendDocumentMessage(phoneNumberId, token, normalizedTo, mediaId, body.filename, body.caption);
 
@@ -298,6 +385,7 @@ serve(async (req: Request) => {
       );
     }
 
+    // --- Template ---
     if (body.type === "template") {
       if (!body.templateName) {
         return new Response(
@@ -306,66 +394,12 @@ serve(async (req: Request) => {
         );
       }
 
-      let buttonParams = body.buttonParams;
-      let reviewUrl: string | null = null;
-
-      // Auto-construct review URL for review_request templates
-      if (body.templateName === "review_request" && body.doctorId && !buttonParams) {
-        if (!supabase) {
-          return new Response(
-            JSON.stringify({ success: false, error: "Server misconfiguration: missing Supabase credentials" }),
-            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
-        reviewUrl = await resolveReviewUrl(supabase, body.doctorId);
-        if (!reviewUrl) {
-          return new Response(
-            JSON.stringify({ success: false, error: "No Google Place ID found for this doctor or clinic" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
-        buttonParams = [
-          {
-            sub_type: "url" as const,
-            index: "0",
-            parameters: [{ type: "text" as const, text: reviewUrl }],
-          },
-        ];
-      }
-
-      // Dedup: atomically insert before sending. The UNIQUE constraint on
-      // (patient_id, google_place_id) guarantees only one request per patient per place.
-      let placeId: string | null = null;
-      if (body.patientId && reviewUrl && supabase) {
-        placeId = new URL(reviewUrl).searchParams.get("placeid");
-        if (placeId) {
-          const { error: insertError } = await supabase
-            .from("review_requests")
-            .insert({
-              patient_id: body.patientId,
-              google_place_id: placeId,
-              appointment_id: body.appointmentId,
-            });
-
-          if (insertError) {
-            if (insertError.code === "23505") {
-              return new Response(
-                JSON.stringify({ success: false, code: "DUPLICATE_REVIEW_REQUEST", error: "Review request already sent to this patient for this place" }),
-                { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-              );
-            }
-            console.error("Failed to record review_request:", insertError);
-          }
-        }
-      }
+      const { buttonParams, errorResponse } = await handleReviewTemplate(supabase, body);
+      if (errorResponse) return errorResponse;
 
       const result = await sendTemplateMessage(
-        phoneNumberId,
-        token,
-        normalizedTo,
-        body.templateName,
-        body.bodyParams,
-        buttonParams,
+        phoneNumberId, token, normalizedTo,
+        body.templateName, body.bodyParams, buttonParams,
       );
 
       return new Response(
