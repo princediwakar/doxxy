@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION public.get_appointments_with_details_by_clinic(clinic_id uuid, filter_doctor_id uuid DEFAULT NULL)
- RETURNS TABLE(id text, patient_id text, doctor_id text, date text, "time" text, type appointment_type, status appointment_status, notes text, created_at text, patient_name text, doctor_name text, department_name text, user_id text, doctor_avatar_url text, patient_gender text, patient_age smallint, review_request_sent boolean)
+ RETURNS TABLE(id text, patient_id text, doctor_id text, date text, "time" text, type appointment_type, status appointment_status, notes text, created_at text, patient_name text, doctor_name text, department_name text, user_id text, doctor_avatar_url text, patient_gender text, patient_age integer, review_request_sent boolean)
  LANGUAGE plpgsql
  SECURITY DEFINER
 AS $function$
