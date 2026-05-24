@@ -1,3 +1,4 @@
+// Path: components/ui/google-place-autocomplete.tsx
 "use client";
 
 import * as React from "react";

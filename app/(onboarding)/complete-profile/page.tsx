@@ -1,4 +1,4 @@
-// File: app/(app)/complete-profile/page.tsx
+// app/(onboarding)/complete-profile/page.tsx
 "use client";
 import { logger } from "@/lib/logger";
 

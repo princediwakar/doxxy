@@ -1,3 +1,4 @@
+// Path: app/(onboarding)/create-clinic/page.tsx
 "use client";
 
 import * as React from "react";
@@ -245,22 +246,80 @@ const CreateClinicPage = () => {
       <div className="w-full max-w-md medical-card p-6 border-4 border-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-2 text-center text-foreground">Create New Clinic</h1>
         <div className="text-center mb-2">
-          <Link href="/help/superadmin" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
+          <Link href="/help/superadmin"  className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline">
             Need help? Read our guide
           </Link>
         </div>
         <StepIndicator step={step} />
         
-        {/* Step 1: Clinic Details */}
+     {/* Step 1: Clinic Details */}
         {step === 1 && (
           <Form {...detailsForm}>
             <form onSubmit={detailsForm.handleSubmit(handleNext)} className="space-y-6">
+              
+              {/* 1. MOVED TO TOP: Google Place Search is now the primary action */}
+              <FormField
+                control={detailsForm.control}
+                name="google_place_id"
+                render={({ field }) => {
+                  const placeData = detailsForm.watch('google_place_data');
+                  return (
+                    <FormItem>
+                      <FormLabel className="text-primary font-semibold text-base">Search for your clinic</FormLabel>
+                      <p className="text-xs text-muted-foreground mb-2 mt-0">We'll auto-fill your details if we find it.</p>
+                      <FormControl>
+                        <GooglePlaceAutocomplete
+                          value={
+                            field.value && placeData
+                              ? { place_id: field.value, google_place_data: placeData }
+                              : null
+                          }
+                          onChange={(selection) => {
+                            field.onChange(selection?.place_id ?? '');
+                            detailsForm.setValue('google_place_data', selection?.google_place_data ?? undefined);
+                            
+                            if (selection?.google_place_data) {
+                              const data = selection.google_place_data;
+                              
+                              // 2. AGGRESSIVE AUTO-FILL: Use everything the API gives us
+                              if (data.displayName) {
+                                detailsForm.setValue('name', data.displayName, { shouldValidate: true });
+                              }
+                              if (data.formattedAddress) {
+                                detailsForm.setValue('address', data.formattedAddress, { shouldValidate: true });
+                              }
+                              if (data.nationalPhoneNumber) {
+                                // Strip formatting spaces/hyphens so it fits a clean tel input
+                                detailsForm.setValue('phone', data.nationalPhoneNumber.replace(/[^\d+]/g, ''), { shouldValidate: true });
+                              }
+                              if (data.websiteURI) {
+                                detailsForm.setValue('website', data.websiteURI, { shouldValidate: true });
+                              }
+                            }
+                          }}
+                          placeholder="Search on Google Maps..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+
+              {/* 3. VISUAL DIVIDER: Establish that manual entry is the fallback */}
+              <div className="relative flex items-center py-2">
+                <div className="flex-grow border-t border-muted"></div>
+                <span className="flex-shrink-0 mx-4 text-xs text-muted-foreground uppercase tracking-wider">Or enter manually</span>
+                <div className="flex-grow border-t border-muted"></div>
+              </div>
+
+              {/* MANUAL FIELDS */}
               <FormField
                 control={detailsForm.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Clinic Name</FormLabel>
+                    <FormLabel>Clinic Name *</FormLabel>
                     <FormControl>
                       <Input placeholder="Neurovision" {...field} />
                     </FormControl>
@@ -281,32 +340,34 @@ const CreateClinicPage = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={detailsForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Clinic Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="email@clinic.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={detailsForm.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Clinic Phone</FormLabel>
-                    <FormControl>
-                      <Input type="tel" placeholder="9876543210" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={detailsForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Clinic Phone</FormLabel>
+                      <FormControl>
+                        <Input type="tel" placeholder="9876543210" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={detailsForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Clinic Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="email@clinic.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={detailsForm.control}
                 name="website"
@@ -320,46 +381,13 @@ const CreateClinicPage = () => {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={detailsForm.control}
-                name="google_place_id"
-                render={({ field }) => {
-                  const placeData = detailsForm.watch('google_place_data');
-                  return (
-                    <FormItem>
-                      <FormLabel>Google Place (Optional)</FormLabel>
-                      <FormControl>
-                        <GooglePlaceAutocomplete
-                          value={
-                            field.value && placeData
-                              ? { place_id: field.value, google_place_data: placeData }
-                              : null
-                          }
-                          onChange={(selection) => {
-                            field.onChange(selection?.place_id ?? '');
-                            detailsForm.setValue('google_place_data', selection?.google_place_data ?? undefined);
-                            if (selection) {
-                              const currentAddress = detailsForm.getValues('address');
-                              if (!currentAddress || currentAddress === '') {
-                                detailsForm.setValue('address', selection.google_place_data.formattedAddress);
-                              }
-                            }
-                          }}
-                          placeholder="Search for your clinic on Google Maps..."
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-              <Button type="submit" className="w-full" disabled={detailsForm.formState.isSubmitting}>
+              
+              <Button type="submit" className="w-full mt-6" disabled={detailsForm.formState.isSubmitting}>
                 Next: Select Departments
               </Button>
             </form>
           </Form>
         )}
-
         {/* Step 2: Departments */}
         {step === 2 && (
           <Form {...departmentsForm}>
@@ -537,7 +565,7 @@ const CreateClinicPage = () => {
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="500"
+                              placeholder="350"
                               min="0"
                               step="50"
                               ref={field.ref}

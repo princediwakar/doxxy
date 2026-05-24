@@ -1,3 +1,4 @@
+// components/doctor/DoctorProfilePrompt.tsx
 "use client";
 
 import { useState } from "react";

@@ -1,3 +1,4 @@
+// types/google-places.ts
 import { z } from "zod";
 
 export const googlePlaceDataSchema = z.object({

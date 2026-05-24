@@ -1,16 +1,9 @@
-import type { Metadata } from 'next';
+// Path: app/(onboarding)/layout.tsx
 import { redirect } from 'next/navigation';
 import { getAuthenticatedUser, getUserClinics, getProfileName, getActiveClinic, isProfileComplete } from '@/lib/auth-server';
-import LayoutServer from '@/components/LayoutServer';
+import { OnboardingWrapper } from './OnboardingWrapper';
 
-export const metadata: Metadata = {
-  robots: {
-    index: false,
-    follow: false,
-  },
-};
-
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function OnboardingLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthenticatedUser();
 
   const [clinics, profileName, activeClinic, profileComplete] = await Promise.all([
@@ -20,21 +13,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isProfileComplete(user.id),
   ]);
 
-  if (!profileComplete) {
-    redirect('/complete-profile');
-  }
-  if (clinics.length === 0) {
-    redirect('/create-clinic');
+  if (profileComplete && clinics.length > 0) {
+    redirect('/schedule');
   }
 
   return (
-    <LayoutServer
+    <OnboardingWrapper
       serverUser={user}
       serverClinics={clinics}
       serverProfileName={profileName}
       serverActiveClinicId={activeClinic?.clinic_id ?? null}
     >
       {children}
-    </LayoutServer>
+    </OnboardingWrapper>
   );
 }
