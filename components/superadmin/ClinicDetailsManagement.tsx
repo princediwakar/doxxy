@@ -13,13 +13,13 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { type DbClinic } from "@/types/core";
 import { z } from "zod";
-import { 
-  Building, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Globe, 
-  Save, 
+import {
+  Building,
+  Mail,
+  Phone,
+  MapPin,
+  Globe,
+  Save,
   Settings,
   CheckCircle,
   AlertCircle
@@ -32,13 +32,14 @@ const clinicDetailsSchema = z.object({
   phone: z.string().min(1, "Phone number is required").regex(/^[+\-\s\d()]+$/, "Invalid phone format"),
   website: z.string().optional().or(z.literal("")).refine((val) => {
     if (!val || val === "") return true; // Empty is allowed
-    
+
     // Allow common website patterns without being too strict
     const websitePattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
     const domainPattern = /^[\da-z.-]+\.([a-z.]{2,6})$/i;
-    
+
     return websitePattern.test(val) || domainPattern.test(val);
   }, { message: "Please enter a valid website (e.g., example.com or https://example.com)" }),
+  google_place_id: z.string().optional().or(z.literal("")),
 });
 
 type ClinicDetailsForm = z.infer<typeof clinicDetailsSchema>;
@@ -76,6 +77,7 @@ const ClinicDetailsManagement = () => {
     email: "",
     phone: "",
     website: "",
+    google_place_id: "",
   });
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -89,6 +91,7 @@ const ClinicDetailsManagement = () => {
         email: clinicData.email || "",
         phone: clinicData.phone || "",
         website: clinicData.website || "",
+        google_place_id: clinicData.google_place_id || "",
       };
       setForm(initialForm);
       setHasUnsavedChanges(false);
@@ -318,6 +321,22 @@ const ClinicDetailsManagement = () => {
                       {getFieldError('website')}
                     </p>
                   )}
+                </div>
+
+                {/* Google Place ID */}
+                <div className="space-y-2">
+                  <label className="flex items-center text-sm font-medium">
+                    <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                    Google Place ID (Optional)
+                  </label>
+                  <Input
+                    name="google_place_id"
+                    type="text"
+                    value={form.google_place_id}
+                    onChange={handleChange}
+                    disabled={isUpdating}
+                    placeholder="ChIJ..."
+                  />
                 </div>
               </div>
 

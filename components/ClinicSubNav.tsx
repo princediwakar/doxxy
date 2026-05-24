@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { IndianRupee, Users, Building2, Building, Wallet } from "lucide-react";
+import { IndianRupee, Users, Building2, Building, Wallet, MessageCircle } from "lucide-react";
 
 const subNavItems = [
   { icon: IndianRupee, label: "Financials", path: "/clinic/financials" },
@@ -10,6 +10,7 @@ const subNavItems = [
   { icon: Building2, label: "Departments", path: "/clinic/departments" },
   { icon: Building, label: "About", path: "/clinic/about" },
   { icon: Wallet, label: "Payments", path: "/clinic/payments" },
+  { icon: MessageCircle, label: "WhatsApp", path: "/clinic/whatsapp" },
 ];
 
 export default function ClinicSubNav() {

@@ -45,9 +45,10 @@ export async function createDoctorForMember(params: {
   consultationFee?: number;
   bio?: string;
   departmentId?: string;
+  googlePlaceId?: string;
 }) {
   const supabase = await createServerSupabase();
-  const { userId, clinicId, name, email, primarySpecialization, consultationFee, bio } = params;
+  const { userId, clinicId, name, email, primarySpecialization, consultationFee, bio, googlePlaceId } = params;
 
   const { error } = await supabase.from('doctors').insert({
     user_id: userId,
@@ -57,6 +58,7 @@ export async function createDoctorForMember(params: {
     primary_specialization: primarySpecialization || null,
     phone: null,
     is_active: true,
+    google_place_id: googlePlaceId || null,
   });
   if (error) return { error: error.message };
 
@@ -71,6 +73,7 @@ export async function createClinicWithAdmin(params: {
   email?: string;
   phone?: string;
   website?: string;
+  googlePlaceId?: string;
   userId: string;
   departments: string[];
   isDoctor: boolean;
@@ -78,6 +81,7 @@ export async function createClinicWithAdmin(params: {
   doctorPhone?: string;
   selectedDepartment?: string;
   consultationFee?: number;
+  doctorGooglePlaceId?: string;
   userName?: string;
   userEmail?: string;
 }) {
@@ -102,6 +106,7 @@ export async function createClinicWithAdmin(params: {
       email: params.email || null,
       phone: params.phone || null,
       website: params.website || null,
+      google_place_id: params.googlePlaceId || null,
       created_by: params.userId,
     })
     .eq('id', createdClinicId);
@@ -146,6 +151,7 @@ export async function createClinicWithAdmin(params: {
         primary_specialization: null,
         consultation_fee: params.consultationFee || 0,
         bio: params.doctorBio,
+        google_place_id: params.doctorGooglePlaceId || null,
         is_active: true,
       },
       { onConflict: 'user_id,clinic_id' },

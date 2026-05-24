@@ -165,7 +165,7 @@ export const ConsultationSignatureFooter: React.FC<{
   if (!signature) return null;
   
   return (
-    <div className="w-[250px] mt-4 pt-4 border-t border-border print:mt-4 print:pt-2 break-inside-avoid">
+    <div id="signature-footer" className="w-[250px] mt-4 pt-4 border-t border-border print:mt-4 print:pt-2 break-inside-avoid">
       <div className="text-left">
         
         <div className="text-sm text-foreground whitespace-pre-line leading-relaxed font-semibold">

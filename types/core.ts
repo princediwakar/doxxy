@@ -371,6 +371,7 @@ export interface CreateDoctorData {
   consultation_fee?: number;
   bio?: string;
   department_id?: string;
+  google_place_id?: string;
 }
 
 // ============================================================================

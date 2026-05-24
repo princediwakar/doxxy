@@ -185,6 +185,11 @@ export const CreateDoctorDialog = ({ open, onOpenChange, data, setData, onSubmit
           <Label htmlFor="doctor-specialization" className="text-sm font-medium">Medical Specialization</Label>
           <Input id="doctor-specialization" value={data.primary_specialization} onChange={e => setData({...data, primary_specialization: e.target.value})} placeholder="e.g., Cardiology, Neurology, General Medicine" />
         </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="doctor-google-place-id" className="text-sm font-medium">Google Place ID (Optional)</Label>
+          <Input id="doctor-google-place-id" value={data.google_place_id || ''} onChange={e => setData({...data, google_place_id: e.target.value})} placeholder="ChIJ..." />
+        </div>
       </div>
 
       <div className="flex justify-end space-x-3 pt-4">

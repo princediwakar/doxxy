@@ -1,0 +1,307 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/loading";
+import { useAppState } from "@/contexts/AppStateContext";
+import { getSupabase } from "@/integrations/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { MessageCircle, CheckCircle } from "lucide-react";
+
+declare global {
+  interface Window {
+    FB?: {
+      init: (params: Record<string, unknown>) => void;
+      login: (
+        cb: (r: { authResponse?: { code: string } }) => void,
+        opts: Record<string, unknown>,
+      ) => void;
+    };
+    fbAsyncInit?: () => void;
+  }
+}
+
+interface WhatsAppConnectionRow {
+  id: string;
+  waba_id: string;
+  phone_number_id: string;
+  display_phone_number: string | null;
+  status: "active" | "expired" | "disconnected";
+  quality_rating: string | null;
+  created_at: string;
+}
+
+interface SignupData {
+  code: string;
+  waba_id: string;
+  phone_number_id: string;
+  business_id: string;
+}
+
+export default function WhatsAppConnection() {
+  const { activeClinicId, activeClinicRole } = useAppState();
+  const queryClient = useQueryClient();
+  const supabase = getSupabase();
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const signupRef = useRef<Partial<SignupData>>({});
+
+  const { data: connection, isLoading } = useQuery({
+    queryKey: ["clinic", "whatsapp-connection", activeClinicId],
+    queryFn: async () => {
+      if (!activeClinicId) return null;
+      const { data, error } = await supabase
+        .from("clinic_whatsapp_connections")
+        .select("id, waba_id, phone_number_id, display_phone_number, status, quality_rating, created_at")
+        .eq("clinic_id", activeClinicId)
+        .maybeSingle();
+      if (error || !data) return null;
+      return data as WhatsAppConnectionRow;
+    },
+    enabled: !!activeClinicId && activeClinicRole === "superadmin",
+  });
+
+  // Load Facebook SDK once
+  useEffect(() => {
+    window.fbAsyncInit = () => {
+      window.FB?.init({
+        appId: "2593115681091436",
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: "v25.0",
+      });
+    };
+
+    if (!document.querySelector('script[src*="connect.facebook.net"]')) {
+      const script = document.createElement("script");
+      script.src = "https://connect.facebook.net/en_US/sdk.js";
+      script.async = true;
+      script.defer = true;
+      script.crossOrigin = "anonymous";
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  // Send combined signup data to backend
+  const completeSignup = useCallback(
+    async (data: SignupData) => {
+      try {
+        const res = await fetch("/api/whatsapp/embedded-signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (result.success) {
+          toast.success("WhatsApp connected successfully");
+          queryClient.invalidateQueries({
+            queryKey: ["clinic", "whatsapp-connection", activeClinicId],
+          });
+        } else {
+          toast.error(result.error || "Failed to connect WhatsApp");
+        }
+      } catch {
+        toast.error("Failed to complete connection");
+      } finally {
+        setIsConnecting(false);
+        signupRef.current = {};
+      }
+    },
+    [activeClinicId, queryClient],
+  );
+
+  // Listen for Embedded Signup postMessage FINISH event (waba_id, phone_number_id)
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (
+        event.origin !== "https://www.facebook.com" &&
+        event.origin !== "https://web.facebook.com"
+      )
+        return;
+
+      let data: {
+        type?: string;
+        event?: string;
+        data?: { waba_id?: string; phone_number_id?: string; business_id?: string };
+      };
+      try {
+        data = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (data.type === "WA_EMBEDDED_SIGNUP" && data.event === "FINISH") {
+        const { waba_id, phone_number_id, business_id } = data.data || {};
+        signupRef.current = {
+          ...signupRef.current,
+          waba_id: waba_id || "",
+          phone_number_id: phone_number_id || "",
+          business_id: business_id || "",
+        };
+
+        // If FB.login callback already gave us the code, complete now
+        if (signupRef.current.code && signupRef.current.waba_id && signupRef.current.phone_number_id) {
+          completeSignup(signupRef.current as SignupData);
+        }
+      }
+    };
+
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [completeSignup]);
+
+  const launchWhatsAppSignup = useCallback(() => {
+    if (!window.FB) {
+      toast.error("Facebook SDK not loaded. Please refresh the page.");
+      return;
+    }
+
+    const configId = process.env.NEXT_PUBLIC_WHATSAPP_CONFIG_ID;
+    if (!configId) {
+      toast.error("WhatsApp Embedded Signup is not configured yet");
+      return;
+    }
+
+    setIsConnecting(true);
+    signupRef.current = {};
+
+    window.FB.login(
+      (response) => {
+        if (response.authResponse?.code) {
+          signupRef.current.code = response.authResponse.code;
+
+          // If postMessage already gave us waba_id and phone_number_id, complete now
+          if (signupRef.current.waba_id && signupRef.current.phone_number_id) {
+            completeSignup(signupRef.current as SignupData);
+          }
+          // Otherwise the postMessage handler will call completeSignup when it fires
+        } else {
+          setIsConnecting(false);
+          signupRef.current = {};
+          toast.error("WhatsApp connection was cancelled or failed");
+        }
+      },
+      {
+        config_id: configId,
+        response_type: "code",
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          featureType: "",
+          sessionInfoVersion: "3",
+        },
+      },
+    );
+  }, [completeSignup]);
+
+  const handleDisconnect = useCallback(async () => {
+    if (!activeClinicId) return;
+    setIsDisconnecting(true);
+    const { error } = await supabase
+      .from("clinic_whatsapp_connections")
+      .update({ status: "disconnected", updated_at: new Date().toISOString() })
+      .eq("clinic_id", activeClinicId);
+
+    if (error) {
+      toast.error("Failed to disconnect");
+    } else {
+      toast.success("WhatsApp disconnected");
+      queryClient.invalidateQueries({
+        queryKey: ["clinic", "whatsapp-connection", activeClinicId],
+      });
+    }
+    setIsDisconnecting(false);
+  }, [activeClinicId, supabase, queryClient]);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Spinner size="md" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const isConnected = connection?.status === "active";
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MessageCircle className="h-5 w-5 text-green-600" />
+          WhatsApp Business
+        </CardTitle>
+        <CardDescription>
+          Connect your clinic&apos;s WhatsApp Business Account to send messages from your own
+          number. Patients will see your clinic&apos;s name and number on all messages.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isConnected ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Status</p>
+                <Badge className="mt-1 bg-green-100 text-green-700 hover:bg-green-100">
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  Connected
+                </Badge>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Phone Number</p>
+                <p className="mt-1 text-lg font-semibold">
+                  {connection.display_phone_number || "Unknown"}
+                </p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Quality Rating</p>
+                <p className="mt-1 font-medium">
+                  {connection.quality_rating || "Pending"}
+                </p>
+              </div>
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Connected Since</p>
+                <p className="mt-1 font-medium">
+                  {new Date(connection.created_at).toLocaleDateString()}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={launchWhatsAppSignup}
+                disabled={isConnecting}
+              >
+                {isConnecting ? "Connecting..." : "Reconnect"}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDisconnect}
+                disabled={isDisconnecting}
+              >
+                {isDisconnecting ? "Disconnecting..." : "Disconnect"}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg border p-6 text-center">
+            <MessageCircle className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
+            <h3 className="text-lg font-semibold mb-1">Not Connected</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Connect your WhatsApp Business Account to send review requests, bills, and
+              prescriptions from your clinic&apos;s own number.
+            </p>
+            <Button onClick={launchWhatsAppSignup} disabled={isConnecting}>
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {isConnecting ? "Connecting..." : "Connect WhatsApp"}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

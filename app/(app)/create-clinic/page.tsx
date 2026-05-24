@@ -41,13 +41,14 @@ const clinicDetailsSchema = z.object({
   phone: z.string().optional(),
   website: z.string().optional().or(z.literal("")).refine((val) => {
     if (!val || val === "") return true; // Empty is allowed
-    
+
     // Allow common website patterns without being too strict
     const websitePattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
     const domainPattern = /^[\da-z.-]+\.([a-z.]{2,6})$/i;
-    
+
     return websitePattern.test(val) || domainPattern.test(val);
   }, { message: "Please enter a valid website (example.com or https://example.com)" }),
+  google_place_id: z.string().optional(),
 });
 
 type ClinicDetailsForm = z.infer<typeof clinicDetailsSchema>;
@@ -73,6 +74,7 @@ const doctorProfileSchema = z.object({
     }
   }),
   consultationFee: z.coerce.number().min(0).optional(),
+  google_place_id: z.string().optional(),
 });
 type DoctorProfileForm = z.infer<typeof doctorProfileSchema>;
 
@@ -102,6 +104,7 @@ const CreateClinicPage = () => {
     email: "",
     phone: "",
     website: "",
+    google_place_id: "",
   });
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -111,6 +114,7 @@ const CreateClinicPage = () => {
     phone: '',
     selectedDepartment: '',
     consultationFee: 0,
+    google_place_id: '',
   };
 
   // Fetch department types
@@ -192,6 +196,7 @@ const CreateClinicPage = () => {
         email: clinicDetails.email,
         phone: clinicDetails.phone,
         website: clinicDetails.website,
+        googlePlaceId: clinicDetails.google_place_id || undefined,
         userId: user.id,
         userPhone: user.phone,
         departments: departmentsForm.getValues('departments'),
@@ -200,6 +205,7 @@ const CreateClinicPage = () => {
         doctorPhone: data.phone,
         selectedDepartment: data.selectedDepartment,
         consultationFee: data.consultationFee,
+        doctorGooglePlaceId: data.google_place_id || undefined,
         userName: user.user_metadata?.name,
         userEmail: user.email,
       });
@@ -300,6 +306,19 @@ const CreateClinicPage = () => {
                     <FormLabel>Website</FormLabel>
                     <FormControl>
                       <Input type="text" placeholder="www.clinic.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={detailsForm.control}
+                name="google_place_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Google Place ID (Optional)</FormLabel>
+                    <FormControl>
+                      <Input type="text" placeholder="ChIJ..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -506,6 +525,21 @@ const CreateClinicPage = () => {
                               }}
                               onBlur={field.onBlur}
                             />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Google Place ID */}
+                    <FormField
+                      control={doctorForm.control}
+                      name="google_place_id"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Google Place ID (Optional)</FormLabel>
+                          <FormControl>
+                            <Input type="text" placeholder="ChIJ..." {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

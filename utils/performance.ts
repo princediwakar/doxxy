@@ -78,7 +78,6 @@ class PerformanceMonitor {
         case '/patients':
           await Promise.all([
             import('@/components/patients/PatientModal'),
-            import('@/lib/pdfExport')
           ]);
           break;
           
@@ -99,7 +98,6 @@ class PerformanceMonitor {
         case '/billing':
           await Promise.all([
             import('@/components/billing/BillingModal'),
-            import('@/lib/pdfExport')
           ]);
           break;
       }

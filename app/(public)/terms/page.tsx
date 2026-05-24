@@ -98,7 +98,7 @@ export default function TermsPage() {
     <div className="font-sans antialiased text-foreground">
       <TermsHeader
         title="Terms of Service for Doxxy"
-        effectiveDate="08-06-2025"
+        effectiveDate="24-05-2026"
       />
 
       <TermsSection title="1. Acceptance of Terms">
@@ -114,6 +114,8 @@ export default function TermsPage() {
         <li>You must ensure that all information entered into the system is accurate, up-to-date, and maintained as part of proper medical records.</li>
         <li>You must not use the Service to store or transmit infringing, libelous, or unlawful content.</li>
         <li>You must not disrupt or compromise the system's integrity, performance, or security.</li>
+        <li>When using WhatsApp messaging features, you must comply with Meta's <a href="https://www.whatsapp.com/legal/business-policy" className="underline" target="_blank" rel="noopener noreferrer">WhatsApp Business Messaging Policy</a> and must not send marketing, promotional, or unsolicited messages. Only transactional, healthcare-related messages are permitted.</li>
+        <li>You must honour patient opt-out requests for WhatsApp communication immediately and must not attempt to circumvent rate limits or duplicate-message protections.</li>
       </TermsSection>
 
       <TermsSection title="4. Account Responsibilities">
@@ -121,7 +123,7 @@ export default function TermsPage() {
       </TermsSection>
 
       <TermsSection title="5. Data Rights and Ownership">
-        All patient and clinical data entered by your organization remains your property. Doxxy acts as a data processor and provides tools for management, access, and retrieval. You are solely responsible for obtaining consent, ensuring legal basis for data collection, and honoring patient data rights under applicable data protection laws.
+        All patient and clinical data entered by your organization — including Google Place IDs you associate with clinics or doctors, patient WhatsApp consent and opt-out preferences, and WhatsApp Business Account credentials you connect via Embedded Signup — remains your property. Doxxy acts as a data processor and provides tools for management, access, and retrieval. You are solely responsible for obtaining patient consent for WhatsApp communication (including an opt-in mechanism), ensuring legal basis for all data collection, and honoring patient data rights under applicable data protection laws.
       </TermsSection>
 
       <TermsSection title="6. Subscriptions, Billing, and Payment" isList>
@@ -144,26 +146,38 @@ export default function TermsPage() {
       </TermsSection>
 
       <TermsSection title="10. Confidentiality and Data Protection">
-        All medical and patient information is considered strictly confidential. We implement encryption, access controls, and audit logging. Our handling of data complies with our Privacy Policy and relevant laws including GDPR (EU), and DPDP (India).
+        All medical and patient information is considered strictly confidential. We implement encryption at rest and in transit, access controls, and audit logging. When WhatsApp messaging is enabled, patient phone numbers, names, doctor names, and PDF summaries are transmitted to Meta's WhatsApp Cloud API for message delivery; this transmission is encrypted in transit but is no longer under Doxxy's control once received by Meta. Our handling of data complies with our Privacy Policy and relevant laws including GDPR (EU) and DPDP (India).
       </TermsSection>
 
-      <TermsSection title="11. Third-party Integrations">
-        The platform may offer integrations with third-party services (e.g., payment gateways, diagnostic labs). We are not liable for data loss, security breaches, or issues arising from such external services. Usage of third-party tools is subject to their respective terms and policies.
+      <TermsSection title="11. Third-party Integrations" isList>
+        <li>The platform offers integrations with third-party services including but not limited to Meta's WhatsApp Cloud API (for messaging) and Google's Places API (for location autocomplete and Place ID resolution). We are not liable for data loss, security breaches, or service interruptions arising from these external services.</li>
+        <li>WhatsApp messaging usage is subject to Meta's <a href="https://www.whatsapp.com/legal/business-policy" className="underline" target="_blank" rel="noopener noreferrer">WhatsApp Business Messaging Policy</a>, <a href="https://developers.facebook.com/policy" className="underline" target="_blank" rel="noopener noreferrer">Meta Platform Policies</a>, and the <a href="https://www.facebook.com/legal/terms/Meta-SP-BM" className="underline" target="_blank" rel="noopener noreferrer">Meta Business Tools Terms</a>.</li>
+        <li>Google Places usage is subject to <a href="https://cloud.google.com/maps-platform/terms" className="underline" target="_blank" rel="noopener noreferrer">Google Maps Platform Terms of Service</a> and <a href="https://policies.google.com/privacy" className="underline" target="_blank" rel="noopener noreferrer">Google Privacy Policy</a>.</li>
+        <li>When you connect your WhatsApp Business Account via Meta Embedded Signup, you authorize Doxxy to send messages on your behalf using your WhatsApp Business number. You are responsible for maintaining your WhatsApp Business Account in good standing with Meta and for any messages sent from your number.</li>
       </TermsSection>
 
-      <TermsSection title="12. Limitation of Liability">
-        Doxxy is not responsible for indirect, incidental, or consequential damages, including but not limited to data loss, service interruptions, or reputational harm. Our total liability under these Terms will not exceed the fees paid by you in the preceding six months of the claim.
+      <TermsSection title="12. WhatsApp Messaging Terms" isList>
+        <li><strong>Patient Consent Required:</strong> You must obtain explicit consent from patients before sending them WhatsApp messages through Doxxy. The platform provides consent tracking fields (<code>whatsapp_consent</code>) that you are responsible for populating accurately.</li>
+        <li><strong>Opt-Out Compliance:</strong> When a patient opts out of WhatsApp communication (by replying "Stop" or using the "Stop reminders" button), Doxxy automatically updates their opt-out preference. You must not manually override or circumvent these opt-out preferences.</li>
+        <li><strong>Message Content:</strong> WhatsApp messages sent through Doxxy are limited to transactional healthcare communications — bills (as PDF invoices), consultation summaries, and post-appointment review requests. Marketing, promotional content, or unsolicited bulk messaging is strictly prohibited.</li>
+        <li><strong>Rate Limiting:</strong> The platform enforces a 90-day cooldown between review requests per patient and prevents duplicate review requests to the same Google Place ID. You must not attempt to bypass these protections.</li>
+        <li><strong>Google Review Links:</strong> Review links are generated from Google Place IDs you provide. You are responsible for ensuring the Place ID is accurate, corresponds to the correct clinic or doctor, and complies with Google's policies regarding review solicitation.</li>
+        <li><strong>WhatsApp Business Account:</strong> Each clinic connects its own WhatsApp Business Account via Meta Embedded Signup. You are responsible for keeping your WhatsApp Business Account compliant with Meta's policies, maintaining your WABA in good standing, and understanding that message quality ratings and any Meta-imposed restrictions apply to your number.</li>
       </TermsSection>
 
-      <TermsSection title="13. Indemnification">
+      <TermsSection title="13. Limitation of Liability">
+        Doxxy is not responsible for indirect, incidental, or consequential damages, including but not limited to data loss, service interruptions, message delivery failures caused by Meta's WhatsApp Cloud API or Google's Places API, or reputational harm. Our total liability under these Terms will not exceed the fees paid by you in the preceding six months of the claim.
+      </TermsSection>
+
+      <TermsSection title="14. Indemnification">
         You agree to indemnify and hold harmless Doxxy, its directors, employees, and partners from any claims, damages, or legal actions arising from your breach of these Terms, violation of any law, or misuse of the platform.
       </TermsSection>
 
-      <TermsSection title="14. Governing Law and Jurisdiction">
+      <TermsSection title="15. Governing Law and Jurisdiction">
         These Terms are governed by the laws of India. All disputes will be subject to the exclusive jurisdiction of courts located in Mumbai, Maharashtra, regardless of your location or country of operation.
       </TermsSection>
 
-      <TermsSection title="15. Updates to the Terms">
+      <TermsSection title="16. Updates to the Terms">
         We may revise these Terms at any time. If material changes are made, we will notify you through the Service or via your registered email. Continued use after changes constitutes acceptance of the updated Terms.
       </TermsSection>
 

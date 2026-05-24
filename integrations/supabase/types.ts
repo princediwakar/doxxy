@@ -329,6 +329,59 @@ export type Database = {
           },
         ]
       }
+      clinic_whatsapp_connections: {
+        Row: {
+          access_token: string
+          business_id: string | null
+          clinic_id: string
+          created_at: string
+          display_phone_number: string | null
+          id: string
+          phone_number_id: string
+          quality_rating: string | null
+          status: string
+          token_expires_at: string | null
+          updated_at: string
+          waba_id: string
+        }
+        Insert: {
+          access_token: string
+          business_id?: string | null
+          clinic_id: string
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          phone_number_id: string
+          quality_rating?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          waba_id: string
+        }
+        Update: {
+          access_token?: string
+          business_id?: string | null
+          clinic_id?: string
+          created_at?: string
+          display_phone_number?: string | null
+          id?: string
+          phone_number_id?: string
+          quality_rating?: string | null
+          status?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          waba_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clinic_whatsapp_connections_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: true
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinics: {
         Row: {
           accreditations: string[] | null
@@ -339,6 +392,7 @@ export type Database = {
           description: string | null
           email: string | null
           established_year: number | null
+          google_place_id: string | null
           id: string
           is_public: boolean | null
           license_number: string | null
@@ -358,6 +412,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           established_year?: number | null
+          google_place_id?: string | null
           id?: string
           is_public?: boolean | null
           license_number?: string | null
@@ -377,6 +432,7 @@ export type Database = {
           description?: string | null
           email?: string | null
           established_year?: number | null
+          google_place_id?: string | null
           id?: string
           is_public?: boolean | null
           license_number?: string | null
@@ -517,6 +573,7 @@ export type Database = {
           consultation_fee: number | null
           created_at: string | null
           email: string | null
+          google_place_id: string | null
           id: string
           is_active: boolean | null
           name: string
@@ -532,6 +589,7 @@ export type Database = {
           consultation_fee?: number | null
           created_at?: string | null
           email?: string | null
+          google_place_id?: string | null
           id?: string
           is_active?: boolean | null
           name: string
@@ -547,6 +605,7 @@ export type Database = {
           consultation_fee?: number | null
           created_at?: string | null
           email?: string | null
+          google_place_id?: string | null
           id?: string
           is_active?: boolean | null
           name?: string
@@ -744,6 +803,8 @@ export type Database = {
           medical_id: string | null
           name: string
           phone: string | null
+          whatsapp_consent: boolean
+          whatsapp_opt_out: boolean
         }
         Insert: {
           address?: string | null
@@ -756,6 +817,8 @@ export type Database = {
           medical_id?: string | null
           name: string
           phone?: string | null
+          whatsapp_consent?: boolean
+          whatsapp_opt_out?: boolean
         }
         Update: {
           address?: string | null
@@ -768,6 +831,8 @@ export type Database = {
           medical_id?: string | null
           name?: string
           phone?: string | null
+          whatsapp_consent?: boolean
+          whatsapp_opt_out?: boolean
         }
         Relationships: [
           {
@@ -1278,6 +1343,17 @@ export type Database = {
       }
       delete_patient: { Args: { p_patient_id: string }; Returns: boolean }
       extract_form_canonical: { Args: { term: string }; Returns: string }
+      finalize_encounter: {
+        Args: {
+          p_appointment_id: string
+          p_clinic_id: string
+          p_doctor_id: string
+          p_medications: Json
+          p_patient_id: string
+          p_specialty_data: Json
+        }
+        Returns: undefined
+      }
       fix_empty_display_names: { Args: never; Returns: number }
       generate_clinic_slug: {
         Args: { clinic_id?: string; clinic_name: string }
@@ -1309,6 +1385,7 @@ export type Database = {
           patient_gender: string
           patient_id: string
           patient_name: string
+          review_request_sent: boolean
           status: Database["public"]["Enums"]["appointment_status"]
           time: string
           type: Database["public"]["Enums"]["appointment_type"]
@@ -1481,6 +1558,8 @@ export type Database = {
           medical_id: string
           name: string
           phone: string
+          whatsapp_consent: boolean
+          whatsapp_opt_out: boolean
         }[]
       }
       get_profile: {

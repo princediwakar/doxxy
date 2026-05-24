@@ -1,7 +1,8 @@
 // src/components/billing/BillingModal.tsx
 import React, { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { FileText, Edit, Printer, Download } from "lucide-react";
+import { FileText, Edit, Printer, Download, MessageCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,7 +42,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useBilling, BillingFormValues } from "@/hooks/useBilling";
 import { toast } from "sonner";
 import { ServiceItemsSection } from "./ServiceItemsSection";
-import { printBill, generateBillPrintContent, generateBillFilename } from "./billingPrintUtils";
+import { generateBillFilename } from "./billingPrintUtils";
+import { pdf } from '@react-pdf/renderer';
+import { BillingPDF } from './BillingPDF';
 import { useAppState } from "@/contexts/AppStateContext";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
@@ -99,9 +102,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   const billRef = useRef(bill);
   billRef.current = bill;
 
-  const { activeClinicName } = useAppState();
+  const { activeClinicName, activeClinicId } = useAppState();
   const queryClient = useQueryClient();
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);
 
   const onSubmit = async (values: BillingFormValues) => {
     try {
@@ -134,7 +138,27 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   const handlePrint = async () => {
     const billData = buildCurrentBillData();
     if (!billData) return;
-    await printBill(billData, patient || null, null);
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("Please allow popups for this site to print.");
+      return;
+    }
+
+    printWindow.document.write('<html><head><title>Preparing invoice...</title></head><body style="font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; color: #64748b;"><h2>Preparing document for print...</h2></body></html>');
+
+    try {
+      setIsGeneratingDocument(true);
+      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={{ name: activeClinicName } as any} />;
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      printWindow.location.href = url;
+    } catch {
+      printWindow.close();
+      toast.error("Failed to prepare document for printing.");
+    } finally {
+      setIsGeneratingDocument(false);
+    }
   };
 
   const handleDownload = async () => {
@@ -142,56 +166,84 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     if (!billData) return;
 
     try {
-      const html = generateBillPrintContent(billData, patient || null, null);
-
-      const [jsPDFModule, html2canvasModule] = await Promise.all([
-        import("jspdf"),
-        import("html2canvas"),
-      ]);
-
-      const jsPDF = jsPDFModule.default;
-      const html2canvas = html2canvasModule.default;
-
-      const container = document.createElement("div");
-      container.style.position = "absolute";
-      container.style.left = "-9999px";
-      container.style.top = "-9999px";
-      container.innerHTML = html;
-      document.body.appendChild(container);
-
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-      });
-
-      document.body.removeChild(container);
-
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
+      setIsGeneratingDocument(true);
+      const toastId = toast.loading("Preparing download...");
+      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={{ name: activeClinicName } as any} />;
+      const blob = await pdf(doc).toBlob();
       const filename = generateBillFilename(billData, patient || null, activeClinicName);
-      pdf.save(filename);
-    } catch (error) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${filename}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("Download started", { id: toastId });
+    } catch {
       toast.error("Failed to download bill PDF");
+    } finally {
+      setIsGeneratingDocument(false);
+    }
+  };
+
+  const handleSendWhatsapp = async () => {
+    const billData = buildCurrentBillData();
+    if (!billData || !patient?.phone) return;
+
+    const toastId = toast.loading("Generating document...");
+
+    try {
+      setIsGeneratingDocument(true);
+      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={{ name: activeClinicName } as any} />;
+      const blob = await pdf(doc).toBlob();
+
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+
+      reader.onloadend = async () => {
+        try {
+          const base64data = reader.result as string;
+          const base64Pdf = base64data.split(",")[1];
+          const filename = generateBillFilename(billData, patient || null, activeClinicName);
+
+          toast.loading("Transmitting via WhatsApp...", { id: toastId });
+
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/whatsapp-messaging`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                type: "document",
+                to: patient.phone,
+                base64Pdf,
+                filename: `${filename}.pdf`,
+                caption: `Invoice from ${activeClinicName}`,
+                clinicId: activeClinicId,
+              }),
+            },
+          );
+
+          const result = await res.json();
+
+          if (result.success) {
+            toast.success("Sent via WhatsApp successfully", { id: toastId });
+          } else {
+            throw new Error(result.error || "Failed delivery");
+          }
+        } catch (err: any) {
+          toast.error(err.message || "Failed to send to WhatsApp", { id: toastId });
+        } finally {
+          setIsGeneratingDocument(false);
+        }
+      };
+    } catch {
+      toast.error("Failed to generate document", { id: toastId });
+      setIsGeneratingDocument(false);
     }
   };
 
@@ -234,6 +286,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               variant="outline"
               size="sm"
               onClick={handleDownload}
+              disabled={isGeneratingDocument}
               className="flex items-center gap-2"
             >
               <Download className="h-4 w-4" />
@@ -247,11 +300,39 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               variant="default"
               size="sm"
               onClick={handlePrint}
+              disabled={isGeneratingDocument}
               className="flex items-center gap-2"
             >
               <Printer className="h-4 w-4" />
               <span className="hidden sm:inline">Print</span>
             </Button>
+          )}
+
+          {bill && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSendWhatsapp}
+                      disabled={isGeneratingDocument || !patient?.phone}
+                      className="flex items-center gap-2 border-green-500 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950 hover:text-green-700 dark:hover:text-green-300"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span className="hidden sm:inline">WhatsApp</span>
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!patient?.phone && (
+                  <TooltipContent>
+                    <p>No phone number</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
           )}
 
           {mode === "view" && (

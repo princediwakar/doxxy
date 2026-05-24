@@ -14,6 +14,7 @@ export async function quickOnboardDoctor(params: {
   clinicId: string;
   existingDoctorProfile: boolean;
   signature?: string;
+  googlePlaceId?: string;
 }) {
   const supabase = await createServerSupabase();
   const {
@@ -27,6 +28,7 @@ export async function quickOnboardDoctor(params: {
     clinicId,
     existingDoctorProfile,
     signature,
+    googlePlaceId,
   } = params;
 
   const trimmedName = name.trim();
@@ -71,6 +73,7 @@ export async function quickOnboardDoctor(params: {
       : 'Medical professional',
     is_active: true,
     signature: signature ?? null,
+    google_place_id: googlePlaceId || null,
     updated_at: new Date().toISOString(),
   };
 

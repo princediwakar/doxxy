@@ -118,7 +118,10 @@ export const PatientModal = ({
     setIsSubmitting(true);
     try {
       if (patient) {
-        const result = await updatePatient(patient.id, { ...values });
+        const result = await updatePatient(patient.id, {
+          ...values,
+          medical_id: values.medical_id?.trim() || null,
+        });
         if (result.error) {
           toast.error(result.error);
         } else {

@@ -40,6 +40,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     primarySpecialization: '',
     consultation_fee: '',
     signature: '',
+    google_place_id: '',
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -68,7 +69,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form with profile data
+  // Initialize form with profile data (excluding department — handled separately to avoid race with departments loading)
   React.useEffect(() => {
     if (profileData) {
       setFormData(prev => ({
@@ -80,13 +81,24 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
       setFormData(prev => ({
         ...prev,
         name: profileData?.name || existingDoctorProfile.name || user?.user_metadata?.name || '',
-        selectedDepartment: existingDoctorProfile.department_id || '',
         primarySpecialization: existingDoctorProfile.primary_specialization || '',
         consultation_fee: existingDoctorProfile.consultation_fee?.toString() || '',
         signature: existingDoctorProfile.signature || '',
+        google_place_id: existingDoctorProfile.google_place_id || '',
       }));
     }
   }, [profileData, existingDoctorProfile, user]);
+
+  // Sync department selection only once both the doctor profile and the department list are loaded.
+  // This prevents the Select from receiving a value before its options exist.
+  React.useEffect(() => {
+    if (existingDoctorProfile?.department_id && departments.length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        selectedDepartment: existingDoctorProfile.department_id!,
+      }));
+    }
+  }, [existingDoctorProfile?.department_id, departments.length]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,6 +139,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
         clinicId: activeClinicId,
         existingDoctorProfile: !!existingDoctorProfile,
         signature: formData.signature || undefined,
+        googlePlaceId: formData.google_place_id || undefined,
       });
       if ('error' in result && result.error) {
         toast.error(result.error);
@@ -290,6 +303,24 @@ placeholder={"Dr. Firstname Lastname\nDegree 1, Degree 2 (Institution)\nSpecialt
             />
             <p className="text-xs text-muted-foreground">
               This appears at the bottom of printed consultation notes. Include your qualifications, registrations, and achievements.
+            </p>
+          </div>
+
+          {/* Google Place ID */}
+          <div className="space-y-2">
+            <Label htmlFor="google_place_id" className="text-sm font-medium">
+              Google Place ID (Optional)
+            </Label>
+            <Input
+              id="google_place_id"
+              value={formData.google_place_id}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, google_place_id: e.target.value }));
+              }}
+              placeholder="ChIJ..."
+            />
+            <p className="text-xs text-muted-foreground">
+              Used to generate Google review links for patients. Falls back to the clinic's Place ID if not set.
             </p>
           </div>
 

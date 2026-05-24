@@ -1,11 +1,15 @@
 // components/schedule/EncounterCanvas.tsx
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { PatientHeader } from "./PatientHeader";
 import { DictationZone } from "./DictationZone";
 import { InlineConsultationForm } from "./InlineConsultationForm";
 import { AdministrativeFooter } from "./AdministrativeFooter";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Star, CheckCircle } from "lucide-react";
+import { useAppState } from "@/contexts/AppStateContext";
 import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
 import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
@@ -55,8 +59,15 @@ export function EncounterCanvas({
   const formRef = useRef<HTMLDivElement>(null!);
   const getLiveFormDataRef = useRef<(() => Record<string, unknown>) | undefined>(undefined);
   const hasEverStructuredRef = useRef(false);
+  const { activeClinicId } = useAppState();
+  const [reviewState, setReviewState] = useState<"idle" | "sending" | "sent">(() =>
+    appointment?.review_request_sent ? "sent" : "idle",
+  );
+  const lastCompletedAppointmentRef = useRef<string | null>(null);
 
   const onAiDataConsumed = useCallback(() => setAiStructuredData(null), []);
+
+  const patient = patientDetail?.patient ?? null;
 
   const handleStructured = useCallback(
     (structured: AIStructuredOutput | null, _transcript: string, _fieldConfidence?: FieldConfidence[]) => {
@@ -72,7 +83,70 @@ export function EncounterCanvas({
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  const patient = patientDetail?.patient ?? null;
+  const handleSendReviewRequest = useCallback(async () => {
+    const patientPhone = patient?.phone;
+    const patientName = appointment?.patient_name;
+    const doctorName = appointment?.doctor_name;
+    const doctorId = appointment?.doctor_id;
+    const patientId = appointment?.patient_id;
+
+    if (!patientPhone || !patientName || !doctorName || !doctorId || !patientId) {
+      toast.error("Missing patient or doctor information");
+      return;
+    }
+
+    setReviewState("sending");
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/whatsapp-messaging`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            type: "template",
+            to: patientPhone,
+            templateName: "review_request",
+            doctorId,
+            appointmentId: appointment?.id,
+            patientId,
+            clinicId: activeClinicId,
+            bodyParams: [
+              { type: "text", text: patientName },
+              { type: "text", text: doctorName },
+            ],
+          }),
+        },
+      );
+      const result = await res.json();
+
+      if (result.success) {
+        setReviewState("sent");
+        onComplete();
+        toast.success("Review request sent");
+      } else {
+        if (result.code === "DUPLICATE_REVIEW_REQUEST") {
+          setReviewState("sent");
+        } else {
+          setReviewState("idle");
+        }
+        toast.error(result.error || "Failed to send");
+      }
+    } catch {
+      setReviewState("idle");
+      toast.error("Failed to send review request");
+    }
+  }, [patient?.phone, appointment?.patient_name, appointment?.doctor_name, appointment?.doctor_id, appointment?.id, appointment?.patient_id, onComplete]);
+
+  useEffect(() => {
+    if (appointment?.id !== lastCompletedAppointmentRef.current) {
+      lastCompletedAppointmentRef.current = appointment?.id ?? null;
+      setReviewState(appointment?.review_request_sent ? "sent" : "idle");
+    }
+  }, [appointment?.id, appointment?.review_request_sent]);
+
   const hasExistingData = hasEverStructuredRef.current || !!aiStructuredData;
 
   if (isLoadingDetail) {
@@ -135,6 +209,31 @@ export function EncounterCanvas({
             getLiveFormDataRef.current = getter;
           }}
         />
+      )}
+
+      {appointment && appointmentStatus === "Completed" && (
+        <div className="flex items-center justify-between rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/40 px-4 py-3">
+          <p className="text-sm text-amber-800 dark:text-amber-300">
+            Ask the patient to leave a Google review.
+          </p>
+          {reviewState === "sent" ? (
+            <Button size="sm" variant="ghost" disabled className="text-green-600 dark:text-green-400">
+              <CheckCircle className="h-4 w-4 mr-1.5" />
+              Review Request Sent
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSendReviewRequest}
+              disabled={reviewState === "sending"}
+              className="border-amber-500 dark:border-amber-600 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950 hover:text-amber-700 dark:hover:text-amber-300"
+            >
+              <Star className="h-4 w-4 mr-1.5" />
+              {reviewState === "sending" ? "Sending..." : "Send Review Request"}
+            </Button>
+          )}
+        </div>
       )}
 
       <AdministrativeFooter
