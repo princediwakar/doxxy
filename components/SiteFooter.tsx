@@ -74,7 +74,7 @@ const SiteFooter = () => {
         </div>
 
         <div className="mt-16 pt-8 border-t border-border text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} Doxxy. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Supersite Technologies Private Limited. All rights reserved.</p>
         </div>
       </div>
     </footer>

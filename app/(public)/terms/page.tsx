@@ -182,11 +182,13 @@ export default function TermsPage() {
       </TermsSection>
 
       <TermsContactInfo>
+        Doxxy is a product of Supersite Technologies Private Limited.
+        <br /><br />
         For any legal, operational, or technical questions, contact:
         <br />
         Doxxy <br />
         Mumbai, India <br />
-        Email: doxxy@neurovisionhospital.com
+        Email: team@doxxy.in
       </TermsContactInfo>
     </div>
   );
