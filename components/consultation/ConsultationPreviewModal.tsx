@@ -85,15 +85,17 @@ export const ConsultationPreviewModal = ({
   });
 
   // Prepare doctor info
+  const doctorName = doctorDetails?.name || user?.user_metadata?.full_name || "";
+  const doctorSpecialization = doctorDetails?.department_name || departmentType;
   const doctorInfo = {
-    name: doctorDetails?.name || user?.user_metadata?.full_name || "",
-    specialization: doctorDetails?.department_name || departmentType,
-    qualification: "", // Default qualification
-    registration_number: "", // Not available in current database schema
+    name: doctorName,
+    specialization: doctorSpecialization,
+    qualification: "",
+    registration_number: "",
     phone: doctorDetails?.phone || user?.phone || "",
     email: doctorDetails?.email || user?.email || "",
     bio: doctorDetails?.bio || "",
-    signature: doctorDetails?.signature || "",
+    signature: doctorDetails?.signature || `Dr. ${doctorName}\n${doctorSpecialization}`,
   };
 
   const handlePrint = async () => {

@@ -168,16 +168,18 @@ export function ConsultationViewModal({
     : null;
 
   // Prepare doctor info
+  const doctorName =
+    firstDoctor?.name ||
+    appointment?.doctor_name ||
+    user?.user_metadata?.full_name ||
+    "Doctor Name";
+  const doctorSpecialization = firstDoctor?.department_name || departmentType;
   const doctorInfo: DoctorInfo = {
-    name:
-      firstDoctor?.name ||
-      appointment?.doctor_name ||
-      user?.user_metadata?.full_name ||
-      "Doctor Name",
-    qualification: "", // Default qualification
-    specialization: firstDoctor?.department_name || departmentType,
-    registration_number: "", // Not available in current database schema
-    signature: firstDoctor?.signature || "",
+    name: doctorName,
+    qualification: "",
+    specialization: doctorSpecialization,
+    registration_number: "",
+    signature: firstDoctor?.signature || `Dr. ${doctorName}\n${doctorSpecialization}`,
   };
 
   // Get field sections for the department
