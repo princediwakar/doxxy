@@ -48,8 +48,8 @@ Security isn't just a regulatory checkbox. It's a pillar of patient trust. Here 
 
 ## How Doxxy Helps
 
-Doxxy was built with security as a foundation, not an afterthought. Every plan includes end-to-end AES-256 encryption, TLS 1.3, role-based access control, multi-factor authentication, comprehensive audit logging, and automated daily backups with point-in-time recovery.
+Doxxy was built with security as a foundation, not an afterthought. Every plan includes AES-256 encryption at rest and in transit, role-based access control, database-level audit logging, and automated daily backups with point-in-time recovery.
 
-The platform is HIPAA, SOC 2 Type 2, GDPR certified and compliant with India's DPDP Act 2023. We maintain these certifications so clinics can focus on patients, not compliance paperwork.
+The platform is compliant with India's DPDP Act 2023. Doxxy is built on Supabase, a SOC 2 and GDPR-compliant cloud infrastructure, with application-level encryption, access controls, and audit logging layered on top.
 
 Want to benchmark your clinic's security posture? [Contact us](/contact) for a conversation with our compliance team.

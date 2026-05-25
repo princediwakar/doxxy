@@ -2,24 +2,24 @@ import { Shield, Server, Lock, Clock } from "lucide-react";
 
 const badges = [
   {
-    icon: Shield,
-    label: "HIPAA Compliant",
-    desc: "Patient data protected to US healthcare standards",
+    icon: Lock,
+    label: "AES-256 Encryption",
+    desc: "Encrypted at rest and in transit, always",
   },
   {
-    icon: Server,
-    label: "SOC 2 Type 2 Certified",
-    desc: "Independently audited security controls",
+    icon: Shield,
+    label: "DPDP Act Compliant",
+    desc: "Built for India's Digital Personal Data Protection Act",
   },
   {
     icon: Clock,
-    label: "99.9% Uptime SLA",
+    label: "99.9% Uptime",
     desc: "Your clinic runs even when the power doesn't",
   },
   {
-    icon: Lock,
-    label: "AES-256 Encryption",
-    desc: "Bank-grade encryption at rest and in transit",
+    icon: Server,
+    label: "Role-Based Access",
+    desc: "Superadmin, doctor, and staff permissions built in",
   },
 ];
 
@@ -92,9 +92,9 @@ export default function TrustAndLegitimacy() {
           </div>
         </div>
 
-        {/* C. Meta compliance note */}
+        {/* C. Compliance note */}
         <p className="text-center text-xs text-gray-400 mt-6">
-          Built to comply with WhatsApp Business Policy and Meta Platform Policies.
+          WhatsApp messaging complies with the WhatsApp Business Messaging Policy and Meta Platform Policies.
         </p>
       </div>
     </section>

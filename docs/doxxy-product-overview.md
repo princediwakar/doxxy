@@ -123,10 +123,10 @@ Online booking, shorter wait times, automated reminders, and fast digital check-
 Add doctors, locations, and patients **without changing your plan or paying more per user**. Pricing scales with patient volume, not team size.
 
 ### Bank-Level Security
-HIPAA-compliant, SOC 2 Type 2 certified, GDPR-compliant. AES-256 encryption at rest and in transit. Role-based access control. Automated daily backups with point-in-time recovery.
+Encryption at rest and in transit via AES-256 and TLS. Role-based access control. Row-level security isolating each clinic's data. Automated daily backups with point-in-time recovery. Built on Supabase, a SOC 2 and GDPR-compliant cloud platform.
 
 ### Always Available
-**99.9% uptime SLA.** Hosted on secure AWS infrastructure with geographic redundancy. 24/7 technical support via phone, email, and live chat.
+**99.9% uptime.** Hosted on Supabase cloud infrastructure with geographic redundancy. Technical support via email.
 
 ---
 
@@ -171,21 +171,16 @@ Full PWA support with manifest, service worker, and app icons. Install Doxxy on 
 
 | Standard | Status |
 |---|---|
-| HIPAA | Certified |
-| SOC 2 Type 2 | Certified |
-| GDPR | Certified |
-| ISO 27001 | In Progress |
 | India DPDP Act 2023 | Compliant |
+| Supabase (infrastructure) | SOC 2 & GDPR compliant |
 
 **Security features:**
-- End-to-end AES-256 encryption (at rest and in transit)
-- TLS 1.3 with certificate pinning for all data transmission
-- Multi-factor authentication (MFA)
-- Granular role-based access control (RBAC)
-- Comprehensive audit logging with tamper-proof trails
+- AES-256 encryption at rest and in transit
+- TLS encryption for all data transmission
+- Role-based access control (RBAC)
+- Row-level security isolating each clinic's data
+- Audit logging via database-level trails
 - Automated daily backups with point-in-time recovery
-- 24/7 threat monitoring with AI-powered detection
-- Data Loss Prevention (DLP) policies
 
 ---
 
