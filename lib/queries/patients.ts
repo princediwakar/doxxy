@@ -60,7 +60,7 @@ export async function queryPatientBills(patientId: string) {
   return ((data ?? []) as Array<Record<string, unknown>>).map((b) => {
     const { patients, ...billData } = b as Record<string, unknown> & { patients?: { name?: string } | null };
     return { ...billData, patient_name: patients?.name ?? null };
-  }) as DbBill[];
+  }) as unknown as DbBill[];
 }
 
 const ITEMS_PER_PAGE = 20;
