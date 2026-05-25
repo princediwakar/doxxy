@@ -86,6 +86,9 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
       if (defaultDoctor && doctors && !doctors.some(d => d.id === defaultDoctor)) {
         defaultDoctor = ""; // Reset if doctor not in list
       }
+      if (!defaultDoctor && doctors && doctors.length === 1) {
+        defaultDoctor = doctors[0].id;
+      }
 
       form.reset({
         date: isNaN(defaultDate.getTime()) ? new Date() : defaultDate,

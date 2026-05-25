@@ -46,7 +46,7 @@ async function sendResendEmail(args: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Doxxy Team <doxxy@neurovisionhospital.com>',
+        from: 'Doxxy Team <team@doxxy.in>',
         to: [args.to],
         subject: args.subject,
         html: args.html,
@@ -207,7 +207,7 @@ serve(async (req: Request) => {
           name: memberData.name,
           email: cleanEmail,
           phone: memberData.phone || null,
-          is_active: true,
+          is_active: false,
         })
         if (doctorError) {
           console.error('Doctor profile creation failed:', doctorError.message)
@@ -222,15 +222,30 @@ serve(async (req: Request) => {
       const emailSent = await sendResendEmail({
         to: cleanEmail,
         subject: `You've been added to ${clinic.name} on Doxxy`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto">
-          <h2 style="color:#2563eb">You've been added to ${clinic.name}</h2>
-          <p>Hello ${memberData.name},</p>
-          <p>You've been added as <strong>${memberData.role}</strong> to <strong>${clinic.name}</strong> on Doxxy.</p>
-          <p>Log in with your existing account to get started:</p>
-          <div style="text-align:center;margin:30px 0">
-            <a href="${loginUrl}" style="background:#2563eb;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold">Log in to Doxxy</a>
+        html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;background:#f8fafc">
+          <div style="background:#fff;border-radius:8px;overflow:hidden;margin:20px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
+            <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:32px;text-align:center">
+              <h1 style="margin:0;font-size:26px;font-weight:700;color:#fff">You've Been Added!</h1>
+              <p style="margin:8px 0 0;font-size:15px;color:#e0e7ff">Welcome to ${clinic.name} on Doxxy</p>
+            </div>
+            <div style="padding:32px">
+              <p style="font-size:15px;color:#374151;margin:0 0 16px"><strong>Hello ${memberData.name},</strong></p>
+              <p style="font-size:15px;color:#374151;margin:0 0 16px">You've been added as <strong>${memberData.role}</strong> to <strong>${clinic.name}</strong> on Doxxy — the modern clinic management platform for healthcare professionals.</p>
+              ${memberData.role === 'doctor'
+                ? '<div style="background:#f0fdf4;border-left:3px solid #16a34a;padding:14px 18px;border-radius:0 6px 6px 0;margin:20px 0"><p style="font-size:14px;color:#166534;margin:0"><strong>Doctor setup:</strong> After logging in, complete your medical profile — specialization, consultation fee, and department — from the Profile page to start seeing patients.</p></div>'
+                : ''}
+              <div style="text-align:center;margin:28px 0">
+                <a href="${loginUrl}" style="background:#2563eb;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:600;font-size:15px;display:inline-block;box-shadow:0 4px 6px -1px rgba(37,99,235,0.3)">Log in to Doxxy</a>
+              </div>
+              <p style="font-size:13px;color:#6b7280;text-align:center;margin:0">Use your existing account — no new sign-up needed.</p>
+              <div style="border-top:1px solid #e2e8f0;padding-top:20px;margin-top:28px">
+                <p style="font-size:12px;color:#9ca3af;margin:0">You're receiving this email because an administrator added you to ${clinic.name} on Doxxy. If this was unexpected, you can safely ignore it.</p>
+              </div>
+            </div>
+            <div style="background:#f1f5f9;padding:16px;text-align:center;border-radius:0 0 8px 8px">
+              <p style="font-size:11px;color:#9ca3af;margin:0">Powered by <strong>Doxxy</strong> — Modern Clinic Management</p>
+            </div>
           </div>
-          ${memberData.role === 'doctor' ? '<p style="color:#64748b;font-size:14px">After logging in, complete your medical profile (department, consultation fee) from the Profile page.</p>' : ''}
         </div>`,
       })
 
@@ -245,35 +260,57 @@ serve(async (req: Request) => {
     }
 
     // =================================================================
-    // SCENARIO B: New user — Supabase inviteUserByEmail handles email delivery
+    // SCENARIO B: New user — send invitation email via Resend
     // =================================================================
-    console.log(`User ${cleanEmail} does not exist. Sending invitation via Supabase...`)
+    console.log(`User ${cleanEmail} does not exist. Sending invitation via Resend...`)
 
-    const { error: inviteAuthError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      cleanEmail,
-      {
-        redirectTo: invitationLink,
-        data: {
-          name: memberData.name,
-          phone: memberData.phone,
-          clinic_id: memberData.clinic_id,
-          clinic_name: clinic.name,
-          role: memberData.role,
-          invitation_token: invitation.invitation_token,
-        },
-      }
-    )
-    if (inviteAuthError) {
-      console.error('Supabase inviteUserByEmail failed:', inviteAuthError.message)
-    }
+    const inviteEmailSent = await sendResendEmail({
+      to: cleanEmail,
+      subject: `You're invited to join ${clinic.name} on Doxxy`,
+      html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;background:#f8fafc">
+        <div style="background:#fff;border-radius:8px;overflow:hidden;margin:20px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
+          <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:32px;text-align:center">
+            <h1 style="margin:0;font-size:26px;font-weight:700;color:#fff">You're Invited!</h1>
+            <p style="margin:8px 0 0;font-size:15px;color:#e0e7ff">Join ${clinic.name} on Doxxy</p>
+          </div>
+          <div style="padding:32px">
+            <p style="font-size:15px;color:#374151;margin:0 0 16px"><strong>Hello ${memberData.name},</strong></p>
+            <p style="font-size:15px;color:#374151;margin:0 0 16px">You've been invited to join <strong>${clinic.name}</strong> as a <strong>${memberData.role}</strong> on Doxxy — the modern clinic management platform for healthcare professionals.</p>
+            <div style="background:#f8fafc;border-radius:8px;padding:20px;margin:20px 0">
+              <h2 style="color:#1e293b;margin:0 0 12px;font-size:15px;font-weight:600">What's next?</h2>
+              <ol style="color:#475569;margin:0;padding-left:20px;font-size:14px;line-height:1.8">
+                <li>Click the button below to accept your invitation</li>
+                <li>Sign in or create your account</li>
+                <li>Complete your profile setup</li>
+                <li>Start using Doxxy!</li>
+              </ol>
+            </div>
+            <div style="text-align:center;margin:28px 0">
+              <a href="${invitationLink}" style="background:#2563eb;color:#fff;text-decoration:none;padding:14px 36px;border-radius:8px;font-weight:600;font-size:15px;display:inline-block;box-shadow:0 4px 6px -1px rgba(37,99,235,0.3)">Accept Invitation</a>
+            </div>
+            <p style="font-size:13px;color:#6b7280;text-align:center;margin:0">This invitation expires in 7 days.</p>
+            <div style="border-top:1px solid #e2e8f0;padding-top:20px;margin-top:28px">
+              <p style="font-size:12px;color:#9ca3af;margin:0 0 6px"><strong>Button not working?</strong> Copy and paste this link:</p>
+              <p style="font-size:12px;color:#2563eb;word-break:break-all;margin:0">${invitationLink}</p>
+            </div>
+            <div style="border-top:1px solid #e2e8f0;padding-top:16px;margin-top:20px">
+              <p style="font-size:11px;color:#9ca3af;margin:0">If you didn't expect this invitation, you can safely ignore this email.</p>
+            </div>
+          </div>
+          <div style="background:#f1f5f9;padding:16px;text-align:center;border-radius:0 0 8px 8px">
+            <p style="font-size:11px;color:#9ca3af;margin:0">Powered by <strong>Doxxy</strong> — Modern Clinic Management</p>
+          </div>
+        </div>
+      </div>`,
+    })
 
     return new Response(JSON.stringify({
       success: true,
-      message: inviteAuthError
-        ? 'Invitation created. Email could not be sent — share the link below.'
-        : 'Invitation email sent.',
-      invitationLink: inviteAuthError ? invitationLink : null,
-      emailSent: !inviteAuthError,
+      message: inviteEmailSent
+        ? 'Invitation email sent.'
+        : 'Invitation created. Email could not be sent — share the link below.',
+      invitationLink: inviteEmailSent ? null : invitationLink,
+      emailSent: inviteEmailSent,
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
   } catch (error) {

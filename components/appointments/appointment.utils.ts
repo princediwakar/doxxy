@@ -1,4 +1,4 @@
-// src/components/appointments/appointment-utils.ts
+// components/appointments/appointment-utils.ts
 import * as z from "zod";
 import type { DbAppointment, DbPatient, DbPatientByClinic } from "@/types/core";
 

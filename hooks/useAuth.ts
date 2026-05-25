@@ -11,7 +11,7 @@ import type { AppUser } from "@/types/core";
 
 const supabase = getSupabase();
 
-export type AuthFlow = "login" | "signup" | "invite" | "reset" | "update-password" | "otp";
+export type AuthFlow = "login" | "signup" | "reset" | "update-password" | "otp";
 
 export const useAuthFlow = () => {
   const [email, setEmail] = useState("");

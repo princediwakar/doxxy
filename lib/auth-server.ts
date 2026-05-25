@@ -1,3 +1,4 @@
+// lib/auth-server.ts
 import { cache } from 'react';
 import { redirect } from 'next/navigation';
 import { createServerSupabase } from '@/integrations/supabase/server';
@@ -5,13 +6,13 @@ import type { ClinicMemberWithClinic, DbClinic } from '@/types/core';
 
 export const getAuthenticatedUser = cache(async () => {
   const supabase = await createServerSupabase();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (!session?.user) {
+  if (error || !user) {
     redirect('/auth');
   }
 
-  return session.user;
+  return user;
 });
 
 function mapClinicMember(member: Record<string, unknown>): ClinicMemberWithClinic {
@@ -75,4 +76,27 @@ export const getProfileName = cache(async (userId: string) => {
 export const isProfileComplete = cache(async (userId: string) => {
   const profile = await getProfile(userId);
   return !!(profile?.name && profile?.phone);
+});
+
+export const isDoctorOnboardingComplete = cache(async (userId: string, clinicId: string) => {
+  const supabase = await createServerSupabase();
+
+  const [doctorResult, memberResult] = await Promise.all([
+    supabase
+      .from('doctors')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('clinic_id', clinicId)
+      .maybeSingle(),
+    supabase
+      .from('clinic_members')
+      .select('department_id')
+      .eq('user_id', userId)
+      .eq('clinic_id', clinicId)
+      .maybeSingle(),
+  ]);
+
+  if (!doctorResult.data) return true;
+
+  return memberResult.data?.department_id != null;
 });

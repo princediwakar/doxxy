@@ -2,7 +2,7 @@
 import { logger } from "@/lib/logger";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { AuthFlow } from "./useAuth";
@@ -21,6 +21,7 @@ export function useAuthTokenHandlers({
   setEmail,
 }: TokenHandlerDeps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -127,9 +128,15 @@ export function useAuthTokenHandlers({
         if (process.env.NODE_ENV === "development") logger.log("Auth: Verification - stored token:", storedToken);
         if (process.env.NODE_ENV === "development") logger.log("Auth: Verification - stored data exists:", !!storedData);
 
-        setAuthFlow("invite");
+        // Check for existing session — skip invite UI if already logged in
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          router.replace('/schedule');
+          return;
+        }
+        setAuthFlow("login");
         setEmail(inviteEmail || '');
-        toast.info("Welcome! Please set your password to complete your account setup.");
+        toast.info("Please sign in to join the clinic.");
       } else {
         logger.error("Auth: No valid invitation found");
         toast.error("No valid invitation found. Please ask for a new invitation.");

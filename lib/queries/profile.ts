@@ -33,7 +33,7 @@ export async function queryDoctorProfile(userId: string, clinicId: string) {
       `department_id,
       clinic_departments(
         id,
-        department_types(name)
+        department_types(id, name)
       )`,
     )
     .eq('user_id', userId)
@@ -43,9 +43,7 @@ export async function queryDoctorProfile(userId: string, clinicId: string) {
   return {
     ...data,
     department_id: memberData?.department_id ?? null,
-    department_name:
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (memberData?.clinic_departments as any)?.department_types?.name ??
-      'No Department',
+    department_type_id: memberData?.clinic_departments?.department_types?.id ?? null,
+    department_name: memberData?.clinic_departments?.department_types?.name ?? 'No Department',
   };
 }

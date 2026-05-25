@@ -188,7 +188,7 @@ export default function TermsPage() {
         <br />
         Doxxy <br />
         Mumbai, India <br />
-        Email: team@doxxy.in
+        Email: prince@supersite.app
       </TermsContactInfo>
     </div>
   );

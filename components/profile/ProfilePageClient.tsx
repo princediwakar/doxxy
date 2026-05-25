@@ -59,10 +59,13 @@ export default function ProfilePageClient({
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    if (searchParams.get("setup") === "doctor") {
-      setIsOnboardingModalOpen(true);
+    if (searchParams.get("setup") === "doctor" && doctorProfile) {
+      const missingDepartment = !doctorProfile.department_id;
+      if (missingDepartment) {
+        setIsOnboardingModalOpen(true);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, doctorProfile]);
 
   const getRoleDisplayConfig = () => {
     const isDoctorRole = activeClinicRole === "doctor" || !!doctorProfile;
@@ -326,6 +329,10 @@ export default function ProfilePageClient({
           onClose={() => setIsOnboardingModalOpen(false)}
           onSuccess={() => {
             setIsOnboardingModalOpen(false);
+            const next = new URLSearchParams(searchParams.toString());
+            next.delete("setup");
+            const qs = next.toString();
+            router.replace(window.location.pathname + (qs ? `?${qs}` : ""), { scroll: false });
             router.refresh();
             handleRefetch();
           }}

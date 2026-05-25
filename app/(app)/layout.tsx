@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { getAuthenticatedUser, getUserClinics, getProfileName, getActiveClinic, isProfileComplete } from '@/lib/auth-server';
+import { headers } from 'next/headers';
+import { getAuthenticatedUser, getUserClinics, getProfileName, getActiveClinic, isProfileComplete, isDoctorOnboardingComplete } from '@/lib/auth-server';
 import LayoutServer from '@/components/LayoutServer';
 
 export const metadata: Metadata = {
@@ -25,6 +26,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }
   if (clinics.length === 0) {
     redirect('/create-clinic');
+  }
+
+  const headerList = await headers();
+  const pathname = headerList.get('x-pathname') || '';
+
+  if (
+    pathname !== '/profile' &&
+    activeClinic &&
+    !(await isDoctorOnboardingComplete(user.id, activeClinic.clinic_id))
+  ) {
+    redirect('/profile?setup=doctor');
   }
 
   return (

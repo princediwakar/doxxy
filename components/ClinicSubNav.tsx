@@ -6,11 +6,11 @@ import { IndianRupee, Users, Building2, Building, Wallet, MessageCircle } from "
 
 const subNavItems = [
   { icon: IndianRupee, label: "Financials", path: "/clinic/financials" },
+  { icon: Wallet, label: "Payments", path: "/clinic/payments" },
   { icon: Users, label: "Staff", path: "/clinic/staff" },
   { icon: Building2, label: "Departments", path: "/clinic/departments" },
-  { icon: Building, label: "About", path: "/clinic/about" },
-  { icon: Wallet, label: "Payments", path: "/clinic/payments" },
   { icon: MessageCircle, label: "WhatsApp", path: "/clinic/whatsapp" },
+  { icon: Building, label: "About", path: "/clinic/about" },
 ];
 
 export default function ClinicSubNav() {

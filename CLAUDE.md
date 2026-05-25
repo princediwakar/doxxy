@@ -110,7 +110,8 @@ Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 
 ## TIER 3: CODE QUALITY & ERROR HANDLING
 
-### A. Component Design
+### A. File & Component Design
+- **File path comment:** Every file MUST start with a comment indicating its path relative to the project root. Example: `// Path: components/appointments/AppointmentModal.tsx`
 - **Stop Prop Drilling:** If you are passing more than 4 props down multiple levels, stop. Use React Context, or better yet, use Component Composition (pass `<Child/>` as `children` to `<Parent/>`).
 - **Hook Limits:** Maximum 5 `useState`/`useEffect` combinations per file. If larger, the component is doing too much. Split it.
 - **Co-locate single-use client components:** When a client component is only used by one page, co-locate it in that page's directory (e.g., `app/(public)/blog/[slug]/ShareButtons.tsx`). Shared components live in `components/`.

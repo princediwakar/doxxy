@@ -1,3 +1,4 @@
+// app/(app)/schedule/TodayPageClient.tsx
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -35,6 +36,7 @@ interface TodayPageClientProps {
   doctors: Doctor[];
   effectiveDoctorFilter: string | null;
   userDoctorId: string | null;
+  hasDoctors: boolean;
 }
 
 export function TodayPageClient({
@@ -45,6 +47,7 @@ export function TodayPageClient({
   doctors,
   effectiveDoctorFilter,
   userDoctorId,
+  hasDoctors,
 }: TodayPageClientProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -184,6 +187,7 @@ export function TodayPageClient({
             onAppointmentClick={selectAppointment}
             isMobile={isMobile}
             doctorFilter={effectiveDoctorFilter}
+            hasDoctors={hasDoctors}
           />
         }
         detail={
@@ -198,6 +202,8 @@ export function TodayPageClient({
             patientBills={patientBills as BillWithDetails[]}
             isLoadingBills={isLoadingBills}
             onRefreshNeeded={handleRefetch}
+            hasDoctors={hasDoctors}
+            clinicId={clinicId}
           />
         }
       />

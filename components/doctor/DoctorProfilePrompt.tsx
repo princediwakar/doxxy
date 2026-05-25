@@ -26,9 +26,15 @@ export function DoctorProfilePrompt() {
     return null;
   }
 
-  const isIncomplete =
+  const missingDepartment =
+    doctorProfile.department_id === null ||
+    doctorProfile.department_id === undefined;
+
+  const missingFee =
     doctorProfile.consultation_fee === null ||
     doctorProfile.consultation_fee === undefined;
+
+  const isIncomplete = missingDepartment || missingFee;
 
   if (!isIncomplete) return null;
 
@@ -40,11 +46,14 @@ export function DoctorProfilePrompt() {
         </div>
         <div>
           <p className="font-medium text-blue-900">
-            Complete your medical profile
+            {missingDepartment
+              ? "Select your primary department"
+              : "Complete your medical profile"}
           </p>
           <p className="text-sm text-blue-700">
-            Add your consultation fee and department details to start seeing
-            patients.
+            {missingDepartment
+              ? "You must select a department before you can start seeing patients."
+              : "Add your consultation fee to speed up billing."}
           </p>
         </div>
       </div>

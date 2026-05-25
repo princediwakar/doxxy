@@ -19,7 +19,7 @@ const SiteFooter = () => {
               </div>
               <div className="flex items-center text-sm">
                 <Mail className="h-4 w-4 mr-3 text-muted-foreground" />
-                <span>doxxyapp@gmail.com</span>
+                <span>prince@supersite.app</span>
               </div>
             </div>
           </div>

@@ -10,7 +10,7 @@ import { useAppState } from "@/contexts/AppStateContext";
 import { quickOnboardDoctor } from "@/actions/doctors";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { queryUserProfile, queryDoctorProfile } from "@/lib/queries/profile";
-import { queryClinicDepartments } from "@/lib/queries/clinic";
+import { queryDepartmentTypes } from "@/lib/queries/clinic";
 import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 import {
@@ -65,8 +65,8 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
   const queryClient = useQueryClient();
 
   const { data: departments = [] } = useQuery({
-    queryKey: queryKeys.clinicDepartments.byClinic(activeClinicId ?? ""),
-    queryFn: () => queryClinicDepartments(activeClinicId!),
+    queryKey: queryKeys.clinicDepartments.allTypes,
+    queryFn: () => queryDepartmentTypes(),
     enabled: !!activeClinicId,
   });
 
@@ -96,13 +96,13 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
   // Sync department selection only once both the doctor profile and the department list are loaded.
   // This prevents the Select from receiving a value before its options exist.
   React.useEffect(() => {
-    if (existingDoctorProfile?.department_id && departments.length > 0) {
+    if (existingDoctorProfile?.department_type_id && departments.length > 0) {
       setFormData(prev => ({
         ...prev,
-        selectedDepartment: existingDoctorProfile.department_id!,
+        selectedDepartment: existingDoctorProfile.department_type_id!,
       }));
     }
-  }, [existingDoctorProfile?.department_id, departments.length]);
+  }, [existingDoctorProfile?.department_type_id, departments.length]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +134,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
     try {
       const result = await quickOnboardDoctor({
         name: formData.name,
-        departmentId: formData.selectedDepartment,
+        departmentTypeId: formData.selectedDepartment,
         specialization: formData.primarySpecialization,
         consultationFee: parseInt(formData.consultation_fee),
         userId: user.id,
@@ -238,7 +238,7 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
               <SelectContent>
                 {departments.map((dept) => (
                   <SelectItem key={dept.id} value={dept.id}>
-                    {dept.department_types?.name}
+                    {dept.name}
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -41,24 +41,30 @@ serve(async (req) => {
     const emailSubject = `New Contact Form Submission - ${record.name}`
     
     const emailHtml = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #2563eb; border-bottom: 2px solid #2563eb; padding-bottom: 10px;">
-          New Contact Form Submission
-        </h2>
-        <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <p><strong>Name:</strong> ${record.name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${record.email}">${record.email}</a></p>
-          <p><strong>Phone:</strong> ${record.phone || 'Not provided'}</p>
-          <p><strong>Company:</strong> ${record.company || 'Not provided'}</p>
-          <p><strong>City:</strong> ${record.city || 'Not provided'}</p>
-          <p><strong>Submitted:</strong> ${new Date(record.created_at).toLocaleString()}</p>
-        </div>
-        <div style="background: #ffffff; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <h3 style="color: #1e293b; margin-top: 0;">Message:</h3>
-          <p style="white-space: pre-wrap; line-height: 1.6;">${record.message}</p>
-        </div>
-        <div style="margin-top: 20px; padding: 10px; background: #f1f5f9; border-radius: 4px; font-size: 12px; color: #64748b;">
-          This email was automatically generated from the Doxxy contact form.
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;background:#f8fafc">
+        <div style="background:#fff;border-radius:8px;overflow:hidden;margin:20px;box-shadow:0 4px 6px -1px rgba(0,0,0,0.1)">
+          <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:32px;text-align:center">
+            <h1 style="margin:0;font-size:24px;font-weight:700;color:#fff">New Contact Form Submission</h1>
+            <p style="margin:8px 0 0;font-size:14px;color:#e0e7ff">${record.name} — ${new Date(record.created_at).toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+          </div>
+          <div style="padding:32px">
+            <div style="background:#f8fafc;border-radius:8px;padding:20px;margin:0 0 20px">
+              <table style="width:100%;border-collapse:collapse;font-size:14px">
+                <tr><td style="padding:6px 12px 6px 0;color:#6b7280;white-space:nowrap;vertical-align:top"><strong>Name</strong></td><td style="padding:6px 0;color:#1e293b">${record.name}</td></tr>
+                <tr><td style="padding:6px 12px 6px 0;color:#6b7280;white-space:nowrap;vertical-align:top"><strong>Email</strong></td><td style="padding:6px 0;color:#1e293b"><a href="mailto:${record.email}" style="color:#2563eb">${record.email}</a></td></tr>
+                <tr><td style="padding:6px 12px 6px 0;color:#6b7280;white-space:nowrap;vertical-align:top"><strong>Phone</strong></td><td style="padding:6px 0;color:#1e293b">${record.phone || '—'}</td></tr>
+                <tr><td style="padding:6px 12px 6px 0;color:#6b7280;white-space:nowrap;vertical-align:top"><strong>Company</strong></td><td style="padding:6px 0;color:#1e293b">${record.company || '—'}</td></tr>
+                <tr><td style="padding:6px 12px 6px 0;color:#6b7280;white-space:nowrap;vertical-align:top"><strong>City</strong></td><td style="padding:6px 0;color:#1e293b">${record.city || '—'}</td></tr>
+              </table>
+            </div>
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:20px">
+              <h3 style="color:#1e293b;margin:0 0 12px;font-size:15px;font-weight:600">Message</h3>
+              <p style="white-space:pre-wrap;line-height:1.6;font-size:14px;color:#374151;margin:0">${record.message}</p>
+            </div>
+          </div>
+          <div style="background:#f1f5f9;padding:16px;text-align:center;border-radius:0 0 8px 8px">
+            <p style="font-size:11px;color:#9ca3af;margin:0">Auto-generated from the <strong>Doxxy</strong> contact form</p>
+          </div>
         </div>
       </div>
     `

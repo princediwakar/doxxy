@@ -152,7 +152,7 @@ export default function PrivacyPage() {
       </PrivacySection>
 
       <PrivacySection title="9. Your Rights">
-        You can request access, correction, deletion, or export of your data — including WhatsApp opt-out preferences, stored Google Place IDs, and WhatsApp connection credentials. To opt out of WhatsApp messages, reply "Stop" to any WhatsApp message from the clinic, or contact us at team@doxxy.in for any data rights request.
+        You can request access, correction, deletion, or export of your data — including WhatsApp opt-out preferences, stored Google Place IDs, and WhatsApp connection credentials. To opt out of WhatsApp messages, reply "Stop" to any WhatsApp message from the clinic, or contact us at prince@supersite.app for any data rights request.
       </PrivacySection>
 
       <PrivacySection title="10. Children's Privacy">
@@ -181,7 +181,7 @@ export default function PrivacyPage() {
         <br />
         Doxxy <br />
         Mumbai, India <br />
-        Email: team@doxxy.in <br />
+        Email: prince@supersite.app <br />
       </PrivacyContactInfo>
     </div>
   );

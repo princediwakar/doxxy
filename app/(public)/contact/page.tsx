@@ -22,7 +22,7 @@ const contactInfo = [
   {
     icon: Mail,
     title: 'Email Us',
-    details: ['doxxyapp@gmail.com'],
+    details: ['prince@supersite.app'],
     description: 'Get in touch via email for support or sales inquiries',
   },
 ];

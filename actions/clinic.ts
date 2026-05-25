@@ -23,8 +23,30 @@ export async function updateClinicMember(id: string, data: DbClinicMemberUpdate)
 
 export async function removeClinicMember(id: string) {
   const supabase = await createServerSupabase();
-  const { error } = await supabase.from('clinic_members').delete().eq('id', id);
+
+  const { data: member, error } = await supabase
+    .from('clinic_members')
+    .delete()
+    .eq('id', id)
+    .select('user_id, clinic_id')
+    .single();
+
   if (error) return { error: error.message };
+
+  if (member?.user_id && member.clinic_id) {
+    // clinic_members has no email column — look up from profiles
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('id', member.user_id)
+      .maybeSingle();
+
+    if (profile?.email) {
+      await supabase.from('pending_invitations').delete().eq('email', profile.email).eq('clinic_id', member.clinic_id);
+    }
+    await supabase.from('doctors').delete().eq('user_id', member.user_id).eq('clinic_id', member.clinic_id);
+  }
+
   revalidatePath('/clinic/staff');
   return { success: true };
 }
@@ -81,12 +103,9 @@ export async function createClinicWithAdmin(params: {
   userId: string;
   departments: string[];
   isDoctor: boolean;
-  doctorBio?: string;
-  doctorPhone?: string;
   selectedDepartment?: string;
   consultationFee?: number;
-  doctorGooglePlaceId?: string;
-  doctorGooglePlaceData?: GooglePlaceData;
+  invitedDoctorEmail?: string;
   userName?: string;
   userEmail?: string;
 }) {
@@ -132,10 +151,25 @@ export async function createClinicWithAdmin(params: {
     if (deptError) return { error: deptError.message };
 
     if (params.isDoctor && params.selectedDepartment && insertedDepartments) {
-      const userDepartment = insertedDepartments.find(
+      const match = insertedDepartments.find(
         (dept) => dept.department_type_id === params.selectedDepartment,
       );
-      userDepartmentId = userDepartment?.id || null;
+      if (match) userDepartmentId = match.id;
+    }
+  }
+
+  // Auto-create clinic_department if doctor picked a department not in step 2
+  if (params.isDoctor && params.selectedDepartment && !userDepartmentId) {
+    const { data: newDept, error: newDeptError } = await supabase
+      .from('clinic_departments')
+      .insert({
+        clinic_id: createdClinicId,
+        department_type_id: params.selectedDepartment,
+      })
+      .select('id')
+      .single();
+    if (!newDeptError && newDept) {
+      userDepartmentId = newDept.id;
     }
   }
 
@@ -156,9 +190,6 @@ export async function createClinicWithAdmin(params: {
         email: params.userEmail,
         primary_specialization: null,
         consultation_fee: params.consultationFee || 0,
-        bio: params.doctorBio,
-        google_place_id: params.doctorGooglePlaceId || null,
-        google_place_data: (params.doctorGooglePlaceData ?? null) as unknown as Json | null,
         is_active: true,
       },
       { onConflict: 'user_id,clinic_id' },
@@ -178,6 +209,19 @@ export async function createClinicWithAdmin(params: {
       );
 
     if (adminMemberError) return { error: adminMemberError.message };
+
+    if (params.invitedDoctorEmail) {
+      await supabase.functions.invoke('invite-member', {
+        body: {
+          memberData: {
+            email: params.invitedDoctorEmail,
+            name: params.invitedDoctorEmail,
+            role: 'doctor',
+            clinic_id: createdClinicId,
+          },
+        },
+      });
+    }
   }
 
   revalidatePath('/clinic');
@@ -220,19 +264,34 @@ export async function removeClinicDepartment(clinicDepartmentId: string) {
   return { success: true };
 }
 
-export async function removeMemberWithCleanup(memberId: string, userId: string | null, clinicId: string, email: string | null) {
+export async function getLatestClinicInviteLink(clinicId: string) {
   const supabase = await createServerSupabase();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return { link: null };
 
-  const { error } = await supabase.from('clinic_members').delete().eq('id', memberId);
-  if (error) return { error: error.message };
+  const { data: member } = await supabase
+    .from('clinic_members')
+    .select('role')
+    .eq('user_id', session.user.id)
+    .eq('clinic_id', clinicId)
+    .maybeSingle();
 
-  if (email) {
-    await supabase.from('pending_invitations').delete().eq('email', email).eq('clinic_id', clinicId);
-  }
-  if (userId) {
-    await supabase.from('doctors').delete().eq('user_id', userId).eq('clinic_id', clinicId);
-  }
+  if (!member || member.role !== 'superadmin') return { link: null };
 
-  revalidatePath('/clinic/staff');
-  return { success: true };
+  const { data: invitation } = await supabase
+    .from('pending_invitations')
+    .select('invitation_token, email')
+    .eq('clinic_id', clinicId)
+    .is('accepted_at', null)
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!invitation) return { link: null };
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://doxxy.app';
+  const link = `${siteUrl}/auth?token=${invitation.invitation_token}&type=invite&email=${encodeURIComponent(invitation.email)}`;
+
+  return { link };
 }

@@ -66,7 +66,7 @@ export default function WhatsAppConnection() {
   // Initialize Facebook SDK when script loads
   const initFB = useCallback(() => {
     window.FB?.init({
-      appId: "2593115681091436",
+      appId: "968197616134046",
       autoLogAppEvents: true,
       xfbml: true,
       version: "v25.0",
@@ -177,9 +177,7 @@ export default function WhatsAppConnection() {
         response_type: "code",
         override_default_response_type: true,
         extras: {
-          setup: {},
-          featureType: "",
-          sessionInfoVersion: "3",
+          sessionInfoVersion: "4",
         },
       },
     );

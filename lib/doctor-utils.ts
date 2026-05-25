@@ -55,6 +55,8 @@ clinicId,
       }
     }
 
+    const isActive = !!departmentId;
+
     // Create the doctor profile (upsert so retries are safe)
     const { data: doctorData, error: doctorError } = await supabase
       .from('doctors')
@@ -66,7 +68,7 @@ clinicId,
         primary_specialization: primarySpecialization,
         consultation_fee: consultationFee,
         bio,
-        is_active: true
+        is_active: isActive
       }, {
         onConflict: 'user_id,clinic_id'
       })

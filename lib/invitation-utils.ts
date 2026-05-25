@@ -213,7 +213,7 @@ export const processInvitationsOnProfileComplete = async (user: AppUser, userNam
           name: userName,
           email: user.email || '',
           phone: userPhone || null,
-          is_active: true,
+          is_active: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })

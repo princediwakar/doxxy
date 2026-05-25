@@ -1,3 +1,4 @@
+// app/(app)/schedule/page.tsx
 import { getTodayAppointments, resolveUserDoctor, getPatientById } from '@/lib/data/today';
 import { getActiveDoctors } from '@/lib/data/doctors';
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
@@ -23,6 +24,7 @@ export default async function TodayPage({
         doctors={[]}
         effectiveDoctorFilter={null}
         userDoctorId={null}
+        hasDoctors={false}
       />
     );
   }
@@ -45,6 +47,8 @@ export default async function TodayPage({
     getTodayAppointments(clinicId, effectiveDoctorFilter, selectedDate),
     getActiveDoctors(clinicId),
   ]);
+
+  const hasDoctors = doctors.length > 0;
 
   // Auto-select first scheduled (fallback in-progress) if no patient selected
   if (!selectedPatientId) {
@@ -71,6 +75,7 @@ export default async function TodayPage({
       doctors={doctors}
       effectiveDoctorFilter={effectiveDoctorFilter}
       userDoctorId={userDoctorId}
+      hasDoctors={hasDoctors}
     />
   );
 }

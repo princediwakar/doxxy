@@ -7,7 +7,7 @@ import type { Json } from '@/types/core';
 
 export async function quickOnboardDoctor(params: {
   name: string;
-  departmentId: string;
+  departmentTypeId: string;
   specialization?: string;
   consultationFee: number;
   userId: string;
@@ -22,7 +22,7 @@ export async function quickOnboardDoctor(params: {
   const supabase = await createServerSupabase();
   const {
     name,
-    departmentId,
+    departmentTypeId,
     specialization,
     consultationFee,
     userId,
@@ -100,10 +100,31 @@ export async function quickOnboardDoctor(params: {
     if (doctorError) return { error: doctorError.message };
   }
 
-  // 4. Update clinic member department
+  // 4. Look up or create clinic_department for this department_type + clinic
+  const { data: existingDept } = await supabase
+    .from('clinic_departments')
+    .select('id')
+    .eq('clinic_id', clinicId)
+    .eq('department_type_id', departmentTypeId)
+    .maybeSingle();
+
+  let clinicDepartmentId: string;
+  if (existingDept) {
+    clinicDepartmentId = existingDept.id;
+  } else {
+    const { data: newDept, error: createError } = await supabase
+      .from('clinic_departments')
+      .insert({ clinic_id: clinicId, department_type_id: departmentTypeId })
+      .select('id')
+      .single();
+    if (createError || !newDept) return { error: 'Failed to create clinic department' };
+    clinicDepartmentId = newDept.id;
+  }
+
+  // 5. Set clinic_members.department_id to the clinic_department.id
   const { error: deptError } = await supabase
     .from('clinic_members')
-    .update({ department_id: departmentId })
+    .update({ department_id: clinicDepartmentId })
     .eq('user_id', userId)
     .eq('clinic_id', clinicId);
   if (deptError) return { error: deptError.message };
