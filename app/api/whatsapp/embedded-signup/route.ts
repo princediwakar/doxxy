@@ -58,10 +58,32 @@ export async function POST(req: Request) {
     }
 
     const tokenData = await tokenRes.json();
-    const accessToken = tokenData.access_token as string;
+    const shortLivedToken = tokenData.access_token as string;
 
-    if (!accessToken) {
+    if (!shortLivedToken) {
       return Response.json({ success: false, error: "No access token in response" }, { status: 502 });
+    }
+
+    // Exchange short-lived token for a long-lived token (~60 days)
+    const longLivedRes = await fetch(
+      `${GRAPH_API_BASE}/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`,
+      { method: "GET" },
+    );
+
+    let accessToken = shortLivedToken;
+    let tokenExpiresAt: string | null = null;
+
+    if (longLivedRes.ok) {
+      const longLivedData = await longLivedRes.json();
+      if (longLivedData.access_token) {
+        accessToken = longLivedData.access_token as string;
+        if (longLivedData.expires_in) {
+          const expiresInSeconds = Number(longLivedData.expires_in);
+          if (!Number.isNaN(expiresInSeconds)) {
+            tokenExpiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
+          }
+        }
+      }
     }
 
     let waba_id = bodyWabaId || "";
@@ -72,7 +94,7 @@ export async function POST(req: Request) {
     if (!waba_id || !phone_number_id) {
       try {
         const accountsRes = await fetch(
-          `${GRAPH_API_BASE}/me/whatsapp_business_accounts`,
+          `${GRAPH_API_BASE}/me/assigned_whatsapp_business_accounts`,
           { headers: { Authorization: `Bearer ${accessToken}` } },
         );
         if (accountsRes.ok) {
@@ -129,7 +151,7 @@ export async function POST(req: Request) {
         access_token: accessToken,
         business_id: business_id || null,
         status: "active",
-        token_expires_at: null, // System user tokens from ES don't expire
+        token_expires_at: tokenExpiresAt,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: "clinic_id",

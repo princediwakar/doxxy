@@ -179,10 +179,9 @@ export default function WhatsAppConnection() {
       business_id: businessId || "",
     };
 
-    if (signupRef.current.waba_id && signupRef.current.phone_number_id) {
-      setAction("connecting");
-      completeSignup(signupRef.current as SignupData);
-    }
+    // Always attempt — server resolves WABA info via Graph API if needed
+    setAction("connecting");
+    completeSignup(signupRef.current as SignupData);
   }, [searchParams, completeSignup]);
 
   // Timeout: reset hung "connecting" state after 5 minutes
