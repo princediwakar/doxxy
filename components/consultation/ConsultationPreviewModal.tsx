@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DbPatient, DbAppointment } from "@/types/core";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import { UseFormReturn } from "react-hook-form";
 import type { ConsultationFormValues, FieldValue } from "@/types/consultation";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -221,6 +222,7 @@ export const ConsultationPreviewModal = ({
               Review your consultation notes
             </DialogDescription>
             <div className="flex items-center gap-2">
+              {isWhatsAppEnabled && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -244,6 +246,7 @@ export const ConsultationPreviewModal = ({
                   )}
                 </Tooltip>
               </TooltipProvider>
+              )}
               <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
                 <Download className="h-4 w-4 mr-2" />
                 Download

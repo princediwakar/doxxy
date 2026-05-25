@@ -5,6 +5,7 @@ import { FileText, Edit, Printer, Download, MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import {
   Dialog,
   DialogContent,
@@ -297,7 +298,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
             </Button>
           )}
 
-          {bill && (
+          {isWhatsAppEnabled && bill && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

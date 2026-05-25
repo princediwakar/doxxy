@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Star, CheckCircle } from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
 import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
@@ -201,7 +202,7 @@ export function EncounterCanvas({
         />
       )}
 
-      {appointment && appointmentStatus === "Completed" && (
+      {isWhatsAppEnabled && appointment && appointmentStatus === "Completed" && (
         <div className="flex items-center justify-between rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/40 px-4 py-3">
           <p className="text-sm text-amber-800 dark:text-amber-300">
             Ask the patient to leave a Google review.

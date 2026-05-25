@@ -15,6 +15,7 @@ import { useAppState } from "@/contexts/AppStateContext";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import { Eye, Printer, Download, MessageCircle } from "lucide-react";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import { ConsultationLayout } from "./ConsultationLayout";
@@ -336,6 +337,7 @@ export function ConsultationViewModal({
             </DialogTitle>
             {consultationData && (
               <div className="flex items-center gap-2">
+                {isWhatsAppEnabled && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -359,6 +361,7 @@ export function ConsultationViewModal({
                     )}
                   </Tooltip>
                 </TooltipProvider>
+                )}
                 <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
                   <Download className="h-4 w-4 mr-2" />
                   Download
