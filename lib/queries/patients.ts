@@ -31,14 +31,19 @@ export async function queryPatientDetail(
 
   const { data: bills } = await supabase
     .from('bills')
-    .select('*')
+    .select('*, patients(name)')
     .eq('patient_id', patientId)
     .order('created_at', { ascending: false });
+
+  const billsWithPatientName = (bills ?? []).map((b) => {
+    const { patients, ...billData } = b as Record<string, unknown> & { patients?: { name?: string } | null };
+    return { ...billData, patient_name: patients?.name ?? null };
+  });
 
   return {
     patient: patient as DbPatientByClinic | null,
     consultations: (consultations ?? []) as Array<Record<string, unknown>>,
-    bills: (bills ?? []) as Array<Record<string, unknown>>,
+    bills: billsWithPatientName as Array<Record<string, unknown>>,
   };
 }
 
@@ -47,12 +52,15 @@ export async function queryPatientBills(patientId: string) {
 
   const { data, error } = await supabase
     .from('bills')
-    .select('*')
+    .select('*, patients(name)')
     .eq('patient_id', patientId)
     .order('created_at', { ascending: false });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as DbBill[];
+  return ((data ?? []) as Array<Record<string, unknown>>).map((b) => {
+    const { patients, ...billData } = b as Record<string, unknown> & { patients?: { name?: string } | null };
+    return { ...billData, patient_name: patients?.name ?? null };
+  }) as DbBill[];
 }
 
 const ITEMS_PER_PAGE = 20;

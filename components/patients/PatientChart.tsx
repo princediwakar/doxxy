@@ -315,6 +315,7 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
             }
           }}
           bill={selectedBill}
+          patient={patient as unknown as import("@/types/core").DbPatient}
           mode={selectedBillMode}
           onModeChange={setSelectedBillMode}
         />

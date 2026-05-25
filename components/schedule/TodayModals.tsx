@@ -138,6 +138,7 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
             open={true}
             onOpenChange={handleBillViewClose}
             bill={selectedBill}
+            patient={billPatient as unknown as DbPatient | null}
             mode={billViewMode}
             onModeChange={(newMode) => {
               if (newMode === "view") onRefetch();
