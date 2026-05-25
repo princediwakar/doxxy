@@ -3,12 +3,11 @@ import HeroRevenue from "@/components/landing/HeroRevenue";
 import CalculatorROI from "@/components/landing/CalculatorROI";
 import OutcomeGrid from "@/components/landing/OutcomeGrid";
 import ProductShowcase from "@/components/landing/ProductShowcase";
-import Specialties from "@/components/landing/Specialties";
+import WhatsAppConnect from "@/components/landing/WhatsAppConnect";
 import Testimonials from "@/components/landing/Testimonials";
-import FrictionKiller from "@/components/landing/FrictionKiller";
+import TrustAndLegitimacy from "@/components/landing/TrustAndLegitimacy";
 import PricingAnchor from "@/components/landing/PricingAnchor";
 import StickyBottomCTA from "@/components/landing/StickyBottomCTA";
-import SiteFooter from "@/components/SiteFooter";
 import { APP_URL } from "@/lib/constants";
 
 const structuredData = {
@@ -20,18 +19,27 @@ const structuredData = {
   url: APP_URL,
   logo: "/doxxy.png",
   medicalSpecialty: "Healthcare Software",
+  parentOrganization: {
+    "@type": "Organization",
+    name: "Supersite Technologies Private Limited",
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: "Mumbai",
+      addressCountry: "IN",
+    },
+  },
 };
 
 export default function LandingPageContent() {
   return (
     <>
       <HeroRevenue />
-      <CalculatorROI />
       <OutcomeGrid />
       <ProductShowcase />
-      <Specialties />
+      <CalculatorROI />
+      <WhatsAppConnect />
       <Testimonials />
-      <FrictionKiller />
+      <TrustAndLegitimacy />
       <PricingAnchor />
       <StickyBottomCTA />
 

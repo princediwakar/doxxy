@@ -22,9 +22,10 @@ export default function HeroRevenue() {
             </h1>
 
             <p className="text-lg md:text-xl text-gray-600 max-w-xl mx-auto lg:mx-0 mb-10 leading-relaxed">
-              Doxxy automates clinical notes, billing, scheduling, and inventory.
-              You see patients. Everything else runs itself. Just ₹10 per
-              appointment.
+              Doxxy automates clinical notes, billing, scheduling, and inventory —
+              and delivers prescriptions, bills, and reminders through your
+              clinic&apos;s own WhatsApp number. You see patients. Everything else
+              runs itself. Just ₹10 per appointment.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">
