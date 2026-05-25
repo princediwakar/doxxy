@@ -31,10 +31,10 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: "Invalid request body" }, { status: 400 });
   }
 
-  const { code, waba_id, phone_number_id, business_id } = body;
+  const { code, waba_id: bodyWabaId, phone_number_id: bodyPhoneNumberId, business_id } = body;
 
-  if (!code || !waba_id || !phone_number_id) {
-    return Response.json({ success: false, error: "Missing required fields: code, waba_id, phone_number_id" }, { status: 400 });
+  if (!code) {
+    return Response.json({ success: false, error: "Missing required field: code" }, { status: 400 });
   }
 
   const appId = process.env.META_APP_ID;
@@ -64,14 +64,58 @@ export async function POST(req: Request) {
       return Response.json({ success: false, error: "No access token in response" }, { status: 502 });
     }
 
-    // Get the display phone number from the phone_number_id
+    let waba_id = bodyWabaId || "";
+    let phone_number_id = bodyPhoneNumberId || "";
     let displayPhoneNumber: string | null = null;
-    const phoneRes = await fetch(`${GRAPH_API_BASE}/${phone_number_id}`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (phoneRes.ok) {
-      const phoneData = await phoneRes.json();
-      displayPhoneNumber = phoneData.display_phone_number || null;
+
+    // If waba_id or phone_number_id missing (fallback redirect case), resolve via Graph API
+    if (!waba_id || !phone_number_id) {
+      try {
+        const accountsRes = await fetch(
+          `${GRAPH_API_BASE}/me/whatsapp_business_accounts`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+        if (accountsRes.ok) {
+          const accountsData = await accountsRes.json();
+          const account = accountsData.data?.[0];
+          if (account) {
+            waba_id = waba_id || account.id;
+
+            const phonesRes = await fetch(
+              `${GRAPH_API_BASE}/${waba_id}/phone_numbers`,
+              { headers: { Authorization: `Bearer ${accessToken}` } },
+            );
+            if (phonesRes.ok) {
+              const phonesData = await phonesRes.json();
+              const phone = phonesData.data?.[0];
+              if (phone) {
+                phone_number_id = phone_number_id || phone.id;
+                displayPhoneNumber = phone.display_phone_number || null;
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("WABA lookup failed:", err);
+      }
+    }
+
+    if (!waba_id || !phone_number_id) {
+      return Response.json({
+        success: false,
+        error: "Could not resolve WhatsApp Business Account. Please try connecting again.",
+      }, { status: 400 });
+    }
+
+    // Fetch display phone number if not already resolved
+    if (!displayPhoneNumber) {
+      const phoneRes = await fetch(`${GRAPH_API_BASE}/${phone_number_id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (phoneRes.ok) {
+        const phoneData = await phoneRes.json();
+        displayPhoneNumber = phoneData.display_phone_number || null;
+      }
     }
 
     // Upsert the clinic WhatsApp connection

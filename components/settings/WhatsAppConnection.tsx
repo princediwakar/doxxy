@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Script from "next/script";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -45,8 +46,10 @@ export default function WhatsAppConnection() {
   const { activeClinicId, activeClinicRole } = useAppState();
   const queryClient = useQueryClient();
   const supabase = getSupabase();
+  const searchParams = useSearchParams();
   const [action, setAction] = useState<"idle" | "connecting" | "disconnecting">("idle");
   const signupRef = useRef<Partial<SignupData>>({});
+  const urlParamsProcessed = useRef(false);
 
   const { data: connection, isLoading } = useQuery({
     queryKey: ["clinic", "whatsapp-connection", activeClinicId],
@@ -66,7 +69,7 @@ export default function WhatsAppConnection() {
   // Initialize Facebook SDK when script loads
   const initFB = useCallback(() => {
     window.FB?.init({
-      appId: "968197616134046",
+      appId: process.env.NEXT_PUBLIC_META_APP_ID || "",
       autoLogAppEvents: true,
       xfbml: true,
       version: "v25.0",
@@ -101,7 +104,7 @@ export default function WhatsAppConnection() {
     [activeClinicId, queryClient],
   );
 
-  // Listen for Embedded Signup postMessage FINISH event (waba_id, phone_number_id)
+  // Listen for Embedded Signup postMessage events (waba_id, phone_number_id)
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       if (
@@ -121,7 +124,9 @@ export default function WhatsAppConnection() {
         return;
       }
 
-      if (data.type === "WA_EMBEDDED_SIGNUP" && data.event === "FINISH") {
+      if (data.type !== "WA_EMBEDDED_SIGNUP") return;
+
+      if (data.event === "FINISH") {
         const { waba_id, phone_number_id, business_id } = data.data || {};
         signupRef.current = {
           ...signupRef.current,
@@ -135,11 +140,63 @@ export default function WhatsAppConnection() {
           completeSignup(signupRef.current as SignupData);
         }
       }
+
+      if (data.event === "CANCEL") {
+        setAction("idle");
+        signupRef.current = {};
+        toast.error("WhatsApp connection was cancelled");
+      }
+
+      if (data.event === "ERROR") {
+        setAction("idle");
+        signupRef.current = {};
+        toast.error("WhatsApp connection failed. Please try again.");
+      }
     };
 
     window.addEventListener("message", handler);
     return () => window.removeEventListener("message", handler);
   }, [completeSignup]);
+
+  // Handle fallback redirect: when popup is blocked, Facebook redirects the
+  // full page to the fallback_redirect_uri with the OAuth code in the URL.
+  useEffect(() => {
+    if (urlParamsProcessed.current) return;
+
+    const code = searchParams.get("code");
+    if (!code) return;
+
+    urlParamsProcessed.current = true;
+
+    const wabaId = searchParams.get("waba_id");
+    const phoneNumberId = searchParams.get("phone_number_id");
+    const businessId = searchParams.get("business_id");
+
+    signupRef.current = {
+      code,
+      waba_id: wabaId || "",
+      phone_number_id: phoneNumberId || "",
+      business_id: businessId || "",
+    };
+
+    if (signupRef.current.waba_id && signupRef.current.phone_number_id) {
+      setAction("connecting");
+      completeSignup(signupRef.current as SignupData);
+    }
+  }, [searchParams, completeSignup]);
+
+  // Timeout: reset hung "connecting" state after 5 minutes
+  useEffect(() => {
+    if (action !== "connecting") return;
+
+    const timeout = setTimeout(() => {
+      setAction("idle");
+      signupRef.current = {};
+      toast.error("WhatsApp connection timed out. Please try again.");
+    }, 5 * 60 * 1000);
+
+    return () => clearTimeout(timeout);
+  }, [action]);
 
   const launchWhatsAppSignup = useCallback(() => {
     if (!window.FB) {
