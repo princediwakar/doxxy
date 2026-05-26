@@ -41,6 +41,11 @@ export function StaffWorkflow({
   const viewBill = useTodayStore((s) => s.viewBill);
   const viewConsultation = useTodayStore((s) => s.viewConsultation);
 
+  const handleViewBill = useCallback(
+    (bill: BillWithDetails) => viewBill(bill, patientDetail?.patient ?? null),
+    [viewBill, patientDetail?.patient],
+  );
+
   const handleCheckIn = useCallback(async () => {
     if (!appointment) return;
     setUpdating(true);
@@ -166,7 +171,7 @@ export function StaffWorkflow({
         isLoadingBills={isLoadingBills}
         defaultExpandBills
         defaultExpandHistory
-        onViewBill={viewBill}
+        onViewBill={handleViewBill}
         onViewConsultationFromHistory={viewConsultation}
         onCreateBill={handleGenerateBill}
       />

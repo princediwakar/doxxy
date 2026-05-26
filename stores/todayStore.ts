@@ -37,7 +37,7 @@ interface TodayActions {
   selectAppointment: (app: AppointmentWithDetails | null) => void;
   createBill: (app: AppointmentWithDetails) => void;
   createBillForPatient: (patient: DbPatientByClinic) => void;
-  viewBill: (bill: BillWithDetails) => void;
+  viewBill: (bill: BillWithDetails, patient?: DbPatientByClinic | null) => void;
   viewConsultation: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
   scheduleAppointment: (patient: Patient) => void;
   editAppointment: (app: AppointmentWithDetails) => void;
@@ -88,9 +88,10 @@ export const useTodayStore = create<TodayState & TodayActions>((set) => ({
       activeModal: 'bill',
     }),
 
-  viewBill: (bill) =>
+  viewBill: (bill, patient) =>
     set({
       selectedBill: bill,
+      billPatient: patient ?? null,
       activeModal: 'bill',
     }),
 

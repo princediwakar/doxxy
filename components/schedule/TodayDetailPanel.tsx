@@ -1,6 +1,7 @@
 // components/schedule/TodayDetailPanel.tsx
 "use client";
 
+import { useCallback } from "react";
 import { User } from "lucide-react";
 import { Spinner } from "@/components/ui/loading";
 import { useTodayStore } from "@/stores/todayStore";
@@ -40,6 +41,11 @@ export function TodayDetailPanel({
   const editPatient = useTodayStore((s) => s.editPatient);
   const viewBill = useTodayStore((s) => s.viewBill);
   const viewConsultation = useTodayStore((s) => s.viewConsultation);
+
+  const handleViewBill = useCallback(
+    (bill: BillWithDetails) => viewBill(bill, patientDetail?.patient ?? null),
+    [viewBill, patientDetail?.patient],
+  );
 
   const selectedAppointment = selectedAppointmentId
     ? patientAppointments.find((a) => a.id === selectedAppointmentId) ?? null
@@ -89,7 +95,7 @@ export function TodayDetailPanel({
             selectedAppointment && editAppointment(selectedAppointment)
           }
           canEditConsultation={canEditConsultation}
-          onViewBill={viewBill}
+          onViewBill={handleViewBill}
           onViewConsultationFromHistory={viewConsultation}
           onCreateBill={
             selectedAppointment
@@ -135,7 +141,7 @@ export function TodayDetailPanel({
             isLoadingBills={isLoadingBills}
             defaultExpandBills
             defaultExpandHistory
-            onViewBill={viewBill}
+            onViewBill={handleViewBill}
             onViewConsultationFromHistory={viewConsultation}
             onCreateBill={
               selectedAppointment
