@@ -1,14 +1,22 @@
 import Script from "next/script";
+import dynamic from "next/dynamic";
 import HeroRevenue from "@/components/landing/HeroRevenue";
-import CalculatorROI from "@/components/landing/CalculatorROI";
 import OutcomeGrid from "@/components/landing/OutcomeGrid";
 import ProductShowcase from "@/components/landing/ProductShowcase";
 import WhatsAppConnect from "@/components/landing/WhatsAppConnect";
 import Testimonials from "@/components/landing/Testimonials";
 import TrustAndLegitimacy from "@/components/landing/TrustAndLegitimacy";
 import PricingAnchor from "@/components/landing/PricingAnchor";
-import StickyBottomCTA from "@/components/landing/StickyBottomCTA";
 import { APP_URL } from "@/lib/constants";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const CalculatorROI = dynamic(() => import("@/components/landing/CalculatorROI"), {
+  loading: () => <div className="py-20 md:py-28"><Skeleton className="h-96 max-w-3xl mx-auto rounded-2xl" /></div>,
+});
+
+const StickyBottomCTA = dynamic(() => import("@/components/landing/StickyBottomCTA"), {
+  ssr: false,
+});
 
 const structuredData = {
   "@context": "https://schema.org",

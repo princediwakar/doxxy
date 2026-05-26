@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { LogOut, Menu, User2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -44,7 +45,7 @@ export function MobileNav() {
       <DrawerContent className="max-w-sm mx-0 h-[85dvh] mt-0">
         <DrawerHeader className="text-left relative">
           <DrawerTitle className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Doxxy" className="h-8" width="128" height="32" />
+            <Image src="/logo.svg" alt="Doxxy" className="h-8" width="128" height="32" />
           </DrawerTitle>
         </DrawerHeader>
 

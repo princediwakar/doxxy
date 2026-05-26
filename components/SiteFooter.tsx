@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image";
 import { Mail, Phone } from "lucide-react";
 
 const SiteFooter = () => {
@@ -8,7 +9,7 @@ const SiteFooter = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="md:col-span-1">
-            <img src="/logo.svg" alt="Doxxy" className="w-20 mb-4" width="80" height="20" />
+            <Image src="/logo.svg" alt="Doxxy" className="w-20 mb-4" width="80" height="20" />
             <p className="text-sm leading-relaxed max-w-xs">
             Doxxy is the modern healthcare management platform for small to medium clinics.
             </p>

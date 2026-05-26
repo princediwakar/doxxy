@@ -2,6 +2,7 @@
 "use client";
 import { memo } from "react";
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import {
@@ -71,7 +72,7 @@ export const AppHeader = memo(() => {
         <header className="flex justify-between items-center max-w-7xl h-full px-6 lg:px-8 mx-auto">
           <nav className="flex items-center space-x-8" aria-label="Main navigation">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200 ease-in-out">
-              <img src="/logo.svg" alt="Doxxy" className="w-24" width="96" height="24" />
+              <Image src="/logo.svg" alt="Doxxy" className="w-24" width="96" height="24" priority />
             </Link>
 
             {/* Desktop Navigation */}

@@ -1,5 +1,6 @@
 // components/auth/AuthFormFields.tsx
 import React from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail } from "lucide-react";
@@ -59,7 +60,7 @@ export const GoogleButton: React.FC<GoogleButtonProps> = ({ onClick, loading }) 
     disabled={loading}
     style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
   >
-    <img src="/google.svg" alt="Google" className="h-5 w-5" width="20" height="20" />
+    <Image src="/google.svg" alt="Google" className="h-5 w-5" width="20" height="20" />
     {loading ? "Signing in..." : "Sign in with Google"}
   </Button>
 );
