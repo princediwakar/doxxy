@@ -59,7 +59,7 @@ export const GoogleButton: React.FC<GoogleButtonProps> = ({ onClick, loading }) 
     disabled={loading}
     style={{ fontFamily: '-apple-system, BlinkMacSystemFont, sans-serif' }}
   >
-    <img src="/google.svg" alt="Google" className="h-5 w-5" />
+    <img src="/google.svg" alt="Google" className="h-5 w-5" width="20" height="20" />
     {loading ? "Signing in..." : "Sign in with Google"}
   </Button>
 );

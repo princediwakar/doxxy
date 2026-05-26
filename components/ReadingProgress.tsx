@@ -6,19 +6,37 @@ export function ReadingProgress() {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => {
+    let rafId: number;
+    let lastProgress = 0;
+
+    const updateProgress = () => {
       const scrollTop = window.scrollY;
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
       if (docHeight <= 0) {
         setProgress(100);
         return;
       }
-      setProgress(Math.min(100, Math.round((scrollTop / docHeight) * 100)));
+      const next = Math.min(100, Math.round((scrollTop / docHeight) * 100));
+      if (next !== lastProgress) {
+        lastProgress = next;
+        setProgress(next);
+      }
+    };
+
+    const handleScroll = () => {
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = 0;
+        updateProgress();
+      });
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    updateProgress();
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return (

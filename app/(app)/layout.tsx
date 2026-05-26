@@ -46,7 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       serverProfileName={profileName}
       serverActiveClinicId={activeClinic?.clinic_id ?? null}
     >
-      {children}
+      <main>{children}</main>
     </LayoutServer>
   );
 }

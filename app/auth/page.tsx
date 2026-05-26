@@ -14,7 +14,7 @@ const AuthContent = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-950 dark:to-gray-900 p-4">
       <div className="mb-8">
-        <img src="/logo.svg" alt="Doxxy" className="h-10 w-auto" />
+        <img src="/logo.svg" alt="Doxxy" className="h-10 w-auto" width="200" height="40" />
       </div>
       <div className="w-full max-w-md">
         <AuthCard {...authProps} />

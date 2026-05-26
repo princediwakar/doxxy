@@ -150,7 +150,7 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
                 <CardContent className="p-8 space-y-4">
                   <blockquote className="text-lg text-muted-foreground italic">&ldquo;{t.quote}&rdquo;</blockquote>
                   <div className="flex items-center">
-                    <img src={t.photo} alt={t.name} className="w-12 h-12 rounded-full mr-4" />
+                    <img src={t.photo} alt={t.name} className="w-12 h-12 rounded-full mr-4" width="48" height="48" />
                     <div>
                       <p className="font-semibold text-foreground">{t.name}</p>
                       <p className="text-muted-foreground">{t.clinic}</p>

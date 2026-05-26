@@ -201,9 +201,11 @@ const About = () => {
             {team.map((member, index) => (
               <Card key={index} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-w-3 aspect-h-4">
-                  <img 
-                    src={member.image} 
+                  <Image
+                    src={member.image}
                     alt={member.name}
+                    width={400}
+                    height={256}
                     className="w-full h-64 object-cover"
                   />
                 </div>

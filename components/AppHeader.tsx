@@ -71,7 +71,7 @@ export const AppHeader = memo(() => {
         <header className="flex justify-between items-center max-w-7xl h-full px-6 lg:px-8 mx-auto">
           <nav className="flex items-center space-x-8" aria-label="Main navigation">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity duration-200 ease-in-out">
-              <img src="/logo.svg" alt="Doxxy" className="w-24" />
+              <img src="/logo.svg" alt="Doxxy" className="w-24" width="96" height="24" />
             </Link>
 
             {/* Desktop Navigation */}

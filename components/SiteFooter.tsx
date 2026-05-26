@@ -8,7 +8,7 @@ const SiteFooter = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="md:col-span-1">
-            <img src="/logo.svg" alt="Doxxy" className="w-20 mb-4" />
+            <img src="/logo.svg" alt="Doxxy" className="w-20 mb-4" width="80" height="20" />
             <p className="text-sm leading-relaxed max-w-xs">
             Doxxy is the modern healthcare management platform for small to medium clinics.
             </p>
@@ -27,7 +27,7 @@ const SiteFooter = () => {
           {/* Navigation Links */}
           <div className="md:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-8">
             <div>
-              <h4 className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Product</h4>
+              <p className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Product</p>
               <div className="space-y-3">
                 <Link href="/features" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Features
@@ -42,7 +42,7 @@ const SiteFooter = () => {
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Resources</h4>
+              <p className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Resources</p>
               <div className="space-y-3">
                 <Link href="/about" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   About Us
@@ -60,7 +60,7 @@ const SiteFooter = () => {
             </div>
 
             <div>
-              <h4 className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Legal</h4>
+              <p className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Legal</p>
               <div className="space-y-3">
                 <Link href="/privacy" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Privacy Policy

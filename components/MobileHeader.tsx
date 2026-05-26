@@ -16,7 +16,7 @@ export function MobileHeader() {
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b pt-safe">
       <div className="flex items-center h-14 px-3 gap-2">
-        <img src="/logo.svg" alt="Doxxy" className="h-7 flex-shrink-0" />
+        <img src="/logo.svg" alt="Doxxy" className="h-7 flex-shrink-0" width="112" height="28" />
 
         <div className="min-w-0 flex-1">
           {activeClinicId && <ClinicSwitcher />}

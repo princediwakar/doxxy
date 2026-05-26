@@ -19,7 +19,7 @@
     --secondary-foreground: 210 10% 20%;
 
     --muted: 210 20% 98%; /* Even lighter gray for muted backgrounds */
-    --muted-foreground: 210 10% 45%; /* Medium gray for muted text */
+    --muted-foreground: 210 10% 40%; /* Medium gray for muted text */
 
     --accent: 210 20% 94%; /* Slightly darker light gray for accents */
     --accent-foreground: 210 10% 20%;
@@ -62,7 +62,7 @@
     --secondary-foreground: 210 10% 90%;
 
     --muted: 210 10% 25%; /* Slightly lighter dark gray for muted backgrounds */
-    --muted-foreground: 210 10% 70%; /* Medium light gray for muted text */
+    --muted-foreground: 210 10% 75%; /* Medium light gray for muted text */
 
     --accent: 210 10% 30%; /* Even lighter dark gray for accents */
     --accent-foreground: 210 10% 90%;

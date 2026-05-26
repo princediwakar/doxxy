@@ -6,10 +6,12 @@ import typography from "@tailwindcss/typography";
 export default {
 	darkMode: ["class"],
 	content: [
-		"./pages/**/*.{ts,tsx}",
 		"./components/**/*.{ts,tsx}",
 		"./app/**/*.{ts,tsx}",
-		"./src/**/*.{ts,tsx}",
+		"./hooks/**/*.{ts,tsx}",
+		"./lib/**/*.{ts,tsx}",
+		"./stores/**/*.{ts,tsx}",
+		"./contexts/**/*.{ts,tsx}",
 	],
 	prefix: "",
 	theme: {

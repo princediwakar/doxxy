@@ -24,7 +24,7 @@ export default async function OnboardingLayout({ children }: { children: React.R
       serverProfileName={profileName}
       serverActiveClinicId={activeClinic?.clinic_id ?? null}
     >
-      {children}
+      <main>{children}</main>
     </OnboardingWrapper>
   );
 }

@@ -57,7 +57,7 @@ export default function PublicLayout({
       {/* End Google Tag Manager (noscript) */}
 
       <AppHeader />
-      {children}
+      <main>{children}</main>
       <SiteFooter />
     </>
   )
