@@ -202,7 +202,7 @@ export function EncounterCanvas({
         />
       )}
 
-      {isWhatsAppEnabled && appointment && appointmentStatus === "Completed" && (
+      {/* {isWhatsAppEnabled && appointment && appointmentStatus === "Completed" && (
         <div className="flex items-center justify-between rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/40 px-4 py-3">
           <p className="text-sm text-amber-800 dark:text-amber-300">
             Ask the patient to leave a Google review.
@@ -225,7 +225,7 @@ export function EncounterCanvas({
             </Button>
           )}
         </div>
-      )}
+      )} */}
 
       <AdministrativeFooter
         patientDetail={patientDetail}

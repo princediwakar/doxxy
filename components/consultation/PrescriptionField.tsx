@@ -80,7 +80,7 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
       {displayMedications.map((medication: PrescriptionMedication, index: number) => (
         <div key={index} className={`border rounded-lg p-4 space-y-4 transition-colors ${
           isReadOnly ? 'bg-muted border-border' : 'bg-background border-border hover:border-border'
-        } ${!medication.name?.trim() && !isReadOnly ? 'border-red-200 bg-red-50' : ''}`}>
+        } ${!medication.name?.trim() && !isReadOnly ? 'border-destructive/30 bg-destructive/5' : ''}`}>
           
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -125,8 +125,8 @@ export const PrescriptionField = ({ value = [], onChange, isReadOnly = false }: 
                 onClear={() => handleMedicineClear(index)}
                 placeholder="Search for medicine..."
                 className={`${
-                  !medication.name || medication.name.trim().length === 0 
-                    ? 'border-red-200 focus:border-red-400' 
+                  !medication.name || medication.name.trim().length === 0
+                    ? 'border-destructive/30 focus:border-destructive/60'
                     : ''
                 }`}
               />
