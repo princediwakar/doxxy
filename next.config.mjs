@@ -3,9 +3,9 @@
 const cspHeader = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net",
-  "style-src 'self' 'unsafe-inline'",
+  "style-src 'self' 'unsafe-inline' https://lh3.googleusercontent.com https://connect.facebook.net",
   "img-src 'self' data: https: blob:",
-  "font-src 'self'",
+  "font-src 'self' https://lh3.googleusercontent.com https://connect.facebook.net",
   "connect-src 'self' https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to https://*.facebook.com",
   "frame-src 'self' https://www.googletagmanager.com https://www.facebook.com https://web.facebook.com",
   "worker-src 'self' blob:",
