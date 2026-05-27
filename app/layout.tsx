@@ -62,6 +62,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Must run before any other scripts — FB SDK checks for this when it loads */}
+        <Script
+          id="fb-async-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `window.fbAsyncInit=function(){window.FB&&window.FB.init({appId:"${process.env.NEXT_PUBLIC_META_APP_ID || "968197616134046"}",autoLogAppEvents:!0,xfbml:!0,version:"v25.0"})}`,
+          }}
+        />
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <Providers>
