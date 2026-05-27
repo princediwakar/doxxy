@@ -260,9 +260,8 @@ export default function WhatsAppConnection() {
         response_type: "code",
         override_default_response_type: true,
         extras: {
-          feature: "app_only_install",
-          version: 4,
-          sessionInfoVersion: 3,
+          version: "v4",
+          sessionInfoVersion: "3",
           setup: {
             business: {
               phone: { code: 91, number: "" },
