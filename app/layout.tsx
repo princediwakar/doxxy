@@ -75,7 +75,7 @@ export default function RootLayout({
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
               __html: `
-                if ('serviceWorker' in navigator) {
+                if ('serviceWorker' in navigator && navigator.maxTouchPoints > 0) {
                   window.addEventListener('load', function() {
                     navigator.serviceWorker.register('/sw.js').then(function(reg) {
                       reg.addEventListener('updatefound', function() {
