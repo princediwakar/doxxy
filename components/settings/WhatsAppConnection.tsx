@@ -41,6 +41,7 @@ interface SignupData {
   waba_id: string;
   phone_number_id: string;
   business_id: string;
+  submitting?: boolean;
 }
 
 export default function WhatsAppConnection() {
@@ -163,7 +164,8 @@ export default function WhatsAppConnection() {
         };
 
         // If FB.login callback already gave us the code, complete now
-        if (signupRef.current.code && signupRef.current.waba_id && signupRef.current.phone_number_id) {
+        if (signupRef.current.code && !signupRef.current.submitting) {
+          signupRef.current.submitting = true;
           completeSignup(signupRef.current as SignupData);
         }
       }
@@ -244,11 +246,16 @@ export default function WhatsAppConnection() {
         if (response.authResponse?.code) {
           signupRef.current.code = response.authResponse.code;
 
-          // If postMessage already gave us waba_id and phone_number_id, complete now
-          if (signupRef.current.waba_id && signupRef.current.phone_number_id) {
-            completeSignup(signupRef.current as SignupData);
+          // Unconditionally complete signup. If waba_id is missing, backend Graph API fallback handles it.
+          if (!signupRef.current.submitting) {
+            signupRef.current.submitting = true;
+            completeSignup({
+              code: signupRef.current.code,
+              waba_id: signupRef.current.waba_id || "",
+              phone_number_id: signupRef.current.phone_number_id || "",
+              business_id: signupRef.current.business_id || "",
+            });
           }
-          // Otherwise the postMessage handler will call completeSignup when it fires
         } else {
           setAction("idle");
           signupRef.current = {};
@@ -261,14 +268,7 @@ export default function WhatsAppConnection() {
         override_default_response_type: true,
         extras: {
           version: "v4",
-          sessionInfoVersion: "3",
-          setup: {
-            business: {
-              phone: { code: 91, number: "" },
-              website: "https://doxxy.in/",
-              address: { country: "IN" },
-            },
-          },
+          sessionInfoVersion: "3"
         },
       },
     );
