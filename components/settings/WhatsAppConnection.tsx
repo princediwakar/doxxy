@@ -15,14 +15,16 @@ import { MessageCircle, CheckCircle } from "lucide-react";
 
 // Must be set before the FB SDK loads — the SDK checks for this
 // function when it initializes. Using onLoad/Script callbacks is too late.
-window.fbAsyncInit = function () {
-  window.FB?.init({
-    appId: process.env.NEXT_PUBLIC_META_APP_ID || "",
-    autoLogAppEvents: true,
-    xfbml: true,
-    version: "v25.0",
-  });
-};
+if (typeof window !== "undefined") {
+  window.fbAsyncInit = function () {
+    window.FB?.init({
+      appId: process.env.NEXT_PUBLIC_META_APP_ID || "",
+      autoLogAppEvents: true,
+      xfbml: true,
+      version: "v25.0",
+    });
+  };
+}
 
 declare global {
   interface Window {
