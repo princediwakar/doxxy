@@ -44,12 +44,23 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: "Meta app not configured on server" }, { status: 500 });
   }
 
+  const redirectUri = process.env.NEXT_PUBLIC_SITE_URL
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/clinic/whatsapp`
+    : "https://www.doxxy.in/clinic/whatsapp";
+
   // Exchange the authorization code for an access token
   try {
-    const tokenRes = await fetch(
-      `${GRAPH_API_BASE}/oauth/access_token?client_id=${appId}&client_secret=${appSecret}&code=${code}`,
-      { method: "GET" },
-    );
+    const tokenRes = await fetch(`${GRAPH_API_BASE}/oauth/access_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        client_id: appId,
+        client_secret: appSecret,
+        grant_type: "authorization_code",
+        code,
+        redirect_uri: redirectUri,
+      }),
+    });
 
     if (!tokenRes.ok) {
       const err = await tokenRes.text();
@@ -65,10 +76,16 @@ export async function POST(req: Request) {
     }
 
     // Exchange short-lived token for a long-lived token (~60 days)
-    const longLivedRes = await fetch(
-      `${GRAPH_API_BASE}/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`,
-      { method: "GET" },
-    );
+    const longLivedRes = await fetch(`${GRAPH_API_BASE}/oauth/access_token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        grant_type: "fb_exchange_token",
+        client_id: appId,
+        client_secret: appSecret,
+        fb_exchange_token: shortLivedToken,
+      }),
+    });
 
     let accessToken = shortLivedToken;
     let tokenExpiresAt: string | null = null;
