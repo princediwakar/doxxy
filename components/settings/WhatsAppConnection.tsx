@@ -13,19 +13,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageCircle, CheckCircle } from "lucide-react";
 
-// Must be set before the FB SDK loads — the SDK checks for this
-// function when it initializes. Using onLoad/Script callbacks is too late.
-if (typeof window !== "undefined") {
-  window.fbAsyncInit = function () {
-    window.FB?.init({
-      appId: process.env.NEXT_PUBLIC_META_APP_ID || "",
-      autoLogAppEvents: true,
-      xfbml: true,
-      version: "v25.0",
-    });
-  };
-}
-
 declare global {
   interface Window {
     fbAsyncInit?: () => void;
@@ -273,16 +260,15 @@ export default function WhatsAppConnection() {
         response_type: "code",
         override_default_response_type: true,
         extras: {
-          version: "v4",
+          feature: "app_only_install",
+          version: 4,
+          sessionInfoVersion: 3,
           setup: {
             business: {
-              id: null,
               phone: { code: 91, number: "" },
               website: "https://doxxy.in/",
-              address: { state: null, country: "IN" },
-              timezone: null,
+              address: { country: "IN" },
             },
-            phone: { category: null, description: "" },
           },
         },
       },
