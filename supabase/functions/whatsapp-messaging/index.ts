@@ -212,7 +212,7 @@ async function sendTemplateMessage(
       type: "template",
       template: {
         name: templateName,
-        language: { code: "en" },
+        language: { code: "en_US" },
         components: components.length > 0 ? components : undefined,
       },
     }),

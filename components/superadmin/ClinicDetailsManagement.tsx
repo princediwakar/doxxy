@@ -342,12 +342,18 @@ const ClinicDetailsManagement = () => {
                         : null
                     }
                     onChange={(selection) => {
-                      setForm(prev => ({
-                        ...prev,
-                        google_place_id: selection?.place_id ?? '',
-                        google_place_data: selection?.google_place_data ?? null,
-                        address: !prev.address && selection ? selection.google_place_data.formattedAddress : prev.address,
-                      }));
+                      setForm(prev => {
+                        const data = selection?.google_place_data;
+                        return {
+                          ...prev,
+                          google_place_id: selection?.place_id ?? '',
+                          google_place_data: data ?? null,
+                          name: !prev.name && data?.displayName ? data.displayName : prev.name,
+                          address: !prev.address && data?.formattedAddress ? data.formattedAddress : prev.address,
+                          phone: !prev.phone && data?.nationalPhoneNumber ? data.nationalPhoneNumber.replace(/[^\d+]/g, '') : prev.phone,
+                          website: !prev.website && data?.websiteURI ? data.websiteURI : prev.website,
+                        };
+                      });
                       setHasUnsavedChanges(true);
                     }}
                     placeholder="Search for your clinic on Google Maps..."
