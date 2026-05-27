@@ -162,6 +162,27 @@ export async function POST(req: Request) {
       return Response.json({ success: false, error: "Failed to store connection" }, { status: 500 });
     }
 
+    // Register the phone number with Meta (required to move from Pending → Connected)
+    try {
+      const registerRes = await fetch(
+        `${GRAPH_API_BASE}/${phone_number_id}/register`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ messaging_product: "whatsapp", pin: "" }),
+        },
+      );
+      if (!registerRes.ok) {
+        const regErr = await registerRes.text();
+        console.error("Phone registration warning:", regErr);
+      }
+    } catch (regError) {
+      console.error("Phone registration error:", regError);
+    }
+
     return Response.json({
       success: true,
       phone_number: displayPhoneNumber,
