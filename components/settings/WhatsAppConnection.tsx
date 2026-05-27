@@ -47,7 +47,9 @@ export default function WhatsAppConnection() {
   const queryClient = useQueryClient();
   const supabase = getSupabase();
   const searchParams = useSearchParams();
-  const [action, setAction] = useState<"idle" | "connecting" | "disconnecting">("idle");
+  const [action, setAction] = useState<"idle" | "connecting" | "disconnecting" | "verifying">("idle");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
   const signupRef = useRef<Partial<SignupData>>({});
   const urlParamsProcessed = useRef(false);
 
@@ -87,22 +89,56 @@ export default function WhatsAppConnection() {
         });
         const result = await res.json();
         if (result.success) {
-          toast.success("WhatsApp connected successfully");
           queryClient.invalidateQueries({
             queryKey: ["clinic", "whatsapp-connection", activeClinicId],
           });
+          if (result.needs_verification) {
+            setNeedsVerification(true);
+            toast.success("WhatsApp connected. Enter the 6-digit code sent to your phone.");
+          } else {
+            toast.success("WhatsApp connected successfully");
+            setAction("idle");
+          }
         } else {
           toast.error(result.error || "Failed to connect WhatsApp");
+          setAction("idle");
         }
       } catch {
         toast.error("Failed to complete connection");
-      } finally {
         setAction("idle");
+      } finally {
         signupRef.current = {};
       }
     },
     [activeClinicId, queryClient],
   );
+
+  const handleVerifyCode = useCallback(async () => {
+    if (verificationCode.length !== 6) return;
+    setAction("verifying");
+    try {
+      const res = await fetch("/api/whatsapp/verify-phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verificationCode }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast.success("Phone number verified");
+        setNeedsVerification(false);
+        setVerificationCode("");
+        queryClient.invalidateQueries({
+          queryKey: ["clinic", "whatsapp-connection", activeClinicId],
+        });
+      } else {
+        toast.error(result.error || "Verification failed. Check the code and try again.");
+      }
+    } catch {
+      toast.error("Verification failed");
+    } finally {
+      setAction("idle");
+    }
+  }, [verificationCode, activeClinicId, queryClient]);
 
   // Listen for Embedded Signup postMessage events (waba_id, phone_number_id)
   useEffect(() => {
@@ -313,6 +349,32 @@ export default function WhatsAppConnection() {
                 </p>
               </div>
             </div>
+            {needsVerification && (
+              <div className="rounded-lg border p-4 space-y-3 bg-amber-50">
+                <p className="text-sm font-medium text-amber-800">
+                  Phone number pending verification
+                </p>
+                <p className="text-sm text-amber-700">
+                  A 6-digit code was sent via SMS. Enter it below to activate your number.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    maxLength={6}
+                    placeholder="000000"
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ""))}
+                    className="w-32 px-3 py-2 text-center text-lg tracking-widest border rounded-md"
+                  />
+                  <Button
+                    onClick={handleVerifyCode}
+                    disabled={action === "verifying" || verificationCode.length !== 6}
+                  >
+                    {action === "verifying" ? "Verifying..." : "Verify"}
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex gap-3">
               <Button
                 variant="outline"

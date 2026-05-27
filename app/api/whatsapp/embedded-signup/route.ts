@@ -129,14 +129,27 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // Fetch display phone number if not already resolved
+    // Fetch phone details (display number + verification status)
+    let phoneVerified = false;
     if (!displayPhoneNumber) {
-      const phoneRes = await fetch(`${GRAPH_API_BASE}/${phone_number_id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const phoneRes = await fetch(
+        `${GRAPH_API_BASE}/${phone_number_id}?fields=display_phone_number,code_verification_status`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
       if (phoneRes.ok) {
         const phoneData = await phoneRes.json();
         displayPhoneNumber = phoneData.display_phone_number || null;
+        phoneVerified = phoneData.code_verification_status === "VERIFIED";
+      }
+    } else {
+      // If we already have displayPhoneNumber, still check verification status
+      const phoneRes = await fetch(
+        `${GRAPH_API_BASE}/${phone_number_id}?fields=code_verification_status`,
+        { headers: { Authorization: `Bearer ${accessToken}` } },
+      );
+      if (phoneRes.ok) {
+        const phoneData = await phoneRes.json();
+        phoneVerified = phoneData.code_verification_status === "VERIFIED";
       }
     }
 
@@ -162,30 +175,36 @@ export async function POST(req: Request) {
       return Response.json({ success: false, error: "Failed to store connection" }, { status: 500 });
     }
 
-    // Register the phone number with Meta (required to move from Pending → Connected)
-    try {
-      const registerRes = await fetch(
-        `${GRAPH_API_BASE}/${phone_number_id}/register`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
+    // Only request verification code if phone is not yet verified
+    let needsVerification = false;
+    if (!phoneVerified) {
+      try {
+        const codeRes = await fetch(
+          `${GRAPH_API_BASE}/${phone_number_id}/request_code`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ messaging_product: "whatsapp", method: "SMS" }),
           },
-          body: JSON.stringify({ messaging_product: "whatsapp", pin: "" }),
-        },
-      );
-      if (!registerRes.ok) {
-        const regErr = await registerRes.text();
-        console.error("Phone registration warning:", regErr);
+        );
+        if (codeRes.ok) {
+          needsVerification = true;
+        } else {
+          const err = await codeRes.text();
+          console.error("request_code failed:", err);
+        }
+      } catch (codeError) {
+        console.error("request_code error:", codeError);
       }
-    } catch (regError) {
-      console.error("Phone registration error:", regError);
     }
 
     return Response.json({
       success: true,
       phone_number: displayPhoneNumber,
+      needs_verification: needsVerification,
     });
   } catch (error) {
     console.error("Embedded signup error:", error);
