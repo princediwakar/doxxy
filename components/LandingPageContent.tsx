@@ -7,15 +7,12 @@ import WhatsAppConnect from "@/components/landing/WhatsAppConnect";
 import Testimonials from "@/components/landing/Testimonials";
 import TrustAndLegitimacy from "@/components/landing/TrustAndLegitimacy";
 import PricingAnchor from "@/components/landing/PricingAnchor";
+import StickyBottomCTALoader from "@/components/landing/StickyBottomCTALoader";
 import { APP_URL } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const CalculatorROI = dynamic(() => import("@/components/landing/CalculatorROI"), {
   loading: () => <div className="py-20 md:py-28"><Skeleton className="h-96 max-w-3xl mx-auto rounded-2xl" /></div>,
-});
-
-const StickyBottomCTA = dynamic(() => import("@/components/landing/StickyBottomCTA"), {
-  ssr: false,
 });
 
 const structuredData = {
@@ -49,7 +46,7 @@ export default function LandingPageContent() {
       <Testimonials />
       <TrustAndLegitimacy />
       <PricingAnchor />
-      <StickyBottomCTA />
+      <StickyBottomCTALoader />
 
       <Script
         id="structured-data"
