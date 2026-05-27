@@ -2,11 +2,13 @@
 
 const cspHeader = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net",
+  // Added 'blob:' to allow the dynamic script execution for your STT library
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net",
   "style-src 'self' 'unsafe-inline' https://lh3.googleusercontent.com https://connect.facebook.net",
   "img-src 'self' data: https: blob: https://lh3.googleusercontent.com",
   "font-src 'self' https://lh3.googleusercontent.com https://connect.facebook.net",
-  "connect-src 'self' data: https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to https://*.facebook.com https://*.facebook.net https://connect.facebook.net https://lh3.googleusercontent.com",
+  // Added wss://*.onrender.com to allow the WebSocket connection to your STT proxy
+  "connect-src 'self' data: https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to wss://*.onrender.com https://*.facebook.com https://*.facebook.net https://connect.facebook.net https://lh3.googleusercontent.com",
   "frame-src 'self' https://www.googletagmanager.com https://www.facebook.com https://web.facebook.com",
   "worker-src 'self' blob:",
   "media-src 'self' blob:",
