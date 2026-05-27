@@ -13,8 +13,20 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageCircle, CheckCircle } from "lucide-react";
 
+// Must be set before the FB SDK loads — the SDK checks for this
+// function when it initializes. Using onLoad/Script callbacks is too late.
+window.fbAsyncInit = function () {
+  window.FB?.init({
+    appId: process.env.NEXT_PUBLIC_META_APP_ID || "",
+    autoLogAppEvents: true,
+    xfbml: true,
+    version: "v25.0",
+  });
+};
+
 declare global {
   interface Window {
+    fbAsyncInit?: () => void;
     FB?: {
       init: (params: Record<string, unknown>) => void;
       login: (
@@ -67,16 +79,6 @@ export default function WhatsAppConnection() {
     },
     enabled: !!activeClinicId && activeClinicRole === "superadmin",
   });
-
-  // Initialize Facebook SDK when script loads
-  const initFB = useCallback(() => {
-    window.FB?.init({
-      appId: process.env.NEXT_PUBLIC_META_APP_ID || "",
-      autoLogAppEvents: true,
-      xfbml: true,
-      version: "v25.0",
-    });
-  }, []);
 
   // Send combined signup data to backend
   const completeSignup = useCallback(
@@ -269,7 +271,7 @@ export default function WhatsAppConnection() {
         response_type: "code",
         override_default_response_type: true,
         extras: {
-          sessionInfoVersion: "4",
+          sessionInfoVersion: "3",
         },
       },
     );
@@ -411,7 +413,6 @@ export default function WhatsAppConnection() {
       <Script
         src="https://connect.facebook.net/en_US/sdk.js"
         strategy="afterInteractive"
-        onLoad={initFB}
       />
     </>
   );
