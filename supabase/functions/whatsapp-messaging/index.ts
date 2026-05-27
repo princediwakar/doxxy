@@ -300,7 +300,9 @@ async function handleReviewTemplate(
 function isAuthError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   const msg = error.message.toLowerCase();
-  return msg.includes("permission") ||
+  return msg.includes("(#133010)") ||
+    msg.includes("account not registered") ||
+    msg.includes("permission") ||
     msg.includes("auth") ||
     msg.includes("unauthorized") ||
     msg.includes("forbidden") ||
@@ -470,12 +472,16 @@ serve(async (req: Request) => {
     );
   } catch (error) {
     console.error("WhatsApp messaging error:", error);
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+
+    // Meta configuration / auth errors are client faults, not server faults
+    const statusCode = isAuthError(error) || errorMessage.includes("(#133010)") || errorMessage.includes("not registered")
+      ? 400
+      : 500;
+
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error instanceof Error ? error.message : "An unknown error occurred",
-      }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      JSON.stringify({ success: false, error: errorMessage }),
+      { status: statusCode, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
