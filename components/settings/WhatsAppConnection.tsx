@@ -410,6 +410,14 @@ export default function WhatsAppConnection() {
       <Script
         src="https://connect.facebook.net/en_US/sdk.js"
         strategy="afterInteractive"
+        onLoad={() => {
+          window.FB?.init({
+            appId: process.env.NEXT_PUBLIC_META_APP_ID!,
+            autoLogAppEvents: true,
+            xfbml: false,
+            version: "v25.0",
+          });
+        }}
       />
     </>
   );

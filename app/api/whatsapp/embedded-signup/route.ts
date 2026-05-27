@@ -44,9 +44,9 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: "Meta app not configured on server" }, { status: 500 });
   }
 
-  const redirectUri = process.env.NEXT_PUBLIC_SITE_URL
-    ? `${process.env.NEXT_PUBLIC_SITE_URL}/clinic/whatsapp`
-    : "https://www.doxxy.in/clinic/whatsapp";
+  // redirect_uri is intentionally omitted — the JS SDK popup flow does not
+  // perform a redirect, so there is nothing for Facebook to match against.
+  // Including any URI here causes a redirect_uri mismatch error.
 
   // Exchange the authorization code for an access token
   try {
@@ -58,7 +58,6 @@ export async function POST(req: Request) {
         client_secret: appSecret,
         grant_type: "authorization_code",
         code,
-        redirect_uri: redirectUri,
       }),
     });
 
