@@ -273,7 +273,17 @@ export default function WhatsAppConnection() {
         response_type: "code",
         override_default_response_type: true,
         extras: {
-          sessionInfoVersion: "3",
+          version: "v4",
+          setup: {
+            business: {
+              id: null,
+              phone: { code: 91, number: "" },
+              website: "https://doxxy.in/",
+              address: { state: null, country: "IN" },
+              timezone: null,
+            },
+            phone: { category: null, description: "" },
+          },
         },
       },
     );
