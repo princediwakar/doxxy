@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Star, CheckCircle } from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
-import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { sendWhatsAppMessage, isMetaConfigError } from "@/lib/whatsapp";
 import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import type { AIStructuredOutput, FieldConfidence } from "@/types/voice";
 import type { PatientDetail } from "@/types/core";
@@ -123,7 +123,11 @@ export function EncounterCanvas({
         } else {
           setReviewState("idle");
         }
-        toast.error(result.error || "Failed to send");
+        if (isMetaConfigError(result)) {
+          toast.error("WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages.", { duration: Infinity, closeButton: true });
+        } else {
+          toast.error(result.error || "Failed to send");
+        }
       }
     } catch {
       setReviewState("idle");

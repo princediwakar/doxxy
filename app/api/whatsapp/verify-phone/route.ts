@@ -73,6 +73,30 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
+    // Re-check phone status — if name is also approved, promote to active
+    try {
+      const phoneRes = await fetch(
+        `${GRAPH_API_BASE}/${phone_number_id}?fields=name_status,quality_rating`,
+        { headers: { Authorization: `Bearer ${access_token}` } },
+      );
+      if (phoneRes.ok) {
+        const phoneData = await phoneRes.json();
+        const nameApproved = phoneData.name_status === "APPROVED";
+        if (nameApproved) {
+          await supabase
+            .from("clinic_whatsapp_connections")
+            .update({
+              status: "active",
+              quality_rating: phoneData.quality_rating || null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("clinic_id", clinic.clinic_id);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to re-check phone status after verification:", err);
+    }
+
     return Response.json({ success: true });
   } catch (error) {
     console.error("Phone verification error:", error);

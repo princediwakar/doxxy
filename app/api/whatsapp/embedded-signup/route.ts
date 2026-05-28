@@ -145,29 +145,25 @@ export async function POST(req: Request) {
       }, { status: 400 });
     }
 
-    // Fetch phone details (display number + verification status)
+    // Fetch phone details: display number, verification status, name approval, quality
     let phoneVerified = false;
-    if (!displayPhoneNumber) {
-      const phoneRes = await fetch(
-        `${GRAPH_API_BASE}/${phone_number_id}?fields=display_phone_number,code_verification_status`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
-      );
-      if (phoneRes.ok) {
-        const phoneData = await phoneRes.json();
-        displayPhoneNumber = phoneData.display_phone_number || null;
-        phoneVerified = phoneData.code_verification_status === "VERIFIED";
-      }
-    } else {
-      // If we already have displayPhoneNumber, still check verification status
-      const phoneRes = await fetch(
-        `${GRAPH_API_BASE}/${phone_number_id}?fields=code_verification_status`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
-      );
-      if (phoneRes.ok) {
-        const phoneData = await phoneRes.json();
-        phoneVerified = phoneData.code_verification_status === "VERIFIED";
-      }
+    let nameApproved = false;
+    let qualityRating: string | null = null;
+
+    const phoneRes = await fetch(
+      `${GRAPH_API_BASE}/${phone_number_id}?fields=display_phone_number,code_verification_status,name_status,quality_rating`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+    if (phoneRes.ok) {
+      const phoneData = await phoneRes.json();
+      displayPhoneNumber = phoneData.display_phone_number || displayPhoneNumber || null;
+      phoneVerified = phoneData.code_verification_status === "VERIFIED";
+      nameApproved = phoneData.name_status === "APPROVED";
+      qualityRating = phoneData.quality_rating || null;
     }
+
+    // Only activate if Meta has fully approved the phone number
+    const connectionStatus = (phoneVerified && nameApproved) ? "active" : "pending_meta_verification";
 
     // Upsert the clinic WhatsApp connection
     const { error: upsertError } = await supabase
@@ -179,7 +175,8 @@ export async function POST(req: Request) {
         display_phone_number: displayPhoneNumber,
         access_token: accessToken,
         business_id: business_id || null,
-        status: "active",
+        status: connectionStatus,
+        quality_rating: qualityRating,
         token_expires_at: tokenExpiresAt,
         updated_at: new Date().toISOString(),
       }, {
@@ -221,6 +218,9 @@ export async function POST(req: Request) {
       success: true,
       phone_number: displayPhoneNumber,
       needs_verification: needsVerification,
+      status: connectionStatus,
+      name_approved: nameApproved,
+      quality_rating: qualityRating,
     });
   } catch (error) {
     console.error("Embedded signup error:", error);

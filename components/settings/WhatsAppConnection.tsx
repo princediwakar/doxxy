@@ -31,7 +31,7 @@ interface WhatsAppConnectionRow {
   waba_id: string;
   phone_number_id: string;
   display_phone_number: string | null;
-  status: "active" | "expired" | "disconnected";
+  status: "active" | "expired" | "disconnected" | "pending_meta_verification";
   quality_rating: string | null;
   created_at: string;
 }
@@ -51,6 +51,7 @@ export default function WhatsAppConnection() {
   const searchParams = useSearchParams();
   const [action, setAction] = useState<"idle" | "connecting" | "disconnecting" | "verifying">("idle");
   const [needsVerification, setNeedsVerification] = useState(false);
+  const [nameApproved, setNameApproved] = useState(true);
   const [verificationCode, setVerificationCode] = useState("");
   const signupRef = useRef<Partial<SignupData>>({});
   const urlParamsProcessed = useRef(false);
@@ -84,9 +85,12 @@ export default function WhatsAppConnection() {
           queryClient.invalidateQueries({
             queryKey: ["clinic", "whatsapp-connection", activeClinicId],
           });
+          setNameApproved(result.name_approved !== false);
           if (result.needs_verification) {
             setNeedsVerification(true);
-            toast.success("WhatsApp connected. Enter the 6-digit code sent to your phone.");
+          }
+          if (result.status === "pending_meta_verification") {
+            toast.warning("WhatsApp connected but not fully verified. Complete the steps below to send messages.");
           } else {
             toast.success("WhatsApp connected successfully");
             setAction("idle");
@@ -303,7 +307,8 @@ export default function WhatsAppConnection() {
     );
   }
 
-  const isConnected = connection?.status === "active";
+  const isConnected = connection?.status === "active" || connection?.status === "pending_meta_verification";
+  const isPending = connection?.status === "pending_meta_verification";
 
   return (
     <>
@@ -324,10 +329,17 @@ export default function WhatsAppConnection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-lg border p-4">
                 <p className="text-sm text-muted-foreground">Status</p>
-                <Badge className="mt-1 bg-green-100 text-green-700 hover:bg-green-100">
-                  <CheckCircle className="mr-1 h-3 w-3" />
-                  Connected
-                </Badge>
+                {isPending ? (
+                  <Badge className="mt-1 bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+                    <CheckCircle className="mr-1 h-3 w-3" />
+                    Pending Verification
+                  </Badge>
+                ) : (
+                  <Badge className="mt-1 bg-green-100 text-green-700 hover:bg-green-100">
+                    <CheckCircle className="mr-1 h-3 w-3" />
+                    Connected
+                  </Badge>
+                )}
               </div>
               <div className="rounded-lg border p-4">
                 <p className="text-sm text-muted-foreground">Phone Number</p>
@@ -348,6 +360,32 @@ export default function WhatsAppConnection() {
                 </p>
               </div>
             </div>
+            {isPending && (
+              <div className="rounded-lg border p-4 space-y-2 bg-yellow-50">
+                <p className="text-sm font-medium text-yellow-800">
+                  Your WhatsApp setup is incomplete
+                </p>
+                {(!needsVerification && nameApproved) ? (
+                  <p className="text-sm text-yellow-700">
+                    Additional verification is required by Meta before messages can be sent.
+                    This may include phone number verification or display name approval.
+                    Try reconnecting if this persists.
+                  </p>
+                ) : (
+                  <ul className="text-sm text-yellow-700 list-disc list-inside space-y-1">
+                    {needsVerification && (
+                      <li>Phone number must be verified via SMS code from Meta.</li>
+                    )}
+                    {!nameApproved && (
+                      <li>Your display name is pending approval by Meta. This can take up to 24 hours.</li>
+                    )}
+                  </ul>
+                )}
+                <p className="text-xs text-yellow-600">
+                  Messages cannot be sent until all requirements are met.
+                </p>
+              </div>
+            )}
             {needsVerification && (
               <div className="rounded-lg border p-4 space-y-3 bg-amber-50">
                 <p className="text-sm font-medium text-amber-800">

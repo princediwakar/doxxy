@@ -36,11 +36,6 @@ interface TemplateRequest {
 
 type WhatsAppRequest = DocumentRequest | TemplateRequest;
 
-interface ClinicWhatsAppCredentials {
-  phoneNumberId: string;
-  token: string;
-}
-
 function normalizeIndianPhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   if (digits.length === 10) return `91${digits}`;
@@ -51,19 +46,25 @@ function normalizeIndianPhone(raw: string): string {
 // Database helpers
 // ---------------------------------------------------------------------------
 
+interface ClinicWhatsAppCredentials {
+  phoneNumberId: string;
+  token: string;
+  status: string;
+}
+
 async function resolveClinicCredentials(
   supabase: ReturnType<typeof createClient>,
   clinicId: string,
 ): Promise<ClinicWhatsAppCredentials | null> {
   const { data, error } = await supabase
     .from("clinic_whatsapp_connections")
-    .select("phone_number_id, access_token")
+    .select("phone_number_id, access_token, status")
     .eq("clinic_id", clinicId)
-    .eq("status", "active")
+    .in("status", ["active", "pending_meta_verification"])
     .single();
 
   if (error || !data) return null;
-  return { phoneNumberId: data.phone_number_id, token: data.access_token };
+  return { phoneNumberId: data.phone_number_id, token: data.access_token, status: data.status };
 }
 
 async function checkPatientOptOut(
@@ -349,6 +350,12 @@ serve(async (req: Request) => {
     if (body.clinicId && supabase) {
       const clinicCreds = await resolveClinicCredentials(supabase, body.clinicId);
       if (clinicCreds) {
+        if (clinicCreds.status === "pending_meta_verification") {
+          return new Response(
+            JSON.stringify({ success: false, error: "WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages." }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
         phoneNumberId = clinicCreds.phoneNumberId;
         token = clinicCreds.token;
         usedClinicCreds = true;

@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { DbPatient, DbAppointment } from "@/types/core";
-import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { sendWhatsAppMessage, isMetaConfigError } from "@/lib/whatsapp";
 import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import { UseFormReturn } from "react-hook-form";
 import type { ConsultationFormValues, FieldValue } from "@/types/consultation";
@@ -201,6 +201,8 @@ export const ConsultationPreviewModal = ({
 
         if (result.success) {
           toast.success("Sent via WhatsApp", { id: toastId });
+        } else if (isMetaConfigError(result)) {
+          toast.error("WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages.", { duration: Infinity, closeButton: true, id: toastId });
         } else {
           toast.error(result.error || "Failed to send", { id: toastId });
         }

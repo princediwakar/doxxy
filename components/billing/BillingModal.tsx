@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Edit, Printer, Download, MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { sendWhatsAppMessage, isMetaConfigError } from "@/lib/whatsapp";
 import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import {
   Dialog,
@@ -222,6 +222,8 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
           if (result.success) {
             toast.success("Sent via WhatsApp successfully", { id: toastId });
+          } else if (isMetaConfigError(result)) {
+            toast.error("WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages.", { duration: Infinity, closeButton: true, id: toastId });
           } else {
             throw new Error(result.error || "Failed delivery");
           }

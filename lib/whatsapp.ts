@@ -27,11 +27,12 @@ type SendTemplateBody = {
 
 export type WhatsAppMessageBody = SendDocumentBody | SendTemplateBody;
 
-interface WhatsAppResult {
+export interface WhatsAppResult {
   success: boolean;
   messageId?: string;
   code?: string;
   error?: string;
+  statusCode: number;
 }
 
 const FUNCTION_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/whatsapp-messaging`;
@@ -47,5 +48,19 @@ export async function sendWhatsAppMessage(
     },
     body: JSON.stringify(body),
   });
-  return res.json();
+  const json = await res.json();
+  return { ...json, statusCode: res.status };
+}
+
+/** Detects Meta Graph API errors that indicate the WhatsApp Business Account
+ * is not fully registered/verified — these are client configuration faults,
+ * not transient server errors. */
+export function isMetaConfigError(result: WhatsAppResult): boolean {
+  if (result.success) return false;
+  const msg = (result.error || "").toLowerCase();
+  return msg.includes("(#133010)") ||
+    msg.includes("account not registered") ||
+    msg.includes("not registered") ||
+    msg.includes("whatsapp setup incomplete") ||
+    msg.includes("verify your number");
 }

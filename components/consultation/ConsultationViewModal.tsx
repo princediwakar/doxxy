@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAppState } from "@/contexts/AppStateContext";
 import { toast } from "sonner";
 import { logger } from "@/lib/logger";
-import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { sendWhatsAppMessage, isMetaConfigError } from "@/lib/whatsapp";
 import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import { Eye, Printer, Download, MessageCircle } from "lucide-react";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
@@ -316,6 +316,8 @@ export function ConsultationViewModal({
 
         if (result.success) {
           toast.success("Sent via WhatsApp", { id: toastId });
+        } else if (isMetaConfigError(result)) {
+          toast.error("WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages.", { duration: Infinity, closeButton: true, id: toastId });
         } else {
           toast.error(result.error || "Failed to send", { id: toastId });
         }
