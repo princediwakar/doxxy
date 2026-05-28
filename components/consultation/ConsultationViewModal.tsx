@@ -340,7 +340,7 @@ export function ConsultationViewModal({
               <span>Consultation Notes - {patient.name}</span>
             </DialogTitle>
             {consultationData && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 {isWhatsAppEnabled && (
                 <TooltipProvider>
                   <Tooltip>
@@ -353,7 +353,7 @@ export function ConsultationViewModal({
                           disabled={!patient?.phone}
                           className="border-green-500 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950 hover:text-green-700 dark:hover:text-green-300"
                         >
-                          <MessageCircle className="h-4 w-4 mr-2" />
+                          <MessageCircle className="h-4 w-4 mr-1.5" />
                           WhatsApp
                         </Button>
                       </span>
@@ -367,10 +367,11 @@ export function ConsultationViewModal({
                 </TooltipProvider>
                 )}
                 <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
-                  <Download className="h-4 w-4" />
+                  <Download className="h-4 w-4 mr-1.5" />
+                  Download
                 </Button>
                 <Button size="sm" onClick={handlePrint}>
-                  <Printer className="h-4 w-4 mr-2" />
+                  <Printer className="h-4 w-4 mr-1.5" />
                   Print
                 </Button>
               </div>

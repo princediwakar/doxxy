@@ -217,15 +217,14 @@ export const ConsultationPreviewModal = ({
     <Dialog open={showPreview} onOpenChange={setShowPreview}>
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
-          <div className="flex items-center justify-between pr-6">
-            <DialogTitle className="flex items-center gap-2">
-              <Eye className="h-5 w-5" />
-              Consultation Preview
-            </DialogTitle>
-            <DialogDescription>
-              Review your consultation notes
-            </DialogDescription>
-            <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <DialogTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Consultation Preview
+              </DialogTitle>
+            </div>
+            <div className="flex items-center gap-1.5">
               {isWhatsAppEnabled && (
               <TooltipProvider>
                 <Tooltip>
@@ -238,7 +237,7 @@ export const ConsultationPreviewModal = ({
                         disabled={!patient?.phone}
                         className="border-green-500 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950 hover:text-green-700 dark:hover:text-green-300"
                       >
-                        <MessageCircle className="h-4 w-4 mr-2" />
+                        <MessageCircle className="h-4 w-4 mr-1.5" />
                         WhatsApp
                       </Button>
                     </span>
@@ -252,10 +251,11 @@ export const ConsultationPreviewModal = ({
               </TooltipProvider>
               )}
               <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
-                <Download className="h-4 w-4" />
+                <Download className="h-4 w-4 mr-1.5" />
+                Download
               </Button>
               <Button size="sm" onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
+                <Printer className="h-4 w-4 mr-1.5" />
                 Print
               </Button>
             </div>
