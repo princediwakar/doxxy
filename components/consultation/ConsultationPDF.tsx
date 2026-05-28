@@ -10,49 +10,58 @@ import type { FieldValue, ClinicInfo, DoctorInfo, MotorExamData, ReflexExamData,
 import type { DbAppointment, DbPatient } from '@/types/core';
 import { isBlank } from '@/lib/schemaUtils';
 
+
 // ---------------------------------------------------------------------------
-// 1. STYLESHEET - Tuned for side-by-side clinical tables
+// 1. STYLESHEET - Tuned for Human Readability
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
-  page: { paddingTop: 35, paddingBottom: 85, paddingHorizontal: 35, fontFamily: 'Helvetica', fontSize: 10, color: '#374151' },
-  h1: { fontSize: 18, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4, color: '#111827' },
-  h2: { fontSize: 14, fontWeight: 'bold', color: '#111827', marginBottom: 2 },
-  h3: { fontSize: 12, fontWeight: 'bold', color: '#111827', marginTop: 12, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', paddingBottom: 4 },
-  label: { fontSize: 9, fontWeight: 'bold', color: '#111827', marginBottom: 3 },
-  value: { fontSize: 10, color: '#374151', lineHeight: 1.4 },
-  muted: { fontSize: 8, color: '#6B7280' },
+  // Base font bumped from 10 to 11
+  page: { paddingTop: 35, paddingBottom: 85, paddingHorizontal: 35, fontFamily: 'Helvetica', fontSize: 11, color: '#374151' },
+  
+  // Headings scaled up to establish visual hierarchy without relying on squinting
+  h1: { fontSize: 20, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4, color: '#111827' },
+  h2: { fontSize: 16, fontWeight: 'bold', color: '#111827', marginBottom: 2 },
+  h3: { fontSize: 14, fontWeight: 'bold', color: '#111827', marginTop: 12, marginBottom: 8, borderBottomWidth: 1, borderBottomColor: '#E5E7EB', paddingBottom: 4 },
+  
+  // Hierarchy: labels dominate, values recede — no equal-weight ambiguity
+  fieldContainer: { marginBottom: 10 },
+  label: { fontSize: 11, fontWeight: 'bold', color: '#111827', marginBottom: 2 },
+  value: { fontSize: 11, color: '#374151', lineHeight: 1.4 },
+  muted: { fontSize: 10, color: '#6B7280' },
   
   headerContainer: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#E5E7EB', paddingBottom: 10, marginBottom: 12 },
   clinicBlock: { width: '50%' },
   doctorBlock: { width: '45%', alignItems: 'flex-end' },
-  patientInfoBlock: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 15, paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  patientInfoItem: { flexDirection: 'row', marginRight: 15, marginBottom: 4 },
+  patientInfoBlock: { flexDirection: 'row', flexWrap: 'wrap', borderBottomWidth: 1, borderBottomColor: '#E5E7EB', paddingBottom: 8, marginBottom: 12 },
+  inlineData: { flexDirection: 'row', marginRight: 16, marginBottom: 4 },
+  inlineLabel: { fontSize: 11, fontWeight: 'bold', color: '#111827', marginRight: 4 },
+  inlineValue: { fontSize: 11, color: '#374151' },
   
-  // Strict Grid
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   colFull: { width: '100%' },
   colHalf: { width: '48.5%' },
   colThird: { width: '31.5%' },
   
-  // Tables (Highly compact to fit side-by-side)
-  tableContainer: { width: '100%', marginBottom: 6 },
-  tableTitle: { fontSize: 8, fontWeight: 'bold', color: '#111827', marginBottom: 3 },
+  // Tables: The 7pt and 8pt fonts are gone. Minimum is now 10pt. 
+  tableContainer: { width: '100%', marginBottom: 8 },
+  tableTitle: { fontSize: 11, fontWeight: 'bold', color: '#111827', marginBottom: 4 },
   table: { width: '100%', borderStyle: 'solid', borderWidth: 1, borderColor: '#E5E7EB' },
   tableHeader: { flexDirection: 'row', backgroundColor: '#F3F4F6', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#F9FAFB' },
-  tableColHeader: { padding: 3, fontSize: 7, fontWeight: 'bold', color: '#111827' },
-  tableCol: { padding: 3, fontSize: 8, color: '#374151' },
+  // Headers bumped from 7 to 10
+  tableColHeader: { padding: 4, fontSize: 10, fontWeight: 'bold', color: '#111827' },
+  // Data bumped from 8 to 11
+  tableCol: { padding: 4, fontSize: 11, color: '#374151' },
   
   // Chips and Sub-notes
   subDataRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4, gap: 8 },
   subDataItem: { flexDirection: 'row', alignItems: 'flex-start', marginRight: 8, marginBottom: 2 },
-  subDataLabel: { fontSize: 8, fontWeight: 'bold', color: '#111827', marginRight: 4 },
-  subDataValue: { fontSize: 8, color: '#374151' },
+  subDataLabel: { fontSize: 10, fontWeight: 'bold', color: '#111827', marginRight: 4 },
+  subDataValue: { fontSize: 11, color: '#374151' },
   notesContainer: { marginTop: 4, paddingTop: 4, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
   
   footer: { position: 'absolute', bottom: 30, left: 35, right: 35, borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 12 }
 });
-
 // ---------------------------------------------------------------------------
 // 2. DATA MUTATION LOGIC (Ported exactly from your HTML Utils)
 // ---------------------------------------------------------------------------
@@ -224,16 +233,24 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
           </View>
         </View>
 
-        {/* PATIENT INFO */}
+        {/* PATIENT INFO — dense horizontal inline row */}
         <View style={styles.patientInfoBlock}>
-          <View style={styles.patientInfoItem}>
-            <Text style={styles.label}>Patient: </Text>
-            <Text style={styles.value}>{patient?.name} {patient?.age ? `(${patient.age}y)` : ''} {patient?.gender ? `[${patient.gender}]` : ''}</Text>
+          <View style={styles.inlineData}>
+            <Text style={styles.inlineLabel}>Patient:</Text>
+            <Text style={styles.inlineValue}>{patient?.name} ({patient?.age}y, {patient?.gender})</Text>
           </View>
+
           {appointment?.date && (
-            <View style={styles.patientInfoItem}>
-              <Text style={styles.label}>Date: </Text>
-              <Text style={styles.value}>{new Date(appointment.date).toLocaleDateString()}</Text>
+            <View style={styles.inlineData}>
+              <Text style={styles.inlineLabel}>Appt:</Text>
+              <Text style={styles.inlineValue}>{new Date(appointment.date).toLocaleDateString()}</Text>
+            </View>
+          )}
+
+          {patient?.phone && (
+            <View style={styles.inlineData}>
+              <Text style={styles.inlineLabel}>Phone:</Text>
+              <Text style={styles.inlineValue}>{patient.phone}</Text>
             </View>
           )}
         </View>
@@ -318,11 +335,33 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
           );
         })}
 
-        {/* FIXED SIGNATURE FOOTER */}
+        {/* FIXED SIGNATURE FOOTER — parsed name + stacked credentials */}
         <View fixed style={styles.footer}>
-          {doctorInfo?.signature && (
-            <Text style={{ fontSize: 10, fontWeight: 'bold' }}>{doctorInfo.signature}</Text>
-          )}
+          {doctorInfo?.signature && (() => {
+            const lines = doctorInfo.signature.split('\n').filter((l: string) => l.trim() !== '');
+            if (lines.length === 0) return null;
+            const [name, ...credentials] = lines;
+            // Fallback: if DB stored it as a single comma-separated string
+            const hasImplicitBreaks = lines.length === 1 && name.includes(',');
+            const creds = hasImplicitBreaks
+              ? name.split(',').map((s: string) => s.trim()).filter(Boolean).slice(1)
+              : credentials;
+
+            return (
+              <View style={{ alignItems: 'flex-end', width: '100%' }}>
+                <View style={{ borderTopWidth: 1, borderTopColor: '#111827', paddingTop: 6, minWidth: 150 }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#111827', textAlign: 'right' }}>
+                    {hasImplicitBreaks ? name.split(',')[0].trim() : name}
+                  </Text>
+                  {creds.map((cred: string, idx: number) => (
+                    <Text key={idx} style={{ fontSize: 9, color: '#4B5563', textAlign: 'right', marginTop: 2 }}>
+                      {cred}
+                    </Text>
+                  ))}
+                </View>
+              </View>
+            );
+          })()}
         </View>
 
       </Page>

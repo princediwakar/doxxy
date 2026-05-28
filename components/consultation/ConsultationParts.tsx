@@ -16,8 +16,8 @@ export const PrintStyles: React.FC = () => (
       __html: `
     @media print {
       @page { margin: 45mm 20mm 20mm 20mm; size: A4; }
-      body { 
-        font-size: 12px !important; 
+      body {
+        font-size: 12pt !important;
         -webkit-print-color-adjust: exact !important; 
         print-color-adjust: exact !important; 
         margin: 0 !important; 
@@ -123,7 +123,7 @@ export const ConsultationHeader: React.FC<{
             <h2 className="text-xl font-bold text-foreground">
               {doctorInfo?.name}
             </h2>
-            <div className="text-sm font-semibold text-primary uppercase tracking-wider text-[10px]">
+            <div className="text-sm font-semibold text-primary uppercase tracking-wider">
               {doctorInfo?.specialization}
             </div>
           </div>
@@ -163,14 +163,27 @@ export const ConsultationSignatureFooter: React.FC<{
   signature?: string | null;
 }> = ({ signature }) => {
   if (!signature) return null;
-  
+
+  const lines = signature.split('\n').filter(l => l.trim() !== '');
+  if (lines.length === 0) return null;
+  const [name, ...credentials] = lines;
+  const hasImplicitBreaks = lines.length === 1 && name.includes(',');
+  const creds = hasImplicitBreaks
+    ? name.split(',').map(s => s.trim()).filter(Boolean).slice(1)
+    : credentials;
+  const displayName = hasImplicitBreaks ? name.split(',')[0].trim() : name;
+
   return (
     <div id="signature-footer" className="w-[250px] mt-4 pt-4 border-t border-border print:mt-4 print:pt-2 break-inside-avoid">
       <div className="text-left">
-        
-        <div className="text-sm text-foreground whitespace-pre-line leading-relaxed font-semibold">
-          {signature}
+        <div className="text-sm text-gray-900 font-bold leading-relaxed">
+          {displayName}
         </div>
+        {creds.map((cred: string, idx: number) => (
+          <div key={idx} className="text-xs text-gray-500 leading-relaxed mt-0.5">
+            {cred}
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -183,17 +196,17 @@ export const ConcisePatientInfo: React.FC<{
   appointment: DbAppointment | null;
 }> = ({ patient, appointment }) => {
   return (
-    <div className="concise-patient-info text-sm text-foreground mb-3 print:mb-2">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <div className="font-semibold text-foreground">Patient:</div>
-        <div>
+    <div className="concise-patient-info text-sm mb-3 print:mb-2">
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <div className="font-bold text-gray-900">Patient:</div>
+        <div className="text-gray-700">
           {patient?.name}
-          {patient?.age && `, ${patient.age} yrs`}
+          {patient?.age && `, ${patient.age}y`}
           {patient?.gender && `, ${patient.gender}`}
         </div>
 
-        <div className="font-semibold text-foreground">Appointment:</div>
-        <div>
+        <div className="font-bold text-gray-900">Appt:</div>
+        <div className="text-gray-700">
           {appointment?.date &&
             format(new Date(appointment.date), "MMM d, yyyy")}
           {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
@@ -201,8 +214,8 @@ export const ConcisePatientInfo: React.FC<{
 
         {patient?.phone && (
           <>
-            <div className="font-semibold text-foreground">Phone:</div>
-            <div>{patient.phone}</div>
+            <div className="font-bold text-gray-900">Phone:</div>
+            <div className="text-gray-700">{patient.phone}</div>
           </>
         )}
       </div>

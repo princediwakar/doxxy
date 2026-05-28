@@ -5,56 +5,63 @@ import type { DbPatient, DbClinic } from '@/types/core';
 
 // Structured Minimalism: Zero backgrounds, high typographic contrast.
 const styles = StyleSheet.create({
-  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 10, color: '#111827' },
-  
-  // Header: Brand & Invoice Details
+  // Base font scaled up to 11
+  page: { padding: 40, fontFamily: 'Helvetica', fontSize: 11, color: '#111827' },
+
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', borderBottomWidth: 2, borderBottomColor: '#111827', paddingBottom: 20, marginBottom: 24 },
   brandSection: { flex: 1, flexDirection: 'row', gap: 12, alignItems: 'center' },
-  logoText: { fontSize: 8, color: '#9ca3af', fontWeight: 'bold' },
+  // Bumped to 10
+  logoText: { fontSize: 10, color: '#9ca3af', fontWeight: 'bold' },
   clinicDetails: { flex: 1 },
-  clinicName: { fontSize: 16, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5, color: '#111827', marginBottom: 2 },
-  clinicContact: { fontSize: 9, color: '#4b5563', lineHeight: 1.4 },
-  
+  // Bumped to 18 for hierarchy
+  clinicName: { fontSize: 18, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5, color: '#111827', marginBottom: 2 },
+  // Bumped to 11
+  clinicContact: { fontSize: 11, color: '#4b5563', lineHeight: 1.4 },
+
   invoiceTitleSection: { alignItems: 'flex-end' },
   invoiceTitle: { fontSize: 24, fontWeight: 'bold', letterSpacing: 1, color: '#111827' },
-  invoiceNumber: { fontSize: 11, marginTop: 4, color: '#6b7280', fontWeight: 'bold' },
-  
-  // Meta Grid: Clean separations
+  // Bumped to 12
+  invoiceNumber: { fontSize: 12, marginTop: 4, color: '#6b7280', fontWeight: 'bold' },
+
   metaGrid: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 },
   metaCol: { flex: 1 },
-  metaLabel: { fontSize: 8, textTransform: 'uppercase', color: '#6b7280', fontWeight: 'bold', letterSpacing: 0.5, marginBottom: 4 },
-  metaValue: { fontSize: 12, fontWeight: 'bold', color: '#111827', marginBottom: 2 },
-  metaSubText: { fontSize: 10, color: '#4b5563' },
+  // Bumped from 8 to 10
+  metaLabel: { fontSize: 10, textTransform: 'uppercase', color: '#6b7280', fontWeight: 'bold', letterSpacing: 0.5, marginBottom: 4 },
+  // Bumped from 12 to 14
+  metaValue: { fontSize: 14, fontWeight: 'bold', color: '#111827', marginBottom: 2 },
+  // Bumped from 10 to 11
+  metaSubText: { fontSize: 11, color: '#4b5563' },
 
-  // Table Structure: Premium spacing and line weights
   table: { width: '100%', marginBottom: 30 },
   tableHeader: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#111827', paddingBottom: 8, marginBottom: 8 },
-  tableHeaderCell: { fontSize: 8, textTransform: 'uppercase', color: '#6b7280', fontWeight: 'bold', letterSpacing: 0.5 },
+  // The primary offender. Bumped from 8 to 11.
+  tableHeaderCell: { fontSize: 11, textTransform: 'uppercase', color: '#6b7280', fontWeight: 'bold', letterSpacing: 0.5 },
   tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e5e7eb', paddingVertical: 10 },
-  
-  // Columns
+
   colDesc: { flex: 4, paddingRight: 15 },
   colQty: { flex: 1, textAlign: 'center' },
   colRate: { flex: 1.5, textAlign: 'right' },
   colAmount: { flex: 1.5, textAlign: 'right' },
-  
-  itemTitle: { fontSize: 10, fontWeight: 'bold', color: '#111827', marginBottom: 3 },
-  tableCellText: { fontSize: 10, color: '#4b5563' },
 
-  // Summary Section
+  // Bumped items and cells to 11
+  itemTitle: { fontSize: 11, fontWeight: 'bold', color: '#111827', marginBottom: 3 },
+  tableCellText: { fontSize: 11, color: '#4b5563' },
+
   summaryWrapper: { flexDirection: 'row', justifyContent: 'flex-end' },
   summaryTable: { width: 240 },
   summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
-  summaryLabel: { fontSize: 10, color: '#4b5563' },
-  summaryValue: { fontSize: 10, fontWeight: 'bold', color: '#111827' },
-  
-  grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 2, borderTopColor: '#111827', marginTop: 4 },
-  grandTotalLabel: { fontSize: 12, fontWeight: 'bold', color: '#111827' },
-  grandTotalValue: { fontSize: 14, fontWeight: 'bold', color: '#111827' },
+  // Bumped to 11
+  summaryLabel: { fontSize: 11, color: '#4b5563' },
+  summaryValue: { fontSize: 11, fontWeight: 'bold', color: '#111827' },
 
-  // Footer
+  grandTotalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 2, borderTopColor: '#111827', marginTop: 4 },
+  // Bumped to 14/16 for obvious final total visibility
+  grandTotalLabel: { fontSize: 14, fontWeight: 'bold', color: '#111827' },
+  grandTotalValue: { fontSize: 16, fontWeight: 'bold', color: '#111827' },
+
   footer: { position: 'absolute', bottom: 30, left: 40, right: 40, borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 12, flexDirection: 'row', justifyContent: 'space-between' },
-  footerText: { fontSize: 8, color: '#9ca3af' }
+  // Bumped to 10
+  footerText: { fontSize: 10, color: '#9ca3af' }
 });
 
 interface BillingPDFProps { billData: Bill; patient: DbPatient | null; clinic: DbClinic | null; }

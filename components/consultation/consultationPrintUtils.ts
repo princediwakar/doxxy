@@ -86,7 +86,7 @@ export const generatePrintContent = async (
           line-height: 1.5;
           color: #374151;
           background: white;
-          font-size: 12px;
+          font-size: 12pt;
           width: 210mm;
           margin: 0 auto;
         }

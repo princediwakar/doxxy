@@ -57,9 +57,9 @@ const ConsultationTable: React.FC<ConsultationTableProps> = ({
 
   return (
     <div className="space-y-1">
-      <div className="text-foreground font-semibold text-xs">{title}</div>
+      <div className="text-foreground font-semibold text-sm">{title}</div>
       <div className="overflow-x-auto">
-        <table className="w-auto border-collapse text-xs">
+        <table className="w-auto border-collapse text-sm">
           <thead>
             <tr className="border-b border-border">
               <th className="text-left py-0.5 px-1 bg-muted font-medium">
@@ -154,7 +154,7 @@ export const PrescriptionList: React.FC<{
   return (
     <div className="prescription-list mt-2">
       <div className="prescription-table">
-        <table className="w-full text-xs border-collapse">
+        <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="border-b border-border">
               <th className="text-left py-1 px-2 bg-muted">Medicine</th>
