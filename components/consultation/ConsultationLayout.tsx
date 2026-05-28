@@ -202,7 +202,7 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, F
     if (isFullWidth) {
       return (
         <div className="w-full">
-          <div className="text-sm font-bold text-gray-900">{field.label}</div>
+          <div className="text-sm font-bold text-foreground">{field.label}</div>
           <div className="text-sm text-foreground">
             <FieldValueRenderer fieldName={field.name} value={value} />
           </div>
@@ -213,7 +213,7 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, F
     if (isCompactField) {
       return (
         <div className="flex gap-2 items-start">
-          <div className="text-sm font-bold text-gray-900 whitespace-nowrap">
+          <div className="text-sm font-bold text-foreground whitespace-nowrap">
             {field.label}:
           </div>
           <div className="text-sm text-foreground flex-1">
@@ -225,7 +225,7 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, F
 
     return (
       <div>
-        <div className="text-sm font-bold text-gray-900">{field.label}</div>
+        <div className="text-sm font-bold text-foreground">{field.label}</div>
         <div className="text-sm text-foreground">
           <FieldValueRenderer fieldName={field.name} value={value} />
         </div>
@@ -248,7 +248,7 @@ return (
         if (isCompact) {
           return (
             <div key={index} className="flex gap-2 items-start">
-              <div className="text-sm font-bold text-gray-900 whitespace-nowrap">
+              <div className="text-sm font-bold text-foreground whitespace-nowrap">
                 {field.label}:
               </div>
               <div className="text-sm text-foreground flex-1">
@@ -260,7 +260,7 @@ return (
 
         return (
           <div key={index}>
-            <div className="text-sm font-bold text-gray-900">{field.label}</div>
+            <div className="text-sm font-bold text-foreground">{field.label}</div>
             <div className="text-sm text-foreground">
               <FieldValueRenderer fieldName={field.name} value={value} />
             </div>

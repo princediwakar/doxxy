@@ -116,6 +116,24 @@ export const generatePrintContent = async (
           padding: 20mm 20mm 20mm 20mm;
         }
 
+        /* Custom shadcn/ui utility classes — defined explicitly because the Tailwind CDN
+           only knows default classes. Without these, text-foreground, bg-muted, etc. are no-ops
+           in the print iframe and everything collapses to the inherited body color. */
+        .text-foreground { color: #1e293b; }
+        .text-muted-foreground { color: #64748b; }
+        .text-primary { color: #3b82f6; }
+        .text-primary-foreground { color: #ffffff; }
+        .text-secondary-foreground { color: #1e293b; }
+        .text-accent-foreground { color: #1e293b; }
+        .text-card-foreground { color: #1e293b; }
+        .bg-background { background-color: #ffffff; }
+        .bg-muted { background-color: #f1f5f9; }
+        .bg-card { background-color: #ffffff; }
+        .bg-accent { background-color: #e2e8f0; }
+        .bg-secondary { background-color: #f8fafc; }
+        .border-border { border-color: #e2e8f0; }
+        .border-input { border-color: #e2e8f0; }
+
         /* Spacer above signature — keeps page break from splitting the signature itself */
         .print-layout tfoot td > div:first-child {
           min-height: 30mm;

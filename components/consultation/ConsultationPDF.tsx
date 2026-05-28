@@ -1,3 +1,4 @@
+// components/consultation/ConsultationPDF.tsx
 import {
   Document,
   Page,

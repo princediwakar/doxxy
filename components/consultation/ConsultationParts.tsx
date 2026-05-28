@@ -176,11 +176,11 @@ export const ConsultationSignatureFooter: React.FC<{
   return (
     <div id="signature-footer" className="w-[250px] mt-4 pt-4 border-t border-border print:mt-4 print:pt-2 break-inside-avoid">
       <div className="text-left">
-        <div className="text-sm text-gray-900 font-bold leading-relaxed">
+        <div className="text-sm text-foreground font-bold leading-relaxed">
           {displayName}
         </div>
         {creds.map((cred: string, idx: number) => (
-          <div key={idx} className="text-xs text-gray-500 leading-relaxed mt-0.5">
+          <div key={idx} className="text-xs leading-relaxed mt-0.5">
             {cred}
           </div>
         ))}
@@ -198,15 +198,15 @@ export const ConcisePatientInfo: React.FC<{
   return (
     <div className="concise-patient-info text-sm mb-3 print:mb-2">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <div className="font-bold text-gray-900">Patient:</div>
-        <div className="text-gray-700">
+        <div className="font-bold text-foreground">Patient:</div>
+        <div>
           {patient?.name}
           {patient?.age && `, ${patient.age}y`}
           {patient?.gender && `, ${patient.gender}`}
         </div>
 
-        <div className="font-bold text-gray-900">Appt:</div>
-        <div className="text-gray-700">
+        <div className="font-bold text-foreground">Appt:</div>
+        <div>
           {appointment?.date &&
             format(new Date(appointment.date), "MMM d, yyyy")}
           {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
@@ -214,8 +214,8 @@ export const ConcisePatientInfo: React.FC<{
 
         {patient?.phone && (
           <>
-            <div className="font-bold text-gray-900">Phone:</div>
-            <div className="text-gray-700">{patient.phone}</div>
+            <div className="font-bold text-foreground">Phone:</div>
+            <div>{patient.phone}</div>
           </>
         )}
       </div>

@@ -272,6 +272,33 @@ export const BillingModal: React.FC<BillingModalProps> = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden">
         {/* Top Actions - Positioned left of the Close X */}
         <div className="absolute right-12 top-4 flex items-center gap-2 z-50">
+          {isWhatsAppEnabled && bill && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSendWhatsapp}
+                      disabled={isGeneratingDocument || !patient?.phone}
+                      className="flex items-center gap-2 border-green-500 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950 hover:text-green-700 dark:hover:text-green-300"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span className="hidden sm:inline">WhatsApp</span>
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!patient?.phone && (
+                  <TooltipContent>
+                    <p>No phone number</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           {bill && (
             <Button
               type="button"
@@ -298,33 +325,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               <Printer className="h-4 w-4" />
               <span className="hidden sm:inline">Print</span>
             </Button>
-          )}
-
-          {isWhatsAppEnabled && bill && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleSendWhatsapp}
-                      disabled={isGeneratingDocument || !patient?.phone}
-                      className="flex items-center gap-2 border-green-500 dark:border-green-700 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-950 hover:text-green-700 dark:hover:text-green-300"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <span className="hidden sm:inline">WhatsApp</span>
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {!patient?.phone && (
-                  <TooltipContent>
-                    <p>No phone number</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
           )}
 
           {mode === "view" && (

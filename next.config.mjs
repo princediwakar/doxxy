@@ -3,7 +3,7 @@
 const cspHeader = [
   "default-src 'self'",
   // Added 'blob:' to allow the dynamic script execution for your STT library
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net https://cdn.tailwindcss.com",
   "style-src 'self' 'unsafe-inline' https://lh3.googleusercontent.com https://connect.facebook.net",
   "img-src 'self' data: https: blob: https://lh3.googleusercontent.com",
   "font-src 'self' https://lh3.googleusercontent.com https://connect.facebook.net",
