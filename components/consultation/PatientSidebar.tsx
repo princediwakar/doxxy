@@ -106,16 +106,6 @@ const ConsultationPreviewModal = ({
               </div>
             )}
 
-            {/* Assessment */}
-            {s(consultationData.assessment) && (
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <h4 className="font-medium text-purple-900 mb-2">Assessment</h4>
-                <p className="text-sm text-purple-800">
-                  {s(consultationData.assessment)}
-                </p>
-              </div>
-            )}
-
             {/* Treatment Plan */}
             {s(consultationData.treatment) && (
               <div className="p-3 bg-green-50 rounded-lg">

@@ -153,7 +153,7 @@ test.describe('Consultation Flow', () => {
     // Check for consultation sections
     await expect(page.getByText('History')).toBeVisible();
     await expect(page.getByText('Examination')).toBeVisible();
-    await expect(page.getByText('Assessment & Plan')).toBeVisible();
+    await expect(page.getByText('Management')).toBeVisible();
 
     // Check for action buttons
     await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();

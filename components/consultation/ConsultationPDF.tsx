@@ -82,7 +82,7 @@ const populateDefaultValues = (fieldName: string, value: any) => {
 // 3. LAYOUT ENGINE (Ported exactly from your HTML Utils)
 // ---------------------------------------------------------------------------
 const isFieldFullWidth = (field: any, value: any): boolean => {
-  if (['chief_complaint', 'history_of_present_illness', 'diagnosis', 'treatment', 'assessment', 'planned_investigations', 'management'].includes(field.name)) return true;
+  if (['chief_complaint', 'history_of_present_illness', 'diagnosis', 'treatment', 'planned_investigations', 'management'].includes(field.name)) return true;
   if (['vital_signs', 'prescription', 'tabular_eye'].includes(field.type)) return true;
   if (typeof value === 'string' && value.length > 300) return true;
   if (field.type === 'textarea' && typeof value === 'string' && value.length <= 150) return false;

@@ -178,7 +178,6 @@ export const baseNotesSchema = z.object({
 
   // --- MANAGEMENT ---
   diagnosis: textField("diagnosis", "Primary Diagnosis", "Management", 3, "Enter confirmed diagnosis"),
-  assessment: textField("assessment", "Assessment", "Management", 3, "Enter clinical reasoning"),
   planned_investigations: textField(
     "planned_investigations",
     "Planned Investigations",
