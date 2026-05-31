@@ -85,7 +85,18 @@ export const BillingPDF = ({ billData, patient, clinic }: BillingPDFProps) => {
             <View style={styles.clinicDetails}>
               <Text style={styles.clinicName}>{clinic?.name || 'Clinic Name'}</Text>
               {clinic?.address && <Text style={styles.clinicContact}>{clinic.address}</Text>}
-              {clinic?.phone && <Text style={styles.clinicContact}>{clinic.phone}</Text>}
+              {(clinic?.phone || clinic?.email || clinic?.website) && (
+                <View style={{ marginTop: 4 }}>
+                  {clinic?.phone && <Text style={styles.clinicContact}>Ph: {clinic.phone}</Text>}
+                  {clinic?.email && <Text style={styles.clinicContact}>Email: {clinic.email}</Text>}
+                  {clinic?.website && <Text style={styles.clinicContact}>Web: {clinic.website}</Text>}
+                </View>
+              )}
+              {(clinic?.license_number) && (
+                <View style={{ marginTop: 4 }}>
+                  {clinic?.license_number && <Text style={styles.clinicContact}>Reg No: {clinic.license_number}</Text>}
+                </View>
+              )}
             </View>
           </View>
           <View style={styles.invoiceTitleSection}>

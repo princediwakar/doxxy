@@ -104,8 +104,13 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   const billRef = useRef(bill);
   billRef.current = bill;
 
-  const { activeClinicName, activeClinicId } = useAppState();
+  const { activeClinicName, activeClinicId, userClinics } = useAppState();
   const queryClient = useQueryClient();
+
+  const clinic = activeClinicId
+    ? userClinics.find((c) => c.clinic_id === activeClinicId)?.clinics ?? null
+    : null;
+
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);
 
@@ -151,7 +156,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
     try {
       setIsGeneratingDocument(true);
-      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={{ name: activeClinicName } as any} />;
+      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={clinic} />;
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
       printWindow.location.href = url;
@@ -170,7 +175,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     try {
       setIsGeneratingDocument(true);
       const toastId = toast.loading("Preparing download...");
-      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={{ name: activeClinicName } as any} />;
+      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={clinic} />;
       const blob = await pdf(doc).toBlob();
       const filename = generateBillFilename(billData, patient || null, activeClinicName);
       const url = URL.createObjectURL(blob);
@@ -197,7 +202,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
     try {
       setIsGeneratingDocument(true);
-      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={{ name: activeClinicName } as any} />;
+      const doc = <BillingPDF billData={billData} patient={patient || null} clinic={clinic} />;
       const blob = await pdf(doc).toBlob();
 
       const reader = new FileReader();
