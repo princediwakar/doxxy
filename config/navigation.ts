@@ -2,8 +2,8 @@
 import { Search, Calendar, Pill, BarChart3, Settings, User2,  Users } from "lucide-react";
 
 export const navItems = [
-  { icon: Search, label: "Search", path: "#", roles: ["superadmin", "staff", "doctor"], bottomNav: true, topGroup: true, sidebar: true },
   { icon: Calendar, label: "Schedule", path: "/schedule", roles: ["superadmin", "staff", "doctor"], bottomNav: true, topGroup: true },
+  { icon: Search, label: "Search", path: "#", roles: ["superadmin", "staff", "doctor"], bottomNav: true, topGroup: true, sidebar: true },
   { icon: Users, label: "Staff", path: "/clinic/staff", roles: ["superadmin"], bottomNav: true, topGroup: true },
   { icon: Pill, label: "Pharmacy", path: "/pharmacy", roles: ["staff", "superadmin"], bottomNav: true, topGroup: true },
   { icon: BarChart3, label: "Analytics", path: "/analytics", roles: ["superadmin"], bottomNav: true, topGroup: true },
