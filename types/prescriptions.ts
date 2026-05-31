@@ -50,28 +50,6 @@ export type MedicationFrequency =
   | "Q8H"
   | "Q12H";
 
-// ============================================================================
-// PRESCRIPTION HOOK TYPES
-// ============================================================================
-
-/** Props for usePrescription hook */
-export interface UsePrescriptionProps {
-  open: boolean;
-  consultationId: string | null;
-  appointment: Appointment | null;
-  doctorId: string | null;
-  patientId: string | null;
-  clinicId: string | null;
-  onOpenChange: (open: boolean) => void;
-}
-
-/** Appointment type for prescription context */
-export type Appointment = DbAppointment & {
-  patient_name?: string;
-  doctor_name?: string;
-  date?: string;
-  time?: string;
-};
 
 /** Enhanced appointment with details for prescription selection */
 export type AppointmentForPrescription = DbAppointmentWithDetails;

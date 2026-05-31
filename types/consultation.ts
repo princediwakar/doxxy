@@ -27,21 +27,6 @@ export type PatientWithClinic = DbPatient & {
   clinic?: DbClinic;
 };
 
-/** Doctor with user profile relationship */
-export type DoctorWithProfile = DbDoctor & {
-  profile?: {
-    first_name: string | null;
-    last_name: string | null;
-    display_name: string | null;
-    email: string | null;
-  };
-};
-
-/** Clinic member with department relationship */
-export type ClinicMemberWithDepartment = DbClinicMember & {
-  clinic_department?: ClinicDepartmentWithType;
-};
-
 // ============================================================================
 // CONSULTATION FORM & UI TYPES
 // ============================================================================
@@ -195,61 +180,6 @@ export type MotorExaminationValue = MotorExamData;
 /** Reflex examination value type (alias for ReflexExamData) */
 export type ReflexExaminationValue = ReflexExamData;
 
-/** Consultation preview modal props */
-export interface ConsultationPreviewModalProps {
-  consultation: Consultation;
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-/** Consultation table props */
-export interface ConsultationTableProps {
-  data: Record<string, unknown>;
-}
-
-/** Patient sidebar props */
-export interface PatientSidebarProps {
-  consultation: Consultation;
-  patient: PatientWithClinic;
-  appointment: DbAppointment;
-}
-
-/** Consultation layout props */
-export interface ConsultationLayoutProps {
-  fields: FieldConfig[];
-  values: Record<string, FieldValue>;
-  onChange: (name: string, value: FieldValue) => void;
-  isReadOnly?: boolean;
-}
-
-/** Character counter props */
-export interface CharacterCounterProps {
-  value: string;
-  maxLength: number;
-}
-
-/** Consultation header props */
-export interface ConsultationHeaderProps {
-  consultation: Consultation;
-  onSave: () => void;
-  isSaving: boolean;
-  mandatoryFields: string[];
-}
-
-/** Auto-save mutation interface */
-export interface AutoSaveMutation {
-  isPending: boolean;
-  isError: boolean;
-  isSuccess: boolean;
-}
-
-/** Mandatory fields status */
-export interface MandatoryFieldsStatus {
-  completed: number;
-  total: number;
-  allCompleted: boolean;
-}
-
 /** Reflex examination field props */
 export interface ReflexExaminationFieldProps {
   value: ReflexExamData;
@@ -345,6 +275,3 @@ export interface TransformedDoctorData {
 export type { Consultation, PrescriptionMedication };
 // Re-export Zod types for convenience
 export type { ConsultationMedication };
-
-// Export all types as namespace for easy access
-export * as ConsultationTypes from "./consultation";
