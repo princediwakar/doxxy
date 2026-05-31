@@ -19,7 +19,6 @@ import { isWhatsAppEnabled } from "@/lib/feature-flags";
 import { Eye, Printer, Download, MessageCircle } from "lucide-react";
 import { specialtyFieldSections } from "@/lib/consultationNotesSchemas";
 import { ConsultationLayout } from "./ConsultationLayout";
-import { printConsultation } from "./consultationPrintUtils";
 import { AppointmentData, Patient } from "@/types/patients";
 import {
   Consultation,
@@ -192,30 +191,40 @@ export function ConsultationViewModal({
       return;
     }
 
+    // Open window synchronously to avoid popup blocker, then redirect after blob is ready
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("Pop-up blocked. Please allow pop-ups for this site to print.");
+      return;
+    }
+
     try {
-      await printConsultation(
-        cleanedSpecialtyData,
-        patient,
-        {
-          ...appointment,
-          clinic_id: appointment?.clinic_id || "",
-          id: appointment?.id || "",
-          patient_id: appointment?.patient_id || "",
-          doctor_id: appointment?.doctor_id || "",
-          date: appointment?.date || "",
-          time: appointment?.time || "",
-          notes: appointment?.notes || "",
-          created_at: appointment?.created_at || null,
-          status: appointment?.status || null,
-          type: appointment?.type || null,
-        },
-        clinicDetails,
-        doctorInfo,
-        user,
-        departmentType
+      const doc = (
+        <ConsultationPDF
+          patient={patient}
+          appointment={{
+            ...appointment,
+            clinic_id: appointment?.clinic_id || activeClinicId || "",
+            notes: appointment?.notes || "",
+          } as any}
+          clinicInfo={clinicInfo}
+          doctorInfo={doctorInfo}
+          consultationData={cleanedSpecialtyData}
+          departmentType={departmentType}
+          showClinicHeader={false}
+        />
       );
-      toast.success("Print dialog opened successfully");
+
+      const asPdf = pdf();
+      asPdf.updateContainer(doc);
+      const blob = await asPdf.toBlob();
+      const url = URL.createObjectURL(blob);
+      printWindow.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+      toast.success("Print dialog opened. Use your browser's print function.");
     } catch (error) {
+      printWindow.close();
       logger.error("Error printing consultation:", error);
       toast.error("Failed to open print dialog");
     }

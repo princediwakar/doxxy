@@ -10,6 +10,7 @@ import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
 import type { FieldValue, ClinicInfo, DoctorInfo, MotorExamData, ReflexExamData, TabularEyeValue, VitalSignsData, PrescriptionMedication } from '@/types/consultation';
 import type { DbAppointment, DbPatient } from '@/types/core';
 import { isBlank } from '@/lib/schemaUtils';
+import { allEyeExaminations } from './ConsultationRenderers';
 
 
 // ---------------------------------------------------------------------------
@@ -17,7 +18,7 @@ import { isBlank } from '@/lib/schemaUtils';
 // ---------------------------------------------------------------------------
 const styles = StyleSheet.create({
   // Base font bumped from 10 to 11
-  page: { paddingTop: 35, paddingBottom: 85, paddingHorizontal: 35, fontFamily: 'Helvetica', fontSize: 11, color: '#374151' },
+  page: { paddingTop: 35, paddingBottom: 35, paddingHorizontal: 35, fontFamily: 'Helvetica', fontSize: 11, color: '#374151' },
   
   // Headings scaled up to establish visual hierarchy without relying on squinting
   h1: { fontSize: 20, fontWeight: 'bold', textTransform: 'uppercase', marginBottom: 4, color: '#111827' },
@@ -33,10 +34,6 @@ const styles = StyleSheet.create({
   headerContainer: { flexDirection: 'row', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#E5E7EB', paddingBottom: 10, marginBottom: 12 },
   clinicBlock: { width: '50%' },
   doctorBlock: { width: '45%', alignItems: 'flex-end' },
-  patientInfoBlock: { flexDirection: 'row', flexWrap: 'wrap', borderBottomWidth: 1, borderBottomColor: '#E5E7EB', paddingBottom: 8, marginBottom: 12 },
-  inlineData: { flexDirection: 'row', marginRight: 16, marginBottom: 4 },
-  inlineLabel: { fontSize: 11, fontWeight: 'bold', color: '#111827', marginRight: 4 },
-  inlineValue: { fontSize: 11, color: '#374151' },
   
   row: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   colFull: { width: '100%' },
@@ -61,7 +58,7 @@ const styles = StyleSheet.create({
   subDataValue: { fontSize: 11, color: '#374151' },
   notesContainer: { marginTop: 4, paddingTop: 4, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
   
-  footer: { position: 'absolute', bottom: 30, left: 35, right: 35, borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 12 }
+  footer: { marginTop: 24, borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 12 }
 });
 // ---------------------------------------------------------------------------
 // 2. DATA MUTATION LOGIC (Ported exactly from your HTML Utils)
@@ -196,65 +193,146 @@ const RenderPrescriptions = ({ data }: { data: PrescriptionMedication[] }) => {
   return <PDFTable headers={['Medicine', 'Dosage', 'Freq', 'Duration', 'Instructions']} rows={rows} flexWidths={[2.5, 1.2, 1.2, 1.5, 2.5]} />;
 };
 
+const RenderVitalSigns = ({ data }: { data: VitalSignsData }) => {
+  const items: { label: string; value: string }[] = [];
+  if (data.temperature) items.push({ label: 'Temp', value: `${data.temperature} °C` });
+  if (data.pulse) items.push({ label: 'Pulse', value: `${data.pulse} bpm` });
+  if (data.blood_pressure_systolic || data.blood_pressure_diastolic) {
+    const bp = [data.blood_pressure_systolic, data.blood_pressure_diastolic].filter(Boolean).join('/');
+    if (bp) items.push({ label: 'B.P.', value: `${bp} mmHg` });
+  }
+  if (data.respiratory_rate) items.push({ label: 'Resp. Rate', value: `${data.respiratory_rate} /min` });
+  if (data.oxygen_saturation) items.push({ label: 'O₂ Sat', value: `${data.oxygen_saturation} %` });
+  if (data.height) items.push({ label: 'Height', value: `${data.height} cm` });
+  if (data.weight) items.push({ label: 'Weight', value: `${data.weight} kg` });
+  if (data.bmi) items.push({ label: 'BMI', value: data.bmi });
+  if (items.length === 0) return null;
+  return (
+    <View style={styles.subDataRow}>
+      {items.map((item, i) => (
+        <View key={i} style={styles.subDataItem}>
+          <Text style={styles.subDataLabel}>{item.label}:</Text>
+          <Text style={styles.subDataValue}>{item.value}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const RenderTabularEye = ({ data }: { data: TabularEyeValue }) => {
+  const rows = allEyeExaminations
+    .map((e) => {
+      const r = data[`${e.key}_right` as keyof TabularEyeValue] as string | null | undefined;
+      const l = data[`${e.key}_left` as keyof TabularEyeValue] as string | null | undefined;
+      if (!r && !l) return null;
+      return [e.label, r || '-', l || '-'];
+    })
+    .filter(Boolean) as string[][];
+  if (rows.length === 0 && !data.notes) return null;
+  return (
+    <View>
+      <PDFTable title="Eye Examination" headers={['EXAMINATION', 'Right', 'Left']} rows={rows} flexWidths={[2, 1, 1]} />
+      <AdditionalNotes notes={data.notes} />
+    </View>
+  );
+};
+
 // ---------------------------------------------------------------------------
 // 5. MAIN DOCUMENT COMPONENT
 // ---------------------------------------------------------------------------
 
-export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, consultationData, departmentType }: any) => {
-  const sections = specialtyFieldSections[departmentType] || specialtyFieldSections.General;
+export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, consultationData, departmentType, showClinicHeader = true }: { patient?: any; appointment?: any; clinicInfo?: any; doctorInfo?: any; consultationData?: any; departmentType?: string; showClinicHeader?: boolean }) => {
+  const sections = specialtyFieldSections[departmentType || 'General'] || specialtyFieldSections.General;
 
   const renderFieldValue = (field: any, value: any) => {
     if (field.name === 'prescriptions') return <RenderPrescriptions data={value} />;
     if (field.name === 'motor_examination') return <RenderMotorExam data={value} />;
     if (field.name === 'reflexes') return <RenderReflexExam data={value} />;
-    
-    // Arrays
+    if (field.name === 'vital_signs') return <RenderVitalSigns data={value} />;
+    if (field.name === 'eye_examination') return <RenderTabularEye data={value} />;
+
     if (Array.isArray(value)) {
-      return <View>{value.map((v, i) => <Text key={i} style={styles.value}>• {v}</Text>)}</View>;
+      return <View>{value.map((v: any, i: number) => <Text key={i} style={styles.value}>• {String(v)}</Text>)}</View>;
     }
-    // General Strings
-    return <Text style={styles.value}>{String(value)}</Text>;
+
+    if (typeof value === 'object' && value !== null) {
+      return <Text style={styles.muted}>[Complex data — see structured section]</Text>;
+    }
+
+    return <Text style={styles.value}>{String(value ?? '')}</Text>;
   };
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         
-        {/* HEADER */}
-        <View fixed style={styles.headerContainer}>
-          <View style={styles.clinicBlock}>
-            <Text style={styles.h1}>{clinicInfo?.name || 'CLINIC'}</Text>
-            {clinicInfo?.address && <Text style={styles.muted}>{clinicInfo.address}</Text>}
-            {clinicInfo?.phone && <Text style={styles.muted}>{clinicInfo.phone}</Text>}
+        {/* CLINIC HEADER — shown for download; spacer preserved for letterhead printing */}
+        {showClinicHeader ? (
+          <View fixed style={styles.headerContainer}>
+            <View style={styles.clinicBlock}>
+              <Text style={styles.h1}>{clinicInfo?.name || 'CLINIC'}</Text>
+              {clinicInfo?.address && <Text style={styles.muted}>{clinicInfo.address}</Text>}
+              {clinicInfo?.phone && <Text style={styles.muted}>{clinicInfo.phone}</Text>}
+            </View>
+            <View style={styles.doctorBlock}>
+              <Text style={styles.h2}>{doctorInfo?.name || 'Doctor'}</Text>
+              <Text style={styles.label}>{doctorInfo?.specialization}</Text>
+              {doctorInfo?.qualification && <Text style={styles.muted}>{doctorInfo.qualification}</Text>}
+            </View>
           </View>
-          <View style={styles.doctorBlock}>
-            <Text style={styles.h2}>{doctorInfo?.name || 'Doctor'}</Text>
-            <Text style={styles.label}>{doctorInfo?.specialization}</Text>
-            {doctorInfo?.qualification && <Text style={styles.muted}>{doctorInfo.qualification}</Text>}
+        ) : (
+          <View style={{ height: 68 }} />
+        )}
+
+        {/* PATIENT INFORMATION — first-class section */}
+        <View style={{ marginBottom: 12 }}>
+          <Text style={styles.h3}>PATIENT INFORMATION</Text>
+
+          <View style={styles.row}>
+            <View style={styles.colHalf}>
+              <Text style={styles.value}>
+                <Text style={styles.label}>Name: </Text>
+                {patient?.name || '—'}
+              </Text>
+            </View>
+            <View style={styles.colHalf}>
+              <Text style={styles.value}>
+                <Text style={styles.label}>Age: </Text>
+                {patient?.age ? `${patient.age} years` : '—'}{patient?.gender ? `, ${patient.gender}` : ''}
+              </Text>
+            </View>
           </View>
+
+          <View style={styles.row}>
+            <View style={styles.colHalf}>
+              <Text style={styles.value}>
+                <Text style={styles.label}>Address: </Text>
+                {patient?.address || '—'}
+              </Text>
+            </View>
+            <View style={styles.colHalf}>
+              <Text style={styles.value}>
+                <Text style={styles.label}>Medical ID: </Text>
+                {patient?.medical_id || '—'}
+              </Text>
+            </View>
+          </View>
+
+          {appointment?.date ? (
+            <View style={styles.row}>
+              <View style={styles.colHalf}>
+                <Text style={styles.value}>
+                  <Text style={styles.label}>Appointment: </Text>
+                  {new Date(appointment.date).toLocaleDateString()}
+                </Text>
+              </View>
+              <View style={styles.colHalf} />
+            </View>
+          ) : null}
         </View>
 
-        {/* PATIENT INFO — dense horizontal inline row */}
-        <View style={styles.patientInfoBlock}>
-          <View style={styles.inlineData}>
-            <Text style={styles.inlineLabel}>Patient:</Text>
-            <Text style={styles.inlineValue}>{patient?.name} ({patient?.age}y, {patient?.gender})</Text>
-          </View>
-
-          {appointment?.date && (
-            <View style={styles.inlineData}>
-              <Text style={styles.inlineLabel}>Appt:</Text>
-              <Text style={styles.inlineValue}>{new Date(appointment.date).toLocaleDateString()}</Text>
-            </View>
-          )}
-
-          {patient?.phone && (
-            <View style={styles.inlineData}>
-              <Text style={styles.inlineLabel}>Phone:</Text>
-              <Text style={styles.inlineValue}>{patient.phone}</Text>
-            </View>
-          )}
-        </View>
+        {/* Separator */}
+        <View style={{ borderTopWidth: 1, borderTopColor: '#E5E7EB', marginBottom: 12 }} />
 
         {/* CONTENT */}
         {sections.map((section: any, sIdx: number) => {
@@ -302,8 +380,8 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
           // 3. Render Groups
           return (
             <View key={sIdx} style={{ marginBottom: 12 }}>
-              <Text style={styles.h3}>{section.title}</Text>
-              
+              {section.title !== "History" && <Text style={styles.h3}>{section.title}</Text>}
+
               {groups.map((group, gIdx) => {
                 const val0 = populateDefaultValues(group[0].name, consultationData[group[0].name]);
 
@@ -336,8 +414,8 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
           );
         })}
 
-        {/* FIXED SIGNATURE FOOTER — parsed name + stacked credentials */}
-        <View fixed style={styles.footer}>
+        {/* SIGNATURE FOOTER — flows naturally to final page */}
+        <View style={styles.footer}>
           {doctorInfo?.signature && (() => {
             const lines = doctorInfo.signature.split('\n').filter((l: string) => l.trim() !== '');
             if (lines.length === 0) return null;
@@ -349,13 +427,13 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
               : credentials;
 
             return (
-              <View style={{ alignItems: 'flex-end', width: '100%' }}>
+              <View style={{ alignItems: 'flex-start', width: '100%' }}>
                 <View style={{ borderTopWidth: 1, borderTopColor: '#111827', paddingTop: 6, minWidth: 150 }}>
-                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#111827', textAlign: 'right' }}>
+                  <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#111827', textAlign: 'left' }}>
                     {hasImplicitBreaks ? name.split(',')[0].trim() : name}
                   </Text>
                   {creds.map((cred: string, idx: number) => (
-                    <Text key={idx} style={{ fontSize: 9, color: '#4B5563', textAlign: 'right', marginTop: 2 }}>
+                    <Text key={idx} style={{ fontSize: 9, color: '#4B5563', textAlign: 'left', marginTop: 2 }}>
                       {cred}
                     </Text>
                   ))}

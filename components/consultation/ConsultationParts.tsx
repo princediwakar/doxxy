@@ -10,60 +10,6 @@ import {
   DoctorInfo,
 } from "@/types/consultation";
 
-export const PrintStyles: React.FC = () => (
-  <style
-    dangerouslySetInnerHTML={{
-      __html: `
-    @media print {
-      @page { margin: 45mm 20mm 20mm 20mm; size: A4; }
-      body {
-        font-size: 12pt !important;
-        -webkit-print-color-adjust: exact !important; 
-        print-color-adjust: exact !important; 
-        margin: 0 !important; 
-        padding: 0 !important; 
-      }
-      
-      /* --- NEW: TABLE HEADER REPEAT LOGIC --- */
-      table { width: 100%; }
-      thead { display: table-header-group; } 
-      tfoot { display: table-footer-group; }
-      tr { page-break-inside: avoid; }
-      /* -------------------------------------- */
-
-      .no-print { display: none !important; }
-      .page-break { page-break-before: always; }
-      .avoid-break { page-break-inside: avoid; }
-      
-      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      .max-w-4xl { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
-      
-
-      /* Grid layout for consultation content */
-      .consultation-content .grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.75rem !important;
-      }
-      .consultation-content .grid.grid-cols-1 { grid-template-columns: 1fr !important; }
-      .consultation-content .grid.grid-cols-1\\/md\\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
-      .consultation-content .grid.grid-cols-1\\/md\\:grid-cols-2\\/lg\\:grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
-      .consultation-content .section-notes .grid {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.5rem !important;
-      }
-      .consultation-content .w-full { width: 100% !important; grid-column: 1 / -1 !important; }
-      .section-notes { page-break-inside: avoid !important; margin-bottom: 0.75rem !important; }
-      .section-notes h3 { margin-bottom: 0.5rem !important; }
-      .field-group { page-break-inside: avoid !important; margin-bottom: 0.25rem !important; }
-      /* ... */
-    }
-  `,
-    }}
-  />
-);
-
 export const ConsultationHeader: React.FC<{
   clinicInfo: ClinicInfo | null;
   doctorInfo: DoctorInfo | null;
@@ -196,27 +142,38 @@ export const ConcisePatientInfo: React.FC<{
   appointment: DbAppointment | null;
 }> = ({ patient, appointment }) => {
   return (
-    <div className="concise-patient-info text-sm mb-3 print:mb-2">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <div className="font-bold text-foreground">Patient:</div>
+    <div className="mb-4 print:mb-3">
+      <h3 className="text-lg font-semibold text-foreground mb-2 pb-1 border-b border-border print:mb-1">
+        PATIENT INFORMATION
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
         <div>
-          {patient?.name}
-          {patient?.age && `, ${patient.age}y`}
-          {patient?.gender && `, ${patient.gender}`}
+          <span className="font-bold text-foreground">Name: </span>
+          <span className="text-foreground">{patient?.name || '—'}</span>
         </div>
-
-        <div className="font-bold text-foreground">Appt:</div>
         <div>
-          {appointment?.date &&
-            format(new Date(appointment.date), "MMM d, yyyy")}
-          {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
+          <span className="font-bold text-foreground">Age: </span>
+          <span className="text-foreground">
+            {patient?.age ? `${patient.age} years` : '—'}
+            {patient?.gender ? `, ${patient.gender}` : ''}
+          </span>
         </div>
-
-        {patient?.phone && (
-          <>
-            <div className="font-bold text-foreground">Phone:</div>
-            <div>{patient.phone}</div>
-          </>
+        <div>
+          <span className="font-bold text-foreground">Address: </span>
+          <span className="text-foreground">{patient?.address || '—'}</span>
+        </div>
+        <div>
+          <span className="font-bold text-foreground">Medical ID: </span>
+          <span className="text-foreground">{patient?.medical_id || '—'}</span>
+        </div>
+        {appointment?.date && (
+          <div className="md:col-span-2">
+            <span className="font-bold text-foreground">Appointment: </span>
+            <span className="text-foreground">
+              {format(new Date(appointment.date), "MMM d, yyyy")}
+              {appointment?.time && ` • ${formatTimeIST(appointment.time)}`}
+            </span>
+          </div>
         )}
       </div>
     </div>

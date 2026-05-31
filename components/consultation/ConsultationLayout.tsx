@@ -3,7 +3,7 @@ import React from 'react';
 import { specialtyFieldSections } from '@/lib/consultationNotesSchemas';
 import type { FieldValue, ClinicInfo, DoctorInfo, MotorExamData, ReflexExamData } from '@/types/consultation';
 import { FieldValueRenderer } from './ConsultationRenderers';
-import { ConsultationHeader, ConcisePatientInfo, PrintStyles, ConsultationSignatureFooter } from './ConsultationParts';
+import { ConsultationHeader, ConcisePatientInfo, ConsultationSignatureFooter } from './ConsultationParts';
 import type { DbAppointment, DbPatient } from '@/types/core';
 
 interface Field {
@@ -235,8 +235,8 @@ const FieldGroup: React.FC<{ fields: Field[], consultationData: Record<string, F
 
 // UPDATED: Multiple fields - responsive grid layout with specific print marker classes
 const gridClassConfig = fields.length === 2
-? 'grid-cols-1 md:grid-cols-2 print-grid-2-cols' // Added marker class
-: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 print-grid-3-cols'; // Added marker class
+? 'grid-cols-1 md:grid-cols-2' // Added marker class
+: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'; // Added marker class
 
 return (
 <div className={`grid ${gridClassConfig} gap-3 print:gap-2`}>
@@ -279,7 +279,6 @@ interface ConsultationLayoutProps {
   consultationData?: Record<string, FieldValue>;
   specialtySections?: Section[];
   departmentType?: string;
-  showPrintStyles?: boolean;
   className?: string;
 }
 
@@ -291,7 +290,6 @@ export const ConsultationLayout: React.FC<ConsultationLayoutProps> = ({
   consultationData = {},
   specialtySections,
   departmentType = 'General',
-  showPrintStyles = false,
   className = ''
 }) => {
   const sections = specialtySections || specialtyFieldSections[departmentType] || specialtyFieldSections.General;
@@ -313,6 +311,8 @@ return (
                 patient={patient}
                 appointment={appointment}
               />
+
+              <hr className="border-border mb-4 print:mb-3" />
 
               {/* Consultation Content */}
               <div className="space-y-4 print:space-y-3">
@@ -344,9 +344,11 @@ return (
 
                   return (
                     <div key={sectionIndex} className="mb-4 print:mb-4">
-                      <h3 className="text-lg font-semibold text-foreground mb-2 print:mb-1 break-after-avoid">
-                        {section.title}
-                      </h3>
+                      {section.title !== "History" && (
+                        <h3 className="text-lg font-semibold text-foreground mb-2 pb-1 border-b border-border print:mb-1 break-after-avoid">
+                          {section.title}
+                        </h3>
+                      )}
                       <div className="space-y-2 print:space-y-1">
                         {groupedFields.map((fieldGroup, groupIndex) => (
                           <FieldGroup
@@ -361,20 +363,13 @@ return (
                 })}
               </div>
 
+              {/* SIGNATURE FOOTER — flows as final content block, not a repeating tfoot */}
+              <div className="h-4 print:h-8"></div>
+              <ConsultationSignatureFooter signature={doctorInfo?.signature} />
+
             </td>
           </tr>
         </tbody>
-
-        {/* The Table Footer - Automatically repeats and reserves space natively */}
-        <tfoot className="print:table-footer-group">
-          <tr>
-            <td className="p-0 border-0 align-bottom">
-              {/* Spacer to guarantee the text never rides exactly on the signature line */}
-              <div className="h-4 print:h-8"></div>
-              <ConsultationSignatureFooter signature={doctorInfo?.signature} />
-            </td>
-          </tr>
-        </tfoot>
       </table>
 
     </div>

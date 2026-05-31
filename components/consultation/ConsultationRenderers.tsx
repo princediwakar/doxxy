@@ -345,7 +345,7 @@ export const ReflexExaminationDisplay: React.FC<{ data: ReflexExamData }> = ({
   );
 };
 
-const allEyeExaminations = [
+export const allEyeExaminations = [
   // Visual Function Tests
   { key: "visual_acuity", label: "Visual Acuity" },
   { key: "refraction", label: "Refraction" },

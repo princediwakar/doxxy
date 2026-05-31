@@ -21,7 +21,6 @@ import { ConsultationLayout } from "./ConsultationLayout";
 import { useAppState } from "@/contexts/AppStateContext";
 import { pdf } from '@react-pdf/renderer';
 import { ConsultationPDF } from './ConsultationPDF';
-import { printConsultation } from "./consultationPrintUtils";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { queryCurrentDoctorByUserId } from "@/lib/queries/doctors";
@@ -99,18 +98,36 @@ export const ConsultationPreviewModal = ({
   };
 
   const handlePrint = async () => {
+    // Open window synchronously to avoid popup blocker, then redirect after blob is ready
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast.error("Pop-up blocked. Please allow pop-ups for this site to print.");
+      return;
+    }
+
     try {
-      await printConsultation(
-        consultationData,
-        patient,
-        appointment,
-        clinicDetails,
-        doctorInfo,
-        user,
-        departmentType
+      const doc = (
+        <ConsultationPDF
+          patient={patient}
+          appointment={appointment}
+          clinicInfo={clinicInfo as any}
+          doctorInfo={doctorInfo as any}
+          consultationData={consultationData}
+          departmentType={departmentType}
+          showClinicHeader={false}
+        />
       );
-      toast.success("Print dialog opened successfully");
+
+      const asPdf = pdf();
+      asPdf.updateContainer(doc);
+      const blob = await asPdf.toBlob();
+      const url = URL.createObjectURL(blob);
+      printWindow.location.href = url;
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+
+      toast.success("Print dialog opened. Use your browser's print function.");
     } catch (error) {
+      printWindow.close();
       logger.error("Error printing consultation:", error);
       toast.error("Failed to open print dialog");
     }
