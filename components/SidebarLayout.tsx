@@ -28,11 +28,11 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
 
       <div
         className={cn(
-          "flex-1 mt-14 lg:mt-0 pb-24 lg:pb-0 min-w-0 overflow-hidden",
+          "flex-1 mt-14 lg:mt-0 pb-24 lg:pb-0 min-w-0 overflow-hidden bg-background",
           isCollapsed ? "lg:ml-16" : "lg:ml-72"
         )}
       >
-        <main className="bg-background p-4 md:p-6 mx-auto min-h-screen max-w-full overflow-x-hidden">
+        <main className="p-4 md:p-6 mx-auto min-h-screen max-w-full overflow-x-hidden">
           {children}
         </main>
       </div>

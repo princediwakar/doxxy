@@ -9,7 +9,6 @@ import type { AppointmentWithDetails } from "@/types/appointments";
 interface TodayQueueViewProps {
   queue: TodayQueue;
   onAppointmentClick: (app: AppointmentWithDetails) => void;
-  isMobile?: boolean;
   doctorFilter: string | null;
   hasDoctors: boolean;
 }
@@ -17,15 +16,11 @@ interface TodayQueueViewProps {
 export function TodayQueueView({
   queue,
   onAppointmentClick,
-  isMobile = false,
   doctorFilter,
   hasDoctors,
 }: TodayQueueViewProps) {
   return (
-    <div
-      className="border rounded-lg bg-muted/5 flex flex-col overflow-hidden"
-      style={{ height: isMobile ? "calc(100vh - 11rem)" : "100%" }}
-    >
+    <div className="flex flex-col overflow-hidden h-full lg:border lg:rounded-lg lg:bg-muted/5">
       <DateCarousel />
       <div className="flex-1 overflow-y-auto p-4">
         {hasDoctors ? (

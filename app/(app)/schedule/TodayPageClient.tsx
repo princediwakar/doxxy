@@ -175,7 +175,7 @@ export function TodayPageClient({
   const showMobileDetail = isMobile && mobileDetailOpen;
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col space-y-6 h-[calc(100vh-3rem)] min-h-0">
       <DoctorProfilePrompt />
       <TodayMobileLayout
         showMobileDetail={showMobileDetail}
@@ -185,7 +185,6 @@ export function TodayPageClient({
           <TodayQueueView
             queue={serverQueue}
             onAppointmentClick={selectAppointment}
-            isMobile={isMobile}
             doctorFilter={effectiveDoctorFilter}
             hasDoctors={hasDoctors}
           />
