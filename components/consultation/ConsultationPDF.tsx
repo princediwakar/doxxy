@@ -273,11 +273,15 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
               <Text style={styles.h1}>{clinicInfo?.name || 'CLINIC'}</Text>
               {clinicInfo?.address && <Text style={styles.muted}>{clinicInfo.address}</Text>}
               {clinicInfo?.phone && <Text style={styles.muted}>{clinicInfo.phone}</Text>}
+              {clinicInfo?.email && <Text style={styles.muted}>{clinicInfo.email}</Text>}
+              {clinicInfo?.website && <Text style={styles.muted}>{clinicInfo.website}</Text>}
             </View>
             <View style={styles.doctorBlock}>
               <Text style={styles.h2}>{doctorInfo?.name || 'Doctor'}</Text>
               <Text style={styles.label}>{doctorInfo?.specialization}</Text>
               {doctorInfo?.qualification && <Text style={styles.muted}>{doctorInfo.qualification}</Text>}
+              {doctorInfo?.phone && <Text style={styles.muted}>{doctorInfo.phone}</Text>}
+              {doctorInfo?.email && <Text style={styles.muted}>{doctorInfo.email}</Text>}
             </View>
           </View>
         ) : (
@@ -317,6 +321,18 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
               </Text>
             </View>
           </View>
+
+          {departmentType && departmentType !== "General" ? (
+            <View style={styles.row}>
+              <View style={styles.colHalf}>
+                <Text style={styles.value}>
+                  <Text style={styles.label}>Department: </Text>
+                  {departmentType}
+                </Text>
+              </View>
+              <View style={styles.colHalf} />
+            </View>
+          ) : null}
 
           {appointment?.date ? (
             <View style={styles.row}>

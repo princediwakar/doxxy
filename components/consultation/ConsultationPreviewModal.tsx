@@ -54,22 +54,23 @@ export const ConsultationPreviewModal = ({
   specialtySections,
   departmentType = "General",
 }: ConsultationPreviewModalProps) => {
-  const { activeClinicId, activeClinicName, user } = useAppState();
+  const { activeClinicId, activeClinicName, user, userClinics } = useAppState();
 
   // Get consultation data from form
   const consultationData = form.watch("specialty_data") as Record<string, FieldValue>;
 
-  // Get the full clinic object for printing
-  const clinicDetails = (activeClinicId && activeClinicName) ? { id: activeClinicId, name: activeClinicName } as any : null;
+  // Derive full clinic details from AppState (userClinics already contains the full DbClinic row)
+  const activeClinic = activeClinicId
+    ? userClinics.find((c) => c.clinic_id === activeClinicId)?.clinics ?? null
+    : null;
 
-  // Prepare clinic info for layout display
-  const clinicInfo = clinicDetails
+  const clinicInfo = activeClinic
     ? {
-        name: clinicDetails.name,
-        address: clinicDetails.address || undefined,
-        phone: clinicDetails.phone || undefined,
-        email: clinicDetails.email || undefined,
-        website: clinicDetails.website || undefined,
+        name: activeClinic.name,
+        address: activeClinic.address ?? null,
+        phone: activeClinic.phone ?? null,
+        email: activeClinic.email ?? null,
+        website: activeClinic.website ?? null,
       }
     : null;
 

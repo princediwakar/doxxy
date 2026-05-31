@@ -46,7 +46,7 @@ export function ConsultationViewModal({
   onOpenChange,
   appointment,
 }: ConsultationViewModalProps) {
-  const { activeClinicId, activeClinicName, user } = useAppState();
+  const { activeClinicId, activeClinicName, user, userClinics } = useAppState();
 
   const patientQuery = useQuery({
     queryKey: queryKeys.patients.byId(appointment?.patient_id ?? ""),
@@ -152,17 +152,19 @@ export function ConsultationViewModal({
     medical_id: "",
   };
 
-  // Get the full clinic object for printing
-  const clinicDetails = (activeClinicId && activeClinicName) ? { id: activeClinicId, name: activeClinicName } as any : null;
+  // Derive full clinic details from AppState (userClinics already contains the full DbClinic row)
+  const activeClinic = activeClinicId
+    ? userClinics.find((c) => c.clinic_id === activeClinicId)?.clinics ?? null
+    : null;
 
   // Prepare clinic info for layout display
-  const clinicInfo: ClinicInfo | null = clinicDetails
+  const clinicInfo: ClinicInfo | null = activeClinic
     ? {
-        name: clinicDetails.name,
-        address: clinicDetails.address || "",
-        phone: clinicDetails.phone || "",
-        email: clinicDetails.email || "",
-        website: clinicDetails.website || null,
+        name: activeClinic.name,
+        address: activeClinic.address || "",
+        phone: activeClinic.phone || "",
+        email: activeClinic.email || "",
+        website: activeClinic.website || null,
       }
     : null;
 
@@ -178,6 +180,9 @@ export function ConsultationViewModal({
     qualification: "",
     specialization: doctorSpecialization,
     registration_number: "",
+    phone: firstDoctor?.phone || user?.phone || "",
+    email: firstDoctor?.email || user?.email || "",
+    bio: firstDoctor?.bio || "",
     signature: firstDoctor?.signature || `Dr. ${doctorName}\n${doctorSpecialization}`,
   };
 

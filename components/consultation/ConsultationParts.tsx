@@ -140,7 +140,8 @@ export const ConsultationSignatureFooter: React.FC<{
 export const ConcisePatientInfo: React.FC<{
   patient: PatientWithClinic;
   appointment: DbAppointment | null;
-}> = ({ patient, appointment }) => {
+  departmentType?: string;
+}> = ({ patient, appointment, departmentType }) => {
   return (
     <div className="mb-4 print:mb-3">
       <h3 className="text-lg font-semibold text-foreground mb-2 pb-1 border-b border-border print:mb-1">
@@ -158,6 +159,12 @@ export const ConcisePatientInfo: React.FC<{
             {patient?.gender ? `, ${patient.gender}` : ''}
           </span>
         </div>
+        {departmentType && departmentType !== "General" && (
+          <div>
+            <span className="font-bold text-foreground">Department: </span>
+            <span className="text-foreground">{departmentType}</span>
+          </div>
+        )}
         <div>
           <span className="font-bold text-foreground">Address: </span>
           <span className="text-foreground">{patient?.address || '—'}</span>

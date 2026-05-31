@@ -310,6 +310,7 @@ return (
               <ConcisePatientInfo
                 patient={patient}
                 appointment={appointment}
+                departmentType={departmentType}
               />
 
               <hr className="border-border mb-4 print:mb-3" />
