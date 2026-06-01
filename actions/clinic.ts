@@ -111,6 +111,18 @@ export async function createClinicWithAdmin(params: {
 }) {
   const supabase = await createServerSupabase();
 
+  // Ensure profile row exists so clinic_members FK doesn't fail
+  await supabase.from('profiles').upsert(
+    {
+      id: params.userId,
+      name: params.userName || params.userEmail || '',
+      email: params.userEmail || '',
+      phone: params.userPhone || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'id' },
+  );
+
   const { data: clinicResult, error: clinicError } = await supabase
     .rpc('create_clinic_with_admin', {
       clinic_name: params.clinicName,

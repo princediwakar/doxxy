@@ -9,7 +9,7 @@ export default function OnboardingCreateClinicPage() {
   const router = useRouter();
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+    <div className="max-w-3xl mx-auto py-12 px-6">
       <ErrorBoundary>
         <CreateClinicForm onSuccess={() => router.replace('/schedule')} />
       </ErrorBoundary>

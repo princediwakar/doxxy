@@ -58,7 +58,7 @@ export const createClinicSchema = z.object({
   isDoctor: z.enum(['yes', 'no'], { required_error: 'Please specify your role.' }),
   selectedDepartment: z.string().optional(),
   consultationFee: z.coerce.number().min(0).optional(),
-  invitedDoctorEmail: z.string().email({ message: "Valid email required." }).optional(),
+  invitedDoctorEmail: z.string().email({ message: "Valid email required." }).optional().or(z.literal("")),
 }).superRefine((data, ctx) => {
   if (data.isDoctor === 'yes') {
     if (!data.selectedDepartment || data.selectedDepartment.trim() === '') {

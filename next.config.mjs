@@ -5,7 +5,7 @@ const cspHeader = [
   // Added 'blob:' to allow the dynamic script execution for your STT library
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net https://cdn.tailwindcss.com https://maps.googleapis.com https://places.googleapis.com",
   "style-src 'self' 'unsafe-inline' https://lh3.googleusercontent.com https://connect.facebook.net",
-  "img-src 'self' data: https: blob: https://lh3.googleusercontent.com",
+  "img-src 'self' data: https: blob: https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com",
   "font-src 'self' https://lh3.googleusercontent.com https://connect.facebook.net",
   // Added wss://*.onrender.com to allow the WebSocket connection to your STT proxy
   "connect-src 'self' data: https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to wss://*.onrender.com https://*.facebook.com https://*.facebook.net https://connect.facebook.net https://lh3.googleusercontent.com https://maps.googleapis.com https://places.googleapis.com",

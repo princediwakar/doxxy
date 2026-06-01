@@ -35,7 +35,11 @@ async function getPlacesLib(): Promise<typeof google.maps.places> {
   if (_placesLib) return _placesLib;
   if (!_loadPromise) {
     const { setOptions, importLibrary } = await import("@googlemaps/js-api-loader");
-    setOptions({ key: API_KEY, v: "weekly" });
+    // Skip setOptions when the API is already loaded (e.g. after HMR). Calling it
+    // again logs a warning and the options are ignored anyway.
+    if (!globalThis.google?.maps) {
+      setOptions({ key: API_KEY, v: "weekly" });
+    }
     _loadPromise = importLibrary("places") as Promise<typeof google.maps.places>;
   }
   _placesLib = await _loadPromise;

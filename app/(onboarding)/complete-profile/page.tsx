@@ -124,7 +124,7 @@ const CompleteProfile = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+    <div className="flex-1 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Complete Your Profile</CardTitle>
