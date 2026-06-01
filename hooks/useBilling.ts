@@ -1,12 +1,12 @@
 "use client";
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useAppState } from '@/contexts/AppStateContext';
 import { useBillingQueries } from '@/hooks/useBillingQueries';
 import { useBillingFormEffects } from '@/hooks/useBillingFormEffects';
-import { saveBill, generateInvoiceNumber } from '@/actions/billing';
+import { saveBill } from '@/actions/billing';
 import { showErrorToast } from '@/lib/error-utils';
 import { toast } from 'sonner';
 import type { Medicine } from '@/types/prescriptions';
@@ -31,7 +31,7 @@ const serviceItemSchema = z.object({
 const billingFormSchema = z.object({
   patient_id: z.string().nonempty('Patient is required'),
   appointment_id: z.string().nullable().optional().transform(e => e === "" || e === "none" ? null : e),
-  invoice_number: z.string().min(1, 'Invoice number is required'),
+  invoice_number: z.string().optional(),
   amount: z.number().min(0, 'Amount must be positive').optional(),
   description: z.string().nullable().optional().transform(e => e === "" ? null : e),
   service_items: z.array(serviceItemSchema).optional(),
@@ -66,31 +66,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
   const taxPercentage = form.watch('tax_percentage') || 0;
   const serviceItems = form.watch('service_items') || [];
 
-  const [invoiceNumber, setInvoiceNumber] = useState<string | null>(null);
-  const [isLoadingInvoiceNumber, setIsLoadingInvoiceNumber] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const fetchInvoiceNumber = useCallback(async () => {
-    if (!activeClinicId) return;
-    setIsLoadingInvoiceNumber(true);
-    try {
-      const result = await generateInvoiceNumber(activeClinicId);
-      if (result.data) {
-        setInvoiceNumber(result.data);
-        form.setValue('invoice_number', result.data, { shouldValidate: true });
-      }
-    } catch {
-      // fallback handled server-side
-    } finally {
-      setIsLoadingInvoiceNumber(false);
-    }
-  }, [activeClinicId, form]);
-
-  useEffect(() => {
-    if (mode === 'create' && open && activeClinicId && !bill?.invoice_number) {
-      fetchInvoiceNumber();
-    }
-  }, [mode, open, activeClinicId, bill?.invoice_number, fetchInvoiceNumber]);
 
   const {
     appointments: filteredAppointments,
@@ -173,7 +149,6 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
           patient_id: values.patient_id,
           appointment_id: values.appointment_id,
           clinic_id: activeClinicId,
-          invoice_number: values.invoice_number,
           amount: calculateTotals.total,
           description: values.description,
           service_items: values.service_items as unknown as import('@/types/core').Json,
@@ -205,7 +180,6 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     form,
     appointments: filteredAppointments,
     patients,
-    isLoadingInvoiceNumber,
     isLoadingAppointments,
     isLoadingPatients,
     appointmentsError: appointmentsError as Error | null,
@@ -220,6 +194,5 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
     selectMedicineForItem,
     saveBill: handleSave,
     isSubmitting,
-    refetchInvoiceNumber: fetchInvoiceNumber,
   };
 };

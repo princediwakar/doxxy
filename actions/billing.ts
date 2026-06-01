@@ -8,7 +8,6 @@ interface SaveBillParams {
   patient_id: string;
   appointment_id: string | null;
   clinic_id: string;
-  invoice_number: string;
   amount: number;
   description?: string | null;
   service_items?: Json;
@@ -28,7 +27,6 @@ export async function saveBill(
     patient_id: data.patient_id,
     appointment_id: data.appointment_id,
     clinic_id: data.clinic_id,
-    invoice_number: data.invoice_number,
     amount: data.amount,
     description: data.description,
     service_items: data.service_items as Json,
@@ -49,9 +47,11 @@ export async function saveBill(
     return { success: true, data: bill };
   }
 
+  const { data: invoice_number } = await generateInvoiceNumber(data.clinic_id);
+
   const { data: bill, error } = await supabase
     .from('bills')
-    .insert(billData as DbBillInsert)
+    .insert({ ...billData, invoice_number } as DbBillInsert)
     .select()
     .single();
   if (error) return { error: error.message };
@@ -60,7 +60,7 @@ export async function saveBill(
   return { success: true, data: bill };
 }
 
-export async function generateInvoiceNumber(clinicId: string) {
+async function generateInvoiceNumber(clinicId: string) {
   const supabase = await createServerSupabase();
 
   try {

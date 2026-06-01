@@ -36,7 +36,7 @@ export interface ServiceItem {
 export interface BillingFormValues {
   patient_id: string;
   appointment_id: string | null;
-  invoice_number: string;
+  invoice_number?: string;
   amount?: number;
   description?: string | null;
   service_items?: ServiceItem[];
@@ -90,7 +90,6 @@ export interface UseBillingReturn {
   form: UseFormReturn<BillingFormValues>;
   appointments: AppointmentForBilling[];
   patients: DbPatient[];
-  isLoadingInvoiceNumber: boolean;
   isLoadingAppointments: boolean;
   isLoadingPatients: boolean;
   appointmentsError: Error | null;
@@ -113,7 +112,6 @@ export interface UseBillingReturn {
   ) => void;
   saveBill: (values: BillingFormValues) => Promise<DbBill>;
   isSubmitting: boolean;
-  refetchInvoiceNumber: () => void;
 }
 
 // ============================================================================
