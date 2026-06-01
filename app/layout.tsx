@@ -67,7 +67,7 @@ export default function RootLayout({
           id="fb-async-init"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `window.fbAsyncInit=function(){window.FB&&window.FB.init({appId:"${process.env.NEXT_PUBLIC_META_APP_ID || "968197616134046"}",autoLogAppEvents:!0,xfbml:!0,version:"v25.0"})}`,
+            __html: `window.fbAsyncInit=function(){window.FB&&window.FB.init({appId:"${process.env.NEXT_PUBLIC_META_APP_ID || "4330186140630040"}",autoLogAppEvents:!0,xfbml:!0,version:"v25.0"})}`,
           }}
         />
       </head>

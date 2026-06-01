@@ -198,3 +198,35 @@ If the test account does not have a WhatsApp number pre-connected, the reviewer 
 2. **Message sending** (for `whatsapp_business_messaging`): Show staff opening a consultation/billing modal → tapping WhatsApp button → PDF arriving on recipient's phone. Also show the feedback template being sent after appointment completion.
 
 3. **Opt-out flow** (for policy compliance): Show recipient replying "STOP" → webhook processing → patient marked as opted out → subsequent send attempt blocked.]
+
+---
+
+## Access Verification — Tech Provider
+
+Supersite Technologies Private Limited
+
+### Which options best describe your business?
+
+**Answer: SaaS Platform**
+
+Doxxy is a SaaS clinic management platform. Healthcare clinics subscribe to Doxxy to manage appointments, consultations, billing, and patient communication. WhatsApp integration is a feature of the platform, not a standalone service — clinics use it through their Doxxy subscription.
+
+---
+
+### How will your business use Platform Data to enable a product or service on behalf of your clients?
+
+**Answer:**
+
+Doxxy receives WhatsApp access tokens and WABA phone number IDs from Meta when a clinic connects their WhatsApp Business Account through Doxxy's Embedded Signup flow. We store these credentials on the clinic's behalf and use them only to send WhatsApp messages that the clinic's own staff trigger — such as sending a patient their visit summary as a PDF or a post-consultation feedback message. The credentials are never shared, sold, or used for Doxxy's own purposes. Each clinic's credentials are isolated via database-level access controls so one clinic cannot access another's WhatsApp account. Clinics use this integration to communicate with their own patients from their own WhatsApp Business number, with their clinic name displayed as the sender.
+
+---
+
+### Does your business manage multiple business portfolios?
+
+**Answer: No**
+
+---
+
+### Provide a link to your website.
+
+**Answer:** https://doxxy.in
