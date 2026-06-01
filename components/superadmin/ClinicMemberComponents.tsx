@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Mail, Stethoscope, Edit3, Trash2, Shield, UserCog, Users, Phone, Building2, X } from 'lucide-react';
+import { Mail, Stethoscope, Edit3, Trash2, Shield, UserCog, Users, Phone, Building2 } from 'lucide-react';
 import { GooglePlaceAutocomplete } from "@/components/ui/google-place-autocomplete";
 import type { InviteMemberData, CreateDoctorData, MemberWithDetails, DepartmentWithDetails } from '@/types/core';
 import { ButtonLoader } from '@/components/ui/loading';
@@ -97,7 +97,7 @@ export const InviteMemberDialog = ({ open, onOpenChange, data, setData, onSubmit
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-full overflow-hidden">
         <div><label className="text-sm font-medium">Email *</label><Input value={data.email} onChange={e => setData({...data, email: e.target.value})} placeholder="email@example.com" /></div>
         <div><label className="text-sm font-medium">Name *</label><Input value={data.name} onChange={e => setData({...data, name: e.target.value})} placeholder="John Doe" /></div>
-        <div><label className="text-sm font-medium">Phone</label><Input value={data.phone} onChange={e => setData({...data, phone: e.target.value})} /></div>
+        <div><label className="text-sm font-medium">Phone</label><Input value={data.phone} onChange={e => setData({...data, phone: e.target.value})} placeholder="9234512345" /></div>
         <div>
           <label className="text-sm font-medium">Role *</label>
           <Select value={data.role} onValueChange={(v: UserRole) => setData({...data, role: v})}>
@@ -139,15 +139,6 @@ export const CreateDoctorDialog = ({ open, onOpenChange, data, setData, onSubmit
             <p className="text-sm text-muted-foreground">Set up a medical profile for this clinic member</p>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onOpenChange(false)}
-          disabled={isPending}
-          className="h-6 w-6 p-0"
-        >
-          <X className="h-4 w-4" />
-        </Button>
       </DialogHeader>
 
       <div className="space-y-4">

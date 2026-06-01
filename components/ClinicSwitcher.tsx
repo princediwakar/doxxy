@@ -25,7 +25,7 @@ const ClinicSwitcher = () => {
   };
 
   const handleCreateNewClinic = () => {
-    router.push('/create-clinic');
+    router.push('/clinics/new');
     setOpen(false); // Close dropdown after navigation
   };
 
