@@ -55,7 +55,7 @@ export const CreateClinicForm = ({ onSuccess, onCancel }: CreateClinicFormProps)
       website: "",
       google_place_id: "",
       google_place_data: undefined,
-      isDoctor: "no",
+      isDoctor: undefined,
       selectedDepartment: "",
       consultationFee: 0,
       invitedDoctorEmail: "",
