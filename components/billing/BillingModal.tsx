@@ -111,19 +111,16 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);
-  const [savedBill, setSavedBill] = useState<Bill | null>(null);
 
   const onSubmit = async (values: BillingFormValues) => {
     try {
-      const result = await saveBill(values);
+      await saveBill(values);
       toast.success(mode === "edit" ? "Bill updated successfully!" : "Bill created successfully!");
       queryClient.invalidateQueries({ queryKey: ["patient", values.patient_id, "bills"] });
       if (mode === "edit") {
         onModeChange?.("view");
       } else {
-        const bill = result as Bill;
-        form.setValue('invoice_number', bill.invoice_number ?? '');
-        setSavedBill(bill);
+        onOpenChange(false);
       }
     } catch {
       // error toast handled in useBilling
@@ -131,7 +128,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   };
 
   const buildCurrentBillData = (): Bill | null => {
-    const currentBill = billRef.current || savedBill;
+    const currentBill = billRef.current;
     if (!currentBill) return null;
     const formServiceItems = form.watch("service_items");
     return {
@@ -266,14 +263,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (open) setSavedBill(null);
-  }, [open]);
-
   const handleDiscard = () => {
     setShowDiscardDialog(false);
     form.reset();
-    setSavedBill(null);
     onDirtyChange?.(false);
     onOpenChange(false);
   };
@@ -290,7 +282,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               </DialogTitle>
             </div>
             <div className="flex items-center gap-1.5">
-              {isWhatsAppEnabled && (bill ?? savedBill) && (
+              {isWhatsAppEnabled && bill && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -317,7 +309,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 </TooltipProvider>
               )}
 
-              {(bill ?? savedBill) && (
+              {bill && (
                 <Button
                   type="button"
                   variant="outline"
@@ -331,7 +323,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 </Button>
               )}
 
-              {(bill ?? savedBill) && (
+              {bill && (
                 <Button
                   type="button"
                   variant="default"
@@ -457,7 +449,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                               ? "Auto-generated on save"
                               : "Invoice number"
                           }
-                          disabled={mode !== "edit"}
+                          disabled
                         />
                       </FormControl>
                       <FormMessage />
