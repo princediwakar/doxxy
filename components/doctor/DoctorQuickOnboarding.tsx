@@ -15,7 +15,6 @@ import { queryKeys } from "@/lib/query-keys";
 import { toast } from "sonner";
 import {
   Stethoscope,
-  X,
 } from "lucide-react";
 import { GooglePlaceAutocomplete } from "@/components/ui/google-place-autocomplete";
 import type { GooglePlaceData } from "@/types/google-places";
@@ -183,15 +182,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
               <p className="text-sm text-muted-foreground">Complete the essentials to start practicing</p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClose}
-            disabled={isSubmitting}
-            className="h-6 w-6 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
