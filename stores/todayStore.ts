@@ -39,7 +39,7 @@ interface TodayActions {
   createBillForPatient: (patient: DbPatientByClinic) => void;
   viewBill: (bill: BillWithDetails, patient?: DbPatientByClinic | null) => void;
   viewConsultation: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
-  scheduleAppointment: (patient: Patient) => void;
+  scheduleAppointment: (patient: DbPatientByClinic | Patient) => void;
   editAppointment: (app: AppointmentWithDetails) => void;
   editPatient: () => void;
   patientCreated: (patient: Patient) => void;

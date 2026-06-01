@@ -137,7 +137,7 @@ export function ConsultationViewModal({
   const cleanedSpecialtyData = cleanSpecialtyData(specialtyData);
 
   // Get patient info with fallback to fetched patient data
-  const patient: Patient = patientData || {
+  const patient = (patientData || {
     name: appointment?.patient_name || "Unknown",
     gender: appointment?.patient_gender || "Unknown",
     age: appointment?.patient_age || null,
@@ -150,7 +150,8 @@ export function ConsultationViewModal({
     created_at: "",
     id: "",
     uhid: "",
-  };
+    legacy_medical_id: null,
+  }) as Patient;
 
   // Derive full clinic details from AppState (userClinics already contains the full DbClinic row)
   const activeClinic = activeClinicId
