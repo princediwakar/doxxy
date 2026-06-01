@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { DbClinicMemberInsert, DbClinicMemberUpdate, DbClinicUpdate, Json } from '@/types/core';
+import type { DbClinicMemberInsert, DbClinicMemberUpdate, DbClinicUpdate, DbProfileInsert, Json } from '@/types/core';
 import type { GooglePlaceData } from '@/types/google-places';
 
 export async function inviteClinicMember(data: DbClinicMemberInsert) {
@@ -114,7 +114,7 @@ export async function createClinicWithAdmin(params: {
   // Ensure profile row exists so clinic_members FK doesn't fail.
   // Only include phone when a value is provided — otherwise upsert overwrites
   // an existing phone with null, breaking isProfileComplete on the next layout render.
-  const profileUpsert: Record<string, unknown> = {
+  const profileUpsert: DbProfileInsert = {
     id: params.userId,
     name: params.userName || params.userEmail || '',
     email: params.userEmail || '',
