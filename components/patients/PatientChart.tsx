@@ -117,10 +117,10 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
               <span className="truncate">{patient.address}</span>
             </div>
           )}
-          {patient.medical_id && (
+          {patient.uhid && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Hash className="h-3.5 w-3.5" />
-              MRN: {patient.medical_id}
+              UHID: {patient.uhid}
             </div>
           )}
         </div>

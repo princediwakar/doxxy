@@ -109,7 +109,7 @@ export const BillingPDF = ({ billData, patient, clinic }: BillingPDFProps) => {
           <View style={styles.metaCol}>
             <Text style={styles.metaLabel}>Billed To</Text>
             <Text style={styles.metaValue}>{patientName}</Text>
-            {patient?.medical_id && <Text style={styles.metaSubText}>ID: {patient.medical_id}</Text>}
+            {patient?.uhid && <Text style={styles.metaSubText}>UHID: {patient.uhid}</Text>}
             {patient?.phone && <Text style={styles.metaSubText}>Ph: {patient.phone}</Text>}
             {patient?.address && <Text style={styles.metaSubText}>{patient.address}</Text>}
           </View>

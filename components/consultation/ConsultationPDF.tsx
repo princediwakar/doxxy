@@ -316,8 +316,8 @@ export const ConsultationPDF = ({ patient, appointment, clinicInfo, doctorInfo, 
             </View>
             <View style={styles.colHalf}>
               <Text style={styles.value}>
-                <Text style={styles.label}>Medical ID: </Text>
-                {patient?.medical_id || '—'}
+                <Text style={styles.label}>UHID: </Text>
+                {patient?.uhid || '—'}
               </Text>
             </View>
           </View>

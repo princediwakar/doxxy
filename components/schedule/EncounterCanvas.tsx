@@ -164,7 +164,7 @@ export function EncounterCanvas({
         name={patient.name}
         age={patient.age}
         gender={patient.gender}
-        medicalId={patient.medical_id}
+        uhid={patient.uhid}
         status={appointmentStatus}
         appointmentType={appointment?.type}
         appointmentTime={appointment?.time}

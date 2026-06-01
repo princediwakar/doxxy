@@ -170,8 +170,8 @@ export const ConcisePatientInfo: React.FC<{
           <span className="text-foreground">{patient?.address || '—'}</span>
         </div>
         <div>
-          <span className="font-bold text-foreground">Medical ID: </span>
-          <span className="text-foreground">{patient?.medical_id || '—'}</span>
+          <span className="font-bold text-foreground">UHID: </span>
+          <span className="text-foreground">{patient?.uhid || '—'}</span>
         </div>
         {appointment?.date && (
           <div className="md:col-span-2">

@@ -68,7 +68,6 @@ const formSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
   address: z.string().optional(),
-  medical_id: z.string().optional(),
 });
 
 export const PatientModal = ({
@@ -90,7 +89,6 @@ export const PatientModal = ({
       phone: patient?.phone ?? "",
       email: patient?.email ?? "",
       address: patient?.address ?? "",
-      medical_id: patient?.medical_id ?? "",
     },
   });
 
@@ -104,7 +102,6 @@ export const PatientModal = ({
         phone: patient?.phone ?? "",
         email: patient?.email ?? "",
         address: patient?.address ?? "",
-        medical_id: patient?.medical_id ?? "",
       });
     }
   }, [open, patient, initialName, form]);
@@ -120,7 +117,6 @@ export const PatientModal = ({
       if (patient) {
         const result = await updatePatient(patient.id, {
           ...values,
-          medical_id: values.medical_id?.trim() || null,
         });
         if (result.error) {
           toast.error(result.error);
@@ -137,8 +133,7 @@ export const PatientModal = ({
           phone: values.phone ?? null,
           email: values.email ?? null,
           address: values.address ?? null,
-          medical_id: values.medical_id?.trim() || null,
-        });
+        } as any);
         if (result.error) {
           toast.error(result.error);
         } else if (result.data) {
@@ -270,19 +265,17 @@ export const PatientModal = ({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="medical_id"
-              render={({ field }) => (
-                <FormItem className="md:col-span-2">
-                  <FormLabel>Medical ID</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Optional Medical ID" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="md:col-span-2">
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                UHID
+              </label>
+              <Input
+                disabled
+                value={patient ? (patient as any).uhid || '' : ''}
+                placeholder={patient ? undefined : "Auto-generated on save"}
+                className="mt-2 bg-muted cursor-not-allowed"
+              />
+            </div>
           </form>
         </Form>
         <DialogFooter>

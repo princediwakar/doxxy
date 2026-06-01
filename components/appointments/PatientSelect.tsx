@@ -134,10 +134,10 @@ export const PatientSelect: React.FC<PatientSelectProps> = ({
                                 <span>{p.phone}</span>
                               </div>
                             )}
-                            {p.medical_id && (
+                            {p.uhid && (
                                 <div className="flex items-center gap-1">
                                     <Hash className="h-3 w-3 opacity-70" />
-                                    <span>{p.medical_id}</span>
+                                    <span>{p.uhid}</span>
                                 </div>
                             )}
                           </div>

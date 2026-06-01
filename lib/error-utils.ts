@@ -198,7 +198,7 @@ export function classifyError(error: unknown): ClassifiedError {
 }
 
 const CONSTRAINT_MESSAGES: Record<string, string> = {
-  medical_id: 'A patient with this Medical ID already exists in your clinic. Please use a different Medical ID.',
+  uhid: 'A patient with this UHID already exists in your clinic.',
   email: 'A patient with this email already exists in your clinic.',
   phone: 'A patient with this phone number already exists in your clinic.',
 };

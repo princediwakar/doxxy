@@ -112,7 +112,7 @@ export function TodayDetailPanel({
               name={patientDetail.patient.name}
               age={patientDetail.patient.age}
               gender={patientDetail.patient.gender}
-              medicalId={patientDetail.patient.medical_id}
+              uhid={patientDetail.patient.uhid}
               variant="staff"
               appointmentType={selectedAppointment?.type}
               appointmentTime={selectedAppointment?.time}

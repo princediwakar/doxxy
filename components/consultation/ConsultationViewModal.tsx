@@ -149,7 +149,7 @@ export function ConsultationViewModal({
     clinic_id: activeClinicId || "",
     created_at: "",
     id: "",
-    medical_id: "",
+    uhid: "",
   };
 
   // Derive full clinic details from AppState (userClinics already contains the full DbClinic row)

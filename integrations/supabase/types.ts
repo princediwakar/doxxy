@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       appointment_billing: {
@@ -806,9 +831,10 @@ export type Database = {
           email: string | null
           gender: string | null
           id: string
-          medical_id: string | null
+          legacy_medical_id: string | null
           name: string
           phone: string | null
+          uhid: string | null
           whatsapp_consent: boolean
           whatsapp_opt_out: boolean
         }
@@ -820,9 +846,10 @@ export type Database = {
           email?: string | null
           gender?: string | null
           id?: string
-          medical_id?: string | null
+          legacy_medical_id?: string | null
           name: string
           phone?: string | null
+          uhid?: string | null
           whatsapp_consent?: boolean
           whatsapp_opt_out?: boolean
         }
@@ -834,9 +861,10 @@ export type Database = {
           email?: string | null
           gender?: string | null
           id?: string
-          medical_id?: string | null
+          legacy_medical_id?: string | null
           name?: string
           phone?: string | null
+          uhid?: string | null
           whatsapp_consent?: boolean
           whatsapp_opt_out?: boolean
         }
@@ -1187,6 +1215,45 @@ export type Database = {
         }
         Relationships: []
       }
+      review_requests: {
+        Row: {
+          appointment_id: string | null
+          google_place_id: string
+          id: string
+          patient_id: string
+          sent_at: string
+        }
+        Insert: {
+          appointment_id?: string | null
+          google_place_id: string
+          id?: string
+          patient_id: string
+          sent_at?: string
+        }
+        Update: {
+          appointment_id?: string | null
+          google_place_id?: string
+          id?: string
+          patient_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_requests_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_requests_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transcription_jobs: {
         Row: {
           created_at: string
@@ -1369,6 +1436,7 @@ export type Database = {
         Args: { clinic_id_arg: string }
         Returns: string
       }
+      generate_uhid: { Args: { clinic_id_arg: string }; Returns: string }
       get_aggregated_demographics: {
         Args: { _clinic_id: string; _doctor_id?: string }
         Returns: {
@@ -1535,22 +1603,6 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_patient_details: {
-        Args: { p_patient_id: string }
-        Returns: {
-          address: string
-          age: number
-          clinic_id: string
-          consultations: Json
-          created_at: string
-          email: string
-          gender: string
-          id: string
-          medical_id: string
-          name: string
-          phone: string
-        }[]
-      }
       get_patients_by_clinic: {
         Args: { _clinic_id: string; _limit?: number; _offset?: number }
         Returns: {
@@ -1561,11 +1613,9 @@ export type Database = {
           email: string
           gender: string
           id: string
-          medical_id: string
           name: string
           phone: string
-          whatsapp_consent: boolean
-          whatsapp_opt_out: boolean
+          uhid: string
         }[]
       }
       get_profile: {
@@ -1997,6 +2047,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       appointment_status: [

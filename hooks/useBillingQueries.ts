@@ -37,7 +37,7 @@ export function useBillingQueries(
       if (!activeClinicId) return [];
       const { data, error } = await supabase
         .from("patients")
-        .select("id, name, phone, email, medical_id")
+        .select("id, name, phone, email, uhid")
         .eq("clinic_id", activeClinicId)
         .order("name");
       if (error) throw error;

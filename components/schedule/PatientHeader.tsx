@@ -22,7 +22,7 @@ interface PatientHeaderProps {
   name: string;
   age?: string | number;
   gender?: string;
-  medicalId?: string;
+  uhid?: string;
   status?: string;
   appointmentType?: string;
   appointmentTime?: string;
@@ -39,7 +39,7 @@ export function PatientHeader({
   name,
   age,
   gender,
-  medicalId,
+  uhid,
   status,
   appointmentType,
   appointmentTime,
@@ -52,7 +52,7 @@ export function PatientHeader({
   onEditAppointment,
 }: PatientHeaderProps) {
   const demographic = [gender, age ? `${age}y` : null].filter(Boolean).join(", ") || "N/A";
-  const contextParts = [demographic, medicalId ? `MRN: ${medicalId}` : null, departmentName, formatTimeIST(appointmentTime)].filter(Boolean);
+  const contextParts = [demographic, uhid ? `UHID: ${uhid}` : null, departmentName, formatTimeIST(appointmentTime)].filter(Boolean);
 
   return (
     <div className="space-y-2 pb-3 border-b">

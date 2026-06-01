@@ -91,7 +91,7 @@ export function StaffWorkflow({
           name={patientDetail.patient.name}
           age={patientDetail.patient.age}
           gender={patientDetail.patient.gender}
-          medicalId={patientDetail.patient.medical_id}
+          uhid={patientDetail.patient.uhid}
           status={appointment?.status}
           appointmentType={appointment?.type}
           appointmentTime={appointment?.time}

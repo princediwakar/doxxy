@@ -55,7 +55,7 @@ export interface EnhancedPatientForDoctorList {
   age?: number | null;
   email?: string;
   gender?: string;
-  medical_id?: string;
+  uhid?: string;
   phone?: string;
 }
 

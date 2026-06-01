@@ -397,7 +397,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                         <SelectContent>
                           {patients?.map((patient) => (
                             <SelectItem key={patient.id} value={patient.id}>
-                              {patient.name} {patient.medical_id}
+                              {patient.name} {patient.uhid}
                             </SelectItem>
                           ))}
                         </SelectContent>
