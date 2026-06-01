@@ -20,6 +20,8 @@ export const useAuthFlow = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [user, setUser] = useState<AppUser | null>(null);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -52,10 +54,7 @@ export const useAuthFlow = () => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth`,
-        },
+        options: { shouldCreateUser: true },
       });
 
       if (error) {
@@ -76,7 +75,6 @@ export const useAuthFlow = () => {
       }
 
       setOtpSent(true);
-      toast.success("Magic link sent to your email! Check your inbox and click the link to sign in.");
     } catch (error: unknown) {
       logger.error('Email Auth Exception:', error);
       toast.error("Unable to send verification code. Please try again or use Google sign-in.");
@@ -95,10 +93,7 @@ export const useAuthFlow = () => {
     try {
       const { error } = await supabase.auth.signInWithOtp({
         email: email.trim(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth`,
-        },
+        options: { shouldCreateUser: true },
       });
 
       if (error) {
@@ -106,13 +101,44 @@ export const useAuthFlow = () => {
         toast.error("Failed to resend code. Please try again.");
         return;
       }
-
-      toast.success("New verification code sent!");
+      toast.success("New code sent to your email.");
     } catch (error: unknown) {
       logger.error('Resend OTP Exception:', error);
       toast.error("Failed to resend code. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const verifyOTP = async (code: string) => {
+    if (code.length !== 6 || verifying) return;
+    setVerifying(true);
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: code,
+        type: 'email',
+      });
+
+      if (error) {
+        logger.error('OTP Verification Error:', error);
+        toast.error(error.message || "Invalid or expired code. Please try again.");
+        setOtpCode("");
+        return false;
+      }
+
+      if (data.session) {
+        setOtpCode("");
+        setUser(data.session.user as AppUser);
+      }
+      return true;
+    } catch (error: unknown) {
+      logger.error('OTP Verification Exception:', error);
+      toast.error("Verification failed. Please try again.");
+      setOtpCode("");
+      return false;
+    } finally {
+      setVerifying(false);
     }
   };
 
@@ -144,8 +170,12 @@ export const useAuthFlow = () => {
     googleLoading,
     otpSent,
     user,
+    otpCode,
+    setOtpCode,
+    verifying,
     handleEmailAuth,
     resendOTP,
+    verifyOTP,
     handleGoogleSignIn,
   };
 };
