@@ -198,7 +198,7 @@ const HeroSection = () => (
         asChild
         className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105"
       >
-        <Link href="/auth">
+        <Link href="https://wa.me/+917388890554">
           Get Started for Free <ArrowRight className="ml-2 h-4 w-4" />
         </Link>
       </Button>
@@ -245,7 +245,7 @@ const PricingCardsSection = () => (
                 : "bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
             } rounded-lg py-3`}
           >
-            <Link href="/auth">{plan.cta}</Link>
+            <Link href="https://wa.me/+917388890554">{plan.cta}</Link>
           </Button>
           <ul className="space-y-3 mt-8 text-sm">
             {plan.features.map((feature) => (
@@ -406,7 +406,10 @@ const Pricing = () => {
       <TestimonialSection />
       <TrustIndicatorsSection />
       <FaqSection />
-      <SignupCTA />
+      <SignupCTA
+        heading="First 100 Consultations Free. Then ₹10/Consultation."
+        description="Transparent pricing, no per-doctor fees, no hidden charges. Have questions about which plan fits your clinic? Chat on WhatsApp."
+      />
 
       <BreadcrumbJsonLd
         items={[

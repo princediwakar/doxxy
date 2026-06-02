@@ -30,7 +30,7 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
           <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">{config.heroSubtitle}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
-              <Link href="/auth">Try Doxxy Free<ArrowRight className="ml-2 h-5 w-5" /></Link>
+              <Link href="https://wa.me/+917388890554">Try Doxxy Free<ArrowRight className="ml-2 h-5 w-5" /></Link>
             </Button>
             <Button variant="outline" size="lg" asChild>
               <Link href="/contact">Schedule Demo</Link>
@@ -183,7 +183,10 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
         </div>
       </section>
 
-      <SignupCTA />
+      <SignupCTA
+        heading="Looking for an Alternative? See Doxxy."
+        description="We'll show you how Doxxy compares on the features that matter to your clinic. Chat with us on WhatsApp — honest answers, no spin."
+      />
 
       <BreadcrumbJsonLd
         items={[

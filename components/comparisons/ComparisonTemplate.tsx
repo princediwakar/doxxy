@@ -40,7 +40,7 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>
-              <Link href="/auth">
+              <Link href="https://wa.me/+917388890554">
                 Start Free Practice
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
@@ -310,7 +310,10 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
       </section>
 
       {/* CTA Section */}
-      <SignupCTA />
+      <SignupCTA
+        heading="See the Side-by-Side Comparison. Then Decide."
+        description="Honest feature-by-feature breakdown. Have questions about how Doxxy stacks up? Ask us on WhatsApp."
+      />
 
       <BreadcrumbJsonLd
         items={[

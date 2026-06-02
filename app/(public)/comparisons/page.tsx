@@ -94,7 +94,7 @@ const HeroSection = () => (
     </SectionSubtitle>
     <div className="mt-10 flex justify-center gap-4">
       <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">
-        <Link href="/auth">Get Started for Free</Link>
+        <Link href="https://wa.me/+917388890554">Get Started for Free</Link>
       </Button>
       <Button size="lg" variant="outline" asChild className="rounded-xl px-8 py-3 text-base font-semibold dark:text-gray-300 dark:border-gray-600">
         <Link href="/pricing">View Pricing</Link>
@@ -193,7 +193,10 @@ const ComparisonIndex = () => {
       <ComparisonsGridSection />
       <WhyCompareSection />
       <QuestionsSection />
-      <SignupCTA />
+      <SignupCTA
+        heading="See How Doxxy Compares. Then Decide."
+        description="Honest comparisons, no marketing fluff. Have questions about specific features vs competitors? Ask us on WhatsApp."
+      />
 
       <BreadcrumbJsonLd
         items={[

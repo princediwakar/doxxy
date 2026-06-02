@@ -241,7 +241,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <RelatedArticles currentSlug={post.slug} />
 
       {/* CTA Section */}
-      <SignupCTA />
+      <SignupCTA
+        heading="Liked This Article? There's a Tool That Makes It Easy."
+        description="Doxxy turns the advice you just read into one-click workflows. Chat with us on WhatsApp to see how."
+      />
 
       <Script
         id="article-structured-data"

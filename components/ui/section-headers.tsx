@@ -3,10 +3,11 @@ import React from "react";
 interface SectionProps {
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }
 
-export const Section = ({ children, className = "" }: SectionProps) => (
-  <section className={`py-24 md:py-32 ${className}`}>
+export const Section = ({ children, className = "", id }: SectionProps) => (
+  <section id={id} className={`py-24 md:py-32 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
   </section>
 );

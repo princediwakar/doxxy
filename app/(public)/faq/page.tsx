@@ -160,7 +160,10 @@ export default function FAQPage() {
         </div>
       </section>
 
-      <SignupCTA />
+      <SignupCTA
+        heading="Still Have Questions? Ask Us Directly."
+        description="Chat with us on WhatsApp. Real answers from real people — not a chatbot, not a knowledge base."
+      />
       <Script
         id="faq-structured-data"
         type="application/ld+json"

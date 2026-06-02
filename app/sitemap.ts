@@ -1,126 +1,86 @@
+import { readdirSync, existsSync } from "node:fs";
+import { join } from "node:path";
 import { logger } from "@/lib/logger";
 // app/sitemap.ts
 import { MetadataRoute } from "next";
 import { getBlogPosts } from "@/content/blog";
 import { getKBArticles } from "@/content/kb";
 import { APP_URL } from "@/lib/constants";
+import { specialtySlugs } from "@/config/specialties";
 
 const BASE_URL = APP_URL;
+const PUBLIC_DIR = join(process.cwd(), "app", "(public)");
 
-// Configuration for public routes with their metadata
-// This makes it easier to maintain and update
-const PUBLIC_ROUTES_CONFIG = [
-  {
-    path: "/",
-    priority: 1.0,
-    changeFrequency: "weekly" as const,
-  },
-  {
-    path: "/about",
-    priority: 0.8,
-    changeFrequency: "monthly" as const,
-    lastModified: new Date("2026-03-15"),
-  },
-  {
-    path: "/contact",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-    lastModified: new Date("2026-03-15"),
-  },
-  {
-    path: "/features",
-    priority: 0.9,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/pricing",
-    priority: 0.9,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/blog",
-    priority: 0.8,
-    changeFrequency: "weekly" as const,
-  },
-  {
-    path: "/faq",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-    lastModified: new Date("2026-03-15"),
-  },
-  {
-    path: "/help",
-    priority: 0.7,
-    changeFrequency: "weekly" as const,
-  },
-  {
-    path: "/comparisons",
-    priority: 0.8,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/comparisons/doxxy-vs-practo",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/comparisons/doxxy-vs-clinicplus",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/comparisons/doxxy-vs-lybrate",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/comparisons/doxxy-vs-mfine",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/comparisons/doxxy-vs-eka-care",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-  },
-  {
-    path: "/comparisons/eka-care-alternative",
-    priority: 0.7,
-    changeFrequency: "monthly" as const,
-  },
+// Overrides for non-default sitemap metadata.
+// Everything else gets priority 0.7, monthly, lastModified = build time.
+const PRIORITY: Record<string, number> = {
+  "/": 1.0,
+  "/features": 0.9,
+  "/pricing": 0.9,
+  "/india-clinic-digitization-guide": 0.9,
+  "/privacy": 0.5,
+  "/terms": 0.5,
+};
 
-  {
-    path: "/security",
-    priority: 0.8,
-    changeFrequency: "monthly" as const,
-    lastModified: new Date("2026-01-20"),
-  },
-  {
-    path: "/privacy",
-    priority: 0.5,
-    changeFrequency: "yearly" as const,
-    lastModified: new Date("2026-01-15"),
-  },
-  {
-    path: "/terms",
-    priority: 0.5,
-    changeFrequency: "yearly" as const,
-    lastModified: new Date("2026-01-15"),
-  },
-] as const;
+const CHANGE_FREQ: Record<string, MetadataRoute.Sitemap[number]["changeFrequency"]> = {
+  "/": "weekly",
+  "/privacy": "yearly",
+  "/terms": "yearly",
+};
+
+const LASTMOD: Record<string, Date> = {
+  "/about": new Date("2026-03-15"),
+  "/contact": new Date("2026-03-15"),
+  "/faq": new Date("2026-03-15"),
+  "/security": new Date("2026-01-20"),
+  "/privacy": new Date("2026-01-15"),
+  "/terms": new Date("2026-01-15"),
+};
+
+const DEFAULTS = {
+  priority: 0.7,
+  changeFrequency: "monthly" as const,
+};
+
+function discoverStaticRoutes(dir: string, basePath = ""): string[] {
+  const routes: string[] = [];
+
+  if (existsSync(join(dir, "page.tsx"))) {
+    routes.push(basePath || "/");
+  }
+
+  let entries: ReturnType<typeof readdirSync>;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return routes;
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    if (entry.name.startsWith("[")) continue;
+    if (basePath === "" && (entry.name === "blog" || entry.name === "help")) continue;
+
+    const segment = entry.name;
+    const nextPath = basePath ? `${basePath}/${segment}` : `/${segment}`;
+    routes.push(...discoverStaticRoutes(join(dir, entry.name), nextPath));
+  }
+
+  return routes;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  // Generate public routes from configuration
-  const publicRoutes: MetadataRoute.Sitemap = PUBLIC_ROUTES_CONFIG.map(
-    (route) => ({
-      url: `${BASE_URL}${route.path}`,
-      lastModified: "lastModified" in route ? (route.lastModified as Date) : new Date(),
-      changeFrequency: route.changeFrequency,
-      priority: route.priority,
-    })
-  );
+  const staticRoutes = discoverStaticRoutes(PUBLIC_DIR);
+  const specialtyRoutes = specialtySlugs.map((slug) => `/specialties/${slug}`);
+  const allRoutes = [...staticRoutes, ...specialtyRoutes];
 
-  // Fetch blog posts dynamically
+  const publicRoutes: MetadataRoute.Sitemap = allRoutes.map((path) => ({
+    url: `${BASE_URL}${path}`,
+    lastModified: LASTMOD[path] ?? new Date(),
+    changeFrequency: CHANGE_FREQ[path] ?? DEFAULTS.changeFrequency,
+    priority: PRIORITY[path] ?? DEFAULTS.priority,
+  }));
+
   let blogPosts: MetadataRoute.Sitemap = [];
   try {
     const posts = await getBlogPosts();
@@ -134,7 +94,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     logger.error("Error fetching blog posts for sitemap:", error);
   }
 
-  // Fetch help articles dynamically
   let helpArticles: MetadataRoute.Sitemap = [];
   try {
     const articles = await getKBArticles();
@@ -148,6 +107,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     logger.error("Error fetching help articles for sitemap:", error);
   }
 
-  // Return all routes
   return [...publicRoutes, ...blogPosts, ...helpArticles];
 }

@@ -138,7 +138,10 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <SignupCTA />
+      <SignupCTA
+        heading="Prefer a Quick Chat Instead of a Form?"
+        description="Skip the contact form. Message us on WhatsApp — we typically reply within minutes during business hours."
+      />
 
       <BreadcrumbJsonLd
         items={[

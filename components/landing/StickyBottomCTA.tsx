@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 
-const WHATSAPP_URL = "https://wa.me/917388890554?text=I%27d%20like%20a%20demo%20of%20Doxxy";
+const WHATSAPP_URL = "https://wa.me/917388890554?text=Hi%21%20I%27d%20like%20to%20know%20more%20about%20Doxxy";
 
 export default function StickyBottomCTA() {
   const [visible, setVisible] = useState(false);

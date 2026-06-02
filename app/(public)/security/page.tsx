@@ -204,7 +204,10 @@ const Security = () => {
       <SecurityHeroSection />
       <SecurityFeaturesSection />
       <DataHandlingSection />
-      <SignupCTA />
+      <SignupCTA
+        heading="Your Patient Data Deserves Enterprise-Grade Security"
+        description="See Doxxy's security architecture — encryption, backups, access controls. Chat with us on WhatsApp for a security overview."
+      />
 
       <BreadcrumbJsonLd
         items={[

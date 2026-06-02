@@ -152,7 +152,7 @@ const HeroSection = () => (
     </SectionSubtitle>
     <div className="mt-10">
       <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">
-        <Link href="/auth">Get Started for Free <ArrowRight className="ml-2 h-4 w-4" /></Link>
+        <Link href="https://wa.me/+917388890554">Get Started for Free <ArrowRight className="ml-2 h-4 w-4" /></Link>
       </Button>
     </div>
   </Section>
@@ -302,7 +302,10 @@ const Features = () => {
       <WorkflowShowcase />
       <PatientInterface />
       <AdditionalFeaturesSection />
-      <SignupCTA />
+      <SignupCTA
+        heading="See All Features in Action"
+        description="From WhatsApp reminders to analytics — see every feature Doxxy offers. Chat with us on WhatsApp for a personalised walkthrough."
+      />
 
       <BreadcrumbJsonLd
         items={[

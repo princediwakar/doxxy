@@ -230,7 +230,10 @@ const About = () => {
         </div>
       </section> */}
 
-      <SignupCTA />
+      <SignupCTA
+        heading="Built for Indian Clinics, by People Who Understand Them"
+        description="Want to know more about the team behind Doxxy? Or how we think about clinic software? Chat with us on WhatsApp."
+      />
 
       <BreadcrumbJsonLd
         items={[

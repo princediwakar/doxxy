@@ -186,7 +186,10 @@ export default async function BlogPage() {
       </section>
 
       {/* CTA Section */}
-      <SignupCTA />
+      <SignupCTA
+        heading="Enjoying the Blog? See Doxxy in Action."
+        description="All the advice, plus the software that makes it easy. Chat with us on WhatsApp for a quick demo tailored to your clinic."
+      />
 
       <BreadcrumbJsonLd
         items={[
