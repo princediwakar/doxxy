@@ -60,7 +60,7 @@ export async function POST(req: Request) {
   const confirmationCode = crypto.randomUUID();
 
   return Response.json({
-    url: `https://doxxy.in/data-deletion?code=${confirmationCode}`,
+    url: `https://www.doxxy.in/data-deletion?code=${confirmationCode}`,
     confirmation_code: confirmationCode,
   });
 }
