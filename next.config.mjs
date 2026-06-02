@@ -28,6 +28,11 @@ const nextConfig = {
         destination: "/help/:path*",
         permanent: true,
       },
+      {
+        source: "/clinic",
+        destination: "/clinic/financials",
+        permanent: false,
+      },
     ];
   },
 
