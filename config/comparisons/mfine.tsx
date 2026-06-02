@@ -13,7 +13,7 @@ const mfineConfig: ComparisonConfig = {
   migrationSubtitle: 'Switching from MFine to Doxxy is simple and hassle-free. Our migration specialists handle the entire process:',
   comparisonPoints: [
     { feature: 'Primary Model', doxxy: 'Hybrid (In-clinic & Telemedicine)', competitor: 'Telemedicine-centric', advantage: 'Flexibility to manage both physical and virtual consultations', icon: <Stethoscope className="h-6 w-6 text-primary" /> },
-    { feature: 'Pricing Model', doxxy: 'Pay-per-appointment (₹10/appointment)', competitor: 'Subscription-based for doctors, commission on consultations', advantage: 'Predictable costs, no hidden commissions', icon: <DollarSign className="h-6 w-6 text-primary" /> },
+    { feature: 'Pricing Model', doxxy: 'Pay-per-consultation (₹10/consultation)', competitor: 'Subscription-based for doctors, commission on consultations', advantage: 'Predictable costs, no hidden commissions', icon: <DollarSign className="h-6 w-6 text-primary" /> },
     { feature: 'Clinic Management', doxxy: 'Comprehensive EMR, billing, scheduling, multi-clinic support', competitor: 'Limited to telemedicine workflow and patient engagement', advantage: 'All-in-one solution for your entire practice operations', icon: <Building2 className="h-6 w-6 text-primary" /> },
     { feature: 'Patient Records', doxxy: 'Full patient history, prescriptions, lab results, and clinical notes', competitor: 'Primarily consultation notes and basic patient data', advantage: 'Complete patient view for better diagnosis and care', icon: <FileText className="h-6 w-6 text-primary" /> },
     { feature: 'Appointment Types', doxxy: 'Supports both in-clinic and online appointments', competitor: 'Mainly focuses on online video consultations', advantage: 'Seamlessly manage all types of patient visits', icon: <Calendar className="h-6 w-6 text-primary" /> },
@@ -23,7 +23,7 @@ const mfineConfig: ComparisonConfig = {
   painPointItems: [
     { title: 'Limited Scope for In-clinic Practice', competitor: 'MFine is heavily focused on telemedicine, making it less suitable for clinics with significant in-person patient flow.', doxxy: 'Doxxy offers a hybrid model, perfectly balancing features for both in-clinic and telemedicine appointments.' },
     { title: 'Fragmented Patient Data', competitor: 'If you use MFine for telemedicine and another system for in-clinic patients, your patient data becomes fragmented.', doxxy: 'Doxxy centralizes all patient data, providing a unified record regardless of how the patient interacts with your clinic.' },
-    { title: 'Subscription & Commission Costs', competitor: "MFine's pricing can involve both subscriptions for doctors and commissions on consultations, leading to unpredictable costs.", doxxy: "Doxxy's transparent pay-per-appointment model ensures clear and predictable billing, with no hidden commissions." },
+    { title: 'Subscription & Commission Costs', competitor: "MFine's pricing can involve both subscriptions for doctors and commissions on consultations, leading to unpredictable costs.", doxxy: "Doxxy's transparent pay-per-consultation model ensures clear and predictable billing, with no hidden commissions." },
     { title: 'Lack of Comprehensive Practice Management', competitor: 'MFine lacks features like detailed billing, multi-clinic management, and advanced reporting needed for full practice operations.', doxxy: 'Doxxy provides an all-encompassing solution, empowering you to manage every aspect of your clinic efficiently.' },
   ],
   testimonialItems: [
@@ -32,7 +32,7 @@ const mfineConfig: ComparisonConfig = {
   ],
   featureComparisonRows: [
     { feature: 'Hybrid Clinic Management', doxxy: true, competitor: false },
-    { feature: 'Pay-per-appointment Pricing', doxxy: true, competitor: false },
+    { feature: 'Pay-per-consultation Pricing', doxxy: true, competitor: false },
     { feature: 'Comprehensive Patient Records', doxxy: true, competitor: false },
     { feature: 'Integrated Billing System', doxxy: true, competitor: false },
     { feature: 'Multi-Clinic Management', doxxy: true, competitor: false },

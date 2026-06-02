@@ -25,7 +25,7 @@ export default function HeroRevenue() {
               Doxxy automates clinical notes, billing, scheduling, and inventory —
               and delivers prescriptions, bills, and reminders through your
               clinic&apos;s own WhatsApp number. You see patients. Everything else
-              runs itself. Just ₹10 per appointment.
+              runs itself. Just ₹10 per consultation.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-8">

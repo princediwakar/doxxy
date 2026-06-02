@@ -217,7 +217,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
-            Purchase Appointment Credits
+            Purchase Consultation Credits
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground text-sm">
             Select a package to continue using the platform.
@@ -252,7 +252,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
               <CardContent className="text-center space-y-1 sm:space-y-2">
                 <div className="font-semibold text-foreground text-sm">{pkg.credits} Credits</div>
                 <div className="text-xs text-muted-foreground">
-                  ₹{Math.round(pkg.amount / pkg.credits)} / appt
+                  ₹{Math.round(pkg.amount / pkg.credits)} / consultation
                 </div>
                 <Separator className="my-2" />
                 <div className="text-xs text-green-700 flex items-center justify-center gap-1">

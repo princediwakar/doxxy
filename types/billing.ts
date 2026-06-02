@@ -162,14 +162,14 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     name: "Junior Pack",
     credits: 50,
     amount: 499,
-    description: "50 appointments",
+    description: "50 consultations",
   },
   {
     id: "Senior",
     name: "Senior Pack",
     credits: 200,
     amount: 1999,
-    description: "200 appointments",
+    description: "200 consultations",
     popular: true,
   },
   {
@@ -177,7 +177,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
     name: "Professional Pack",
     credits: 1000,
     amount: 9999,
-    description: "1000 appointments",
+    description: "1000 consultations",
   },
 ];
 

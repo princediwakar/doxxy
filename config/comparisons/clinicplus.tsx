@@ -12,7 +12,7 @@ const clinicplusConfig: ComparisonConfig = {
   keyDifferencesSubtitle: 'See how Doxxy compares to ClinicPlus across important features and deployment models.',
   migrationSubtitle: 'Switching from ClinicPlus to Doxxy is simple and hassle-free. Our migration specialists handle the entire process:',
   comparisonPoints: [
-    { feature: 'Pricing Model', doxxy: 'Pay-per-appointment (₹10/appointment)', competitor: 'One-time purchase + annual maintenance fees', advantage: 'Lower upfront cost, pay only for what you use', icon: <DollarSign className="h-6 w-6 text-primary" /> },
+    { feature: 'Pricing Model', doxxy: 'Pay-per-consultation (₹10/consultation)', competitor: 'One-time purchase + annual maintenance fees', advantage: 'Lower upfront cost, pay only for what you use', icon: <DollarSign className="h-6 w-6 text-primary" /> },
     { feature: 'Deployment', doxxy: 'Cloud-based (SaaS)', competitor: 'On-premise software', advantage: 'Access from anywhere, no IT maintenance required', icon: <Zap className="h-6 w-6 text-primary" /> },
     { feature: 'Updates & Upgrades', doxxy: 'Automatic, continuous updates', competitor: 'Manual updates, often paid upgrades', advantage: 'Always on the latest version with new features', icon: <Calendar className="h-6 w-6 text-primary" /> },
     { feature: 'Accessibility', doxxy: 'Web and native mobile apps (iOS/Android)', competitor: 'Desktop application only', advantage: 'Work from any device, anywhere', icon: <Smartphone className="h-6 w-6 text-primary" /> },
@@ -21,7 +21,7 @@ const clinicplusConfig: ComparisonConfig = {
     { feature: 'Support', doxxy: '24/7 online and phone support', competitor: 'Limited hours, often email-based support', advantage: 'Get help whenever you need it', icon: <MessageSquare className="h-6 w-6 text-primary" /> },
   ],
   painPointItems: [
-    { title: 'High Upfront Costs', competitor: 'ClinicPlus requires a significant one-time purchase fee, making it a large initial investment.', doxxy: "Doxxy's pay-per-appointment model means you have minimal upfront costs and only pay as you grow." },
+    { title: 'High Upfront Costs', competitor: 'ClinicPlus requires a significant one-time purchase fee, making it a large initial investment.', doxxy: "Doxxy's pay-per-consultation model means you have minimal upfront costs and only pay as you grow." },
     { title: 'Lack of Remote Access', competitor: "Being an on-premise solution, ClinicPlus can only be accessed from the clinic's computers.", doxxy: 'Doxxy is cloud-based, allowing you to manage your practice from anywhere, on any device.' },
     { title: 'Manual Updates & Maintenance', competitor: "With ClinicPlus, you're responsible for software updates, backups, and IT maintenance.", doxxy: 'Doxxy handles all updates, backups, and security automatically, so you can focus on patient care.' },
     { title: 'Limited Scalability', competitor: 'Scaling ClinicPlus for multiple locations or growing practices can be complex and expensive.', doxxy: 'Doxxy is designed for scalability, easily supporting multiple clinics and unlimited doctors without complex setups.' },

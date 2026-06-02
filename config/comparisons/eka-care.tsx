@@ -12,7 +12,7 @@ const ekaCareConfig: ComparisonConfig = {
   keyDifferencesSubtitle: 'See how Doxxy compares to Eka Care across important features and pricing models.',
   migrationSubtitle: 'Switching from Eka Care to Doxxy is simple and hassle-free. Our migration specialists handle the entire process:',
   comparisonPoints: [
-    { feature: 'Pricing Model', doxxy: 'Pay-per-appointment (₹10/appointment)', competitor: 'Monthly subscription + per-doctor fees', advantage: 'More cost-effective for small to medium practices', icon: <DollarSign className="h-6 w-6 text-primary" /> },
+    { feature: 'Pricing Model', doxxy: 'Pay-per-consultation (₹10/consultation)', competitor: 'Monthly subscription + per-doctor fees', advantage: 'More cost-effective for small to medium practices', icon: <DollarSign className="h-6 w-6 text-primary" /> },
     { feature: 'Free Plan', doxxy: 'First 100 appointments completely free', competitor: 'Limited-time trial with restricted features', advantage: 'Start with zero risk and no time pressure', icon: <Calendar className="h-6 w-6 text-primary" /> },
     { feature: 'Doctor Limits', doxxy: 'Unlimited doctors on all plans', competitor: 'Tiered pricing based on number of doctors', advantage: 'Add as many doctors as needed without extra cost', icon: <Users className="h-6 w-6 text-primary" /> },
     { feature: 'Contract Length', doxxy: 'No commitment, cancel anytime', competitor: 'Annual contracts with early termination fees', advantage: 'Flexibility to adjust as your practice needs change', icon: <Clock className="h-6 w-6 text-primary" /> },

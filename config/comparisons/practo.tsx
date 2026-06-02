@@ -12,7 +12,7 @@ const practoConfig: ComparisonConfig = {
   keyDifferencesSubtitle: 'How Doxxy compares to Practo across important features and pricing models.',
   migrationSubtitle: 'Switching from Practo to Doxxy is straightforward with our dedicated migration team:',
   comparisonPoints: [
-    { feature: 'Pricing Model', doxxy: 'Pay-per-appointment (₹10/appointment)', competitor: 'Monthly subscription + per-doctor fees', advantage: 'More cost-effective for small to medium practices', icon: <DollarSign className="h-6 w-6 text-primary" /> },
+    { feature: 'Pricing Model', doxxy: 'Pay-per-consultation (₹10/consultation)', competitor: 'Monthly subscription + per-doctor fees', advantage: 'More cost-effective for small to medium practices', icon: <DollarSign className="h-6 w-6 text-primary" /> },
     { feature: 'Free Plan', doxxy: 'First 100 appointments completely free', competitor: 'Limited free tier with restricted features', advantage: 'Start with zero risk and full feature access', icon: <Calendar className="h-6 w-6 text-primary" /> },
     { feature: 'Doctor Limits', doxxy: 'Unlimited doctors on all plans', competitor: 'Tiered pricing based on number of doctors', advantage: 'Add as many doctors as needed without extra cost', icon: <Users className="h-6 w-6 text-primary" /> },
     { feature: 'Contract Length', doxxy: 'No commitment, cancel anytime', competitor: 'Annual contracts preferred, monthly at premium', advantage: 'Flexibility to adjust as your practice needs change', icon: <Clock className="h-6 w-6 text-primary" /> },
@@ -22,11 +22,11 @@ const practoConfig: ComparisonConfig = {
     { feature: 'User Interface', doxxy: 'Modern, intuitive design', competitor: 'Complex interface with steeper learning curve', advantage: 'Less training time, higher staff adoption', icon: <Smartphone className="h-6 w-6 text-primary" /> },
   ],
   painPointItems: [
-    { title: 'Complex Pricing Structure', competitor: "Practo's pricing model includes base subscription fees, per-doctor charges, and additional costs for premium features, making it difficult to predict monthly expenses.", doxxy: "Doxxy's simple pay-per-appointment model means transparent, predictable costs that scale directly with your practice volume." },
+    { title: 'Complex Pricing Structure', competitor: "Practo's pricing model includes base subscription fees, per-doctor charges, and additional costs for premium features, making it difficult to predict monthly expenses.", doxxy: "Doxxy's simple pay-per-consultation model means transparent, predictable costs that scale directly with your practice volume." },
     { title: 'Marketplace Focus vs. Clinic Management', competitor: "Practo's primary focus is its patient marketplace, with clinic management software as a secondary offering, leading to divided attention on software improvements.", doxxy: 'Doxxy is 100% focused on clinic management software, with all development resources dedicated to improving the clinic and doctor experience.' },
     { title: 'Complex Implementation', competitor: "Practo's implementation can take weeks and requires extensive training sessions for staff to become proficient.", doxxy: "Doxxy's intuitive interface can be learned in hours, not days, with most practices fully operational within 48 hours." },
     { title: 'Limited Customization', competitor: 'Practo offers limited customization options for workflows and forms, forcing clinics to adapt to their system.', doxxy: 'Doxxy provides flexible templates and customizable workflows that adapt to your existing processes, not the other way around.' },
-    { title: 'Expensive Add-ons', competitor: 'Many essential features in Practo require additional payments beyond the base subscription.', doxxy: "All features are included in Doxxy's simple per-appointment pricing with no hidden costs or premium tiers." },
+    { title: 'Expensive Add-ons', competitor: 'Many essential features in Practo require additional payments beyond the base subscription.', doxxy: "All features are included in Doxxy's simple per-consultation pricing with no hidden costs or premium tiers." },
   ],
   testimonialItems: [
     { quote: 'After using Practo for two years, we switched to Doxxy and immediately noticed the difference in usability. Our staff required minimal training, and the pay-per-appointment model has saved us nearly 35% on monthly costs.', name: 'Dr. Vikram Mehta', clinic: 'Mehta Family Clinic, Mumbai', photo: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=100&h=100&fit=crop' },

@@ -58,7 +58,7 @@ const plans = [
     description:
       "For established clinics. Premium features at special pricing.",
     price: "₹10",
-    priceSuffix: "/appointment",
+    priceSuffix: "/consultation",
     originalPrice: "₹20",
     features: [
       "Everything in Essentials, plus:",
@@ -78,7 +78,7 @@ const advantages = [
     icon: DollarSign,
     title: "Pay For What You Use",
     description:
-      "Our per-appointment pricing means you only pay for actual appointments. No wasted resources during slow months.",
+      "Our per-consultation pricing means you only pay for actual consultations. No wasted resources during slow months.",
   },
   {
     icon: Users,
@@ -97,7 +97,7 @@ const advantages = [
 const comparisons = [
   {
     feature: "Pricing Model",
-    us: "Per appointment (₹10)",
+    us: "Per consultation (₹10)",
     competitors: "Monthly subscription + per doctor fees",
   },
   {

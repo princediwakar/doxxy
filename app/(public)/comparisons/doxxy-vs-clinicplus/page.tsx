@@ -4,7 +4,7 @@ import clinicplusConfig from '@/config/comparisons/clinicplus';
 
 export const metadata: Metadata = {
   title: 'Doxxy vs ClinicPlus - Modern Cloud vs Traditional Clinic Software',
-  description: 'Compare Doxxy\'s cloud-based clinic management software with ClinicPlus\'s traditional model. See benefits of pay-per-appointment pricing and modern features.',
+  description: 'Compare Doxxy\'s cloud-based clinic management software with ClinicPlus\'s traditional model. See benefits of pay-per-consultation pricing and modern features.',
   alternates: { canonical: '/comparisons/doxxy-vs-clinicplus' },
   openGraph: {
     title: 'Doxxy vs ClinicPlus - Clinic Software Comparison',

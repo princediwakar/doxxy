@@ -20,7 +20,7 @@ const structuredData = {
   "@type": "MedicalOrganization",
   name: "Doxxy",
   description:
-    "Modern clinic management platform for Indian outpatient clinics. Automate bookings, clinical notes, billing, and inventory. ₹10 per appointment.",
+    "Modern clinic management platform for Indian outpatient clinics. Automate bookings, clinical notes, billing, and inventory. ₹10 per consultation.",
   url: APP_URL,
   logo: "/doxxy.png",
   medicalSpecialty: "Healthcare Software",

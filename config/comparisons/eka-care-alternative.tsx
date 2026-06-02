@@ -8,7 +8,7 @@ const ekaCareAlternativeConfig: AlternativeConfig = {
   heroSubtitle: 'Discover why healthcare practices are switching from Eka Care to Doxxy for more flexible pricing, unlimited doctors, and a more comprehensive feature set.',
   migrationSubtitle: 'Switching from Eka Care to Doxxy is easier than you think. Our team handles the entire process:',
   whyChooseItems: [
-    { icon: <Coins className="h-12 w-12 text-primary" />, title: 'Pay-Per-Appointment Pricing', description: "Unlike Eka Care's fixed monthly fees, Doxxy charges only for the appointments you actually complete. Start with 100 free consultations and then pay just ₹10 per consultation." },
+    { icon: <Coins className="h-12 w-12 text-primary" />, title: 'Pay-Per-Consultation Pricing', description: "Unlike Eka Care's fixed monthly fees, Doxxy charges only for the consultations you actually complete. Start with 100 free consultations and then pay just ₹10 per consultation." },
     { icon: <Users className="h-12 w-12 text-success" />, title: 'Unlimited Doctors & Staff', description: "Eka Care charges per doctor, limiting your practice's growth. Doxxy allows unlimited doctors and staff members on all plans, including our free tier." },
     { icon: <Building2 className="h-12 w-12 text-purple-600" />, title: 'Multi-Clinic Management', description: 'Manage multiple clinic locations from a single dashboard without paying premium fees. Eka Care restricts this feature to higher-tier plans only.' },
     { icon: <Calendar className="h-12 w-12 text-orange-600" />, title: 'Smart Appointment Scheduling', description: "Doxxy's intelligent scheduling system prevents double-bookings, sends automatic reminders, and allows patients to book online - all included in the base price." },
@@ -26,7 +26,7 @@ const ekaCareAlternativeConfig: AlternativeConfig = {
     { quote: "The unlimited doctors feature alone made switching to Doxxy worth it. As we've grown from 2 to 6 doctors, our software costs have remained predictable.", name: 'Dr. Sunita Reddy', clinic: 'Wellness Multispecialty, Chennai', photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop' },
   ],
   featureComparisonRows: [
-    { feature: 'Pricing Model', doxxy: 'Pay-per-appointment', competitor: 'Monthly subscription' },
+    { feature: 'Pricing Model', doxxy: 'Pay-per-consultation', competitor: 'Monthly subscription' },
     { feature: 'Doctor Limits', doxxy: 'Unlimited on all plans', competitor: 'Pay per doctor' },
     { feature: 'Free Plan', doxxy: '100 appointments free', competitor: 'Limited time trial only' },
     { feature: 'Contract Length', doxxy: 'No commitment', competitor: 'Annual contract' },
