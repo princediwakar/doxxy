@@ -2,15 +2,21 @@ import React from 'react';
 import type { Metadata } from 'next';
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { 
-  ArrowRight, 
+import {
+  ArrowRight,
   DollarSign,
   Shield,
   Zap,
   BarChart3,
   FileText,
   MessageSquare,
-  Smartphone
+  Smartphone,
+  Stethoscope,
+  HeartPulse,
+  CreditCard,
+  Building2,
+  FileSpreadsheet,
+  Layers,
 } from 'lucide-react';
 import Link from "next/link";
 import SignupCTA from '@/components/SignupCTA';
@@ -19,8 +25,8 @@ import { APP_URL } from "@/lib/constants";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 
 export const metadata: Metadata = {
-  title: 'Doxxy Comparisons - Clinic Management Software vs Competitors',
-  description: 'Compare Doxxy with Practo, Eka Care, ClinicPlus, Lybrate, and MFine. See feature-by-feature comparisons and pricing analysis.',
+  title: 'Doxxy Comparisons — Clinic Management Software vs Competitors & Manual Methods',
+  description: 'Compare Doxxy with Practo, Eka Care, ClinicPlus, Lybrate, MFine, KiviHealth, DocPulse, MediBuddy, HealthPlix, Bajaj Finserv Health, Excel, Tally, and Google Sheets. Honest, feature-by-feature comparisons.',
   alternates: {
     canonical: '/comparisons',
   },
@@ -37,43 +43,88 @@ export const metadata: Metadata = {
       },
     ],
   },
-  keywords: ['doxxy comparisons', 'clinic software comparison', 'practo vs doxxy', 'eka care alternative', 'healthcare software comparisons'],
+  keywords: ['doxxy comparisons', 'clinic software comparison', 'practo vs doxxy', 'eka care alternative', 'clinic software vs excel', 'clinic software vs google sheets', 'healthcare software comparisons', 'kivihealth alternative', 'docpulse alternative', 'medibuddy alternative', 'healthplix alternative', 'bajaj finserv health alternative'],
 }
 
 // --- DATA ---
-const comparisons = [
+const competitorComparisons = [
   {
-    title: "Doxxy vs Eka Care",
-    description: "See how our innovative pricing and comprehensive features provide better value compared to Eka Care.",
-    icon: DollarSign,
-    link: "/comparisons/doxxy-vs-eka-care",
-    badge: "Most Popular"
-  },
-  {
-    title: "Doxxy vs Practo",
-    description: "Discover why our dedicated clinic management platform offers a more streamlined experience than Practo.",
+    title: 'Doxxy vs Practo',
+    description: 'Discover why our dedicated clinic management platform offers a more streamlined experience than Practo.',
     icon: Shield,
-    link: "/comparisons/doxxy-vs-practo"
+    link: '/comparisons/doxxy-vs-practo',
   },
   {
-    title: "Doxxy vs ClinicPlus",
-    description: "Compare our modern, cloud-based approach with ClinicPlus's traditional software model.",
+    title: 'Doxxy vs Eka Care',
+    description: 'See how our innovative pricing and comprehensive features provide better value compared to Eka Care.',
+    icon: DollarSign,
+    link: '/comparisons/doxxy-vs-eka-care',
+    badge: 'Most Popular',
+  },
+  {
+    title: 'Doxxy vs ClinicPlus',
+    description: 'Compare our modern, cloud-based approach with ClinicPlus\'s traditional software model.',
     icon: Smartphone,
-    link: "/comparisons/doxxy-vs-clinicplus"
+    link: '/comparisons/doxxy-vs-clinicplus',
   },
   {
-    title: "Doxxy vs Lybrate",
-    description: "Learn why we provide a more complete clinic solution compared to Lybrate's consultation-focused platform.",
+    title: 'Doxxy vs Lybrate',
+    description: 'Learn why we provide a more complete clinic solution compared to Lybrate\'s consultation-focused platform.',
     icon: MessageSquare,
-    link: "/comparisons/doxxy-vs-lybrate"
+    link: '/comparisons/doxxy-vs-lybrate',
   },
   {
-    title: "Doxxy vs MFine",
-    description: "See how our hybrid approach offers more flexibility than MFine's telemedicine-centric model.",
+    title: 'Doxxy vs MFine',
+    description: 'See how our hybrid approach offers more flexibility than MFine\'s telemedicine-centric model.',
     icon: FileText,
-    link: "/comparisons/doxxy-vs-mfine"
-  }
-];
+    link: '/comparisons/doxxy-vs-mfine',
+  },
+  {
+    title: 'Doxxy vs KiviHealth',
+    description: 'Compare Doxxy\'s mature, clinic-hardened platform against KiviHealth\'s newer telemedicine-first approach.',
+    icon: Stethoscope,
+    link: '/comparisons/doxxy-vs-kivihealth',
+  },
+  {
+    title: 'Doxxy vs DocPulse',
+    description: 'Full clinic management suite vs basic EMR — see why clinics choose Doxxy for multi-user workflows and ABDM compliance.',
+    icon: HeartPulse,
+    link: '/comparisons/doxxy-vs-docpulse',
+  },
+  {
+    title: 'Doxxy vs MediBuddy',
+    description: 'A 100% clinic-focused platform vs a marketplace-insurance hybrid. Understand the data ownership difference.',
+    icon: CreditCard,
+    link: '/comparisons/doxxy-vs-medibuddy',
+  },
+  {
+    title: 'Doxxy vs HealthPlix',
+    description: 'Complete clinic management vs doctor-only EMR. Front desk, billing, pharmacy, and WhatsApp — not just clinical notes.',
+    icon: FileText,
+    link: '/comparisons/doxxy-vs-healthplix',
+  },
+  {
+    title: 'Doxxy vs Bajaj Finserv Health',
+    description: 'Purpose-built clinic software vs a fintech-healthcare hybrid. Daily operations vs financial product with clinic features bolted on.',
+    icon: Building2,
+    link: '/comparisons/doxxy-vs-bajaj-finserv-health',
+  },
+]
+
+const preSoftwareComparisons = [
+  {
+    title: 'Doxxy vs Excel & Tally',
+    description: 'Spreadsheets and accounting software are not clinic software. See what your practice loses to manual processes every day.',
+    icon: FileSpreadsheet,
+    link: '/comparisons/doxxy-vs-excel-tally',
+  },
+  {
+    title: 'Doxxy vs Google Sheets',
+    description: '"Free" cloud spreadsheets cost 15+ staff hours a week. Know when your clinic has outgrown Google Sheets.',
+    icon: Layers,
+    link: '/comparisons/doxxy-vs-google-sheets',
+  },
+]
 
 const whyCompareItems = [
     { icon: BarChart3, title: "Understand Pricing Models", description: "See how different pricing structures affect your practice's costs as you grow." },
@@ -103,27 +154,53 @@ const HeroSection = () => (
   </Section>
 );
 
-const ComparisonsGridSection = () => (
+const ComparisonCard = ({ comp }: { comp: (typeof competitorComparisons)[number] }) => (
+  <Link
+    key={comp.title}
+    href={comp.link}
+    className="block bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+  >
+    <div className="flex justify-between items-start">
+      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mb-4">
+        <comp.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+      </div>
+      {('badge' in comp && comp.badge) && (
+        <div className="text-xs bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-1 rounded-full font-medium">
+          {comp.badge}
+        </div>
+      )}
+    </div>
+    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{comp.title}</h3>
+    <p className="text-gray-600 dark:text-gray-300 mt-2 mb-6">{comp.description}</p>
+    <div className="flex items-center text-blue-600 dark:text-blue-400 font-medium">
+      Read Comparison <ArrowRight className="ml-2 h-4 w-4" />
+    </div>
+  </Link>
+)
+
+const CompetitorComparisonsSection = () => (
   <Section className="bg-gray-50 dark:bg-gray-800/50">
-    <SectionTitle>Detailed Comparisons.</SectionTitle>
+    <SectionTitle>Software Comparisons.</SectionTitle>
     <SectionSubtitle className="mt-4">
-      We've created feature-by-feature comparisons to help you make an informed decision for your practice.
+      Feature-by-feature comparisons with other clinic management platforms. We did the research so you do not have to.
     </SectionSubtitle>
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16">
-      {comparisons.map((comp) => (
-        <Link key={comp.title} href={comp.link} className="block bg-white dark:bg-gray-800 rounded-2xl p-8 border border-gray-200/75 dark:border-gray-700/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-          <div className="flex justify-between items-start">
-            <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl flex items-center justify-center mb-4">
-                <comp.icon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-            </div>
-            {comp.badge && <div className="text-xs bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-300 px-2 py-1 rounded-full font-medium">{comp.badge}</div>}
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">{comp.title}</h3>
-          <p className="text-gray-600 dark:text-gray-300 mt-2 mb-6">{comp.description}</p>
-          <div className="flex items-center text-blue-600 dark:text-blue-400 font-medium">
-            Read Comparison <ArrowRight className="ml-2 h-4 w-4" />
-          </div>
-        </Link>
+      {competitorComparisons.map((comp) => (
+        <ComparisonCard key={comp.title} comp={comp} />
+      ))}
+    </div>
+  </Section>
+)
+
+const PreSoftwareComparisonsSection = () => (
+  <Section>
+    <SectionTitle>Before You Had Software.</SectionTitle>
+    <SectionSubtitle className="mt-4">
+      Many clinics do not think they need software — until they see what manual processes are actually costing them. These comparisons show the real math.
+    </SectionSubtitle>
+    <div className="grid md:grid-cols-2 gap-8 mt-16 max-w-4xl mx-auto">
+      {preSoftwareComparisons.map((comp) => (
+        <ComparisonCard key={comp.title} comp={comp} />
       ))}
     </div>
   </Section>
@@ -190,7 +267,8 @@ const ComparisonIndex = () => {
   return (
     <div className="bg-white dark:bg-gray-900">
       <HeroSection />
-      <ComparisonsGridSection />
+      <CompetitorComparisonsSection />
+      <PreSoftwareComparisonsSection />
       <WhyCompareSection />
       <QuestionsSection />
       <SignupCTA
