@@ -4,7 +4,7 @@ import { Inter } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 import { Providers } from '@/components/Providers'
-import { APP_URL } from '@/lib/constants'
+import { APP_URL, SOCIAL_LINKS } from '@/lib/constants'
 
 const inter = Inter({ subsets: ['latin'], display: 'swap' })
 
@@ -62,6 +62,39 @@ export default function RootLayout({
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <Script
+          id="site-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  name: "Doxxy",
+                  url: APP_URL,
+                  logo: `${APP_URL}/doxxy.png`,
+                  description:
+                    "Modern clinic management software for healthcare providers — smart scheduling, patient records, billing, and telehealth.",
+                  sameAs: SOCIAL_LINKS,
+                },
+                {
+                  "@type": "WebSite",
+                  name: "Doxxy",
+                  url: APP_URL,
+                  potentialAction: {
+                    "@type": "SearchAction",
+                    target: {
+                      "@type": "EntryPoint",
+                      urlTemplate: `${APP_URL}/help?search={search_term_string}`,
+                    },
+                    "query-input": "required name=search_term_string",
+                  },
+                },
+              ],
+            }),
+          }}
+        />
         {/* Must run before any other scripts — FB SDK checks for this when it loads */}
         <Script
           id="fb-async-init"

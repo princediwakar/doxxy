@@ -19,6 +19,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import SignupCTA from "@/components/SignupCTA";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
@@ -301,6 +303,13 @@ const Features = () => {
       <PatientInterface />
       <AdditionalFeaturesSection />
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Features", url: `${APP_URL}/features` },
+        ]}
+      />
     </div>
   );
 };

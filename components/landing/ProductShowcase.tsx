@@ -1,4 +1,5 @@
-import { CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CheckCircle } from "lucide-react";
 
 const screens = [
   {
@@ -261,6 +262,16 @@ export default function ProductShowcase() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="text-center mt-16">
+          <Link
+            href="/features"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold text-lg transition-colors"
+          >
+            See all features
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>

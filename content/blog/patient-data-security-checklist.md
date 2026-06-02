@@ -6,6 +6,11 @@ publishDate: "2024-01-05"
 readTime: "7 min read"
 category: "Compliance"
 heroImage: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1200&h=600&fit=crop"
+references:
+  - title: "Digital Personal Data Protection Act 2023 — MeitY"
+    url: "https://www.meity.gov.in/digital-personal-data-protection-act-2023"
+  - title: "HIPAA Security Rule Guidance"
+    url: "https://www.hhs.gov/hipaa/for-professionals/security/index.html"
 ---
 
 Healthcare is the most targeted industry for cyberattacks. Patient records are valuable — they contain names, dates of birth, insurance IDs, and medical histories that can't be reissued like a credit card. India's Digital Personal Data Protection Act 2023 has raised the compliance bar significantly, with serious penalties for violations.

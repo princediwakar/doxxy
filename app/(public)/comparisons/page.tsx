@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import Link from "next/link";
 import SignupCTA from '@/components/SignupCTA';
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 
 export const metadata: Metadata = {
@@ -192,6 +194,13 @@ const ComparisonIndex = () => {
       <WhyCompareSection />
       <QuestionsSection />
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Comparisons", url: `${APP_URL}/comparisons` },
+        ]}
+      />
     </div>
   );
 };

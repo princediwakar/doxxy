@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Check, X, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import SignupCTA from '@/components/SignupCTA';
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import type { AlternativeConfig } from '@/config/comparisons/types';
 
 const FeatureCell = ({ value }: { value: boolean | string }) => {
@@ -182,6 +184,14 @@ const AlternativeTemplate = ({ config }: { config: AlternativeConfig }) => {
       </section>
 
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Comparisons", url: `${APP_URL}/comparisons` },
+          { name: `${config.competitorName} Alternative`, url: `${APP_URL}/comparisons/${config.slug}` },
+        ]}
+      />
     </div>
   );
 };

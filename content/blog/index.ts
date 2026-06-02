@@ -11,6 +11,7 @@ interface BlogFrontmatter {
   category?: string;
   heroImage?: string;
   featured?: boolean;
+  references?: { title: string; url: string }[];
 }
 
 export type BlogPost = BlogFrontmatter & {

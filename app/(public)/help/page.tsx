@@ -3,6 +3,8 @@ import { getKBArticles } from "@/content/kb";
 import KBArticleSearch from "./KBArticleSearch";
 import KBCategoryGrid, { type GroupedArticles } from "./KBCategoryGrid";
 import { Suspense } from "react";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Knowledge Base — Doxxy Help",
@@ -77,6 +79,13 @@ export default async function KBLandingPage({
           <KBCategoryGrid grouped={grouped} search={search} />
         </div>
       </section>
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Help", url: `${APP_URL}/help` },
+        ]}
+      />
     </div>
   );
 }

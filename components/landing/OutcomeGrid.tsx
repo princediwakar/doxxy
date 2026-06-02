@@ -1,4 +1,5 @@
-import { Mic, ReceiptText, Package, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Mic, ReceiptText, Package, MessageCircle } from "lucide-react";
 
 const outcomes = [
   {
@@ -171,6 +172,16 @@ export default function OutcomeGrid() {
               </div>
             </div>
           ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <Link
+            href="/help"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold text-lg transition-colors"
+          >
+            See how it works in our Knowledge Base
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>

@@ -6,6 +6,8 @@ import { ArrowLeft, Stethoscope, Users, Shield } from "lucide-react";
 import KBArticleSearch from "../KBArticleSearch";
 import KBCategoryGrid from "../KBCategoryGrid";
 import { Suspense } from "react";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 
 const CATEGORY_CONFIG: Record<
   string,
@@ -127,6 +129,14 @@ export default async function KBCategoryPage({
           <KBCategoryGrid grouped={grouped} search={search} />
         </div>
       </section>
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Help", url: `${APP_URL}/help` },
+          { name: config.label, url: `${APP_URL}/help/${category}` },
+        ]}
+      />
     </div>
   );
 }

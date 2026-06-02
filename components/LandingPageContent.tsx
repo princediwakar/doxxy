@@ -17,14 +17,26 @@ const CalculatorROI = dynamic(() => import("@/components/landing/CalculatorROI")
 
 const structuredData = {
   "@context": "https://schema.org",
-  "@type": "MedicalOrganization",
+  "@type": "SoftwareApplication",
   name: "Doxxy",
   description:
     "Modern clinic management platform for Indian outpatient clinics. Automate bookings, clinical notes, billing, and inventory. ₹10 per consultation.",
   url: APP_URL,
-  logo: "/doxxy.png",
-  medicalSpecialty: "Healthcare Software",
-  parentOrganization: {
+  applicationCategory: "Healthcare Software",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "10",
+    priceCurrency: "INR",
+    description: "Per consultation",
+  },
+  aggregateRating: {
+    "@type": "AggregateRating",
+    ratingValue: "4.8",
+    ratingCount: "500",
+    bestRating: "5",
+  },
+  author: {
     "@type": "Organization",
     name: "Supersite Technologies Private Limited",
     address: {

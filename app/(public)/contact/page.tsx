@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { ContactForm } from '@/components/public/ContactForm';
 import { Button } from '@/components/ui/button';
 import SignupCTA from '@/components/SignupCTA';
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import { Mail, Phone, Calendar } from 'lucide-react';
 
 export const metadata: Metadata = {
@@ -47,6 +50,19 @@ const faqs = [
 ];
 
 export default function ContactPage() {
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300">
       <section className="py-24 md:py-32 text-center !pt-28 md:!pt-40">
@@ -123,6 +139,18 @@ export default function ContactPage() {
       </section>
 
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Contact", url: `${APP_URL}/contact` },
+        ]}
+      />
+      <Script
+        id="contact-faq-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
     </div>
   );
 }

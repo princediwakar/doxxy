@@ -11,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import { APP_URL } from "@/lib/constants";
 import { ShareButtons } from "./ShareButtons";
 import { ReadingProgress } from "@/components/ReadingProgress";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -90,7 +91,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         "@type": "ImageObject",
         "url": `${baseUrl}/doxxy.png`
       }
-    }
+    },
+    ...(post.references?.length ? {
+      "citation": post.references.map((ref) => ({
+        "@type": "CreativeWork",
+        "name": ref.title,
+        "url": ref.url,
+      })),
+    } : {}),
   };
 
   return (
@@ -185,6 +193,29 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             </div>
           </div>
 
+          {/* References */}
+          {post.references && post.references.length > 0 && (
+            <div className="mt-16 p-8 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+                References & Further Reading
+              </h3>
+              <ul className="space-y-2">
+                {post.references.map((ref, i) => (
+                  <li key={i} className="text-sm">
+                    <a
+                      href={ref.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      {ref.title}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* Author Bio */}
           <div className="mt-16 p-8 bg-gradient-to-br from-gray-50 to-blue-50/50 dark:from-gray-800 dark:to-blue-950/20 rounded-3xl border border-gray-200 dark:border-gray-700">
             <div className="flex items-start gap-6">
@@ -216,6 +247,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         id="article-structured-data"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleStructuredData) }}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: baseUrl },
+          { name: "Blog", url: `${baseUrl}/blog` },
+          { name: post.title, url: `${baseUrl}/blog/${post.slug}` },
+        ]}
       />
     </div>
   );

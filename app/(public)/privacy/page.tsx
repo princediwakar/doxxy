@@ -1,5 +1,7 @@
 // src/pages/Privacy.tsx
 import type { Metadata } from 'next';
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: 'Doxxy Privacy Policy - Clinic Management Software Data Protection',
@@ -183,6 +185,13 @@ export default function PrivacyPage() {
         Mumbai, India <br />
         Email: prince@supersite.app <br />
       </PrivacyContactInfo>
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Privacy Policy", url: `${APP_URL}/privacy` },
+        ]}
+      />
     </div>
   );
 }

@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Check, X, ArrowRight, Shield, Globe } from 'lucide-react';
 import Link from 'next/link';
 import SignupCTA from '@/components/SignupCTA';
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import type { ComparisonConfig } from '@/config/comparisons/types';
 
 const FeatureCell = ({ value }: { value: boolean | string }) => {
@@ -309,6 +311,14 @@ const ComparisonTemplate = ({ config }: { config: ComparisonConfig }) => {
 
       {/* CTA Section */}
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Comparisons", url: `${APP_URL}/comparisons` },
+          { name: `Doxxy vs ${config.competitorName}`, url: `${APP_URL}/comparisons/${config.slug}` },
+        ]}
+      />
     </div>
   );
 };

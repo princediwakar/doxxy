@@ -1,5 +1,7 @@
 // src/pages/Terms.tsx
 import type { Metadata } from 'next';
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: 'Doxxy Terms of Service - Clinic Management Software Agreement',
@@ -190,6 +192,13 @@ export default function TermsPage() {
         Mumbai, India <br />
         Email: prince@supersite.app
       </TermsContactInfo>
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Terms of Service", url: `${APP_URL}/terms` },
+        ]}
+      />
     </div>
   );
 }

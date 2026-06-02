@@ -1,10 +1,45 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { getKBArticle, getKBArticles, getKBCategories } from "@/content/kb";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
+
+interface HowToStep {
+  name: string;
+  text: string;
+}
+
+function extractHowToSteps(content: string): HowToStep[] {
+  const stepsSection = content.match(/## Step-by-Step UI Instructions\n\n([\s\S]*?)(?=\n## |\n---|$)/);
+  if (!stepsSection) return [];
+
+  const stepsText = stepsSection[1];
+  const stepRegex = /(\d+)\.\s+\*\*(.+?)\*\*\n([\s\S]*?)(?=\n\d+\.\s+\*\*|\n###|\n##|$)/g;
+  const steps: HowToStep[] = [];
+
+  let match;
+  while ((match = stepRegex.exec(stepsText)) !== null) {
+    const title = match[2].trim();
+    const text = match[3]
+      .replace(/^[\s-]*/g, "")
+      .replace(/\*\*/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/\n+/g, " ")
+      .trim()
+      .substring(0, 300);
+
+    if (title && text) {
+      steps.push({ name: title, text });
+    }
+  }
+
+  return steps;
+}
 
 const CATEGORY_LABELS: Record<string, string> = {
   doctor: "Doctor",
@@ -58,6 +93,20 @@ export default async function KBArticlePage({ params }: KBArticlePageProps) {
   }
 
   const categoryLabel = CATEGORY_LABELS[category] || category;
+  const howToSteps = extractHowToSteps(article.content);
+
+  const howToStructuredData = howToSteps.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: article.title,
+    description: article.description,
+    step: howToSteps.map((step, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: step.name,
+      text: step.text,
+    })),
+  } : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
@@ -118,6 +167,22 @@ export default async function KBArticlePage({ params }: KBArticlePageProps) {
           </article>
         </div>
       </section>
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Help", url: `${APP_URL}/help` },
+          { name: categoryLabel, url: `${APP_URL}/help/${category}` },
+          { name: article.title, url: `${APP_URL}/help/${category}/${slug}` },
+        ]}
+      />
+      {howToStructuredData && (
+        <Script
+          id="howto-structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(howToStructuredData) }}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,11 @@ publishDate: "2026-05-15"
 readTime: "8 min read"
 category: "Technology"
 heroImage: "https://images.unsplash.com/photo-1658724684973-8791f6bc1206?w=1200&h=600&fit=crop"
+references:
+  - title: "Ayushman Bharat Digital Mission — Official Portal"
+    url: "https://abdm.gov.in/"
+  - title: "National Health Authority — ABDM"
+    url: "https://nha.gov.in/abdm"
 ---
 
 By 2027, every Indian citizen who wants one will have a unique Ayushman Bharat Health Account (ABHA) number — a digital health ID that links their medical records across every clinic, hospital, lab, and pharmacy they visit. Clinics that connect to the Ayushman Bharat Digital Mission (ABDM) ecosystem will be part of this national health infrastructure. Clinics that don't will be invisible to it.

@@ -6,6 +6,11 @@ publishDate: "2024-01-08"
 readTime: "6 min read"
 category: "Telemedicine"
 heroImage: "https://images.unsplash.com/photo-1576671081837-49000212a370?w=1200&h=600&fit=crop"
+references:
+  - title: "WHO Telemedicine Implementation Guide"
+    url: "https://www.who.int/publications/i/item/9789241565257"
+  - title: "Telemedicine Practice Guidelines — NITI Aayog"
+    url: "https://www.niti.gov.in/telemedicine-practice-guidelines"
 ---
 
 Telemedicine has moved from novelty to necessity. Patients now expect virtual visits as an option for routine consultations, follow-ups, and chronic care management. But delivering great remote care takes more than a webcam and a link.

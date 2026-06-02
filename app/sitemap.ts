@@ -19,11 +19,13 @@ const PUBLIC_ROUTES_CONFIG = [
     path: "/about",
     priority: 0.8,
     changeFrequency: "monthly" as const,
+    lastModified: new Date("2026-03-15"),
   },
   {
     path: "/contact",
     priority: 0.7,
     changeFrequency: "monthly" as const,
+    lastModified: new Date("2026-03-15"),
   },
   {
     path: "/features",
@@ -44,6 +46,7 @@ const PUBLIC_ROUTES_CONFIG = [
     path: "/faq",
     priority: 0.7,
     changeFrequency: "monthly" as const,
+    lastModified: new Date("2026-03-15"),
   },
   {
     path: "/help",
@@ -90,16 +93,19 @@ const PUBLIC_ROUTES_CONFIG = [
     path: "/security",
     priority: 0.8,
     changeFrequency: "monthly" as const,
+    lastModified: new Date("2026-01-20"),
   },
   {
     path: "/privacy",
     priority: 0.5,
     changeFrequency: "yearly" as const,
+    lastModified: new Date("2026-01-15"),
   },
   {
     path: "/terms",
     priority: 0.5,
     changeFrequency: "yearly" as const,
+    lastModified: new Date("2026-01-15"),
   },
 ] as const;
 
@@ -108,7 +114,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const publicRoutes: MetadataRoute.Sitemap = PUBLIC_ROUTES_CONFIG.map(
     (route) => ({
       url: `${BASE_URL}${route.path}`,
-      lastModified: new Date(),
+      lastModified: "lastModified" in route ? (route.lastModified as Date) : new Date(),
       changeFrequency: route.changeFrequency,
       priority: route.priority,
     })

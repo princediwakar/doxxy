@@ -3,6 +3,8 @@ import Link from "next/link";
 import { Calendar, User, Clock, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SignupCTA from "@/components/SignupCTA";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -185,6 +187,13 @@ export default async function BlogPage() {
 
       {/* CTA Section */}
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Blog", url: `${APP_URL}/blog` },
+        ]}
+      />
     </div>
   );
 }

@@ -12,6 +12,8 @@ import {
   Globe,
 } from 'lucide-react';
 import SignupCTA from "@/components/SignupCTA";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
@@ -203,6 +205,13 @@ const Security = () => {
       <SecurityFeaturesSection />
       <DataHandlingSection />
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Security", url: `${APP_URL}/security` },
+        ]}
+      />
     </div>
   );
 };

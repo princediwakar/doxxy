@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import Script from "next/script";
 import {
   Check,
   Users,
@@ -13,6 +14,8 @@ import {
 } from "lucide-react";
 import Link from "next/link"
 import SignupCTA from "@/components/SignupCTA";
+import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
+import { APP_URL } from "@/lib/constants";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 import type { Metadata } from 'next';
 
@@ -381,6 +384,19 @@ const FaqSection = () => (
 // --- MAIN PAGE COMPONENT ---
 
 const Pricing = () => {
+  const faqStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900">
       <HeroSection />
@@ -391,6 +407,18 @@ const Pricing = () => {
       <TrustIndicatorsSection />
       <FaqSection />
       <SignupCTA />
+
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", url: APP_URL },
+          { name: "Pricing", url: `${APP_URL}/pricing` },
+        ]}
+      />
+      <Script
+        id="pricing-faq-structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
     </div>
   );
 };
