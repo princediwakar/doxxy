@@ -7,6 +7,7 @@ import { getBlogPosts } from "@/content/blog";
 import { getKBArticles } from "@/content/kb";
 import { APP_URL } from "@/lib/constants";
 import { specialtySlugs } from "@/config/specialties";
+import { citySlugs } from "@/config/cities";
 
 const BASE_URL = APP_URL;
 const PUBLIC_DIR = join(process.cwd(), "app", "(public)");
@@ -20,6 +21,12 @@ const PRIORITY: Record<string, number> = {
   "/india-clinic-digitization-guide": 0.9,
   "/privacy": 0.5,
   "/terms": 0.5,
+  "/cities/mumbai": 0.8,
+  "/cities/delhi": 0.8,
+  "/cities/bangalore": 0.8,
+  "/cities/pune": 0.8,
+  "/cities/hyderabad": 0.8,
+  "/cities/chennai": 0.8,
 };
 
 const CHANGE_FREQ: Record<string, MetadataRoute.Sitemap[number]["changeFrequency"]> = {
@@ -72,7 +79,8 @@ function discoverStaticRoutes(dir: string, basePath = ""): string[] {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = discoverStaticRoutes(PUBLIC_DIR);
   const specialtyRoutes = specialtySlugs.map((slug) => `/specialties/${slug}`);
-  const allRoutes = [...staticRoutes, ...specialtyRoutes];
+  const cityRoutes = citySlugs.map((slug) => `/cities/${slug}`);
+  const allRoutes = [...staticRoutes, ...specialtyRoutes, ...cityRoutes];
 
   const publicRoutes: MetadataRoute.Sitemap = allRoutes.map((path) => ({
     url: `${BASE_URL}${path}`,
