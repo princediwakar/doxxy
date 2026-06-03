@@ -13,7 +13,17 @@ import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-
 export const metadata: Metadata = {
   title: 'क्लिनिक मैनेजमेंट सॉफ्टवेयर — डॉक्सी | अपॉइंटमेंट, बिलिंग, मरीज रिकॉर्ड',
   description: 'डॉक्सी भारत का भरोसेमंद क्लिनिक मैनेजमेंट सॉफ्टवेयर है। अपॉइंटमेंट बुकिंग, डिजिटल बिलिंग, GST, मरीज़ रिकॉर्ड, WhatsApp रिमाइंडर — सब एक प्लेटफ़ॉर्म पर। लखनऊ, जयपुर, पटना, इंदौर सहित 500+ क्लिनिक्स का भरोसा।',
-  alternates: { canonical: '/hi' },
+  alternates: {
+    canonical: '/hi',
+    languages: {
+      'bn': '/bn',
+      'hi': '/hi',
+      'kn': '/kn',
+      'mr': '/mr',
+      'ta': '/ta',
+      'te': '/te',
+    },
+  },
   openGraph: {
     title: 'क्लिनिक मैनेजमेंट सॉफ्टवेयर — डॉक्सी | अपॉइंटमेंट, बिलिंग, मरीज रिकॉर्ड',
     description: 'डॉक्सी भारत का भरोसेमंद क्लिनिक मैनेजमेंट सॉफ्टवेयर है। अपॉइंटमेंट बुकिंग, डिजिटल बिलिंग, GST, मरीज़ रिकॉर्ड, WhatsApp रिमाइंडर — सब एक प्लेटफ़ॉर्म पर।',

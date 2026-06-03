@@ -186,6 +186,20 @@ const faqItems = [
   },
 ];
 
+// --- FAQ Structured Data ---
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqItems.map((f) => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: f.answer,
+    },
+  })),
+};
+
 // --- PAGE SECTIONS ---
 
 const HeroSection = () => (
@@ -465,7 +479,11 @@ const FAQSection = () => (
 const WhatIsClinicManagementSoftware = () => {
   return (
     <div className="bg-white dark:bg-gray-900">
-      {/* Article Structured Data */}
+      <Script
+        id="faq-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <Script
         id="article-ld"
         type="application/ld+json"

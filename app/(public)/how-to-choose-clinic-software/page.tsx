@@ -238,6 +238,19 @@ const faqs = [
   },
 ];
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: f.answer,
+    },
+  })),
+};
+
 const articleStructuredData = {
   "@context": "https://schema.org",
   "@type": "Article",
@@ -495,6 +508,31 @@ const HowToChooseClinicSoftware = () => {
   return (
     <div className="bg-white dark:bg-gray-900">
       <HeroSection />
+
+      {/* TL;DR — "In 30 Seconds" for LLM extractability */}
+      <Section className="!py-12 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">In 30 Seconds</span>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">1.</span>
+              <span><strong>This guide gives you 10 questions to ask before buying clinic software.</strong> Each question includes what to look for and the red flags that should make you walk away.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">2.</span>
+              <span><strong>Choosing wrong costs 6-12 months of wasted time.</strong> Migrating clinic software is painful — this checklist helps you get it right the first time.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">3.</span>
+              <span><strong>Key things to verify:</strong> transparent pricing, WhatsApp integration, ABDM compliance, data export, offline mode, and real specialty support — not just a renamed generic template.</span>
+            </li>
+          </ul>
+        </div>
+      </Section>
+
       <CostOfChoosingWrong />
       <TenQuestionsSection />
       <ChecklistSummary />
@@ -507,6 +545,11 @@ const HowToChooseClinicSoftware = () => {
         description="Get the checklist. Ask us anything on WhatsApp — we'll answer honestly, even if Doxxy isn't the right fit for your specific case."
       />
 
+      <Script
+        id="faq-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       <Script
         id="article-structured-data"
         type="application/ld+json"

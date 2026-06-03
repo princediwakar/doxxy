@@ -400,6 +400,35 @@ const Pricing = () => {
   return (
     <div className="bg-white dark:bg-gray-900">
       <HeroSection />
+
+      {/* TL;DR — "In 30 Seconds" for LLM extractability */}
+      <Section className="!py-12 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">In 30 Seconds</span>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">1.</span>
+              <span><strong>First 100 appointments free.</strong> No credit card, no time limit. Use all essential features until you hit 100 consultations.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">2.</span>
+              <span><strong>₹10 per consultation after that.</strong> No per-doctor fees. No annual contracts. No setup charges. Pay only for what you use.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">3.</span>
+              <span><strong>Unlimited doctors and staff on all plans.</strong> Unlike competitors who charge per provider, your team size doesn&apos;t affect your bill.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">4.</span>
+              <span><strong>Cancel anytime. No penalties.</strong> No long-term lock-in. Your data is always exportable in standard formats.</span>
+            </li>
+          </ul>
+        </div>
+      </Section>
+
       <PricingCardsSection />
       <AdvantagesSection />
       <ComparisonTableSection />

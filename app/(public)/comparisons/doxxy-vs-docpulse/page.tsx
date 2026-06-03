@@ -3,18 +3,20 @@ import type { Metadata } from 'next';
 import ComparisonTemplate from '@/components/comparisons/ComparisonTemplate';
 import docpulseConfig from '@/config/comparisons/docpulse';
 
-export const metadata: Metadata = {
-  title: 'Doxxy vs DocPulse - Full Clinic Suite vs Basic EMR Software',
-  description: 'Compare Doxxy vs DocPulse: comprehensive clinic management with ABDM compliance and unlimited users vs basic EMR with tiered pricing. See which fits your clinic.',
-  alternates: { canonical: '/comparisons/doxxy-vs-docpulse' },
-  openGraph: {
-    title: 'Doxxy vs DocPulse - Clinic Management Software Comparison',
-    description: 'Compare Doxxy and DocPulse for clinic management software features, pricing transparency, ABDM compliance, and multi-clinic support.',
-    type: 'website',
-    images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: 'Doxxy vs DocPulse Comparison' }],
-  },
-  keywords: ['doxxy vs docpulse', 'docpulse alternative', 'clinic management software comparison', 'healthcare software India', 'abdm compliant clinic software'],
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: `Doxxy vs ${docpulseConfig.competitorName} — Clinic Management Software Comparison`,
+    description: docpulseConfig.heroSubtitle,
+    alternates: { canonical: `/comparisons/doxxy-vs-${docpulseConfig.slug}` },
+    openGraph: {
+      title: `Doxxy vs ${docpulseConfig.competitorName} — Clinic Management Software Comparison`,
+      description: docpulseConfig.heroSubtitle,
+      type: 'website',
+      images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: `Doxxy vs ${docpulseConfig.competitorName} Comparison` }],
+    },
+    keywords: [`doxxy vs ${docpulseConfig.competitorName.toLowerCase()}`, `${docpulseConfig.competitorName.toLowerCase()} alternative`, 'clinic management software', 'healthcare software comparison'],
+  };
+}
 
 const DoxxyVsDocPulse = () => <ComparisonTemplate config={docpulseConfig} />;
 

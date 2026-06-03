@@ -1,5 +1,6 @@
 // Path: app/(public)/clinic-patient-follow-up-system/page.tsx
 
+import Script from 'next/script';
 import { Button } from "@/components/ui/button";
 import { MessageCircle, CalendarCheck, Bell, BarChart3, HeartHandshake, Repeat, ArrowRight, Activity, Stethoscope, TrendingUp, Clock, Users, ShieldCheck, FileText } from 'lucide-react';
 import Link from 'next/link';
@@ -328,6 +329,53 @@ const FAQSection = () => (
   </Section>
 );
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How is this different from just sending bulk WhatsApp messages to all patients?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Bulk messaging is spam. It broadcasts the same generic message to everyone — \"Get your health checkup today!\" — and patients ignore it because it is not relevant to them. Doxxy's follow-up system is the opposite. Each message is personalised to the individual patient: their name, their specific doctor, the exact reason for the follow-up (e.g., \"your 30-day blood sugar review is due\"), and a rebooking link specific to that doctor. Patients respond because the message is relevant to their specific health situation, not a marketing blast. The open and response rates reflect this difference: bulk WhatsApp campaigns get 15-20% engagement. Personalised follow-up messages get 85%+ engagement. The difference is relevance.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What if a patient has already switched to another clinic?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "If a patient replies \"I have changed doctors\" or does not respond after 3 follow-up cycles, the system automatically marks them as inactive and stops sending reminders. You maintain professional dignity, the patient is not harassed, and the relationship ends gracefully. You can also manually deactivate any patient from the follow-up system at any time with a single click. The system tracks deactivation reasons so you can analyse patterns — are patients leaving because of wait times? Cost? Location? The data helps you fix the root cause, not just manage the symptom.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can we customise the follow-up messages for our clinic's tone and language?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Completely. You can write your own message templates from scratch or modify Doxxy's defaults. The templates support variables like {patient_name}, {doctor_name}, {date}, {condition}, and {clinic_name} that auto-fill per patient. You can have different templates for different follow-up types — your post-consultation check-in can be warm and casual while your chronic disease recall can be more clinical and specific. Language support covers English, Hindi, Marathi, Tamil, Telugu, Bengali, Gujarati, Kannada, Malayalam, Punjabi, Odia, Assamese, and Urdu. The system automatically uses the patient's preferred language, and the templates are crafted by native speakers — not machine translations. A Hindi reminder reads naturally to a Hindi speaker. A Tamil reminder uses culturally appropriate phrasing. This matters enormously for older patients and those in smaller cities who may be less comfortable with English.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Does this comply with WhatsApp's business messaging policies?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Yes, completely. Doxxy uses the official WhatsApp Business API — the same infrastructure used by banks, airlines, and healthcare providers worldwide. Our follow-up messages qualify as transactional healthcare communication, not promotional marketing, which is explicitly permitted under WhatsApp's business policy. Patients opt in by providing their phone number at registration and are informed that they will receive appointment and follow-up messages. They can opt out anytime by replying STOP, and the system immediately honours the opt-out. Every message includes opt-out instructions as required by WhatsApp policy. You are fully protected from a compliance standpoint.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "How do we handle patients who need follow-up but do not use WhatsApp?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "While WhatsApp penetration in India exceeds 500 million users and covers the vast majority of your patient base, Doxxy has a multi-channel fallback system for those who do not use it. If a patient does not have WhatsApp on their registered phone number, or if a WhatsApp message fails to deliver, the system automatically falls back to SMS. For elderly patients or those without smartphones at all, the follow-up dashboard includes a \"Phone Call Required\" list — a prioritised queue of patients who need human outreach. Your staff can work through this list during slow hours, and each call is logged in the patient's record for continuity. The system ensures nobody falls through the cracks. It simply uses the best available channel for each patient, and it tells you clearly when human intervention is the only option.",
+      },
+    },
+  ],
+};
+
 // --- MAIN PAGE COMPONENT ---
 
 export default function ClinicPatientFollowUpSystem() {
@@ -344,6 +392,12 @@ export default function ClinicPatientFollowUpSystem() {
       <SignupCTA
         heading="The 6-Month Checkup Reminder That Fills Next Month's Calendar"
         description="Automated WhatsApp follow-ups → one-tap rebooking. See the recall system that keeps patients coming back. Chat on WhatsApp."
+      />
+
+      <Script
+        id="faq-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
       <BreadcrumbJsonLd

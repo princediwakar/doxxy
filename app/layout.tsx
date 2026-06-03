@@ -71,6 +71,7 @@ export default function RootLayout({
               "@graph": [
                 {
                   "@type": "Organization",
+                  "@id": `${APP_URL}/#organization`,
                   name: "Doxxy",
                   url: APP_URL,
                   logo: `${APP_URL}/doxxy.png`,
@@ -80,6 +81,7 @@ export default function RootLayout({
                 },
                 {
                   "@type": "WebSite",
+                  "@id": `${APP_URL}/#website`,
                   name: "Doxxy",
                   url: APP_URL,
                   potentialAction: {

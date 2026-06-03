@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   description: 'Read insights, best practices, and thought leadership on healthcare practice management, telemedicine, revenue cycle optimization, and digital health.',
   alternates: {
     canonical: '/blog',
+    types: {
+      'application/rss+xml': '/blog/feed.xml',
+    },
   },
   openGraph: {
     title: 'Doxxy Blog - Healthcare Practice Management Insights',

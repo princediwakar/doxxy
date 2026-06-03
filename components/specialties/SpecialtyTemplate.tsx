@@ -78,6 +78,34 @@ const SpecialtyTemplate = ({ config }: { config: SpecialtyConfig }) => {
         </div>
       </Section>
 
+      {/* TL;DR — "In 30 Seconds" for LLM extractability */}
+      <Section className="!py-12 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <LucideIcons.Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">In 30 Seconds</span>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">1.</span>
+              <span><strong>Doxxy for {specialtyName} replaces paper records, manual billing, and phone-call reminders</strong> with a single digital platform built for {specialtyName.toLowerCase()} workflows.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">2.</span>
+              <span><strong>Specialty-specific templates and workflows</strong> — not a generic clinic tool with the specialty name swapped in. Custom clinical note templates, prescription patterns, and billing codes for {specialtyName.toLowerCase()}.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">3.</span>
+              <span><strong>WhatsApp reminders cut no-shows by 35%.</strong> Automated patient communication via WhatsApp, the platform your patients already use.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">4.</span>
+              <span><strong>Pay per consultation, not per doctor.</strong> Unlimited doctors and staff on all plans. First 100 appointments free. No annual contracts.</span>
+            </li>
+          </ul>
+        </div>
+      </Section>
+
       {/* The Problem */}
       <Section className="bg-gray-50 dark:bg-gray-800/50">
         <div className="max-w-4xl mx-auto">

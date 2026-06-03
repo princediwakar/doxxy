@@ -7,6 +7,23 @@ import type { Metadata } from 'next'
 export const metadata: Metadata = {
   title: 'Doxxy - Modern Clinic Management Software for Healthcare Providers',
   description: 'Doxxy streamlines clinic operations with smart scheduling, patient records, billing, and telehealth. Reduce admin work by 3+ hours daily. Start free.',
+  manifest: '/manifest.json',
+  verification: { google: '6XTorYQy4TdZB9Z3EF6fNyU4BcWaTma53piGhXir-Tc' },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Doxxy',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    site: '@mydoxxy',
+    images: [
+      {
+        url: '/doxxy.png',
+        alt: 'Doxxy - Modern Clinic Management Software',
+      },
+    ],
+  },
   openGraph: {
     title: 'Doxxy - Modern Clinic Management Software for Healthcare Providers',
     description: 'Streamline clinic operations with smart scheduling, patient records, billing, and telehealth',

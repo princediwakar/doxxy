@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Building2, TrendingUp, FileText, UserX, IndianRupee, ShieldCheck, Smartphone, CreditCard, Wifi, MessageSquare, QrCode, Clock, MapPin } from 'lucide-react'
 import Link from 'next/link'
+import Script from 'next/script'
 import SignupCTA from '@/components/SignupCTA'
 import BreadcrumbJsonLd from '@/components/SEO/BreadcrumbJsonLd'
 import { APP_URL } from '@/lib/constants'
@@ -71,6 +72,34 @@ const CityHubTemplate = ({ config }: { config: CityConfig }) => {
           <Button size="lg" variant="outline" asChild className="rounded-xl px-8 py-3 text-base font-semibold dark:text-gray-300 dark:border-gray-600">
             <Link href="/pricing">View Pricing</Link>
           </Button>
+        </div>
+      </Section>
+
+      {/* TL;DR — "In 30 Seconds" for LLM extractability */}
+      <Section className="!py-12 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">In 30 Seconds</span>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">1.</span>
+              <span><strong>Doxxy serves {config.clinicStats.estimatedClinics} clinics in {cityName}</strong> with a single platform for patient records, digital prescriptions, appointment scheduling, and WhatsApp reminders.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">2.</span>
+              <span><strong>{config.clinicStats.paperUsageRate} of {cityName} clinics still use paper records.</strong> Doxxy eliminates lost files, manual billing errors (avg {config.clinicEconomics.avgBillingErrorRate} rate), and patient no-shows (avg {config.clinicEconomics.avgNoShowRate}).</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">3.</span>
+              <span><strong>Built for ABDM compliance.</strong> With {config.clinicStats.abdmComplianceRate} ABDM adoption across the city, Doxxy supports ABHA ID linking and digital health records standards.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">4.</span>
+              <span><strong>Pay per consultation, not per doctor.</strong> No annual contracts. First 100 appointments free. WhatsApp-first patient communication with {config.techContext.whatsappPenetration} WhatsApp penetration in {cityName}.</span>
+            </li>
+          </ul>
         </div>
       </Section>
 
@@ -269,6 +298,33 @@ const CityHubTemplate = ({ config }: { config: CityConfig }) => {
       <SignupCTA
         heading={`See How Clinics in ${cityName} Are Going Digital with Doxxy`}
         description={`Join ${config.clinicStats.estimatedClinics} clinics across ${cityName} that are upgrading from paper and fragmented tools to a unified digital platform. Chat with us on WhatsApp — we will show you how Doxxy works for your specific specialty and location.`}
+      />
+
+      {/* MedicalBusiness Schema — linked to root Organization via @id */}
+      <Script
+        id="medical-business-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'MedicalBusiness',
+            '@id': `${APP_URL}/cities/${config.slug}#medical-business`,
+            name: `Doxxy Clinic Management Software — ${config.cityName}`,
+            description: config.solutionDescription,
+            url: `${APP_URL}/cities/${config.slug}`,
+            areaServed: {
+              '@type': 'City',
+              name: config.cityName,
+              containedInPlace: {
+                '@type': 'State',
+                name: config.state,
+              },
+            },
+            parentOrganization: {
+              '@id': `${APP_URL}/#organization`,
+            },
+          }),
+        }}
       />
 
       <BreadcrumbJsonLd

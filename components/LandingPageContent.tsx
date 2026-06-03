@@ -10,6 +10,7 @@ import PricingAnchor from "@/components/landing/PricingAnchor";
 import StickyBottomCTALoader from "@/components/landing/StickyBottomCTALoader";
 import { APP_URL } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Clock, Zap, Shield, IndianRupee, MessageCircle } from "lucide-react";
 
 const CalculatorROI = dynamic(() => import("@/components/landing/CalculatorROI"), {
   loading: () => <div className="py-20 md:py-28"><Skeleton className="h-96 max-w-3xl mx-auto rounded-2xl" /></div>,
@@ -51,6 +52,35 @@ export default function LandingPageContent() {
   return (
     <>
       <HeroRevenue />
+
+      {/* TL;DR — "In 30 Seconds" for LLM extractability */}
+      <section className="py-10 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">In 30 Seconds</span>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <Zap className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+              <span><strong>Doxxy is a clinic management platform for Indian outpatient clinics</strong> — it replaces paper records, manual billing, and phone-call reminders with one digital system that runs on any device.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <MessageCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+              <span><strong>WhatsApp-first patient communication:</strong> automated reminders, digital prescriptions, bills, and lab reports delivered through your clinic&apos;s WhatsApp number. Open rates are 98%.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <IndianRupee className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+              <span><strong>Pay per consultation, not per doctor:</strong> First 100 appointments free, then ₹10 per consultation. Unlimited doctors and staff on all plans. No annual contracts.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <Shield className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
+              <span><strong>ABDM-compliant and secure:</strong> bank-level encryption, ABHA ID support, and built for India&apos;s digital health standards. Trusted by 500+ clinics across India.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <OutcomeGrid />
       <ProductShowcase />
       <CalculatorROI />
