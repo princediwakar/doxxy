@@ -45,6 +45,9 @@ const SiteFooter = () => {
             <div>
               <p className="text-sm font-semibold text-foreground tracking-wider uppercase mb-4">Resources</p>
               <div className="space-y-3">
+                <Link href="/resources" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Resources
+                </Link>
                 <Link href="/about" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   About Us
                 </Link>
@@ -77,7 +80,82 @@ const SiteFooter = () => {
           </div>
         </div>
 
-        <div className="mt-16 pt-8 border-t border-border text-center text-sm">
+        {/* Compact location & specialty links */}
+        <div className="mt-12 pt-8 border-t border-border">
+          <div className="text-xs text-muted-foreground leading-relaxed space-y-2">
+            <div>
+              <span className="font-semibold text-foreground">Cities: </span>
+              {[
+                { href: '/cities/mumbai', label: 'Mumbai' },
+                { href: '/cities/delhi', label: 'Delhi' },
+                { href: '/cities/bangalore', label: 'Bangalore' },
+                { href: '/cities/pune', label: 'Pune' },
+                { href: '/cities/hyderabad', label: 'Hyderabad' },
+                { href: '/cities/chennai', label: 'Chennai' },
+                { href: '/cities/ahmedabad', label: 'Ahmedabad' },
+                { href: '/cities/kolkata', label: 'Kolkata' },
+                { href: '/cities/jaipur', label: 'Jaipur' },
+                { href: '/cities/lucknow', label: 'Lucknow' },
+                { href: '/cities/surat', label: 'Surat' },
+                { href: '/cities/nagpur', label: 'Nagpur' },
+                { href: '/cities/indore', label: 'Indore' },
+                { href: '/cities/bhopal', label: 'Bhopal' },
+                { href: '/cities/chandigarh', label: 'Chandigarh' },
+                { href: '/cities/kochi', label: 'Kochi' },
+                { href: '/cities/vadodara', label: 'Vadodara' },
+                { href: '/cities/visakhapatnam', label: 'Visakhapatnam' },
+                { href: '/cities/coimbatore', label: 'Coimbatore' },
+                { href: '/cities/ludhiana', label: 'Ludhiana' },
+                { href: '/cities/agra', label: 'Agra' },
+                { href: '/cities/nashik', label: 'Nashik' },
+                { href: '/cities/patna', label: 'Patna' },
+                { href: '/cities/rajkot', label: 'Rajkot' },
+                { href: '/cities/meerut', label: 'Meerut' },
+              ].map((city, i) => (
+                <span key={city.href}>
+                  <Link href={city.href} className="hover:text-foreground transition-colors">{city.label}</Link>
+                  {i < 24 && <span className="text-gray-400 dark:text-gray-600"> · </span>}
+                </span>
+              ))}
+            </div>
+            <div>
+              <span className="font-semibold text-foreground">Specialties: </span>
+              {[
+                { href: '/specialties/dermatology', label: 'Dermatology' },
+                { href: '/specialties/dental', label: 'Dental' },
+                { href: '/specialties/ophthalmology', label: 'Ophthalmology' },
+                { href: '/specialties/ent', label: 'ENT' },
+                { href: '/specialties/pediatrics', label: 'Pediatrics' },
+                { href: '/specialties/gynecology', label: 'Gynecology' },
+                { href: '/specialties/orthopedics', label: 'Orthopedics' },
+                { href: '/specialties/general-physician', label: 'General Physician' },
+              ].map((s, i, arr) => (
+                <span key={s.href}>
+                  <Link href={s.href} className="hover:text-foreground transition-colors">{s.label}</Link>
+                  {i < arr.length - 1 && <span className="text-gray-400 dark:text-gray-600"> · </span>}
+                </span>
+              ))}
+            </div>
+            <div>
+              <span className="font-semibold text-foreground">Also in: </span>
+              {[
+                { href: '/hi', label: 'हिन्दी' },
+                { href: '/bn', label: 'বাংলা' },
+                { href: '/ta', label: 'தமிழ்' },
+                { href: '/te', label: 'తెలుగు' },
+                { href: '/mr', label: 'मराठी' },
+                { href: '/kn', label: 'ಕನ್ನಡ' },
+              ].map((l, i, arr) => (
+                <span key={l.href}>
+                  <Link href={l.href} className="hover:text-foreground transition-colors">{l.label}</Link>
+                  {i < arr.length - 1 && <span className="text-gray-400 dark:text-gray-600"> · </span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-8 pt-8 border-t border-border text-center text-sm">
           <p>&copy; {new Date().getFullYear()} Supersite Technologies Private Limited. All rights reserved.</p>
         </div>
       </div>

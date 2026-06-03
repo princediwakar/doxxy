@@ -1,6 +1,6 @@
 import { getBlogPosts, getExcerpt } from "@/content/blog";
 import Link from "next/link";
-import { Calendar, User, Clock, ArrowRight, Sparkles } from "lucide-react";
+import { Calendar, User, Clock, ArrowRight, Sparkles, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SignupCTA from "@/components/SignupCTA";
 import BreadcrumbJsonLd from "@/components/SEO/BreadcrumbJsonLd";
@@ -184,6 +184,29 @@ export default async function BlogPage() {
                 </article>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Resources Cross-Link */}
+      <section className="px-6 lg:px-8 mb-24">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-8 md:p-10 text-center border border-blue-100 dark:border-blue-800/50">
+            <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-xl mb-4">
+              <BookOpen className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3">
+              Browse Our Clinic Resources
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6 max-w-xl mx-auto">
+              Free guides, calculators, and best practices for running a modern clinic — software selection, digitization, patient experience, and more.
+            </p>
+            <Link href="/resources">
+              <Button size="lg" className="gap-2 rounded-xl">
+                Explore Resources
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
