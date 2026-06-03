@@ -36,17 +36,11 @@ export const metadata: Metadata = {
     canonical: '/india-clinic-digitization-guide',
   },
   openGraph: {
+    type: 'website',
     title: 'India Clinic Digitization Guide 2026 — The Complete Roadmap for Doctors',
     description:
       'The definitive guide to digitizing your clinic in India. Covers ABDM compliance, software selection, patient records, WhatsApp integration, costs, and government schemes.',
-    images: [
-      {
-        url: '/doxxy-india-clinic-digitization-guide.png',
-        width: 1200,
-        height: 630,
-        alt: 'India Clinic Digitization Guide 2026',
-      },
-    ],
+    images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: 'India Clinic Digitization Guide 2026' }],
   },
   keywords: [
     'clinic digitization India',
@@ -256,7 +250,7 @@ const HeroSection = () => (
     </SectionSubtitle>
     <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
       <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">
-        <Link href="https://wa.me/+917388890554">Start Your Free Trial <ArrowRight className="ml-2 h-4 w-4" /></Link>
+        <Link href="https://wa.me/+917388890554">Start Free Trial <ArrowRight className="ml-2 h-4 w-4" /></Link>
       </Button>
       <Button size="lg" variant="outline" asChild className="rounded-xl px-8 py-3 text-base font-semibold dark:text-gray-300 dark:border-gray-600">
         <Link href="#roadmap">Jump to Roadmap <ChevronRight className="ml-2 h-4 w-4" /></Link>
@@ -867,6 +861,19 @@ const InternalLinkHubSection = () => (
   </Section>
 );
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: f.answer,
+    },
+  })),
+};
+
 // --- MAIN PAGE COMPONENT ---
 
 const ArticleStructuredData = () => {
@@ -907,6 +914,31 @@ const IndiaClinicDigitizationGuide = () => {
   return (
     <div className="bg-white dark:bg-gray-900">
       <HeroSection />
+
+      {/* TL;DR — "In 30 Seconds" for LLM extractability */}
+      <Section className="!py-12 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">In 30 Seconds</span>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">1.</span>
+              <span><strong>This is the complete roadmap for digitizing your Indian clinic</strong> — from paper records to a fully digital practice. Covers every step: EMR, appointments, billing, prescriptions, and ABDM compliance.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">2.</span>
+              <span><strong>ABDM (Ayushman Bharat Digital Mission) is the biggest driver.</strong> Government incentives, ABHA ID linking, and digital health records are becoming mandatory — this guide explains what you need to do and when.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">3.</span>
+              <span><strong>You don&apos;t need to go all-digital on day one.</strong> The 6-phase roadmap lets you digitize progressively, starting with patient records and appointments, then adding billing, prescriptions, and compliance.</span>
+            </li>
+          </ul>
+        </div>
+      </Section>
+
       <WhyDigitizeSection />
       <FivePillarsSection />
       <ABDMSection />
@@ -923,6 +955,12 @@ const IndiaClinicDigitizationGuide = () => {
       />
 
       <ArticleStructuredData />
+
+      <Script
+        id="faq-ld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
 
       <BreadcrumbJsonLd
         items={[

@@ -17,6 +17,7 @@ import {
   MessageCircle,
   Check,
   X,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import SignupCTA from "@/components/SignupCTA";
@@ -36,6 +37,7 @@ export const metadata: Metadata = {
     "Honest comparison of the 6 best clinic management software options in India. Real pros, cons, pricing, and who each is best for. No affiliate bias — just facts.",
   alternates: { canonical: "/best-clinic-management-software-india" },
   openGraph: {
+    type: "website",
     title:
       "Best Clinic Management Software India 2026 — Honest Comparison & Reviews",
     description:
@@ -896,6 +898,31 @@ const BestClinicManagementSoftwareIndia = () => {
   return (
     <div className="bg-white dark:bg-gray-900">
       <HeroSection />
+
+      {/* TL;DR — "In 30 Seconds" for LLM extractability */}
+      <Section className="!py-12 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-b border-blue-100 dark:border-blue-900/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center gap-2 mb-6">
+            <Clock className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-bold text-blue-600 uppercase tracking-widest">In 30 Seconds</span>
+          </div>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">1.</span>
+              <span><strong>This is an honest, unsponsored comparison</strong> of the 6 leading clinic management software options in India — Doxxy, Practo, KiviHealth, DocPulse, HealthPlix, and Bajaj Finserv Health.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">2.</span>
+              <span><strong>Each option is reviewed on pricing, features, ABDM compliance, WhatsApp integration, and honest drawbacks.</strong> No software is perfect — we tell you exactly where each one falls short.</span>
+            </li>
+            <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
+              <span className="text-blue-500 font-bold mt-0.5">3.</span>
+              <span><strong>Use the decision framework at the bottom</strong> to match your clinic size, specialty, budget, and tech comfort to the right option.</span>
+            </li>
+          </ul>
+        </div>
+      </Section>
+
       <WhyTrustSection />
       <ComparisonTableSection />
       <DetailedReviewsSection />

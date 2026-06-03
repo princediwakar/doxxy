@@ -71,6 +71,29 @@ const faqSchema = {
   ],
 };
 
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Improve Patient Experience in Your Clinic — Happy Patients = More Referrals',
+  description: 'Shorter waits, WhatsApp reports, digital payments, and appointment reminders — transform how patients feel about your clinic. Each improvement mapped to a specific, implementable change.',
+  datePublished: '2026-06-02',
+  dateModified: '2026-06-02',
+  author: {
+    '@type': 'Organization',
+    name: 'Doxxy',
+    url: APP_URL,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Doxxy',
+    url: APP_URL,
+  },
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': `${APP_URL}/improve-patient-experience-clinic`,
+  },
+};
+
 export default function ImprovePatientExperience() {
   return (
     <div className="bg-white dark:bg-gray-900">
@@ -605,6 +628,12 @@ export default function ImprovePatientExperience() {
             </p>
           </div>
         </div>
+
+        <Script
+          id="article-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        />
 
         <Script
           id="faq-ld"

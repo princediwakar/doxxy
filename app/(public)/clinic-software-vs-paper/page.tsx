@@ -19,8 +19,9 @@ export const metadata: Metadata = {
   description: 'Paper-based clinic management costs ₹3.6-5.4 lakhs every year in lost time, billing errors, and missed patients. See the real math behind paper vs digital clinic software in India — and how to switch in 4 weeks.',
   alternates: { canonical: '/clinic-software-vs-paper' },
   openGraph: {
+    type: 'website',
     title: 'Clinic Software vs Paper Records — The Real Annual Cost of Paper',
-    description: 'Paper is the most expensive employee in your clinic — costing ₹3.6-5.4 lakhs/year in lost time, missed billing, and buried records. See the math.',
+    description: 'Paper-based clinic management costs ₹3.6-5.4 lakhs every year in lost time, billing errors, and missed patients. See the real math behind paper vs digital clinic software in India.',
     images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: 'Clinic Software vs Paper Records — Doxxy' }],
   },
   keywords: [
@@ -80,6 +81,29 @@ const faqSchema = {
       },
     },
   ],
+};
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: 'Clinic Software vs Paper Records — What Paper Is Actually Costing You Per Year',
+  description: 'Paper-based clinic management costs ₹3.6-5.4 lakhs every year in lost time, billing errors, and missed patients. See the real math behind paper vs digital clinic software in India — and how to switch in 4 weeks.',
+  datePublished: '2026-06-02',
+  dateModified: '2026-06-02',
+  author: {
+    '@type': 'Organization',
+    name: 'Doxxy',
+    url: APP_URL,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Doxxy',
+    url: APP_URL,
+  },
+  mainEntityOfPage: {
+    '@type': 'WebPage',
+    '@id': `${APP_URL}/clinic-software-vs-paper`,
+  },
 };
 
 // --- SECTION COMPONENTS ---
@@ -606,6 +630,11 @@ const ExploreLinksSection = () => (
 export default function ClinicSoftwareVsPaper() {
   return (
     <div className="bg-white dark:bg-gray-900">
+      <Script
+        id="article-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <HeroSection />
       <ProblemSection />
       <CostBreakdownSection />
