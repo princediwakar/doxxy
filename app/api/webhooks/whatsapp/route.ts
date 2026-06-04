@@ -79,36 +79,79 @@ export async function POST(req: Request) {
       // Skip status updates (delivery receipts) — no action needed for now
       if (value.statuses) continue;
 
-      // Process incoming messages for opt-out
+      // Process incoming messages
       if (value.messages) {
         const phoneNumberId = value.metadata?.phone_number_id;
         if (!phoneNumberId) continue;
 
+        // Find the clinic by phone_number_id
+        const { data: connection } = await supabase
+          .from("clinic_whatsapp_connections")
+          .select("clinic_id")
+          .eq("phone_number_id", phoneNumberId)
+          .in("status", ["active", "pending_meta_verification"])
+          .single();
+
+        if (!connection) {
+          console.log(`No clinic connection found for phone_number_id: ${phoneNumberId}`);
+          continue;
+        }
+
         for (const msg of value.messages) {
-          const isOptOut = detectOptOut(msg);
-          if (!isOptOut) continue;
+          const fromPhone = msg.from;
+          const normalizedPhone = normalizeIndianPhone(fromPhone);
 
-          const normalizedPhone = normalizeIndianPhone(msg.from);
-
-          // Find the clinic by phone_number_id and update patient opt-out
-          const { data: connection } = await supabase
-            .from("clinic_whatsapp_connections")
-            .select("clinic_id")
-            .eq("phone_number_id", phoneNumberId)
-            .eq("status", "active")
-            .single();
-
-          if (!connection) continue;
-
-          // Try matching with and without country code prefix
-          await supabase
+          // Look up patient by phone number
+          const { data: patient } = await supabase
             .from("patients")
-            .update({ whatsapp_opt_out: true })
+            .select("id")
             .eq("clinic_id", connection.clinic_id)
-            .or(`phone.eq.${normalizedPhone},phone.eq.${msg.from},phone.eq.${msg.from.replace(/\D/g, "")}`)
-            .not("phone", "is", null);
+            .or(`phone.eq.${normalizedPhone},phone.eq.${fromPhone},phone.eq.${fromPhone.replace(/\D/g, "")}`)
+            .not("phone", "is", null)
+            .maybeSingle();
 
-          console.log(`Opt-out processed: ${msg.from} for clinic ${connection.clinic_id}`);
+          // Extract message text
+          let text = "";
+          if (msg.type === "text" && msg.text?.body) {
+            text = msg.text.body;
+          } else if (msg.type === "interactive" && msg.interactive?.button_reply) {
+            text = msg.interactive.button_reply.title || "";
+          } else {
+            text = `[${msg.type}]`;
+          }
+
+          // Store all inbound messages
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error: insertError } = await (supabase as any)
+            .from("whatsapp_messages")
+            .upsert({
+              clinic_id: connection.clinic_id,
+              patient_id: patient?.id || null,
+              phone_number_id: phoneNumberId,
+              from_phone: fromPhone,
+              direction: "inbound",
+              text,
+              whatsapp_message_id: msg.id,
+            }, {
+              onConflict: "whatsapp_message_id",
+            });
+
+          if (insertError) {
+            console.error("Failed to store WhatsApp message:", insertError);
+          }
+
+          // Process opt-out
+          const isOptOut = detectOptOut(msg);
+          if (isOptOut) {
+            await supabase
+              .from("patients")
+              .update({ whatsapp_opt_out: true })
+              .eq("clinic_id", connection.clinic_id)
+              .or(`phone.eq.${normalizedPhone},phone.eq.${fromPhone},phone.eq.${fromPhone.replace(/\D/g, "")}`)
+              .not("phone", "is", null);
+
+            console.log(`Opt-out processed: ${fromPhone} for clinic ${connection.clinic_id}`);
+          }
         }
       }
     }
