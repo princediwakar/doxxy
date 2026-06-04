@@ -61,13 +61,13 @@ const faqs = [
     category: 'billing',
     question: 'What are your pricing plans?',
     answer:
-      'Doxxy keeps pricing simple:\n• Practice Essentials – FREE for the first 100 lifetime appointments.\n• Clinical Excellence – ₹10 per consultation (discounted from ₹20), unlimited doctors & locations.\nThere are no yearly commitments or hidden add-ons.',
+      'Doxxy keeps pricing simple:\n• Practice Essentials – FREE for the first 100 lifetime consultations.\n• Clinical Excellence – ₹10 per consultation (discounted from ₹20), unlimited doctors & locations.\nThere are no yearly commitments or hidden add-ons.',
   },
   {
     category: 'billing',
     question: 'Is there a setup fee or long-term contract?',
     answer:
-      'No. Pay only for what you use once you cross the 100-appointment threshold. You can downgrade, upgrade, or cancel at any time.',
+      'No. Pay only for what you use once you cross the 100-consultation threshold. You can downgrade, upgrade, or cancel at any time.',
   },
   {
     category: 'billing',

@@ -29,7 +29,7 @@ const practoConfig: ComparisonConfig = {
     { title: 'Expensive Add-ons', competitor: 'Many essential features in Practo require additional payments beyond the base subscription.', doxxy: "All features are included in Doxxy's simple per-consultation pricing with no hidden costs or premium tiers." },
   ],
   testimonialItems: [
-    { quote: 'After using Practo for two years, we switched to Doxxy and immediately noticed the difference in usability. Our staff required minimal training, and the pay-per-appointment model has saved us nearly 35% on monthly costs.', name: 'Dr. Vikram Mehta', clinic: 'Mehta Family Clinic, Mumbai', photo: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=100&h=100&fit=crop' },
+    { quote: 'After using Practo for two years, we switched to Doxxy and immediately noticed the difference in usability. Our staff required minimal training, and the pay-per-consultation model has saved us nearly 35% on monthly costs.', name: 'Dr. Vikram Mehta', clinic: 'Mehta Family Clinic, Mumbai', photo: 'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=100&h=100&fit=crop' },
     { quote: "The biggest advantage of Doxxy over Practo is the pricing transparency. With Practo, we were constantly surprised by additional charges for features we thought were included. Doxxy's all-inclusive pricing is refreshingly simple.", name: 'Dr. Ananya Gupta', clinic: 'Wellness Pediatrics, Bangalore', photo: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=100&h=100&fit=crop' },
   ],
   featureComparisonRows: [

@@ -330,7 +330,7 @@ const TestimonialSection = () => (
       <BarChart3 className="h-10 w-10 text-blue-500 mx-auto mb-4" />
       <blockquote className="text-xl md:text-2xl font-medium text-gray-900 dark:text-white">
         "After switching from a subscription-based platform that charged per
-        doctor, we're saving over 40% with Doxxy's per-appointment model. The
+        doctor, we're saving over 40% with Doxxy's per-consultation model. The
         best part is we only pay for what we actually use."
       </blockquote>
       <figcaption className="mt-6">

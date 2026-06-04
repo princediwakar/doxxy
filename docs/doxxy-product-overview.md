@@ -100,7 +100,7 @@ Doxxy is a cloud-based clinic management platform purpose-built for small to med
 
 | | Doxxy | Traditional Platforms |
 |---|---|---|
-| **Pricing model** | Per appointment (INR 10) | Monthly subscription + per-doctor fees |
+| **Pricing model** | Per consultation (INR 10) | Monthly subscription + per-doctor fees |
 | **Free tier** | First 100 consultations free | 14-30 day time-limited trial |
 | **Doctor limits** | Unlimited on all plans | Pay per doctor/provider |
 | **Contract** | No commitment, cancel anytime | Annual contracts with penalties |
@@ -202,7 +202,7 @@ Full PWA support with manifest, service worker, and app icons. Install Doxxy on 
 - **Phone:** +91 7388890554
 - **Address:** Mumbai, India
 
-**Ready to transform your practice?** Start with 100 free appointments. No setup fees. No commitment. Cancel anytime.
+**Ready to transform your practice?** Start with 100 free consultations. No setup fees. No commitment. Cancel anytime.
 
 ---
 

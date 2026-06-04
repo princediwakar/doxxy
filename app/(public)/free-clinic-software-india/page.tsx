@@ -12,11 +12,11 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Free Clinic Software India 2026 — What\'s Actually Free (Honest Guide)',
-  description: 'Honest guide to free clinic management software in India. Compare e-Sushrut, OpenMRS, Practo Ray, and Doxxy\'s 100 free appointments. No bait-and-switch.',
+  description: 'Honest guide to free clinic management software in India. Compare e-Sushrut, OpenMRS, Practo Ray, and Doxxy\'s 100 free consultations. No bait-and-switch.',
   alternates: { canonical: '/free-clinic-software-india' },
   openGraph: {
     title: 'Free Clinic Software India 2026 — What\'s Actually Free (Honest Guide)',
-    description: 'Honest guide to free clinic management software in India. Compare e-Sushrut, OpenMRS, Practo Ray, and Doxxy\'s 100 free appointments. No bait-and-switch.',
+    description: 'Honest guide to free clinic management software in India. Compare e-Sushrut, OpenMRS, Practo Ray, and Doxxy\'s 100 free consultations. No bait-and-switch.',
     images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: 'Free Clinic Software India Guide' }],
   },
   keywords: ['free clinic management software India', 'free EMR for doctors', 'free clinic software', 'free electronic medical records software India', 'clinic software free trial'],
@@ -81,7 +81,7 @@ const freeOptions: FreeOption[] = [
     letter: 'D',
     color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
     whatIsFree: 'First 100 consultations free. Forever. No time limit. Full features included — EMR, digital prescriptions, billing, WhatsApp reminders. Unlimited doctors and staff. No credit card required.',
-    catch: 'After 100 consultations, it is ₹10 per consultation. If your clinic sees 30+ patients a day, your free appointments run out in 3–4 days. Cloud-based — needs internet. Built for Indian clinics, not suitable if you are outside India.',
+    catch: 'After 100 consultations, it is ₹10 per consultation. If your clinic sees 30+ patients a day, your free consultations run out in 3–4 days. Cloud-based — needs internet. Built for Indian clinics, not suitable if you are outside India.',
     bestFor: 'Small to medium Indian clinics (1–5 doctors) wanting to start digital without upfront cost. New practices testing the waters.',
     verdict: 'Honest — most generous free tier among commercial options.',
     verdictType: 'honest',
@@ -134,19 +134,19 @@ const comparisonRows = [
 const faqs = [
   {
     question: 'Is there really a completely free clinic management software in India?',
-    answer: 'Yes and no. e-Sushrut by C-DAC is genuinely free (government-funded), but it is built for government hospitals — not private clinics. OpenMRS is free open-source software, but you will pay for hosting (₹500–₹1,000/month) and need IT staff to maintain it. For private clinics wanting zero upfront cost, Doxxy\'s Practice Essentials gives you 100 free appointments with full features and no time limit. After that, it is ₹10 per consultation. There is no completely free, full-featured, ready-to-use clinic software for private clinics in India — anyone claiming otherwise is hiding a catch.',
+    answer: 'Yes and no. e-Sushrut by C-DAC is genuinely free (government-funded), but it is built for government hospitals — not private clinics. OpenMRS is free open-source software, but you will pay for hosting (₹500–₹1,000/month) and need IT staff to maintain it. For private clinics wanting zero upfront cost, Doxxy\'s Practice Essentials gives you 100 free consultations with full features and no time limit. After that, it is ₹10 per consultation. There is no completely free, full-featured, ready-to-use clinic software for private clinics in India — anyone claiming otherwise is hiding a catch.',
   },
   {
     question: 'What\'s the best free clinic software for a small clinic?',
-    answer: 'It depends on what "small" means. If you see fewer than 5 patients a day as a solo doctor, Google Sheets + WhatsApp works — but you will have no security, no prescription templates, and no way to search patient history efficiently. If you see 5–15 patients a day, a free plan like Doxxy Practice Essentials (100 free appointments, full features) is the best fit among commercial options. If you see 20+ patients a day, no free plan will last you more than a week — you should evaluate paid plans based on per-consultation pricing rather than chasing "free."',
+    answer: 'It depends on what "small" means. If you see fewer than 5 patients a day as a solo doctor, Google Sheets + WhatsApp works — but you will have no security, no prescription templates, and no way to search patient history efficiently. If you see 5–15 patients a day, a free plan like Doxxy Practice Essentials (100 free consultations, full features) is the best fit among commercial options. If you see 20+ patients a day, no free plan will last you more than a week — you should evaluate paid plans based on per-consultation pricing rather than chasing "free."',
   },
   {
     question: 'Does Doxxy really give 100 consultations free?',
     answer: 'Yes. The first 100 consultations on Doxxy Practice Essentials are completely free. No time limit — you can use them over 3 months or 3 years. No credit card required. Full features included: EMR, digital prescriptions, billing, WhatsApp reminders. No hidden per-doctor fees. This is not a trial; it is a genuine free tier. The business model works because clinics that grow past 100 consultations typically stay and pay ₹10 per consultation.',
   },
   {
-    question: 'What happens after I use up my 100 free appointments?',
-    answer: 'Your account continues without interruption. Appointments 101 onwards are billed at ₹10 per consultation. If a patient does not show up, you are not charged for that appointment. There is no subscription, no annual contract, and no per-doctor fees. You only pay for consultations that actually happen. You can stop using Doxxy anytime and export all your data.',
+    question: 'What happens after I use up my 100 free consultations?',
+    answer: 'Your account continues without interruption. Consultations 101 onwards are billed at ₹10 per consultation. If a patient does not show up, you are not charged for that consultation. There is no subscription, no annual contract, and no per-doctor fees. You only pay for consultations that actually happen. You can stop using Doxxy anytime and export all your data.',
   },
   {
     question: 'Can I export my data if I start with free and want to leave?',
@@ -154,7 +154,7 @@ const faqs = [
   },
   {
     question: 'Why would Doxxy give away free appointments? What\'s the catch?',
-    answer: 'The catch is honest math, not a hidden trap. Most clinics that try Doxxy and see 100 patients through the platform find it indispensable and continue as paying customers at ₹10 per consultation. The free appointments are our customer acquisition cost — instead of spending money on Google ads and sales teams, we invest it in letting you actually use the product. If your clinic is too small to ever cross 100 consultations, you get a genuinely free clinic management tool. If your clinic grows, we earn your business. That is the entire model.',
+    answer: 'The catch is honest math, not a hidden trap. Most clinics that try Doxxy and see 100 patients through the platform find it indispensable and continue as paying customers at ₹10 per consultation. The free consultations are our customer acquisition cost — instead of spending money on Google ads and sales teams, we invest it in letting you actually use the product. If your clinic is too small to ever cross 100 consultations, you get a genuinely free clinic management tool. If your clinic grows, we earn your business. That is the entire model.',
   },
 ];
 
@@ -282,7 +282,7 @@ export default function FreeClinicSoftwareIndia() {
       <Section className="bg-gray-50 dark:bg-gray-800/50">
         <SectionTitle>Why Doxxy&apos;s Free Plan Is Different.</SectionTitle>
         <SectionSubtitle className="mt-4">
-          First 100 Appointments Free. Forever. No Asterisks.
+          First 100 Consultations Free. Forever. No Asterisks.
         </SectionSubtitle>
 
         {/* Differentiators grid */}
@@ -293,7 +293,7 @@ export default function FreeClinicSoftwareIndia() {
             </div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">No Time Limit</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Not 14 days. Not 30 days. Use your 100 free appointments over 3 months or 3 years. The clock does not tick.
+              Not 14 days. Not 30 days. Use your 100 free consultations over 3 months or 3 years. The clock does not tick.
             </p>
           </div>
 
@@ -485,7 +485,7 @@ export default function FreeClinicSoftwareIndia() {
       <Section className="text-center">
         <SectionTitle>Try Doxxy Free. Or Don&apos;t. At Least Now You Know Your Options.</SectionTitle>
         <SectionSubtitle className="mt-4">
-          We wrote this guide because clinic owners deserve honesty, not marketing. If Doxxy fits your clinic, start with 100 free appointments. If another option fits better, use it. The important thing is that you stop running your clinic on paper and WhatsApp alone.
+          We wrote this guide because clinic owners deserve honesty, not marketing. If Doxxy fits your clinic, start with 100 free consultations. If another option fits better, use it. The important thing is that you stop running your clinic on paper and WhatsApp alone.
         </SectionSubtitle>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">

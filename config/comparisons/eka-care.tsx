@@ -29,7 +29,7 @@ const ekaCareConfig: ComparisonConfig = {
     { title: 'Hidden Costs', competitor: 'Eka Care charges additional fees for setup, training, and premium support.', doxxy: 'Doxxy includes setup assistance, training, and premium support at no additional cost.' },
   ],
   testimonialItems: [
-    { quote: "After switching from Eka Care to Doxxy, our monthly software costs decreased by nearly 40%. The pay-per-appointment model is much more aligned with our practice's cash flow.", name: 'Dr. Rajesh Sharma', clinic: 'Family Care Clinic, Mumbai', photo: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop' },
+    { quote: "After switching from Eka Care to Doxxy, our monthly software costs decreased by nearly 40%. The pay-per-consultation model is much more aligned with our practice's cash flow.", name: 'Dr. Rajesh Sharma', clinic: 'Family Care Clinic, Mumbai', photo: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=100&h=100&fit=crop' },
     { quote: "We were hesitant to switch EMR systems, but Doxxy's migration process was seamless. Their team imported all our patient data from Eka Care without any downtime.", name: 'Dr. Priya Patel', clinic: 'Wellness Medical Center, Pune', photo: 'https://images.unsplash.com/photo-1594824175513-9daa7a191e78?w=100&h=100&fit=crop' },
   ],
   featureComparisonRows: [

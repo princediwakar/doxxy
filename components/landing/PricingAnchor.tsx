@@ -56,7 +56,7 @@ export default function PricingAnchor() {
               href="/auth"
               className="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 rounded-xl text-base transition-colors shadow-lg shadow-blue-600/25"
             >
-              Start with 100 Free Appointments
+              Start with 100 Free Consultations
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a
