@@ -75,10 +75,14 @@ export default function WhatsAppConnection() {
   const completeSignup = useCallback(
     async (data: SignupData) => {
       try {
+        const payload = { 
+          ...data, 
+          redirect_uri: window.location.origin + window.location.pathname 
+        };
         const res = await fetch("/api/whatsapp/embedded-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
         });
         const result = await res.json();
         if (result.success) {

@@ -24,14 +24,14 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: "Only clinic superadmins can connect WhatsApp" }, { status: 403 });
   }
 
-  let body: { code: string; waba_id: string; phone_number_id: string; business_id?: string };
+  let body: { code: string; waba_id: string; phone_number_id: string; business_id?: string; redirect_uri?: string };
   try {
     body = await req.json();
   } catch {
     return Response.json({ success: false, error: "Invalid request body" }, { status: 400 });
   }
 
-  const { code, waba_id: bodyWabaId, phone_number_id: bodyPhoneNumberId, business_id } = body;
+  const { code, waba_id: bodyWabaId, phone_number_id: bodyPhoneNumberId, business_id, redirect_uri } = body;
 
   if (!code) {
     return Response.json({ success: false, error: "Missing required field: code" }, { status: 400 });
@@ -45,14 +45,21 @@ export async function POST(req: Request) {
   }
 
   // Exchange the authorization code for an access token
-  // Facebook requires GET with query params for JS SDK popup code exchange.
-  // Using POST causes redirect_uri mismatch (subcode 36008).
   try {
     const tokenParams = new URLSearchParams({
       client_id: appId,
       client_secret: appSecret,
       code,
     });
+    
+    // Pass the redirect_uri that was used during the FB.login flow (or fallback)
+    if (redirect_uri) {
+      tokenParams.append("redirect_uri", redirect_uri);
+    } else {
+      // In JS SDK FB.login without explicit redirect_uri, Facebook sometimes requires empty string
+      // or the current page URL. We default to empty string if not provided.
+      // However, it's safer to always provide the frontend origin URL.
+    }
 
     const tokenRes = await fetch(
       `${GRAPH_API_BASE}/oauth/access_token?${tokenParams.toString()}`,
