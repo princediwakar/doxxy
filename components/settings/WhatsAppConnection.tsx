@@ -3,7 +3,6 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import Script from "next/script";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,19 +12,6 @@ import { getSupabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MessageCircle, CheckCircle } from "lucide-react";
-
-declare global {
-  interface Window {
-    fbAsyncInit?: () => void;
-    FB?: {
-      init: (params: Record<string, unknown>) => void;
-      login: (
-        cb: (r: { authResponse?: { code: string } }) => void,
-        opts: Record<string, unknown>,
-      ) => void;
-    };
-  }
-}
 
 interface WhatsAppConnectionRow {
   id: string;
@@ -37,15 +23,6 @@ interface WhatsAppConnectionRow {
   created_at: string;
 }
 
-interface SignupData {
-  code: string;
-  waba_id: string;
-  phone_number_id: string;
-  business_id: string;
-  isFallback?: boolean;
-  submitting?: boolean;
-}
-
 export default function WhatsAppConnection() {
   const { activeClinicId, activeClinicRole } = useAppState();
   const queryClient = useQueryClient();
@@ -55,7 +32,6 @@ export default function WhatsAppConnection() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [nameApproved, setNameApproved] = useState(true);
   const [verificationCode, setVerificationCode] = useState("");
-  const signupRef = useRef<Partial<SignupData>>({});
   const urlParamsProcessed = useRef(false);
 
   const { data: connection, isLoading } = useQuery({
@@ -73,22 +49,17 @@ export default function WhatsAppConnection() {
     enabled: !!activeClinicId && activeClinicRole === "superadmin",
   });
 
-  // Send combined signup data to backend
   const completeSignup = useCallback(
-    async (data: SignupData & { isFallback?: boolean }) => {
+    async (data: { code: string; waba_id: string; phone_number_id: string; business_id: string }) => {
       try {
-        // JS SDK popup flow: redirect_uri key must not exist in the payload at all.
-        // Fallback redirect: must be the exact page URL byte-for-byte.
         const payload: Record<string, unknown> = {
           code: data.code,
           waba_id: data.waba_id,
           phone_number_id: data.phone_number_id,
           business_id: data.business_id,
+          redirect_uri: window.location.origin + window.location.pathname,
         };
 
-        if (data.isFallback) {
-          payload.redirect_uri = window.location.origin + window.location.pathname;
-        }
         const res = await fetch("/api/whatsapp/embedded-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -116,8 +87,6 @@ export default function WhatsAppConnection() {
       } catch {
         toast.error("Failed to complete connection");
         setAction("idle");
-      } finally {
-        signupRef.current = {};
       }
     },
     [activeClinicId, queryClient],
@@ -150,63 +119,7 @@ export default function WhatsAppConnection() {
     }
   }, [verificationCode, activeClinicId, queryClient]);
 
-  // Listen for Embedded Signup postMessage events (waba_id, phone_number_id)
-  useEffect(() => {
-    const handler = (event: MessageEvent) => {
-      if (
-        event.origin !== "https://www.facebook.com" &&
-        event.origin !== "https://web.facebook.com"
-      )
-        return;
-
-      let data: {
-        type?: string;
-        event?: string;
-        data?: { waba_id?: string; phone_number_id?: string; business_id?: string };
-      };
-      try {
-        data = JSON.parse(event.data);
-      } catch {
-        return;
-      }
-
-      if (data.type !== "WA_EMBEDDED_SIGNUP") return;
-
-      if (data.event === "FINISH") {
-        const { waba_id, phone_number_id, business_id } = data.data || {};
-        signupRef.current = {
-          ...signupRef.current,
-          waba_id: waba_id || "",
-          phone_number_id: phone_number_id || "",
-          business_id: business_id || "",
-        };
-
-        // If FB.login callback already gave us the code, complete now
-        if (signupRef.current.code && !signupRef.current.submitting) {
-          signupRef.current.submitting = true;
-          completeSignup(signupRef.current as SignupData);
-        }
-      }
-
-      if (data.event === "CANCEL") {
-        setAction("idle");
-        signupRef.current = {};
-        toast.error("WhatsApp connection was cancelled");
-      }
-
-      if (data.event === "ERROR") {
-        setAction("idle");
-        signupRef.current = {};
-        toast.error("WhatsApp connection failed. Please try again.");
-      }
-    };
-
-    window.addEventListener("message", handler);
-    return () => window.removeEventListener("message", handler);
-  }, [completeSignup]);
-
-  // Handle fallback redirect: when popup is blocked, Facebook redirects the
-  // full page to the fallback_redirect_uri with the OAuth code in the URL.
+  // Process OAuth redirect: Meta sends the user back here with ?code=... in the URL.
   useEffect(() => {
     if (urlParamsProcessed.current) return;
 
@@ -215,20 +128,15 @@ export default function WhatsAppConnection() {
 
     urlParamsProcessed.current = true;
 
-    const wabaId = searchParams.get("waba_id");
-    const phoneNumberId = searchParams.get("phone_number_id");
-    const businessId = searchParams.get("business_id");
-
-    signupRef.current = {
+    const data = {
       code,
-      waba_id: wabaId || "",
-      phone_number_id: phoneNumberId || "",
-      business_id: businessId || "",
-      isFallback: true,
+      waba_id: searchParams.get("waba_id") || "",
+      phone_number_id: searchParams.get("phone_number_id") || "",
+      business_id: searchParams.get("business_id") || "",
     };
 
     setAction("connecting");
-    completeSignup(signupRef.current as SignupData & { isFallback: boolean });
+    completeSignup(data);
   }, [searchParams, completeSignup]);
 
   // Timeout: reset hung "connecting" state after 5 minutes
@@ -237,7 +145,6 @@ export default function WhatsAppConnection() {
 
     const timeout = setTimeout(() => {
       setAction("idle");
-      signupRef.current = {};
       toast.error("WhatsApp connection timed out. Please try again.");
     }, 5 * 60 * 1000);
 
@@ -245,52 +152,27 @@ export default function WhatsAppConnection() {
   }, [action]);
 
   const launchWhatsAppSignup = useCallback(() => {
-    if (!window.FB) {
-      toast.error("Facebook SDK not loaded. Please refresh the page.");
-      return;
-    }
-
     const configId = process.env.NEXT_PUBLIC_WHATSAPP_CONFIG_ID;
-    if (!configId) {
+    const appId = process.env.NEXT_PUBLIC_META_APP_ID;
+
+    if (!configId || !appId) {
       toast.error("WhatsApp Embedded Signup is not configured yet");
       return;
     }
 
     setAction("connecting");
-    signupRef.current = {};
 
-    window.FB.login(
-      (response) => {
-        if (response.authResponse?.code) {
-          signupRef.current.code = response.authResponse.code;
+    const redirectUri = window.location.origin + window.location.pathname;
 
-          // Unconditionally complete signup. If waba_id is missing, backend Graph API fallback handles it.
-          if (!signupRef.current.submitting) {
-            signupRef.current.submitting = true;
-            completeSignup({
-              code: signupRef.current.code,
-              waba_id: signupRef.current.waba_id || "",
-              phone_number_id: signupRef.current.phone_number_id || "",
-              business_id: signupRef.current.business_id || "",
-            });
-          }
-        } else {
-          setAction("idle");
-          signupRef.current = {};
-          toast.error("WhatsApp connection was cancelled or failed");
-        }
-      },
-      {
-        config_id: configId,
-        response_type: "code",
-        override_default_response_type: true,
-        extras: {
-          version: "v4",
-          sessionInfoVersion: "3"
-        },
-      },
-    );
-  }, [completeSignup]);
+    const params = new URLSearchParams({
+      client_id: appId,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      config_id: configId,
+    });
+
+    window.location.href = `https://www.facebook.com/v25.0/dialog/oauth?${params.toString()}`;
+  }, []);
 
   const handleDisconnect = useCallback(async () => {
     if (!activeClinicId) return;
@@ -325,9 +207,8 @@ export default function WhatsAppConnection() {
   const isPending = connection?.status === "pending_meta_verification";
 
   return (
-    <>
-      <Card>
-        <CardHeader>
+    <Card>
+      <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageCircle className="h-5 w-5 text-green-600" />
           WhatsApp Business
@@ -459,18 +340,5 @@ export default function WhatsAppConnection() {
         )}
       </CardContent>
     </Card>
-      <Script
-        src="https://connect.facebook.net/en_US/sdk.js"
-        strategy="afterInteractive"
-        onLoad={() => {
-          window.FB?.init({
-            appId: process.env.NEXT_PUBLIC_META_APP_ID!,
-            autoLogAppEvents: true,
-            xfbml: false,
-            version: "v25.0",
-          });
-        }}
-      />
-    </>
   );
 }
