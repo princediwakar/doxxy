@@ -55,11 +55,13 @@ export async function POST(req: Request) {
       redirect_uri: redirect_uri || "",
     });
 
-    // DEBUG CHECKPOINT 1: exact payload being sent to Meta
+    // DEBUG CHECKPOINT 1: exact payload being sent to Meta (secret redacted)
+    const debugParams = new URLSearchParams(tokenParams.toString());
+    debugParams.set("client_secret", "[REDACTED]");
     console.log("========================================");
     console.log("🔥 [DEBUG] OUTGOING TOKEN EXCHANGE TO META:");
     console.log(`URL: ${GRAPH_API_BASE}/oauth/access_token`);
-    console.log(`PAYLOAD: ${tokenParams.toString()}`);
+    console.log(`PAYLOAD: ${debugParams.toString()}`);
     console.log("========================================");
 
     const tokenRes = await fetch(
@@ -115,18 +117,30 @@ export async function POST(req: Request) {
     let phone_number_id = bodyPhoneNumberId || "";
     let displayPhoneNumber: string | null = null;
 
-    // If waba_id or phone_number_id missing (fallback redirect case), resolve via Graph API
+    // If waba_id or phone_number_id missing, resolve via /debug_token
+    // Embedded Signup tokens have the WABA ID attached in granular_scopes
     if (!waba_id || !phone_number_id) {
       try {
-        const accountsRes = await fetch(
-          `${GRAPH_API_BASE}/me/assigned_whatsapp_business_accounts`,
-          { headers: { Authorization: `Bearer ${accessToken}` } },
+        console.log("🔥 [DEBUG] Resolving WABA ID via debug_token...");
+
+        const debugRes = await fetch(
+          `${GRAPH_API_BASE}/debug_token?input_token=${accessToken}&access_token=${appId}|${appSecret}`,
         );
-        if (accountsRes.ok) {
-          const accountsData = await accountsRes.json();
-          const account = accountsData.data?.[0];
-          if (account) {
-            waba_id = waba_id || account.id;
+
+        if (debugRes.ok) {
+          const debugData = await debugRes.json();
+          const scopes: Array<{ scope: string; target_ids?: string[] }> =
+            debugData.data?.granular_scopes || [];
+
+          const waScope = scopes.find(
+            (s) =>
+              s.scope === "whatsapp_business_messaging" ||
+              s.scope === "whatsapp_business_management",
+          );
+
+          if (waScope?.target_ids?.length) {
+            waba_id = waScope.target_ids[0];
+            console.log(`🔥 [DEBUG] Found WABA ID via debug_token: ${waba_id}`);
 
             const phonesRes = await fetch(
               `${GRAPH_API_BASE}/${waba_id}/phone_numbers`,
@@ -136,14 +150,19 @@ export async function POST(req: Request) {
               const phonesData = await phonesRes.json();
               const phone = phonesData.data?.[0];
               if (phone) {
-                phone_number_id = phone_number_id || phone.id;
+                phone_number_id = phone.id;
                 displayPhoneNumber = phone.display_phone_number || null;
+                console.log(`🔥 [DEBUG] Found Phone ID via debug_token: ${phone_number_id}`);
               }
             }
+          } else {
+            console.error("🔥 [DEBUG] No WhatsApp scopes found in granular_scopes:", JSON.stringify(scopes));
           }
+        } else {
+          console.error("🔥 [DEBUG] debug_token request failed:", await debugRes.text());
         }
       } catch (err) {
-        console.error("WABA lookup failed:", err);
+        console.error("🔥 [DEBUG] WABA lookup via debug_token failed:", err);
       }
     }
 
