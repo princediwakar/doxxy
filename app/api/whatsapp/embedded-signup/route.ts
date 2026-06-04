@@ -46,35 +46,27 @@ export async function POST(req: Request) {
 
   // Exchange the authorization code for an access token
   try {
-    // JS SDK popup: redirect_uri must be present but empty (redirect_uri=).
-    // Fallback redirect: must be the exact page URL byte-for-byte.
     const tokenParams = new URLSearchParams({
       client_id: appId,
       client_secret: appSecret,
       code,
-      redirect_uri: redirect_uri || "",
     });
 
-    // DEBUG CHECKPOINT 1: exact payload being sent to Meta (secret redacted)
-    const debugParams = new URLSearchParams(tokenParams.toString());
-    debugParams.set("client_secret", "[REDACTED]");
-    console.log("========================================");
-    console.log("🔥 [DEBUG] OUTGOING TOKEN EXCHANGE TO META:");
-    console.log(`URL: ${GRAPH_API_BASE}/oauth/access_token`);
-    console.log(`PAYLOAD: ${debugParams.toString()}`);
-    console.log("========================================");
+    // JS SDK popup: redirect_uri must be omitted entirely.
+    // Fallback redirect: must be the exact page URL byte-for-byte.
+    if (redirect_uri) {
+      tokenParams.set("redirect_uri", redirect_uri);
+    }
+
+    console.log("[WhatsApp] Exchanging code for token...");
 
     const tokenRes = await fetch(
       `${GRAPH_API_BASE}/oauth/access_token?${tokenParams.toString()}`,
     );
 
     if (!tokenRes.ok) {
-      // DEBUG CHECKPOINT 2: exact raw error from Meta
       const errText = await tokenRes.text();
-      console.error("========================================");
-      console.error("❌ [FATAL] META REJECTED THE EXCHANGE:");
-      console.error(`RAW RESPONSE: ${errText}`);
-      console.error("========================================");
+      console.error("[WhatsApp] Token exchange failed:", errText);
       return Response.json({ success: false, error: `Failed to exchange authorization code: ${errText}` }, { status: 502 });
     }
 
@@ -121,7 +113,7 @@ export async function POST(req: Request) {
     // Embedded Signup tokens have the WABA ID attached in granular_scopes
     if (!waba_id || !phone_number_id) {
       try {
-        console.log("🔥 [DEBUG] Resolving WABA ID via debug_token...");
+        console.log("[WhatsApp] Resolving WABA ID via debug_token...");
 
         const debugRes = await fetch(
           `${GRAPH_API_BASE}/debug_token?input_token=${accessToken}&access_token=${appId}|${appSecret}`,
@@ -140,7 +132,7 @@ export async function POST(req: Request) {
 
           if (waScope?.target_ids?.length) {
             waba_id = waScope.target_ids[0];
-            console.log(`🔥 [DEBUG] Found WABA ID via debug_token: ${waba_id}`);
+            console.log(`[WhatsApp] Found WABA ID: ${waba_id}`);
 
             const phonesRes = await fetch(
               `${GRAPH_API_BASE}/${waba_id}/phone_numbers`,
@@ -156,22 +148,22 @@ export async function POST(req: Request) {
               if (realPhone) {
                 phone_number_id = realPhone.id;
                 displayPhoneNumber = realPhone.display_phone_number || null;
-                console.log(`🔥 [DEBUG] Found Phone ID via debug_token: ${phone_number_id}`);
+                console.log(`[WhatsApp] Found Phone ID: ${phone_number_id}`);
               } else {
                 console.error(
-                  "🔥 [DEBUG] No real phone numbers found. All phones:",
+                  "[WhatsApp] No real phone numbers found. All phones:",
                   JSON.stringify(phonesData.data),
                 );
               }
             }
           } else {
-            console.error("🔥 [DEBUG] No WhatsApp scopes found in granular_scopes:", JSON.stringify(scopes));
+            console.error("[WhatsApp] No WhatsApp scopes found in granular_scopes:", JSON.stringify(scopes));
           }
         } else {
-          console.error("🔥 [DEBUG] debug_token request failed:", await debugRes.text());
+          console.error("[WhatsApp] debug_token request failed:", await debugRes.text());
         }
       } catch (err) {
-        console.error("🔥 [DEBUG] WABA lookup via debug_token failed:", err);
+        console.error("[WhatsApp] WABA lookup via debug_token failed:", err);
       }
     }
 
@@ -195,7 +187,7 @@ export async function POST(req: Request) {
       const phoneData = await phoneRes.json();
       displayPhoneNumber = phoneData.display_phone_number || displayPhoneNumber || null;
       phoneVerified = phoneData.code_verification_status === "VERIFIED";
-      nameApproved = phoneData.name_status === "APPROVED";
+      nameApproved = phoneData.name_status === "APPROVED" || phoneData.name_status === "AVAILABLE_WITHOUT_REVIEW";
       qualityRating = phoneData.quality_rating || null;
     }
 
@@ -248,7 +240,7 @@ export async function POST(req: Request) {
         },
       );
       if (registerRes.ok) {
-        console.log("🔥 [DEBUG] Phone registered for Cloud API");
+        console.log("[WhatsApp] Phone registered for Cloud API");
       } else {
         const err = await registerRes.text();
         console.error("register failed:", err);
@@ -267,7 +259,7 @@ export async function POST(req: Request) {
         },
       );
       if (webhookRes.ok) {
-        console.log("🔥 [DEBUG] Webhook subscribed for WABA:", waba_id);
+        console.log("[WhatsApp] Webhook subscribed for WABA:", waba_id);
       } else {
         const err = await webhookRes.text();
         console.error("subscribed_apps failed:", err);

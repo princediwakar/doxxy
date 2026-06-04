@@ -83,7 +83,7 @@ export default function WhatsAppConnection() {
           redirect_uri: data.redirect_uri,
         };
 
-        console.log("🔥 [DEBUG] SENDING TO BACKEND:", JSON.stringify(payload, null, 2));
+
 
         const res = await fetch("/api/whatsapp/embedded-signup", {
           method: "POST",
@@ -255,10 +255,7 @@ export default function WhatsAppConnection() {
     setAction("connecting");
     signupRef.current = {};
 
-    const currentRedirectUri = window.location.origin + window.location.pathname;
 
-    console.log("🔥 [DEBUG] LAUNCHING FB.LOGIN EMBEDDED SIGNUP:");
-    console.log(`Redirect URI: ${currentRedirectUri}`);
 
     window.FB.login(
       (response) => {
@@ -274,7 +271,6 @@ export default function WhatsAppConnection() {
               waba_id: signupRef.current.waba_id,
               phone_number_id: signupRef.current.phone_number_id || "",
               business_id: signupRef.current.business_id || "",
-              redirect_uri: currentRedirectUri,
             });
           }
         } else {
@@ -287,9 +283,6 @@ export default function WhatsAppConnection() {
         config_id: configId,
         response_type: "code",
         override_default_response_type: true,
-        extras: {
-          sessionInfoVersion: "3",
-        },
       },
     );
   }, [completeSignup]);

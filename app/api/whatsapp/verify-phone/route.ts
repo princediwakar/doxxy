@@ -81,7 +81,7 @@ export async function POST(req: Request) {
       );
       if (phoneRes.ok) {
         const phoneData = await phoneRes.json();
-        const nameApproved = phoneData.name_status === "APPROVED";
+        const nameApproved = phoneData.name_status === "APPROVED" || phoneData.name_status === "AVAILABLE_WITHOUT_REVIEW";
         if (nameApproved) {
           await supabase
             .from("clinic_whatsapp_connections")
