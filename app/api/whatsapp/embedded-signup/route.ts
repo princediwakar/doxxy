@@ -148,11 +148,20 @@ export async function POST(req: Request) {
             );
             if (phonesRes.ok) {
               const phonesData = await phonesRes.json();
-              const phone = phonesData.data?.[0];
-              if (phone) {
-                phone_number_id = phone.id;
-                displayPhoneNumber = phone.display_phone_number || null;
+              // Filter out Meta's test numbers (555-XXXX)
+              const realPhone = phonesData.data?.find(
+                (p: { display_phone_number?: string; id: string }) =>
+                  !p.display_phone_number?.includes("555"),
+              );
+              if (realPhone) {
+                phone_number_id = realPhone.id;
+                displayPhoneNumber = realPhone.display_phone_number || null;
                 console.log(`🔥 [DEBUG] Found Phone ID via debug_token: ${phone_number_id}`);
+              } else {
+                console.error(
+                  "🔥 [DEBUG] No real phone numbers found. All phones:",
+                  JSON.stringify(phonesData.data),
+                );
               }
             }
           } else {
@@ -188,6 +197,14 @@ export async function POST(req: Request) {
       phoneVerified = phoneData.code_verification_status === "VERIFIED";
       nameApproved = phoneData.name_status === "APPROVED";
       qualityRating = phoneData.quality_rating || null;
+    }
+
+    // Reject Meta test numbers that slip through (555-XXXX)
+    if (displayPhoneNumber?.includes("555")) {
+      return Response.json({
+        success: false,
+        error: "A Meta test phone number was detected. Please disconnect and reconnect, making sure to add a real phone number during the WhatsApp setup.",
+      }, { status: 400 });
     }
 
     // Only activate if Meta has fully approved the phone number
@@ -228,7 +245,7 @@ export async function POST(req: Request) {
               Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ code_method: "SMS", language: "en" }),
+            body: JSON.stringify({ code_method: "SMS", language: "en_US" }),
           },
         );
         if (codeRes.ok) {
