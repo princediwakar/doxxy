@@ -1280,6 +1280,7 @@ export type Database = {
           id: string
           patient_id: string | null
           phone_number_id: string
+          status: string | null
           text: string
           whatsapp_message_id: string | null
         }
@@ -1291,6 +1292,7 @@ export type Database = {
           id?: string
           patient_id?: string | null
           phone_number_id: string
+          status?: string | null
           text: string
           whatsapp_message_id?: string | null
         }
@@ -1302,6 +1304,7 @@ export type Database = {
           id?: string
           patient_id?: string | null
           phone_number_id?: string
+          status?: string | null
           text?: string
           whatsapp_message_id?: string | null
         }
