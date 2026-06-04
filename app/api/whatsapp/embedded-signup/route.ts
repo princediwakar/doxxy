@@ -55,14 +55,25 @@ export async function POST(req: Request) {
       redirect_uri: redirect_uri || "",
     });
 
+    // DEBUG CHECKPOINT 1: exact payload being sent to Meta
+    console.log("========================================");
+    console.log("🔥 [DEBUG] OUTGOING TOKEN EXCHANGE TO META:");
+    console.log(`URL: ${GRAPH_API_BASE}/oauth/access_token`);
+    console.log(`PAYLOAD: ${tokenParams.toString()}`);
+    console.log("========================================");
+
     const tokenRes = await fetch(
       `${GRAPH_API_BASE}/oauth/access_token?${tokenParams.toString()}`,
     );
 
     if (!tokenRes.ok) {
-      const err = await tokenRes.text();
-      console.error("OAuth token exchange failed:", err);
-      return Response.json({ success: false, error: `Failed to exchange authorization code: ${err}` }, { status: 502 });
+      // DEBUG CHECKPOINT 2: exact raw error from Meta
+      const errText = await tokenRes.text();
+      console.error("========================================");
+      console.error("❌ [FATAL] META REJECTED THE EXCHANGE:");
+      console.error(`RAW RESPONSE: ${errText}`);
+      console.error("========================================");
+      return Response.json({ success: false, error: `Failed to exchange authorization code: ${errText}` }, { status: 502 });
     }
 
     const tokenData = await tokenRes.json();

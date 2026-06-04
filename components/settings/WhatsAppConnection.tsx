@@ -60,6 +60,9 @@ export default function WhatsAppConnection() {
           redirect_uri: window.location.origin + window.location.pathname,
         };
 
+        // DEBUG CHECKPOINT 4: exact payload sent to our backend
+        console.log("🔥 [DEBUG] SENDING TO BACKEND:", JSON.stringify(payload, null, 2));
+
         const res = await fetch("/api/whatsapp/embedded-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -171,7 +174,14 @@ export default function WhatsAppConnection() {
       config_id: configId,
     });
 
-    window.location.href = `https://www.facebook.com/v25.0/dialog/oauth?${params.toString()}`;
+    const finalUrl = `https://www.facebook.com/v25.0/dialog/oauth?${params.toString()}`;
+
+    // DEBUG CHECKPOINT 3: verify redirect_uri matches Meta Dashboard exactly
+    console.log("🔥 [DEBUG] LAUNCHING MANUAL OAUTH:");
+    console.log(`Redirect URI: ${redirectUri}`);
+    console.log(`Full URL:     ${finalUrl}`);
+
+    window.location.href = finalUrl;
   }, []);
 
   const handleDisconnect = useCallback(async () => {
