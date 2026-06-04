@@ -228,7 +228,7 @@ export async function POST(req: Request) {
               Authorization: `Bearer ${accessToken}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ messaging_product: "whatsapp", method: "SMS" }),
+            body: JSON.stringify({ code_method: "SMS", language: "en" }),
           },
         );
         if (codeRes.ok) {
