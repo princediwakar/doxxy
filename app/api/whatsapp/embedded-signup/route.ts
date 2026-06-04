@@ -24,14 +24,14 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: "Only clinic superadmins can connect WhatsApp" }, { status: 403 });
   }
 
-  let body: { code: string; waba_id: string; phone_number_id: string; business_id?: string };
+  let body: { code: string; waba_id: string; phone_number_id: string; business_id?: string; redirect_uri?: string };
   try {
     body = await req.json();
   } catch {
     return Response.json({ success: false, error: "Invalid request body" }, { status: 400 });
   }
 
-  const { code, waba_id: bodyWabaId, phone_number_id: bodyPhoneNumberId, business_id } = body;
+  const { code, waba_id: bodyWabaId, phone_number_id: bodyPhoneNumberId, business_id, redirect_uri } = body;
 
   if (!code) {
     return Response.json({ success: false, error: "Missing required field: code" }, { status: 400 });
@@ -44,27 +44,30 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: "Meta app not configured on server" }, { status: 500 });
   }
 
-  // redirect_uri is intentionally omitted — the JS SDK popup flow does not
-  // perform a redirect, so there is nothing for Facebook to match against.
-  // Including any URI here causes a redirect_uri mismatch error.
-
   // Exchange the authorization code for an access token
   try {
+    const tokenParams = new URLSearchParams({
+      client_id: appId,
+      client_secret: appSecret,
+      grant_type: "authorization_code",
+      code,
+    });
+    
+    if (redirect_uri) {
+      tokenParams.append("redirect_uri", redirect_uri);
+    }
+
     const tokenRes = await fetch(`${GRAPH_API_BASE}/oauth/access_token`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        client_id: appId,
-        client_secret: appSecret,
-        grant_type: "authorization_code",
-        code,
-      }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: tokenParams,
     });
 
     if (!tokenRes.ok) {
       const err = await tokenRes.text();
       console.error("OAuth token exchange failed:", err);
-      return Response.json({ success: false, error: "Failed to exchange authorization code" }, { status: 502 });
+      require("fs").writeFileSync("/tmp/fb_error.log", err);
+      return Response.json({ success: false, error: `Failed to exchange authorization code: ${err}` }, { status: 502 });
     }
 
     const tokenData = await tokenRes.json();
@@ -75,15 +78,17 @@ export async function POST(req: Request) {
     }
 
     // Exchange short-lived token for a long-lived token (~60 days)
+    const longLivedParams = new URLSearchParams({
+      grant_type: "fb_exchange_token",
+      client_id: appId,
+      client_secret: appSecret,
+      fb_exchange_token: shortLivedToken,
+    });
+
     const longLivedRes = await fetch(`${GRAPH_API_BASE}/oauth/access_token`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        grant_type: "fb_exchange_token",
-        client_id: appId,
-        client_secret: appSecret,
-        fb_exchange_token: shortLivedToken,
-      }),
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: longLivedParams,
     });
 
     let accessToken = shortLivedToken;
