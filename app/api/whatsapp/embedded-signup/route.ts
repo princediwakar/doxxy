@@ -24,14 +24,14 @@ export async function POST(req: Request) {
     return Response.json({ success: false, error: "Only clinic superadmins can connect WhatsApp" }, { status: 403 });
   }
 
-  let body: { code: string; waba_id: string; phone_number_id: string; business_id?: string; redirect_uri?: string };
+  let body: { code: string; waba_id: string; phone_number_id: string; business_id?: string };
   try {
     body = await req.json();
   } catch {
     return Response.json({ success: false, error: "Invalid request body" }, { status: 400 });
   }
 
-  const { code, waba_id: bodyWabaId, phone_number_id: bodyPhoneNumberId, business_id, redirect_uri } = body;
+  const { code, waba_id: bodyWabaId, phone_number_id: bodyPhoneNumberId, business_id } = body;
 
   if (!code) {
     return Response.json({ success: false, error: "Missing required field: code" }, { status: 400 });
@@ -45,28 +45,22 @@ export async function POST(req: Request) {
   }
 
   // Exchange the authorization code for an access token
+  // Facebook requires GET with query params for JS SDK popup code exchange.
+  // Using POST causes redirect_uri mismatch (subcode 36008).
   try {
     const tokenParams = new URLSearchParams({
       client_id: appId,
       client_secret: appSecret,
-      grant_type: "authorization_code",
       code,
     });
-    
-    if (redirect_uri) {
-      tokenParams.append("redirect_uri", redirect_uri);
-    }
 
-    const tokenRes = await fetch(`${GRAPH_API_BASE}/oauth/access_token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: tokenParams,
-    });
+    const tokenRes = await fetch(
+      `${GRAPH_API_BASE}/oauth/access_token?${tokenParams.toString()}`,
+    );
 
     if (!tokenRes.ok) {
       const err = await tokenRes.text();
       console.error("OAuth token exchange failed:", err);
-      require("fs").writeFileSync("/tmp/fb_error.log", err);
       return Response.json({ success: false, error: `Failed to exchange authorization code: ${err}` }, { status: 502 });
     }
 
@@ -85,11 +79,9 @@ export async function POST(req: Request) {
       fb_exchange_token: shortLivedToken,
     });
 
-    const longLivedRes = await fetch(`${GRAPH_API_BASE}/oauth/access_token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: longLivedParams,
-    });
+    const longLivedRes = await fetch(
+      `${GRAPH_API_BASE}/oauth/access_token?${longLivedParams.toString()}`,
+    );
 
     let accessToken = shortLivedToken;
     let tokenExpiresAt: string | null = null;

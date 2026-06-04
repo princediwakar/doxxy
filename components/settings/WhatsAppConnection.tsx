@@ -41,7 +41,6 @@ interface SignupData {
   waba_id: string;
   phone_number_id: string;
   business_id: string;
-  redirect_uri?: string;
   submitting?: boolean;
 }
 
@@ -211,7 +210,6 @@ export default function WhatsAppConnection() {
       waba_id: wabaId || "",
       phone_number_id: phoneNumberId || "",
       business_id: businessId || "",
-      redirect_uri: window.location.origin + window.location.pathname,
     };
 
     // Always attempt — server resolves WABA info via Graph API if needed
@@ -260,7 +258,6 @@ export default function WhatsAppConnection() {
               waba_id: signupRef.current.waba_id || "",
               phone_number_id: signupRef.current.phone_number_id || "",
               business_id: signupRef.current.business_id || "",
-              redirect_uri: signupRef.current.redirect_uri,
             });
           }
         } else {
