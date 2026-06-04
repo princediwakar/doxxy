@@ -23,26 +23,35 @@ CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_wamid ON public.whatsapp_messag
 ALTER TABLE public.whatsapp_messages ENABLE ROW LEVEL SECURITY;
 
 -- Clinic members can read their clinic's messages
-CREATE POLICY "whatsapp_messages_read_clinic" ON public.whatsapp_messages
-  FOR SELECT USING (
-    clinic_id IN (SELECT public.user_clinic_ids())
-  );
+DO $$ BEGIN
+  CREATE POLICY "whatsapp_messages_read_clinic" ON public.whatsapp_messages
+    FOR SELECT USING (
+      clinic_id IN (SELECT public.user_clinic_ids())
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Insert: clinic members + service_role (webhook uses service_role key)
-CREATE POLICY "whatsapp_messages_insert" ON public.whatsapp_messages
-  FOR INSERT WITH CHECK (
-    clinic_id IN (SELECT public.user_clinic_ids())
-    OR (SELECT public.is_superadmin())
-  );
+DO $$ BEGIN
+  CREATE POLICY "whatsapp_messages_insert" ON public.whatsapp_messages
+    FOR INSERT WITH CHECK (
+      clinic_id IN (SELECT public.user_clinic_ids())
+      OR (SELECT public.is_superadmin())
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Only superadmins can delete messages in their clinic
-CREATE POLICY "whatsapp_messages_delete" ON public.whatsapp_messages
-  FOR DELETE USING (
-    clinic_id IN (SELECT public.user_clinic_ids())
-    AND (
-      public.get_user_role_in_clinic(clinic_id) = 'superadmin'
-      OR public.is_superadmin()
-    )
-  );
+DO $$ BEGIN
+  CREATE POLICY "whatsapp_messages_delete" ON public.whatsapp_messages
+    FOR DELETE USING (
+      clinic_id IN (SELECT public.user_clinic_ids())
+      AND (
+        public.get_user_role_in_clinic(clinic_id) = 'superadmin'
+        OR public.is_superadmin()
+      )
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 COMMIT;

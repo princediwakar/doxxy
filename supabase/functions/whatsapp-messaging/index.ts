@@ -317,6 +317,38 @@ function isAuthError(error: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------
+// Outbound message logging
+// ---------------------------------------------------------------------------
+
+async function logOutboundMessage(
+  supabase: ReturnType<typeof createClient> | null,
+  params: {
+    clinicId?: string;
+    patientId?: string;
+    phoneNumberId: string;
+    toPhone: string;
+    direction: "outbound";
+    text: string;
+    whatsappMessageId: string;
+  },
+) {
+  if (!supabase || !params.clinicId) return;
+  const { error } = await supabase
+    .from("whatsapp_messages")
+    .insert({
+      clinic_id: params.clinicId,
+      patient_id: params.patientId || null,
+      phone_number_id: params.phoneNumberId,
+      from_phone: params.toPhone,
+      direction: "outbound",
+      text: params.text,
+      whatsapp_message_id: params.whatsappMessageId,
+      status: "sent",
+    });
+  if (error) console.error("Failed to log outbound WhatsApp message:", error);
+}
+
+// ---------------------------------------------------------------------------
 // Main handler
 // ---------------------------------------------------------------------------
 
@@ -413,8 +445,18 @@ serve(async (req: Request) => {
         const mediaId = await uploadMedia(phoneNumberId, token, pdfBytes, body.filename);
         const result = await sendDocumentMessage(phoneNumberId, token, normalizedTo, mediaId, body.filename, body.caption);
 
+        const docMsgId = result.messages?.[0]?.id;
+        await logOutboundMessage(supabase, {
+          clinicId: body.clinicId,
+          phoneNumberId,
+          toPhone: normalizedTo,
+          direction: "outbound",
+          text: `Document: ${body.filename}${body.caption ? ` - ${body.caption}` : ""}`,
+          whatsappMessageId: docMsgId,
+        });
+
         return new Response(
-          JSON.stringify({ success: true, messageId: result.messages?.[0]?.id }),
+          JSON.stringify({ success: true, messageId: docMsgId }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       } catch (docError) {
@@ -424,8 +466,18 @@ serve(async (req: Request) => {
           const mediaId = await uploadMedia(envPhoneNumberId, envToken, pdfBytes, body.filename);
           const result = await sendDocumentMessage(envPhoneNumberId, envToken, normalizedTo, mediaId, body.filename, body.caption);
 
+          const fbMsgId = result.messages?.[0]?.id;
+          await logOutboundMessage(supabase, {
+            clinicId: body.clinicId,
+            phoneNumberId: envPhoneNumberId,
+            toPhone: normalizedTo,
+            direction: "outbound",
+            text: `Document: ${body.filename}${body.caption ? ` - ${body.caption}` : ""}`,
+            whatsappMessageId: fbMsgId,
+          });
+
           return new Response(
-            JSON.stringify({ success: true, messageId: result.messages?.[0]?.id, fallback: true }),
+            JSON.stringify({ success: true, messageId: fbMsgId, fallback: true }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
@@ -451,8 +503,19 @@ serve(async (req: Request) => {
           body.templateName, body.bodyParams, buttonParams,
         );
 
+        const tplMsgId = result.messages?.[0]?.id;
+        await logOutboundMessage(supabase, {
+          clinicId: body.clinicId,
+          patientId: body.patientId,
+          phoneNumberId,
+          toPhone: normalizedTo,
+          direction: "outbound",
+          text: `Template: ${body.templateName}`,
+          whatsappMessageId: tplMsgId,
+        });
+
         return new Response(
-          JSON.stringify({ success: true, messageId: result.messages?.[0]?.id }),
+          JSON.stringify({ success: true, messageId: tplMsgId }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       } catch (templateError) {
@@ -464,8 +527,19 @@ serve(async (req: Request) => {
             body.templateName, body.bodyParams, buttonParams,
           );
 
+          const fbTplMsgId = result.messages?.[0]?.id;
+          await logOutboundMessage(supabase, {
+            clinicId: body.clinicId,
+            patientId: body.patientId,
+            phoneNumberId: envPhoneNumberId,
+            toPhone: normalizedTo,
+            direction: "outbound",
+            text: `Template: ${body.templateName}`,
+            whatsappMessageId: fbTplMsgId,
+          });
+
           return new Response(
-            JSON.stringify({ success: true, messageId: result.messages?.[0]?.id, fallback: true }),
+            JSON.stringify({ success: true, messageId: fbTplMsgId, fallback: true }),
             { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }

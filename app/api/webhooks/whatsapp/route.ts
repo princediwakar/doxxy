@@ -76,8 +76,23 @@ export async function POST(req: Request) {
       const value = change.value;
       if (!value) continue;
 
-      // Skip status updates (delivery receipts) — no action needed for now
-      if (value.statuses) continue;
+      // Process status updates (delivery receipts)
+      if (value.statuses) {
+        for (const st of value.statuses) {
+          if (!st.id) continue;
+          const { error: updateError } = await supabase
+            .from("whatsapp_messages")
+            .update({ status: st.status })
+            .eq("whatsapp_message_id", st.id);
+
+          if (updateError) {
+            // Row might not exist yet if outbound logging was added after the
+            // message was sent — not an error worth failing over.
+            console.error("Failed to update WhatsApp message status:", updateError);
+          }
+        }
+        continue;
+      }
 
       // Process incoming messages
       if (value.messages) {
