@@ -46,17 +46,14 @@ export async function POST(req: Request) {
 
   // Exchange the authorization code for an access token
   try {
-    // JS SDK popup flow: redirect_uri must be ABSENT from the request.
+    // JS SDK popup: redirect_uri must be present but empty (redirect_uri=).
     // Fallback redirect: must be the exact page URL byte-for-byte.
     const tokenParams = new URLSearchParams({
       client_id: appId,
       client_secret: appSecret,
       code,
+      redirect_uri: redirect_uri || "",
     });
-
-    if (redirect_uri && redirect_uri.trim() !== "") {
-      tokenParams.append("redirect_uri", redirect_uri);
-    }
 
     const tokenRes = await fetch(
       `${GRAPH_API_BASE}/oauth/access_token?${tokenParams.toString()}`,
