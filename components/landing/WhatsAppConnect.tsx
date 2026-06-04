@@ -52,7 +52,7 @@ export default function WhatsAppConnect() {
             </p>
 
             <a
-              href="/settings/whatsapp"
+              href="/clinic/whatsapp"
               className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
             >
               Manage your clinic&apos;s WhatsApp settings &rarr;
