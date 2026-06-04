@@ -46,17 +46,16 @@ export async function POST(req: Request) {
 
   // Exchange the authorization code for an access token
   try {
-    // JS SDK popup flow: Meta expects empty string. Fallback redirect: exact page URL.
+    // JS SDK popup flow: redirect_uri must be ABSENT from the request.
+    // Fallback redirect: must be the exact page URL byte-for-byte.
     const tokenParams = new URLSearchParams({
       client_id: appId,
       client_secret: appSecret,
       code,
     });
 
-    if (redirect_uri) {
+    if (redirect_uri && redirect_uri.trim() !== "") {
       tokenParams.append("redirect_uri", redirect_uri);
-    } else {
-      tokenParams.append("redirect_uri", "");
     }
 
     const tokenRes = await fetch(

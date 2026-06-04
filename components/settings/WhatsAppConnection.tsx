@@ -77,14 +77,18 @@ export default function WhatsAppConnection() {
   const completeSignup = useCallback(
     async (data: SignupData & { isFallback?: boolean }) => {
       try {
-        // redirect_uri must match byte-for-byte what was used to generate the code.
-        // JS SDK popup flow: Meta expects empty string. Fallback redirect: exact page URL.
-        const payload = {
-          ...data,
-          redirect_uri: data.isFallback
-            ? window.location.origin + window.location.pathname
-            : undefined
+        // JS SDK popup flow: redirect_uri key must not exist in the payload at all.
+        // Fallback redirect: must be the exact page URL byte-for-byte.
+        const payload: Record<string, unknown> = {
+          code: data.code,
+          waba_id: data.waba_id,
+          phone_number_id: data.phone_number_id,
+          business_id: data.business_id,
         };
+
+        if (data.isFallback) {
+          payload.redirect_uri = window.location.origin + window.location.pathname;
+        }
         const res = await fetch("/api/whatsapp/embedded-signup", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
