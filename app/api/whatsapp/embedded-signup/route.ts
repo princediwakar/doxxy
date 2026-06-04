@@ -233,36 +233,52 @@ export async function POST(req: Request) {
       return Response.json({ success: false, error: "Failed to store connection" }, { status: 500 });
     }
 
-    // Only request verification code if phone is not yet verified
-    let needsVerification = false;
-    if (!phoneVerified) {
-      try {
-        const codeRes = await fetch(
-          `${GRAPH_API_BASE}/${phone_number_id}/request_code`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ code_method: "SMS", language: "en_US" }),
+    // Register the phone number for Cloud API access (verification happened in the popup)
+    const pin = String(Math.floor(100000 + Math.random() * 900000));
+    try {
+      const registerRes = await fetch(
+        `${GRAPH_API_BASE}/${phone_number_id}/register`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
           },
-        );
-        if (codeRes.ok) {
-          needsVerification = true;
-        } else {
-          const err = await codeRes.text();
-          console.error("request_code failed:", err);
-        }
-      } catch (codeError) {
-        console.error("request_code error:", codeError);
+          body: JSON.stringify({ messaging_product: "whatsapp", pin }),
+        },
+      );
+      if (registerRes.ok) {
+        console.log("🔥 [DEBUG] Phone registered for Cloud API");
+      } else {
+        const err = await registerRes.text();
+        console.error("register failed:", err);
       }
+    } catch (registerError) {
+      console.error("register error:", registerError);
+    }
+
+    // Subscribe webhooks to receive incoming messages on this WABA
+    try {
+      const webhookRes = await fetch(
+        `${GRAPH_API_BASE}/${waba_id}/subscribed_apps`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${accessToken}` },
+        },
+      );
+      if (webhookRes.ok) {
+        console.log("🔥 [DEBUG] Webhook subscribed for WABA:", waba_id);
+      } else {
+        const err = await webhookRes.text();
+        console.error("subscribed_apps failed:", err);
+      }
+    } catch (webhookError) {
+      console.error("subscribed_apps error:", webhookError);
     }
 
     return Response.json({
       success: true,
       phone_number: displayPhoneNumber,
-      needs_verification: needsVerification,
       status: connectionStatus,
       name_approved: nameApproved,
       quality_rating: qualityRating,

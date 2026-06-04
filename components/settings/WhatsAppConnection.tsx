@@ -54,6 +54,7 @@ export default function WhatsAppConnection() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [nameApproved, setNameApproved] = useState(true);
   const [verificationCode, setVerificationCode] = useState("");
+  const signupRef = useRef<{ code?: string; waba_id?: string; phone_number_id?: string; business_id?: string; submitting?: boolean }>({});
   const urlParamsProcessed = useRef(false);
 
   const { data: connection, isLoading } = useQuery({
@@ -143,6 +144,67 @@ export default function WhatsAppConnection() {
     }
   }, [verificationCode, activeClinicId, queryClient]);
 
+  // Listen for WA_EMBEDDED_SIGNUP postMessage events from the JS SDK popup.
+  // Meta delivers waba_id, phone_number_id, business_id via this channel.
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (
+        event.origin !== "https://www.facebook.com" &&
+        event.origin !== "https://web.facebook.com"
+      )
+        return;
+
+      let data: {
+        type?: string;
+        event?: string;
+        data?: { waba_id?: string; phone_number_id?: string; business_id?: string };
+      };
+      try {
+        data = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+
+      if (data.type !== "WA_EMBEDDED_SIGNUP") return;
+
+      if (data.event === "FINISH") {
+        const { waba_id, phone_number_id, business_id } = data.data || {};
+        signupRef.current = {
+          ...signupRef.current,
+          waba_id: waba_id || "",
+          phone_number_id: phone_number_id || "",
+          business_id: business_id || "",
+        };
+
+        // If FB.login callback already gave us the code, complete now
+        if (signupRef.current.code && !signupRef.current.submitting) {
+          signupRef.current.submitting = true;
+          completeSignup({
+            code: signupRef.current.code,
+            waba_id: signupRef.current.waba_id || "",
+            phone_number_id: signupRef.current.phone_number_id || "",
+            business_id: signupRef.current.business_id || "",
+          });
+        }
+      }
+
+      if (data.event === "CANCEL") {
+        setAction("idle");
+        signupRef.current = {};
+        toast.error("WhatsApp connection was cancelled");
+      }
+
+      if (data.event === "ERROR") {
+        setAction("idle");
+        signupRef.current = {};
+        toast.error("WhatsApp connection failed. Please try again.");
+      }
+    };
+
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, [completeSignup]);
+
   // Handle fallback redirect: when popup is blocked, Meta redirects the
   // full page with ?code=... in the URL.
   useEffect(() => {
@@ -191,6 +253,7 @@ export default function WhatsAppConnection() {
     }
 
     setAction("connecting");
+    signupRef.current = {};
 
     const currentRedirectUri = window.location.origin + window.location.pathname;
 
@@ -200,17 +263,23 @@ export default function WhatsAppConnection() {
     window.FB.login(
       (response) => {
         if (response.authResponse?.code) {
-          // waba_id / phone_number_id come via WA_EMBEDDED_SIGNUP postMessage
-          // or are resolved by the backend via debug_token fallback.
-          completeSignup({
-            code: response.authResponse.code,
-            waba_id: "",
-            phone_number_id: "",
-            business_id: "",
-            redirect_uri: currentRedirectUri,
-          });
+          signupRef.current.code = response.authResponse.code;
+
+          // If WA_EMBEDDED_SIGNUP postMessage already delivered WABA IDs, complete now.
+          // Otherwise the postMessage handler will trigger completion when it fires.
+          if (signupRef.current.waba_id && !signupRef.current.submitting) {
+            signupRef.current.submitting = true;
+            completeSignup({
+              code: signupRef.current.code,
+              waba_id: signupRef.current.waba_id,
+              phone_number_id: signupRef.current.phone_number_id || "",
+              business_id: signupRef.current.business_id || "",
+              redirect_uri: currentRedirectUri,
+            });
+          }
         } else {
           setAction("idle");
+          signupRef.current = {};
           toast.error("WhatsApp connection was cancelled or failed");
         }
       },
