@@ -50,4 +50,4 @@ At an average of 3 follow-up visits per year and INR 500 per consultation, those
 
 Start with the highest-impact automation: post-consultation follow-ups for first-time patients. Set up the message once. It goes out automatically after every first visit. Track how many of those patients rebook within 30 days. The improvement will show up within the first quarter.
 
-Doxxy includes automated patient communication — SMS and WhatsApp follow-ups, medication reminders, health checkup recalls, and lab result notifications — in one platform. [Start for free](/auth) — first 100 appointments on us. Your patients are waiting to hear from you.
+Doxxy includes automated patient communication — SMS and WhatsApp follow-ups, medication reminders, health checkup recalls, and lab result notifications — in one platform. [Start for free](/auth) — first 100 consultations on us. Your patients are waiting to hear from you.

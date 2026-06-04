@@ -408,7 +408,7 @@ const FinalCTASection = () => (
       Stop Running Your Practice on Gut Feeling.
     </h2>
     <SectionSubtitle>
-      Join clinic owners across India who now know — with precision — their revenue, their most profitable services, their patient retention rate, and their growth trajectory. Start with your first 100 appointments free. Zero risk. Infinite clarity.
+      Join clinic owners across India who now know — with precision — their revenue, their most profitable services, their patient retention rate, and their growth trajectory. Start with your first 100 consultations free. Zero risk. Infinite clarity.
     </SectionSubtitle>
     <div className="mt-10">
       <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">

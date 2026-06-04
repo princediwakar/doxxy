@@ -398,7 +398,7 @@ const ClinicRoiCalculator = () => {
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {results.netAnnualSavings > 0
                 ? `After deducting Doxxy's cost, your clinic stands to save ${formatIndianCurrency(results.netAnnualSavings)} per year. That is ${formatIndianCurrency(results.netMonthlySavings)} in additional profit every single month.`
-                : `Your clinic is relatively small — but you still save ${formatIndianCurrency(Math.max(0, results.totalAnnualSavings))} in operational costs before software fees. Our free tier (first 100 appointments) means you can start saving immediately at zero cost.`}
+                : `Your clinic is relatively small — but you still save ${formatIndianCurrency(Math.max(0, results.totalAnnualSavings))} in operational costs before software fees. Our free tier (first 100 consultations) means you can start saving immediately at zero cost.`}
             </p>
           </div>
         </div>

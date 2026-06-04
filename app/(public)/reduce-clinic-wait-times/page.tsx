@@ -471,7 +471,7 @@ export default function ReduceClinicWaitTimes() {
           Your Patients Deserve Better Than a Plastic Chair and a 90-Minute Wait.
         </h2>
         <SectionSubtitle>
-          Join clinics across India that have cut wait times, reduced walkouts, and built a reputation for respecting their patients&apos; time. Start with your first 100 appointments free.
+          Join clinics across India that have cut wait times, reduced walkouts, and built a reputation for respecting their patients&apos; time. Start with your first 100 consultations free.
         </SectionSubtitle>
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">

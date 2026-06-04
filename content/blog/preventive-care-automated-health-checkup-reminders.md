@@ -50,4 +50,4 @@ For a clinic already running at capacity on acute care, preventive checkups fill
 
 Set up recall rules for your top three patient segments: annual checkups for all adults, quarterly monitoring for diabetics, and pediatric vaccination reminders. The setup takes 30 minutes. The reminders go out forever.
 
-Doxxy includes automated recall and reminder systems for health checkups, chronic disease monitoring, and vaccination schedules — all configurable per patient and per condition. [Start for free](/auth) — first 100 appointments on us. Your patients' next checkup is overdue.
+Doxxy includes automated recall and reminder systems for health checkups, chronic disease monitoring, and vaccination schedules — all configurable per patient and per condition. [Start for free](/auth) — first 100 consultations on us. Your patients' next checkup is overdue.

@@ -52,4 +52,4 @@ Patients who complete digital intake also show up more reliably — they've alre
 
 Digital intake is the lowest-effort, highest-impact change a clinic can make. It costs nothing extra — it's included in Doxxy's patient management platform. Your front desk gets hours back every day. Your patient data gets cleaner. Your patients get a better first impression.
 
-Doxxy includes digital patient intake, EMR, scheduling, billing, and AI-powered clinical notes in one platform. [Start for free](/auth) — first 100 appointments on us. No clipboards required.
+Doxxy includes digital patient intake, EMR, scheduling, billing, and AI-powered clinical notes in one platform. [Start for free](/auth) — first 100 consultations on us. No clipboards required.

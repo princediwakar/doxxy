@@ -69,4 +69,4 @@ The platform handles the tracking, the reminders, and the data organization. The
 
 Pick one chronic condition — diabetes is the obvious starting point for most Indian clinics. Set up structured profiles for your existing diabetic patients. Enable automated monitoring flags. Send the first batch of "you're due for an HbA1c" reminders. Track how many patients book and how many show improved control at the next visit.
 
-Doxxy includes chronic disease management with condition-specific profiles, automated monitoring, trend visualization, and patient self-logging — all in one platform. [Start for free](/auth) — first 100 appointments on us. Your chronic patients deserve better than a paper file and a prayer.
+Doxxy includes chronic disease management with condition-specific profiles, automated monitoring, trend visualization, and patient self-logging — all in one platform. [Start for free](/auth) — first 100 consultations on us. Your chronic patients deserve better than a paper file and a prayer.

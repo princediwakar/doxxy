@@ -44,4 +44,4 @@ Digital records on Doxxy are encrypted, backed up daily with point-in-time recov
 
 If your clinic still relies on paper files, you're paying for them every single day — in staff time, lost clinical context, and unnecessary risk. The math isn't close.
 
-Doxxy includes digital patient records, scheduling, billing, and AI-powered clinical notes in one platform. [Start for free](/auth) — first 100 appointments on us. No setup fees. No commitment.
+Doxxy includes digital patient records, scheduling, billing, and AI-powered clinical notes in one platform. [Start for free](/auth) — first 100 consultations on us. No setup fees. No commitment.

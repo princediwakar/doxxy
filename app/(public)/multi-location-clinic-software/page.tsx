@@ -455,7 +455,7 @@ const FinalCTASection = () => (
       Run Your Chain from a Single Screen.
     </h2>
     <SectionSubtitle>
-      Join multi-location clinic owners across India — from Hyderabad to Delhi, Bangalore to Mumbai — who have stopped managing by WhatsApp and started managing by dashboard. Centralized records. Location-wise analytics. Consolidated billing. Your first 100 appointments are free. No setup fees. No per-location surcharge.
+      Join multi-location clinic owners across India — from Hyderabad to Delhi, Bangalore to Mumbai — who have stopped managing by WhatsApp and started managing by dashboard. Centralized records. Location-wise analytics. Consolidated billing. Your first 100 consultations are free. No setup fees. No per-location surcharge.
     </SectionSubtitle>
     <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
       <Button size="lg" asChild className="bg-blue-600 text-white hover:bg-blue-700 rounded-xl px-8 py-3 text-base font-semibold transition-transform hover:scale-105">

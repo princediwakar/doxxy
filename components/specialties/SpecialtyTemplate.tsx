@@ -100,7 +100,7 @@ const SpecialtyTemplate = ({ config }: { config: SpecialtyConfig }) => {
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <span className="text-blue-500 font-bold mt-0.5">4.</span>
-              <span><strong>Pay per consultation, not per doctor.</strong> Unlimited doctors and staff on all plans. First 100 appointments free. No annual contracts.</span>
+              <span><strong>Pay per consultation, not per doctor.</strong> Unlimited doctors and staff on all plans. First 100 consultations free. No annual contracts.</span>
             </li>
           </ul>
         </div>

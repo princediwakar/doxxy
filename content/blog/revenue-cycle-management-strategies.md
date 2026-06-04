@@ -53,4 +53,4 @@ Doxxy's analytics dashboards surface these metrics automatically. Role-specific 
 
 Revenue cycle improvement is a continuous process, not a one-time fix. Start with the biggest leak — for most clinics, that's slow invoice generation and inconsistent follow-up — and fix it. Measure the impact. Move to the next.
 
-Doxxy's billing, payments, and analytics are part of one unified platform. No separate systems, no manual reconciliation. [Start for free](/auth) — first 100 appointments free.
+Doxxy's billing, payments, and analytics are part of one unified platform. No separate systems, no manual reconciliation. [Start for free](/auth) — first 100 consultations free.

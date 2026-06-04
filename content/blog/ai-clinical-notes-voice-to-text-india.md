@@ -53,4 +53,4 @@ This turns clinical notes from a compliance chore into a clinical asset.
 
 If you're spending more than 30 minutes a day typing notes, AI dictation pays for itself in the first week. The technology is mature, the accuracy is high, and the workflow is simpler than you think.
 
-Try it yourself. [Start for free](/auth) — first 100 appointments on us, including AI-powered clinical notes.
+Try it yourself. [Start for free](/auth) — first 100 consultations on us, including AI-powered clinical notes.

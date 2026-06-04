@@ -28,7 +28,7 @@ const ekaCareAlternativeConfig: AlternativeConfig = {
   featureComparisonRows: [
     { feature: 'Pricing Model', doxxy: 'Pay-per-consultation', competitor: 'Monthly subscription' },
     { feature: 'Doctor Limits', doxxy: 'Unlimited on all plans', competitor: 'Pay per doctor' },
-    { feature: 'Free Plan', doxxy: '100 appointments free', competitor: 'Limited time trial only' },
+    { feature: 'Free Plan', doxxy: '100 consultations free', competitor: 'Limited time trial only' },
     { feature: 'Contract Length', doxxy: 'No commitment', competitor: 'Annual contract' },
     { feature: 'Multi-Clinic Management', doxxy: 'All plans', competitor: 'Premium plans only' },
     { feature: 'Patient SMS Notifications', doxxy: 'Included', competitor: 'Additional fee' },

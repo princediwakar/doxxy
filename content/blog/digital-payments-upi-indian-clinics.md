@@ -50,4 +50,4 @@ When patients can see exactly what they're paying for — consultation fee, proc
 
 Enabling digital payments takes less than a day. The infrastructure already exists. Your patients already use it. The only missing piece is your clinic accepting it.
 
-Doxxy includes integrated billing and digital payments via Razorpay — UPI, cards, and net banking — with automatic reconciliation. [Start for free](/auth) — first 100 appointments on us. Leave the cash counting behind.
+Doxxy includes integrated billing and digital payments via Razorpay — UPI, cards, and net banking — with automatic reconciliation. [Start for free](/auth) — first 100 consultations on us. Leave the cash counting behind.

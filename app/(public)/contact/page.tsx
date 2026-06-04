@@ -45,7 +45,7 @@ const faqs = [
   },
   {
     question: 'Is Doxxy suitable for small practices?',
-    answer: 'Absolutely! Our Practice Essentials plan is free for your first 100 appointments and specifically designed for solo practitioners and small clinics.',
+    answer: 'Absolutely! Our Practice Essentials plan is free for your first 100 consultations and specifically designed for solo practitioners and small clinics.',
   },
 ];
 

@@ -86,7 +86,7 @@ Doxxy is a cloud-based clinic management platform purpose-built for small to med
 
 | | Practice Essentials | Clinical Excellence |
 |---|---|---|
-| **Price** | Free | INR 10 / appointment |
+| **Price** | Free | INR 10 / consultation |
 | **Appointments** | First 100 free (lifetime) | Unlimited |
 | **Doctors & Staff** | Unlimited | Unlimited |
 | **Patient Records** | Essential | Comprehensive + digital prescriptions |
@@ -101,7 +101,7 @@ Doxxy is a cloud-based clinic management platform purpose-built for small to med
 | | Doxxy | Traditional Platforms |
 |---|---|---|
 | **Pricing model** | Per appointment (INR 10) | Monthly subscription + per-doctor fees |
-| **Free tier** | First 100 appointments free | 14-30 day time-limited trial |
+| **Free tier** | First 100 consultations free | 14-30 day time-limited trial |
 | **Doctor limits** | Unlimited on all plans | Pay per doctor/provider |
 | **Contract** | No commitment, cancel anytime | Annual contracts with penalties |
 | **Hidden fees** | None, all features included | Setup, training, support fees |

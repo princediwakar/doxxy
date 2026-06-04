@@ -71,7 +71,7 @@ export default function LandingPageContent() {
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <IndianRupee className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-              <span><strong>Pay per consultation, not per doctor:</strong> First 100 appointments free, then ₹10 per consultation. Unlimited doctors and staff on all plans. No annual contracts.</span>
+              <span><strong>Pay per consultation, not per doctor:</strong> First 100 consultations free, then ₹10 per consultation. Unlimited doctors and staff on all plans. No annual contracts.</span>
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <Shield className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />

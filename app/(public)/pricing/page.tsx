@@ -21,7 +21,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Doxxy Pricing - Transparent Clinic Management Software Pricing',
-  description: 'Fair and transparent pricing for clinic management software. Pay per consultation with no hidden fees. First 100 appointments free.',
+  description: 'Fair and transparent pricing for clinic management software. Pay per consultation with no hidden fees. First 100 consultations free.',
   alternates: {
     canonical: '/pricing',
   },
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
 const plans = [
   {
     name: "Practice Essentials",
-    description: "Perfect for new practices. First 100 appointments free.",
+    description: "Perfect for new practices. First 100 consultations free.",
     price: "Free",
-    priceSuffix: "for first 100 appointments",
+    priceSuffix: "for first 100 consultations",
     features: [
       "Unlimited doctors & clinic staff",
       "Appointment scheduling (up to 100 total)",
@@ -105,7 +105,7 @@ const comparisons = [
   },
   {
     feature: "Free Plan",
-    us: "First 100 appointments free",
+    us: "First 100 consultations free",
     competitors: "14-30 day time-limited trial",
   },
   {
@@ -152,12 +152,12 @@ const faqs = [
   {
     question: "Is there a free plan?",
     answer:
-      "Yes! Our Practice Essentials plan is completely free for your first 100 appointments. You can explore all essential features with no credit card required.",
+      "Yes! Our Practice Essentials plan is completely free for your first 100 consultations. You can explore all essential features with no credit card required.",
   },
   {
-    question: "What happens when I reach 100 appointments on the free plan?",
+    question: "What happens when I reach 100 consultations on the free plan?",
     answer:
-      "After your first 100 appointments, you'll automatically transition to our pay-as-you-go model at ₹10 per consultation. There's no interruption in service.",
+      "After your first 100 consultations, you'll automatically transition to our pay-as-you-go model at ₹10 per consultation. There's no interruption in service.",
   },
   {
     question: "Are there any limits on doctors or staff members?",
@@ -411,7 +411,7 @@ const Pricing = () => {
           <ul className="space-y-3">
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <span className="text-blue-500 font-bold mt-0.5">1.</span>
-              <span><strong>First 100 appointments free.</strong> No credit card, no time limit. Use all essential features until you hit 100 consultations.</span>
+              <span><strong>First 100 consultations free.</strong> No credit card, no time limit. Use all essential features until you hit 100 consultations.</span>
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <span className="text-blue-500 font-bold mt-0.5">2.</span>

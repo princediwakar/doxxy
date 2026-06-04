@@ -52,4 +52,4 @@ The clinics we studied didn't gain 3 hours by working harder or hiring more staf
 
 You don't need to fix everything at once. Start with online booking — that alone reclaims the first hour. Add digital records next. Then automated billing. Each step compounds the time savings.
 
-Doxxy includes scheduling, EMR, billing, AI clinical notes, and pharmacy inventory in one platform. [Start for free](/auth) — first 100 appointments on us, and you can see exactly where your hours go.
+Doxxy includes scheduling, EMR, billing, AI clinical notes, and pharmacy inventory in one platform. [Start for free](/auth) — first 100 consultations on us, and you can see exactly where your hours go.

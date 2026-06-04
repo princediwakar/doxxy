@@ -52,4 +52,4 @@ A complete Google Business Profile with active review management is the highest-
 
 Don't let your online reputation be an accident. Claim your profile today. Set up a systematic way to ask happy patients for reviews. Respond to what's already there.
 
-Doxxy helps clinics automate patient communication including post-visit follow-ups and review requests — so your reputation grows while you focus on care. [Start for free](/auth) — first 100 appointments on us.
+Doxxy helps clinics automate patient communication including post-visit follow-ups and review requests — so your reputation grows while you focus on care. [Start for free](/auth) — first 100 consultations on us.

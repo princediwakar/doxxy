@@ -318,7 +318,7 @@ const BottomCTA = () => (
         You ran the numbers. Now run a better clinic.
       </h2>
       <p className="text-gray-600 dark:text-gray-300 mb-8">
-        Doxxy is free for your first 100 appointments. No credit card. No
+        Doxxy is free for your first 100 consultations. No credit card. No
         commitment. Just a better way to run your practice.
       </p>
       <Button

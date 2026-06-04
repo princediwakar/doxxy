@@ -121,7 +121,7 @@ const faqs = [
   {
     question: "Is digitization expensive?",
     answer:
-      "Doxxy starts free for your first 100 appointments. After that, it is ₹10 per consultation — no monthly subscriptions, no per-doctor fees, no hidden costs. The real expense is staying on paper: clinics lose ₹15,000-₹30,000/month in inefficiencies that software eliminates.",
+      "Doxxy starts free for your first 100 consultations. After that, it is ₹10 per consultation — no monthly subscriptions, no per-doctor fees, no hidden costs. The real expense is staying on paper: clinics lose ₹15,000-₹30,000/month in inefficiencies that software eliminates.",
   },
   {
     question: "Will my staff need technical training?",
@@ -304,7 +304,7 @@ const SolutionSection = () => (
           Pay Per Consultation
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          No monthly subscriptions. First 100 appointments free. Then just
+          No monthly subscriptions. First 100 consultations free. Then just
           Rs.10 per consultation. You pay only when your clinic earns.
         </p>
       </div>

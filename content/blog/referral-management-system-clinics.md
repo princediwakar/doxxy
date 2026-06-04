@@ -54,4 +54,4 @@ This data tells you where to invest your relationship-building time. Send a than
 
 If your practice depends on referrals, treat referral management as a core business process — not an afterthought. Set up digital referral creation, automated patient follow-up, and closed-loop reporting. The referring doctors who send you patients will notice. The ones who stopped will come back.
 
-Doxxy includes referral management with structured referrals, conversion tracking, closed-loop reporting, and referral analytics. [Start for free](/auth) — first 100 appointments on us. Your next referral should never get lost on a scrap of paper.
+Doxxy includes referral management with structured referrals, conversion tracking, closed-loop reporting, and referral analytics. [Start for free](/auth) — first 100 consultations on us. Your next referral should never get lost on a scrap of paper.

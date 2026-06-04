@@ -41,4 +41,4 @@ No configuration required. The dashboards are pre-built. You connect your data a
 
 AI doesn't require a massive IT project anymore. Doxxy bundles these capabilities into a platform you can set up in minutes. Start with smart scheduling and reminders for the fastest operational win, then add AI notes and inventory management as your team gets comfortable.
 
-Ready to see it in action? [Start for free](/auth) — first 100 appointments are on us, no credit card required.
+Ready to see it in action? [Start for free](/auth) — first 100 consultations are on us, no credit card required.

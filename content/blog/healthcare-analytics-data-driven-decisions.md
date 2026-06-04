@@ -44,4 +44,4 @@ Doxxy's analytics surface these trends without requiring a data science team. Re
 
 Analytics is an operating rhythm, not a one-time project. Start with the pre-built dashboards, pick three KPIs to track weekly, and add more as your team's comfort grows.
 
-Doxxy's analytics are included in every plan. Ready to stop guessing? [Start for free](/auth) — first 100 appointments free, no credit card required.
+Doxxy's analytics are included in every plan. Ready to stop guessing? [Start for free](/auth) — first 100 consultations free, no credit card required.

@@ -41,7 +41,7 @@ const faqStructuredData = {
       name: 'How much does Doxxy cost?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Doxxy offers a free Practice Essentials plan for your first 100 appointments. After that, the Clinical Excellence plan costs ₹10 per consultation with no per-doctor fees, no annual contracts, and no hidden charges.',
+        text: 'Doxxy offers a free Practice Essentials plan for your first 100 consultations. After that, the Clinical Excellence plan costs ₹10 per consultation with no per-doctor fees, no annual contracts, and no hidden charges.',
       },
     },
     {

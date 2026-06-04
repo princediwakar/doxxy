@@ -20,11 +20,11 @@ The model assumes your clinic is a SaaS company. It's not. Your patient volume f
 
 ## Per-Appointment Pricing: You Pay When You Earn
 
-Doxxy charges INR 10 per appointment. That's it. No per-doctor fees. No per-location surcharge. No premium feature unlocks. No setup fees. No annual contracts.
+Doxxy charges INR 10 per consultation. That's it. No per-doctor fees. No per-location surcharge. No premium feature unlocks. No setup fees. No annual contracts.
 
 A clinic seeing 250 patients a month pays INR 2,500. The next month, if it's quieter and they see 180 patients, they pay INR 1,800. The month after, if they're busy and see 400, they pay INR 4,000 — but they also earned revenue on those 400 consultations, so the software bill scales with the business.
 
-The first 100 appointments are free, forever. For a new clinic building its patient base, that means months of essential practice management at zero cost.
+The first 100 consultations are free, forever. For a new clinic building its patient base, that means months of essential practice management at zero cost.
 
 ## What "Unlimited" Actually Means
 
@@ -49,4 +49,4 @@ The subscription model charges for time. Doxxy charges for usage. One of those a
 
 If you're evaluating practice management software, ask one question: "What happens to my bill during a slow month?" If the answer is "nothing changes," you're subsidizing the software company's revenue targets.
 
-Doxxy's pricing is transparent, usage-based, and includes everything: appointments, EMR, billing, AI notes, pharmacy inventory, and analytics. [Start for free](/auth) — first 100 appointments on us. No credit card. No commitment. Cancel anytime.
+Doxxy's pricing is transparent, usage-based, and includes everything: appointments, EMR, billing, AI notes, pharmacy inventory, and analytics. [Start for free](/auth) — first 100 consultations on us. No credit card. No commitment. Cancel anytime.

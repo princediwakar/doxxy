@@ -451,7 +451,7 @@ const CalculatorCTASection = () => (
         </Link>
       </Button>
       <p className="text-sm text-blue-200 mt-4">
-        First 100 appointments free. No credit card required.
+        First 100 consultations free. No credit card required.
       </p>
     </div>
   </section>

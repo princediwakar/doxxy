@@ -52,4 +52,4 @@ No CSV exports. No merging spreadsheets. No "this number doesn't match, let me c
 
 Billing automation is the kind of change that pays for itself in the first week — not through some abstract efficiency gain, but through faster payments, fewer errors, and less staff time spent on paperwork.
 
-Doxxy includes automated billing, payment tracking, Razorpay integration, and financial reporting as part of one unified platform. [Start for free](/auth) — first 100 appointments on us, automated invoicing included.
+Doxxy includes automated billing, payment tracking, Razorpay integration, and financial reporting as part of one unified platform. [Start for free](/auth) — first 100 consultations on us, automated invoicing included.

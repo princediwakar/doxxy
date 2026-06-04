@@ -97,7 +97,7 @@ const CityHubTemplate = ({ config }: { config: CityConfig }) => {
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <span className="text-blue-500 font-bold mt-0.5">4.</span>
-              <span><strong>Pay per consultation, not per doctor.</strong> No annual contracts. First 100 appointments free. WhatsApp-first patient communication with {config.techContext.whatsappPenetration} WhatsApp penetration in {cityName}.</span>
+              <span><strong>Pay per consultation, not per doctor.</strong> No annual contracts. First 100 consultations free. WhatsApp-first patient communication with {config.techContext.whatsappPenetration} WhatsApp penetration in {cityName}.</span>
             </li>
           </ul>
         </div>

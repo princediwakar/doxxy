@@ -28,7 +28,7 @@ export default function StickyBottomCTA() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
           <div className="hidden sm:block">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              100 appointments free. ₹10/visit after.
+              100 consultations free. ₹10/visit after.
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               No monthly fees · Unlimited doctors

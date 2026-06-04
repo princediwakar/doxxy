@@ -13,7 +13,7 @@ const practoConfig: ComparisonConfig = {
   migrationSubtitle: 'Switching from Practo to Doxxy is straightforward with our dedicated migration team:',
   comparisonPoints: [
     { feature: 'Pricing Model', doxxy: 'Pay-per-consultation (₹10/consultation)', competitor: 'Monthly subscription + per-doctor fees', advantage: 'More cost-effective for small to medium practices', icon: <DollarSign className="h-6 w-6 text-primary" /> },
-    { feature: 'Free Plan', doxxy: 'First 100 appointments completely free', competitor: 'Limited free tier with restricted features', advantage: 'Start with zero risk and full feature access', icon: <Calendar className="h-6 w-6 text-primary" /> },
+    { feature: 'Free Plan', doxxy: 'First 100 consultations completely free', competitor: 'Limited free tier with restricted features', advantage: 'Start with zero risk and full feature access', icon: <Calendar className="h-6 w-6 text-primary" /> },
     { feature: 'Doctor Limits', doxxy: 'Unlimited doctors on all plans', competitor: 'Tiered pricing based on number of doctors', advantage: 'Add as many doctors as needed without extra cost', icon: <Users className="h-6 w-6 text-primary" /> },
     { feature: 'Contract Length', doxxy: 'No commitment, cancel anytime', competitor: 'Annual contracts preferred, monthly at premium', advantage: 'Flexibility to adjust as your practice needs change', icon: <Clock className="h-6 w-6 text-primary" /> },
     { feature: 'Patient Records', doxxy: 'Comprehensive EMR with unlimited storage', competitor: 'Storage limits on basic plans', advantage: 'Never worry about hitting storage limits', icon: <FileText className="h-6 w-6 text-primary" /> },

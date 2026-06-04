@@ -48,4 +48,4 @@ Doxxy connects prescribing directly to inventory. The doctor sees stock levels d
 
 Pharmacy inventory doesn't need to be the part of your clinic that runs on sticky notes and memory. AI predictions, expiry alerts, and real-time stock visibility turn it from a liability into a reliable system.
 
-Doxxy includes pharmacy management, appointments, EMR, billing, and AI clinical notes in one platform. [Start for free](/auth) — first 100 appointments on us.
+Doxxy includes pharmacy management, appointments, EMR, billing, and AI clinical notes in one platform. [Start for free](/auth) — first 100 consultations on us.

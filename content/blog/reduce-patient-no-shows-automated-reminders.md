@@ -56,4 +56,4 @@ At an average consultation fee of INR 500, that's INR 33,500 in recovered revenu
 
 Automated reminders and online rescheduling are the fastest operational improvement a clinic can make. Set them up once. They work every day. The ROI is measurable by the end of the first week.
 
-Doxxy includes smart scheduling, automated SMS and WhatsApp reminders, online booking, and waitlist management in one platform. [Start for free](/auth) — first 100 appointments on us, and see what your no-show rate actually looks like.
+Doxxy includes smart scheduling, automated SMS and WhatsApp reminders, online booking, and waitlist management in one platform. [Start for free](/auth) — first 100 consultations on us, and see what your no-show rate actually looks like.

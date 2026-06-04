@@ -48,4 +48,4 @@ A clinic that automated its front desk with Doxxy reported a 60% drop in staff o
 
 Automation isn't about replacing your staff. It's about giving them the tools to do the meaningful parts of their job and letting software handle the rest. The fastest wins are automated reminders and digital billing — both can be live within a day.
 
-Doxxy includes scheduling, automated reminders, digital billing, patient portal, and waitlist management in one platform. [Start for free](/auth) — first 100 appointments on us. Your staff will thank you.
+Doxxy includes scheduling, automated reminders, digital billing, patient portal, and waitlist management in one platform. [Start for free](/auth) — first 100 consultations on us. Your staff will thank you.

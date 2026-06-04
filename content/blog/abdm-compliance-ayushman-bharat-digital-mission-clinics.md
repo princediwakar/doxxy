@@ -65,4 +65,4 @@ This is why your choice of practice management platform matters. Doxxy builds AB
 
 ABDM isn't optional over the long term. It's the direction India's healthcare infrastructure is moving. The clinics that connect early will have smoother operations, faster insurance processing, and better referral networks. The clinics that wait will be playing catch-up.
 
-Doxxy supports ABDM integration including ABHA creation, health facility and professional registration, and interoperable health record sharing. [Start for free](/auth) — first 100 appointments on us. Get your clinic on India's digital health map.
+Doxxy supports ABDM integration including ABHA creation, health facility and professional registration, and interoperable health record sharing. [Start for free](/auth) — first 100 consultations on us. Get your clinic on India's digital health map.

@@ -56,4 +56,4 @@ The goal isn't to become a marketing machine. It's to set up systems that work i
 
 Don't overthink it. Claim your Google Business Profile today. Set a goal of 5 new reviews this month. Send one useful health update to your patient WhatsApp list. Track how many booking link clicks you get from each channel.
 
-Doxxy helps clinics manage their patient communication, automate review requests, and keep their booking link everywhere it needs to be. [Start for free](/auth) — first 100 appointments on us.
+Doxxy helps clinics manage their patient communication, automate review requests, and keep their booking link everywhere it needs to be. [Start for free](/auth) — first 100 consultations on us.

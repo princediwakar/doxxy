@@ -12,7 +12,7 @@ export default function PricingAnchor() {
           <span className="text-blue-600">not for software.</span>
         </h2>
         <p className="text-lg text-gray-600 dark:text-gray-300 max-w-xl mx-auto mb-14">
-          First 100 appointments are entirely free. After that, it's just ₹10 per
+          First 100 consultations are entirely free. After that, it's just ₹10 per
           completed visit. Unlimited doctors, unlimited staff.
         </p>
 
@@ -27,7 +27,7 @@ export default function PricingAnchor() {
             <span className="text-xl text-gray-500 dark:text-gray-400">/ visit</span>
           </div>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">
-            First 100 appointments free · No monthly subscription · Cancel anytime
+            First 100 consultations free · No monthly subscription · Cancel anytime
           </p>
           <p className="text-sm text-emerald-600 dark:text-emerald-400 font-medium mb-8">
             Less than what a single no-show costs you. Less than your evening chai. Just ₹10.

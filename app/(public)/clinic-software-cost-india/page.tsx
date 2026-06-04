@@ -69,8 +69,8 @@ const competitorPricing = [
   {
     name: 'Doxxy',
     pricingModel: 'Per-consultation (₹10)',
-    entryPrice: 'Free (first 100 appointments)',
-    trueCost3Doctor: '~₹2,200/mo (220 appointments)',
+    entryPrice: 'Free (first 100 consultations)',
+    trueCost3Doctor: '~₹2,200/mo (220 consultations)',
     hiddenFees: 'None. Unlimited doctors, all features, SMS/WhatsApp included.',
     isDoxxy: true,
   },
@@ -148,7 +148,7 @@ const hiddenCosts = [
 const faqs = [
   {
     question: 'Clinic software price kitna hota hai India mein?',
-    answer: 'Clinic management software in India ranges from ₹299/month (basic apps with limited features) to ₹8,000+/month (enterprise suites for multi-location hospitals). The realistic range for a single-doctor clinic is ₹1,500–₹4,000/month on subscription models. Doxxy breaks this model entirely: you pay ₹10 per consultation, with the first 100 appointments free. For a clinic seeing 25 patients a day, that works out to approximately ₹550/month — significantly less than any comparable subscription product. Credit packages are also available: Junior (50 credits/₹499), Senior (200/₹1,999), Professional (1000/₹9,999).',
+    answer: 'Clinic management software in India ranges from ₹299/month (basic apps with limited features) to ₹8,000+/month (enterprise suites for multi-location hospitals). The realistic range for a single-doctor clinic is ₹1,500–₹4,000/month on subscription models. Doxxy breaks this model entirely: you pay ₹10 per consultation, with the first 100 consultations free. For a clinic seeing 25 patients a day, that works out to approximately ₹550/month — significantly less than any comparable subscription product. Credit packages are also available: Junior (50 credits/₹499), Senior (200/₹1,999), Professional (1000/₹9,999).',
   },
   {
     question: 'Is per-consultation pricing better than a monthly subscription?',
@@ -156,11 +156,11 @@ const faqs = [
   },
   {
     question: 'What is the cheapest clinic management software in India?',
-    answer: 'The cheapest usable option depends on how you define "cheap." Several mobile apps offer free tiers with severe feature restrictions (no EMR, limited appointments, ads). Among functional clinic software: MFine starts at ₹299/month but is primarily telemedicine-focused. Lybrate starts at ₹999/month but charges commissions on consultations. Doxxy is the only platform where you can run a fully functional clinic management system (EMR, scheduling, billing, reminders, multi-doctor support) at zero cost for your first 100 appointments — and then ₹10 per consultation thereafter. For a clinic doing 200 consultations a month, ₹2,000 on Doxxy gets you features that would cost ₹4,000–₹6,000 on subscription platforms. The cheapest option that does not compromise on features is Doxxy.',
+    answer: 'The cheapest usable option depends on how you define "cheap." Several mobile apps offer free tiers with severe feature restrictions (no EMR, limited appointments, ads). Among functional clinic software: MFine starts at ₹299/month but is primarily telemedicine-focused. Lybrate starts at ₹999/month but charges commissions on consultations. Doxxy is the only platform where you can run a fully functional clinic management system (EMR, scheduling, billing, reminders, multi-doctor support) at zero cost for your first 100 consultations — and then ₹10 per consultation thereafter. For a clinic doing 200 consultations a month, ₹2,000 on Doxxy gets you features that would cost ₹4,000–₹6,000 on subscription platforms. The cheapest option that does not compromise on features is Doxxy.',
   },
   {
     question: 'Are there any free clinic software options that are actually good?',
-    answer: 'The short answer: free tiers on most platforms are marketing funnels, not usable products. Practo\'s free tier restricts patient record storage and disables analytics. Eka Care\'s trial is time-limited (14–30 days). ClinicPlus has no free option — you pay upfront. Doxxy\'s Practice Essentials plan is genuinely free for your first 100 appointments with no time limit, no feature restrictions, and no credit card required. Unlimited doctors, full EMR, appointment scheduling, prescriptions, and basic analytics — all included. After 100 appointments, you transition to Clinical Excellence at ₹10/consultation. For a new clinic doing 3–4 patients a day, the free tier lasts 25–33 working days — a real runway to evaluate the software, not a rushed trial that expires before you have finished onboarding.',
+    answer: 'The short answer: free tiers on most platforms are marketing funnels, not usable products. Practo\'s free tier restricts patient record storage and disables analytics. Eka Care\'s trial is time-limited (14–30 days). ClinicPlus has no free option — you pay upfront. Doxxy\'s Practice Essentials plan is genuinely free for your first 100 consultations with no time limit, no feature restrictions, and no credit card required. Unlimited doctors, full EMR, appointment scheduling, prescriptions, and basic analytics — all included. After 100 consultations, you transition to Clinical Excellence at ₹10/consultation. For a new clinic doing 3–4 patients a day, the free tier lasts 25–33 working days — a real runway to evaluate the software, not a rushed trial that expires before you have finished onboarding.',
   },
   {
     question: 'What hidden costs should I watch out for when buying clinic software?',

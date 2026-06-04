@@ -43,7 +43,7 @@ const faqs = [
     category: 'getting-started',
     question: 'How quickly can I get started with Doxxy?',
     answer:
-      'Sign-up takes less than five minutes—no credit card required. The Practice Essentials plan gives you access to all essential features for your first 100 appointments so you can experience the platform before upgrading.',
+      'Sign-up takes less than five minutes—no credit card required. The Practice Essentials plan gives you access to all essential features for your first 100 consultations so you can experience the platform before upgrading.',
   },
   {
     category: 'getting-started',

@@ -80,8 +80,8 @@ const freeOptions: FreeOption[] = [
     name: 'Doxxy Practice Essentials',
     letter: 'D',
     color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
-    whatIsFree: 'First 100 appointments free. Forever. No time limit. Full features included — EMR, digital prescriptions, billing, WhatsApp reminders. Unlimited doctors and staff. No credit card required.',
-    catch: 'After 100 appointments, it is ₹10 per consultation. If your clinic sees 30+ patients a day, your free appointments run out in 3–4 days. Cloud-based — needs internet. Built for Indian clinics, not suitable if you are outside India.',
+    whatIsFree: 'First 100 consultations free. Forever. No time limit. Full features included — EMR, digital prescriptions, billing, WhatsApp reminders. Unlimited doctors and staff. No credit card required.',
+    catch: 'After 100 consultations, it is ₹10 per consultation. If your clinic sees 30+ patients a day, your free appointments run out in 3–4 days. Cloud-based — needs internet. Built for Indian clinics, not suitable if you are outside India.',
     bestFor: 'Small to medium Indian clinics (1–5 doctors) wanting to start digital without upfront cost. New practices testing the waters.',
     verdict: 'Honest — most generous free tier among commercial options.',
     verdictType: 'honest',
@@ -122,7 +122,7 @@ const catchPatterns = [
 ];
 
 const comparisonRows = [
-  { dimension: 'Really Free?', doxxy: 'Yes — 100 appointments, no time limit', others: 'Usually a time-limited trial (14–30 days)' },
+  { dimension: 'Really Free?', doxxy: 'Yes — 100 consultations, no time limit', others: 'Usually a time-limited trial (14–30 days)' },
   { dimension: 'Full Features on Free Plan?', doxxy: 'Yes — EMR, prescriptions, billing, WhatsApp', others: 'No — free tier is usually crippled' },
   { dimension: 'Doctor/Staff Limits', doxxy: 'Unlimited on all plans', others: 'Per-doctor fees; free tier limited to 1–2 users' },
   { dimension: 'Credit Card Required?', doxxy: 'No', others: 'Often yes, "for verification"' },
@@ -141,8 +141,8 @@ const faqs = [
     answer: 'It depends on what "small" means. If you see fewer than 5 patients a day as a solo doctor, Google Sheets + WhatsApp works — but you will have no security, no prescription templates, and no way to search patient history efficiently. If you see 5–15 patients a day, a free plan like Doxxy Practice Essentials (100 free appointments, full features) is the best fit among commercial options. If you see 20+ patients a day, no free plan will last you more than a week — you should evaluate paid plans based on per-consultation pricing rather than chasing "free."',
   },
   {
-    question: 'Does Doxxy really give 100 appointments free?',
-    answer: 'Yes. The first 100 appointments on Doxxy Practice Essentials are completely free. No time limit — you can use them over 3 months or 3 years. No credit card required. Full features included: EMR, digital prescriptions, billing, WhatsApp reminders. No hidden per-doctor fees. This is not a trial; it is a genuine free tier. The business model works because clinics that grow past 100 appointments typically stay and pay ₹10 per consultation.',
+    question: 'Does Doxxy really give 100 consultations free?',
+    answer: 'Yes. The first 100 consultations on Doxxy Practice Essentials are completely free. No time limit — you can use them over 3 months or 3 years. No credit card required. Full features included: EMR, digital prescriptions, billing, WhatsApp reminders. No hidden per-doctor fees. This is not a trial; it is a genuine free tier. The business model works because clinics that grow past 100 consultations typically stay and pay ₹10 per consultation.',
   },
   {
     question: 'What happens after I use up my 100 free appointments?',
@@ -154,7 +154,7 @@ const faqs = [
   },
   {
     question: 'Why would Doxxy give away free appointments? What\'s the catch?',
-    answer: 'The catch is honest math, not a hidden trap. Most clinics that try Doxxy and see 100 patients through the platform find it indispensable and continue as paying customers at ₹10 per consultation. The free appointments are our customer acquisition cost — instead of spending money on Google ads and sales teams, we invest it in letting you actually use the product. If your clinic is too small to ever cross 100 appointments, you get a genuinely free clinic management tool. If your clinic grows, we earn your business. That is the entire model.',
+    answer: 'The catch is honest math, not a hidden trap. Most clinics that try Doxxy and see 100 patients through the platform find it indispensable and continue as paying customers at ₹10 per consultation. The free appointments are our customer acquisition cost — instead of spending money on Google ads and sales teams, we invest it in letting you actually use the product. If your clinic is too small to ever cross 100 consultations, you get a genuinely free clinic management tool. If your clinic grows, we earn your business. That is the entire model.',
   },
 ];
 
@@ -323,7 +323,7 @@ export default function FreeClinicSoftwareIndia() {
             </div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">No Credit Card Required</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              Sign up, create your clinic, and start seeing patients. We do not ask for payment details until you cross 100 appointments.
+              Sign up, create your clinic, and start seeing patients. We do not ask for payment details until you cross 100 consultations.
             </p>
           </div>
 
@@ -333,7 +333,7 @@ export default function FreeClinicSoftwareIndia() {
             </div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">No-Shows Don&apos;t Count</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              After 100 appointments, you pay only for consultations that happen. Patient did not show up? You are not charged for that slot.
+              After 100 consultations, you pay only for consultations that happen. Patient did not show up? You are not charged for that slot.
             </p>
           </div>
 
@@ -343,7 +343,7 @@ export default function FreeClinicSoftwareIndia() {
             </div>
             <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Simple Upgrade Path</h3>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              After 100 appointments: &#x20B9;10 per consultation. No jump to a massive subscription. No per-doctor surge. Just pay for what you use.
+              After 100 consultations: &#x20B9;10 per consultation. No jump to a massive subscription. No per-doctor surge. Just pay for what you use.
             </p>
           </div>
         </div>

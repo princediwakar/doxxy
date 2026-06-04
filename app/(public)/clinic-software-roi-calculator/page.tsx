@@ -57,7 +57,7 @@ const faqs = [
   {
     question: "Can I try Doxxy before committing?",
     answer:
-      "Yes. Our Practice Essentials plan is completely free for your first 100 appointments — no credit card required. You get full access to scheduling, patient records, digital prescriptions, and billing. Once you see the value, you can continue at ₹10 per consultation with zero commitment and no annual contract.",
+      "Yes. Our Practice Essentials plan is completely free for your first 100 consultations — no credit card required. You get full access to scheduling, patient records, digital prescriptions, and billing. Once you see the value, you can continue at ₹10 per consultation with zero commitment and no annual contract.",
   },
 ];
 

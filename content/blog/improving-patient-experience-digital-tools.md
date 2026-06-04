@@ -38,4 +38,4 @@ Two-way messaging through the portal also prevents unnecessary visits. A quick q
 
 Digital patient experience isn't about replacing human interaction — it's about removing the friction so your team can focus on care. Start with online booking for the fastest impact, then layer in digital intake and online payments.
 
-Doxxy includes patient records, scheduling, billing, and a patient portal in one platform. [Start for free](/auth) — first 100 appointments on us.
+Doxxy includes patient records, scheduling, billing, and a patient portal in one platform. [Start for free](/auth) — first 100 consultations on us.
