@@ -46,12 +46,18 @@ export async function POST(req: Request) {
 
   // Exchange the authorization code for an access token
   try {
+    // JS SDK popup flow: Meta expects empty string. Fallback redirect: exact page URL.
     const tokenParams = new URLSearchParams({
       client_id: appId,
       client_secret: appSecret,
       code,
-      redirect_uri: "", // Must be empty string for JS SDK code exchange
     });
+
+    if (redirect_uri) {
+      tokenParams.append("redirect_uri", redirect_uri);
+    } else {
+      tokenParams.append("redirect_uri", "");
+    }
 
     const tokenRes = await fetch(
       `${GRAPH_API_BASE}/oauth/access_token?${tokenParams.toString()}`,

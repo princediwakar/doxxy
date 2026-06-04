@@ -42,6 +42,7 @@ interface SignupData {
   waba_id: string;
   phone_number_id: string;
   business_id: string;
+  isFallback?: boolean;
   submitting?: boolean;
 }
 
@@ -74,11 +75,15 @@ export default function WhatsAppConnection() {
 
   // Send combined signup data to backend
   const completeSignup = useCallback(
-    async (data: SignupData) => {
+    async (data: SignupData & { isFallback?: boolean }) => {
       try {
-        const payload = { 
-          ...data, 
-          redirect_uri: window.location.origin + window.location.pathname 
+        // redirect_uri must match byte-for-byte what was used to generate the code.
+        // JS SDK popup flow: Meta expects empty string. Fallback redirect: exact page URL.
+        const payload = {
+          ...data,
+          redirect_uri: data.isFallback
+            ? window.location.origin + window.location.pathname
+            : undefined
         };
         const res = await fetch("/api/whatsapp/embedded-signup", {
           method: "POST",
@@ -215,11 +220,11 @@ export default function WhatsAppConnection() {
       waba_id: wabaId || "",
       phone_number_id: phoneNumberId || "",
       business_id: businessId || "",
+      isFallback: true,
     };
 
-    // Always attempt — server resolves WABA info via Graph API if needed
     setAction("connecting");
-    completeSignup(signupRef.current as SignupData);
+    completeSignup(signupRef.current as SignupData & { isFallback: boolean });
   }, [searchParams, completeSignup]);
 
   // Timeout: reset hung "connecting" state after 5 minutes
