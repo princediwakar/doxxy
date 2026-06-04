@@ -118,8 +118,10 @@ export const BillingModal: React.FC<BillingModalProps> = ({
       toast.success(mode === "edit" ? "Bill updated successfully!" : "Bill created successfully!");
       queryClient.invalidateQueries({ queryKey: ["patient", values.patient_id, "bills"] });
       if (mode === "edit") {
+        form.reset(values);
         onModeChange?.("view");
       } else {
+        form.reset();
         onOpenChange(false);
       }
     } catch {
@@ -129,15 +131,16 @@ export const BillingModal: React.FC<BillingModalProps> = ({
 
   const buildCurrentBillData = (): Bill | null => {
     const currentBill = billRef.current;
-    if (!currentBill) return null;
-    const formServiceItems = form.watch("service_items");
+    if (!currentBill && mode !== "create") return null;
+    const currentFormValues = form.getValues();
     return {
       ...currentBill,
+      ...currentFormValues,
       service_items:
-        formServiceItems && formServiceItems.length > 0
-          ? formServiceItems
+        currentFormValues.service_items && currentFormValues.service_items.length > 0
+          ? currentFormValues.service_items
           : null,
-    };
+    } as Bill;
   };
 
   const handlePrint = async () => {
@@ -280,6 +283,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
         setShowDiscardDialog(true);
         return;
       }
+      form.reset();
       onOpenChange(false);
     }
   };
