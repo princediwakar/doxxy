@@ -238,8 +238,8 @@ async function handleReviewTemplate(
   buttonParams?: TemplateRequest["buttonParams"];
   errorResponse?: Response;
 }> {
-  // Only auto-construct for review_request templates without explicit button params
-  if (body.templateName !== "review_request" || !body.doctorId || body.buttonParams) {
+  // Only auto-construct for feedback_survey_1 templates without explicit button params
+  if (body.templateName !== "feedback_survey_1" || !body.doctorId || body.buttonParams) {
     return { buttonParams: body.buttonParams };
   }
 

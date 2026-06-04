@@ -102,7 +102,7 @@ export function EncounterCanvas({
       const result = await sendWhatsAppMessage({
         type: "template",
         to: patientPhone,
-        templateName: "review_request",
+        templateName: "feedback_survey_1",
         doctorId,
         appointmentId: appointment?.id,
         patientId,
@@ -110,6 +110,7 @@ export function EncounterCanvas({
         bodyParams: [
           { type: "text", text: patientName },
           { type: "text", text: doctorName },
+          { type: "text", text: appointment?.date ? new Date(appointment.date).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) },
         ],
       });
 
