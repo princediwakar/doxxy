@@ -220,6 +220,22 @@ export const ConsultationPreviewModal = ({
 
         if (result.success) {
           toast.success("Sent via WhatsApp", { id: toastId });
+
+          // Also send the consultation_note_delivery template notification
+          const consultDate = appointment?.date
+            ? new Date(appointment.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+            : new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+          sendWhatsAppMessage({
+            type: "template",
+            to: patient.phone,
+            templateName: "consultation_note_delivery",
+            patientId: patient.id,
+            clinicId: activeClinicId,
+            bodyParams: [
+              { type: "text", text: doctorInfo.name || activeClinicName || "Doctor" },
+              { type: "text", text: consultDate },
+            ],
+          }).catch(() => {}); // fire-and-forget; PDF already delivered
         } else if (isMetaConfigError(result)) {
           toast.error("WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages.", { duration: Infinity, closeButton: true, id: toastId });
         } else {

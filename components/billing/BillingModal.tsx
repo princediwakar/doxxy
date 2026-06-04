@@ -221,10 +221,31 @@ export const BillingModal: React.FC<BillingModalProps> = ({
             filename: `${filename}.pdf`,
             caption: `Invoice from ${activeClinicName}`,
             clinicId: activeClinicId,
+            patientId: patient.id,
           });
 
           if (result.success) {
             toast.success("Sent via WhatsApp successfully", { id: toastId });
+
+            // Also send the billing_invoice_delivery template notification
+            const billDate = billData.created_at
+              ? new Date(billData.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+              : new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+            const totalAmount = calculateTotals.total > 0
+              ? `₹${calculateTotals.total.toFixed(2)}`
+              : "₹0";
+            sendWhatsAppMessage({
+              type: "template",
+              to: patient.phone,
+              templateName: "billing_invoice_delivery",
+              patientId: patient.id,
+              clinicId: activeClinicId,
+              bodyParams: [
+                { type: "text", text: activeClinicName || "Clinic" },
+                { type: "text", text: totalAmount },
+                { type: "text", text: billDate },
+              ],
+            }).catch(() => {}); // fire-and-forget; PDF already delivered
           } else if (isMetaConfigError(result)) {
             toast.error("WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages.", { duration: Infinity, closeButton: true, id: toastId });
           } else {
