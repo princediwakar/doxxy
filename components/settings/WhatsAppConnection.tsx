@@ -283,6 +283,9 @@ export default function WhatsAppConnection() {
         config_id: configId,
         response_type: "code",
         override_default_response_type: true,
+        extras: {
+          version: "v4",
+        },
       },
     );
   }, [completeSignup]);
