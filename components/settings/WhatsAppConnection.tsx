@@ -1,3 +1,4 @@
+// components/settings/WhatsAppConnection.tsx
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";

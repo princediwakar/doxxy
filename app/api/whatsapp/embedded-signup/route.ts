@@ -50,16 +50,8 @@ export async function POST(req: Request) {
       client_id: appId,
       client_secret: appSecret,
       code,
+      redirect_uri: "", // Must be empty string for JS SDK code exchange
     });
-    
-    // Pass the redirect_uri that was used during the FB.login flow (or fallback)
-    if (redirect_uri) {
-      tokenParams.append("redirect_uri", redirect_uri);
-    } else {
-      // In JS SDK FB.login without explicit redirect_uri, Facebook sometimes requires empty string
-      // or the current page URL. We default to empty string if not provided.
-      // However, it's safer to always provide the frontend origin URL.
-    }
 
     const tokenRes = await fetch(
       `${GRAPH_API_BASE}/oauth/access_token?${tokenParams.toString()}`,
