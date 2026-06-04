@@ -219,7 +219,6 @@ export default function WhatsAppConnection() {
         response_type: "code",
         override_default_response_type: true,
         extras: {
-          version: "v4",
           sessionInfoVersion: "3",
         },
       },
