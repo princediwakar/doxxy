@@ -327,6 +327,7 @@ export function ConsultationViewModal({
           filename,
           caption: `Consultation from ${doctorInfo.name || activeClinicName}`,
           clinicId: activeClinicId,
+          patientId: appointment?.patient_id,
         });
 
         if (result.success) {

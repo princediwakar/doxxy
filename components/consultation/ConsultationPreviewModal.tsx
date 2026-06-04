@@ -215,6 +215,7 @@ export const ConsultationPreviewModal = ({
           filename,
           caption: `Consultation from ${doctorInfo.name || activeClinicName}`,
           clinicId: activeClinicId,
+          patientId: patient.id,
         });
 
         if (result.success) {

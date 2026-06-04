@@ -7,6 +7,7 @@ type SendDocumentBody = {
   filename: string;
   caption?: string;
   clinicId?: string;
+  patientId?: string;
 };
 
 type SendTemplateBody = {

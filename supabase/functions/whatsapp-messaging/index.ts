@@ -16,6 +16,7 @@ interface DocumentRequest {
   filename: string;
   caption?: string;
   clinicId?: string;
+  patientId?: string;
 }
 
 interface TemplateRequest {
@@ -448,6 +449,7 @@ serve(async (req: Request) => {
         const docMsgId = result.messages?.[0]?.id;
         await logOutboundMessage(supabase, {
           clinicId: body.clinicId,
+          patientId: body.patientId,
           phoneNumberId,
           toPhone: normalizedTo,
           direction: "outbound",
@@ -469,6 +471,7 @@ serve(async (req: Request) => {
           const fbMsgId = result.messages?.[0]?.id;
           await logOutboundMessage(supabase, {
             clinicId: body.clinicId,
+            patientId: body.patientId,
             phoneNumberId: envPhoneNumberId,
             toPhone: normalizedTo,
             direction: "outbound",
