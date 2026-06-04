@@ -121,8 +121,7 @@ export async function POST(req: Request) {
           }
 
           // Store all inbound messages
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { error: insertError } = await (supabase as any)
+          const { error: insertError } = await supabase
             .from("whatsapp_messages")
             .upsert({
               clinic_id: connection.clinic_id,

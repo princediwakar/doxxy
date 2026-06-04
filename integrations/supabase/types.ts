@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       appointment_billing: {
@@ -1296,6 +1271,57 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_messages: {
+        Row: {
+          clinic_id: string
+          created_at: string
+          direction: string
+          from_phone: string
+          id: string
+          patient_id: string | null
+          phone_number_id: string
+          text: string
+          whatsapp_message_id: string | null
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string
+          direction: string
+          from_phone: string
+          id?: string
+          patient_id?: string | null
+          phone_number_id: string
+          text: string
+          whatsapp_message_id?: string | null
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string
+          direction?: string
+          from_phone?: string
+          id?: string
+          patient_id?: string | null
+          phone_number_id?: string
+          text?: string
+          whatsapp_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_messages_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2047,9 +2073,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       appointment_status: [
