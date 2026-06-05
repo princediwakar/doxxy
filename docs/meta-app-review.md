@@ -191,13 +191,76 @@ If the test account does not have a WhatsApp number pre-connected, the reviewer 
 
 ### documents-web-1: Supporting documentation
 
-[Upload screencasts here. Three separate recordings recommended:
+Three screencasts required, one per permission group:
 
-1. **Embedded Signup flow** (for `business_management` + `whatsapp_business_management` + `public_profile`): Show superadmin navigating to Clinic → WhatsApp → Connect WhatsApp → Facebook Login → Embedded Signup popup → successful connection → phone number displayed in settings.
+---
 
-2. **Message sending** (for `whatsapp_business_messaging`): Show staff opening a consultation/billing modal → tapping WhatsApp button → PDF arriving on recipient's phone. Also show the feedback template being sent after appointment completion.
+#### Screencast 1: `business_management`
 
-3. **Opt-out flow** (for policy compliance): Show recipient replying "STOP" → webhook processing → patient marked as opted out → subsequent send attempt blocked.]
+**What it covers:** Embedded Signup — creating and managing WhatsApp Business Accounts on behalf of clinics.
+
+**Duration:** 60–90 seconds.
+
+**Flow:**
+
+1. Open Doxxy (`https://doxxy.in`), signed in as a clinic superadmin
+2. Navigate to **Clinic → WhatsApp** (the `WhatsAppConnection` component)
+3. Show the current state: "Not Connected" with the "Connect WhatsApp" button
+4. Click **Connect WhatsApp** — the Facebook Login popup opens (Embedded Signup via `FB.login()` with `config_id`)
+5. Walk through the Meta popup: select/create WhatsApp Business Account, choose phone number
+6. After completion, show the Doxxy UI updating: "Connected" badge, phone number displayed, quality rating
+7. Show the stored connection details: phone number, WABA ID, status
+
+**Meta wants to see:** User explicitly initiates the connection and consents via Facebook Login. The app manages business assets (WABA) on behalf of the clinic, not Doxxy itself.
+
+---
+
+#### Screencast 2: `whatsapp_business_management`
+
+**What it covers:** Phone number lifecycle — registration, SMS verification, status checks.
+
+**Duration:** 60–90 seconds.
+
+**Flow:**
+
+1. Start from a freshly connected WhatsApp account showing **"Pending Verification"** (yellow badge)
+2. Show the yellow warning box: "Phone number pending verification — a 6-digit code was sent via SMS"
+3. Enter the 6-digit verification code in the input field
+4. Click **Verify** — show the request going to `POST /{phone_number_id}/verify_code`
+5. Show the success toast: "Phone number verified"
+6. Navigate back to show the status changed to **"Connected"** (green badge)
+7. If display name is still pending, show the "Display name pending approval by Meta — this can take up to 24 hours" message
+
+**Meta wants to see:** The app actively manages phone number configuration — registration, code verification, status polling — not just reading data.
+
+---
+
+#### Screencast 3: `whatsapp_business_messaging`
+
+**What it covers:** Sending consultation PDFs and feedback templates, receiving inbound messages, handling opt-outs.
+
+**Duration:** 90–120 seconds.
+
+**Flow (Part A — Document Send):**
+
+1. Show the **Today** dashboard with today's appointments
+2. Open a completed consultation for a patient
+3. Show the consultation notes in the view modal (`ConsultationViewModal`)
+4. Point out the green **WhatsApp** button, explain: "The doctor sends the patient's consultation summary as a PDF"
+5. Click WhatsApp — show the loading toasts: "Generating vector PDF..." → "Sending via WhatsApp..."
+6. Show the success toast: "Sent via WhatsApp"
+7. Switch to the patient's phone and show the received WhatsApp message with the PDF document attached, sent from the clinic's verified number
+
+**Flow (Part B — Template & Opt-out):**
+
+8. Back in Doxxy, after marking an appointment complete, show the **Send Feedback Request** button
+9. Click it — show the template message being sent (`review_request` template)
+10. Show the patient's phone receiving the feedback request message
+11. Show the opt-out: patient replies "STOP" from their phone
+12. Explain: the webhook at `/api/webhooks/whatsapp` receives this, marks the patient as opted out, and blocks all future messages
+13. Try sending another message to the same patient — show it's blocked
+
+**Meta wants to see:** Messages are triggered by human action (doctor clicking a button tied to a specific patient visit), not automated. There's no bulk sending, no marketing broadcasts. Opt-out is functional and immediate.
 
 ---
 

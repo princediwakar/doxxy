@@ -13,7 +13,6 @@ import {
 // 1. SHARED SUB-SCHEMAS
 // ============================================================================
 
-// Convert all `.optional()` string fields to `.nullable()` to satisfy Strict JSON Schema requirements natively.
 export const medicationSchema = z.object({
   name: getCleanString(),
   dosage: getCleanString(),
@@ -50,6 +49,7 @@ const vitalSignsSchema = zField(
   }).nullable(),
   { label: "Vital Signs", type: "vital_signs", section: "Examination", placeholder: "Enter vital signs" },
 );
+
 // Neurology Sub-Schemas
 const motorJointDescription =
   "Muscle power grade out of 5.";
@@ -140,7 +140,7 @@ export const baseNotesSchema = z.object({
   _clinical_reasoning: z
     .string()
     .describe(
-      "Chain of thought: Explain logic for resolving ambiguities, corrections, and translations BEFORE populating any clinical fields."
+      "Chain of thought: Explain logic for resolving ambiguities. Explicitly list any fields where data was missing and state: 'Data missing for [X], will output primitive null.' Do this BEFORE populating clinical fields."
     ),
   // --- HISTORY ---
   chief_complaint: textField("chief_complaint", "Chief Complaint", "History", 3, "Enter chief complaint"),
@@ -660,11 +660,6 @@ export const schemasByDepartment: Record<string, z.ZodObject<z.ZodRawShape>> = {
   EmergencyMedicine: emergencyMedicineNotesSchema,
 };
 
-/**
- * FIX: now logs a warning instead of silently falling back when the department
- * string doesn't match any registered schema. This surfaces typos and missing
- * registrations during development rather than silently using the wrong schema.
- */
 export function getSchemaForDepartment(department: string): z.ZodObject<z.ZodRawShape> {
   const schema = schemasByDepartment[department];
   if (!schema) {

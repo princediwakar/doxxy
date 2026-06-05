@@ -5,8 +5,6 @@ import * as z from "zod";
  * Server-Side Sanitizer — the bouncer at the database door.
  * Intercepts LLM string hallucinations (":null}", "N/A", etc.) and coerces them
  * to primitive null BEFORE the data reaches the database or the UI.
- *
- * This lives here, in the Zod layer, so React components stay completely dumb.
  */
 const sanitizeLlmString = (val: unknown) => {
   if (typeof val === "string") {
@@ -18,7 +16,9 @@ const sanitizeLlmString = (val: unknown) => {
       lower === "n/a" ||
       lower === "none" ||
       lower === "not_specified" ||
-      scrubbed === ""
+      scrubbed === "" ||
+      scrubbed === "-" ||
+      lower.includes("not stated")
     ) {
       return null;
     }
@@ -30,8 +30,13 @@ const sanitizeLlmString = (val: unknown) => {
 /**
  * Base sanitized string field. Use everywhere instead of raw z.string().nullable().
  * The preprocessor silently converts known LLM hallucination tokens to null.
+ * The strict .describe() forces the LLM to avoid generating garbage strings in the first place.
  */
-export const getCleanString = () => z.preprocess(sanitizeLlmString, z.string().nullable());
+export const getCleanString = () => 
+  z.preprocess(
+    sanitizeLlmString, 
+    z.string().nullable().describe("MUST be actual clinical data. If unstated, missing, or unknown, you MUST return primitive null. NEVER output 'N/A', 'None', '> not stated', '-', or similar placeholders.")
+  );
 
 export type NoteFieldConfig = {
   name: string;
@@ -52,9 +57,6 @@ const FIELD_CONFIG = Symbol('fieldConfig');
 
 /**
  * Enhanced Zod field with UI metadata.
- * Stores only { label, description } in .describe() for the LLM.
- * Attaches the full UI config (type, rows, section, placeholder) via a Symbol on the returned schema,
- * scoping it to the schema instance rather than a global namespace.
  */
 export const zField = <T extends z.ZodTypeAny>(
   name: string,
@@ -71,7 +73,6 @@ export const zField = <T extends z.ZodTypeAny>(
 
 /**
  * Factory for textarea/text fields.
- * Switched to .nullable() for native OpenAI strict mode compatibility.
  */
 export const textField = (
   name: string,
@@ -126,9 +127,6 @@ export const getAllFieldsFromSchema = (
     .filter((config): config is NoteFieldConfig => config !== null);
 };
 
-
-// src/lib/schemaUtils.ts (or similar core utils file)
-
 export function isBlank(v: unknown): v is null | undefined | "" {
   if (v === null || v === undefined || v === "") return true;
   if (typeof v === "string") {
@@ -145,7 +143,6 @@ export function isBlank(v: unknown): v is null | undefined | "" {
   return false;
 }
 
-
 export const getMandatoryFieldsFromSchema = (
   schema: z.ZodObject<z.ZodRawShape>,
 ): string[] => {
@@ -154,10 +151,6 @@ export const getMandatoryFieldsFromSchema = (
     .map((field) => field.name);
 };
 
-/**
- * Safe string coercion.
- * Fallback is now null, not "NOT_SPECIFIED".
- */
 export function safeString(val: unknown, fallback: string | null = null): string | null {
   if (val === null || val === undefined) return fallback;
   if (typeof val === "string") return val;
