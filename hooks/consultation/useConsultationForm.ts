@@ -126,13 +126,21 @@ export const useConsultationForm = ({
 
   const isFormDirty = !isDeepEqual(initialValuesRef.current, formValues);
 
+  // Ref to avoid adding isFormDirty to the effect dependency array (would fire on every keystroke)
+  const isFormDirtyRef = useRef(isFormDirty);
+  isFormDirtyRef.current = isFormDirty;
+
   const resetForm = useCallback(() => {
     form.reset(initialValuesRef.current);
     setBaseline(initialValuesRef.current);
   }, [form, setBaseline]);
 
-  // Effect: sync form baseline and manage auto-save readiness
+  // Effect: sync form baseline and manage auto-save readiness.
+  // Skip reset when form has unsaved local changes — otherwise a DB refetch
+  // triggered by auto-save's own query invalidation can clobber in-progress typing.
   useEffect(() => {
+    if (isFormDirtyRef.current) return;
+
     setAutoSaveReady(false);
 
     if (existingConsultation?.specialty_data) {
