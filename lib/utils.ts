@@ -164,15 +164,27 @@ export function normalizeIndianPhone(raw: string): string {
   return digits;
 }
 
+type ConsultationWithJoins = {
+  created_at?: string | null;
+  specialty_data?: Record<string, unknown> | null;
+  appointments?: {
+    doctors?: { name?: string } | null;
+  } | null;
+};
+
+/**
+ * Extracts follow-up date and doctor name from the most recent consultation.
+ * Caller must provide consultations sorted by created_at descending — the first
+ * element is assumed to be the latest.
+ */
 export function extractFollowUp(consultations: Array<Record<string, unknown>> | null | undefined): {
   date: string;
   doctorName: string;
 } | null {
-  const latest = consultations?.[0];
+  const latest = consultations?.[0] as ConsultationWithJoins | undefined;
   if (!latest) return null;
-  const sd = latest.specialty_data as Record<string, unknown> | null | undefined;
-  const followUpDate = sd?.follow_up_date as string | undefined;
+  const followUpDate = latest.specialty_data?.follow_up_date as string | undefined;
   if (!followUpDate) return null;
-  const doctorName = (latest.appointments as Record<string, unknown> | null)?.doctors as { name?: string } | null | undefined;
-  return { date: followUpDate, doctorName: doctorName?.name ?? 'Unknown' };
+  const doctorName = latest.appointments?.doctors?.name;
+  return { date: followUpDate, doctorName: doctorName ?? 'Unknown' };
 }

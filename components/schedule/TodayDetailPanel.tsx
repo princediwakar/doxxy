@@ -12,7 +12,7 @@ import { extractFollowUp } from "@/lib/utils";
 import { EncounterCanvas } from "./EncounterCanvas";
 import { PatientHeader } from "./PatientHeader";
 import { AdministrativeFooter } from "./AdministrativeFooter";
-import type { AppointmentWithDetails } from "@/types/appointments";
+import { APPOINTMENT_STATUS, type AppointmentWithDetails } from "@/types/appointments";
 import type { PatientDetail } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
 
@@ -69,6 +69,14 @@ export function TodayDetailPanel({
       </div>
     );
   }
+
+  const followUpData = extractFollowUp(patientDetail?.consultations);
+  const showFollowUpBanner = followUpData && patientDetail?.hasFutureAppointment === false;
+
+  const appointmentStatus = selectedAppointment?.status;
+  const showMutedBilling = appointmentStatus === APPOINTMENT_STATUS.SCHEDULED || appointmentStatus === APPOINTMENT_STATUS.IN_PROGRESS;
+  const showCreateBill = appointmentStatus === APPOINTMENT_STATUS.COMPLETED && (!patientBills || patientBills.length === 0);
+  const showBillList = appointmentStatus === APPOINTMENT_STATUS.COMPLETED && patientBills && patientBills.length > 0;
 
   return (
     <div className="relative">
@@ -137,82 +145,68 @@ export function TodayDetailPanel({
             />
           )}
 
-          {(() => {
-            const followUp = extractFollowUp(patientDetail?.consultations);
-            if (followUp && patientDetail?.hasFutureAppointment === false) {
-              return (
-                <div className="rounded-lg border-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950 p-4">
-                  <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                    Dr. {followUp.doctorName} recommended follow-up by {format(parseISO(followUp.date), 'MMM dd, yyyy')}
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mt-2 border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
-                    onClick={() => {
-                      if (patientDetail?.patient) {
-                        scheduleAppointment(patientDetail.patient, followUp.date);
-                      }
-                    }}
-                  >
-                    <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
-                    Book Follow-Up
-                  </Button>
-                </div>
-              );
-            }
-            return null;
-          })()}
+          {showFollowUpBanner && (
+            <div className="rounded-lg border-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950 p-4">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Dr. {followUpData!.doctorName} recommended follow-up by {format(parseISO(followUpData!.date), 'MMM dd, yyyy')}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                onClick={() => {
+                  if (patientDetail?.patient) {
+                    scheduleAppointment(patientDetail.patient, followUpData!.date);
+                  }
+                }}
+              >
+                <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
+                Book Follow-Up
+              </Button>
+            </div>
+          )}
 
-          {(() => {
-            const status = selectedAppointment?.status;
-            if (status === 'Scheduled' || status === 'In Progress') {
-              return (
-                <div className="rounded-lg border bg-muted/30 p-4">
-                  <p className="text-sm text-muted-foreground">Complete the visit to generate a bill.</p>
-                </div>
-              );
-            }
-            if (status === 'Completed') {
-              if (!patientBills || patientBills.length === 0) {
-                return (
-                  <div className="rounded-lg border p-4">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        if (selectedAppointment) {
-                          createBill(selectedAppointment);
-                        } else if (patientDetail?.patient) {
-                          createBillForPatient(patientDetail.patient);
-                        }
-                      }}
-                    >
-                      <Receipt className="h-3.5 w-3.5 mr-1.5" />
-                      Create Bill
-                    </Button>
-                  </div>
-                );
-              }
-              return (
-                <div className="rounded-lg border p-4 space-y-2">
-                  {patientBills.map((bill) => (
-                    <button
-                      key={bill.id}
-                      onClick={() => handleViewBill(bill)}
-                      className="w-full text-left flex items-center justify-between hover:bg-muted/50 rounded p-2 transition-colors"
-                    >
-                      <span className="text-sm font-medium">
-                        {bill.invoice_number ?? `INV-${bill.id.slice(0, 8)}`}
-                      </span>
-                      <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString('en-IN')}</span>
-                    </button>
-                  ))}
-                </div>
-              );
-            }
-            return null;
-          })()}
+          {showMutedBilling && (
+            <div className="rounded-lg border bg-muted/30 p-4">
+              <p className="text-sm text-muted-foreground">Complete the visit to generate a bill.</p>
+            </div>
+          )}
+
+          {showCreateBill && (
+            <div className="rounded-lg border p-4">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (selectedAppointment) {
+                    createBill(selectedAppointment);
+                  } else if (patientDetail?.patient) {
+                    createBillForPatient(patientDetail.patient);
+                  }
+                }}
+              >
+                <Receipt className="h-3.5 w-3.5 mr-1.5" />
+                Create Bill
+              </Button>
+            </div>
+          )}
+
+          {showBillList && (
+            <div className="rounded-lg border p-4 space-y-2">
+              {patientBills.map((bill) => (
+                <button
+                  key={bill.id}
+                  onClick={() => handleViewBill(bill)}
+                  className="w-full text-left flex items-center justify-between hover:bg-muted/50 rounded p-2 transition-colors"
+                >
+                  <span className="text-sm font-medium">
+                    {bill.invoice_number ?? `INV-${bill.id.slice(0, 8)}`}
+                  </span>
+                  <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString('en-IN')}</span>
+                </button>
+              ))}
+            </div>
+          )}
 
           <AdministrativeFooter
             patientDetail={patientDetail}

@@ -1,7 +1,7 @@
 // components/consultation/ConsultationFormField.tsx
 "use client";
 
-import { ChevronDown, Activity, CalendarIcon } from 'lucide-react';
+import { ChevronDown, Activity, CalendarIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -174,18 +174,33 @@ export const ConsultationFormField = memo(({
         <div className="space-y-3">
           {showCompanionDate && (
             <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={`w-full justify-start text-left font-normal ${!companionValue ? "text-muted-foreground" : ""}`}
-                    disabled={isReadOnly}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {typeof companionValue === 'string' && companionValue
-                      ? format(new Date(companionValue), "PPP")
-                      : "Select follow-up date"}
-                  </Button>
-                </PopoverTrigger>
+                <div className="flex gap-2">
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={`flex-1 justify-start text-left font-normal ${!companionValue ? "text-muted-foreground" : ""}`}
+                      disabled={isReadOnly}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {typeof companionValue === 'string' && companionValue
+                        ? format(new Date(companionValue), "PPP")
+                        : "Select follow-up date"}
+                    </Button>
+                  </PopoverTrigger>
+                  {!isReadOnly && typeof companionValue === 'string' && companionValue && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onCompanionChange('');
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
                 <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
                     mode="single"
