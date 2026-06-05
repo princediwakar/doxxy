@@ -163,3 +163,16 @@ export function normalizeIndianPhone(raw: string): string {
   if (digits.length === 10) return `91${digits}`;
   return digits;
 }
+
+export function extractFollowUp(consultations: Array<Record<string, unknown>> | null | undefined): {
+  date: string;
+  doctorName: string;
+} | null {
+  const latest = consultations?.[0];
+  if (!latest) return null;
+  const sd = latest.specialty_data as Record<string, unknown> | null | undefined;
+  const followUpDate = sd?.follow_up_date as string | undefined;
+  if (!followUpDate) return null;
+  const doctorName = (latest.appointments as Record<string, unknown> | null)?.doctors as { name?: string } | null | undefined;
+  return { date: followUpDate, doctorName: doctorName?.name ?? 'Unknown' };
+}

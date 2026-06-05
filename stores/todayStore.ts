@@ -21,6 +21,7 @@ interface TodayState {
   historyAppointment: AppointmentData | null;
   appointmentModalPatient: Patient | null;
   appointmentModalOpen: boolean;
+  suggestedAppointmentDate: string | null;
   // Form guard (dirty bill form)
   dirtyFormGuard: boolean;
   shakeTrigger: number;
@@ -39,7 +40,7 @@ interface TodayActions {
   createBillForPatient: (patient: DbPatientByClinic) => void;
   viewBill: (bill: BillWithDetails, patient?: DbPatientByClinic | null) => void;
   viewConsultation: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
-  scheduleAppointment: (patient: DbPatientByClinic | Patient) => void;
+  scheduleAppointment: (patient: DbPatientByClinic | Patient, suggestedDate?: string | null) => void;
   editAppointment: (app: AppointmentWithDetails) => void;
   editPatient: () => void;
   patientCreated: (patient: Patient) => void;
@@ -54,6 +55,7 @@ export const useTodayStore = create<TodayState & TodayActions>((set) => ({
   historyAppointment: null,
   appointmentModalPatient: null,
   appointmentModalOpen: false,
+  suggestedAppointmentDate: null,
   dirtyFormGuard: false,
   shakeTrigger: 0,
 
@@ -113,10 +115,11 @@ export const useTodayStore = create<TodayState & TodayActions>((set) => ({
       activeModal: 'consult',
     }),
 
-  scheduleAppointment: (patient) =>
+  scheduleAppointment: (patient, suggestedDate?) =>
     set({
       appointmentModalPatient: patient as unknown as Patient,
       selectedAppointment: null,
+      suggestedAppointmentDate: suggestedDate ?? null,
       appointmentModalOpen: true,
     }),
 
@@ -133,6 +136,7 @@ export const useTodayStore = create<TodayState & TodayActions>((set) => ({
       activeModal: null,
       appointmentModalPatient: patient,
       selectedAppointment: null,
+      suggestedAppointmentDate: null,
       appointmentModalOpen: true,
     }),
 }));

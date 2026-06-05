@@ -324,6 +324,7 @@ export interface PatientDetail {
   patient: DbPatientByClinic | null;
   consultations: Array<Record<string, unknown>>;
   bills: Array<Record<string, unknown>>;
+  hasFutureAppointment?: boolean;
 }
 
 // ============================================================================

@@ -43,6 +43,7 @@ interface AppointmentModalProps {
   onOpenChange: (open: boolean) => void;
   appointment: AppointmentData | null;
   patient?: Patient | null;
+  suggestedDate?: string | null;
 }
 
 export const AppointmentModal: React.FC<AppointmentModalProps> = ({
@@ -50,6 +51,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   onOpenChange,
   appointment,
   patient,
+  suggestedDate,
 }) => {
   const { patients, isLoadingPatients, doctors, isLoadingDoctors } = useAppointmentForm(open);
   const { activeClinicId } = useAppState();
@@ -78,7 +80,11 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
   // We combine the reset logic into one clear effect
   useEffect(() => {
     if (open) {
-      const defaultDate = appointment?.date ? new Date(appointment.date) : new Date();
+      const defaultDate = appointment?.date
+        ? new Date(appointment.date)
+        : suggestedDate
+          ? new Date(suggestedDate)
+          : new Date();
       
       // Determine Doctor ID
       let defaultDoctor = appointment?.doctor_id || "";

@@ -2,6 +2,7 @@
 
 import { createServerSupabase } from '@/integrations/supabase/server';
 import type { DbPatientByClinic, DbPatient, DbBill } from '@/types/core';
+import { getCurrentDateStringIST } from '@/lib/utils';
 
 import type { PatientDetail } from '@/types/core';
 
@@ -40,10 +41,19 @@ export async function queryPatientDetail(
     return { ...billData, patient_name: patients?.name ?? null };
   });
 
+  const today = getCurrentDateStringIST();
+  const { data: futureApps } = await supabase
+    .from('appointments')
+    .select('id')
+    .eq('patient_id', patientId)
+    .gt('date', today)
+    .limit(1);
+
   return {
     patient: patient as DbPatientByClinic | null,
     consultations: (consultations ?? []) as Array<Record<string, unknown>>,
     bills: billsWithPatientName as Array<Record<string, unknown>>,
+    hasFutureAppointment: (futureApps?.length ?? 0) > 0,
   };
 }
 

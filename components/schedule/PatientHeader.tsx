@@ -23,6 +23,7 @@ interface PatientHeaderProps {
   age?: string | number;
   gender?: string;
   uhid?: string;
+  phone?: string;
   status?: string;
   appointmentType?: string;
   appointmentTime?: string;
@@ -40,6 +41,7 @@ export function PatientHeader({
   age,
   gender,
   uhid,
+  phone,
   status,
   appointmentType,
   appointmentTime,
@@ -65,6 +67,7 @@ export function PatientHeader({
           <p className="text-sm text-muted-foreground truncate">
             {contextParts.join(" · ")}
           </p>
+          {phone && <p className="text-xs text-muted-foreground">{phone}</p>}
         </div>
 
         {variant === "staff" ? (
@@ -75,9 +78,21 @@ export function PatientHeader({
             <Button variant="outline" size="sm" onClick={onSchedule}>
               <CalendarPlus className="h-3.5 w-3.5 mr-1" />Schedule
             </Button>
-            <Button variant="outline" size="sm" onClick={onEditPatient}>
-              <Edit className="h-3.5 w-3.5 mr-1" />Edit
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onEditPatient}>
+                  <Edit className="h-4 w-4 mr-2" />Edit Patient
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onEditAppointment}>
+                  <Stethoscope className="h-4 w-4 mr-2" />Edit Appointment
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         ) : (
           <DropdownMenu>

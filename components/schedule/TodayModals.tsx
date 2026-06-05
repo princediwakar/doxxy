@@ -43,6 +43,7 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
   const historyAppointment = useTodayStore((s) => s.historyAppointment);
   const appointmentModalPatient = useTodayStore((s) => s.appointmentModalPatient);
   const appointmentModalOpen = useTodayStore((s) => s.appointmentModalOpen);
+  const suggestedAppointmentDate = useTodayStore((s) => s.suggestedAppointmentDate);
   const shakeTrigger = useTodayStore((s) => s.shakeTrigger);
   const dirtyFormGuard = useTodayStore((s) => s.dirtyFormGuard);
   const setDirtyFormGuard = useTodayStore((s) => s.setDirtyFormGuard);
@@ -167,6 +168,7 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
         onOpenChange={handleAppointmentModalClose}
         appointment={selectedAppointment}
         patient={appointmentModalPatient}
+        suggestedDate={suggestedAppointmentDate}
       />
 
       <Suspense fallback={null}>

@@ -34,6 +34,7 @@ interface AdministrativeFooterProps {
   isLoadingBills: boolean;
   defaultExpandBills?: boolean;
   defaultExpandHistory?: boolean;
+  hideBillsAccordion?: boolean;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
   onCreateBill?: () => void;
@@ -54,6 +55,7 @@ export function AdministrativeFooter({
   isLoadingBills = false,
   defaultExpandBills = false,
   defaultExpandHistory = false,
+  hideBillsAccordion = false,
   onViewBill,
   onViewConsultationFromHistory,
   onCreateBill,
@@ -78,6 +80,7 @@ export function AdministrativeFooter({
   return (
     <div className="space-y-2">
       {/* Bills Accordion */}
+      {!hideBillsAccordion && (
       <div className="rounded-lg border">
         <div
           role="button"
@@ -150,14 +153,15 @@ export function AdministrativeFooter({
           </div>
         )}
       </div>
+      )}
 
-      {/* Previous Consultations Accordion */}
+      {/* Consultation History Accordion */}
       <div className="rounded-lg border">
         <button
           onClick={() => setHistoryOpen(!historyOpen)}
           className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium hover:bg-muted/50 rounded-lg transition-colors"
         >
-          <span>Previous Consultations ({previousConsultations.length})</span>
+          <span>Consultation History ({previousConsultations.length})</span>
           {historyOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {historyOpen && (

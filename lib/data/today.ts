@@ -66,5 +66,13 @@ export async function getPatientById(patientId: string) {
     .eq('patient_id', patientId)
     .order('created_at', { ascending: false });
 
-  return { patient: patient as DbPatientByClinic, consultations: consultations || [], bills: bills || [] };
+  const today = getCurrentDateStringIST();
+  const { data: futureApps } = await supabase
+    .from('appointments')
+    .select('id')
+    .eq('patient_id', patientId)
+    .gt('date', today)
+    .limit(1);
+
+  return { patient: patient as DbPatientByClinic, consultations: consultations || [], bills: bills || [], hasFutureAppointment: (futureApps?.length ?? 0) > 0 };
 }
