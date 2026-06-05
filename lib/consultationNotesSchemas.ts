@@ -3,6 +3,7 @@ import * as z from "zod";
 import {
   zField,
   textField,
+  dateField,
   getCleanString,
   getSectionsFromSchema,
   type FieldSection,
@@ -193,7 +194,17 @@ export const baseNotesSchema = z.object({
   }),
   treatment: textField("treatment", "Treatment", "Management", 4, "Describe treatment plan"),
   prognosis: textField("prognosis", "Prognosis", "Management", 2, "Enter prognosis"),
-  follow_up: textField("follow_up", "Follow-Up Plan", "Management", 2, "Enter follow-up plan"),
+  follow_up: zField("follow_up", getCleanString(), {
+    label: "Follow-Up",
+    section: "Management",
+    type: "textarea",
+    rows: 2,
+    placeholder: "Enter follow-up plan",
+    companionField: "follow_up_date",
+  }),
+  follow_up_date: dateField("follow_up_date", "Follow-Up Date", "Management", "Select follow-up date", {
+    hideFromSection: true,
+  }),
   referrals: textField("referrals", "Referrals", "Management", 2, "Enter referrals"),
 });
 

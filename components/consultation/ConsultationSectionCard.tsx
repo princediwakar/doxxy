@@ -76,26 +76,42 @@ export const ConsultationSectionCard = ({
         <CollapsibleContent>
           <div className="pb-3 space-y-2">
             {section.fields.map(
-              (field: NoteFieldConfig, fieldIndex: number) => (
-                <ConsultationFormField
-                  key={fieldIndex}
-                  fieldConfig={field}
-                  fieldIndex={fieldIndex}
-                  value={
-                    form.watch(
-                      `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>
-                    ) as unknown as FieldValue
-                  }
-                  onChange={(value) =>
-                    form.setValue(
-                      `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>,
-                      value as never
-                    )
-                  }
-                  isReadOnly={!canEditConsultation}
-                  autoFocus={sectionIndex === 0 && fieldIndex === 0}
-                />
-              )
+              (field: NoteFieldConfig, fieldIndex: number) => {
+                const companionField = field.companionField;
+                const companionProps = companionField
+                  ? {
+                      companionValue: form.watch(
+                        `specialty_data.${companionField}` as FieldPath<ConsultationFormValues>
+                      ) as unknown as FieldValue,
+                      onCompanionChange: (value: FieldValue) =>
+                        form.setValue(
+                          `specialty_data.${companionField}` as FieldPath<ConsultationFormValues>,
+                          value as never
+                        ),
+                    }
+                  : {};
+                return (
+                  <ConsultationFormField
+                    key={fieldIndex}
+                    fieldConfig={field}
+                    fieldIndex={fieldIndex}
+                    value={
+                      form.watch(
+                        `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>
+                      ) as unknown as FieldValue
+                    }
+                    onChange={(value) =>
+                      form.setValue(
+                        `specialty_data.${field.name}` as FieldPath<ConsultationFormValues>,
+                        value as never
+                      )
+                    }
+                    isReadOnly={!canEditConsultation}
+                    autoFocus={sectionIndex === 0 && fieldIndex === 0}
+                    {...companionProps}
+                  />
+                );
+              }
             )}
           </div>
         </CollapsibleContent>

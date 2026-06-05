@@ -41,11 +41,13 @@ export const getCleanString = () =>
 export type NoteFieldConfig = {
   name: string;
   label: string;
-  type?: "input" | "textarea" | "prescription" | "vital_signs" | "tabular_eye" | "motor_examination" | "reflex_examination";
+  type?: "input" | "textarea" | "prescription" | "vital_signs" | "tabular_eye" | "motor_examination" | "reflex_examination" | "date";
   rows?: number;
   placeholder?: string;
   mandatory?: boolean;
   section?: string;
+  companionField?: string;
+  hideFromSection?: boolean;
 };
 
 export type FieldSection = {
@@ -84,6 +86,16 @@ export const textField = (
   return zField(name, getCleanString(), { label, section, type: "textarea", rows, placeholder });
 };
 
+export const dateField = (
+  name: string,
+  label: string,
+  section: string,
+  placeholder: string,
+  overrides?: Partial<Omit<NoteFieldConfig, "name" | "label" | "section" | "type" | "placeholder">>,
+) => {
+  return zField(name, getCleanString(), { label, section, type: "date", placeholder, ...overrides });
+};
+
 export const extractFieldConfig = (
   _fieldName: string,
   schema: z.ZodTypeAny,
@@ -104,7 +116,7 @@ export const getSectionsFromSchema = (
   const shape = schema.shape;
   Object.entries(shape).forEach(([fieldName, fieldSchema]) => {
     const config = extractFieldConfig(fieldName, fieldSchema as z.ZodTypeAny);
-    if (config && config.section) {
+    if (config && config.section && !config.hideFromSection) {
       const sectionTitle = config.section;
       if (!sections[sectionTitle]) {
         sections[sectionTitle] = { title: sectionTitle, fields: [] };

@@ -1,12 +1,16 @@
 // components/consultation/ConsultationFormField.tsx
 "use client";
 
-import { ChevronDown, Activity } from 'lucide-react';
+import { ChevronDown, Activity, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CHARACTER_LIMITS } from './constants';
 import { PrescriptionField } from './PrescriptionField';
 import { TabularEyeField } from './TabularEyeField';
@@ -40,6 +44,8 @@ interface ConsultationFormFieldProps {
   onChange: (value: FieldValue) => void;
   isReadOnly?: boolean;
   autoFocus?: boolean;
+  companionValue?: FieldValue;
+  onCompanionChange?: (value: FieldValue) => void;
 }
 
 export const ConsultationFormField = memo(({
@@ -48,7 +54,9 @@ export const ConsultationFormField = memo(({
   value,
   onChange,
   isReadOnly = false,
-  autoFocus = false
+  autoFocus = false,
+  companionValue,
+  onCompanionChange,
 }: ConsultationFormFieldProps) => {
   const isMandatory = fieldConfig.mandatory || false;
   const hasValue = useMemo(() => hasFieldValue(value), [value]);
@@ -161,21 +169,48 @@ export const ConsultationFormField = memo(({
 
   const renderInput = () => {
     if (fieldConfig.type === 'textarea') {
+      const showCompanionDate = fieldConfig.companionField && onCompanionChange;
       return (
-        <Textarea
-          ref={textareaRef}
-          placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
-          value={typeof value === 'string' ? value : ''}
-          onChange={(e) => {
-            if (isReadOnly) return;
-            if (e.target.value.length <= characterLimit) onChange(e.target.value);
-          }}
-          rows={fieldConfig.rows || 4}
-          className={`min-h-[100px] resize-none ${isReadOnly ? readOnlyInputClass : ""}`}
-          maxLength={characterLimit}
-          readOnly={isReadOnly}
-          disabled={isReadOnly}
-        />
+        <div className="space-y-3">
+          {showCompanionDate && (
+            <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={`w-full justify-start text-left font-normal ${!companionValue ? "text-muted-foreground" : ""}`}
+                    disabled={isReadOnly}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {typeof companionValue === 'string' && companionValue
+                      ? format(new Date(companionValue), "PPP")
+                      : "Select follow-up date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={typeof companionValue === 'string' && companionValue ? new Date(companionValue) : undefined}
+                    onSelect={(date) => onCompanionChange(date ? date.toISOString() : '')}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+          )}
+          <Textarea
+            ref={textareaRef}
+            placeholder={isReadOnly ? "No data entered" : fieldConfig.placeholder}
+            value={typeof value === 'string' ? value : ''}
+            onChange={(e) => {
+              if (isReadOnly) return;
+              if (e.target.value.length <= characterLimit) onChange(e.target.value);
+            }}
+            rows={fieldConfig.rows || 4}
+            className={`min-h-[100px] resize-none ${isReadOnly ? readOnlyInputClass : ""}`}
+            maxLength={characterLimit}
+            readOnly={isReadOnly}
+            disabled={isReadOnly}
+          />
+        </div>
       );
     }
     if (fieldConfig.type === 'select') {

@@ -52,6 +52,8 @@ export interface FieldConfig {
   rows?: number;
   options?: string[];
   mandatory?: boolean;
+  companionField?: string;
+  hideFromSection?: boolean;
 }
 
 // ============================================================================
@@ -211,9 +213,13 @@ export interface VitalSignsFieldProps {
 /** Consultation form field props */
 export interface ConsultationFormFieldProps {
   fieldConfig: FieldConfig;
+  fieldIndex?: number;
   value: FieldValue;
   onChange: (value: FieldValue) => void;
   isReadOnly?: boolean;
+  autoFocus?: boolean;
+  companionValue?: FieldValue;
+  onCompanionChange?: (value: FieldValue) => void;
 }
 
 // ============================================================================
