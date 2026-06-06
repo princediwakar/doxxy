@@ -5,7 +5,7 @@ import type { Database } from './types';
 export async function createServerSupabase() {
   const cookieStore = await cookies();
 
-  return createServerClient<Database>(
+  const client = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -25,4 +25,10 @@ export async function createServerSupabase() {
       },
     },
   );
+
+  // createServerClient sets skipAutoInitialize: true and does not allow overriding it.
+  // Without this, queries run as anonymous and RLS blocks all data.
+  await client.auth.getSession();
+
+  return client;
 }
