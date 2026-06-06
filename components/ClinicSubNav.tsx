@@ -3,13 +3,16 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { IndianRupee, Users, Building2, Building, Wallet, MessageCircle } from "lucide-react";
+import { isWhatsAppEnabled } from "@/lib/feature-flags";
 
 const subNavItems = [
   { icon: IndianRupee, label: "Financials", path: "/clinic/financials" },
   { icon: Wallet, label: "Payments", path: "/clinic/payments" },
   { icon: Users, label: "Staff", path: "/clinic/staff" },
   { icon: Building2, label: "Departments", path: "/clinic/departments" },
-  { icon: MessageCircle, label: "WhatsApp", path: "/clinic/whatsapp" },
+  ...(isWhatsAppEnabled
+    ? [{ icon: MessageCircle, label: "WhatsApp", path: "/clinic/whatsapp" }]
+    : []),
   { icon: Building, label: "About", path: "/clinic/about" },
 ];
 

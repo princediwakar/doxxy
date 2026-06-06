@@ -1,4 +1,5 @@
 import { CheckCircle } from "lucide-react";
+import { isWhatsAppEnabled } from "@/lib/feature-flags";
 
 const bullets = [
   {
@@ -51,12 +52,14 @@ export default function WhatsAppConnect() {
               Built to comply with WhatsApp Business Policy.
             </p>
 
-            <a
-              href="/clinic/whatsapp"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-            >
-              Manage your clinic&apos;s WhatsApp settings &rarr;
-            </a>
+            {isWhatsAppEnabled && (
+              <a
+                href="/clinic/whatsapp"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Manage your clinic&apos;s WhatsApp settings &rarr;
+              </a>
+            )}
           </div>
 
           {/* Right: Phone mockup */}

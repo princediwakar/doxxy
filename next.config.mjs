@@ -3,13 +3,13 @@
 const cspHeader = [
   "default-src 'self'",
   // Added 'blob:' to allow the dynamic script execution for your STT library
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net https://cdn.tailwindcss.com https://maps.googleapis.com https://places.googleapis.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://www.googletagmanager.com https://embed.tawk.to https://va.tawk.to https://connect.facebook.net https://cdn.tailwindcss.com https://maps.googleapis.com https://maps.gstatic.com https://places.googleapis.com https://checkout.razorpay.com",
   "style-src 'self' 'unsafe-inline' https://lh3.googleusercontent.com https://connect.facebook.net",
   "img-src 'self' data: https: blob: https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com",
-  "font-src 'self' https://lh3.googleusercontent.com https://connect.facebook.net",
+  "font-src 'self' https://fonts.gstatic.com https://lh3.googleusercontent.com https://connect.facebook.net",
   // Added wss://*.onrender.com to allow the WebSocket connection to your STT proxy
-  "connect-src 'self' data: https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to wss://*.onrender.com https://*.facebook.com https://*.facebook.net https://connect.facebook.net https://lh3.googleusercontent.com https://maps.googleapis.com https://places.googleapis.com https://*.ingest.us.sentry.io",
-  "frame-src 'self' https://www.googletagmanager.com https://www.facebook.com https://web.facebook.com",
+  "connect-src 'self' data: https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to wss://*.onrender.com https://*.facebook.com https://*.facebook.net https://connect.facebook.net https://lh3.googleusercontent.com https://maps.googleapis.com https://places.googleapis.com https://*.ingest.us.sentry.io https://api.razorpay.com",
+  "frame-src 'self' https://www.googletagmanager.com https://www.facebook.com https://web.facebook.com https://api.razorpay.com",
   "worker-src 'self' blob:",
   "media-src 'self' blob:",
 ].join('; ');
@@ -101,11 +101,15 @@ if (process.env.ANALYZE === 'true') {
   }
 }
 
-export default withSentryConfig(config, {
-  org: process.env.SENTRY_ORG ?? '',
-  project: process.env.SENTRY_PROJECT ?? '',
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  widenClientFileUpload: true,
-  tunnelRoute: '/monitoring',
-  silent: !process.env.CI,
-})
+if (process.env.NODE_ENV === 'production' || process.env.SENTRY_AUTH_TOKEN) {
+  config = withSentryConfig(config, {
+    org: process.env.SENTRY_ORG ?? '',
+    project: process.env.SENTRY_PROJECT ?? '',
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    widenClientFileUpload: true,
+    tunnelRoute: '/monitoring',
+    silent: !process.env.CI,
+  });
+}
+
+export default config;

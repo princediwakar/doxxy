@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -n proxy,next -c cyan,green \"npm run dev:proxy\" \"next dev\"",
+    "dev": "concurrently -n proxy,next -c cyan,green \"npm run dev:proxy\" \"next dev --turbo\"",
     "dev:proxy": "cd stt-proxy && npm run dev",
     "build": "next build",
     "start": "next start",
