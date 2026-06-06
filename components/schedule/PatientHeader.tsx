@@ -72,7 +72,7 @@ export function PatientHeader({
 
         {variant === "staff" ? (
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-            {status === "Completed" && (
+            {(!status || status === "Completed") && (
               <Button variant="outline" size="sm" onClick={onBill}>
                 <Receipt className="h-3.5 w-3.5 mr-1" />Bill
               </Button>
@@ -107,7 +107,7 @@ export function PatientHeader({
               <DropdownMenuItem onClick={onSchedule}>
                 <CalendarPlus className="h-4 w-4 mr-2" />Schedule
               </DropdownMenuItem>
-              {status === "Completed" && (
+              {(!status || status === "Completed") && (
                 <DropdownMenuItem onClick={onBill}>
                   <Receipt className="h-4 w-4 mr-2" />Bill
                 </DropdownMenuItem>

@@ -62,7 +62,7 @@ export function AdministrativeFooter({
   onViewConsultationFromHistory,
   onCreateBill,
 }: AdministrativeFooterProps) {
-  const isCompleted = appointmentStatus === "Completed";
+  const canCreateBill = !appointmentStatus || appointmentStatus === "Completed";
   const [billsOpen, setBillsOpen] = useState(defaultExpandBills);
   const [historyOpen, setHistoryOpen] = useState(defaultExpandHistory);
 
@@ -99,7 +99,7 @@ export function AdministrativeFooter({
         >
           <span>Bills ({patientBills.length})</span>
           <div className="flex items-center gap-2">
-            {onCreateBill && isCompleted && patientBills.length > 0 && !patientBills.some(bill => bill.appointment_id === currentAppointmentId && currentAppointmentId != null) && (
+            {onCreateBill && canCreateBill && patientBills.length > 0 && !patientBills.some(bill => bill.appointment_id === currentAppointmentId && currentAppointmentId != null) && (
               <Button
                 size="sm"
                 variant="outline"
@@ -124,7 +124,7 @@ export function AdministrativeFooter({
             ) : patientBills.length === 0 ? (
               <div className="text-center py-4 space-y-2">
                 <p className="text-sm text-muted-foreground">No bills for this patient.</p>
-                {onCreateBill && isCompleted && (
+                {onCreateBill && canCreateBill && (
                   <Button size="sm" variant="outline" onClick={onCreateBill}>
                     <Receipt className="h-3.5 w-3.5 mr-1.5" />
                     Create Bill
