@@ -54,6 +54,11 @@ export function useRealtimeSubscription({
       )
       .subscribe((status, err) => {
         if (status === "CHANNEL_ERROR") {
+          const msg = err instanceof Error ? err.message : String(err ?? '');
+          // Suppress transport errors — harmless Strict Mode / HMR artifact.
+          // React double-mounts in dev, and removeChannel() closes the
+          // WebSocket before it connects, producing "transport failure".
+          if (msg.includes('transport failure')) return;
           console.error(`Realtime subscription failed for ${table}:`, err);
         }
       });
