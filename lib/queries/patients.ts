@@ -191,7 +191,7 @@ export async function queryPatientSearch(
     .from('patients')
     .select('*', { count: 'exact', head: false })
     .eq('clinic_id', clinicId)
-    .order('name')
+    .order('created_at', { ascending: false })
     .range(start, end);
 
   if (search?.trim()) {

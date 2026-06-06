@@ -13,37 +13,16 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 
-function openCommandPalette() {
-  document.dispatchEvent(new Event("open-command-palette"));
-}
-
 export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
   const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
   const pathname = usePathname();
   const role = activeClinicRole;
 
-  const topItems = navItems.filter(item => item.topGroup && item.sidebar !== false);
+  const topItems = navItems.filter(item => item.topGroup);
   const bottomItems = navItems.filter(item => !item.topGroup && (role ? item.roles.includes(role) : true));
 
   const renderNavItem = (item: (typeof navItems)[number]) => {
-    const isSearch = item.label === "Search";
-    const isActive = isSearch ? false : isActiveLink(pathname, item.path);
-
-    const linkContent = (
-      <>
-        <item.icon size={18} className={cn(
-          "flex-shrink-0 transition-transform group-hover:scale-105",
-          isActive ? "text-primary" : "text-muted-foreground"
-        )} />
-        {/* FIX: CSS width animation instead of React unmounting */}
-        <div className={cn(
-          "overflow-hidden transition-all duration-300 whitespace-nowrap flex-1 text-left",
-          isCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[200px] opacity-100 ml-3"
-        )}>
-          <span className="font-medium">{item.label}</span>
-        </div>
-      </>
-    );
+    const isActive = isActiveLink(pathname, item.path);
 
     const className = cn(
       "flex items-center justify-start py-3 rounded-lg text-sm transition-all duration-200 group min-h-[48px] w-full border border-transparent overflow-hidden",
@@ -53,25 +32,20 @@ export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
         : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
     );
 
-    if (isSearch) {
-      return (
-        <li key={item.path}>
-          <button onClick={openCommandPalette} className={className}>
-            {linkContent}
-          </button>
-        </li>
-      );
-    }
-
-    const link = (
-      <Link href={item.path} className={className}>
-        {linkContent}
-      </Link>
-    );
-
     return (
       <li key={item.path}>
-        {link}
+        <Link href={item.path} className={className}>
+          <item.icon size={18} className={cn(
+            "flex-shrink-0 transition-transform group-hover:scale-105",
+            isActive ? "text-primary" : "text-muted-foreground"
+          )} />
+          <div className={cn(
+            "overflow-hidden transition-all duration-300 whitespace-nowrap flex-1 text-left",
+            isCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[200px] opacity-100 ml-3"
+          )}>
+            <span className="font-medium">{item.label}</span>
+          </div>
+        </Link>
       </li>
     );
   };

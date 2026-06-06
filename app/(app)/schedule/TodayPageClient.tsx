@@ -280,8 +280,8 @@ export function TodayPageClient({
   const showMobileDetail = isMobile && mobileDetailOpen;
 
   return (
-    <div className="flex flex-col space-y-6 h-[calc(100vh-3rem)] min-h-0">
-      <DoctorProfilePrompt />
+    <div className="flex flex-col lg:h-[calc(100vh-3rem)] flex-1 min-h-0">
+      {!showMobileDetail && <DoctorProfilePrompt />}
       <TodayMobileLayout
         showMobileDetail={showMobileDetail}
         onBackToQueue={() => setMobileDetailOpen(false)}

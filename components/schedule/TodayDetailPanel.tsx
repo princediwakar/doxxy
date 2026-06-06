@@ -131,6 +131,7 @@ export function TodayDetailPanel({
               gender={patientDetail.patient.gender}
               uhid={patientDetail.patient.uhid}
               phone={patientDetail.patient.phone}
+              status={selectedAppointment?.status}
               variant="staff"
               appointmentType={selectedAppointment?.type}
               appointmentTime={selectedAppointment?.time}

@@ -51,6 +51,7 @@ export async function createPatient(data: Omit<DbPatientInsert, 'uhid'> & { clin
 
   if (error) return { error: error.message };
   revalidatePath('/schedule');
+  revalidatePath('/patients');
   return { success: true, data: patient };
 }
 
@@ -69,5 +70,6 @@ export async function updatePatient(id: string, data: Partial<DbPatientUpdate>) 
 
   if (error) return { error: error.message };
   revalidatePath('/schedule');
+  revalidatePath('/patients');
   return { success: true, data: patient };
 }
