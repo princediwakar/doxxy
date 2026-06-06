@@ -42,7 +42,7 @@ export async function saveBill(
       .eq('id', billId)
       .select()
       .single();
-    if (error) return { error: error.message };
+    if (error) return { error: error.message, code: error.code };
     revalidatePath('/schedule');
     return { success: true, data: bill };
   }
@@ -55,7 +55,7 @@ export async function saveBill(
     .insert({ ...billData, invoice_number: invoiceResult.data } as DbBillInsert)
     .select()
     .single();
-  if (error) return { error: error.message };
+  if (error) return { error: error.message, code: error.code };
 
   revalidatePath('/schedule');
   return { success: true, data: bill };
