@@ -237,6 +237,7 @@ export function EncounterCanvas({
         isLoadingDetail={false}
         selectedPatientId={patientId}
         currentAppointmentId={appointment?.id ?? null}
+        appointmentStatus={appointmentStatus}
         patientBills={patientBills}
         isLoadingBills={isLoadingBills}
         onViewBill={onViewBill}
