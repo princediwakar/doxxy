@@ -121,7 +121,7 @@ export interface UseBillingReturn {
 /** Payment transaction type - extends core DbPaymentTransaction with stricter types */
 export type PaymentTransaction = Omit<DbPaymentTransaction, 'payment_status' | 'transaction_type'> & {
   payment_status: "pending" | "completed" | "failed" | "refunded";
-  transaction_type?: "credit_purchase" | "bill_payment";
+  transaction_type?: "credit_purchase" | "monthly_billing";
 };
 
 /** Payment form values */

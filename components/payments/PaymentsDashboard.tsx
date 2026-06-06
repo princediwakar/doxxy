@@ -66,7 +66,7 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
             <p className="hidden sm:block text-muted-foreground">Credits and transaction history</p>
           </div>
         </div>
-        <Button onClick={() => setIsCreditModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 shrink-0">
+        <Button onClick={() => setIsCreditModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shrink-0">
           <Plus className="h-4 w-4 mr-2" />
           Add Credits
         </Button>
@@ -86,7 +86,7 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
             ) : (
               <div className="flex items-baseline gap-2">
                 <span className={`text-2xl font-bold ${
-                  (billingSummary?.credit_balance || 0) < 10 ? 'text-red-600' : 'text-green-600'
+                  (billingSummary?.credit_balance || 0) < 10 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'
                 }`}>
                   {billingSummary?.credit_balance || 0}
                 </span>
@@ -146,7 +146,7 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
             </div>
             <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
               <div 
-                className={`h-full transition-all duration-500 ${usagePercentage > 90 ? 'bg-orange-500' : 'bg-blue-600'}`}
+                className={`h-full transition-all duration-500 ${usagePercentage > 90 ? 'bg-orange-500 dark:bg-orange-600' : 'bg-blue-600 dark:bg-blue-500'}`}
                 style={{ width: `${usagePercentage}%` }}
               />
             </div>
@@ -194,11 +194,11 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
                   <div className="flex items-start gap-3">
                     {/* Status Icon */}
                     {tx.payment_status === 'completed' ? (
-                      <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 shrink-0" />
+                      <CheckCircle2 className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 dark:text-green-400 shrink-0" />
                     ) : tx.payment_status === 'failed' ? (
-                      <XCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 shrink-0" />
+                      <XCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-500 dark:text-red-400 shrink-0" />
                     ) : (
-                      <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 shrink-0" />
+                      <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-500 dark:text-yellow-400 shrink-0" />
                     )}
                     
                     <div className="min-w-0">
@@ -209,7 +209,7 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
                         {tx.created_at ? format(new Date(tx.created_at), "MMM dd, yyyy • h:mm a") : '-'}
                       </div>
                       {tx.credits_purchased && (
-                        <span className="inline-flex items-center text-xs font-medium text-blue-600 mt-1">
+                        <span className="inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400 mt-1">
                           <Plus className="w-3 h-3 mr-0.5" />
                           {tx.credits_purchased} credits
                         </span>
@@ -222,11 +222,11 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
                     <Badge 
                       variant="outline" 
                       className={`text-xs capitalize shrink-0 ${
-                        tx.payment_status === 'completed' 
-                          ? 'border-green-200 text-green-700 bg-green-50' 
+                        tx.payment_status === 'completed'
+                          ? 'border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/40'
                           : tx.payment_status === 'failed'
-                          ? 'border-red-200 text-red-700 bg-red-50'
-                          : 'border-yellow-200 text-yellow-700 bg-yellow-50'
+                          ? 'border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40'
+                          : 'border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300 bg-yellow-50 dark:bg-yellow-950/40'
                       }`}
                     >
                       {tx.payment_status}

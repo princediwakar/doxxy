@@ -154,7 +154,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
 
       const { transaction, order } = orderResult;
 
-      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+      const razorpayKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID?.trim();
       if (!razorpayKey) throw new Error("Razorpay key missing");
 
       // Step B: Open Razorpay Modal
@@ -236,7 +236,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
               className={cn(
                 'relative cursor-pointer transition-all border-2 hover:shadow-md',
                 selectedPackage?.id === pkg.id 
-                  ? 'border-blue-600 bg-blue-50/50' 
+                  ? 'border-blue-600 dark:border-blue-400 bg-blue-50/50 dark:bg-blue-950/30'
                   : 'border-transparent hover:border-border'
               )}
             >
@@ -247,7 +247,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
               )}
               <CardHeader className="text-center pb-2 pt-4 sm:pt-6">
                 <CardTitle className="text-base sm:text-lg">{pkg.name}</CardTitle>
-                <div className="text-xl sm:text-2xl font-bold text-blue-700">₹{pkg.amount}</div>
+                <div className="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-300">₹{pkg.amount}</div>
               </CardHeader>
               <CardContent className="text-center space-y-1 sm:space-y-2">
                 <div className="font-semibold text-foreground text-sm">{pkg.credits} Credits</div>
@@ -255,7 +255,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
                   ₹{Math.round(pkg.amount / pkg.credits)} / consultation
                 </div>
                 <Separator className="my-2" />
-                <div className="text-xs text-green-700 flex items-center justify-center gap-1">
+                <div className="text-xs text-green-700 dark:text-green-400 flex items-center justify-center gap-1">
                   <Check className="w-3 h-3" /> No Expiry
                 </div>
               </CardContent>
@@ -317,7 +317,7 @@ export const CreditPurchaseModal: React.FC<CreditPurchaseModalProps> = ({
             )}
           </Button>
           {!isRazorpayLoaded && (
-            <p className="text-xs text-center text-red-500 mt-2">Loading payment gateway...</p>
+            <p className="text-xs text-center text-red-500 dark:text-red-400 mt-2">Loading payment gateway...</p>
           )}
         </div>
 

@@ -21,8 +21,8 @@ serve(async (req) => {
 
   try {
     // 1. Environment Validation
-    const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID')
-    const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')
+    const RAZORPAY_KEY_ID = Deno.env.get('RAZORPAY_KEY_ID')?.trim()
+    const RAZORPAY_KEY_SECRET = Deno.env.get('RAZORPAY_KEY_SECRET')?.trim()
 
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
       console.error('Missing Razorpay credentials')
