@@ -201,6 +201,7 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   uhid: 'A patient with this UHID already exists in your clinic.',
   email: 'A patient with this email already exists in your clinic.',
   phone: 'A patient with this phone number already exists in your clinic.',
+  appointment: 'A bill already exists for this appointment. Please edit the existing bill instead.',
 };
 
 function buildValidationErrorMessage(errorObj: ErrorLike): string {
@@ -212,7 +213,7 @@ function buildValidationErrorMessage(errorObj: ErrorLike): string {
       for (const [key, message] of Object.entries(CONSTRAINT_MESSAGES)) {
         if (constraint.includes(key)) return message;
       }
-      return 'A record with this value already exists. Please use a different value.';
+      return 'This record already exists. Please edit the existing one instead.';
     }
   }
   return 'There was an issue with the data provided. Please check and try again.';

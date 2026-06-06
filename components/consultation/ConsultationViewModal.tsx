@@ -366,7 +366,7 @@ export function ConsultationViewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh]">
         <DialogHeader>
-          <div className="flex items-center justify-between pr-6">
+          <div className="flex items-center justify-between">
             <DialogTitle className="flex items-center space-x-2">
               <Eye className="h-5 w-5" />
               <span>Consultation Notes - {patient.name}</span>

@@ -168,7 +168,7 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
       }
       throw new Error('Unexpected response from server');
     } catch (err) {
-      showErrorToast(err instanceof Error ? err : new Error(`Failed to ${mode === 'edit' ? 'update' : 'create'} bill`), { title: 'Bill save failed' });
+      showErrorToast(err instanceof Error ? err : new Error(`Failed to ${mode === 'edit' ? 'update' : 'create'} bill`), { title: 'Could not save bill' });
       throw err;
     } finally {
       setIsSubmitting(false);
