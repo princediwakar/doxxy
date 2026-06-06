@@ -6,7 +6,6 @@ import { SidebarLayout } from '@/components/SidebarLayout';
 import { CommandPalette } from '@/components/CommandPalette';
 import { MobileHeader } from '@/components/MobileHeader';
 import { BottomNav } from '@/components/BottomNav';
-import { AppFAB } from '@/components/AppFAB';
 import { PageLoader } from '@/components/ui/loading';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -41,8 +40,6 @@ const LayoutServer = ({
           </SidebarLayout>
 
           <CommandPalette />
-
-          <AppFAB />
 
           <BottomNav />
         </div>

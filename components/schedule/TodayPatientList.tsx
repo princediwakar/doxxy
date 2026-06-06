@@ -24,19 +24,25 @@ const STATUS_GROUPS = [
     key: "inProgress" as const,
     label: "In Progress",
     color: "text-yellow-500",
-    bg: "bg-yellow-50",
+    bg: "bg-yellow-50 dark:bg-yellow-950/30",
   },
   {
     key: "scheduled" as const,
     label: "Waiting",
     color: "text-blue-500",
-    bg: "bg-blue-50",
+    bg: "bg-blue-50 dark:bg-blue-950/30",
   },
   {
     key: "completed" as const,
     label: "Completed",
     color: "text-green-500",
-    bg: "bg-green-50",
+    bg: "bg-green-50 dark:bg-green-950/30",
+  },
+  {
+    key: "upcoming" as const,
+    label: "Upcoming",
+    color: "text-violet-500",
+    bg: "bg-violet-50 dark:bg-violet-950/30",
   },
 ];
 
@@ -150,10 +156,10 @@ export function TodayPatientList({
     [dirtyFormGuard, onShake, router, searchParams, onAppointmentClick, onSetMobileDetailOpen],
   );
 
-  const totalToday =
-    queue.inProgress.length + queue.scheduled.length + queue.completed.length;
+  const totalEntries =
+    queue.inProgress.length + queue.scheduled.length + queue.completed.length + queue.upcoming.length;
 
-  if (totalToday === 0) {
+  if (totalEntries === 0) {
     return (
       <div className="text-center py-16 text-muted-foreground">
         <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />

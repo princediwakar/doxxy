@@ -58,6 +58,7 @@ export interface TodayQueue {
   inProgress: AppointmentWithDetails[];
   scheduled: AppointmentWithDetails[];
   completed: AppointmentWithDetails[];
+  upcoming: AppointmentWithDetails[];
 }
 
 export interface UseAppointmentsReturn {

@@ -1,6 +1,7 @@
 'use server';
 
 import { cache } from 'react';
+import { addDays, format, parseISO } from 'date-fns';
 import { createServerSupabase } from '@/integrations/supabase/server';
 import type { DbPatientByClinic } from '@/types/core';
 import { getCurrentDateStringIST } from '@/lib/utils';
@@ -39,7 +40,23 @@ export async function getTodayAppointments(clinicId: string, doctorId?: string |
   const scheduled = filtered.filter((a) => a.status === 'Scheduled');
   const completed = filtered.filter((a) => a.status === 'Completed');
 
-  return { inProgress, scheduled, completed };
+  const todayDate = parseISO(targetDate);
+  const nextDate = format(addDays(todayDate, 1), 'yyyy-MM-dd');
+  const weekEndDate = format(addDays(todayDate, 7), 'yyyy-MM-dd');
+
+  const upcoming = (data || []).filter((app) => {
+    if (!app.date) return false;
+    const appDate = app.date.substring(0, 10);
+    return appDate >= nextDate && appDate <= weekEndDate;
+  });
+
+  upcoming.sort((a, b) => {
+    const dateCmp = a.date.localeCompare(b.date);
+    if (dateCmp !== 0) return dateCmp;
+    return a.time.localeCompare(b.time);
+  });
+
+  return { inProgress, scheduled, completed, upcoming };
 }
 
 export async function getPatientById(patientId: string) {

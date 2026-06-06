@@ -101,7 +101,7 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
             </Button>
             <Button size="sm" onClick={handleSchedule}>
               <CalendarPlus className="h-3.5 w-3.5 mr-1.5" />
-              Schedule Appointment
+              Schedule
             </Button>
           </div>
         </div>

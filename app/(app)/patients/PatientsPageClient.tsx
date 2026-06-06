@@ -119,15 +119,12 @@ export function PatientsPageClient({
   // ── List panel ──
   const listPanel = (
     <div className="flex flex-col h-full min-h-0">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0 mb-4 shrink-0">
+      <div className="flex items-center justify-between gap-3 mb-4 shrink-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted shrink-0">
             <PersonStanding className="w-5 h-5" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Patients</h1>
-            <p className="hidden sm:block text-muted-foreground text-sm">Manage patient records and walk-in billing.</p>
-          </div>
+          <h1 className="text-2xl font-bold">Patients</h1>
         </div>
         <Button onClick={() => setIsNewPatientModalOpen(true)} className="gap-2 bg-primary shrink-0">
           <Plus className="w-4 h-4" />
@@ -223,8 +220,8 @@ export function PatientsPageClient({
 
   return (
     <>
-      {/* Desktop: side-by-side */}
-      <div className="hidden lg:flex gap-6 h-full min-h-0">
+      <div className="flex flex-col lg:h-[calc(100vh-3rem)] flex-1 min-h-0">
+        <div className="hidden lg:flex gap-6 flex-1 min-h-0">
         <div className="w-1/3 flex flex-col min-h-0">{listPanel}</div>
         <div className="w-2/3 border rounded-lg bg-muted/5 p-4 overflow-y-auto min-h-0">
           {detailPanel}
@@ -241,7 +238,7 @@ export function PatientsPageClient({
                 className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors p-2 rounded-md hover:bg-muted/30"
               >
                 <ArrowLeft className="h-5 w-5" />
-                <span className="font-semibold text-base">Back to List</span>
+                <span className="font-semibold text-base">Back to Patients</span>
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 min-h-0">
@@ -251,6 +248,7 @@ export function PatientsPageClient({
         ) : (
           <div className="flex-1 min-h-0 p-4">{listPanel}</div>
         )}
+      </div>
       </div>
 
       <PatientModal

@@ -8,7 +8,6 @@ import { useTodayStore } from "@/stores/todayStore";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { queryPatientDetail, queryPatientBills } from "@/lib/queries/patients";
-import { TodayHeader } from "@/components/schedule/TodayHeader";
 import { TodayQueueView } from "@/components/schedule/TodayQueueView";
 import { TodayDetailView } from "@/components/schedule/TodayDetailView";
 import { TodayMobileLayout } from "@/components/schedule/TodayMobileLayout";
@@ -32,6 +31,7 @@ interface TodayPageClientProps {
     inProgress: AppointmentWithDetails[];
     scheduled: AppointmentWithDetails[];
     completed: AppointmentWithDetails[];
+    upcoming: AppointmentWithDetails[];
   };
   initialPatientId: string | null;
   initialPatientDetail: PatientDetail | null;
@@ -160,22 +160,6 @@ export function TodayPageClient({
     setShakeTrigger((s) => s + 1);
   }, []);
 
-  // ── FAB action handler ──
-  const fabHandled = useRef(false);
-  useEffect(() => {
-    const action = searchParams.get("action");
-    if (action === "new-patient" && !fabHandled.current) {
-      fabHandled.current = true;
-      openModal("patient-new");
-      const next = new URLSearchParams(searchParams.toString());
-      next.delete("action");
-      const qs = next.toString();
-      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
-    } else if (action !== "new-patient") {
-      fabHandled.current = false;
-    }
-  }, [searchParams, router, openModal]);
-
   // ── Patient detail ──
   const isInitialPatient =
     !!(initialPatientId && selectedPatientId === initialPatientId);
@@ -213,6 +197,7 @@ export function TodayPageClient({
     ...serverQueue.inProgress,
     ...serverQueue.scheduled,
     ...serverQueue.completed,
+    ...serverQueue.upcoming,
   ];
 
   const appointmentsByPatient = (() => {
@@ -285,7 +270,6 @@ export function TodayPageClient({
       <TodayMobileLayout
         showMobileDetail={showMobileDetail}
         onBackToQueue={() => setMobileDetailOpen(false)}
-        header={<TodayHeader doctors={doctors} effectiveDoctorFilter={effectiveDoctorFilter} userDoctorId={userDoctorId} />}
         queue={
           <TodayQueueView
             queue={serverQueue}
@@ -295,6 +279,8 @@ export function TodayPageClient({
             dirtyFormGuard={dirtyFormGuard}
             onShake={triggerShake}
             onSetMobileDetailOpen={setMobileDetailOpen}
+            doctors={doctors}
+            userDoctorId={userDoctorId}
           />
         }
         detail={
