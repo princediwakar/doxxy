@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, Suspense, useCallback, useState } from "react";
+import { Suspense, useEffect, useRef, useCallback, useState } from "react";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -11,6 +11,8 @@ import type { DbPatientByClinic } from "@/types/core";
 import type { AppointmentForBilling, BillWithDetails } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
 import type { Patient } from "@/types/patients";
+import type { AppointmentWithDetails } from "@/types/appointments";
+import type { AppointmentData } from "@/types/patients";
 
 const ConsultationViewModal = dynamic(() =>
   import("@/components/consultation/ConsultationViewModal").then(
@@ -32,22 +34,39 @@ const PatientModal = dynamic(() =>
 interface TodayModalsProps {
   editPatient: DbPatientByClinic | null;
   onRefetch: () => void;
+  selectedAppointment: AppointmentWithDetails | null;
+  selectedBill: BillWithDetails | null;
+  billPatient: DbPatientByClinic | null;
+  historyAppointment: AppointmentData | null;
+  appointmentModalPatient: Patient | null;
+  appointmentModalOpen: boolean;
+  suggestedAppointmentDate: string | null;
+  dirtyFormGuard: boolean;
+  shakeTrigger: number;
+  onCloseModal: () => void;
+  onSetDirtyFormGuard: (dirty: boolean) => void;
+  onPatientCreated: (patient: Patient) => void;
+  onSetAppointmentModalOpen: (open: boolean) => void;
 }
 
-export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
+export function TodayModals({
+  editPatient,
+  onRefetch,
+  selectedAppointment,
+  selectedBill,
+  billPatient,
+  historyAppointment,
+  appointmentModalPatient,
+  appointmentModalOpen,
+  suggestedAppointmentDate,
+  dirtyFormGuard,
+  shakeTrigger,
+  onCloseModal,
+  onSetDirtyFormGuard,
+  onPatientCreated,
+  onSetAppointmentModalOpen,
+}: TodayModalsProps) {
   const activeModal = useTodayStore((s) => s.activeModal);
-  const closeModal = useTodayStore((s) => s.closeModal);
-  const selectedAppointment = useTodayStore((s) => s.selectedAppointment);
-  const selectedBill = useTodayStore((s) => s.selectedBill);
-  const billPatient = useTodayStore((s) => s.billPatient);
-  const historyAppointment = useTodayStore((s) => s.historyAppointment);
-  const appointmentModalPatient = useTodayStore((s) => s.appointmentModalPatient);
-  const appointmentModalOpen = useTodayStore((s) => s.appointmentModalOpen);
-  const suggestedAppointmentDate = useTodayStore((s) => s.suggestedAppointmentDate);
-  const shakeTrigger = useTodayStore((s) => s.shakeTrigger);
-  const dirtyFormGuard = useTodayStore((s) => s.dirtyFormGuard);
-  const setDirtyFormGuard = useTodayStore((s) => s.setDirtyFormGuard);
-  const patientCreated = useTodayStore((s) => s.patientCreated);
 
   const queryClient = useQueryClient();
   const { activeClinicId } = useAppState();
@@ -65,8 +84,8 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
   }, [shakeTrigger]);
 
   const handleDirtyChange = useCallback(
-    (dirty: boolean) => setDirtyFormGuard(dirty),
-    [setDirtyFormGuard],
+    (dirty: boolean) => onSetDirtyFormGuard(dirty),
+    [onSetDirtyFormGuard],
   );
 
   const handleBillClose = useCallback(
@@ -76,35 +95,35 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
           toast.error("Complete or discard the current bill before closing.");
           return;
         }
-        closeModal();
+        onCloseModal();
         onRefetch();
       }
     },
-    [dirtyFormGuard, closeModal, onRefetch],
+    [dirtyFormGuard, onCloseModal, onRefetch],
   );
 
   const handleBillViewClose = useCallback(
     (open: boolean) => {
       if (!open) {
-        closeModal();
+        onCloseModal();
         setBillViewMode("view");
       }
     },
-    [closeModal],
+    [onCloseModal],
   );
 
   const handleConsultClose = useCallback(() => {
-    closeModal();
-  }, [closeModal]);
+    onCloseModal();
+  }, [onCloseModal]);
 
   const handleAppointmentModalClose = useCallback(
     (open: boolean) => {
       if (!open) {
-        useTodayStore.setState({ appointmentModalOpen: false });
+        onSetAppointmentModalOpen(false);
         onRefetch();
       }
     },
-    [onRefetch],
+    [onSetAppointmentModalOpen, onRefetch],
   );
 
   return (
@@ -176,14 +195,14 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
           <PatientModal
             open={true}
             onOpenChange={(open) => {
-              if (!open) closeModal();
+              if (!open) onCloseModal();
             }}
             patient={null}
             onPatientCreated={(newPatient) => {
               queryClient.invalidateQueries({
                 queryKey: queryKeys.patients.byClinic(activeClinicId ?? ""),
               });
-              patientCreated(newPatient);
+              onPatientCreated(newPatient);
             }}
           />
         )}
@@ -194,10 +213,10 @@ export function TodayModals({ editPatient, onRefetch }: TodayModalsProps) {
           <PatientModal
             open={true}
             onOpenChange={(open) => {
-              if (!open) closeModal();
+              if (!open) onCloseModal();
             }}
             patient={editPatient ?? null}
-            onPatientCreated={patientCreated as (patient: Patient) => void}
+            onPatientCreated={onPatientCreated as (patient: Patient) => void}
           />
         )}
       </Suspense>

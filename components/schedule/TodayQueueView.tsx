@@ -11,6 +11,9 @@ interface TodayQueueViewProps {
   onAppointmentClick: (app: AppointmentWithDetails) => void;
   doctorFilter: string | null;
   hasDoctors: boolean;
+  dirtyFormGuard: boolean;
+  onShake: () => void;
+  onSetMobileDetailOpen: (open: boolean) => void;
 }
 
 export function TodayQueueView({
@@ -18,6 +21,9 @@ export function TodayQueueView({
   onAppointmentClick,
   doctorFilter,
   hasDoctors,
+  dirtyFormGuard,
+  onShake,
+  onSetMobileDetailOpen,
 }: TodayQueueViewProps) {
   return (
     <div className="flex flex-col overflow-hidden h-full lg:border lg:rounded-lg lg:bg-muted/5">
@@ -28,6 +34,9 @@ export function TodayQueueView({
             queue={queue}
             onAppointmentClick={onAppointmentClick}
             doctorFilter={doctorFilter}
+            dirtyFormGuard={dirtyFormGuard}
+            onShake={onShake}
+            onSetMobileDetailOpen={onSetMobileDetailOpen}
           />
         ) : (
           <div className="flex items-center justify-center h-full">

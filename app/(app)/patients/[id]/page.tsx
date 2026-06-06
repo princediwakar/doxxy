@@ -1,4 +1,4 @@
-import { getPatientDetail } from '@/lib/data/patients';
+import { getPatientDetail } from '@/lib/queries/patients';
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
 import { PatientChartPage } from './PatientChartPage';
 

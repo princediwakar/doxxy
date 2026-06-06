@@ -44,7 +44,6 @@
     "test-voice-pipeline.ts",
     "scratch-*.ts",
     "scripts/",
-    "jest.setup.ts",
-    "jest.config.cjs"
+    "tests/"
   ]
 }

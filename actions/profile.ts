@@ -16,6 +16,7 @@ export async function updateProfile(profileData: {
   if (error) return { error: error.message };
 
   revalidatePath('/profile');
+  revalidatePath('/clinic/staff');
   return { success: true };
 }
 
@@ -29,6 +30,7 @@ export async function updateDoctorProfile(doctorId: string, data: DbDoctorUpdate
   if (error) return { error: error.message };
 
   revalidatePath('/profile');
+  revalidatePath('/clinic/staff');
   return { success: true };
 }
 
@@ -72,6 +74,7 @@ export async function upsertProfile(params: {
   }
 
   revalidatePath('/profile');
+  revalidatePath('/clinic/staff');
   return { success: true };
 }
 

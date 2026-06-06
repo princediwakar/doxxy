@@ -1398,6 +1398,10 @@ export type Database = {
         }
       }
       cleanup_transcription_jobs: { Args: never; Returns: undefined }
+      complete_appointment: {
+        Args: { p_appointment_id: string; p_clinic_id: string }
+        Returns: Json
+      }
       create_clinic_with_admin: {
         Args: { clinic_name: string; user_phone?: string }
         Returns: Json
@@ -1431,14 +1435,6 @@ export type Database = {
         Returns: string
       }
       debug_invitation_flow: { Args: { user_email: string }; Returns: Json }
-      deduct_appointment_credit: {
-        Args: {
-          appointment_id_param: string
-          clinic_id_param: string
-          credits_to_deduct?: number
-        }
-        Returns: boolean
-      }
       delete_consultation: {
         Args: { p_consultation_id: string }
         Returns: boolean
@@ -1818,18 +1814,6 @@ export type Database = {
         }
         Returns: string
       }
-      sync_all_clinic_credits: {
-        Args: never
-        Returns: {
-          credit_balance: number
-          new_credits_used: number
-          old_credits_used: number
-          result_clinic_id: string
-          total_credits_purchased: number
-          updated: boolean
-        }[]
-      }
-      sync_credits_one_time: { Args: never; Returns: undefined }
       update_clinic_member_details: {
         Args: {
           member_user_id: string

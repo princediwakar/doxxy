@@ -16,7 +16,6 @@ import {
 import { formatTimeIST } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useTodayStore } from "@/stores/todayStore";
 import type { PatientDetail } from "@/types/core";
 import type { Patient } from "@/types/patients";
 import type { Bill } from "@/types/billing";
@@ -54,30 +53,33 @@ interface PatientChartProps {
 
 export function PatientChart({ patientDetail }: PatientChartProps) {
   const router = useRouter();
-  const scheduleAppointment = useTodayStore((s) => s.scheduleAppointment);
-  const editPatient = useTodayStore((s) => s.editPatient);
-  const closeModal = useTodayStore((s) => s.closeModal);
-  const appointmentModalOpen = useTodayStore((s) => s.appointmentModalOpen);
-  const appointmentModalPatient = useTodayStore((s) => s.appointmentModalPatient);
-  const selectedAppointment = useTodayStore((s) => s.selectedAppointment);
-  const activeModal = useTodayStore((s) => s.activeModal);
-  const patientCreated = useTodayStore((s) => s.patientCreated);
 
   const [showCreateBillModal, setShowCreateBillModal] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [selectedBillMode, setSelectedBillMode] = useState<"create" | "view" | "edit">("view");
+  const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
+  const [appointmentModalPatient, setAppointmentModalPatient] = useState<Patient | null>(null);
+  const [patientEditModalOpen, setPatientEditModalOpen] = useState(false);
+  const [newlyCreatedPatient, setNewlyCreatedPatient] = useState<Patient | null>(null);
 
   const patient = patientDetail.patient!;
   const consultations = (patientDetail.consultations ?? []) as ConsultationRow[];
   const bills = (patientDetail.bills ?? []) as Bill[];
 
   const handleSchedule = useCallback(() => {
-    scheduleAppointment(patient as unknown as Patient);
-  }, [scheduleAppointment, patient]);
+    setAppointmentModalPatient(patient as unknown as Patient);
+    setAppointmentModalOpen(true);
+  }, [patient]);
 
   const handleEdit = useCallback(() => {
-    editPatient();
-  }, [editPatient]);
+    setPatientEditModalOpen(true);
+  }, []);
+
+  const handlePatientCreated = useCallback((newPatient: Patient) => {
+    setPatientEditModalOpen(false);
+    setAppointmentModalPatient(newPatient);
+    setAppointmentModalOpen(true);
+  }, []);
 
   const demographic = [patient.gender, patient.age ? `${patient.age}y` : null]
     .filter(Boolean)
@@ -276,22 +278,22 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
         <AppointmentModal
           open={appointmentModalOpen}
           onOpenChange={(open) => {
-            if (!open) useTodayStore.setState({ appointmentModalOpen: false });
+            if (!open) setAppointmentModalOpen(false);
           }}
-          appointment={selectedAppointment}
+          appointment={null}
           patient={appointmentModalPatient}
         />
       </Suspense>
 
       <Suspense fallback={null}>
-        {activeModal === "patient-edit" && (
+        {patientEditModalOpen && (
           <PatientModal
             open={true}
             onOpenChange={(open) => {
-              if (!open) closeModal();
+              if (!open) setPatientEditModalOpen(false);
             }}
             patient={patientDetail.patient}
-            onPatientCreated={patientCreated as (p: Patient) => void}
+            onPatientCreated={handlePatientCreated}
           />
         )}
       </Suspense>

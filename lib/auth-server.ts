@@ -78,6 +78,11 @@ export const isProfileComplete = cache(async (userId: string) => {
   return !!(profile?.name && profile?.phone);
 });
 
+export async function validateClinicAccess(userId: string, targetClinicId: string): Promise<boolean> {
+  const clinics = await getUserClinics(userId);
+  return clinics.some((c) => c.clinic_id === targetClinicId);
+}
+
 export const isDoctorOnboardingComplete = cache(async (userId: string, clinicId: string) => {
   const supabase = await createServerSupabase();
 

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { getLatestClinicInviteLink } from "@/actions/clinic";
 import { useTodayStore } from "@/stores/todayStore";
 import type { AppointmentWithDetails } from "@/types/appointments";
-import type { PatientDetail } from "@/types/core";
+import type { PatientDetail, DbPatientByClinic } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
 
 interface TodayDetailViewProps {
@@ -24,6 +24,13 @@ interface TodayDetailViewProps {
   onRefreshNeeded: () => void;
   hasDoctors: boolean;
   clinicId: string | null;
+  onCreateBill: (app: AppointmentWithDetails) => void;
+  onCreateBillForPatient: (patient: DbPatientByClinic) => void;
+  onViewBill: (bill: BillWithDetails, patient?: DbPatientByClinic | null) => void;
+  onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
+  onScheduleAppointment: (patient: DbPatientByClinic, suggestedDate?: string | null) => void;
+  onEditAppointment: (app: AppointmentWithDetails) => void;
+  onEditPatient: () => void;
 }
 
 export function TodayDetailView({
@@ -37,6 +44,13 @@ export function TodayDetailView({
   onRefreshNeeded,
   hasDoctors,
   clinicId,
+  onCreateBill,
+  onCreateBillForPatient,
+  onViewBill,
+  onViewConsultationFromHistory,
+  onScheduleAppointment,
+  onEditAppointment,
+  onEditPatient,
 }: TodayDetailViewProps) {
   const router = useRouter();
   const openModal = useTodayStore((s) => s.openModal);
@@ -156,6 +170,13 @@ export function TodayDetailView({
       patientBills={patientBills}
       isLoadingBills={isLoadingBills}
       onRefreshNeeded={onRefreshNeeded}
+      onCreateBill={onCreateBill}
+      onCreateBillForPatient={onCreateBillForPatient}
+      onViewBill={onViewBill}
+      onViewConsultationFromHistory={onViewConsultationFromHistory}
+      onScheduleAppointment={onScheduleAppointment}
+      onEditAppointment={onEditAppointment}
+      onEditPatient={onEditPatient}
     />
   );
 }

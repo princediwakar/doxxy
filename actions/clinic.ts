@@ -56,6 +56,8 @@ export async function updateClinic(id: string, data: DbClinicUpdate) {
   const { error } = await supabase.from('clinics').update(data).eq('id', id);
   if (error) return { error: error.message };
   revalidatePath('/clinic');
+  revalidatePath('/clinic/staff');
+  revalidatePath('/clinic/departments');
   return { success: true };
 }
 

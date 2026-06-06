@@ -10,7 +10,7 @@ import type { ConsultationFormValues } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase } from "@/types/core";
 
 import { useConsultationPermissions } from "./useConsultationPermissions";
-import { useConsultationAutoSave } from "./useConsultationAutoSave";
+import { useConsultationAutoSave, type AutoSaveResult } from "./useConsultationAutoSave";
 import { useConsultationValidation } from "./useConsultationValidation";
 import { useConsultationCompletion } from "./useConsultationCompletion";
 import { isDeepEqual } from "./utils";
@@ -27,7 +27,7 @@ export interface UseConsultationFormReturn {
   form: ReturnType<typeof useForm<ConsultationFormValues>>;
   isConsultationCompleted: boolean;
   canEditConsultation: boolean;
-  autoSaveMutation: UseMutationResult<DbConsultationBase, Error, ConsultationFormValues>;
+  autoSaveMutation: UseMutationResult<AutoSaveResult, Error, ConsultationFormValues>;
   handleSave: () => void;
   handleCompleteConsultation: () => Promise<void>;
   validateMandatoryFields: () => string[];

@@ -8,7 +8,7 @@ const cspHeader = [
   "img-src 'self' data: https: blob: https://lh3.googleusercontent.com https://maps.googleapis.com https://maps.gstatic.com",
   "font-src 'self' https://lh3.googleusercontent.com https://connect.facebook.net",
   // Added wss://*.onrender.com to allow the WebSocket connection to your STT proxy
-  "connect-src 'self' data: https://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to wss://*.onrender.com https://*.facebook.com https://*.facebook.net https://connect.facebook.net https://lh3.googleusercontent.com https://maps.googleapis.com https://places.googleapis.com",
+  "connect-src 'self' data: https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.vercel-insights.com https://*.tawk.to wss://*.tawk.to wss://*.onrender.com https://*.facebook.com https://*.facebook.net https://connect.facebook.net https://lh3.googleusercontent.com https://maps.googleapis.com https://places.googleapis.com https://*.ingest.us.sentry.io",
   "frame-src 'self' https://www.googletagmanager.com https://www.facebook.com https://web.facebook.com",
   "worker-src 'self' blob:",
   "media-src 'self' blob:",
@@ -88,6 +88,8 @@ const nextConfig = {
   trailingSlash: false,
 }
 
+import { withSentryConfig } from '@sentry/nextjs';
+
 let config = nextConfig
 
 if (process.env.ANALYZE === 'true') {
@@ -99,4 +101,11 @@ if (process.env.ANALYZE === 'true') {
   }
 }
 
-export default config
+export default withSentryConfig(config, {
+  org: process.env.SENTRY_ORG ?? '',
+  project: process.env.SENTRY_PROJECT ?? '',
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  widenClientFileUpload: true,
+  tunnelRoute: '/monitoring',
+  silent: !process.env.CI,
+})

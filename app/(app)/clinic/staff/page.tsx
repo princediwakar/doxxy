@@ -1,7 +1,7 @@
 import { Spinner } from "@/components/ui/loading";
 import { Suspense } from "react";
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
-import { getClinicMembers, getClinicDepartments } from '@/lib/data/clinic';
+import { getClinicMembers, getClinicDepartments } from '@/lib/queries/clinic';
 import ClinicMembersManagement from "@/components/superadmin/ClinicMembersManagement";
 import type { MemberWithDetails, DepartmentWithDetails } from '@/types/core';
 

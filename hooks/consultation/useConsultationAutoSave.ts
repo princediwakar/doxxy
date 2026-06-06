@@ -3,111 +3,17 @@ import { logger } from "@/lib/logger";
 
 import { useEffect, useCallback, useRef } from "react";
 import { useMutation, useQueryClient, UseMutationResult } from "@tanstack/react-query";
-import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { ConsultationFormValues } from "@/types/consultation";
-import type { DbAppointment, DbConsultationBase, DbJson } from "@/types/core";
+import type { DbAppointment, DbConsultationBase } from "@/types/core";
 import type { UseFormReturn } from "react-hook-form";
 import type { ClinicMemberWithClinic } from "@/types/core";
 import type { AppUser } from "@/types/core";
 
 import { isDeepEqual } from "./utils";
+import { saveConsultation } from "@/actions/consultations";
 
-const supabase = getSupabase();
-
-async function saveConsultation(
-  data: ConsultationFormValues,
-  appointmentId: string | undefined,
-  clinicId: string | undefined,
-  appointment: DbAppointment | null | undefined,
-  userId: string | undefined,
-): Promise<DbConsultationBase> {
-  if (!appointmentId || !clinicId || !appointment) {
-    logger.error('❌ Auto-save failed: Missing required data', {
-      appointmentId, clinicId, appointment
-    });
-    throw new Error('Missing required data');
-  }
-
-  const consultationData = {
-    appointment_id: appointmentId,
-    patient_id: appointment.patient_id || '',
-    doctor_id: appointment.doctor_id || userId || '',
-    clinic_id: clinicId,
-    specialty_data: data.specialty_data as DbJson,
-  };
-
-  const { data: updateResult, error: updateError } = await supabase
-    .from('consultations')
-    .update(consultationData)
-    .eq('appointment_id', appointmentId)
-    .select();
-
-  let result: DbConsultationBase;
-
-  if (!updateError && updateResult && updateResult.length === 0) {
-    const insertResult = await supabase
-      .from('consultations')
-      .insert(consultationData)
-      .select()
-      .single();
-
-    if (insertResult.error) {
-      logger.error('❌ Auto-save insert error:', insertResult.error);
-      throw insertResult.error;
-    }
-    result = insertResult.data;
-  } else if (updateError) {
-    logger.error('❌ Auto-save update error:', updateError);
-    throw updateError;
-  } else if (updateResult && updateResult.length > 0) {
-    result = updateResult[0];
-  } else {
-    logger.error('❌ Auto-save: Unexpected response from consultation update');
-    throw new Error('Unexpected response from consultation update');
-  }
-
-  if (data.specialty_data.prescriptions != null) {
-    const prescriptions = data.specialty_data.prescriptions as Array<{ name?: string; [key: string]: unknown }>;
-    const validPrescriptions = prescriptions.filter(
-      (med) => med.name && med.name.trim().length > 0
-    );
-
-    if (validPrescriptions.length > 0) {
-      const prescriptionData = {
-        consultation_id: result.id,
-        patient_id: appointment.patient_id || '',
-        doctor_id: appointment.doctor_id || userId || '',
-        clinic_id: clinicId || '',
-        medications: validPrescriptions as unknown as DbJson,
-      };
-
-      const { error: prescError } = await supabase
-        .from('prescriptions')
-        .upsert(prescriptionData, {
-          onConflict: 'consultation_id,patient_id,doctor_id',
-          ignoreDuplicates: false
-        });
-
-      if (prescError) {
-        logger.error('❌ Auto-save prescription upsert error:', prescError);
-        throw prescError;
-      }
-    } else {
-      const { error: deleteError } = await supabase
-        .from('prescriptions')
-        .delete()
-        .eq('consultation_id', result.id);
-
-      if (deleteError) {
-        logger.error('❌ Auto-save prescription delete error:', deleteError);
-        throw deleteError;
-      }
-    }
-  }
-
-  return result;
-}
+export type AutoSaveResult = { success: boolean; id: string } | { error: string };
 
 export interface UseConsultationAutoSaveParams {
   form: UseFormReturn<ConsultationFormValues>;
@@ -121,7 +27,7 @@ export interface UseConsultationAutoSaveParams {
 }
 
 export interface UseConsultationAutoSaveReturn {
-  autoSaveMutation: UseMutationResult<DbConsultationBase, Error, ConsultationFormValues>;
+  autoSaveMutation: UseMutationResult<AutoSaveResult, Error, ConsultationFormValues>;
   handleSave: () => void;
   setBaseline: (values: ConsultationFormValues) => void;
 }
@@ -149,20 +55,28 @@ export const useConsultationAutoSave = ({
   }, []);
 
   const autoSaveMutation = useMutation({
-    mutationFn: (data: ConsultationFormValues) =>
-      saveConsultation(
-        data,
+    mutationFn: (data: ConsultationFormValues) => {
+      if (!appointmentId || !activeClinicId || !appointment) {
+        throw new Error('Missing required data');
+      }
+
+      const prescriptions = data.specialty_data.prescriptions as Array<{ name?: string; [key: string]: unknown }> | undefined;
+
+      return saveConsultation({
         appointmentId,
-        activeClinicId,
-        appointment,
-        user?.id,
-      ),
+        patientId: appointment.patient_id || '',
+        doctorId: appointment.doctor_id || user?.id || '',
+        clinicId: activeClinicId,
+        specialtyData: data.specialty_data,
+        prescriptions,
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinicId] });
       queryClient.invalidateQueries({ queryKey: ['consultation', appointmentId] });
     },
     onError: (error) => {
-      logger.error('❌ Auto-save error:', error);
+      logger.error('Auto-save error:', error);
       toast.error('Save failed', {
         description: 'Could not save consultation notes. Please try again.',
       });

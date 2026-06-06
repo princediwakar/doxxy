@@ -58,7 +58,7 @@ export async function updatePatient(id: string, data: Partial<DbPatientUpdate>) 
   const supabase = await createServerSupabase();
 
   // Strip uhid from incoming payload to prevent accidental overwrites
-  const { uhid, ...safeUpdateData } = data as any;
+  const { uhid, ...safeUpdateData } = data;
 
   const { data: patient, error } = await supabase
     .from('patients')

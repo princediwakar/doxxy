@@ -1,5 +1,5 @@
 import { getAuthenticatedUser, getActiveClinic } from "@/lib/auth-server";
-import { getFinancialsData } from "@/lib/data/financials";
+import { getFinancialsData } from "@/lib/queries/financials";
 import FinancialsPageClient from "@/components/financials/FinancialsPageClient";
 import { Card, CardContent } from "@/components/ui/card";
 import { IndianRupee } from "lucide-react";

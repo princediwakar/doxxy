@@ -1,5 +1,5 @@
 // src/components/billing/BillingModal.tsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Edit, Printer, Download, MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -48,6 +48,7 @@ import { generateBillFilename } from "./billingPrintUtils";
 import { pdf } from '@react-pdf/renderer';
 import { BillingPDF } from './BillingPDF';
 import { useAppState } from "@/contexts/AppStateContext";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
 
@@ -77,8 +78,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     appointments,
     patients,
     appointmentsError,
-    patientsError,
-    doctorFeeError,
     calculateTotals,
     addServiceItem,
     removeServiceItem,
@@ -88,16 +87,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({
     isSubmitting,
   } = useBilling({ bill, patient, appointment, mode, open });
 
-  // Show error toasts for failed queries
   useEffect(() => {
-    if (appointmentsError) toast.error('Failed to load appointments');
-    if (patientsError) toast.error('Failed to load patients');
-    if (doctorFeeError) toast.error('Failed to load doctor fee information');
-  }, [appointmentsError, patientsError, doctorFeeError]);
-
-  useEffect(() => {
-    onDirtyChange?.(form.formState.isDirty);
-  }, [form.formState.isDirty, onDirtyChange]);
+    if (appointmentsError) toast.error('Failed to load billing data');
+  }, [appointmentsError]);
 
   const billRef = useRef(bill);
   billRef.current = bill;
@@ -108,6 +100,12 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   const clinic = activeClinicId
     ? userClinics.find((c) => c.clinic_id === activeClinicId)?.clinics ?? null
     : null;
+
+  const billingQueryKeys = useMemo(
+    () => [["bills"], ["billing-context"], ["billingStats"]] as unknown[][],
+    [],
+  );
+  useRealtimeSubscription({ table: "bills", clinicId: activeClinicId ?? "", queryKeys: billingQueryKeys });
 
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);

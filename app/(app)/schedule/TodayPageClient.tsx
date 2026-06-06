@@ -1,11 +1,12 @@
 // app/(app)/schedule/TodayPageClient.tsx
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTodayStore } from "@/stores/todayStore";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import { queryPatientDetail, queryPatientBills } from "@/lib/queries/patients";
 import { TodayHeader } from "@/components/schedule/TodayHeader";
 import { TodayQueueView } from "@/components/schedule/TodayQueueView";
@@ -14,8 +15,9 @@ import { TodayMobileLayout } from "@/components/schedule/TodayMobileLayout";
 import { TodayModals } from "@/components/schedule/TodayModals";
 import { DoctorProfilePrompt } from "@/components/doctor/DoctorProfilePrompt";
 import type { AppointmentWithDetails } from "@/types/appointments";
-import type { PatientDetail } from "@/types/core";
+import type { PatientDetail, DbPatientByClinic } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
+import type { AppointmentData, Patient } from "@/types/patients";
 
 interface Doctor {
   id: string;
@@ -57,11 +59,106 @@ export function TodayPageClient({
   const selectedPatientId = searchParams.get("patient") || null;
   const selectedAppointmentId = searchParams.get("appointment") || null;
 
-  // ── Store ──
+  // ── Store (modal visibility only) ──
   const openModal = useTodayStore((s) => s.openModal);
-  const mobileDetailOpen = useTodayStore((s) => s.mobileDetailOpen);
-  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
-  const selectAppointment = useTodayStore((s) => s.selectAppointment);
+  const closeModal = useTodayStore((s) => s.closeModal);
+  const appointmentModalOpen = useTodayStore((s) => s.appointmentModalOpen);
+  const setAppointmentModalOpen = useTodayStore((s) => s.setAppointmentModalOpen);
+
+  // ── Local modal context ──
+  const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentWithDetails | null>(null);
+  const [selectedBill, setSelectedBill] = useState<BillWithDetails | null>(null);
+  const [billPatient, setBillPatient] = useState<DbPatientByClinic | null>(null);
+  const [historyAppointment, setHistoryAppointment] = useState<AppointmentData | null>(null);
+  const [appointmentModalPatient, setAppointmentModalPatient] = useState<Patient | null>(null);
+  const [suggestedAppointmentDate, setSuggestedAppointmentDate] = useState<string | null>(null);
+  const [dirtyFormGuard, setDirtyFormGuard] = useState(false);
+  const [shakeTrigger, setShakeTrigger] = useState(0);
+
+  // ── Modal callbacks ──
+  const handleCloseModal = useCallback(() => {
+    setSelectedBill(null);
+    setHistoryAppointment(null);
+    setDirtyFormGuard(false);
+    closeModal();
+  }, [closeModal]);
+
+  const handleCreateBill = useCallback((app: AppointmentWithDetails) => {
+    setSelectedAppointment(app);
+    setBillPatient(null);
+    setSelectedBill(null);
+    openModal("bill");
+  }, [openModal]);
+
+  const handleCreateBillForPatient = useCallback((patient: DbPatientByClinic) => {
+    setBillPatient(patient);
+    setSelectedAppointment(null);
+    setSelectedBill(null);
+    openModal("bill");
+  }, [openModal]);
+
+  const handleViewBill = useCallback((bill: BillWithDetails, patient?: DbPatientByClinic | null) => {
+    setSelectedBill(bill);
+    setBillPatient(patient ?? null);
+    openModal("bill");
+  }, [openModal]);
+
+  const handleViewConsultation = useCallback((
+    appointmentId: string,
+    patientId: string,
+    doctorId: string,
+    date = "",
+    time = "",
+    doctorName?: string,
+  ) => {
+    setSelectedAppointment(null);
+    setSelectedBill(null);
+    setHistoryAppointment({
+      id: appointmentId,
+      patient_id: patientId,
+      doctor_id: doctorId,
+      doctor_name: doctorName,
+      date,
+      time,
+      type: "Walk-in",
+      status: "Completed",
+      created_at: "",
+    });
+    openModal("consult");
+  }, [openModal]);
+
+  const handleScheduleAppointment = useCallback((patient: DbPatientByClinic, suggestedDate?: string | null) => {
+    setAppointmentModalPatient(patient as unknown as Patient);
+    setSelectedAppointment(null);
+    setSuggestedAppointmentDate(suggestedDate ?? null);
+    setAppointmentModalOpen(true);
+  }, [setAppointmentModalOpen]);
+
+  const handleEditAppointment = useCallback((app: AppointmentWithDetails) => {
+    setSelectedAppointment(app);
+    setAppointmentModalOpen(true);
+  }, [setAppointmentModalOpen]);
+
+  const handleEditPatient = useCallback(() => {
+    openModal("patient-edit");
+  }, [openModal]);
+
+  const handlePatientCreated = useCallback((patient: Patient) => {
+    closeModal();
+    setAppointmentModalPatient(patient);
+    setSelectedAppointment(null);
+    setSuggestedAppointmentDate(null);
+    setAppointmentModalOpen(true);
+  }, [closeModal, setAppointmentModalOpen]);
+
+  const handleSelectAppointment = useCallback((app: AppointmentWithDetails | null) => {
+    setSelectedAppointment(app);
+  }, []);
+
+  const triggerShake = useCallback(() => {
+    setShakeTrigger((s) => s + 1);
+  }, []);
 
   // ── FAB action handler ──
   const fabHandled = useRef(false);
@@ -86,7 +183,7 @@ export function TodayPageClient({
     queryKey: ["patient", selectedPatientId, "detail"],
     queryFn: () => queryPatientDetail(clinicId!, selectedPatientId!),
     enabled: !!clinicId && !!selectedPatientId && !isInitialPatient,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
   const patientDetail: PatientDetail | undefined = isInitialPatient
     ? initialPatientDetail ?? undefined
@@ -97,8 +194,19 @@ export function TodayPageClient({
     queryKey: ["patient", selectedPatientId, "bills"],
     queryFn: () => queryPatientBills(selectedPatientId!),
     enabled: !!selectedPatientId,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
   });
+
+  // ── Realtime subscriptions ──
+  const scheduleQueryKeys = useMemo(
+    () => [["patient"], ["consultation-context"], ["appointments"]] as unknown[][],
+    [],
+  );
+  const handleRealtimeChange = () => router.refresh();
+
+  useRealtimeSubscription({ table: "appointments", clinicId: clinicId ?? "", queryKeys: scheduleQueryKeys, onChange: handleRealtimeChange });
+  useRealtimeSubscription({ table: "consultations", clinicId: clinicId ?? "", queryKeys: scheduleQueryKeys, onChange: handleRealtimeChange });
+  useRealtimeSubscription({ table: "bills", clinicId: clinicId ?? "", queryKeys: scheduleQueryKeys, onChange: handleRealtimeChange });
 
   // ── Derived data ──
   const allApps = [
@@ -131,23 +239,20 @@ export function TodayPageClient({
       const doctorName = searchParams.get("doctor_name") || undefined;
       const date = searchParams.get("date") || "";
       const time = searchParams.get("time") || "";
-      // Set historyAppointment directly — the appointment may not be in today's queue
-      useTodayStore.setState({
-        selectedAppointment: null,
-        selectedBill: null,
-        historyAppointment: {
-          id: selectedAppointmentId,
-          patient_id: selectedPatientId,
-          doctor_id: doctorId,
-          doctor_name: doctorName,
-          date,
-          time,
-          type: "Walk-in",
-          status: "Completed",
-          created_at: "",
-        },
-        activeModal: "consult",
+      setSelectedAppointment(null);
+      setSelectedBill(null);
+      setHistoryAppointment({
+        id: selectedAppointmentId,
+        patient_id: selectedPatientId,
+        doctor_id: doctorId,
+        doctor_name: doctorName,
+        date,
+        time,
+        type: "Walk-in",
+        status: "Completed",
+        created_at: "",
       });
+      openModal("consult");
       const next = new URLSearchParams(searchParams.toString());
       next.delete("action");
       next.delete("doctor_id");
@@ -159,7 +264,7 @@ export function TodayPageClient({
     } else if (action !== "view-consult") {
       consultHandled.current = false;
     }
-  }, [searchParams, router, selectedAppointmentId, selectedPatientId]);
+  }, [searchParams, router, selectedAppointmentId, selectedPatientId, openModal]);
 
   const handleRefetch = () => {
     if (selectedPatientId) {
@@ -184,9 +289,12 @@ export function TodayPageClient({
         queue={
           <TodayQueueView
             queue={serverQueue}
-            onAppointmentClick={selectAppointment}
+            onAppointmentClick={handleSelectAppointment}
             doctorFilter={effectiveDoctorFilter}
             hasDoctors={hasDoctors}
+            dirtyFormGuard={dirtyFormGuard}
+            onShake={triggerShake}
+            onSetMobileDetailOpen={setMobileDetailOpen}
           />
         }
         detail={
@@ -203,12 +311,32 @@ export function TodayPageClient({
             onRefreshNeeded={handleRefetch}
             hasDoctors={hasDoctors}
             clinicId={clinicId}
+            onCreateBill={handleCreateBill}
+            onCreateBillForPatient={handleCreateBillForPatient}
+            onViewBill={handleViewBill}
+            onViewConsultationFromHistory={handleViewConsultation}
+            onScheduleAppointment={handleScheduleAppointment}
+            onEditAppointment={handleEditAppointment}
+            onEditPatient={handleEditPatient}
           />
         }
       />
       <TodayModals
         editPatient={patientDetail?.patient ?? null}
         onRefetch={handleRefetch}
+        selectedAppointment={selectedAppointment}
+        selectedBill={selectedBill}
+        billPatient={billPatient}
+        historyAppointment={historyAppointment}
+        appointmentModalPatient={appointmentModalPatient}
+        appointmentModalOpen={appointmentModalOpen}
+        suggestedAppointmentDate={suggestedAppointmentDate}
+        dirtyFormGuard={dirtyFormGuard}
+        shakeTrigger={shakeTrigger}
+        onCloseModal={handleCloseModal}
+        onSetDirtyFormGuard={setDirtyFormGuard}
+        onPatientCreated={handlePatientCreated}
+        onSetAppointmentModalOpen={setAppointmentModalOpen}
       />
     </div>
   );

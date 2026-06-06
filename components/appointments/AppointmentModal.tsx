@@ -303,7 +303,7 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {["Scheduled", "In Progress", "Completed", "Cancelled"].map((s) => (
+                      {["Scheduled", "In Progress", "Cancelled"].map((s) => (
                         <SelectItem key={s} value={s}>{s}</SelectItem>
                       ))}
                     </SelectContent>

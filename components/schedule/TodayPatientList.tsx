@@ -7,7 +7,6 @@ import { Clock, User, ChevronRight, Circle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { formatTimeIST, cn } from "@/lib/utils";
-import { useTodayStore } from "@/stores/todayStore";
 import type { TodayQueue } from "@/types/appointments";
 import type { AppointmentWithDetails } from "@/types/appointments";
 
@@ -15,6 +14,9 @@ interface TodayPatientListProps {
   queue: TodayQueue;
   onAppointmentClick: (app: AppointmentWithDetails) => void;
   doctorFilter: string | null;
+  dirtyFormGuard: boolean;
+  onShake: () => void;
+  onSetMobileDetailOpen: (open: boolean) => void;
 }
 
 const STATUS_GROUPS = [
@@ -73,6 +75,7 @@ function QueueSection({
         {appointments.map((app) => (
           <button
             key={app.id}
+            data-testid="patient-card"
             onClick={() => onAppointmentClick(app)}
             className={cn(
               "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
@@ -117,12 +120,12 @@ export function TodayPatientList({
   queue,
   onAppointmentClick,
   doctorFilter,
+  dirtyFormGuard,
+  onShake,
+  onSetMobileDetailOpen,
 }: TodayPatientListProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const dirtyFormGuard = useTodayStore((s) => s.dirtyFormGuard);
-  const triggerShake = useTodayStore((s) => s.triggerShake);
-  const setMobileDetailOpen = useTodayStore((s) => s.setMobileDetailOpen);
 
   const selectedAppointmentId = searchParams.get("appointment") || null;
 
@@ -134,7 +137,7 @@ export function TodayPatientList({
         toast.error(
           "Complete or discard the current bill before switching patients.",
         );
-        triggerShake();
+        onShake();
         return;
       }
       const params = new URLSearchParams(searchParams.toString());
@@ -142,9 +145,9 @@ export function TodayPatientList({
       params.set("appointment", app.id);
       router.push(`/schedule?${params.toString()}`, { scroll: false });
       onAppointmentClick(app);
-      setMobileDetailOpen(true);
+      onSetMobileDetailOpen(true);
     },
-    [dirtyFormGuard, triggerShake, router, searchParams, onAppointmentClick, setMobileDetailOpen],
+    [dirtyFormGuard, onShake, router, searchParams, onAppointmentClick, onSetMobileDetailOpen],
   );
 
   const totalToday =

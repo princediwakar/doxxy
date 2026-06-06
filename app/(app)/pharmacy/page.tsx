@@ -1,5 +1,5 @@
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
-import { getInventory, getProcurements } from '@/lib/data/pharmacy';
+import { getInventory, getProcurements } from '@/lib/queries/pharmacy';
 import PharmacyPageClient from '@/components/pharmacy/PharmacyPageClient';
 
 export default async function PharmacyPage() {

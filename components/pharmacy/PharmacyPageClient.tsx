@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventoryTab } from "@/components/pharmacy/InventoryTab";
 import { ProcurementsHistoryTab } from "@/components/pharmacy/ProcurementsHistoryTab";
 import { ProcurementEntrySheet } from "@/components/pharmacy/ProcurementEntrySheet";
 import { Button } from "@/components/ui/button";
 import { Plus, Package } from "lucide-react";
+import { useAppState } from "@/contexts/AppStateContext";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import type { InventoryItemWithMedicine, DbProcurement } from "@/types/core";
 
 interface PharmacyPageClientProps {
@@ -19,6 +22,15 @@ export default function PharmacyPageClient({
   serverProcurements,
 }: PharmacyPageClientProps) {
   const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);
+  const { activeClinicId } = useAppState();
+  const router = useRouter();
+
+  const pharmacyQueryKeys = useMemo(
+    () => [["pharmacy_inventory"], ["pharmacy_procurements"]] as unknown[][],
+    [],
+  );
+  useRealtimeSubscription({ table: "inventory_items", clinicId: activeClinicId ?? "", queryKeys: pharmacyQueryKeys, onChange: () => router.refresh() });
+  useRealtimeSubscription({ table: "procurements", clinicId: activeClinicId ?? "", queryKeys: pharmacyQueryKeys, onChange: () => router.refresh() });
 
   return (
     <div className="space-y-6">

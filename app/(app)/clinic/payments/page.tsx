@@ -1,7 +1,7 @@
 import { Spinner } from "@/components/ui/loading";
 import { Suspense } from "react";
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
-import { getBillingSummary, getPaymentTransactions } from '@/lib/data/payments';
+import { getBillingSummary, getPaymentTransactions } from '@/lib/queries/financials';
 import { PaymentsDashboard } from "@/components/payments/PaymentsDashboard";
 
 export default async function PaymentsPage() {

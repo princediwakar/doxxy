@@ -6,14 +6,13 @@ import { format, parseISO } from "date-fns";
 import { CalendarPlus, Receipt, User } from "lucide-react";
 import { Spinner } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
-import { useTodayStore } from "@/stores/todayStore";
 import { useConsultationPermissions } from "@/hooks/consultation/useConsultationPermissions";
 import { extractFollowUp } from "@/lib/utils";
 import { EncounterCanvas } from "./EncounterCanvas";
 import { PatientHeader } from "./PatientHeader";
 import { AdministrativeFooter } from "./AdministrativeFooter";
 import { APPOINTMENT_STATUS, type AppointmentWithDetails } from "@/types/appointments";
-import type { PatientDetail } from "@/types/core";
+import type { PatientDetail, DbPatientByClinic } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
 
 interface TodayDetailPanelProps {
@@ -25,6 +24,13 @@ interface TodayDetailPanelProps {
   patientBills: BillWithDetails[];
   isLoadingBills: boolean;
   onRefreshNeeded: () => void;
+  onCreateBill: (app: AppointmentWithDetails) => void;
+  onCreateBillForPatient: (patient: DbPatientByClinic) => void;
+  onViewBill: (bill: BillWithDetails, patient?: DbPatientByClinic | null) => void;
+  onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => void;
+  onScheduleAppointment: (patient: DbPatientByClinic, suggestedDate?: string | null) => void;
+  onEditAppointment: (app: AppointmentWithDetails) => void;
+  onEditPatient: () => void;
 }
 
 export function TodayDetailPanel({
@@ -36,18 +42,17 @@ export function TodayDetailPanel({
   patientBills,
   isLoadingBills,
   onRefreshNeeded,
+  onCreateBill,
+  onCreateBillForPatient,
+  onViewBill,
+  onViewConsultationFromHistory,
+  onScheduleAppointment,
+  onEditAppointment,
+  onEditPatient,
 }: TodayDetailPanelProps) {
-  const createBill = useTodayStore((s) => s.createBill);
-  const createBillForPatient = useTodayStore((s) => s.createBillForPatient);
-  const scheduleAppointment = useTodayStore((s) => s.scheduleAppointment);
-  const editAppointment = useTodayStore((s) => s.editAppointment);
-  const editPatient = useTodayStore((s) => s.editPatient);
-  const viewBill = useTodayStore((s) => s.viewBill);
-  const viewConsultation = useTodayStore((s) => s.viewConsultation);
-
   const handleViewBill = useCallback(
-    (bill: BillWithDetails) => viewBill(bill, patientDetail?.patient ?? null),
-    [viewBill, patientDetail?.patient],
+    (bill: BillWithDetails) => onViewBill(bill, patientDetail?.patient ?? null),
+    [onViewBill, patientDetail?.patient],
   );
 
   const selectedAppointment = selectedAppointmentId
@@ -92,26 +97,26 @@ export function TodayDetailPanel({
           isLoadingBills={isLoadingBills}
           onSchedule={() =>
             patientDetail?.patient &&
-            scheduleAppointment(patientDetail.patient)
+            onScheduleAppointment(patientDetail.patient)
           }
           onBill={
             selectedAppointment
-              ? () => createBill(selectedAppointment)
+              ? () => onCreateBill(selectedAppointment)
               : () =>
                 patientDetail?.patient &&
-                createBillForPatient(patientDetail.patient)
+                onCreateBillForPatient(patientDetail.patient)
           }
-          onEditPatient={editPatient}
+          onEditPatient={onEditPatient}
           onEditAppointment={() =>
-            selectedAppointment && editAppointment(selectedAppointment)
+            selectedAppointment && onEditAppointment(selectedAppointment)
           }
           canEditConsultation={canEditConsultation}
           onViewBill={handleViewBill}
-          onViewConsultationFromHistory={viewConsultation}
+          onViewConsultationFromHistory={onViewConsultationFromHistory}
           onCreateBill={
             selectedAppointment
-              ? () => createBill(selectedAppointment)
-              : () => patientDetail?.patient && createBillForPatient(patientDetail.patient)
+              ? () => onCreateBill(selectedAppointment)
+              : () => patientDetail?.patient && onCreateBillForPatient(patientDetail.patient)
           }
           appointment={selectedAppointment}
           onComplete={onRefreshNeeded}
@@ -131,16 +136,16 @@ export function TodayDetailPanel({
               departmentName={selectedAppointment?.department_name}
               notes={selectedAppointment?.notes}
               onSchedule={() =>
-                scheduleAppointment(patientDetail!.patient!)
+                onScheduleAppointment(patientDetail!.patient!)
               }
               onBill={
                 selectedAppointment
-                  ? () => createBill(selectedAppointment)
-                  : () => createBillForPatient(patientDetail!.patient!)
+                  ? () => onCreateBill(selectedAppointment)
+                  : () => onCreateBillForPatient(patientDetail!.patient!)
               }
-              onEditPatient={editPatient}
+              onEditPatient={onEditPatient}
               onEditAppointment={() =>
-                selectedAppointment && editAppointment(selectedAppointment)
+                selectedAppointment && onEditAppointment(selectedAppointment)
               }
             />
           )}
@@ -156,7 +161,7 @@ export function TodayDetailPanel({
                 className="mt-2 border-blue-400 dark:border-blue-600 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/30"
                 onClick={() => {
                   if (patientDetail?.patient) {
-                    scheduleAppointment(patientDetail.patient, followUpData!.date);
+                    onScheduleAppointment(patientDetail.patient, followUpData!.date);
                   }
                 }}
               >
@@ -179,9 +184,9 @@ export function TodayDetailPanel({
                 variant="outline"
                 onClick={() => {
                   if (selectedAppointment) {
-                    createBill(selectedAppointment);
+                    onCreateBill(selectedAppointment);
                   } else if (patientDetail?.patient) {
-                    createBillForPatient(patientDetail.patient);
+                    onCreateBillForPatient(patientDetail.patient);
                   }
                 }}
               >
@@ -218,11 +223,11 @@ export function TodayDetailPanel({
             hideBillsAccordion
             defaultExpandHistory
             onViewBill={handleViewBill}
-            onViewConsultationFromHistory={viewConsultation}
+            onViewConsultationFromHistory={onViewConsultationFromHistory}
             onCreateBill={
               selectedAppointment
-                ? () => createBill(selectedAppointment)
-                : () => patientDetail?.patient && createBillForPatient(patientDetail.patient)
+                ? () => onCreateBill(selectedAppointment)
+                : () => patientDetail?.patient && onCreateBillForPatient(patientDetail.patient)
             }
           />
         </div>

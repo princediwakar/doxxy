@@ -1,7 +1,7 @@
 import { Spinner } from "@/components/ui/loading";
 import { Suspense } from "react";
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
-import { getClinicDepartments, getDepartmentTypes } from '@/lib/data/clinic';
+import { getClinicDepartments, getDepartmentTypes } from '@/lib/queries/clinic';
 import ClinicDepartmentsManagement from "@/components/superadmin/ClinicDepartmentsManagement";
 
 export default async function DepartmentsPage() {

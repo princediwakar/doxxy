@@ -1,6 +1,6 @@
 // app/(app)/schedule/page.tsx
-import { getTodayAppointments, resolveUserDoctor, getPatientById } from '@/lib/data/today';
-import { getActiveDoctors } from '@/lib/data/doctors';
+import { getTodayAppointments, resolveUserDoctor, getPatientById } from '@/lib/queries/appointments';
+import { getActiveDoctors } from '@/lib/queries/doctors';
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
 import { redirect } from 'next/navigation';
 import { TodayPageClient } from './TodayPageClient';

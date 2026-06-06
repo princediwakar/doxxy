@@ -1,5 +1,6 @@
+'use server';
+
 import { cache } from 'react';
-import { parseISO, format } from 'date-fns';
 import { createServerSupabase } from '@/integrations/supabase/server';
 import type { DbPatientByClinic } from '@/types/core';
 import { getCurrentDateStringIST } from '@/lib/utils';
@@ -28,8 +29,7 @@ export async function getTodayAppointments(clinicId: string, doctorId?: string |
   if (error) throw new Error(error.message);
 
   const targetDate = date || getCurrentDateStringIST();
-  
-  // appointments.date is text with mixed formats (plain "2026-05-02" or full "2026-05-02 00:00:00+05:30")
+
   const filtered = (data || []).filter((app) => {
     if (!app.date) return false;
     return app.date.substring(0, 10) === targetDate;

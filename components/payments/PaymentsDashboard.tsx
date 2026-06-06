@@ -1,6 +1,7 @@
 // components/payments/PaymentsDashboard.tsx
 "use client";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,8 @@ import {
 import type { BillingSummary, PaymentTransaction } from "@/types/billing";
 import { CreditPurchaseModal } from "./CreditPurchaseModal";
 import { format } from "date-fns";
+import { useAppState } from "@/contexts/AppStateContext";
+import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 
 interface PaymentsDashboardProps {
   serverBillingSummary: BillingSummary | null;
@@ -35,6 +38,14 @@ export const PaymentsDashboard: React.FC<PaymentsDashboardProps> = ({
   const isLoadingTransactions = false;
 
   const [isCreditModalOpen, setIsCreditModalOpen] = useState(false);
+  const { activeClinicId } = useAppState();
+  const router = useRouter();
+
+  const paymentsQueryKeys = useMemo(
+    () => [["billingStats"], ["financials"], ["clinic-billing-summary"], ["clinic-credits"]] as unknown[][],
+    [],
+  );
+  useRealtimeSubscription({ table: "payment_transactions", clinicId: activeClinicId ?? "", queryKeys: paymentsQueryKeys, onChange: () => router.refresh() });
 
   // Calculate usage percentage safely (prevent division by zero)
   const usagePercentage = React.useMemo(() => {

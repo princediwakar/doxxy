@@ -3,57 +3,16 @@ import { logger } from "@/lib/logger";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useQueryClient, UseMutationResult } from "@tanstack/react-query";
-import { getSupabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { ConsultationFormValues } from "@/types/consultation";
 import type { DbAppointment, DbConsultationBase } from "@/types/core";
 import type { UseFormReturn } from "react-hook-form";
 import type { ClinicMemberWithClinic } from "@/types/core";
 
-const supabase = getSupabase();
+import { completeConsultation } from "@/actions/consultations";
+import type { AutoSaveResult } from "./useConsultationAutoSave";
+
 const isDev = process.env.NODE_ENV === "development";
-
-type CreditDeductionResult = 'success' | 'failed' | 'insufficient' | 'no_clinic';
-
-async function finalizeAppointment(
-  appointmentId: string,
-  clinicId: string | undefined,
-): Promise<{ creditResult: CreditDeductionResult }> {
-  if (isDev) logger.log('Updating appointment status to "Completed" for:', appointmentId);
-
-  const { error: appointmentError } = await supabase
-    .from('appointments')
-    .update({ status: 'Completed' })
-    .eq('id', appointmentId);
-
-  if (appointmentError) {
-    logger.error('Error updating appointment status:', appointmentError);
-    throw appointmentError;
-  }
-
-  if (!clinicId) {
-    logger.warn('Cannot deduct credits: No active clinic found');
-    return { creditResult: 'no_clinic' };
-  }
-
-  if (isDev) logger.log('Deducting consultation credit');
-  const { data: deductResult, error: deductError } = await supabase
-    .rpc('deduct_appointment_credit', {
-      appointment_id_param: appointmentId,
-      clinic_id_param: clinicId,
-      credits_to_deduct: 1
-    });
-
-  if (deductError) {
-    logger.error('Error deducting appointment credit:', deductError);
-    return { creditResult: 'failed' };
-  }
-  if (deductResult !== true) {
-    logger.warn('Credit deduction returned false - clinic may have insufficient credits');
-    return { creditResult: 'insufficient' };
-  }
-  return { creditResult: 'success' };
-}
 
 export interface UseConsultationCompletionParams {
   appointmentId: string | undefined;
@@ -61,7 +20,7 @@ export interface UseConsultationCompletionParams {
   activeClinicId: string | undefined;
   canEditConsultation: boolean;
   form: UseFormReturn<ConsultationFormValues>;
-  autoSaveMutation: UseMutationResult<DbConsultationBase, Error, ConsultationFormValues>;
+  autoSaveMutation: UseMutationResult<AutoSaveResult, Error, ConsultationFormValues>;
   validateMandatoryFields: () => string[];
 }
 
@@ -93,22 +52,20 @@ export const useConsultationCompletion = ({
   const canEditConsultationRef = useRef(canEditConsultation);
   canEditConsultationRef.current = canEditConsultation;
 
-  // Sync completion state with appointment status
   useEffect(() => {
     if (appointment?.status) {
       setIsConsultationCompleted(appointment.status === 'Completed');
     }
   }, [appointment?.status]);
 
-  // Reset justCompleted when editing a previously completed consultation
   useEffect(() => {
     const completing = isCompletingRef.current;
     const editing = isEditingCompletedRef.current;
-    if (isDev) logger.log('🔄 Reset effect:', { isConsultationCompleted, canEditConsultation, justCompleted, completing, editing });
+    if (isDev) logger.log('Reset effect:', { isConsultationCompleted, canEditConsultation, justCompleted, completing, editing });
 
     if (isConsultationCompleted && canEditConsultation && justCompleted && !completing && !editing) {
       if (appointment?.status === 'Completed') {
-        if (isDev) logger.log('🔄 Resetting justCompleted - editing existing completed consultation');
+        if (isDev) logger.log('Resetting justCompleted - editing existing completed consultation');
         setJustCompleted(false);
       }
     }
@@ -125,10 +82,17 @@ export const useConsultationCompletion = ({
       return;
     }
 
+    if (!activeClinicId) {
+      toast.error('No Clinic', {
+        description: 'Cannot complete consultation without an active clinic.',
+      });
+      return;
+    }
+
     // Editing a completed consultation — save and redirect
     if (isConsultationCompletedRef.current && canEditConsultationRef.current) {
       try {
-        if (isDev) logger.log('🔄 Editing completed consultation - saving and redirecting');
+        if (isDev) logger.log('Editing completed consultation - saving and redirecting');
         await autoSaveMutation.mutateAsync(form.getValues());
         isEditingCompletedRef.current = true;
         setJustCompleted(true);
@@ -167,21 +131,19 @@ export const useConsultationCompletion = ({
       isCompletingRef.current = true;
       await autoSaveMutation.mutateAsync(form.getValues());
 
-      const { creditResult } = await finalizeAppointment(appointmentId, activeClinicId);
+      const result = await completeConsultation(appointmentId, activeClinicId);
 
-      if (creditResult === 'failed') {
-        toast('Consultation Completed', {
-          description: 'Consultation marked as complete, but credit deduction failed. Please check billing.',
+      if (result.error) {
+        toast.error('Completion Failed', {
+          description: result.error,
         });
-      } else if (creditResult === 'insufficient') {
-        toast('Consultation Completed', {
-          description: 'Consultation marked as complete, but clinic has insufficient credits for billing.',
-        });
+        isCompletingRef.current = false;
+        return;
       }
 
       setIsConsultationCompleted(true);
       setJustCompleted(true);
-      if (isDev) logger.log('✅ Consultation completed, appointment status updated');
+      if (isDev) logger.log('Consultation completed, appointment status updated');
 
       queryClient.invalidateQueries({ queryKey: ['appointments'] });
       queryClient.invalidateQueries({ queryKey: ['consultation-data', appointmentId, activeClinicId] });
@@ -200,11 +162,11 @@ export const useConsultationCompletion = ({
     }
   }, [
     appointmentId,
+    activeClinicId,
     autoSaveMutation,
     validateMandatoryFields,
     form,
     queryClient,
-    activeClinicId,
   ]);
 
   return { isConsultationCompleted, justCompleted, handleCompleteConsultation };

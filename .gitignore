@@ -33,4 +33,7 @@ out
 next-env.d.ts
 tsconfig.tsbuildinfo
 
-
+# Playwright
+test-results/
+playwright-report/
+tests/e2e/.auth/
