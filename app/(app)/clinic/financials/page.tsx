@@ -21,7 +21,7 @@ export default async function FinancialsPage() {
     );
   }
 
-  const data = await getFinancialsData(clinic.id);
+  const data = await getFinancialsData(clinic.clinic_id);
 
   return <FinancialsPageClient data={data} />;
 }
