@@ -96,7 +96,7 @@ export function AdministrativeFooter({
         >
           <span>Bills ({patientBills.length})</span>
           <div className="flex items-center gap-2">
-            {onCreateBill && patientBills.length > 0 && (
+            {onCreateBill && patientBills.length > 0 && !patientBills.some(bill => bill.appointment_id === currentAppointmentId && currentAppointmentId != null) && (
               <Button
                 size="sm"
                 variant="outline"

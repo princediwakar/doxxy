@@ -80,7 +80,8 @@ export function TodayDetailPanel({
 
   const appointmentStatus = selectedAppointment?.status;
   const showMutedBilling = appointmentStatus === APPOINTMENT_STATUS.SCHEDULED || appointmentStatus === APPOINTMENT_STATUS.IN_PROGRESS;
-  const showCreateBill = appointmentStatus === APPOINTMENT_STATUS.COMPLETED && (!patientBills || patientBills.length === 0);
+  const currentAppointmentHasBill = patientBills?.some(bill => bill.appointment_id === selectedAppointment?.id && selectedAppointment?.id != null);
+  const showCreateBill = appointmentStatus === APPOINTMENT_STATUS.COMPLETED && !currentAppointmentHasBill;
   const showBillList = appointmentStatus === APPOINTMENT_STATUS.COMPLETED && patientBills && patientBills.length > 0;
 
   return (
