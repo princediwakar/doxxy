@@ -286,8 +286,7 @@ export const ConsultationPreviewModal = ({
               </TooltipProvider>
               )}
               <Button size="sm" variant="outline" onClick={handleDownloadPdf}>
-                <Download className="h-4 w-4 mr-1.5" />
-                Download
+                <Download className="h-4 w-4" />
               </Button>
               <Button size="sm" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-1.5" />
