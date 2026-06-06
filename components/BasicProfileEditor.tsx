@@ -314,9 +314,6 @@ export const BasicProfileEditor: React.FC<BasicProfileEditorProps> = ({
                     rows={4}
                     className="resize-y"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    This appears at the bottom of printed consultation notes.
-                  </p>
                 </div>
               )}
 

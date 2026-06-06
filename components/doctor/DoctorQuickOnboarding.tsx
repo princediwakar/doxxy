@@ -179,7 +179,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
             </div>
             <div>
               <DialogTitle className="text-xl font-semibold">Setup Medical Profile</DialogTitle>
-              <p className="text-sm text-muted-foreground">Complete the essentials to start practicing</p>
             </div>
           </div>
         </DialogHeader>
@@ -296,9 +295,6 @@ export function DoctorQuickOnboarding({ open, onClose, onSuccess }: DoctorQuickO
 placeholder={"Dr. Firstname Lastname\nDegree 1, Degree 2 (Institution)\nSpecialty (Institution)\nNotable Achievement (e.g., Gold Medalist)"}              rows={4}
               className="resize-y"
             />
-            <p className="text-xs text-muted-foreground">
-              This appears at the bottom of printed consultation notes. Include your qualifications, registrations, and achievements.
-            </p>
           </div>
 
           {/* Google Place */}
@@ -321,9 +317,6 @@ placeholder={"Dr. Firstname Lastname\nDegree 1, Degree 2 (Institution)\nSpecialt
               }}
               placeholder="Search for your practice on Google Maps..."
             />
-            <p className="text-xs text-muted-foreground">
-              Used to generate Google review links for patients. Falls back to the clinic's Place ID if not set.
-            </p>
           </div>
 
           {/* Action Buttons */}
