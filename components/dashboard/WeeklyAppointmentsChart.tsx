@@ -11,6 +11,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import React, { useMemo } from "react";
+import { useTheme } from "next-themes";
 import { format, startOfWeek, addDays } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,10 +32,10 @@ const CustomTooltip = React.memo(({ active, payload, label }: TooltipProps) => {
         <p className="font-medium">{label}</p>
         <p className="text-sm text-muted-foreground">{data.date}</p>
         <div className="mt-1 space-y-0.5 text-sm">
-          <p className="text-green-600">Completed: {data.completed}</p>
+          <p className="text-green-600 dark:text-green-400">Completed: {data.completed}</p>
           <p className="text-muted-foreground">Pending: {data.pending}</p>
-          <p className="text-red-500">No-Shows: {data.no_shows}</p>
-          <p className="text-amber-500">Cancelled: {data.cancelled}</p>
+          <p className="text-red-500 dark:text-red-400">No-Shows: {data.no_shows}</p>
+          <p className="text-amber-500 dark:text-amber-400">Cancelled: {data.cancelled}</p>
           <p className="font-medium">Total: {data.total}</p>
         </div>
       </div>
@@ -45,17 +46,17 @@ const CustomTooltip = React.memo(({ active, payload, label }: TooltipProps) => {
 
 CustomTooltip.displayName = "CustomTooltip";
 
-const CustomCursor = (props: { x?: number; y?: number; width?: number; height?: number }) => {
-  if (props.x === undefined || props.y === undefined || props.width === undefined || props.height === undefined) {
+const CustomCursor = ({ x, y, width, height, isDark }: { x?: number; y?: number; width?: number; height?: number; isDark: boolean }) => {
+  if (x === undefined || y === undefined || width === undefined || height === undefined) {
     return null;
   }
   return (
     <rect
-      x={props.x}
-      y={props.y}
-      width={props.width}
-      height={props.height}
-      fill="rgba(0,0,0,0.04)"
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      fill={isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.04)"}
       rx={4}
     />
   );
@@ -75,6 +76,9 @@ export const WeeklyAppointmentsChart = React.memo(function WeeklyAppointmentsCha
   onBarClick,
   loading = false,
 }: WeeklyAppointmentsChartProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const chartData: DailyBreakdown[] = useMemo(() => {
     if (data) return data;
     if (appointments) {
@@ -169,30 +173,30 @@ export const WeeklyAppointmentsChart = React.memo(function WeeklyAppointmentsCha
               barGap={0}
               barCategoryGap="20%"
             >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#f0f0f0"} />
               <XAxis
                 dataKey="day"
                 tick={{ fontSize: 12 }}
-                tickLine={{ stroke: "#e0e0e0" }}
+                tickLine={{ stroke: isDark ? "#4b5563" : "#e0e0e0" }}
               />
               <YAxis
                 allowDecimals={false}
                 tick={{ fontSize: 12 }}
-                tickLine={{ stroke: "#e0e0e0" }}
-                axisLine={{ stroke: "#e0e0e0" }}
+                tickLine={{ stroke: isDark ? "#4b5563" : "#e0e0e0" }}
+                axisLine={{ stroke: isDark ? "#4b5563" : "#e0e0e0" }}
               />
-              <Tooltip content={<CustomTooltip />} cursor={<CustomCursor />} />
+              <Tooltip content={<CustomTooltip />} cursor={<CustomCursor isDark={isDark} />} />
               {dailyAvg > 0 && (
                 <ReferenceLine
                   y={dailyAvg}
-                  stroke="#94a3b8"
+                  stroke={isDark ? "#64748b" : "#94a3b8"}
                   strokeDasharray="6 4"
                   strokeWidth={1.5}
                   label={{
                     value: `avg ${dailyAvg.toFixed(1)}`,
                     position: "insideTopRight",
                     fontSize: 11,
-                    fill: "#94a3b8",
+                    fill: isDark ? "#64748b" : "#94a3b8",
                   }}
                 />
               )}

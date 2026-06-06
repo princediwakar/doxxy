@@ -1,17 +1,21 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTheme } from "next-themes";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { FileText } from "lucide-react";
 import type { MonthlyData, DailyData } from "@/types/core";
 
 export function RevenueChart({ data }: { data: MonthlyData[] }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   const chartData = useMemo(() =>
     data.map((m) => ({
       ...m,
-      fill: m.month === data[data.length - 1]?.month ? "var(--color-primary, #0080ff)" : "#94a3b8",
+      fill: m.month === data[data.length - 1]?.month ? "var(--color-primary, #0080ff)" : isDark ? "#64748b" : "#94a3b8",
     })),
-    [data]
+    [data, isDark]
   );
 
   if (data.every((m) => m.revenue === 0)) {
@@ -26,7 +30,7 @@ export function RevenueChart({ data }: { data: MonthlyData[] }) {
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#f0f0f0"} vertical={false} />
         <XAxis dataKey="monthLabel" tick={{ fontSize: 11 }} tickLine={false} />
         <YAxis
           tick={{ fontSize: 11 }}
@@ -45,6 +49,8 @@ export function RevenueChart({ data }: { data: MonthlyData[] }) {
 }
 
 export function DailyRevenueChart({ data }: { data: DailyData[] }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const hasData = data.some((d) => d.revenue > 0);
 
   if (!hasData) {
@@ -59,6 +65,7 @@ export function DailyRevenueChart({ data }: { data: DailyData[] }) {
   return (
     <ResponsiveContainer width="100%" height={180}>
       <BarChart data={data} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#374151" : "#f0f0f0"} vertical={false} />
         <XAxis dataKey="dayLabel" tick={{ fontSize: 9 }} tickLine={false} interval={Math.max(Math.floor(data.length / 8), 1)} />
         <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} width={32}
           tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v))}

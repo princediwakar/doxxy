@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
+import { useTheme } from "next-themes";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 const WORKING_DAYS = 26;
@@ -23,6 +24,7 @@ interface SliderInputProps {
   step: number;
   unit?: string;
   suffix?: string;
+  isDark: boolean;
   onChange: (value: number) => void;
 }
 
@@ -34,9 +36,11 @@ const SliderInput = ({
   step,
   unit = "",
   suffix = "",
+  isDark,
   onChange,
 }: SliderInputProps) => {
   const fillPct = ((value - min) / (max - min)) * 100;
+  const trackColor = isDark ? "#374151" : "#e5e7eb";
 
   return (
     <div className="mb-8">
@@ -44,7 +48,7 @@ const SliderInput = ({
         <label className="text-sm font-medium text-gray-600 dark:text-gray-400">
           {label}
         </label>
-        <span className="text-2xl font-bold text-blue-600 tabular-nums">
+        <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
           {unit}
           {value % 1 !== 0 ? value.toFixed(1) : value}
           {suffix}
@@ -64,7 +68,7 @@ const SliderInput = ({
           )}
           className="w-full h-2 rounded-full appearance-none cursor-pointer bg-gray-200 dark:bg-gray-700 accent-blue-600"
           style={{
-            background: `linear-gradient(to right, #2563eb 0%, #2563eb ${fillPct}%, #e5e7eb ${fillPct}%, #e5e7eb 100%)`,
+            background: `linear-gradient(to right, #2563eb 0%, #2563eb ${fillPct}%, ${trackColor} ${fillPct}%, ${trackColor} 100%)`,
           }}
         />
         <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500 mt-2">
@@ -108,6 +112,8 @@ const ChartTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{
 // --- MAIN COMPONENT ---
 
 export default function ROICalculatorInteractive() {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const [patientsPerDay, setPatientsPerDay] = useState(40);
   const [revenuePerPatient, setRevenuePerPatient] = useState(500);
   const [noShowRate, setNoShowRate] = useState(15);
@@ -151,6 +157,7 @@ export default function ROICalculatorInteractive() {
           min={5}
           max={200}
           step={5}
+          isDark={isDark}
           onChange={setPatientsPerDay}
         />
         <SliderInput
@@ -160,6 +167,7 @@ export default function ROICalculatorInteractive() {
           max={2000}
           step={50}
           unit="₹"
+          isDark={isDark}
           onChange={setRevenuePerPatient}
         />
         <SliderInput
@@ -169,6 +177,7 @@ export default function ROICalculatorInteractive() {
           max={50}
           step={1}
           suffix="%"
+          isDark={isDark}
           onChange={setNoShowRate}
         />
         <SliderInput
@@ -178,6 +187,7 @@ export default function ROICalculatorInteractive() {
           max={12}
           step={0.5}
           suffix=" hrs"
+          isDark={isDark}
           onChange={setAdminHoursPerDay}
         />
       </div>
