@@ -5,7 +5,6 @@ import { Eye } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { formatTimeIST } from "@/lib/utils";
 import { Spinner } from "@/components/ui/loading";
-import { Button } from "@/components/ui/button";
 import type { PatientDetail } from "@/types/core";
 
 type ConsultationRow = {
@@ -69,54 +68,46 @@ export function ConsultationHistory({
           No previous consultations.
         </p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {previousConsultations.slice(0, 5).map((c) => (
-            <div key={c.id} className="text-sm border-b pb-3 last:border-0 space-y-1">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-medium">
-                    Consultation ·{" "}
-                    {c.appointments?.date
-                      ? format(parseISO(c.appointments.date), "MMM dd, yyyy")
-                      : c.created_at
-                        ? format(parseISO(c.created_at), "MMM dd, yyyy")
-                        : "Unknown date"}
+            <button
+              key={c.id}
+              disabled={!c.appointments?.id}
+              onClick={() =>
+                c.appointments?.id &&
+                onViewConsultationFromHistory(
+                  c.appointments.id,
+                  selectedPatientId,
+                  c.appointments.doctor_id ?? "",
+                  c.appointments.date,
+                  c.appointments.time,
+                  c.appointments.doctors?.name,
+                )
+              }
+              className="w-full text-left rounded-lg border p-3 hover:bg-muted/50 transition-colors flex items-center justify-between group disabled:pointer-events-none disabled:opacity-70"
+            >
+              <div className="min-w-0">
+                <p className="text-sm font-medium">
+                  {c.appointments?.date
+                    ? format(parseISO(c.appointments.date), "MMM dd, yyyy")
+                    : c.created_at
+                      ? format(parseISO(c.created_at), "MMM dd, yyyy")
+                      : "Unknown date"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {c.appointments?.time ? formatTimeIST(c.appointments.time) + " · " : ""}
+                  Dr. {c.appointments?.doctors?.name ?? "—"}
+                  {" · "}
+                  {c.appointments?.status ?? "—"}
+                </p>
+                {extractSpecialtyField(c as Record<string, unknown>, "chief_complaint") && (
+                  <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                    {extractSpecialtyField(c as Record<string, unknown>, "chief_complaint")}
                   </p>
-                  {c.appointments && (
-                    <p className="text-xs text-muted-foreground">
-                      {c.appointments.time ? formatTimeIST(c.appointments.time) + " · " : ""}
-                      Doctor: {c.appointments.doctors?.name ?? "—"}
-                      {" · "}
-                      {c.appointments.status ?? "—"}
-                    </p>
-                  )}
-                </div>
-                {c.appointments?.id && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs"
-                    onClick={() =>
-                      onViewConsultationFromHistory(
-                        c.appointments!.id!,
-                        selectedPatientId,
-                        c.appointments!.doctor_id ?? "",
-                        c.appointments!.date,
-                        c.appointments!.time,
-                        c.appointments!.doctors?.name
-                      )
-                    }
-                  >
-                    <Eye className="h-3 w-3 mr-1" />View Notes
-                  </Button>
                 )}
               </div>
-              {extractSpecialtyField(c as Record<string, unknown>, "chief_complaint") && (
-                <p className="text-xs text-muted-foreground line-clamp-2">
-                  {extractSpecialtyField(c as Record<string, unknown>, "chief_complaint")}
-                </p>
-              )}
-            </div>
+              <Eye className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-3" />
+            </button>
           ))}
         </div>
       )}

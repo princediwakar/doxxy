@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, Suspense, useState } from "react";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   CalendarPlus,
@@ -15,7 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { BillingSection } from "@/components/schedule/BillingSection";
 import { ConsultationHistory } from "@/components/schedule/ConsultationHistory";
 import type { PatientDetail } from "@/types/core";
-import type { Patient } from "@/types/patients";
+import type { Patient, AppointmentData } from "@/types/patients";
 import type { Bill } from "@/types/billing";
 
 const AppointmentModal = dynamic(() =>
@@ -29,37 +28,46 @@ const PatientModal = dynamic(() =>
 const BillingModal = dynamic(() =>
   import("@/components/billing/BillingModal").then((m) => m.BillingModal),
 );
+const ConsultationViewModal = dynamic(() =>
+  import("@/components/consultation/ConsultationViewModal").then(
+    (m) => m.ConsultationViewModal,
+  ),
+);
 
 interface PatientChartProps {
   patientDetail: PatientDetail;
 }
 
 export function PatientChart({ patientDetail }: PatientChartProps) {
-  const router = useRouter();
-
   const [showCreateBillModal, setShowCreateBillModal] = useState(false);
   const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
   const [selectedBillMode, setSelectedBillMode] = useState<"create" | "view" | "edit">("view");
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
   const [appointmentModalPatient, setAppointmentModalPatient] = useState<Patient | null>(null);
   const [patientEditModalOpen, setPatientEditModalOpen] = useState(false);
+  const [consultAppointment, setConsultAppointment] = useState<AppointmentData | null>(null);
 
   const patient = patientDetail.patient!;
   const bills = (patientDetail.bills ?? []) as Bill[];
 
   const handleViewConsultationFromHistory = useCallback(
     (appointmentId: string, _patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => {
-      const params = new URLSearchParams();
-      params.set("patient", patient.id);
-      params.set("appointment", appointmentId);
-      params.set("action", "view-consult");
-      if (doctorId) params.set("doctor_id", doctorId);
-      if (doctorName) params.set("doctor_name", doctorName);
-      if (date) params.set("date", date);
-      if (time) params.set("time", time);
-      router.push(`/schedule?${params.toString()}`);
+      setConsultAppointment({
+        id: appointmentId,
+        patient_id: patient.id,
+        doctor_id: doctorId,
+        date: date || "",
+        time: time || "",
+        type: "Walk-in",
+        status: "Completed",
+        created_at: "",
+        patient_name: patient.name,
+        patient_gender: patient.gender ?? null,
+        patient_age: patient.age ?? null,
+        doctor_name: doctorName,
+      });
     },
-    [patient.id, router],
+    [patient],
   );
 
   const handleCreateBill = useCallback(() => {
@@ -199,6 +207,16 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
           patient={patient as unknown as import("@/types/core").DbPatient}
           mode={selectedBillMode}
           onModeChange={setSelectedBillMode}
+        />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <ConsultationViewModal
+          open={consultAppointment !== null}
+          onOpenChange={(open) => {
+            if (!open) setConsultAppointment(null);
+          }}
+          appointment={consultAppointment}
         />
       </Suspense>
     </div>
