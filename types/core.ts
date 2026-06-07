@@ -345,6 +345,17 @@ export type DepartmentWithDetails = DbClinicDepartment & {
   department_types: DbDepartmentType | DbDepartmentType[] | null;
 };
 
+export interface DoctorMemberFields {
+  id: string;
+  primary_specialization: string | null;
+  consultation_fee: number | null;
+  bio: string | null;
+  signature: string | null;
+  google_place_id: string | null;
+  google_place_data: unknown | null;
+  phone: string | null;
+}
+
 export interface MemberWithDetails {
   id: string;
   user_id: string | null;
@@ -356,6 +367,7 @@ export interface MemberWithDetails {
   profile: ProfileData | null;
   department: DepartmentWithDetails | null;
   hasDoctor: boolean;
+  doctor: DoctorMemberFields | null;
 }
 
 export interface InviteMemberData {
@@ -364,17 +376,6 @@ export interface InviteMemberData {
   phone: string;
   role: UserRole;
   department_id?: string;
-}
-
-export interface CreateDoctorData {
-  name: string;
-  email: string;
-  primary_specialization?: string;
-  consultation_fee?: number;
-  bio?: string;
-  department_id?: string;
-  google_place_id?: string;
-  google_place_data?: GooglePlaceData;
 }
 
 // ============================================================================

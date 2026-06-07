@@ -1,8 +1,9 @@
+// actions/clinic.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { createServerSupabase } from '@/integrations/supabase/server';
-import type { DbClinicMemberInsert, DbClinicMemberUpdate, DbClinicUpdate, DbProfileInsert, Json } from '@/types/core';
+import type { DbClinicMemberInsert, DbClinicMemberUpdate, DbClinicUpdate, DbProfileInsert, DbProfileUpdate, DbDoctorUpdate, DbDoctorInsert, UserRole, Json } from '@/types/core';
 import type { GooglePlaceData } from '@/types/google-places';
 
 export async function inviteClinicMember(data: DbClinicMemberInsert) {
@@ -70,11 +71,23 @@ export async function createDoctorForMember(params: {
   consultationFee?: number;
   bio?: string;
   departmentId?: string;
-  googlePlaceId?: string;
-  googlePlaceData?: GooglePlaceData;
 }) {
   const supabase = await createServerSupabase();
-  const { userId, clinicId, name, email, primarySpecialization, consultationFee, bio, googlePlaceId, googlePlaceData } = params;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: member } = await supabase
+    .from('clinic_members')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('clinic_id', params.clinicId)
+    .maybeSingle();
+
+  if (!member || member.role !== 'superadmin') {
+    return { error: 'Only superadmins can create doctor profiles' };
+  }
+
+  const { userId, clinicId, name, email, primarySpecialization, consultationFee, bio } = params;
 
   const { error } = await supabase.from('doctors').insert({
     user_id: userId,
@@ -84,10 +97,102 @@ export async function createDoctorForMember(params: {
     primary_specialization: primarySpecialization || null,
     phone: null,
     is_active: true,
-    google_place_id: googlePlaceId || null,
-    google_place_data: (googlePlaceData ?? null) as unknown as Json | null,
   });
   if (error) return { error: error.message };
+
+  revalidatePath('/clinic/staff');
+  return { success: true };
+}
+
+export async function updateMemberProfile(params: {
+  memberId: string;
+  clinicId: string;
+  userId: string;
+  profile: { name?: string; phone?: string | null };
+  member: { role?: UserRole; department_id?: string | null };
+  doctor?: {
+    primary_specialization?: string;
+    consultation_fee?: number;
+    bio?: string;
+  };
+}) {
+  const supabase = await createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: caller } = await supabase
+    .from('clinic_members')
+    .select('role')
+    .eq('user_id', user.id)
+    .eq('clinic_id', params.clinicId)
+    .maybeSingle();
+
+  if (!caller || caller.role !== 'superadmin') {
+    return { error: 'Only superadmins can update member profiles' };
+  }
+
+  // Update profile
+  if (params.profile.name || params.profile.phone !== undefined) {
+    const profileUpdate: DbProfileUpdate = { updated_at: new Date().toISOString() };
+    if (params.profile.name) profileUpdate.name = params.profile.name;
+    if (params.profile.phone !== undefined) profileUpdate.phone = params.profile.phone;
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update(profileUpdate)
+      .eq('id', params.userId);
+    if (profileError) return { error: profileError.message };
+  }
+
+  // Update clinic_members
+  if (params.member.role || params.member.department_id !== undefined) {
+    const memberUpdate: DbClinicMemberUpdate = {};
+    if (params.member.role) memberUpdate.role = params.member.role;
+    if (params.member.department_id !== undefined) memberUpdate.department_id = params.member.department_id;
+
+    const { error: memberError } = await supabase
+      .from('clinic_members')
+      .update(memberUpdate)
+      .eq('id', params.memberId);
+    if (memberError) return { error: memberError.message };
+  }
+
+  // Update or create doctor record
+  if (params.doctor) {
+    const doctorUpdate: DbDoctorUpdate = { updated_at: new Date().toISOString() };
+    if (params.doctor.primary_specialization !== undefined) doctorUpdate.primary_specialization = params.doctor.primary_specialization || null;
+    if (params.doctor.consultation_fee !== undefined) doctorUpdate.consultation_fee = params.doctor.consultation_fee;
+    if (params.doctor.bio !== undefined) doctorUpdate.bio = params.doctor.bio || null;
+
+    if (doctorUpdate.primary_specialization !== undefined || doctorUpdate.consultation_fee !== undefined || doctorUpdate.bio !== undefined) {
+      const { data: existingDoctor } = await supabase
+        .from('doctors')
+        .select('id')
+        .eq('user_id', params.userId)
+        .eq('clinic_id', params.clinicId)
+        .maybeSingle();
+
+      if (existingDoctor) {
+        const { error: docError } = await supabase
+          .from('doctors')
+          .update(doctorUpdate)
+          .eq('id', existingDoctor.id);
+        if (docError) return { error: docError.message };
+      } else {
+        const { error: docError } = await supabase
+          .from('doctors')
+          .insert({
+            user_id: params.userId,
+            clinic_id: params.clinicId,
+            name: params.profile.name || '',
+            email: null,
+            is_active: true,
+            ...doctorUpdate,
+          });
+        if (docError) return { error: docError.message };
+      }
+    }
+  }
 
   revalidatePath('/clinic/staff');
   return { success: true };

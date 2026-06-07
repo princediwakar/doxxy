@@ -1,3 +1,4 @@
+// lib/queries/clinic.ts
 'use server';
 
 import { cache } from 'react';
@@ -34,7 +35,7 @@ export const getClinicMembers = cache(async (clinicId: string) => {
     clinicMembersData.map(async (member) => {
       const { data: doctorProfile } = await supabase
         .from('doctors')
-        .select('id')
+        .select('id, primary_specialization, consultation_fee, bio, signature, google_place_id, google_place_data, phone')
         .eq('user_id', member.user_id || '')
         .eq('clinic_id', clinicId)
         .maybeSingle();
@@ -60,6 +61,7 @@ export const getClinicMembers = cache(async (clinicId: string) => {
         profile: member.profiles,
         department: departmentInfo,
         hasDoctor: !!doctorProfile,
+        doctor: doctorProfile,
       };
     }),
   );

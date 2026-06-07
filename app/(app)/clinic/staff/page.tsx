@@ -1,3 +1,4 @@
+// app/(app)/clinic/staff/page.tsx
 import { Spinner } from "@/components/ui/loading";
 import { Suspense } from "react";
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';

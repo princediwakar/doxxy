@@ -1,3 +1,4 @@
+// actions/profile.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -20,8 +21,41 @@ export async function updateProfile(profileData: {
   return { success: true };
 }
 
+const IDENTITY_BOUND_FIELDS = ['signature', 'google_place_id', 'google_place_data'] as const;
+
 export async function updateDoctorProfile(doctorId: string, data: DbDoctorUpdate) {
   const supabase = await createServerSupabase();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: doctor } = await supabase
+    .from('doctors')
+    .select('user_id, clinic_id')
+    .eq('id', doctorId)
+    .single();
+  if (!doctor) return { error: 'Doctor not found' };
+
+  const isSelf = doctor.user_id === user.id;
+
+  if (!isSelf) {
+    const { data: member } = await supabase
+      .from('clinic_members')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('clinic_id', doctor.clinic_id)
+      .maybeSingle();
+
+    if (!member || member.role !== 'superadmin') {
+      return { error: 'Unauthorized' };
+    }
+
+    for (const field of IDENTITY_BOUND_FIELDS) {
+      if ((data as Record<string, unknown>)[field] !== undefined) {
+        return { error: `Only the doctor can update their ${field.replace(/_/g, ' ')}` };
+      }
+    }
+  }
+
   const { error } = await supabase
     .from('doctors')
     .update(data)
