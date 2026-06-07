@@ -1,3 +1,4 @@
+// lib/queries/profile.ts
 'use server';
 
 import { cache } from 'react';

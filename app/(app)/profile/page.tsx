@@ -1,3 +1,4 @@
+// app/(app)/profile/page.tsx
 import { getAuthenticatedUser, getActiveClinic } from "@/lib/auth-server";
 import { getDoctorProfile, getUserProfile } from "@/lib/queries/profile";
 import ProfilePageClient from "@/components/profile/ProfilePageClient";

@@ -1,3 +1,4 @@
+// components/profile/ProfilePageClient.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -9,30 +10,28 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { AppUser } from "@/types/core";
 import {
-  User as UserIcon,
   Shield,
   Stethoscope,
-  UserPlus,
   Building2,
-  Edit,
+  Edit2,
   Phone,
   Mail,
-  CheckCircle,
+  AlertCircle,
+  BriefcaseMedical,
+  MapPin,
+  Banknote,
 } from "lucide-react";
 import { BasicProfileEditor } from "@/components/BasicProfileEditor";
 import { DoctorQuickOnboarding } from "@/components/doctor/DoctorQuickOnboarding";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type DoctorProfile = Record<string, any> | null;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type UserProfile = Record<string, any> | null;
 
 interface ProfilePageClientProps {
@@ -54,264 +53,178 @@ export default function ProfilePageClient({
 }: ProfilePageClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
+
   const [isBasicModalOpen, setIsBasicModalOpen] = useState(false);
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState(false);
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (searchParams.get("setup") === "doctor" && doctorProfile) {
-      const missingDepartment = !doctorProfile.department_id;
-      if (missingDepartment) {
+      if (!doctorProfile.department_id) {
         setIsOnboardingModalOpen(true);
       }
     }
   }, [searchParams, doctorProfile]);
 
-  const getRoleDisplayConfig = () => {
-    const isDoctorRole = activeClinicRole === "doctor" || !!doctorProfile;
-    const isHybridSuperadmin =
-      activeClinicRole === "superadmin" && !!doctorProfile;
-
-    const displayName =
-      userProfile?.name || user?.user_metadata?.name || "User";
-
-    if (isDoctorRole) {
-      return {
-        title: displayName,
-        subtitle:
-          doctorProfile?.primary_specialization || "Medical Professional",
-        icon: Stethoscope,
-        iconClass: "",
-        bgClass: "bg-muted",
-        badge: isHybridSuperadmin ? { text: "Superadmin", icon: Shield } : null,
-      };
-    }
-
-    if (activeClinicRole === "superadmin") {
-      return {
-        title: displayName,
-        subtitle: "Clinic Administrator",
-        icon: Shield,
-        iconClass: "text-slate-600",
-        bgClass: "bg-slate-50",
-        badge: null,
-      };
-    }
-
-    return {
-      title: displayName,
-      subtitle: "Healthcare Team",
-      icon: UserIcon,
-      iconClass: "text-success",
-      bgClass: "bg-success/10",
-      badge: null,
-    };
-  };
-
-  const roleConfig = getRoleDisplayConfig();
-  const IconComponent = roleConfig.icon;
+  const displayName = userProfile?.name || user?.user_metadata?.name || "Unknown User";
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").substring(0, 2).toUpperCase();
+  
+  const isDoctorRole = activeClinicRole === "doctor" || !!doctorProfile;
+  const isSuperadmin = activeClinicRole === "superadmin";
+  const needsMedicalProfile = !doctorProfile && (isDoctorRole || isSuperadmin);
+  
+  // Identify if this user is strictly staff to hide clinical sections entirely
+  const isStrictlyStaff = activeClinicRole === "staff" && !doctorProfile;
 
   const handleRefetch = () => {
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.profile.doctor(user.id, activeClinicId),
-    });
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.profile.user(user.id),
-    });
+    queryClient.invalidateQueries({ queryKey: queryKeys.profile.doctor(user.id, activeClinicId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.profile.user(user.id) });
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
-        <div className="flex items-center gap-3">
-          <div
-            className={`flex items-center justify-center w-10 h-10 rounded-lg ${roleConfig.bgClass}`}
-          >
-            <IconComponent className={`w-5 h-5 ${roleConfig.iconClass}`} />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Profile</h1>
-            <p className="hidden md:block text-muted-foreground">
-              Manage your profile information and settings
-            </p>
+    <div className="max-w-5xl mx-auto space-y-8 pb-10" data-testid="profile-page">
+      
+      {/* Hero Identity Section */}
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-border">
+        <div className="flex items-center gap-5">
+          <Avatar className="w-20 h-20 md:w-24 md:h-24 border-2 border-border shadow-sm">
+            <AvatarImage src={user?.user_metadata?.avatar_url} className="object-cover" />
+            <AvatarFallback className="text-2xl font-semibold bg-primary/10 text-primary">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{displayName}</h1>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5 font-medium text-foreground">
+                <Building2 className="w-4 h-4 text-muted-foreground" />
+                {activeClinicName}
+              </span>
+              <span className="text-muted-foreground/40">•</span>
+              <Badge variant="secondary" className="capitalize font-normal text-xs px-2 py-0.5">
+                {activeClinicRole}
+              </Badge>
+              {isSuperadmin && doctorProfile && (
+                <Badge variant="outline" className="font-normal text-xs px-2 py-0.5 border-blue-500/30 text-blue-500">
+                  <Shield className="w-3 h-3 mr-1" /> Superadmin
+                </Badge>
+              )}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {roleConfig.badge && (
-            <Badge className="bg-primary/10 text-primary border-primary/20">
-              <roleConfig.badge.icon className="w-3 h-3 mr-1" />
-              {roleConfig.badge.text}
-            </Badge>
-          )}
-          <Button onClick={() => setIsBasicModalOpen(true)} variant="outline">
-            <Edit className="h-4 w-4 mr-2" />
-            Edit Profile
-          </Button>
-        </div>
+        <Button onClick={() => setIsBasicModalOpen(true)} variant="secondary" className="shrink-0 shadow-sm">
+          <Edit2 className="h-4 w-4 mr-2" />
+          Edit Profile
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Avatar className="w-16 h-16 border-2 border-border">
-                  <AvatarImage
-                    src={user?.user_metadata?.avatar_url}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="text-lg font-semibold">
-                    {roleConfig.title
-                      .split(" ")
-                      .map((n: string) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <CardTitle className="text-lg">{roleConfig.title}</CardTitle>
-                  <CardDescription>{roleConfig.subtitle}</CardDescription>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Building2 className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">
-                      {activeClinicName}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <Button
-                onClick={() => setIsBasicModalOpen(true)}
-                size="sm"
-                variant="ghost"
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
+      {/* Critical Actions */}
+      {needsMedicalProfile && (
+        <Alert className="bg-blue-500/10 border-blue-500/20 text-blue-500 shadow-sm">
+          <AlertCircle className="h-5 w-5 text-blue-500" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full ml-2">
+            <div>
+              <AlertTitle className="font-semibold">Medical Profile Required</AlertTitle>
+              <AlertDescription className="text-sm opacity-90">
+                Complete your medical profile to assign yourself to a department, set fees, and accept appointments.
+              </AlertDescription>
             </div>
+            <Button 
+              onClick={() => setIsOnboardingModalOpen(true)} 
+              className="bg-blue-600 hover:bg-blue-700 text-white shrink-0"
+            >
+              Setup Profile
+            </Button>
+          </div>
+        </Alert>
+      )}
+
+      {/* Data Grids */}
+      <div className={`grid grid-cols-1 ${isStrictlyStaff ? 'max-w-2xl' : 'lg:grid-cols-2'} gap-8`}>
+        
+        {/* Contact Information */}
+        <Card className="shadow-sm border-border bg-card">
+          <CardHeader className="pb-3 border-b border-border">
+            <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+              Contact Information
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <h4 className="font-medium text-sm">Contact Information</h4>
-              <div className="space-y-2">
-                {user?.email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{user.email}</span>
-                    <CheckCircle className="w-4 h-4 text-success" />
-                  </div>
-                )}
-                {userProfile?.phone ? (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{userProfile.phone}</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="w-4 h-4" />
-                    <span>Phone not provided</span>
-                  </div>
-                )}
+          <CardContent className="p-0 divide-y divide-border">
+            <div className="flex items-center p-4 gap-4">
+              <div className="p-2 bg-muted rounded-md"><Mail className="w-4 h-4 text-foreground/70" /></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground font-medium mb-0.5">Email Address</p>
+                <p className="text-sm font-medium truncate text-foreground">{user.email}</p>
+              </div>
+            </div>
+            <div className="flex items-center p-4 gap-4">
+              <div className="p-2 bg-muted rounded-md"><Phone className="w-4 h-4 text-foreground/70" /></div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-muted-foreground font-medium mb-0.5">Phone Number</p>
+                <p className="text-sm font-medium truncate text-foreground">
+                  {userProfile?.phone || <span className="text-muted-foreground italic">Not provided</span>}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <roleConfig.icon
-                  className={`w-5 h-5 ${roleConfig.iconClass}`}
-                />
-                Role & Access
+        {/* Clinical Profile - Hidden for pure Staff */}
+        {!isStrictlyStaff && (
+          <Card className="shadow-sm border-border bg-card">
+            <CardHeader className="pb-3 border-b border-border flex flex-row items-center justify-between space-y-0">
+              <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                Clinical Details
               </CardTitle>
               {doctorProfile && (
-                <Button
-                  onClick={() => setIsOnboardingModalOpen(true)}
-                  size="sm"
-                  variant="ghost"
-                >
-                  <Edit className="w-4 h-4" />
+                <Button onClick={() => setIsOnboardingModalOpen(true)} variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground hover:text-foreground">
+                  <Edit2 className="w-3 h-3 mr-1" /> Edit
                 </Button>
               )}
-            </div>
-            <CardDescription>
-              Your role, clinic, and permissions
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">
-                Current Role
-              </label>
-              <p className="text-sm font-medium">{roleConfig.subtitle}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">
-                Clinic
-              </label>
-              <p className="text-sm">{activeClinicName}</p>
-            </div>
-            <div>
-              <label className="text-xs font-medium text-muted-foreground">
-                Permissions
-              </label>
-              <p className="text-sm">
-                {activeClinicRole === "superadmin"
-                  ? "Full clinic management access"
-                  : "Standard healthcare team access"}
-              </p>
-            </div>
-
-            {doctorProfile && (
-              <>
-                <Separator />
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">
-                      Specialization
-                    </label>
-                    <p className="text-sm">
-                      {doctorProfile.primary_specialization || "Not specified"}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">
-                      Department
-                    </label>
-                    <p className="text-sm">
-                      {doctorProfile.department_name || "Not assigned"}
+            </CardHeader>
+            
+            {doctorProfile ? (
+              <CardContent className="p-0 divide-y divide-border">
+                <div className="flex items-center p-4 gap-4">
+                  <div className="p-2 bg-blue-500/10 text-blue-500 rounded-md"><BriefcaseMedical className="w-4 h-4" /></div>
+<div className="flex-1 min-w-0">
+  <p className="text-xs text-muted-foreground font-medium mb-0.5">Specialization & Dept.</p>
+  <p className="text-sm font-medium truncate text-foreground">
+    {[doctorProfile.primary_specialization, doctorProfile.department_name]
+      .filter(Boolean)
+      .join(' • ') || "Unassigned"}
+  </p>
+</div>
+                </div>
+                <div className="flex items-center p-4 gap-4">
+                  <div className="p-2 bg-green-500/10 text-green-500 rounded-md"><Banknote className="w-4 h-4" /></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground font-medium mb-0.5">Consultation Fee</p>
+                    <p className="text-sm font-medium truncate text-foreground">
+                      {doctorProfile.consultation_fee ? `₹${doctorProfile.consultation_fee}` : "Free"}
                     </p>
                   </div>
                 </div>
-              </>
-            )}
-
-            {!doctorProfile &&
-              (activeClinicRole === "superadmin" ||
-                activeClinicRole === "doctor") && (
-                <>
-                  <Separator />
-                  <div className="space-y-3">
-                    <h4 className="font-medium text-sm">Medical Practice</h4>
-                    <p className="text-xs text-muted-foreground">
-                      {activeClinicRole === "superadmin"
-                        ? "As a clinic administrator, you can also set up a medical practice profile"
-                        : "Complete your medical profile to start seeing patients"}
-                    </p>
-                    <Button
-                      onClick={() => setIsOnboardingModalOpen(true)}
-                      className="w-full"
-                      size="sm"
-                    >
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      {activeClinicRole === "superadmin"
-                        ? "Setup Medical Profile"
-                        : "Complete Medical Profile"}
-                    </Button>
+                {doctorProfile.google_place_id && (
+                  <div className="flex items-center p-4 gap-4 bg-muted/20">
+                    <div className="p-2 bg-muted text-foreground/70 rounded-md"><MapPin className="w-4 h-4" /></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground font-medium mb-0.5">Google Place Linked</p>
+                      <p className="text-xs font-mono text-muted-foreground truncate">{doctorProfile.google_place_id}</p>
+                    </div>
                   </div>
-                </>
-              )}
-          </CardContent>
-        </Card>
+                )}
+              </CardContent>
+            ) : (
+              <CardContent className="p-8">
+                <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
+                  <Stethoscope className="w-8 h-8 mb-3 opacity-20" />
+                  <p className="text-sm">No clinical profile established.</p>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        )}
       </div>
 
       {isBasicModalOpen && (
@@ -331,8 +244,7 @@ export default function ProfilePageClient({
             setIsOnboardingModalOpen(false);
             const next = new URLSearchParams(searchParams.toString());
             next.delete("setup");
-            const qs = next.toString();
-            router.replace(window.location.pathname + (qs ? `?${qs}` : ""), { scroll: false });
+            router.replace(window.location.pathname + (next.toString() ? `?${next.toString()}` : ""), { scroll: false });
             router.refresh();
             handleRefetch();
           }}
