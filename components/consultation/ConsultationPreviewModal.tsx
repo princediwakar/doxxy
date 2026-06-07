@@ -23,7 +23,7 @@ import { pdf } from '@react-pdf/renderer';
 import { ConsultationPDF } from './ConsultationPDF';
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { queryCurrentDoctorByUserId } from "@/lib/queries/doctors";
+import { queryCurrentDoctorDetails } from "@/lib/queries/doctors";
 import { queryKeys } from "@/lib/query-keys";
 
 interface Section {
@@ -75,27 +75,34 @@ export const ConsultationPreviewModal = ({
     : null;
 
   const { data: doctorDetails } = useQuery({
-    queryKey: queryKeys.doctors.currentForClinic(
+    queryKey: queryKeys.doctors.details(
+      appointment?.doctor_id ?? "",
       activeClinicId ?? "",
-      user?.id ?? "",
     ),
     queryFn: () =>
-      queryCurrentDoctorByUserId(user!.id!, activeClinicId!),
-    enabled: !!activeClinicId && !!user?.id,
+      queryCurrentDoctorDetails(activeClinicId!, appointment!.doctor_id!),
+    enabled: !!activeClinicId && !!appointment?.doctor_id,
   });
 
-  // Prepare doctor info
-  const doctorName = doctorDetails?.name || user?.user_metadata?.full_name || "";
-  const doctorSpecialization = doctorDetails?.department_name || departmentType;
+  const firstDoctor =
+    doctorDetails && Array.isArray(doctorDetails) && doctorDetails.length > 0
+      ? doctorDetails[0]
+      : null;
+
+  const doctorName =
+    firstDoctor?.name ||
+    user?.user_metadata?.full_name ||
+    "";
+  const doctorSpecialization = firstDoctor?.department_name || departmentType;
   const doctorInfo = {
     name: doctorName,
     specialization: doctorSpecialization,
     qualification: "",
     registration_number: "",
-    phone: doctorDetails?.phone || user?.phone || "",
-    email: doctorDetails?.email || user?.email || "",
-    bio: doctorDetails?.bio || "",
-    signature: doctorDetails?.signature || `Dr. ${doctorName}\n${doctorSpecialization}`,
+    phone: firstDoctor?.phone || user?.phone || "",
+    email: firstDoctor?.email || user?.email || "",
+    bio: firstDoctor?.bio || "",
+    signature: firstDoctor?.signature || `Dr. ${doctorName}\n${doctorSpecialization}`,
   };
 
   const handlePrint = async () => {

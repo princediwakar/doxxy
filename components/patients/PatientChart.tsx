@@ -3,19 +3,17 @@
 import { useCallback, Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { format, parseISO } from "date-fns";
 import {
   CalendarPlus,
   Edit,
   Phone,
   MapPin,
   Hash,
-  Eye,
-  Receipt,
 } from "lucide-react";
-import { formatTimeIST } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { BillingSection } from "@/components/schedule/BillingSection";
+import { ConsultationHistory } from "@/components/schedule/ConsultationHistory";
 import type { PatientDetail } from "@/types/core";
 import type { Patient } from "@/types/patients";
 import type { Bill } from "@/types/billing";
@@ -32,21 +30,6 @@ const BillingModal = dynamic(() =>
   import("@/components/billing/BillingModal").then((m) => m.BillingModal),
 );
 
-type ConsultationRow = {
-  id: string;
-  created_at: string;
-  appointment_id?: string;
-  specialty_data?: Record<string, unknown> | null;
-  appointments?: {
-    id?: string;
-    doctor_id?: string;
-    status?: string;
-    date?: string;
-    time?: string;
-    doctors?: { name?: string } | null;
-  } | null;
-};
-
 interface PatientChartProps {
   patientDetail: PatientDetail;
 }
@@ -60,11 +43,33 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
   const [appointmentModalOpen, setAppointmentModalOpen] = useState(false);
   const [appointmentModalPatient, setAppointmentModalPatient] = useState<Patient | null>(null);
   const [patientEditModalOpen, setPatientEditModalOpen] = useState(false);
-  const [newlyCreatedPatient, setNewlyCreatedPatient] = useState<Patient | null>(null);
 
   const patient = patientDetail.patient!;
-  const consultations = (patientDetail.consultations ?? []) as ConsultationRow[];
   const bills = (patientDetail.bills ?? []) as Bill[];
+
+  const handleViewConsultationFromHistory = useCallback(
+    (appointmentId: string, _patientId: string, doctorId: string, date?: string, time?: string, doctorName?: string) => {
+      const params = new URLSearchParams();
+      params.set("patient", patient.id);
+      params.set("appointment", appointmentId);
+      params.set("action", "view-consult");
+      if (doctorId) params.set("doctor_id", doctorId);
+      if (doctorName) params.set("doctor_name", doctorName);
+      if (date) params.set("date", date);
+      if (time) params.set("time", time);
+      router.push(`/schedule?${params.toString()}`);
+    },
+    [patient.id, router],
+  );
+
+  const handleCreateBill = useCallback(() => {
+    setShowCreateBillModal(true);
+  }, []);
+
+  const handleViewBill = useCallback((bill: Bill) => {
+    setSelectedBill(bill);
+    setSelectedBillMode("view");
+  }, []);
 
   const handleSchedule = useCallback(() => {
     setAppointmentModalPatient(patient as unknown as Patient);
@@ -130,149 +135,23 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
 
       <Separator />
 
-      {/* Past Consultations */}
-      <div>
-        <h3 className="text-lg font-semibold mb-4">
-          Consultation History ({consultations.length})
-        </h3>
-        {consultations.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-8">
-            No past consultations.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {consultations.map((c) => (
-              <div
-                key={c.id}
-                className="border rounded-lg p-4 hover:bg-muted/30 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium">
-                      Consultation ·{" "}
-                      {c.appointments?.date
-                        ? format(parseISO(c.appointments.date), "MMM dd, yyyy")
-                        : c.created_at
-                          ? format(parseISO(c.created_at), "MMM dd, yyyy")
-                          : "Unknown date"}
-                    </p>
-                    {c.appointments && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {c.appointments.time
-                          ? formatTimeIST(c.appointments.time) + " · "
-                          : ""}
-                        Doctor: {c.appointments.doctors?.name ?? "—"}
-                        {" · "}
-                        {c.appointments.status ?? "—"}
-                      </p>
-                    )}
-                  </div>
-                  {c.appointments?.id && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 text-xs"
-                      onClick={() => {
-                        const params = new URLSearchParams();
-                        params.set("patient", patient.id);
-                        params.set("appointment", c.appointments!.id!);
-                        params.set("action", "view-consult");
-                        if (c.appointments!.doctor_id) params.set("doctor_id", c.appointments!.doctor_id);
-                        if (c.appointments!.doctors?.name) params.set("doctor_name", c.appointments!.doctors.name);
-                        if (c.appointments!.date) params.set("date", c.appointments!.date);
-                        if (c.appointments!.time) params.set("time", c.appointments!.time);
-                        router.push(`/schedule?${params.toString()}`);
-                      }}
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      View Notes
-                    </Button>
-                  )}
-                </div>
-                {(() => {
-                    const sd = c.specialty_data;
-                    if (sd && typeof sd === "object" && "chief_complaint" in sd) {
-                      return (
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                          {(sd as Record<string, unknown>).chief_complaint as string}
-                        </p>
-                      );
-                    }
-                    return null;
-                  })()}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ConsultationHistory
+        patientDetail={patientDetail}
+        isLoadingDetail={false}
+        selectedPatientId={patient.id}
+        currentAppointmentId={null}
+        onViewConsultationFromHistory={handleViewConsultationFromHistory}
+      />
 
       <Separator />
 
-      {/* Past Bills */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">
-            Billing History ({bills.length})
-          </h3>
-          {bills.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowCreateBillModal(true)}
-            >
-              <Receipt className="h-3.5 w-3.5 mr-1.5" />
-              Create Bill
-            </Button>
-          )}
-        </div>
-        {bills.length === 0 ? (
-          <div className="text-center py-8 space-y-3">
-            <p className="text-sm text-muted-foreground">No past bills.</p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowCreateBillModal(true)}
-            >
-              <Receipt className="h-3.5 w-3.5 mr-1.5" />
-              Create Bill
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {bills.map((b) => (
-              <div
-                key={b.id}
-                className="border rounded-lg p-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
-                onClick={() => {
-                  setSelectedBill(b);
-                  setSelectedBillMode("view");
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <Receipt className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {b.invoice_number ?? "Bill"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {b.created_at
-                        ? format(parseISO(b.created_at), "MMM dd, yyyy")
-                        : "—"}
-                    </p>
-                  </div>
-                </div>
-                {b.amount != null && (
-                  <span className="text-sm font-medium">
-                    ₹{Number(b.amount).toLocaleString()}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <BillingSection
+        patientBills={bills}
+        isLoadingBills={false}
+        showCreateBill
+        onCreateBill={handleCreateBill}
+        onViewBill={handleViewBill}
+      />
 
       <Suspense fallback={null}>
         <AppointmentModal

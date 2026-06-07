@@ -5,7 +5,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { PatientHeader } from "./PatientHeader";
 import { DictationZone } from "./DictationZone";
 import { InlineConsultationForm } from "./InlineConsultationForm";
-import { AdministrativeFooter } from "./AdministrativeFooter";
+import { ConsultationHistory } from "./ConsultationHistory";
+import { BillingSection } from "./BillingSection";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Star, CheckCircle } from "lucide-react";
@@ -27,7 +28,6 @@ interface EncounterCanvasProps {
   patientBills: BillWithDetails[];
   isLoadingBills: boolean;
   onSchedule: () => void;
-  onBill: () => void;
   onEditPatient: () => void;
   onEditAppointment: () => void;
   canEditConsultation: boolean;
@@ -47,7 +47,6 @@ export function EncounterCanvas({
   patientBills,
   isLoadingBills,
   onSchedule,
-  onBill,
   onEditPatient,
   onEditAppointment,
   canEditConsultation,
@@ -68,6 +67,16 @@ export function EncounterCanvas({
   const lastCompletedAppointmentRef = useRef<string | null>(null);
 
   const onAiDataConsumed = useCallback(() => setAiStructuredData(null), []);
+
+  const isBillingBlocked =
+    appointmentStatus === "Scheduled" ||
+    appointmentStatus === "In Progress";
+  const canCreateBill =
+    !appointmentStatus || appointmentStatus === "Completed";
+  const currentAppointmentHasBill =
+    (appointment?.id != null) &&
+    patientBills.some((b) => b.appointment_id === appointment?.id);
+  const showCreateBill = canCreateBill && !currentAppointmentHasBill && !!onCreateBill;
 
   const patient = patientDetail?.patient ?? null;
 
@@ -172,7 +181,6 @@ export function EncounterCanvas({
         departmentName={appointment?.department_name}
         notes={appointment?.notes}
         onSchedule={onSchedule}
-        onBill={onBill}
         onEditPatient={onEditPatient}
         onEditAppointment={onEditAppointment}
       />
@@ -232,17 +240,28 @@ export function EncounterCanvas({
         </div>
       )} */}
 
-      <AdministrativeFooter
+      {isBillingBlocked && (
+        <div className="rounded-lg border bg-muted/30 px-4 py-3">
+          <p className="text-sm text-muted-foreground">
+            Complete the visit to generate a bill.
+          </p>
+        </div>
+      )}
+
+      <BillingSection
+        patientBills={patientBills}
+        isLoadingBills={isLoadingBills}
+        showCreateBill={showCreateBill}
+        onCreateBill={onCreateBill}
+        onViewBill={onViewBill}
+      />
+
+      <ConsultationHistory
         patientDetail={patientDetail}
         isLoadingDetail={false}
         selectedPatientId={patientId}
         currentAppointmentId={appointment?.id ?? null}
-        appointmentStatus={appointmentStatus}
-        patientBills={patientBills}
-        isLoadingBills={isLoadingBills}
-        onViewBill={onViewBill}
         onViewConsultationFromHistory={onViewConsultationFromHistory}
-        onCreateBill={onCreateBill}
       />
     </div>
   );

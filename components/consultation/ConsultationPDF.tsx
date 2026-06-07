@@ -231,7 +231,7 @@ const RenderTabularEye = ({ data }: { data: TabularEyeValue }) => {
   if (rows.length === 0 && !data.notes) return null;
   return (
     <View>
-      <PDFTable title="Eye Examination" headers={['EXAMINATION', 'Right', 'Left']} rows={rows} flexWidths={[2, 1, 1]} />
+      <PDFTable headers={['EXAMINATION', 'Right', 'Left']} rows={rows} flexWidths={[2, 1, 1]} />
       <AdditionalNotes notes={data.notes} />
     </View>
   );

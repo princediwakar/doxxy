@@ -3,14 +3,15 @@
 
 import { useCallback } from "react";
 import { format, parseISO } from "date-fns";
-import { CalendarPlus, Receipt, User } from "lucide-react";
+import { CalendarPlus, User } from "lucide-react";
 import { Spinner } from "@/components/ui/loading";
 import { Button } from "@/components/ui/button";
 import { useConsultationPermissions } from "@/hooks/consultation/useConsultationPermissions";
 import { extractFollowUp } from "@/lib/utils";
 import { EncounterCanvas } from "./EncounterCanvas";
 import { PatientHeader } from "./PatientHeader";
-import { AdministrativeFooter } from "./AdministrativeFooter";
+import { ConsultationHistory } from "./ConsultationHistory";
+import { BillingSection } from "./BillingSection";
 import { APPOINTMENT_STATUS, type AppointmentWithDetails } from "@/types/appointments";
 import type { PatientDetail, DbPatientByClinic } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
@@ -79,10 +80,20 @@ export function TodayDetailPanel({
   const showFollowUpBanner = followUpData && patientDetail?.hasFutureAppointment === false;
 
   const appointmentStatus = selectedAppointment?.status;
-  const showMutedBilling = appointmentStatus === APPOINTMENT_STATUS.SCHEDULED || appointmentStatus === APPOINTMENT_STATUS.IN_PROGRESS;
-  const currentAppointmentHasBill = patientBills?.some(bill => bill.appointment_id === selectedAppointment?.id && selectedAppointment?.id != null);
-  const canCreateBill = (!appointmentStatus || appointmentStatus === APPOINTMENT_STATUS.COMPLETED) && !currentAppointmentHasBill;
-  const showBillList = appointmentStatus === APPOINTMENT_STATUS.COMPLETED && patientBills && patientBills.length > 0;
+
+  const isBillingBlocked =
+    appointmentStatus === "Scheduled" ||
+    appointmentStatus === "In Progress";
+  const canCreateBill =
+    !appointmentStatus || appointmentStatus === "Completed";
+  const currentAppointmentHasBill =
+    selectedAppointment?.id != null &&
+    patientBills.some((b) => b.appointment_id === selectedAppointment?.id);
+  const showCreateBill = canCreateBill && !currentAppointmentHasBill;
+  const handleCreateBill =
+    selectedAppointment
+      ? () => onCreateBill(selectedAppointment)
+      : () => patientDetail?.patient && onCreateBillForPatient(patientDetail.patient);
 
   return (
     <div className="relative">
@@ -99,13 +110,6 @@ export function TodayDetailPanel({
           onSchedule={() =>
             patientDetail?.patient &&
             onScheduleAppointment(patientDetail.patient)
-          }
-          onBill={
-            selectedAppointment
-              ? () => onCreateBill(selectedAppointment)
-              : () =>
-                patientDetail?.patient &&
-                onCreateBillForPatient(patientDetail.patient)
           }
           onEditPatient={onEditPatient}
           onEditAppointment={() =>
@@ -140,11 +144,6 @@ export function TodayDetailPanel({
               onSchedule={() =>
                 onScheduleAppointment(patientDetail!.patient!)
               }
-              onBill={
-                selectedAppointment
-                  ? () => onCreateBill(selectedAppointment)
-                  : () => onCreateBillForPatient(patientDetail!.patient!)
-              }
               onEditPatient={onEditPatient}
               onEditAppointment={() =>
                 selectedAppointment && onEditAppointment(selectedAppointment)
@@ -173,64 +172,28 @@ export function TodayDetailPanel({
             </div>
           )}
 
-          {showMutedBilling && (
-            <div className="rounded-lg border bg-muted/30 p-4">
-              <p className="text-sm text-muted-foreground">Complete the visit to generate a bill.</p>
+          {isBillingBlocked && (
+            <div className="rounded-lg border bg-muted/30 px-4 py-3">
+              <p className="text-sm text-muted-foreground">
+                Complete the visit to generate a bill.
+              </p>
             </div>
           )}
 
-          {canCreateBill && (
-            <div className="rounded-lg border p-4">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  if (selectedAppointment) {
-                    onCreateBill(selectedAppointment);
-                  } else if (patientDetail?.patient) {
-                    onCreateBillForPatient(patientDetail.patient);
-                  }
-                }}
-              >
-                <Receipt className="h-3.5 w-3.5 mr-1.5" />
-                Create Bill
-              </Button>
-            </div>
-          )}
+          <BillingSection
+            patientBills={patientBills}
+            isLoadingBills={isLoadingBills}
+            showCreateBill={showCreateBill}
+            onCreateBill={handleCreateBill}
+            onViewBill={handleViewBill}
+          />
 
-          {showBillList && (
-            <div className="rounded-lg border p-4 space-y-2">
-              {patientBills.map((bill) => (
-                <button
-                  key={bill.id}
-                  onClick={() => handleViewBill(bill)}
-                  className="w-full text-left flex items-center justify-between hover:bg-muted/50 rounded p-2 transition-colors"
-                >
-                  <span className="text-sm font-medium">
-                    {bill.invoice_number ?? `INV-${bill.id.slice(0, 8)}`}
-                  </span>
-                  <span className="text-sm font-semibold">₹{Number(bill.amount).toLocaleString('en-IN')}</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          <AdministrativeFooter
+          <ConsultationHistory
             patientDetail={patientDetail}
             isLoadingDetail={isLoadingDetail}
             selectedPatientId={selectedPatientId}
             currentAppointmentId={null}
-            patientBills={patientBills}
-            isLoadingBills={isLoadingBills}
-            hideBillsAccordion
-            defaultExpandHistory
-            onViewBill={handleViewBill}
             onViewConsultationFromHistory={onViewConsultationFromHistory}
-            onCreateBill={
-              selectedAppointment
-                ? () => onCreateBill(selectedAppointment)
-                : () => patientDetail?.patient && onCreateBillForPatient(patientDetail.patient)
-            }
           />
         </div>
       )}

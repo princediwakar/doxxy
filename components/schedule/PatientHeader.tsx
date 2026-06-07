@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVertical, CalendarPlus, Receipt, Edit, Stethoscope } from "lucide-react";
+import { MoreVertical, CalendarPlus, Edit, Stethoscope } from "lucide-react";
 import { formatTimeIST } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,6 @@ interface PatientHeaderProps {
   notes?: string;
   variant?: "doctor" | "staff";
   onSchedule: () => void;
-  onBill: () => void;
   onEditPatient: () => void;
   onEditAppointment: () => void;
 }
@@ -49,7 +48,6 @@ export function PatientHeader({
   notes,
   variant = "doctor",
   onSchedule,
-  onBill,
   onEditPatient,
   onEditAppointment,
 }: PatientHeaderProps) {
@@ -72,11 +70,6 @@ export function PatientHeader({
 
         {variant === "staff" ? (
           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-            {(!status || status === "Completed") && (
-              <Button variant="outline" size="sm" onClick={onBill}>
-                <Receipt className="h-3.5 w-3.5 mr-1" />Bill
-              </Button>
-            )}
             <Button variant="outline" size="sm" onClick={onSchedule}>
               <CalendarPlus className="h-3.5 w-3.5 mr-1" />Schedule
             </Button>
@@ -107,11 +100,6 @@ export function PatientHeader({
               <DropdownMenuItem onClick={onSchedule}>
                 <CalendarPlus className="h-4 w-4 mr-2" />Schedule
               </DropdownMenuItem>
-              {(!status || status === "Completed") && (
-                <DropdownMenuItem onClick={onBill}>
-                  <Receipt className="h-4 w-4 mr-2" />Bill
-                </DropdownMenuItem>
-              )}
               <DropdownMenuItem onClick={onEditPatient}>
                 <Edit className="h-4 w-4 mr-2" />Edit Patient
               </DropdownMenuItem>

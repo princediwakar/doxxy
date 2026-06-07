@@ -17,7 +17,7 @@ export interface UseConsultationPermissionsReturn {
 export const useConsultationPermissions = ({
   appointment,
 }: UseConsultationPermissionsParams): UseConsultationPermissionsReturn => {
-  const { user, activeClinicRole, activeClinicId } = useAppState();
+  const { user, activeClinicId } = useAppState();
   const [userDoctorId, setUserDoctorId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -45,10 +45,8 @@ export const useConsultationPermissions = ({
   }, [appointment?.doctor_id, user?.id, userDoctorId]);
 
   const canEditConsultation = useMemo(() => {
-    if (isAssignedDoctor) return true;
-    if (activeClinicRole === "superadmin") return true;
-    return false;
-  }, [isAssignedDoctor, activeClinicRole]);
+    return isAssignedDoctor;
+  }, [isAssignedDoctor]);
 
   return { isAssignedDoctor, canEditConsultation };
 };
