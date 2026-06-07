@@ -45,7 +45,29 @@ function ShareIcon() {
   )
 }
 
-function PlatformInstructions({ platform }: { platform: Platform }) {
+function InstallIcon() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="inline-block align-middle mx-0.5"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7,10 12,15 17,10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  )
+}
+
+function PlatformInstructions({ platform, hasInstallButton }: { platform: Platform; hasInstallButton: boolean }) {
+  if (hasInstallButton) return null
+
   switch (platform) {
     case 'ios-safari':
       return (
@@ -56,20 +78,31 @@ function PlatformInstructions({ platform }: { platform: Platform }) {
     case 'mac-safari':
       return (
         <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
-          <strong>File</strong> → <strong>Add to Dock</strong>
+          <strong>File</strong> → <strong>Add to Dock</strong>, then right-click → <strong>Keep in Dock</strong>
+        </span>
+      )
+    case 'chromium':
+      return (
+        <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+          Click <InstallIcon /> in the address bar → <strong>Install</strong>
         </span>
       )
     default:
-      return null
+      return (
+        <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+          Use your browser menu to install this app
+        </span>
+      )
   }
 }
 
 const DISMISSAL_KEY = 'install-prompt-dismissed'
 const DISMISSAL_DAYS = 7
+const FALLBACK_DELAY = 8000 // show manual instructions if beforeinstallprompt hasn't fired
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [showManual, setShowManual] = useState(false)
+  const [showPrompt, setShowPrompt] = useState(false)
   const [dismissed, setDismissed] = useState(true)
   const [platform, setPlatform] = useState<Platform>('other')
   const [isStandalone, setIsStandalone] = useState(true)
@@ -87,35 +120,46 @@ export function InstallPrompt() {
       if (daysSince < DISMISSAL_DAYS) return
     }
 
+    let fallbackTimer: ReturnType<typeof setTimeout>
+
     if (plat === 'chromium') {
-      const handler = (e: Event) => {
+      const bipHandler = (e: Event) => {
         e.preventDefault()
         setDeferredPrompt(e as BeforeInstallPromptEvent)
+        setShowPrompt(true)
+        clearTimeout(fallbackTimer)
       }
-      window.addEventListener('beforeinstallprompt', handler)
+      window.addEventListener('beforeinstallprompt', bipHandler)
 
       const installedHandler = () => {
         setDeferredPrompt(null)
-        setShowManual(false)
+        setShowPrompt(false)
       }
       window.addEventListener('appinstalled', installedHandler)
 
+      // Fallback: if beforeinstallprompt hasn't fired, show manual instructions
+      fallbackTimer = setTimeout(() => {
+        if (!deferredPrompt) {
+          setShowPrompt(true)
+          setDismissed(false)
+        }
+      }, FALLBACK_DELAY)
+
       setDismissed(false)
       return () => {
-        window.removeEventListener('beforeinstallprompt', handler)
+        window.removeEventListener('beforeinstallprompt', bipHandler)
         window.removeEventListener('appinstalled', installedHandler)
+        clearTimeout(fallbackTimer)
       }
     }
 
-    if (plat === 'ios-safari' || plat === 'mac-safari') {
-      const timer = setTimeout(() => {
-        setShowManual(true)
-        setDismissed(false)
-      }, 3000)
-      return () => clearTimeout(timer)
-    }
-
+    // Safari and other browsers: show manual instructions after delay
+    fallbackTimer = setTimeout(() => {
+      setShowPrompt(true)
+      setDismissed(false)
+    }, 3000)
     setDismissed(false)
+    return () => clearTimeout(fallbackTimer)
   }, [])
 
   const handleInstall = useCallback(async () => {
@@ -129,16 +173,16 @@ export function InstallPrompt() {
 
   const handleDismiss = useCallback(() => {
     setDeferredPrompt(null)
-    setShowManual(false)
+    setShowPrompt(false)
     setDismissed(true)
     localStorage.setItem(DISMISSAL_KEY, Date.now().toString())
   }, [])
 
   if (dismissed || isStandalone) return null
-  if (!deferredPrompt && !showManual) return null
+  if (!showPrompt) return null
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-2rem)] max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 animate-in slide-in-from-bottom-4">
+    <div className="fixed bottom-20 lg:bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 animate-in slide-in-from-bottom-4">
       <button
         onClick={handleDismiss}
         className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -157,7 +201,7 @@ export function InstallPrompt() {
           <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
             Install Doxxy
           </p>
-          <PlatformInstructions platform={platform} />
+          <PlatformInstructions platform={platform} hasInstallButton={!!deferredPrompt} />
         </div>
 
         {deferredPrompt && (
