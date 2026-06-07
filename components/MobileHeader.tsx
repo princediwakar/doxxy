@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, User2 } from "lucide-react";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAppState } from "@/contexts/AppStateContext";
 import { managementNav } from "@/config/navigation";
@@ -17,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 export function MobileHeader() {
   const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
   const pathname = usePathname();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   // Filter management links by the user's role so staff don't see Settings
   const mobileManagementLinks = activeClinicRole 
@@ -35,7 +37,7 @@ export function MobileHeader() {
           {activeClinicId && <ClinicSwitcher isCollapsed={false} />}
         </div>
 
-        <Popover>
+        <Popover open={profileOpen} onOpenChange={setProfileOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
@@ -82,14 +84,15 @@ export function MobileHeader() {
                   {mobileManagementLinks.map((item) => {
                     const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
                     return (
-                      <Button 
-                        key={item.path} 
-                        variant="ghost" 
+                      <Button
+                        key={item.path}
+                        variant="ghost"
                         className={cn(
-                          "w-full justify-start", 
+                          "w-full justify-start",
                           isActive ? "text-primary bg-primary/10 font-semibold" : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                        )} 
+                        )}
                         asChild
+                        onClick={() => setProfileOpen(false)}
                       >
                         <Link href={item.path}>
                           <item.icon size={16} className="h-4 w-4 mr-3" />
@@ -104,7 +107,7 @@ export function MobileHeader() {
             )}
 
             <div className="p-2 pt-1">
-              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground" asChild>
+              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground" asChild onClick={() => setProfileOpen(false)}>
                 <Link href="/profile">
                   <User2 size={16} className="h-4 w-4 mr-3" />
                   Profile
