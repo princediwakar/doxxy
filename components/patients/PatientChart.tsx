@@ -10,7 +10,6 @@ import {
   Hash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { BillingSection } from "@/components/schedule/BillingSection";
 import { ConsultationHistory } from "@/components/schedule/ConsultationHistory";
 import type { PatientDetail } from "@/types/core";
@@ -141,7 +140,13 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
         </div>
       </div>
 
-      <Separator />
+      <BillingSection
+        patientBills={bills}
+        isLoadingBills={false}
+        showCreateBill
+        onCreateBill={handleCreateBill}
+        onViewBill={handleViewBill}
+      />
 
       <ConsultationHistory
         patientDetail={patientDetail}
@@ -149,16 +154,6 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
         selectedPatientId={patient.id}
         currentAppointmentId={null}
         onViewConsultationFromHistory={handleViewConsultationFromHistory}
-      />
-
-      <Separator />
-
-      <BillingSection
-        patientBills={bills}
-        isLoadingBills={false}
-        showCreateBill
-        onCreateBill={handleCreateBill}
-        onViewBill={handleViewBill}
       />
 
       <Suspense fallback={null}>
