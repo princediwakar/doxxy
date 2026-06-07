@@ -1,7 +1,9 @@
+// components/InstallPrompt.tsx
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { X } from 'lucide-react'
+import { PostInstallModal } from '@/components/PostInstallModal'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -49,8 +51,11 @@ export function InstallPrompt() {
   const [dismissed, setDismissed] = useState(true)
   const [platform, setPlatform] = useState<Platform>('other')
   const [isStandalone, setIsStandalone] = useState(true)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const plat = detectPlatform()
     setPlatform(plat)
 
@@ -65,59 +70,45 @@ export function InstallPrompt() {
 
     if (plat === 'chromium') {
       const bipHandler = (e: Event) => {
+        // Prevent Chrome 67 and earlier from automatically showing the prompt
         e.preventDefault()
-        const promptEvent = e as BeforeInstallPromptEvent
-
-        // Try firing native dialog immediately. Older Chrome allows this
-        // synchronously in the handler; newer Chrome requires a user gesture
-        // and will reject the promise.
-        promptEvent.prompt().then(
-          () => {
-            promptEvent.userChoice.then((result) => {
-              if (result.outcome === 'dismissed') {
-                setShowManual(true)
-                setDismissed(false)
-              }
-            })
-          },
-          () => {
-            // Chrome blocked it — need a user click, show the button
-            setDeferredPrompt(promptEvent)
-            setDismissed(false)
-          }
-        )
+        // Stash the event so it can be triggered later by a USER ACTION.
+        setDeferredPrompt(e as BeforeInstallPromptEvent)
+        setDismissed(false)
       }
+      
       window.addEventListener('beforeinstallprompt', bipHandler)
 
       const installedHandler = () => {
         setDeferredPrompt(null)
         setShowManual(false)
+        setShowSuccessModal(true)
       }
       window.addEventListener('appinstalled', installedHandler)
 
-      setDismissed(false)
       return () => {
         window.removeEventListener('beforeinstallprompt', bipHandler)
         window.removeEventListener('appinstalled', installedHandler)
       }
     }
 
-    // Safari and others: show manual instructions after delay
-    const timer = setTimeout(() => {
-      setShowManual(true)
-      setDismissed(false)
-    }, 3000)
+    // For Safari/iOS: Component mounts silently. 
+    // You should trigger setShowManual(true) via a prop or global state 
+    // when the user explicitly clicks an "Install App" button in your UI.
     setDismissed(false)
-    return () => clearTimeout(timer)
   }, [])
 
   const handleInstall = useCallback(async () => {
     if (!deferredPrompt) return
+    
+    // This is now safe. It is directly tied to the user clicking the button below.
     deferredPrompt.prompt()
     const { outcome } = await deferredPrompt.userChoice
+    
     if (outcome === 'accepted') {
       setDeferredPrompt(null)
       setShowManual(false)
+      setShowSuccessModal(true)
     }
   }, [deferredPrompt])
 
@@ -131,76 +122,79 @@ export function InstallPrompt() {
   if (dismissed || isStandalone) return null
   if (!deferredPrompt && !showManual) return null
 
-  // Chromium with a deferred prompt: show the "Add to Home Screen" button
-  if (deferredPrompt) {
-    return (
-      <div className="fixed bottom-20 lg:bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 animate-in slide-in-from-bottom-4">
-        <button
-          onClick={handleDismiss}
-          className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-          aria-label="Dismiss"
-        >
-          <X className="w-4 h-4" />
-        </button>
-        <div className="flex items-center gap-3">
-          <img src="/icon-192x192.png" alt="Doxxy" className="w-10 h-10 rounded-lg" />
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-              Add Doxxy to Home Screen
-            </p>
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
-              Quick access, no app store needed
-            </span>
-          </div>
-          <button
-            onClick={handleInstall}
-            className="shrink-0 px-4 py-2 bg-[#1f8fff] text-white text-sm font-medium rounded-lg hover:bg-[#1a7ae6] transition-colors"
-          >
-            Add to Home Screen
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // Manual instructions for Safari or when native prompt was dismissed
   return (
-    <div className="fixed bottom-20 lg:bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 animate-in slide-in-from-bottom-4">
-      <button
-        onClick={handleDismiss}
-        className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-        aria-label="Dismiss"
-      >
-        <X className="w-4 h-4" />
-      </button>
-      <div className="flex items-center gap-3">
-        <img src="/icon-192x192.png" alt="Doxxy" className="w-10 h-10 rounded-lg" />
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-            Install Doxxy
-          </p>
-          {platform === 'ios-safari' && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
-              Tap <ShareIcon /> then <strong>Add to Home Screen</strong>
-            </span>
-          )}
-          {platform === 'mac-safari' && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
-              <strong>File</strong> → <strong>Add to Dock</strong>, then right-click → <strong>Keep in Dock</strong>
-            </span>
-          )}
-          {platform === 'chromium' && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
-              Tap the install icon in the address bar
-            </span>
-          )}
-          {platform === 'other' && (
-            <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
-              Use your browser menu to install this app
-            </span>
-          )}
+    <>
+      {deferredPrompt ? (
+        <div className="fixed bottom-20 lg:bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 animate-in slide-in-from-bottom-4">
+          <button
+            onClick={handleDismiss}
+            className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-3">
+            <img src="/icon-192x192.png" alt="Doxxy" className="w-10 h-10 rounded-lg" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                Add Doxxy to Home Screen
+              </p>
+              <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+                Quick access, no app store needed
+              </span>
+            </div>
+            <button
+              onClick={handleInstall}
+              className="shrink-0 px-4 py-2 bg-[#1f8fff] text-white text-sm font-medium rounded-lg hover:bg-[#1a7ae6] transition-colors"
+            >
+              Add to Home Screen
+            </button>
+          </div>
         </div>
-      </div>
-    </div>
+      ) : (
+        <div className="fixed bottom-20 lg:bottom-4 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-4 animate-in slide-in-from-bottom-4">
+          <button
+            onClick={handleDismiss}
+            className="absolute top-2 right-2 p-1 rounded-md text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-3">
+            <img src="/icon-192x192.png" alt="Doxxy" className="w-10 h-10 rounded-lg" />
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                Install Doxxy
+              </p>
+              {platform === 'ios-safari' && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+                  Tap <ShareIcon /> then <strong>Add to Home Screen</strong>
+                </span>
+              )}
+              {platform === 'mac-safari' && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+                  <strong>File</strong> → <strong>Add to Dock</strong>, then right-click → <strong>Keep in Dock</strong>
+                </span>
+              )}
+              {platform === 'chromium' && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+                  Tap the install icon in the address bar
+                </span>
+              )}
+              {platform === 'other' && (
+                <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block">
+                  Use your browser menu to install this app
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <PostInstallModal
+        isOpen={showSuccessModal}
+        onClose={() => setShowSuccessModal(false)}
+      />
+    </>
   )
 }

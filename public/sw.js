@@ -1,3 +1,4 @@
+// public/sw.js
 const CACHE_NAME = 'doxxy-v2'
 const APP_SHELL = [
   '/',
