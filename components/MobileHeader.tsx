@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { LogOut, User2 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { useAppState } from "@/contexts/AppStateContext";
+import { managementNav } from "@/config/navigation";
+
 import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,14 +16,23 @@ import { Separator } from "@/components/ui/separator";
 
 export function MobileHeader() {
   const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
+  const pathname = usePathname();
+
+  // Filter management links by the user's role so staff don't see Settings
+  const mobileManagementLinks = activeClinicRole 
+    ? managementNav.filter(item => item.roles.includes(activeClinicRole))
+    : [];
 
   return (
     <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-background border-b pt-safe">
       <div className="flex items-center h-14 px-3 gap-2">
-        <Image src="/logo.svg" alt="Doxxy" className="h-7 flex-shrink-0" width="112" height="28" />
+        <Link href="/" className="flex-shrink-0">
+          <img src="/logo.svg" alt="Doxxy" className="h-7" />
+        </Link>
 
-        <div className="min-w-0 flex-1">
-          {activeClinicId && <ClinicSwitcher />}
+        {/* Center the Clinic Switcher so it feels like a global context anchor */}
+        <div className="min-w-0 flex-1 flex justify-center">
+          {activeClinicId && <ClinicSwitcher isCollapsed={false} />}
         </div>
 
         <Popover>
@@ -39,6 +51,7 @@ export function MobileHeader() {
               </Avatar>
             </Button>
           </PopoverTrigger>
+          
           <PopoverContent className="w-64 p-0 shadow-lg border" side="bottom" align="end">
             <div className="flex items-center gap-3 p-4">
               <Avatar className="h-10 w-10 ring-2 ring-primary/20">
@@ -56,12 +69,45 @@ export function MobileHeader() {
                 </span>
               </div>
             </div>
+            
             <Separator />
-            <div className="p-2">
+
+            {/* --- INJECTED MANAGEMENT LINKS --- */}
+            {mobileManagementLinks.length > 0 && (
+              <>
+                <div className="p-2 pb-1">
+                  <p className="text-xs font-semibold text-muted-foreground px-2 mb-1 uppercase tracking-wider">
+                    Management
+                  </p>
+                  {mobileManagementLinks.map((item) => {
+                    const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
+                    return (
+                      <Button 
+                        key={item.path} 
+                        variant="ghost" 
+                        className={cn(
+                          "w-full justify-start", 
+                          isActive ? "text-primary bg-primary/10 font-semibold" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        )} 
+                        asChild
+                      >
+                        <Link href={item.path}>
+                          <item.icon size={16} className="h-4 w-4 mr-3" />
+                          {item.label}
+                        </Link>
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Separator />
+              </>
+            )}
+
+            <div className="p-2 pt-1">
               <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground" asChild>
                 <Link href="/profile">
                   <User2 size={16} className="h-4 w-4 mr-3" />
-                  View Profile
+                  Profile
                 </Link>
               </Button>
               <Button variant="ghost" className="w-full justify-start mt-1 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={signOut}>

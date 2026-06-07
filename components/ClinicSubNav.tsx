@@ -2,45 +2,44 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { IndianRupee, Users, Building2, Building, Wallet, MessageCircle } from "lucide-react";
 import { isWhatsAppEnabled } from "@/lib/feature-flags";
 
 const subNavItems = [
-  { icon: IndianRupee, label: "Financials", path: "/clinic/financials" },
-  { icon: Wallet, label: "Payments", path: "/clinic/payments" },
+  { icon: Building, label: "General", path: "/clinic/about" },
   { icon: Users, label: "Staff", path: "/clinic/staff" },
   { icon: Building2, label: "Departments", path: "/clinic/departments" },
-  ...(isWhatsAppEnabled
-    ? [{ icon: MessageCircle, label: "WhatsApp", path: "/clinic/whatsapp" }]
-    : []),
-  { icon: Building, label: "About", path: "/clinic/about" },
+  { icon: IndianRupee, label: "Financials", path: "/clinic/financials" },
+  { icon: Wallet, label: "Payments", path: "/clinic/payments" },
+  ...(isWhatsAppEnabled ? [{ icon: MessageCircle, label: "WhatsApp", path: "/clinic/whatsapp" }] : []),
 ];
 
 export default function ClinicSubNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="lg:w-48 shrink-0">
-      <div className="flex lg:flex-col gap-1 overflow-x-auto pb-1 lg:pb-0">
+    <div className="border-b mb-6">
+      <nav className="-mb-px flex space-x-6 overflow-x-auto [&::-webkit-scrollbar]:hidden">
         {subNavItems.map((item) => {
-          const isActive =
-            pathname === item.path || pathname.startsWith(item.path + "/");
+          const isActive = pathname === item.path || pathname.startsWith(item.path + "/");
           return (
             <Link
               key={item.path}
               href={item.path}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors shrink-0 ${
+              className={cn(
+                "group inline-flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-muted"
+              )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className={cn("h-4 w-4", isActive ? "text-primary" : "text-muted-foreground")} />
               {item.label}
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }

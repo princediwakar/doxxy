@@ -22,7 +22,9 @@ const PROTECTED_PATHS = [
 ];
 
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  // Collect cookie mutations from Supabase auth refresh — we can't write them
+  // to a NextResponse until after the auth check produces the final response.
+  let cookieMutations: Array<{ name: string; value: string; options: Record<string, unknown> }> = [];
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,9 +35,7 @@ export async function proxy(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, options);
-          });
+          cookieMutations = cookiesToSet;
         },
       },
     },
@@ -51,13 +51,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Pass pathname to layouts so they can conditionally redirect for
-  // profile completion / clinic membership without blocking the middleware
-  // on DB calls.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
-  response = NextResponse.next({
+  const response = NextResponse.next({
     request: { headers: requestHeaders },
+  });
+
+  // Apply any session-refresh cookie mutations from Supabase
+  cookieMutations.forEach(({ name, value, options }) => {
+    response.cookies.set(name, value, options);
   });
 
   return response;

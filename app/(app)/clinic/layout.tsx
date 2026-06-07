@@ -15,10 +15,19 @@ export default async function ClinicLayout({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col lg:flex-row gap-6">
-        <ClinicSubNav />
-        <div className="flex-1 min-w-0">{children}</div>
+    // FIX: Enforced padding across all screen sizes (px-4 md:px-8)
+    <div className="flex flex-col w-full max-w-7xl mx-auto px-4 md:px-8 py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Clinic Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Manage your clinic's operational details, staff access, and billing.
+        </p>
+      </div>
+
+      <ClinicSubNav />
+
+      <div className="w-full pt-4">
+        {children}
       </div>
     </div>
   );

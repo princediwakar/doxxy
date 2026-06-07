@@ -1,4 +1,3 @@
-// Path: components/SidebarLayout.tsx
 "use client";
 
 import { useState } from "react";
@@ -6,30 +5,27 @@ import { cn } from "@/lib/utils";
 import { AppSidebar } from "@/components/AppSidebar";
 
 export function SidebarLayout({ children }: { children: React.ReactNode }) {
-  const [isCollapsed, setIsCollapsed] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
-
-  const sidebarExpanded = !isCollapsed || isHovered;
-  const isFlyout = isCollapsed && isHovered;
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
     <>
       <div
         className={cn(
           "hidden lg:flex lg:flex-col fixed left-0 top-0 h-screen z-40 transition-all duration-300 bg-background border-r border-border",
-          sidebarExpanded ? "lg:w-72" : "lg:w-16",
-          isFlyout && "shadow-2xl z-50"
+          isCollapsed ? "lg:w-16" : "lg:w-64"
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
-        <AppSidebar isCollapsed={!sidebarExpanded} />
+        {/* We removed the absolute floating button and passed the toggle as a prop */}
+        <AppSidebar 
+          isCollapsed={isCollapsed} 
+          onToggle={() => setIsCollapsed(!isCollapsed)} 
+        />
       </div>
 
       <div
         className={cn(
-          "flex-1 mt-14 lg:mt-0 pb-24 lg:pb-0 min-w-0 overflow-hidden bg-background",
-          isCollapsed ? "lg:ml-16" : "lg:ml-72"
+          "flex-1 mt-14 lg:mt-0 pb-24 lg:pb-0 min-w-0 overflow-hidden bg-background transition-all duration-300",
+          isCollapsed ? "lg:ml-16" : "lg:ml-64"
         )}
       >
         <main className="md:p-6 mx-auto min-h-screen max-w-full overflow-x-hidden flex flex-col">

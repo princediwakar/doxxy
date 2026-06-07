@@ -1,11 +1,13 @@
 "use client";
-import { usePathname } from "next/navigation"
-import Link from "next/link"
-import { LogOut, User2 } from "lucide-react";
+
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+// Make sure to add PanelLeftClose and PanelLeftOpen to your imports here
+import { LogOut, User2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { useAppState } from "@/contexts/AppStateContext";
-import { navItems, isActiveLink } from "@/config/navigation";
+import { operationalNav, managementNav, isActiveLink } from "@/config/navigation";
 
 import ClinicSwitcher from "@/components/ClinicSwitcher";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,161 +15,135 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 
-export function AppSidebar({ isCollapsed }: { isCollapsed: boolean }) {
-  const { user, activeClinicId, activeClinicName, activeClinicRole, signOut, profileName } = useAppState();
+// Update the interface to accept the toggle function
+interface AppSidebarProps {
+  isCollapsed: boolean;
+  onToggle: () => void;
+}
+
+export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
+  const { user, activeClinicId, activeClinicRole, signOut, profileName } = useAppState();
   const pathname = usePathname();
   const role = activeClinicRole;
 
-  const topItems = navItems.filter(item => item.topGroup);
-  const bottomItems = navItems.filter(item => !item.topGroup && (role ? item.roles.includes(role) : true));
+  const visibleOperationalNav = operationalNav.filter(item => !role || item.roles.includes(role));
+  const visibleManagementNav = managementNav.filter(item => !role || item.roles.includes(role));
 
-  const renderNavItem = (item: (typeof navItems)[number]) => {
+  const renderNavItem = (item: any) => {
     const isActive = isActiveLink(pathname, item.path);
-
     const className = cn(
-      "flex items-center justify-start py-3 rounded-lg text-sm transition-all duration-200 group min-h-[48px] w-full border border-transparent overflow-hidden",
-      isCollapsed ? "px-2" : "px-4",
+      "flex items-center justify-start py-2.5 rounded-lg text-sm transition-all duration-200 group min-h-[40px] w-full border border-transparent overflow-hidden mb-1",
+      isCollapsed ? "px-2 justify-center" : "px-3",
       isActive
-        ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
-        : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
+        ? "bg-primary/10 text-primary font-semibold"
+        : "text-muted-foreground hover:bg-muted hover:text-foreground"
     );
 
     return (
       <li key={item.path}>
-        <Link href={item.path} className={className}>
-          <item.icon size={18} className={cn(
-            "flex-shrink-0 transition-transform group-hover:scale-105",
-            isActive ? "text-primary" : "text-muted-foreground"
-          )} />
-          <div className={cn(
-            "overflow-hidden transition-all duration-300 whitespace-nowrap flex-1 text-left",
-            isCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[200px] opacity-100 ml-3"
-          )}>
-            <span className="font-medium">{item.label}</span>
-          </div>
+        <Link href={item.path} className={className} title={isCollapsed ? item.label : undefined}>
+          <item.icon size={18} className={cn("flex-shrink-0", isActive ? "text-primary" : "")} />
+          {!isCollapsed && (
+            <span className="ml-3 truncate">{item.label}</span>
+          )}
         </Link>
       </li>
     );
   };
 
-  const filterByRole = (items: typeof navItems) =>
-    role ? items.filter(item => item.roles.includes(role)) : items.filter(item => item.roles.includes("superadmin") && item.roles.includes("staff") && item.roles.includes("doctor"));
-
-  const visibleTopItems = filterByRole(topItems);
-  const visibleBottomItems = bottomItems;
-
   return (
     <div className="flex flex-col h-screen sticky top-0 left-0 w-full flex-shrink-0">
-      <div className={cn("flex items-center p-3 h-14", isCollapsed ? "justify-center" : "justify-start")}>
-        <Link href="/" className="relative flex items-center">
-          <img
-            src="/logo-icon.svg"
-            alt="Doxxy"
-            className={cn(
-              "h-8 w-8 transition-opacity duration-300",
-              isCollapsed ? "opacity-100" : "opacity-0 absolute"
-            )}
-          />
-          <img
-            src="/logo.svg"
-            alt="Doxxy"
-            className={cn(
-              "h-9 transition-opacity duration-300",
-              isCollapsed ? "opacity-0 absolute" : "opacity-100"
-            )}
-          />
+      
+      {/* 1. Brand Logo (Clean and isolated) */}
+      <div className={cn("flex items-center p-4 h-16", isCollapsed ? "justify-center" : "justify-start")}>
+        <Link href="/">
+          <img src={isCollapsed ? "/logo-icon.svg" : "/logo.svg"} alt="Doxxy" className="h-8" />
         </Link>
       </div>
 
-      {/* FIX: Hide the scrollbar footprint completely */}
-      <nav className="flex-1 overflow-y-auto p-3 pb-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-        <ul className="space-y-2 flex flex-col w-full">
-          {visibleTopItems.map(renderNavItem)}
-        </ul>
-      </nav>
+      {/* 2. Clinic Context */}
+      {activeClinicId && (
+        <div className={cn("mb-4", isCollapsed ? "px-0 flex justify-center" : "px-3")}>
+          <ClinicSwitcher isCollapsed={isCollapsed} />
+        </div>
+      )}
 
-      <div className="mt-auto p-3 flex flex-col w-full space-y-2">
-        {visibleBottomItems.length > 0 && (
-          <ul className="space-y-2 flex flex-col w-full">
-            {visibleBottomItems.map(renderNavItem)}
-          </ul>
-        )}
-
-        {/* Geometric Lock: reserves exact vertical space whether collapsed or not */}
-        {activeClinicId && (
-          <div className="relative w-full h-[60px] flex-shrink-0">
-            <div className={cn(
-              "absolute inset-0 flex flex-col justify-end overflow-hidden transition-all duration-300",
-              isCollapsed ? "opacity-0 pointer-events-none translate-y-1" : "opacity-100 translate-y-0"
-            )}>
-              <Separator className="mb-2" />
-              <div className="w-full">
-                <ClinicSwitcher />
-              </div>
-            </div>
+      {/* 3. Navigation */}
+      <nav className="flex-1 overflow-y-auto px-3 [&::-webkit-scrollbar]:hidden">
+        {visibleOperationalNav.length > 0 && (
+          <div className="mb-6">
+            {!isCollapsed && <p className="text-xs font-semibold text-muted-foreground mb-2 px-3 uppercase tracking-wider">Operations</p>}
+            <ul>{visibleOperationalNav.map(renderNavItem)}</ul>
           </div>
         )}
 
+        {visibleManagementNav.length > 0 && (
+          <div>
+             {!isCollapsed && <p className="text-xs font-semibold text-muted-foreground mb-2 px-3 uppercase tracking-wider">Management</p>}
+            <ul>{visibleManagementNav.map(renderNavItem)}</ul>
+          </div>
+        )}
+      </nav>
+
+      {/* 4. Bottom Anchor (Toggle + Profile) */}
+      <div className="mt-auto p-3 border-t">
+        
+        {/* NEW: The integrated Toggle Button */}
+        <Button
+          variant="ghost"
+          onClick={onToggle}
+          className={cn(
+            "w-full mb-2 text-muted-foreground hover:text-foreground transition-all duration-300",
+            isCollapsed ? "justify-center px-0" : "justify-start px-3"
+          )}
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {isCollapsed ? (
+            <PanelLeftOpen size={18} className="flex-shrink-0" />
+          ) : (
+            <>
+              <PanelLeftClose size={18} className="flex-shrink-0 mr-3" />
+              <span className="text-sm font-medium">Collapse</span>
+            </>
+          )}
+        </Button>
+
+        {/* Existing User Profile Popover */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
               className={cn(
-                "h-12 justify-start focus-visible:ring-2 focus-visible:ring-primary hover:bg-background/50 rounded-lg overflow-hidden transition-all duration-300",
-                isCollapsed ? "w-10 px-0 justify-center" : "w-full px-3"
+                "h-12 hover:bg-muted rounded-lg overflow-hidden transition-all duration-300",
+                isCollapsed ? "w-10 px-0 justify-center mx-auto flex" : "w-full justify-start px-3"
               )}
             >
-              <Avatar className="h-8 w-8 ring-2 ring-primary/20 flex-shrink-0">
+              <Avatar className="h-8 w-8 flex-shrink-0 border border-border">
                 <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
                   {user?.email?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              {/* FIX: CSS width transition for the profile text */}
-              <div className={cn(
-                "overflow-hidden transition-all duration-300 flex flex-col text-left whitespace-nowrap",
-                isCollapsed ? "max-w-0 opacity-0 ml-0" : "max-w-[200px] opacity-100 ml-3"
-              )}>
-                <span className="text-sm font-medium text-foreground truncate block">
-                  {profileName || user?.email}
-                </span>
-                <span className="text-xs text-muted-foreground capitalize">
-                  {activeClinicRole}
-                </span>
-              </div>
+              {!isCollapsed && (
+                <div className="flex flex-col text-left whitespace-nowrap ml-3 overflow-hidden">
+                  <span className="text-sm font-medium text-foreground truncate block">
+                    {profileName || user?.email}
+                  </span>
+                  <span className="text-xs text-muted-foreground capitalize">
+                    {activeClinicRole}
+                  </span>
+                </div>
+              )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-64 mb-2 p-0 shadow-lg border" side="right" align="end">
-             {/* Unchanged Popover Content */}
-            <div className="flex items-center gap-3 p-4">
-              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {user?.email?.[0]?.toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex-1 overflow-hidden">
-                <span className="text-sm font-semibold text-foreground overflow-hidden text-ellipsis whitespace-nowrap block">
-                  {profileName || user?.email}
-                </span>
-                <span className="text-xs text-muted-foreground capitalize">
-                  {activeClinicRole} • {activeClinicName}
-                </span>
-              </div>
-            </div>
-            <Separator />
-            <div className="p-2">
-              <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground" asChild>
-                <Link href="/profile">
-                  <User2 size={16} className="h-4 w-4 mr-3" />
-                  View Profile
-                </Link>
-              </Button>
-              <Button variant="ghost" className="w-full justify-start mt-1 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={signOut}>
-                <LogOut size={16} className="h-4 w-4 mr-3" />
-                Logout
-              </Button>
-            </div>
+          <PopoverContent className="w-56 mb-2 p-1" side="right" align="end">
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link href="/profile"><User2 size={16} className="mr-2" /> Profile</Link>
+            </Button>
+            <Separator className="my-1" />
+            <Button variant="ghost" className="w-full justify-start text-destructive hover:bg-destructive/10" onClick={signOut}>
+              <LogOut size={16} className="mr-2" /> Logout
+            </Button>
           </PopoverContent>
         </Popover>
       </div>

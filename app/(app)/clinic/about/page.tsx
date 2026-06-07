@@ -1,3 +1,4 @@
+// app/(app)/clinic/about/page.tsx
 import { Spinner } from "@/components/ui/loading";
 import { Suspense } from "react";
 import ClinicDetailsManagement from "@/components/superadmin/ClinicDetailsManagement";
