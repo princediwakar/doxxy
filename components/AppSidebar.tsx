@@ -1,8 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-// Make sure to add PanelLeftClose and PanelLeftOpen to your imports here
 import { LogOut, User2, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -25,6 +25,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
   const { user, activeClinicId, activeClinicRole, signOut, profileName } = useAppState();
   const pathname = usePathname();
   const role = activeClinicRole;
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const visibleOperationalNav = operationalNav.filter(item => !role || item.roles.includes(role));
   const visibleManagementNav = managementNav.filter(item => !role || item.roles.includes(role));
@@ -109,7 +110,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
         </Button>
 
         {/* Existing User Profile Popover */}
-        <Popover>
+        <Popover open={profileOpen} onOpenChange={setProfileOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
@@ -137,7 +138,7 @@ export function AppSidebar({ isCollapsed, onToggle }: AppSidebarProps) {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-56 mb-2 p-1" side="right" align="end">
-            <Button variant="ghost" className="w-full justify-start" asChild>
+            <Button variant="ghost" className="w-full justify-start" asChild onClick={() => setProfileOpen(false)}>
               <Link href="/profile"><User2 size={16} className="mr-2" /> Profile</Link>
             </Button>
             <Separator className="my-1" />
