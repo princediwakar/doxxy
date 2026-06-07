@@ -111,9 +111,8 @@ export default function RootLayout({
           {children}
         </Providers>
 
-        {/* Register Service Worker for PWA — production only */}
-        {process.env.NODE_ENV === 'production' && (
-          <Script
+        {/* Register Service Worker for PWA */}
+        <Script
             id="register-sw"
             strategy="afterInteractive"
             dangerouslySetInnerHTML={{
@@ -138,7 +137,6 @@ export default function RootLayout({
               `,
             }}
           />
-        )}
 
         {/* Tawk.to Script (commented out for now) */}
         {/* <Script
