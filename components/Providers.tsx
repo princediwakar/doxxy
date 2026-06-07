@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'next-themes';
 import { type ReactNode } from 'react';
 import { SWUpdatePrompt } from '@/components/SWUpdatePrompt';
+import { InstallPrompt } from '@/components/InstallPrompt';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,7 @@ export const Providers = ({ children }: ProvidersProps) => (
       <TooltipProvider>
         <Sonner />
         <SWUpdatePrompt />
+        <InstallPrompt />
         {children}
       </TooltipProvider>
     </QueryClientProvider>
