@@ -3,16 +3,28 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTodayStore } from "@/stores/todayStore";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
+import { cancelAppointment } from "@/actions/appointments";
 import { queryPatientDetail, queryPatientBills } from "@/lib/queries/patients";
 import { TodayQueueView } from "@/components/schedule/TodayQueueView";
 import { TodayDetailView } from "@/components/schedule/TodayDetailView";
 import { TodayMobileLayout } from "@/components/schedule/TodayMobileLayout";
 import { TodayModals } from "@/components/schedule/TodayModals";
 import { DoctorProfilePrompt } from "@/components/doctor/DoctorProfilePrompt";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { AppointmentWithDetails } from "@/types/appointments";
 import type { PatientDetail, DbPatientByClinic } from "@/types/core";
 import type { BillWithDetails } from "@/types/billing";
@@ -75,6 +87,7 @@ export function TodayPageClient({
   const [suggestedAppointmentDate, setSuggestedAppointmentDate] = useState<string | null>(null);
   const [dirtyFormGuard, setDirtyFormGuard] = useState(false);
   const [shakeTrigger, setShakeTrigger] = useState(0);
+  const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
 
   // ── Modal callbacks ──
   const handleCloseModal = useCallback(() => {
@@ -143,6 +156,27 @@ export function TodayPageClient({
   const handleEditPatient = useCallback(() => {
     openModal("patient-edit");
   }, [openModal]);
+
+  const handleCancelAppointment = useCallback((id: string) => {
+    setCancelTargetId(id);
+  }, []);
+
+  const handleConfirmCancel = useCallback(async () => {
+    if (!cancelTargetId) return;
+    const result = await cancelAppointment(cancelTargetId);
+    if (result.error) {
+      toast.error(result.error);
+    } else {
+      toast.success("Appointment cancelled");
+      if (cancelTargetId === selectedAppointmentId) {
+        const next = new URLSearchParams(searchParams.toString());
+        next.delete("appointment");
+        const qs = next.toString();
+        router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
+      }
+    }
+    setCancelTargetId(null);
+  }, [cancelTargetId, selectedAppointmentId, searchParams, router]);
 
   const handlePatientCreated = useCallback((patient: Patient) => {
     closeModal();
@@ -213,6 +247,26 @@ export function TodayPageClient({
   const patientAppointments = selectedPatientId
     ? appointmentsByPatient.get(selectedPatientId) ?? []
     : [];
+
+  // Strip stale params when entity is no longer in the queue
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams.toString());
+    let changed = false;
+
+    if (selectedPatientId && !allApps.some((a) => a.patient_id === selectedPatientId)) {
+      next.delete("patient");
+      next.delete("appointment");
+      changed = true;
+    } else if (selectedAppointmentId && !allApps.some((a) => a.id === selectedAppointmentId)) {
+      next.delete("appointment");
+      changed = true;
+    }
+
+    if (changed) {
+      const qs = next.toString();
+      router.replace(window.location.pathname + (qs ? `?${qs}` : ""));
+    }
+  }, [selectedPatientId, selectedAppointmentId, allApps, searchParams, router]);
 
   // ── View-consult action handler ──
   const consultHandled = useRef(false);
@@ -304,6 +358,7 @@ export function TodayPageClient({
             onScheduleAppointment={handleScheduleAppointment}
             onEditAppointment={handleEditAppointment}
             onEditPatient={handleEditPatient}
+            onCancelAppointment={handleCancelAppointment}
           />
         }
       />
@@ -324,6 +379,23 @@ export function TodayPageClient({
         onPatientCreated={handlePatientCreated}
         onSetAppointmentModalOpen={setAppointmentModalOpen}
       />
+
+      <AlertDialog open={!!cancelTargetId} onOpenChange={(open) => { if (!open) setCancelTargetId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel this appointment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The patient will be notified and the slot will be freed. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmCancel} className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700">
+              Cancel Appointment
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

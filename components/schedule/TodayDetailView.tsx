@@ -31,6 +31,7 @@ interface TodayDetailViewProps {
   onScheduleAppointment: (patient: DbPatientByClinic, suggestedDate?: string | null) => void;
   onEditAppointment: (app: AppointmentWithDetails) => void;
   onEditPatient: () => void;
+  onCancelAppointment: (id: string) => void;
 }
 
 export function TodayDetailView({
@@ -51,6 +52,7 @@ export function TodayDetailView({
   onScheduleAppointment,
   onEditAppointment,
   onEditPatient,
+  onCancelAppointment,
 }: TodayDetailViewProps) {
   const router = useRouter();
   const openModal = useTodayStore((s) => s.openModal);
@@ -177,6 +179,7 @@ export function TodayDetailView({
       onScheduleAppointment={onScheduleAppointment}
       onEditAppointment={onEditAppointment}
       onEditPatient={onEditPatient}
+      onCancelAppointment={onCancelAppointment}
     />
   );
 }

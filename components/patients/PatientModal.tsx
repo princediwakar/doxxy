@@ -63,11 +63,14 @@ const formSchema = z.object({
       // but ensure the very first letter is uppercase.
       return val.charAt(0).toUpperCase() + val.slice(1);
     }),
-  gender: z.string().optional(),
+	gender: z.string({
+		required_error: "Please select a gender.",
+		invalid_type_error: "Please select a gender.",
+	}).min(1, "Please select a gender."),
   age: z.number().int().min(0).max(150).optional().nullable(),
-  phone: z.string().optional(),
+  phone: z.string().optional().transform((e) => (e === "" ? null : e)),
   email: z.string().email({ message: "Invalid email address." }).optional().or(z.literal('')),
-  address: z.string().optional(),
+  address: z.string().optional().transform((e) => (e === "" ? null : e)),
 });
 
 export const PatientModal = ({
@@ -84,7 +87,7 @@ export const PatientModal = ({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: (patient?.name || initialName) || "",
-      gender: patient?.gender ?? "",
+      gender: patient?.gender ?? undefined,
       age: patient?.age ?? undefined,
       phone: patient?.phone ?? "",
       email: patient?.email ?? "",
@@ -97,7 +100,7 @@ export const PatientModal = ({
     if (open) {
       form.reset({
         name: (patient?.name || initialName) || "",
-        gender: patient?.gender ?? "",
+        gender: patient?.gender ?? undefined,
         age: patient?.age ?? undefined,
         phone: patient?.phone ?? "",
         email: patient?.email ?? "",
@@ -128,7 +131,7 @@ export const PatientModal = ({
         const result = await createPatient({
           name: values.name,
           clinic_id: activeClinicId,
-          gender: values.gender ?? null,
+          gender: values.gender,
           age: values.age ?? null,
           phone: values.phone ?? null,
           email: values.email ?? null,
@@ -187,7 +190,7 @@ export const PatientModal = ({
                   <FormLabel>Gender</FormLabel>
                     <FormControl>
                     <div className="flex flex-wrap gap-2">
-                      {['Male', 'Female'].map(genderOption => (
+                      {['Male', 'Female', 'Other'].map(genderOption => (
                         <Button
                           key={genderOption}
                           type="button"
@@ -233,7 +236,7 @@ export const PatientModal = ({
                 <FormItem>
                   <FormLabel>Phone</FormLabel>
                   <FormControl>
-                    <Input placeholder="9876543210" {...field} />
+                    <Input placeholder="9876543210" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -259,7 +262,7 @@ export const PatientModal = ({
                 <FormItem className="md:col-span-2">
                   <FormLabel>Address</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Patient Address" {...field} />
+                    <Textarea placeholder="Patient Address" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -21,6 +21,8 @@ export async function saveBill(
   data: SaveBillParams,
   billId?: string,
 ) {
+  if (!data.patient_id) return { error: "Patient is required." };
+
   const supabase = await createServerSupabase();
 
   const billData = {

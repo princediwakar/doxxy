@@ -37,7 +37,7 @@ const billingFormSchema = z.object({
   service_items: z.array(serviceItemSchema).optional(),
   discount_percentage: z.number().min(0).max(100).default(0),
   tax_percentage: z.number().min(0).max(100).default(0),
-  notes: z.string().optional(),
+  notes: z.string().optional().transform((e) => (e === "" ? null : e)),
 });
 
 export type { BillingFormValues, ServiceItem };

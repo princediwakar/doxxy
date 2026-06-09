@@ -30,6 +30,7 @@ interface EncounterCanvasProps {
   onSchedule: () => void;
   onEditPatient: () => void;
   onEditAppointment: () => void;
+  onCancelAppointment?: () => void;
   canEditConsultation: boolean;
   onViewBill: (bill: BillWithDetails) => void;
   onViewConsultationFromHistory: (appointmentId: string, patientId: string, doctorId: string) => void;
@@ -49,6 +50,7 @@ export function EncounterCanvas({
   onSchedule,
   onEditPatient,
   onEditAppointment,
+  onCancelAppointment,
   canEditConsultation,
   onViewBill,
   onViewConsultationFromHistory,
@@ -183,6 +185,7 @@ export function EncounterCanvas({
         onSchedule={onSchedule}
         onEditPatient={onEditPatient}
         onEditAppointment={onEditAppointment}
+        onCancelAppointment={onCancelAppointment}
       />
 
       {appointment && appointmentStatus !== "Completed" && canEditConsultation && (

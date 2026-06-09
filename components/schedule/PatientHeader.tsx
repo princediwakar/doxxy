@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreVertical, CalendarPlus, Edit, Stethoscope } from "lucide-react";
+import { MoreVertical, CalendarPlus, Edit, Stethoscope, XCircle } from "lucide-react";
 import { formatTimeIST } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,7 @@ interface PatientHeaderProps {
   onSchedule: () => void;
   onEditPatient: () => void;
   onEditAppointment: () => void;
+  onCancelAppointment?: () => void;
 }
 
 export function PatientHeader({
@@ -50,6 +51,7 @@ export function PatientHeader({
   onSchedule,
   onEditPatient,
   onEditAppointment,
+  onCancelAppointment,
 }: PatientHeaderProps) {
   const demographic = [gender, age ? `${age}y` : null].filter(Boolean).join(", ") || "N/A";
   const contextParts = [demographic, uhid ? `UHID: ${uhid}` : null, departmentName, formatTimeIST(appointmentTime)].filter(Boolean);
@@ -86,6 +88,14 @@ export function PatientHeader({
                 <DropdownMenuItem onClick={onEditAppointment}>
                   <Stethoscope className="h-4 w-4 mr-2" />Edit Appointment
                 </DropdownMenuItem>
+                {onCancelAppointment && (
+                  <DropdownMenuItem
+                    onClick={onCancelAppointment}
+                    className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />Cancel Appointment
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -106,6 +116,14 @@ export function PatientHeader({
               <DropdownMenuItem onClick={onEditAppointment}>
                 <Stethoscope className="h-4 w-4 mr-2" />Edit Appointment
               </DropdownMenuItem>
+              {onCancelAppointment && (
+                <DropdownMenuItem
+                  onClick={onCancelAppointment}
+                  className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
+                >
+                  <XCircle className="h-4 w-4 mr-2" />Cancel Appointment
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

@@ -38,6 +38,8 @@ const SUPABASE_ERROR_CODES = {
   'PGRST116': 'NOT_FOUND_ERROR', // No rows returned
   '23505': 'VALIDATION_ERROR', // Unique violation
   '23503': 'VALIDATION_ERROR', // Foreign key violation
+  '23514': 'VALIDATION_ERROR', // Check constraint violation
+  '23502': 'VALIDATION_ERROR', // NOT NULL violation
   '42501': 'PERMISSION_ERROR', // Insufficient privilege
   '42P01': 'DATABASE_ERROR', // Undefined table
   '08000': 'NETWORK_ERROR', // Connection exception
@@ -202,6 +204,10 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   email: 'A patient with this email already exists in your clinic.',
   phone: 'A patient with this phone number already exists in your clinic.',
   appointment: 'A bill already exists for this appointment. Please edit the existing bill instead.',
+  patients_gender: 'Please select a gender (Male, Female, or Other).',
+  gender_check: 'Please select a gender (Male, Female, or Other).',
+  billing_type_check: 'Please select a valid billing type.',
+  status_check: 'Please select a valid status.',
 };
 
 function buildValidationErrorMessage(errorObj: ErrorLike): string {
@@ -215,6 +221,23 @@ function buildValidationErrorMessage(errorObj: ErrorLike): string {
       }
       return 'This record already exists. Please edit the existing one instead.';
     }
+  }
+  if (errorObj?.code === '23514' || errorObj?.message?.includes('check constraint')) {
+    const details = errorObj?.details || errorObj?.message || '';
+    const constraintMatch = details.match(/constraint\s+"(\w+)"/);
+    if (constraintMatch) {
+      const constraint = constraintMatch[1];
+      for (const [key, message] of Object.entries(CONSTRAINT_MESSAGES)) {
+        if (constraint.includes(key)) return message;
+      }
+    }
+    return 'A required field is missing or invalid. Please check the form and try again.';
+  }
+  if (errorObj?.code === '23502' || errorObj?.message?.includes('not-null constraint')) {
+    return 'A required field is missing. Please fill in all required fields.';
+  }
+  if (errorObj?.code === '23503' || errorObj?.message?.includes('foreign key constraint')) {
+    return 'The referenced record does not exist. Please check your selection.';
   }
   return 'There was an issue with the data provided. Please check and try again.';
 }

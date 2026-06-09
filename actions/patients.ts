@@ -40,6 +40,16 @@ async function generateUhid(clinicId: string): Promise<string> {
 }
 
 export async function createPatient(data: Omit<DbPatientInsert, 'uhid'> & { clinic_id: string }) {
+  if (!data.name || data.name.trim().length < 2) {
+    return { error: "Patient name must be at least 2 characters." };
+  }
+  if (!data.gender) {
+    return { error: "Please select a gender." };
+  }
+  if (data.gender && !['Male', 'Female', 'Other'].includes(data.gender)) {
+    return { error: "Gender must be Male, Female, or Other." };
+  }
+
   const supabase = await createServerSupabase();
   const uhid = await generateUhid(data.clinic_id);
 
@@ -56,6 +66,16 @@ export async function createPatient(data: Omit<DbPatientInsert, 'uhid'> & { clin
 }
 
 export async function updatePatient(id: string, data: Partial<DbPatientUpdate>) {
+  if (data.name !== undefined && data.name.trim().length < 2) {
+    return { error: "Patient name must be at least 2 characters." };
+  }
+  if (data.gender !== undefined && !data.gender) {
+    return { error: "Please select a gender." };
+  }
+  if (data.gender !== undefined && !['Male', 'Female', 'Other'].includes(data.gender)) {
+    return { error: "Gender must be Male, Female, or Other." };
+  }
+
   const supabase = await createServerSupabase();
 
   // Strip uhid from incoming payload to prevent accidental overwrites

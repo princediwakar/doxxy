@@ -5,6 +5,10 @@ import { createServerSupabase } from '@/integrations/supabase/server';
 import type { DbAppointmentInsert, DbAppointmentUpdate } from '@/types/core';
 
 export async function createAppointment(data: DbAppointmentInsert) {
+  if (!data.patient_id) return { error: "Patient is required." };
+  if (!data.doctor_id) return { error: "Doctor is required." };
+  if (!data.date) return { error: "Date is required." };
+
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('appointments').insert(data);
 
@@ -18,6 +22,9 @@ export async function updateAppointment(
   id: string,
   data: DbAppointmentUpdate,
 ) {
+  if (data.patient_id !== undefined && !data.patient_id) return { error: "Patient is required." };
+  if (data.doctor_id !== undefined && !data.doctor_id) return { error: "Doctor is required." };
+
   const supabase = await createServerSupabase();
   const { error } = await supabase.from('appointments').update(data).eq('id', id);
 

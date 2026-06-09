@@ -32,6 +32,7 @@ interface TodayDetailPanelProps {
   onScheduleAppointment: (patient: DbPatientByClinic, suggestedDate?: string | null) => void;
   onEditAppointment: (app: AppointmentWithDetails) => void;
   onEditPatient: () => void;
+  onCancelAppointment: (id: string) => void;
 }
 
 export function TodayDetailPanel({
@@ -50,6 +51,7 @@ export function TodayDetailPanel({
   onScheduleAppointment,
   onEditAppointment,
   onEditPatient,
+  onCancelAppointment,
 }: TodayDetailPanelProps) {
   const handleViewBill = useCallback(
     (bill: BillWithDetails) => onViewBill(bill, patientDetail?.patient ?? null),
@@ -115,6 +117,12 @@ export function TodayDetailPanel({
           onEditAppointment={() =>
             selectedAppointment && onEditAppointment(selectedAppointment)
           }
+          onCancelAppointment={
+            selectedAppointment &&
+            (selectedAppointment.status === "Scheduled" || selectedAppointment.status === "In Progress")
+              ? () => onCancelAppointment(selectedAppointment.id)
+              : undefined
+          }
           canEditConsultation={canEditConsultation}
           onViewBill={handleViewBill}
           onViewConsultationFromHistory={onViewConsultationFromHistory}
@@ -147,6 +155,12 @@ export function TodayDetailPanel({
               onEditPatient={onEditPatient}
               onEditAppointment={() =>
                 selectedAppointment && onEditAppointment(selectedAppointment)
+              }
+              onCancelAppointment={
+                selectedAppointment &&
+                (selectedAppointment.status === "Scheduled" || selectedAppointment.status === "In Progress")
+                  ? () => onCancelAppointment(selectedAppointment.id)
+                  : undefined
               }
             />
           )}
