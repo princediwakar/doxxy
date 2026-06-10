@@ -67,7 +67,7 @@ export default function LandingPageContent() {
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <MessageCircle className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-              <span><strong>WhatsApp-first patient communication:</strong> automated reminders, digital prescriptions, bills, and lab reports delivered through your clinic&apos;s WhatsApp number. Open rates are 98%.</span>
+              <span><strong>WhatsApp-first patient communication:</strong> clinician-triggered reminders, treatment plans, bills, and lab reports delivered through your clinic&apos;s WhatsApp number. Open rates are 98%.</span>
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <IndianRupee className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />

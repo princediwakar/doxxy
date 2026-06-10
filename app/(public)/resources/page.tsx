@@ -79,7 +79,7 @@ const resourceCategories: ResourceCategory[] = [
       { href: '/clinic-software-vs-paper', title: 'Clinic Software vs Paper Records', description: 'Paper-based clinic management costs Rs.3.6-5.4 lakhs every year in lost time, billing errors, and missed patients.' },
       { href: '/india-clinic-digitization-guide', title: 'India Clinic Digitization Guide 2026', description: 'The definitive guide to digitizing your clinic in India.' },
       { href: '/digital-patient-registration', title: 'Digital Patient Registration', description: 'Replace paper intake forms with QR-based digital patient registration.' },
-      { href: '/digital-prescription-software', title: 'Digital Prescription Software', description: 'Digital prescription software for Indian doctors.' },
+      { href: '/digital-treatment-plans', title: 'Digital Treatment Plans', description: 'Digital treatment plan software for Indian doctors.' },
       { href: '/electronic-medical-records', title: 'Electronic Medical Records (EMR)', description: 'Switch from paper files to digital EMR.' },
     ],
   },

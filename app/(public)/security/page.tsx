@@ -71,8 +71,8 @@ const securityFeatures = [
   },
   {
     icon: <Shield className="h-5 w-5" />,
-    title: "GDPR Aligned",
-    description: "Data handling practices aligned with GDPR principles for consent, access, and deletion",
+    title: "India-Only Data Residency",
+    description: "All patient data is stored exclusively on servers in India. No data leaves Indian jurisdiction.",
   },
   {
     icon: <FileText className="h-5 w-5" />,
@@ -134,7 +134,7 @@ const SecurityHeroSection = () => (
         Your data is <span className="text-blue-600 dark:text-blue-400">protected</span>
       </h1>
       <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-10 leading-relaxed">
-        Doxxy is built on Supabase, a SOC 2 and GDPR-compliant cloud platform. We layer
+        Doxxy is built on Supabase, with data centers in India. We layer
         application-level controls — encryption, role-based access, and row-level security —
         to keep each clinic&apos;s data isolated and protected.
       </p>

@@ -9,8 +9,6 @@ heroImage: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=1200&h=6
 references:
   - title: "Digital Personal Data Protection Act 2023 — MeitY"
     url: "https://www.meity.gov.in/digital-personal-data-protection-act-2023"
-  - title: "HIPAA Security Rule Guidance"
-    url: "https://www.hhs.gov/hipaa/for-professionals/security/index.html"
 ---
 
 Healthcare is the most targeted industry for cyberattacks. Patient records are valuable — they contain names, dates of birth, insurance IDs, and medical histories that can't be reissued like a credit card. India's Digital Personal Data Protection Act 2023 has raised the compliance bar significantly, with serious penalties for violations.
@@ -55,6 +53,6 @@ Security isn't just a regulatory checkbox. It's a pillar of patient trust. Here 
 
 Doxxy was built with security as a foundation, not an afterthought. Every plan includes AES-256 encryption at rest and in transit, role-based access control, database-level audit logging, and automated daily backups with point-in-time recovery.
 
-The platform is compliant with India's DPDP Act 2023. Doxxy is built on Supabase, a SOC 2 and GDPR-compliant cloud infrastructure, with application-level encryption, access controls, and audit logging layered on top.
+The platform is compliant with India's DPDP Act 2023. Doxxy is built on Supabase with data centers in India, with application-level encryption, access controls, and audit logging layered on top.
 
 Want to benchmark your clinic's security posture? [Contact us](/contact) for a conversation with our compliance team.

@@ -81,7 +81,7 @@ const fivePillars = [
     icon: Smartphone,
     title: 'Digital Patient Communication',
     description:
-      'WhatsApp reminders, prescription delivery, lab report sharing, two-way chat. Patients get everything on the phone they already check 50 times a day.',
+      'WhatsApp reminders, treatment plan sharing, lab report delivery, two-way chat. Patients get everything on the phone they already check 50 times a day.',
     replaces: 'Phone calls (45-60 min/day), printed reports that patients lose.',
   },
   {
@@ -142,7 +142,7 @@ const roadmapPhases = [
       'Import patient data into the system.',
       'Training sessions: 2-3 sessions of 2 hours each for receptionist and doctors.',
       'Configure templates: Prescription templates for common conditions, billing templates for common procedures.',
-      'Set up WhatsApp automation: Reminder templates, prescription sharing workflow.',
+      'Set up WhatsApp automation: Reminder templates, treatment plan sharing workflow.',
     ],
   },
   {

@@ -38,10 +38,10 @@ const faqSchema = {
     },
     {
       '@type': 'Question',
-      name: 'How do WhatsApp reports and prescriptions improve patient experience?',
+      name: 'How do digital reports and treatment plans improve patient experience?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Instead of waiting at the clinic for printed reports or making a second trip, patients get everything on WhatsApp instantly. It saves them time, eliminates paper clutter, and feels modern and respectful of their time. 92% of patients in our user survey preferred WhatsApp report delivery over printed copies.',
+        text: 'Instead of waiting at the clinic for printed reports or making a second trip, patients get everything digitally instantly. It saves them time, eliminates paper clutter, and feels modern and respectful of their time. 92% of patients in our user survey preferred digital report delivery over printed copies.',
       },
     },
     {
@@ -398,7 +398,7 @@ export default function ImprovePatientExperience() {
               WhatsApp Report Delivery
             </h3>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              Lab reports, prescriptions, discharge summaries — delivered directly to the patient&apos;s WhatsApp. No printing. No &ldquo;kal aana report lene.&rdquo; Instant, contactless, appreciated. Patients love it.
+              Lab reports, treatment plans, discharge summaries — delivered directly to the patient digitally. No printing. No &ldquo;kal aana report lene.&rdquo; Instant, contactless, appreciated. Patients love it.
             </p>
             <div className="mt-4 flex gap-4">
               <Link href="/lab-report-management-clinic" className="text-amber-600 dark:text-amber-400 text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all">
@@ -498,7 +498,7 @@ export default function ImprovePatientExperience() {
             {
               step: 6,
               title: 'Digital consultation and prescription',
-              description: 'Doctor consults. Uses digital prescription template. &ldquo;I&apos;m sending your prescription and diet plan to your WhatsApp.&rdquo; Patient leaves with nothing to carry — and everything they need on their phone.',
+              description: 'Doctor consults. Uses digital prescription template. &ldquo;I&apos;m sending your treatment plan and diet plan to your phone.&rdquo; Patient leaves with nothing to carry — and everything they need on their phone.',
               icon: Heart,
             },
             {
@@ -566,7 +566,7 @@ export default function ImprovePatientExperience() {
               </tr>
               <tr>
                 <td className="p-4 text-red-600/80 dark:text-red-400/80 bg-red-50/50 dark:bg-red-950/20">Handwritten prescriptions</td>
-                <td className="p-4 text-green-600/80 dark:text-green-400/80 bg-green-50/50 dark:bg-green-950/20">WhatsApp prescriptions + reports</td>
+                <td className="p-4 text-green-600/80 dark:text-green-400/80 bg-green-50/50 dark:bg-green-950/20">Digital prescriptions + reports</td>
               </tr>
               <tr>
                 <td className="p-4 text-red-600/80 dark:text-red-400/80 bg-red-50/50 dark:bg-red-950/20">&ldquo;Cash only&rdquo; billing awkwardness</td>
@@ -604,7 +604,7 @@ export default function ImprovePatientExperience() {
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">How do WhatsApp reports and prescriptions improve patient experience?</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">How do digital reports and treatment plans improve patient experience?</h3>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
               Instead of waiting at the clinic for printed reports or making a second trip, patients get everything on WhatsApp instantly. It saves them time, eliminates paper clutter, and feels modern and respectful of their time. 92% of patients in our user survey preferred WhatsApp report delivery over printed copies.
             </p>

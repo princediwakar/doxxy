@@ -103,6 +103,10 @@ export default function PrivacyPage() {
         effectiveDate="24-05-2026"
       />
 
+      <PrivacySection title="Platform Nature">
+        Doxxy is a clinical documentation and practice management platform. We do not sell, dispense, or facilitate the sale of pharmaceutical products, medical devices, or supplements. WhatsApp messages sent through Doxxy are transactional clinical communications sent on behalf of your healthcare provider, not marketing or commerce.
+      </PrivacySection>
+
       <PrivacySection title="1. Scope">
         This policy applies to all users of Doxxy including healthcare professionals, clinic staff, and patients.
       </PrivacySection>
@@ -161,13 +165,12 @@ export default function PrivacyPage() {
         Doxxy does not knowingly collect data from individuals under 18 without verified guardian consent. Clinics must verify and document such consent.
       </PrivacySection>
 
-      <PrivacySection title="11. International Transfers">
-        Data transfers outside your jurisdiction — including to Meta (WhatsApp) servers and Google (Places API) servers, which may be located globally — comply with applicable cross-border data protection laws and safeguards (e.g., localization, SCCs). Meta and Google each maintain their own data transfer frameworks; please refer to their respective privacy policies for details.
+      <PrivacySection title="11. Data Residency and Jurisdiction">
+        Doxxy operates exclusively in India. All patient data is stored on servers located in India (Mumbai region). Third-party sub-processors — Meta (WhatsApp Cloud API) and Google (Places API) — may process data on servers located globally; this processing is governed by their respective data processing terms and India's DPDP Act 2023. Doxxy is not intended for use outside Indian jurisdiction, and we do not offer services to clinics or patients located outside India.
       </PrivacySection>
 
       <PrivacySection title="12. Compliance" isList>
         <li>India: Digital Personal Data Protection Act, 2023 (DPDP)</li>
-        <li>EU: General Data Protection Regulation (GDPR)</li>
         <li>WhatsApp messaging complies with Meta's <a href="https://www.whatsapp.com/legal/business-policy" className="underline" target="_blank" rel="noopener noreferrer">WhatsApp Business Messaging Policy</a> and <a href="https://developers.facebook.com/policy" className="underline" target="_blank" rel="noopener noreferrer">Meta Platform Policies</a>.</li>
         <li>Google Places Autocomplete usage complies with the <a href="https://cloud.google.com/maps-platform/terms" className="underline" target="_blank" rel="noopener noreferrer">Google Maps Platform Terms of Service</a>.</li>
       </PrivacySection>

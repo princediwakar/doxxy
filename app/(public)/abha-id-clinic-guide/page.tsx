@@ -280,8 +280,8 @@ const internalLinks = [
   },
   {
     title: 'Digital Prescription Software',
-    description: 'How digital prescriptions work, ABDM compliance, SNOMED-CT coding, and sending prescriptions to patients via WhatsApp.',
-    href: '/digital-prescription-software',
+    description: 'How digital prescriptions work, ABDM compliance, SNOMED-CT coding, and sharing treatment plans with patients digitally.',
+    href: '/digital-treatment-plans',
   },
   {
     title: 'Electronic Medical Records for Indian Clinics',

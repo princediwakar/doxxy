@@ -65,7 +65,7 @@ const faqStructuredData = {
       name: 'Does Doxxy support WhatsApp and SMS reminders?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. On the Clinical Excellence plan, Doxxy sends automated appointment reminders, bills, and prescriptions via WhatsApp and SMS. This reduces no-shows and speeds up payment collection.',
+        text: 'Yes. On the Clinical Excellence plan, Doxxy sends automated appointment reminders, bills, and treatment plans via digital channels. This reduces no-shows and speeds up payment collection.',
       },
     },
     {

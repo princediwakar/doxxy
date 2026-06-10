@@ -74,7 +74,7 @@ Third, **go-to-market support** — introductions to other health-tech founders 
 
 Three specific suggestions:
 
-**1. Healthcare-specific onboarding guides.** Healthcare messaging has unique compliance requirements (data privacy, consent management, template restrictions). A dedicated healthcare startup onboarding path with pre-approved message templates, HIPAA/DPDP compliance checklists, and example architectures would dramatically reduce time-to-launch.
+**1. Healthcare-specific onboarding guides.** Healthcare messaging has unique compliance requirements (data privacy, consent management, template restrictions). A dedicated healthcare startup onboarding path with pre-approved message templates, DPDP compliance checklists, and example architectures would dramatically reduce time-to-launch.
 
 **2. AI credit bundles for inference + messaging.** Our costs are split between LLM inference and message delivery. A bundled startup credit that covers both (e.g., $5K Twilio credits + $5K OpenAI/AI provider credits) would acknowledge that AI-native startups don't just send messages — we generate content with AI and deliver it through Twilio in a single pipeline.
 

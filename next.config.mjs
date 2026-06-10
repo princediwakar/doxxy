@@ -1,3 +1,5 @@
+import path from 'path';
+
 /** @type {import('next').NextConfig} */
 
 const cspHeader = [
@@ -18,6 +20,11 @@ const cspHeader = [
 const nextConfig = {
   async redirects() {
     return [
+      {
+        source: "/digital-prescription-software",
+        destination: "/digital-treatment-plans",
+        permanent: true,
+      },
       {
         source: "/consultation/:id",
         destination: "/schedule?selectedAppointment=:id",
@@ -86,6 +93,21 @@ const nextConfig = {
 
   // Trailing Slash for better compatibility
   trailingSlash: false,
+
+  // Patch @radix-ui/react-id to use stable React.useId() instead of
+  // useState(useId()) which produces SSR/client ID mismatches
+  experimental: {
+    turbopack: {
+      resolveAlias: {
+        '@radix-ui/react-id': './lib/patches/radix-id.ts',
+      },
+    },
+  },
+
+  webpack: (config) => {
+    config.resolve.alias['@radix-ui/react-id'] = path.resolve('./lib/patches/radix-id.ts');
+    return config;
+  },
 }
 
 import { withSentryConfig } from '@sentry/nextjs';

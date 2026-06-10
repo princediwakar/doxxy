@@ -2,7 +2,7 @@
 
 ## Overview
 
-Doxxy is a multi-tenant web application for Neurology and Ophthalmology clinics. It provides end-to-end management of appointments, patients, medical records, pharmacy inventory, billing, and AI-powered clinical tools — with strict data isolation and role-based access.
+Doxxy is a multi-tenant web application for Neurology and Ophthalmology clinics. It provides end-to-end management of appointments, patients, medical records, clinical inventory, billing, and AI-powered clinical tools — with strict data isolation and role-based access.
 
 ## Features
 
@@ -27,12 +27,12 @@ Doxxy is a multi-tenant web application for Neurology and Ophthalmology clinics.
 
 ### Patients & Medical Records
 - **Patient Profiles:** Add, edit, and view patient information.
-- **Medical Records:** Manage diagnoses, treatment plans, and prescriptions.
+- **Medical Records:** Manage diagnoses, treatment plans, and clinical documentation.
 
-### Pharmacy & Inventory
-- **Medicine Auto-complete:** Smart search across 31+ medicines by name, manufacturer, or composition with real-time debounced filtering, pricing (₹), and pack information.
+### Clinical Inventory
+- **Medicine Auto-complete:** Smart search across medicines by name, manufacturer, or composition with real-time debounced filtering.
 - **AI-Based Stock Management:** Intelligent procurement extraction and inventory tracking with OpenAI fallback when Gemini is unavailable.
-- **Inventory Management:** Track medicine stock levels, manufacturers, and pricing.
+- **Inventory Management:** Track medicine stock levels and manufacturers.
 
 ### Billing & Payments
 - **Bill Management:** Create, update, and track bills and payment status.

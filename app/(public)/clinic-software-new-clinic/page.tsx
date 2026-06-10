@@ -163,7 +163,7 @@ const ChecklistSection = () => (
           step: '7',
           title: 'Grand Opening & First Patient Walkthrough',
           icon: Rocket,
-          description: 'Opening day. Your Doxxy dashboard is live. Your receptionist logs in and the queue screen is empty — ready for the first patient. Walk through the entire flow together one final time: receptionist taps &ldquo;New Patient,&rdquo; fills the digital registration form (name, age, phone, chief complaint), assigns the patient to the doctor&apos;s queue. Doctor opens the SOAP note in Doxxy, picks the relevant prescription template, prescribes in under 60 seconds. Bill auto-generates with consultation fee, pharmacy line items, and GST — patient scans the UPI QR on the reception screen. WhatsApp receipt and digital prescription land on the patient&apos;s phone instantly. The patient is auto-added to the follow-up list. One patient done. Zero paper touched. Your digital clinic is live.',
+          description: 'Opening day. Your Doxxy dashboard is live. Your receptionist logs in and the queue screen is empty — ready for the first patient. Walk through the entire flow together one final time: receptionist taps &ldquo;New Patient,&rdquo; fills the digital registration form (name, age, phone, chief complaint), assigns the patient to the doctor&apos;s queue. Doctor opens the SOAP note in Doxxy, picks the relevant prescription template, prescribes in under 60 seconds. Bill auto-generates with consultation fee, pharmacy line items, and GST — patient scans the UPI QR on the reception screen. Digital receipt and treatment plan land on the patient&apos;s phone instantly. The patient is auto-added to the follow-up list. One patient done. Zero paper touched. Your digital clinic is live.',
         },
       ].map(({ step, title, description, icon: Icon }) => (
         <div key={step} className="bg-white dark:bg-gray-800 rounded-2xl p-6 md:p-8 border border-gray-200/75 dark:border-gray-700/50 shadow-sm">
@@ -311,7 +311,7 @@ const WorkflowSection = () => (
         { step: '1', title: 'Patient Registers', description: 'Receptionist taps &ldquo;New Patient.&rdquo; Fills name, age, phone, chief complaint. Digital registration form. Two minutes. No paper form. No carbon copy.' },
         { step: '2', title: 'Doctor Consults', description: 'Doctor opens SOAP note in Doxxy. Picks the relevant prescription template. Types diagnosis and treatment. Prescribes in 60 seconds — not 3 minutes of handwriting.' },
         { step: '3', title: 'Bill Generates', description: 'Doxxy compiles consultation fee, pharmacy items, lab tests into an itemized bill with GST. Receptionist confirms. Patient scans UPI QR on the screen. Paid.' },
-        { step: '4', title: 'Receipt Sent', description: 'WhatsApp receipt + digital prescription sent to patient instantly. No printed bill to lose. No &ldquo;can you send me a copy?&rdquo; calls at 10 PM.' },
+        { step: '4', title: 'Receipt Sent', description: 'Digital receipt + treatment plan sent to patient instantly. No printed bill to lose. No &ldquo;can you send me a copy?&rdquo; calls at 10 PM.' },
         { step: '5', title: 'Follow-Up Set', description: 'Patient auto-added to follow-up list. System flags overdue visits. One tap to send a WhatsApp reminder. No diary. No manual tracking.' },
       ].map(({ step, title, description }) => (
         <div key={step} className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200/75 dark:border-gray-700/50 text-center">

@@ -144,7 +144,7 @@ const softwareReviews: SoftwareReview[] = [
     bestFor:
       "Solo doctors and small clinics (1-5 doctors) who want simple, WhatsApp-first clinic management.",
     strengths: [
-      "Best-in-class WhatsApp integration — automated reminders, digital prescriptions via WhatsApp, and patient communication in one thread. Clinics report a 35% reduction in no-shows.",
+      "Best-in-class WhatsApp integration — automated reminders, digital treatment plan sharing, and patient communication in one thread. Clinics report a 35% reduction in no-shows.",
       "Transparent pricing starting at ₹999/mo with no per-doctor fees. Unlimited doctors and staff on all plans. No credit card required for the free trial.",
       "Built-in ABDM compliance with ABHA ID creation and linking. Hindi and regional language support across the interface.",
     ],
@@ -221,7 +221,7 @@ const softwareReviews: SoftwareReview[] = [
     weaknesses: [
       "UI feels dated and cluttered. The interface design has not significantly changed since 2018, and it shows. Staff training is mandatory, not optional.",
       "Mobile app has documented performance issues — recent Google Play Store reviews average 1.7 stars, with complaints about crashes and slow load times.",
-      "WhatsApp integration is limited to SMS-based reminders only. No WhatsApp prescription delivery, no two-way chat.",
+      "WhatsApp integration is limited to SMS-based reminders only. No digital treatment plan sharing, no two-way chat.",
       "ABDM compliance is not yet available. They have announced it on their roadmap but no release date.",
     ],
     pricing:
@@ -342,7 +342,7 @@ const redFlags = [
     icon: MessageCircle,
     title: "No WhatsApp Integration in 2026",
     description:
-      "98% of Indian smartphone users are on WhatsApp. If a clinic software does not integrate with WhatsApp for appointment reminders, prescription delivery, and patient communication, they fundamentally do not understand how Indian clinics operate. This is not a nice-to-have — it is table stakes.",
+      "98% of Indian smartphone users are on WhatsApp. If a clinic software does not integrate with WhatsApp for appointment reminders, treatment plan sharing, and patient communication, they fundamentally do not understand how Indian clinics operate. This is not a nice-to-have — it is table stakes.",
   },
   {
     icon: Shield,
@@ -483,7 +483,7 @@ const WhyTrustSection = () => (
           },
           {
             title: "WhatsApp Integration",
-            desc: "Can you send reminders, prescriptions, and communicate via WhatsApp?",
+            desc: "Can you send reminders, treatment plans, and communicate via WhatsApp?",
           },
           {
             title: "Support Quality",

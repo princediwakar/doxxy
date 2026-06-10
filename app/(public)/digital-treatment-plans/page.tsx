@@ -1,4 +1,4 @@
-// Path: app/(public)/digital-prescription-software/page.tsx
+// Path: app/(public)/digital-treatment-plans/page.tsx
 
 import type { Metadata } from 'next';
 import Script from 'next/script';
@@ -11,15 +11,15 @@ import { APP_URL } from "@/lib/constants";
 import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-headers";
 
 export const metadata: Metadata = {
-  title: 'Digital Prescription Software India — 60-Second Rx, 13 Languages | Doxxy',
-  description: 'Digital prescription software for Indian doctors. Move from illegible handwriting to 60-second digital prescriptions. Templates, drug interaction checks, print or send via WhatsApp. Built for doctors writing 40-60 Rx daily.',
-  alternates: { canonical: '/digital-prescription-software' },
+  title: 'Digital Treatment Plans for Indian Doctors — 60-Second, 13 Languages | Doxxy',
+  description: 'Digital treatment plan software for Indian doctors. Move from illegible handwriting to 60-second digital plans. Templates, drug interaction checks, print or share digitally. Built for doctors writing 40-60 Rx daily.',
+  alternates: { canonical: '/digital-treatment-plans' },
   openGraph: {
-    title: 'Digital Prescription Software India — Stop Writing. Start Prescribing.',
-    description: 'Move from illegible handwriting to 60-second digital prescriptions. Templates, drug interaction checks, and support for 13 Indian languages.',
-    images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: 'Digital Prescription Software for Indian Doctors' }],
+    title: 'Digital Treatment Plans for Indian Doctors — Stop Writing. Start Treating.',
+    description: 'Move from illegible handwriting to 60-second digital plans. Templates, drug interaction checks, and support for 13 Indian languages.',
+    images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: 'Digital Treatment Plans for Indian Doctors' }],
   },
-  keywords: ['digital prescription software India', 'e-prescription software', 'digital Rx India', 'electronic prescription', 'prescription writing software', 'ABDM prescription'],
+  keywords: ['digital treatment plan software India', 'e-prescription software', 'digital Rx India', 'electronic prescription', 'prescription writing software', 'ABDM prescription'],
 };
 
 // --- FAQ Structured Data ---
@@ -57,14 +57,6 @@ const faqSchema = {
       acceptedAnswer: {
         '@type': 'Answer',
         text: 'Yes, and printing is one click. Doxxy prescriptions are designed for both digital delivery and physical printing. When you complete a prescription, you can print it directly on your clinic printer — formatted exactly to A4, A5, or your custom prescription pad size. The print layout includes your clinic letterhead, doctor details with registration number, patient information, diagnosis, medication table with dosage instructions, advice section, and follow-up date. For clinics that prefer to hand patients a printed prescription at the counter, the receptionist can also print from their screen after the doctor signs off. Printed prescriptions include a QR code that links to the digital record for verification.',
-      },
-    },
-    {
-      '@type': 'Question',
-      name: 'Can patients get their prescriptions on WhatsApp?',
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: 'Yes. Once a prescription is completed and signed in Doxxy, it can be sent to the patient via WhatsApp as a PDF attachment with a single click. The WhatsApp delivery includes the prescription PDF, a text summary of the medicines prescribed with dosage instructions, and the follow-up date. This is especially useful for chronic patients who need to maintain their prescription records, for patients who lose paper prescriptions, and for telemedicine consultations where physical handover is not possible. The WhatsApp delivery also creates a digital record on the patient\'s phone, making it easy for them to show the prescription to any pharmacist. This feature ties directly into Doxxy\'s broader WhatsApp capabilities.',
       },
     },
   ],
@@ -163,8 +155,8 @@ const SolutionSection = () => (
           icon: Languages,
         },
         {
-          title: 'Print, WhatsApp, or Both — One Click',
-          description: 'Complete the prescription and choose your delivery method: print on your clinic printer (A4, A5, or custom prescription pad size), send to patient via WhatsApp as a professionally formatted PDF, or both. For telemedicine consultations, the WhatsApp delivery is the primary handover. For in-person visits, you can print for immediate handover and WhatsApp a copy for the patient\'s records. Each printed prescription includes a QR code that links to the digital record. No more "Doctor, I lost my prescription" calls.',
+          title: 'Print, Share, or Both — One Click',
+          description: 'Complete the treatment plan and choose your delivery method: print on your clinic printer (A4, A5, or custom prescription pad size), share with the patient digitally as a professionally formatted PDF, or both. For telemedicine consultations, digital delivery is the primary handover. For in-person visits, you can print for immediate handover and share a digital copy for the patient\'s records. Each printed plan includes a QR code that links to the digital record. No more "Doctor, I lost my prescription" calls.',
           icon: Smartphone,
         },
       ].map(({ title, description, icon: Icon }) => (
@@ -193,7 +185,7 @@ const WorkflowSection = () => (
         { step: '1', title: 'Open Patient Record', description: 'Search by name, phone, or UHID. The patient\'s complete medical history, current medications, allergies, and past prescriptions load instantly.' },
         { step: '2', title: 'Select Diagnosis & Template', description: 'Choose the diagnosis from your specialty-specific template library. Your preferred medicines, dosages, and instructions auto-populate.' },
         { step: '3', title: 'Review & Customise', description: 'Adjust dosages, add or remove medications, check interaction alerts. Add specific advice or follow-up instructions. Takes 15-20 seconds.' },
-        { step: '4', title: 'Sign, Print, or Send', description: 'Digital signature applied. One click to print on clinic printer. One click to WhatsApp the PDF to patient. Prescription saved to patient history.' },
+        { step: '4', title: 'Sign, Print, or Share', description: 'Digital signature applied. One click to print on clinic printer. One click to share the PDF with the patient. Plan saved to patient history.' },
       ].map(({ step, title, description }) => (
         <div key={step} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200/75 dark:border-gray-700/50 overflow-hidden">
           <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border-b border-blue-100 dark:border-blue-900/50">
@@ -233,7 +225,7 @@ const ResultsSection = () => (
             { metric: 'Drug Interaction Check', before: 'Relies on memory. No systematic check.', after: 'Automatic cross-reference against 15,000+ drugs and patient history.' },
             { metric: 'Medication History Access', before: 'Patient carries old Rx — if they remember.', after: 'Full history. Every prescription ever written in your clinic, searchable.' },
             { metric: 'Patient Understanding', before: 'Pharmacist translates. Patient may misunderstand.', after: 'Instructions in patient\'s language. Clear dosage in words, not abbreviations.' },
-            { metric: 'Prescription Duplicate', before: 'Carbon copy. Fades. Gets lost.', after: 'Digital record forever. Reprint anytime. WhatsApp copy on patient\'s phone.' },
+            { metric: 'Prescription Duplicate', before: 'Carbon copy. Fades. Gets lost.', after: 'Digital record forever. Reprint anytime. Digital copy on patient\'s phone.' },
             { metric: 'Insurance Claim Support', before: 'Illegible Rx rejected by TPA.', after: 'Typed, coded, digitally signed. Insurer accepts first time.' },
           ].map(({ metric, before, after }) => (
             <tr key={metric} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
@@ -326,8 +318,8 @@ const FAQSection = () => (
           a: 'Yes, and it is designed to be as fast as tearing a page off a prescription pad. Once you complete and sign a prescription in Doxxy, one click sends it to your clinic\'s printer — pre-formatted for A4, A5, or your custom prescription-pad paper size. The printed prescription includes your clinic letterhead, doctor\'s details with registration number, patient details, diagnosis, a clean medication table with dosage and duration, any advice or follow-up notes, and a QR code that links to the digital record. If your receptionist handles printing, they can do it from their own screen while the patient waits at the counter. The entire print-and-handover process takes under 10 seconds. Most clinics keep a dedicated prescription printer at the reception desk for exactly this purpose.',
         },
         {
-          q: 'Can I send prescriptions to patients via WhatsApp?',
-          a: 'Yes, and this is one of the most popular features among Doxxy doctors. After completing a prescription, you (or your receptionist) can send it to the patient via WhatsApp as a professionally formatted PDF with a single click. The WhatsApp message includes the prescription PDF, a text summary of medicines with dosage instructions in the patient\'s preferred language, and the follow-up date. This is ideal for several scenarios: telemedicine consultations where physical handover is impossible; chronic patients who need a digital copy for their records; patients who frequently lose paper prescriptions; and clinics that want to reduce paper usage. The WhatsApp copy stays on the patient\'s phone, so they can show it to any pharmacist even weeks later. This feature works seamlessly with Doxxy\'s broader WhatsApp communication suite for <Link href="/whatsapp-appointment-reminders" className="text-blue-600 hover:underline">appointment reminders</Link> and lab report delivery.',
+          q: 'Can I share treatment plans with patients digitally?',
+          a: 'Yes, and this is one of the most popular features among Doxxy doctors. After completing a treatment plan, you (or your receptionist) can share it with the patient as a professionally formatted PDF with a single click. The message includes the treatment plan PDF, a text summary of medicines with dosage instructions in the patient\'s preferred language, and the follow-up date. This is ideal for several scenarios: telemedicine consultations where physical handover is impossible; chronic patients who need a digital copy for their records; patients who frequently lose paper prescriptions; and clinics that want to reduce paper usage. The digital copy stays on the patient\'s phone, so they can show it to any pharmacist even weeks later. This feature works seamlessly with Doxxy\'s broader communication suite for <Link href="/whatsapp-appointment-reminders" className="text-blue-600 hover:underline">appointment reminders</Link> and lab report delivery.',
         },
       ].map(({ q, a }) => (
         <details key={q} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-6 group">
@@ -357,7 +349,7 @@ export default function DigitalPrescriptionSoftware() {
       <FAQSection />
       <SignupCTA
         heading="Write Prescriptions in 60 Seconds, Not 5 Minutes"
-        description="See Doxxy's digital prescription workflow — templates, drug interaction checks, 13 Indian languages. A quick WhatsApp demo tailored to your specialty."
+        description="See Doxxy's digital treatment plan workflow — templates, drug interaction checks, 13 Indian languages. A quick demo tailored to your specialty."
       />
 
       <Script
@@ -368,7 +360,7 @@ export default function DigitalPrescriptionSoftware() {
       <BreadcrumbJsonLd
         items={[
           { name: "Home", url: APP_URL },
-          { name: "Digital Prescription Software", url: `${APP_URL}/digital-prescription-software` },
+          { name: "Digital Treatment Plans", url: `${APP_URL}/digital-treatment-plans` },
         ]}
       />
     </div>

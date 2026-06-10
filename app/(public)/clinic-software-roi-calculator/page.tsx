@@ -42,7 +42,7 @@ const faqs = [
   {
     question: "What's included in the ₹10 per consultation fee?",
     answer:
-      "₹10 per completed consultation covers everything: unlimited doctors and staff, EMR, digital prescriptions, appointment scheduling, WhatsApp reminders, billing, and analytics. There are no setup fees, per-doctor charges, or hidden costs. You only pay for consultations that actually happen.",
+      "₹10 per completed consultation covers everything: unlimited doctors and staff, EMR, treatment plans, appointment scheduling, WhatsApp reminders, billing, and analytics. There are no setup fees, per-doctor charges, or hidden costs. You only pay for consultations that actually happen.",
   },
   {
     question: "Do you charge for no-show appointments?",

@@ -103,6 +103,10 @@ export default function TermsPage() {
         effectiveDate="24-05-2026"
       />
 
+      <TermsSection title="Platform Nature">
+        Doxxy is a clinical documentation and practice management platform. We do not sell, dispense, or facilitate the sale of pharmaceutical products, medical devices, or supplements. WhatsApp messages sent through Doxxy are transactional clinical communications sent on behalf of your healthcare provider, not marketing or commerce.
+      </TermsSection>
+
       <TermsSection title="1. Acceptance of Terms">
         By registering for, accessing, or using any part of the Doxxy platform, including its web and mobile applications, APIs, and associated services (collectively, the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you must not use the Service.
       </TermsSection>
@@ -148,7 +152,7 @@ export default function TermsPage() {
       </TermsSection>
 
       <TermsSection title="10. Confidentiality and Data Protection">
-        All medical and patient information is considered strictly confidential. We implement encryption at rest and in transit, access controls, and audit logging. When WhatsApp messaging is enabled, patient phone numbers, names, doctor names, and PDF summaries are transmitted to Meta's WhatsApp Cloud API for message delivery; this transmission is encrypted in transit but is no longer under Doxxy's control once received by Meta. Our handling of data complies with our Privacy Policy and relevant laws including GDPR (EU) and DPDP (India).
+        All medical and patient information is considered strictly confidential. We implement encryption at rest and in transit, access controls, and audit logging. When WhatsApp messaging is enabled, patient phone numbers, names, doctor names, and PDF summaries are transmitted to Meta's WhatsApp Cloud API for message delivery; this transmission is encrypted in transit but is no longer under Doxxy's control once received by Meta. Our handling of data complies with our Privacy Policy and India's Digital Personal Data Protection Act, 2023 (DPDP Act). Doxxy operates exclusively in India and is not intended for use outside Indian jurisdiction.
       </TermsSection>
 
       <TermsSection title="11. Third-party Integrations" isList>

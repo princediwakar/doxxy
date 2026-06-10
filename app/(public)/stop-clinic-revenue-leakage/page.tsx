@@ -421,7 +421,7 @@ const WorkflowSection = () => (
           </li>
           <li className="flex gap-3">
             <span className="text-green-500 font-bold flex-shrink-0">4.</span>
-            <span>Patient pays via UPI QR (exact amount pre-filled), card, or cash. Payment confirmation reconciled instantly. Digital receipt sent to patient via WhatsApp automatically.</span>
+            <span>Patient pays via UPI QR (exact amount pre-filled), card, or cash. Payment confirmation reconciled instantly. Digital receipt sent to patient via WhatsApp with one click.</span>
           </li>
           <li className="flex gap-3">
             <span className="text-green-500 font-bold flex-shrink-0">5.</span>

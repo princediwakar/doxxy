@@ -96,7 +96,7 @@ const faqs = [
   },
   {
     question: 'Is patient data secure on a phone-based form?',
-    answer: 'Yes. All data transmission between the patient\'s phone and our servers is encrypted over HTTPS (TLS 1.3). Patient data is never stored on the phone itself — the form is a web page that sends data directly to secure cloud servers. Our infrastructure runs on enterprise-grade cloud with AES-256 encryption at rest, regular security audits, and role-based access controls. We comply with ABDM (Ayushman Bharat Digital Mission) guidelines and international standards including HIPAA. No patient data is ever shared with third parties. You control who on your staff can view, edit, or export patient information.',
+    answer: 'Yes. All data transmission between the patient\'s phone and our servers is encrypted over HTTPS (TLS 1.3). Patient data is never stored on the phone itself — the form is a web page that sends data directly to secure cloud servers. Our infrastructure runs on enterprise-grade cloud with AES-256 encryption at rest, regular security audits, and role-based access controls. We comply with ABDM (Ayushman Bharat Digital Mission) guidelines and India\'s DPDP Act 2023. No patient data is ever shared with third parties. You control who on your staff can view, edit, or export patient information.',
   },
   {
     question: 'Can we customize the registration form for our specialty?',

@@ -187,10 +187,10 @@ export const baseNotesSchema = z.object({
     "Enter planned investigations",
   ),
   prescriptions: zField("prescriptions", z.array(medicationSchema).nullable().transform(val => val ?? []), {
-    label: "Active Prescriptions",
+    label: "Medications",
     section: "Management",
     type: "prescription",
-    placeholder: "Enter prescriptions",
+    placeholder: "Enter medications",
   }),
   treatment: textField("treatment", "Treatment", "Management", 4, "Describe treatment plan"),
   prognosis: textField("prognosis", "Prognosis", "Management", 2, "Enter prognosis"),

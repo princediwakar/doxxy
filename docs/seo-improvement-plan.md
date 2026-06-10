@@ -27,7 +27,7 @@ All public pages now have unique, optimized metadata:
 - ✅ **About**: "About Doxxy - Modern Clinic Management Software Company"
 - ✅ **Contact**: "Contact Doxxy - Clinic Management Software Support"
 - ✅ **FAQ**: "Doxxy FAQ - Clinic Management Software Questions & Answers"
-- ✅ **Security**: "Doxxy Security - HIPAA Compliant Clinic Management Software"
+- ✅ **Security**: "Doxxy Security - DPDP Compliant Clinic Management Software for India"
 - ✅ **Privacy**: "Doxxy Privacy Policy - Clinic Management Software Data Protection"
 - ✅ **Terms**: "Doxxy Terms of Service - Clinic Management Software Agreement"
 - ✅ **Blog**: "Doxxy Blog - Healthcare Practice Management Insights & Best Practices"

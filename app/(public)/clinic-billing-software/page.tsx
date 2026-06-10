@@ -234,7 +234,7 @@ const ResultsSection = () => (
             { metric: 'GST Compliance', before: 'Inconsistent. Most bills are non-compliant.', after: 'Every bill is a valid tax invoice. Month-end export ready for filing.' },
             { metric: 'Follow-Up Billing', before: 'Often forgotten. No systematic tracking.', after: 'Auto-flagged. Outstanding payments dashboard with SMS/WhatsApp nudges.' },
             { metric: 'End-of-Day Reconciliation', before: '45 minutes of manual counting and cross-checking.', after: 'One click. Real-time dashboard already reconciled throughout the day.' },
-            { metric: 'Insurance Claims', before: '3-4 days per claim. Inconsistent formats.', after: 'Pre-formatted itemised bills. Claim submitted same day with all attachments. Pair with <Link href="/digital-prescription-software" className="text-blue-600 hover:underline">digital prescriptions</Link> for coded, insurer-ready claims.' },
+            { metric: 'Insurance Claims', before: '3-4 days per claim. Inconsistent formats.', after: 'Pre-formatted itemised bills. Claim submitted same day with all attachments. Pair with <Link href="/digital-treatment-plans" className="text-blue-600 hover:underline">digital treatment plans</Link> for coded, insurer-ready claims.' },
           ].map(({ metric, before, after }) => (
             <tr key={metric} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
               <td className="p-4 font-medium text-gray-900 dark:text-white">{metric}</td>

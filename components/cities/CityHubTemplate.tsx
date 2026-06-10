@@ -85,7 +85,7 @@ const CityHubTemplate = ({ config }: { config: CityConfig }) => {
           <ul className="space-y-3">
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <span className="text-blue-500 font-bold mt-0.5">1.</span>
-              <span><strong>Doxxy serves {config.clinicStats.estimatedClinics} clinics in {cityName}</strong> with a single platform for patient records, digital prescriptions, appointment scheduling, and WhatsApp reminders.</span>
+              <span><strong>Doxxy serves {config.clinicStats.estimatedClinics} clinics in {cityName}</strong> with a single platform for patient records, treatment plans, appointment scheduling, and WhatsApp reminders.</span>
             </li>
             <li className="flex items-start gap-3 text-gray-700 dark:text-gray-300">
               <span className="text-blue-500 font-bold mt-0.5">2.</span>

@@ -510,8 +510,8 @@ Week 3 Day 5: STOP. Ship features.
 
 | Cut item | Reason |
 |---|---|
-| **Integration tests with seed DB** | Playwright E2E smoke tests are sufficient safety net for a startup. Come back when you have dedicated QA or SOC2 requirements. |
-| **`pgaudit` audit logging** | Premature unless you're undergoing HIPAA/SOC2 compliance audits this month. |
+| **Integration tests with seed DB** | Playwright E2E smoke tests are sufficient safety net for a startup. Come back when you have dedicated QA or compliance audit requirements. |
+| **`pgaudit` audit logging** | Premature unless you're undergoing DPDP compliance audits this month. |
 | **Custom structured JSON logging** | Sentry covers error observability. Console logs are fine for the rest. |
 | **Migration squash / clean lineage** | Cosmetic. The migration history works. Don't touch it. |
 | **Bundle analysis / dynamic import of voice module** | Not blocking anything. Do when performance data shows it's a problem. |

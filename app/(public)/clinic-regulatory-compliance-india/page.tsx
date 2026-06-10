@@ -355,9 +355,9 @@ const internalLinks = [
     href: '/clinic-data-security-guide',
   },
   {
-    title: 'Digital Prescription Software for Clinics',
+    title: 'Digital Treatment Plans for Clinics',
     description: 'How digital prescriptions work, drug interaction checks, 13 Indian language support, and legal validity of e-prescriptions.',
-    href: '/digital-prescription-software',
+    href: '/digital-treatment-plans',
   },
   {
     title: 'Electronic Medical Records for Indian Clinics',

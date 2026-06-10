@@ -55,7 +55,7 @@ const faqSchema = {
       name: 'Can patients access their own records?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Yes. Doxxy lets you share patient records securely via WhatsApp or email directly from the platform. Patients receive a link to view their consultation history, prescriptions, and attached lab reports. You control exactly what is shared — from a single prescription to a complete health timeline. This is especially useful when patients need records for specialist referrals, insurance claims, or personal health tracking.',
+        text: 'Yes. Doxxy lets you share patient records securely via WhatsApp or email directly from the platform. Patients receive a link to view their consultation history, treatment plans, and attached lab reports. You control exactly what is shared — from a single treatment plan to a complete health timeline. This is especially useful when patients need records for specialist referrals, insurance claims, or personal health tracking.',
       },
     },
     {
@@ -211,7 +211,7 @@ export default function ElectronicMedicalRecords() {
             </div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">Share via WhatsApp</h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Send prescriptions and test results to patients directly over WhatsApp. No printing, no scanning, no email attachments. Patient gets a link with their records — accessible on any phone.
+              Send treatment plans and test results to patients digitally. No printing, no scanning, no email attachments. Patient gets a link with their records — accessible on any phone.
             </p>
           </div>
 
@@ -384,7 +384,7 @@ export default function ElectronicMedicalRecords() {
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Can patients access their own records?</h3>
             <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-              Yes. Doxxy lets you share patient records securely via WhatsApp or email directly from the platform. Patients receive a link to view their consultation history, prescriptions, and attached lab reports. You control exactly what is shared — from a single prescription to a complete health timeline. This is especially useful when patients need records for specialist referrals, insurance claims, or personal health tracking.
+              Yes. Doxxy lets you share patient records securely via WhatsApp or email directly from the platform. Patients receive a link to view their consultation history, treatment plans, and attached lab reports. You control exactly what is shared — from a single treatment plan to a complete health timeline. This is especially useful when patients need records for specialist referrals, insurance claims, or personal health tracking.
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/75 dark:border-gray-700/50 p-6">
@@ -413,7 +413,7 @@ export default function ElectronicMedicalRecords() {
             <Link href="https://wa.me/+917388890554">Start Free Practice <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
           <Button size="lg" variant="outline" asChild className="rounded-xl px-8 py-3 text-base font-semibold dark:text-gray-300 dark:border-gray-600">
-            <Link href="/digital-prescription-software">Explore Prescriptions <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Link href="/digital-treatment-plans">Explore Prescriptions <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>
       </Section>

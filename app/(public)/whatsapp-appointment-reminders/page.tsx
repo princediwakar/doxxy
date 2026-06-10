@@ -12,14 +12,14 @@ import { Section, SectionTitle, SectionSubtitle } from "@/components/ui/section-
 
 export const metadata: Metadata = {
   title: 'WhatsApp Appointment Reminders for Clinics — Cut No-Shows by 35% | Doxxy',
-  description: 'Automated WhatsApp appointment reminders for Indian clinics. Reduce no-shows by 35%, send confirmations, and let patients reschedule with one tap. Used by 500+ clinics across India.',
+  description: 'Staff-triggered WhatsApp appointment reminders for Indian clinics. Reduce no-shows by 35%, send confirmations, and let patients reschedule with one tap. Used by 500+ clinics across India.',
   alternates: { canonical: '/whatsapp-appointment-reminders' },
   openGraph: {
     title: 'WhatsApp Appointment Reminders for Clinics — Cut No-Shows by 35%',
-    description: 'Automated WhatsApp appointment reminders for Indian clinics. Reduce no-shows, send confirmations, and let patients reschedule with one tap.',
+    description: 'Staff-triggered WhatsApp appointment reminders for Indian clinics. Reduce no-shows, send confirmations, and let patients reschedule with one tap.',
     images: [{ url: '/doxxy.png', width: 1200, height: 630, alt: 'WhatsApp Appointment Reminders for Clinics' }],
   },
-  keywords: ['WhatsApp appointment reminders', 'clinic reminder WhatsApp', 'reduce patient no-shows', 'clinic WhatsApp automation', 'patient reminder system India', 'WhatsApp Business API clinic'],
+  keywords: ['WhatsApp appointment reminders', 'clinic reminder WhatsApp', 'reduce patient no-shows', 'clinic WhatsApp reminders', 'patient reminder system India', 'WhatsApp Business API clinic'],
 };
 
 // --- FAQ Structured Data ---
@@ -272,7 +272,7 @@ const BonusFeaturesSection = () => (
           icon: Users,
           title: 'Bulk WhatsApp Campaigns',
           description: 'Send health awareness messages, flu-season alerts, or new-service announcements to your entire patient base — or targeted segments — through WhatsApp. Like email marketing, but with 98% open rates.',
-          items: ['Segment by age, condition, or visit history', 'Schedule campaigns in advance', 'Track open and response rates', 'GDPR and data-protection compliant'],
+          items: ['Segment by age, condition, or visit history', 'Schedule campaigns in advance', 'Track open and response rates', 'DPDP and data-protection compliant'],
         },
         {
           icon: Shield,

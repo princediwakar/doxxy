@@ -606,7 +606,7 @@ const ExploreLinksSection = () => (
         { href: '/features', label: 'All Features', desc: 'Everything Doxxy replaces — EMR, billing, reminders, analytics' },
         { href: '/pricing', label: 'Pricing Plans', desc: 'From free to unlimited. Find the plan that fits your clinic' },
         { href: '/electronic-medical-records', label: 'Electronic Medical Records', desc: 'Replace paper files with instant, searchable digital records' },
-        { href: '/digital-prescription-software', label: 'Digital Prescriptions', desc: 'Stop handwriting. Templates, auto-dosage, WhatsApp delivery' },
+        { href: '/digital-treatment-plans', label: 'Digital Prescriptions', desc: 'Stop handwriting. Templates, auto-dosage, digital delivery' },
         { href: '/clinic-billing-software', label: 'Clinic Billing', desc: 'Auto-generate GST bills, accept UPI, reconcile in real time' },
         { href: '/whatsapp-appointment-reminders', label: 'WhatsApp Reminders', desc: 'Cut no-shows by 35%. Automated confirmations and waitlist fills' },
       ].map(({ href, label, desc }) => (

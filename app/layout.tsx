@@ -73,10 +73,12 @@ export default function RootLayout({
                   "@type": "Organization",
                   "@id": `${APP_URL}/#organization`,
                   name: "Doxxy",
+                  legalName: "Supersite Technologies Private Limited",
                   url: APP_URL,
                   logo: `${APP_URL}/doxxy.png`,
                   description:
-                    "Modern clinic management software for healthcare providers — smart scheduling, patient records, billing, and telehealth.",
+                    "Modern clinic management software for healthcare providers in India — smart scheduling, patient records, billing, and telehealth.",
+                  areaServed: "India",
                   sameAs: SOCIAL_LINKS,
                 },
                 {

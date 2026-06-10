@@ -40,7 +40,7 @@ const faqSchema = {
       name: 'How much does Doxxy cost for a small clinic?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Doxxy starts at ₹499 per month for small clinics on the Practice Essentials plan, which includes appointment scheduling, digital prescriptions, patient records, and basic billing. There are no setup fees, no hardware costs, and no long-term contracts — you can cancel anytime. For clinics that want automated WhatsApp reminders, UPI payment collection, and advanced analytics, the Practice Plus plan is ₹999 per month. Both plans operate on a pay-per-consultation model, so if you have a slow month, your cost reflects that. Compare this to the ₹8,000-₹12,000 per month that manual record-keeping costs in staff time alone.',
+        text: 'Doxxy starts at ₹499 per month for small clinics on the Practice Essentials plan, which includes appointment scheduling, digital treatment plans, patient records, and basic billing. There are no setup fees, no hardware costs, and no long-term contracts — you can cancel anytime. For clinics that want automated WhatsApp reminders, UPI payment collection, and advanced analytics, the Practice Plus plan is ₹999 per month. Both plans operate on a pay-per-consultation model, so if you have a slow month, your cost reflects that. Compare this to the ₹8,000-₹12,000 per month that manual record-keeping costs in staff time alone.',
       },
     },
     {
@@ -156,7 +156,7 @@ const SolutionSection = () => (
         },
         {
           title: 'Digital Prescriptions — Write, Print, Share in Under 60 Seconds',
-          description: 'Type or dictate (English or Hindi) your prescription. Doxxy auto-suggests common medicines, dosages, and durations. Print it on your existing printer, or WhatsApp it directly to the patient. Every prescription is saved against the patient record, so next visit, you pull up their history in seconds. No more "Please bring your old prescription." No more deciphering handwriting at the pharmacy.',
+          description: 'Type or dictate (English or Hindi) your prescription. Doxxy auto-suggests common medicines, dosages, and durations. Print it on your existing printer, or share it digitally with the patient. Every prescription is saved against the patient record, so next visit, you pull up their history in seconds. No more "Please bring your old prescription." No more deciphering handwriting at the pharmacy.',
           icon: FileText,
         },
         {
@@ -171,7 +171,7 @@ const SolutionSection = () => (
         },
         {
           title: 'WhatsApp Reminders — Stop the No-Show Bleed',
-          description: 'Appointment reminders go out automatically on WhatsApp the day before every booking. Patients can confirm or reschedule with one tap. For follow-ups, the system flags overdue patients and sends gentle reminders. Clinics using this feature report a 35-40% drop in no-shows within the first month. That alone often covers the cost of Doxxy several times over.',
+          description: 'Appointment reminders are sent by your staff on WhatsApp the day before every booking. Patients can confirm or reschedule with one tap. For follow-ups, the system flags overdue patients and sends gentle reminders. Clinics using this feature report a 35-40% drop in no-shows within the first month. That alone often covers the cost of Doxxy several times over.',
           icon: Bell,
         },
         {
@@ -243,7 +243,7 @@ const ResultsSection = () => (
           {[
             { metric: 'Appointment Booking', before: 'Patients call. Phone rings busy. Receptionist scribbles in a diary. Double-bookings are common.', after: 'Patients self-book via your WhatsApp link. Calendar updates live. No double-booking possible. Receptionist focuses on patients in the clinic.' },
             { metric: 'Patient Records', before: 'Cardboard folders in a steel almirah. Misfiled, lost, or buried under newer files. 10 minutes to find one record.', after: 'Digital. Search by name or number. Full history in 3 seconds. Never lose a file again. Access from phone or laptop.' },
-            { metric: 'Prescriptions', before: 'Handwritten on letterhead. Pharmacist calls to decipher. Patient loses it before next visit. No record of what was prescribed.', after: 'Typed or dictated. Saved to patient file forever. WhatsApp to patient. Print if needed. Complete prescription history across all visits.' },
+            { metric: 'Prescriptions', before: 'Handwritten on letterhead. Pharmacist calls to decipher. Patient loses it before next visit. No record of what was prescribed.', after: 'Typed or dictated. Saved to patient file forever. Share digitally with patient. Print if needed. Complete prescription history across all visits.' },
             { metric: 'Billing', before: 'Manual calculator. Handwritten receipt in triplicate. Cash-only tracking. 45-minute evening tally with frequent errors.', after: 'Auto-generated from consultation. UPI, card, or cash. Digital receipt on WhatsApp. Day-end report in one click. Zero reconciliation needed.' },
             { metric: 'Follow-Ups', before: 'Doctor mentally tracks who needs to return. Patients forget. Conditions worsen. Revenue walks out the door.', after: 'System flags overdue follow-ups. Automated WhatsApp reminders go out. Patients rebook. Continuity of care — and revenue — is maintained.' },
             { metric: 'Monthly Cost', before: '₹8,000-₹12,000 in staff time spent on paperwork, plus ₹500 in stationery, ₹1,000 in missed billings, and ₹7,000+ in no-show revenue loss.', after: '₹499/month flat (Practice Essentials). No hidden costs. The time saved alone is worth 15-20x the subscription. No-shows drop, billings are complete, day closes on time.' },
@@ -280,7 +280,7 @@ const TestimonialSection = () => (
           detail: 'Paediatric Clinic, Lucknow — 2 doctors, 30 patients/day',
         },
         {
-          quote: 'For years I thought clinic software was for big hospitals. I assumed it would cost ₹20,000+ and need a server. Doxxy runs on my 3-year-old Android phone. I type prescriptions in Hindi, my patients get them on WhatsApp, and I close my day by 7:30 PM. I have not touched a prescription pad in 5 months.',
+          quote: 'For years I thought clinic software was for big hospitals. I assumed it would cost ₹20,000+ and need a server. Doxxy runs on my 3-year-old Android phone. I type prescriptions in Hindi, my patients get them instantly on their phones, and I close my day by 7:30 PM. I have not touched a prescription pad in 5 months.',
           name: 'Dr. Menon',
           detail: 'General Physician, Kochi — Solo practice, 20 patients/day',
         },
@@ -313,7 +313,7 @@ const FAQSection = () => (
         },
         {
           q: 'How much does Doxxy cost for a small clinic?',
-          a: 'Practice Essentials starts at ₹499/month — that covers appointment scheduling, digital prescriptions, patient records, and basic billing. Practice Plus at ₹999/month adds WhatsApp reminders, UPI payment collection, and advanced analytics. No setup fees, no hardware costs, no annual contracts. Cancel anytime. Compare this to the ₹8,000-₹12,000 your clinic loses every month in staff time spent on manual paperwork alone. The ROI is not marginal — it is immediate.',
+          a: 'Practice Essentials starts at ₹499/month — that covers appointment scheduling, digital treatment plans, patient records, and basic billing. Practice Plus at ₹999/month adds WhatsApp reminders, UPI payment collection, and advanced analytics. No setup fees, no hardware costs, no annual contracts. Cancel anytime. Compare this to the ₹8,000-₹12,000 your clinic loses every month in staff time spent on manual paperwork alone. The ROI is not marginal — it is immediate.',
         },
         {
           q: 'Can my receptionist learn it? She has never used clinic software before.',

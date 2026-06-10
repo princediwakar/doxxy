@@ -65,7 +65,7 @@ supabase secrets set WHATSAPP_WEBHOOK_VERIFY_TOKEN="your_secure_string"
 `whatsapp_waba_id` — WhatsApp Business Account ID, also populated by Embedded Signup
 
 ### Queue Table: `automation_queue`
-Serves all three phases. Columns: `id`, `clinic_id`, `patient_id`, `doctor_id`, `appointment_id`, `automation_type` (enum: `review_request`, `prescription_share`, `bill_share`, `follow_up_reminder`), `status` (pending/sent/failed/cancelled), `payload` (JSONB), `scheduled_at`, `processed_at`, `error_message`.
+Serves all three phases. Columns: `id`, `clinic_id`, `patient_id`, `doctor_id`, `appointment_id`, `automation_type` (enum: `review_request`, `visit_summary_share`, `bill_share`, `follow_up_reminder`), `status` (pending/sent/failed/cancelled), `payload` (JSONB), `scheduled_at`, `processed_at`, `error_message`.
 
 Add a partial index to keep query performance as rows accumulate: `CREATE INDEX ON automation_queue (status, scheduled_at) WHERE status = 'pending'`. Add a pg_cron job to archive rows with `processed_at < now() - interval '90 days'` to prevent unbounded table growth.
 
@@ -198,16 +198,16 @@ Save `contact_phone` always. Save `whatsapp_phone` from Embedded Signup. `whatsa
    - `view_count`, `first_viewed_at`, `last_viewed_at`
    - CHECK constraint: exactly one of `prescription_id` or `bill_id` is NOT NULL
 2. Create `pin_attempts` table: `encounter_id`, `ip_address`, `attempted_at`, `succeeded`. Used by the verify-pin API to enforce rate limiting across serverless cold starts. Without this, an in-memory counter is wiped on every function recycle.
-3. Create trigger `create_encounter_link()`: fires AFTER INSERT on `prescriptions` and `bills`. Generates `encounter_id = encode(sha256((id || type)::bytea), 'hex')`, generates a random 4-digit PIN via `floor(random() * 9000 + 1000)::int::text`, inserts into `encounter_links`, enqueues `prescription_share` / `bill_share` automation in `automation_queue` with the PIN in the payload.
+3. Create trigger `create_encounter_link()`: fires AFTER INSERT on `prescriptions` and `bills`. Generates `encounter_id = encode(sha256((id || type)::bytea), 'hex')`, generates a random 4-digit PIN via `floor(random() * 9000 + 1000)::int::text`, inserts into `encounter_links`, enqueues `visit_summary_share` / `bill_share` automation in `automation_queue` with the PIN in the payload.
 4. RPCs:
    - `get_encounter_link(encounter_id)` — returns the encounter link with joined data (SECURITY DEFINER, no auth gate)
    - `verify_encounter_pin(encounter_id, pin)` — checks `pin_attempts` for rate limit, validates PIN, returns `{ valid, patient_name, record_data }`
    - `increment_encounter_link_views(encounter_id)` — updates view counters
 
 ### WhatsApp Template
-- **Name**: `prescription_share` (Utility)
-- **Body**: "Your {{1}} from Dr. {{2}}'s clinic on {{3}} is ready. PIN: {{4}}. Tap below to view."
-- **Button (URL)**: `https://doxxy.in/p/{{5}}`
+- **Name**: `visit_summary_share` (Utility)
+- **Body**: "Your visit summary from Dr. {{1}}'s clinic on {{2}} is ready. Tap below to view."
+- **Button (URL)**: `https://doxxy.in/s/{{3}}`
 
 ### Frontend
 - **`app/(public)/p/[encounter_id]/page.tsx`**: Public page. Fetches the encounter link by `encounter_id` (no auth needed — the slug is unguessable). Shows PIN gate. After validation, renders the record. Tracks view on successful auth.

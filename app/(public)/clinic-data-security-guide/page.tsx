@@ -320,7 +320,7 @@ export default function ClinicDataSecurityGuide() {
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Secure WhatsApp Communication</h3>
             <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-              Patient reports and prescriptions sent via WhatsApp are end-to-end encrypted. No patient data sits unencrypted on any device. Patients get what they need, securely — no screenshots, no forwarded PDFs.
+              Patient reports and treatment plans shared digitally are end-to-end encrypted. No patient data sits unencrypted on any device. Patients get what they need, securely — no screenshots, no forwarded PDFs.
             </p>
           </div>
 

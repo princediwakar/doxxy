@@ -322,9 +322,9 @@ const internalLinks = [
     href: '/best-clinic-management-software-india',
   },
   {
-    title: 'Digital Prescription Software',
+    title: 'Digital Treatment Plans',
     description: 'How digital prescriptions work, ABDM compliance, drug interaction checks, and 13 Indian language support.',
-    href: '/digital-prescription-software',
+    href: '/digital-treatment-plans',
   },
   {
     title: 'Electronic Medical Records for Indian Clinics',

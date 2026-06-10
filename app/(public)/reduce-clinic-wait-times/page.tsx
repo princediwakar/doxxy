@@ -76,10 +76,10 @@ const solutionCards = [
   },
   {
     icon: Timer,
-    title: 'Template-Based Digital Prescriptions',
-    description: 'Doctor selects from pre-built templates — common diagnoses, standard drug combinations, dosage instructions. Customizes in seconds instead of writing from scratch. 5 minutes per consultation saved. For 30 patients a day, that\'s 2.5 hours of doctor time recovered. The prescription is printed or shared via WhatsApp instantly. No pharmacy translation errors. No "I can\'t read the doctor\'s handwriting." The saved time goes straight into seeing more patients or finishing OPD on schedule.',
-    link: '/digital-prescription-software',
-    linkText: 'Digital prescription software',
+    title: 'Template-Based Treatment Plans',
+    description: 'Doctor selects from pre-built templates — common diagnoses, standard drug combinations, dosage instructions. Customizes in seconds instead of writing from scratch. 5 minutes per consultation saved. For 30 patients a day, that\'s 2.5 hours of doctor time recovered. The treatment plan is printed or shared with the patient instantly. No pharmacy translation errors. No "I can\'t read the doctor\'s handwriting." The saved time goes straight into seeing more patients or finishing OPD on schedule.',
+    link: '/digital-treatment-plans',
+    linkText: 'Digital treatment plans',
   },
 ];
 
@@ -389,7 +389,7 @@ export default function ReduceClinicWaitTimes() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">10:41 AM — Patient leaves</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Satisfied. Total time at clinic: 16 minutes. Gets prescription and report on WhatsApp. Books follow-up for next month.</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Satisfied. Total time at clinic: 16 minutes. Gets treatment plan and report on their phone. Books follow-up for next month.</p>
               </div>
             </div>
           </div>

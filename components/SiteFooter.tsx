@@ -75,6 +75,9 @@ const SiteFooter = () => {
                 <Link href="/terms" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Terms of Service
                 </Link>
+                <Link href="/compliance" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  Compliance
+                </Link>
               </div>
             </div>
           </div>
@@ -156,7 +159,7 @@ const SiteFooter = () => {
         </div>
 
         <div className="mt-8 pt-8 border-t border-border text-center text-sm">
-          <p>&copy; {new Date().getFullYear()} Supersite Technologies Private Limited. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Doxxy, a product of Supersite Technologies Private Limited. Operates exclusively in India. All rights reserved.</p>
         </div>
       </div>
     </footer>

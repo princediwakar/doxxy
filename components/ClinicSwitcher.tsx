@@ -40,8 +40,8 @@ const ClinicSwitcher = ({ isCollapsed = false }: ClinicSwitcherProps) => {
           variant={isCollapsed ? "outline" : "ghost"}
           className={cn(
             "font-semibold transition-all duration-300",
-            isCollapsed 
-              ? "w-10 h-10 px-0 flex items-center justify-center mx-auto" 
+            isCollapsed
+              ? "w-10 h-10 px-0 flex items-center justify-center mx-auto"
               : "w-full justify-start text-left px-4 hover:bg-accent/50"
           )}
           aria-label="Select clinic"

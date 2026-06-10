@@ -373,39 +373,37 @@ serve(async (req: Request) => {
       );
     }
 
-    // Resolve credentials: per-clinic takes priority, fall back to env vars
-    let token: string;
-    let phoneNumberId: string;
-    let usedClinicCreds = false;
-    const envToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN") || "";
-    const envPhoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID") || "";
-
-    if (body.clinicId && supabase) {
-      const clinicCreds = await resolveClinicCredentials(supabase, body.clinicId);
-      if (clinicCreds) {
-        if (clinicCreds.status === "pending_meta_verification") {
-          return new Response(
-            JSON.stringify({ success: false, error: "WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages." }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
-        phoneNumberId = clinicCreds.phoneNumberId;
-        token = clinicCreds.token;
-        usedClinicCreds = true;
-      } else {
-        return new Response(
-          JSON.stringify({ success: false, error: "Clinic has no active WhatsApp connection. Please connect a WhatsApp Business account in clinic settings." }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      }
-    } else {
-      token = envToken;
-      phoneNumberId = envPhoneNumberId;
+    // Resolve per-clinic credentials. Every message must come from the clinic's own number.
+    // No platform-level fallback — sending from Doxxy's number violates the App Review
+    // commitment that messages always come from the clinic's verified WhatsApp number.
+    if (!body.clinicId || !supabase) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Missing clinicId" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
+
+    const clinicCreds = await resolveClinicCredentials(supabase, body.clinicId);
+    if (!clinicCreds) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Clinic has no active WhatsApp connection. Please connect a WhatsApp Business account in clinic settings." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    if (clinicCreds.status === "pending_meta_verification") {
+      return new Response(
+        JSON.stringify({ success: false, error: "WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages." }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    const token = clinicCreds.token;
+    const phoneNumberId = clinicCreds.phoneNumberId;
 
     if (!token || !phoneNumberId) {
       return new Response(
-        JSON.stringify({ success: false, error: "WhatsApp not configured" }),
+        JSON.stringify({ success: false, error: "WhatsApp credentials not configured for this clinic" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -442,50 +440,24 @@ serve(async (req: Request) => {
         );
       }
 
-      try {
-        const mediaId = await uploadMedia(phoneNumberId, token, pdfBytes, body.filename);
-        const result = await sendDocumentMessage(phoneNumberId, token, normalizedTo, mediaId, body.filename, body.caption);
+      const mediaId = await uploadMedia(phoneNumberId, token, pdfBytes, body.filename);
+      const result = await sendDocumentMessage(phoneNumberId, token, normalizedTo, mediaId, body.filename, body.caption);
 
-        const docMsgId = result.messages?.[0]?.id;
-        await logOutboundMessage(supabase, {
-          clinicId: body.clinicId,
-          patientId: body.patientId,
-          phoneNumberId,
-          toPhone: normalizedTo,
-          direction: "outbound",
-          text: `Document: ${body.filename}${body.caption ? ` - ${body.caption}` : ""}`,
-          whatsappMessageId: docMsgId,
-        });
+      const docMsgId = result.messages?.[0]?.id;
+      await logOutboundMessage(supabase, {
+        clinicId: body.clinicId,
+        patientId: body.patientId,
+        phoneNumberId,
+        toPhone: normalizedTo,
+        direction: "outbound",
+        text: `Document: ${body.filename}${body.caption ? ` - ${body.caption}` : ""}`,
+        whatsappMessageId: docMsgId,
+      });
 
-        return new Response(
-          JSON.stringify({ success: true, messageId: docMsgId }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      } catch (docError) {
-        // If clinic token fails with auth error, fall back to env var token
-        if (usedClinicCreds && isAuthError(docError) && envToken && envPhoneNumberId) {
-          console.warn("Clinic token failed, falling back to env token:", (docError as Error).message);
-          const mediaId = await uploadMedia(envPhoneNumberId, envToken, pdfBytes, body.filename);
-          const result = await sendDocumentMessage(envPhoneNumberId, envToken, normalizedTo, mediaId, body.filename, body.caption);
-
-          const fbMsgId = result.messages?.[0]?.id;
-          await logOutboundMessage(supabase, {
-            clinicId: body.clinicId,
-            patientId: body.patientId,
-            phoneNumberId: envPhoneNumberId,
-            toPhone: normalizedTo,
-            direction: "outbound",
-            text: `Document: ${body.filename}${body.caption ? ` - ${body.caption}` : ""}`,
-            whatsappMessageId: fbMsgId,
-          });
-
-          return new Response(
-            JSON.stringify({ success: true, messageId: fbMsgId, fallback: true }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
-        throw docError;
-      }
+      return new Response(
+        JSON.stringify({ success: true, messageId: docMsgId }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // --- Template ---
@@ -500,54 +472,26 @@ serve(async (req: Request) => {
       const { buttonParams, errorResponse } = await handleReviewTemplate(supabase, body);
       if (errorResponse) return errorResponse;
 
-      try {
-        const result = await sendTemplateMessage(
-          phoneNumberId, token, normalizedTo,
-          body.templateName, body.bodyParams, buttonParams,
-        );
+      const result = await sendTemplateMessage(
+        phoneNumberId, token, normalizedTo,
+        body.templateName, body.bodyParams, buttonParams,
+      );
 
-        const tplMsgId = result.messages?.[0]?.id;
-        await logOutboundMessage(supabase, {
-          clinicId: body.clinicId,
-          patientId: body.patientId,
-          phoneNumberId,
-          toPhone: normalizedTo,
-          direction: "outbound",
-          text: `Template: ${body.templateName}`,
-          whatsappMessageId: tplMsgId,
-        });
+      const tplMsgId = result.messages?.[0]?.id;
+      await logOutboundMessage(supabase, {
+        clinicId: body.clinicId,
+        patientId: body.patientId,
+        phoneNumberId,
+        toPhone: normalizedTo,
+        direction: "outbound",
+        text: `Template: ${body.templateName}`,
+        whatsappMessageId: tplMsgId,
+      });
 
-        return new Response(
-          JSON.stringify({ success: true, messageId: tplMsgId }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-        );
-      } catch (templateError) {
-        // If clinic token fails with auth error, fall back to env var token
-        if (usedClinicCreds && isAuthError(templateError) && envToken && envPhoneNumberId) {
-          console.warn("Clinic token failed, falling back to env token:", (templateError as Error).message);
-          const result = await sendTemplateMessage(
-            envPhoneNumberId, envToken, normalizedTo,
-            body.templateName, body.bodyParams, buttonParams,
-          );
-
-          const fbTplMsgId = result.messages?.[0]?.id;
-          await logOutboundMessage(supabase, {
-            clinicId: body.clinicId,
-            patientId: body.patientId,
-            phoneNumberId: envPhoneNumberId,
-            toPhone: normalizedTo,
-            direction: "outbound",
-            text: `Template: ${body.templateName}`,
-            whatsappMessageId: fbTplMsgId,
-          });
-
-          return new Response(
-            JSON.stringify({ success: true, messageId: fbTplMsgId, fallback: true }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
-        throw templateError;
-      }
+      return new Response(
+        JSON.stringify({ success: true, messageId: tplMsgId }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(

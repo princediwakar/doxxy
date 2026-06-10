@@ -69,7 +69,7 @@ const config: SpecialtyConfig = {
       icon: 'messageSquare',
       title: 'Secure Patient Communication & Teledermatology',
       description:
-        'HIPAA-compliant messaging for treatment queries, post-procedure concerns, and prescription refill requests. Built-in store-and-forward teledermatology: patients submit photos with standardised questionnaires, which are triaged and queued for asynchronous review. Reduces unnecessary in-person visits while maintaining clinical quality.',
+        'Secure, DPDP-compliant messaging for treatment queries, post-procedure concerns, and prescription refill requests. Built-in store-and-forward teledermatology: patients submit photos with standardised questionnaires, which are triaged and queued for asynchronous review. Reduces unnecessary in-person visits while maintaining clinical quality.',
     },
   ],
   workflowSteps: [

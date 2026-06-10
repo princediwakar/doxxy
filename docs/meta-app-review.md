@@ -16,7 +16,7 @@ Doxxy uses the Facebook Login SDK (`FB.login()`) to authenticate clinic administ
 
 **How will this app use whatsapp_business_messaging?**
 
-Doxxy sends WhatsApp messages on behalf of clinics using the WhatsApp Cloud API (`/v25.0/{phone_number_id}/messages`). Each clinic connects its own WhatsApp Business number via Embedded Signup, so messages always come from the clinic's own verified number — patients see the clinic's name and number, not Doxxy's.
+Doxxy sends WhatsApp messages on behalf of clinics using the WhatsApp Cloud API (`/v25.0/{phone_number_id}/messages`). Each clinic connects its own WhatsApp Business number via Embedded Signup, so messages always come from the clinic's own verified number — patients see the clinic's name and number, not Doxxy's. There is no platform-level fallback sender: if a clinic's credentials are invalid or expired, the message fails with an error and the clinic is prompted to reconnect. Doxxy never sends messages from its own number on behalf of a clinic.
 
 Two message types are sent:
 
@@ -26,6 +26,10 @@ Two message types are sent:
 All messages are manually triggered by clinic staff after a consultation is complete — there is no bulk sending, no marketing broadcasts, and no automated drip campaigns. Every message requires an explicit human action tied to a specific patient visit.
 
 Opt-out is built into every template via a "Stop reminders" Quick Reply button. When a patient replies STOP, our webhook handler marks them as opted out and blocks all future messages. The system enforces a hard uniqueness constraint: only one feedback message can ever be sent to a given patient for a given doctor (or clinic). Once sent, that patient-doctor pair is permanently deduplicated — no repeat requests regardless of how many future visits occur.
+
+Doxxy does not facilitate pharmaceutical commerce. The medications section in consultation PDFs is clinical documentation of the doctor's treatment plan — no pharmacy fulfillment, no drug sales, no commerce.
+
+Doxxy does not provide telemedicine services through WhatsApp. Consultation summaries are sent after an in-person visit, not as a substitute for clinical care. WhatsApp is used solely as a delivery channel for post-consultation documentation that the patient would otherwise receive on paper at the clinic.
 
 ---
 
@@ -92,11 +96,13 @@ No other categories apply. Neither processor is used for advertising, analytics,
 ### processor-2b: Countries where each processor handles Platform Data
 
 **Supabase:**
-- [FILL IN — Check your Supabase project region at https://supabase.com/dashboard/project/chftygsapwhahqbqlfdx/settings/general. Common regions for Indian projects: ap-southeast-1 (Singapore) or us-east-1 (United States). Select the country where that AWS region is located.]
+- India (ap-south-1, Mumbai region). All patient data is stored exclusively on Supabase servers in India.
 
 **Vercel:**
-- United States (serverless functions run in us-east-1 / IAD1 by default)
-- Global (Edge Functions and Edge Config are distributed across Vercel's global edge network; the WhatsApp webhook handler and embedded-signup API route run as serverless functions in us-east-1)
+- United States (serverless functions run in us-east-1 / IAD1 by default — these handle the OAuth token exchange and webhook processing only; no patient data is stored on Vercel infrastructure)
+- Global (Edge Functions and Edge Config are distributed across Vercel's global edge network)
+
+Patient data is stored exclusively in India (Supabase, Mumbai region). Vercel processes only transient OAuth codes and webhook payloads in transit — no patient health information is persisted on Vercel infrastructure.
 
 ---
 
@@ -114,18 +120,18 @@ No other categories apply. Neither processor is used for advertising, analytics,
 
 ### requests-3: National security requests in past 12 months
 
-**Answer:** [FILL IN — Do you (Supersite Technologies) know of any national security requests for user data in the past 12 months? Almost certainly "No" for a healthcare SaaS startup.]
+**Answer:** No. Supersite Technologies Private Limited has received zero national security requests for user data in the past 12 months and has no knowledge of any such requests.
 
 ---
 
 ### requests-4: Policies for public authority data requests
 
-**Answer:** [FILL IN — Select which policies apply. A small company typically has at minimum: review of legality, data minimization, and documentation. Select all that are true for your organization:
+**Answer:** Supersite Technologies Private Limited has the following policies for handling public authority data requests:
 
 - Required review of the legality of these requests
 - Provisions for challenging these requests if they are considered unlawful
 - Data minimization policy
-- Documentation of these requests, including responses and legal reasoning]
+- Documentation of these requests, including responses and legal reasoning
 
 ---
 
@@ -166,14 +172,14 @@ Facebook Login is used exclusively for WhatsApp Embedded Signup. When a clinic s
 
 ### accesscode-web-1: Test credentials
 
-**Answer:** [FILL IN — Provide a test clinic superadmin account with WhatsApp already connected, OR a test account that can go through the Embedded Signup flow. Include:
+**Answer:**
 
 - Login URL: https://doxxy.in
-- Email: [test account email]
-- Password: [test account password]
+- Email: demo@doxxy.in
+- Password: `DoxxyDemo2024!`
 - Role: superadmin (has access to Clinic → WhatsApp settings)
 
-If the test account does not have a WhatsApp number pre-connected, the reviewer will need to complete the Embedded Signup flow themselves. Ensure the test Facebook account has access to a WhatsApp Business Account with a phone number that can receive SMS verification codes.]
+This account has a pre-connected WhatsApp Business number ready for testing. The reviewer can immediately send test messages without going through Embedded Signup. If the reviewer prefers to test the full Embedded Signup flow, they can disconnect and reconnect using their own Facebook account with access to a WhatsApp Business Account.
 
 ---
 
@@ -185,7 +191,7 @@ If the test account does not have a WhatsApp number pre-connected, the reviewer 
 
 ### geo-web-5: Geographic restrictions
 
-**Answer:** Not applicable. Doxxy is accessible globally without geo-blocking or geo-fencing. The app serves healthcare clinics in India, but there are no technical restrictions preventing access from other locations.
+**Answer:** Not applicable. Doxxy operates exclusively in India. The platform is intended for healthcare clinics and patients located within the Republic of India. Patient data is stored on servers in India (Mumbai region) and is governed by India's Digital Personal Data Protection Act, 2023 (DPDP Act). Doxxy is not intended for use outside Indian jurisdiction.
 
 ---
 
@@ -254,7 +260,7 @@ Three screencasts required, one per permission group:
 **Flow (Part B — Template & Opt-out):**
 
 8. Back in Doxxy, after marking an appointment complete, show the **Send Feedback Request** button
-9. Click it — show the template message being sent (`review_request` template)
+9. Click it — show the template message being sent (`feedback_survey_1` template)
 10. Show the patient's phone receiving the feedback request message
 11. Show the opt-out: patient replies "STOP" from their phone
 12. Explain: the webhook at `/api/webhooks/whatsapp` receives this, marks the patient as opted out, and blocks all future messages
@@ -280,7 +286,9 @@ Doxxy is a SaaS clinic management platform. Healthcare clinics subscribe to Doxx
 
 **Answer:**
 
-Doxxy receives WhatsApp access tokens and WABA phone number IDs from Meta when a clinic connects their WhatsApp Business Account through Doxxy's Embedded Signup flow. We store these credentials on the clinic's behalf and use them only to send WhatsApp messages that the clinic's own staff trigger — such as sending a patient their visit summary as a PDF or a post-consultation feedback message. The credentials are never shared, sold, or used for Doxxy's own purposes. Each clinic's credentials are isolated via database-level access controls so one clinic cannot access another's WhatsApp account. Clinics use this integration to communicate with their own patients from their own WhatsApp Business number, with their clinic name displayed as the sender.
+Doxxy receives WhatsApp access tokens and WABA phone number IDs from Meta when a clinic connects their WhatsApp Business Account through Doxxy's Embedded Signup flow. We store these credentials on the clinic's behalf and use them only to send WhatsApp messages that the clinic's own staff trigger — such as sending a patient their visit summary as a PDF or a post-consultation feedback message. The credentials are never shared, sold, or used for Doxxy's own purposes. Each clinic's credentials are isolated via database-level access controls so one clinic cannot access another's WhatsApp account. There is no platform-level fallback sender — if a clinic's credentials fail, the message is rejected with an error. Clinics use this integration to communicate with their own patients from their own WhatsApp Business number, with their clinic name displayed as the sender.
+
+Doxxy operates exclusively in India. All patient data is stored on servers in India (Mumbai region) and is governed by India's Digital Personal Data Protection Act, 2023 (DPDP Act). The platform is a product of Supersite Technologies Private Limited, a company incorporated under the Companies Act, 2013 (India).
 
 ---
 

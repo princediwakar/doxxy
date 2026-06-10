@@ -81,7 +81,7 @@ const tenQuestions: QuestionItem[] = [
     why: "500M+ Indians use WhatsApp. Your patients already have it. A clinic software without WhatsApp integration means your receptionist manually calls every patient for reminders. That's 2-3 hours of wasted labor daily.",
     lookFor: [
       "Automated WhatsApp appointment reminders",
-      "WhatsApp prescription delivery to patients",
+      "Digital treatment plan sharing with patients",
       "WhatsApp lab report sharing",
       "Two-way WhatsApp messaging with patients",
     ],

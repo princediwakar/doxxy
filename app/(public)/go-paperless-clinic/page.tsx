@@ -309,11 +309,11 @@ export default function GoPaperlessClinic() {
             </div>
             <div className="p-6">
               <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                By week 3, extend digital prescriptions and billing to existing patients as well — even if their full medical history is still on paper. The doctor writes the prescription digitally. The bill is auto-calculated from the consultation notes. The patient gets their prescription on WhatsApp. The paper file still exists, but it is now a reference document, not the active record. This is the phase where your staff starts to feel the time savings: no more manual bill calculations, no more deciphering handwriting for the pharmacist.
+                By week 3, extend digital prescriptions and billing to existing patients as well — even if their full medical history is still on paper. The doctor writes the prescription digitally. The bill is auto-calculated from the consultation notes. The patient gets their treatment plan digitally. The paper file still exists, but it is now a reference document, not the active record. This is the phase where your staff starts to feel the time savings: no more manual bill calculations, no more deciphering handwriting for the pharmacist.
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Button variant="outline" size="sm" asChild className="text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800">
-                  <Link href="/digital-prescription-software">Digital Prescription Software <ArrowRight className="ml-1 h-3 w-3" /></Link>
+                  <Link href="/digital-treatment-plans">Digital Prescription Software <ArrowRight className="ml-1 h-3 w-3" /></Link>
                 </Button>
                 <Button variant="outline" size="sm" asChild className="text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800">
                   <Link href="/clinic-billing-software">Clinic Billing <ArrowRight className="ml-1 h-3 w-3" /></Link>
@@ -457,7 +457,7 @@ export default function GoPaperlessClinic() {
               <li className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center text-xs font-bold text-green-600 dark:text-green-400">4</span>
                 <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">Prescription auto-generated, sent via WhatsApp</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Treatment plan auto-generated, shared digitally</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Crystal clear. 13 Indian languages. Patient never loses it. ~30 sec.</p>
                 </div>
               </li>
@@ -518,7 +518,7 @@ export default function GoPaperlessClinic() {
               </tr>
               <tr>
                 <td className="p-4 text-gray-700 dark:text-gray-300 bg-red-50/30 dark:bg-red-950/10">Handwritten prescriptions — legibility risk with every script</td>
-                <td className="p-4 text-gray-700 dark:text-gray-300 bg-green-50/30 dark:bg-green-950/10">Digital prescriptions printed or sent via WhatsApp in 13 Indian languages</td>
+                <td className="p-4 text-gray-700 dark:text-gray-300 bg-green-50/30 dark:bg-green-950/10">Digital treatment plans printed or shared digitally in 13 Indian languages</td>
               </tr>
               <tr>
                 <td className="p-4 text-gray-700 dark:text-gray-300 bg-red-50/30 dark:bg-red-950/10">Files lost or damaged every monsoon; no backup exists</td>

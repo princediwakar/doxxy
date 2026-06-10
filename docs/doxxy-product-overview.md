@@ -123,7 +123,7 @@ Online booking, shorter wait times, automated reminders, and fast digital check-
 Add doctors, locations, and patients **without changing your plan or paying more per user**. Pricing scales with patient volume, not team size.
 
 ### Bank-Level Security
-Encryption at rest and in transit via AES-256 and TLS. Role-based access control. Row-level security isolating each clinic's data. Automated daily backups with point-in-time recovery. Built on Supabase, a SOC 2 and GDPR-compliant cloud platform.
+Encryption at rest and in transit via AES-256 and TLS. Role-based access control. Row-level security isolating each clinic's data. Automated daily backups with point-in-time recovery. Built on Supabase, with data residency in India.
 
 ### Always Available
 **99.9% uptime.** Hosted on Supabase cloud infrastructure with geographic redundancy. Technical support via email.
@@ -172,7 +172,7 @@ Full PWA support with manifest, service worker, and app icons. Install Doxxy on 
 | Standard | Status |
 |---|---|
 | India DPDP Act 2023 | Compliant |
-| Supabase (infrastructure) | SOC 2 & GDPR compliant |
+| Supabase (infrastructure) | India data residency |
 
 **Security features:**
 - AES-256 encryption at rest and in transit

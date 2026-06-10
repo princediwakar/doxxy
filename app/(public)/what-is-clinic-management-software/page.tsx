@@ -77,12 +77,12 @@ const coreModules = [
   {
     icon: FileText,
     title: 'Digital Prescriptions',
-    description: 'Type or dictate prescriptions. Instead of: Handwritten Rx that pharmacists call to clarify. You get: Typed in 60 seconds. Drug interaction checks. Template for common conditions. 13 Indian language support. Auto-saved to patient record. Share via WhatsApp.',
+    description: 'Type or dictate prescriptions. Instead of: Handwritten Rx that pharmacists call to clarify. You get: Typed in 60 seconds. Drug interaction checks. Template for common conditions. 13 Indian language support. Auto-saved to patient record. Share digitally with patients.',
   },
   {
     icon: MessageCircle,
     title: 'WhatsApp Patient Communication',
-    description: 'Automated patient communication. Instead of: Receptionist making 40 phone calls every evening (45-60 minutes, half go unanswered). You get: WhatsApp reminders with 98% open rate. Prescription and lab report delivery via WhatsApp. Two-way chat with patients. No-show rate drops by 35%.',
+    description: 'Automated patient communication. Instead of: Receptionist making 40 phone calls every evening (45-60 minutes, half go unanswered). You get: WhatsApp reminders with 98% open rate. Treatment plan and lab report sharing. Two-way chat with patients. No-show rate drops by 35%.',
   },
   {
     icon: BarChart3,
