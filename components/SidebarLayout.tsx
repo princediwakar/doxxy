@@ -12,7 +12,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "hidden lg:flex lg:flex-col fixed left-0 top-0 h-screen z-40 transition-all duration-300 bg-background border-r border-border",
-          isCollapsed ? "lg:w-16" : "lg:w-64"
+          isCollapsed ? "lg:w-16" : "lg:w-56"
         )}
       >
         {/* We removed the absolute floating button and passed the toggle as a prop */}
@@ -25,10 +25,10 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "flex-1 mt-14 lg:mt-0 pb-24 lg:pb-0 min-w-0 overflow-hidden bg-background transition-all duration-300",
-          isCollapsed ? "lg:ml-16" : "lg:ml-64"
+          isCollapsed ? "lg:ml-16" : "lg:ml-56"
         )}
       >
-        <main className="md:p-6 mx-auto min-h-screen max-w-full overflow-x-hidden flex flex-col">
+        <main className="md:p-4 mx-auto min-h-screen max-w-full overflow-x-hidden flex flex-col">
           {children}
         </main>
       </div>

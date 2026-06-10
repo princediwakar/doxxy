@@ -84,7 +84,7 @@ export function UpcomingAppointmentsList({
           </div>
         ) : (
           <>
-            <div className="space-y-2">
+            <div className="space-y-1">
               {paginatedAppointments.map((appointment) => (
                 <div
                   key={appointment.id}

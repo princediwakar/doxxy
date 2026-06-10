@@ -1,6 +1,6 @@
 // Path: app/(app)/patients/page.tsx
 import { getAuthenticatedUser, getActiveClinic } from '@/lib/auth-server';
-import { getPatientsByClinic, queryPatientDetail } from '@/lib/queries/patients';
+import { queryPatientDetail, queryPatientSearch } from '@/lib/queries/patients';
 import { PatientsPageClient } from './PatientsPageClient';
 
 export default async function PatientsPage({
@@ -15,7 +15,9 @@ export default async function PatientsPage({
   const params = await searchParams;
   const selectedPatientId = params.patient || null;
 
-  const initialPatients = clinicId ? await getPatientsByClinic(clinicId) : [];
+  const initialData = clinicId
+    ? await queryPatientSearch(clinicId, "", { page: 1 })
+    : { patients: [], totalCount: 0 };
 
   let initialPatientDetail = null;
   if (clinicId && selectedPatientId) {
@@ -26,7 +28,8 @@ export default async function PatientsPage({
 
   return (
     <PatientsPageClient
-      serverPatients={initialPatients}
+      initialPatients={initialData.patients}
+      totalPatientCount={initialData.totalCount}
       initialPatientId={selectedPatientId}
       initialPatientDetail={initialPatientDetail}
     />

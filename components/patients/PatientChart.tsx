@@ -1,14 +1,18 @@
+// components/patients/PatientChart.tsx
 "use client";
 
 import { useCallback, Suspense, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   CalendarPlus,
+  Calendar,
   Edit,
+  Mail,
   Phone,
   MapPin,
   Hash,
 } from "lucide-react";
+import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { BillingSection } from "@/components/schedule/BillingSection";
 import { ConsultationHistory } from "@/components/schedule/ConsultationHistory";
@@ -103,8 +107,19 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
       <div className="bg-card rounded-xl border p-6">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-xl font-semibold truncate">{patient.name}</h2>
-            <p className="text-sm text-muted-foreground mt-1">{demographic}</p>
+            <div className="flex items-center gap-3 mb-2">
+              {(() => {
+                const g = (patient.gender || "").toLowerCase();
+                const color = g === "male" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : g === "female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" : "bg-primary/10 text-primary";
+                return (
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${color}`}>
+                    <span className="text-sm font-semibold">{patient.name?.[0]?.toUpperCase() || "?"}</span>
+                  </div>
+                );
+              })()}
+              <h2 className="text-xl font-semibold truncate">{patient.name}</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">{demographic}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="sm" onClick={handleEdit}>
@@ -125,6 +140,12 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
               {patient.phone}
             </div>
           )}
+          {patient.email && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Mail className="h-3.5 w-3.5" />
+              <span className="truncate">{patient.email}</span>
+            </div>
+          )}
           {patient.address && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <MapPin className="h-3.5 w-3.5" />
@@ -135,6 +156,12 @@ export function PatientChart({ patientDetail }: PatientChartProps) {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Hash className="h-3.5 w-3.5" />
               UHID: {patient.uhid}
+            </div>
+          )}
+          {patient.created_at && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-3.5 w-3.5" />
+              Created on: {format(parseISO(patient.created_at), "MMM dd, yyyy")}
             </div>
           )}
         </div>

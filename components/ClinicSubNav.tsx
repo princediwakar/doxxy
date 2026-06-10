@@ -19,7 +19,7 @@ export default function ClinicSubNav() {
   const pathname = usePathname();
 
   return (
-    <div className="border-b mb-6">
+    <div className="border-b mb-4">
       <nav className="-mb-px flex space-x-6 overflow-x-auto [&::-webkit-scrollbar]:hidden">
         {subNavItems.map((item) => {
           const isActive = pathname === item.path || pathname.startsWith(item.path + "/");

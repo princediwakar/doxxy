@@ -3,7 +3,7 @@
 
 import { useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Clock, User, ChevronRight, Circle } from "lucide-react";
+import { Clock, ChevronRight, Circle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { toast } from "sonner";
 import { formatTimeIST, cn } from "@/lib/utils";
@@ -66,7 +66,7 @@ function QueueSection({
   if (appointments.length === 0) return null;
 
   return (
-    <div className="mb-4">
+    <div className="mb-3">
       <div
         className={`flex items-center gap-2 px-3 py-1.5 ${bg} rounded-md mb-2`}
       >
@@ -84,15 +84,21 @@ function QueueSection({
             data-testid="patient-card"
             onClick={() => onAppointmentClick(app)}
             className={cn(
-              "w-full text-left px-3 py-2.5 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
+              "w-full text-left px-3 py-2 rounded-lg hover:bg-muted/50 flex items-center justify-between group transition-colors",
               selectedAppointmentId === app.id &&
               "bg-primary/10 ring-1 ring-primary/20",
             )}
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <User className="h-4 w-4 text-primary" />
-              </div>
+              {(() => {
+                const g = (app.patient_gender || "").toLowerCase();
+                const color = g === "male" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : g === "female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" : "bg-primary/10 text-primary";
+                return (
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${color}`}>
+                    <span className="text-[10px] font-semibold">{app.patient_name?.[0]?.toUpperCase() || "?"}</span>
+                  </div>
+                );
+              })()}
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">
                   {app.patient_name}

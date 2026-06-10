@@ -122,7 +122,11 @@ export const PatientSelect: React.FC<PatientSelectProps> = ({
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{p.name}</span>
                             {formatDemographics(p.age, p.gender) && (
-                              <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm uppercase tracking-wide font-medium">
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-sm uppercase tracking-wide font-medium ${
+                                (p.gender || "").toLowerCase() === "male" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" :
+                                (p.gender || "").toLowerCase() === "female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" :
+                                "bg-muted text-muted-foreground"
+                              }`}>
                                 {formatDemographics(p.age, p.gender)}
                               </span>
                             )}

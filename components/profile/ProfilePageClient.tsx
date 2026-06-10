@@ -82,7 +82,7 @@ export default function ProfilePageClient({
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-10 px-4" data-testid="profile-page">
+    <div className="max-w-5xl mx-auto space-y-8 p-4 pb-10" data-testid="profile-page">
       
       {/* Hero Identity Section */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 pb-6 border-b border-border">

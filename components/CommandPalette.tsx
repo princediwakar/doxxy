@@ -80,7 +80,7 @@ export function CommandPalette() {
     (patientId: string) => {
       setOpen(false);
       setQuery("");
-      router.push(`/patients/${patientId}`);
+      router.push(`/patients?patient=${patientId}`);
     },
     [router],
   );
@@ -155,15 +155,21 @@ export function CommandPalette() {
                 <button
                   key={patient.id}
                   onClick={() => handleSelect(patient.id)}
-                  className="flex items-center gap-4 w-full rounded-lg px-3 py-3 text-left hover:bg-accent active:bg-accent touch-manipulation transition-colors"
+                  className="flex items-center gap-4 w-full rounded-lg px-3 py-2.5 text-left hover:bg-accent active:bg-accent touch-manipulation transition-colors"
                 >
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-sm">
-                    {patient.name ? (
-                      getInitials(patient.name)
-                    ) : (
-                      <User className="h-5 w-5" />
-                    )}
-                  </div>
+                  {(() => {
+                    const g = (patient.gender || "").toLowerCase();
+                    const color = g === "male" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : g === "female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" : "bg-primary/10 text-primary";
+                    return (
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-medium text-sm ${color}`}>
+                        {patient.name ? (
+                          getInitials(patient.name)
+                        ) : (
+                          <User className="h-5 w-5" />
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="flex flex-col min-w-0">
                     <span className="text-sm font-semibold truncate">
                       {patient.name}
@@ -220,16 +226,22 @@ export function CommandPalette() {
                 key={patient.id}
                 value={`${patient.name} ${patient.id} ${patient.phone || ""} ${patient.email || ""}`}
                 onSelect={() => handleSelect(patient.id)}
-                className="flex items-center justify-between py-3"
+                className="flex items-center justify-between py-2.5"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-medium text-xs">
-                    {patient.name ? (
-                      getInitials(patient.name)
-                    ) : (
-                      <User className="h-4 w-4" />
-                    )}
-                  </div>
+                  {(() => {
+                    const g = (patient.gender || "").toLowerCase();
+                    const color = g === "male" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : g === "female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" : "bg-primary/10 text-primary";
+                    return (
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-medium text-xs ${color}`}>
+                        {patient.name ? (
+                          getInitials(patient.name)
+                        ) : (
+                          <User className="h-4 w-4" />
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold">{patient.name}</span>
                     <span className="text-xs text-muted-foreground">

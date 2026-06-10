@@ -9,7 +9,7 @@ export default function AppCreateClinicPage() {
   const router = useRouter();
 
   return (
-    <div className="max-w-3xl mx-auto py-8">
+    <div className="max-w-3xl mx-auto py-8 px-4">
       <ErrorBoundary>
         <CreateClinicForm
           onSuccess={() => router.push('/schedule')}

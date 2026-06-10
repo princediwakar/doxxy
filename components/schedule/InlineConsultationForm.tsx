@@ -232,7 +232,7 @@ export function InlineConsultationForm({
             sectionIndex={index}
             form={form}
             canEditConsultation={!!canEditConsultation}
-            isExpanded={expandedSections[section.title] ?? index === 0}
+            isExpanded={expandedSections[section.title] ?? true}
             onToggle={() =>
               setExpandedSections((prev) => ({
                 ...prev,

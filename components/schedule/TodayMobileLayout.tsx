@@ -18,9 +18,9 @@ export function TodayMobileLayout({
 }: TodayMobileLayoutProps) {
   return (
     <>
-      <div className="hidden lg:flex flex-1 min-h-0 gap-6">
-        <div className="w-1/3 flex flex-col min-h-0">{queue}</div>
-        <div className="w-2/3 border rounded-lg bg-muted/5 p-4 overflow-y-auto min-h-0">
+      <div className="hidden lg:flex flex-1 min-h-0 gap-4">
+        <div className="w-[30%] flex flex-col min-h-0">{queue}</div>
+        <div className="flex-1 border rounded-lg bg-muted/5 p-3 overflow-y-auto min-h-0">
           {detail}
         </div>
       </div>
@@ -42,7 +42,7 @@ export function TodayMobileLayout({
             </div>
           </div>
         ) : (
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 p-4">
             {queue}
           </div>
         )}

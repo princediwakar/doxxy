@@ -61,6 +61,15 @@ export function PatientHeader({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            {(() => {
+              const g = (gender || "").toLowerCase();
+              const color = g === "male" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : g === "female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" : "bg-primary/10 text-primary";
+              return (
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${color}`}>
+                  <span className="text-xs font-semibold">{name?.[0]?.toUpperCase() || "?"}</span>
+                </div>
+              );
+            })()}
             <h2 className="text-lg font-semibold truncate">{name}</h2>
             {status && <Badge className={STATUS_COLORS[status] ?? "bg-muted text-foreground"}>{status}</Badge>}
           </div>

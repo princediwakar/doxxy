@@ -33,7 +33,7 @@ export default function PharmacyPageClient({
   useRealtimeSubscription({ table: "procurements", clinicId: activeClinicId ?? "", queryKeys: pharmacyQueryKeys, onChange: () => router.refresh() });
 
   return (
-    <div className="space-y-6 px-4">
+    <div className="space-y-6 p-4">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">

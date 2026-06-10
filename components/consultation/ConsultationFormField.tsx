@@ -60,7 +60,7 @@ export const ConsultationFormField = memo(({
 }: ConsultationFormFieldProps) => {
   const isMandatory = fieldConfig.mandatory || false;
   const hasValue = useMemo(() => hasFieldValue(value), [value]);
-  const [isExpanded, setIsExpanded] = useState(isMandatory || fieldIndex === 0 || hasValue);
+  const [isExpanded, setIsExpanded] = useState(isMandatory || fieldIndex === 0 || hasValue || fieldConfig.type === 'prescription');
 
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);

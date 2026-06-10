@@ -15,8 +15,7 @@ export default async function ClinicLayout({
   }
 
   return (
-    // FIX: Enforced padding across all screen sizes (px-4 md:px-8)
-    <div className="flex flex-col w-full max-w-7xl mx-auto px-4 md:px-8 py-6">
+    <div className="flex flex-col w-full max-w-7xl mx-auto p-4">
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Clinic Settings</h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -26,7 +25,7 @@ export default async function ClinicLayout({
 
       <ClinicSubNav />
 
-      <div className="w-full pt-4">
+      <div className="w-full pt-2">
         {children}
       </div>
     </div>

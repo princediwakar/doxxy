@@ -63,24 +63,25 @@ export function TodayQueueView({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden h-full lg:border lg:rounded-lg lg:bg-muted/5">
-      <div className="flex-1 overflow-y-auto p-4">
+    <div className="flex flex-col overflow-hidden h-full">
+      <div className="flex-1 overflow-y-auto">
         {hasDoctors ? (
           <>
-            <div className="flex items-center justify-between gap-3 mb-4 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted shrink-0">
-                  <CalendarCheck className="w-5 h-5" />
-                </div>
-                <h1 className="text-2xl font-bold">Schedule</h1>
-              </div>
-              <Button onClick={() => openModal("patient-new")} className="gap-2 bg-primary shrink-0">
-                <Plus className="w-4 h-4" />
-                New Patient
-              </Button>
-            </div>
-
             <div className="mb-4 shrink-0">
+              <div className="flex items-center justify-between lg:flex-col lg:items-stretch xl:flex-row xl:items-center xl:justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted shrink-0">
+                    <CalendarCheck className="w-5 h-5" />
+                  </div>
+                  <h1 className="text-2xl font-bold">Schedule</h1>
+                </div>
+                <Button onClick={() => openModal("patient-new")} size="sm" className="gap-1.5 bg-primary shrink-0 lg:w-full xl:w-auto">
+                  <Plus className="w-4 h-4" />
+                  New Patient
+                </Button>
+              </div>
+
+              <div className="shrink-0">
               <Select
                 value={doctorFilter ?? "all"}
                 onValueChange={handleDoctorChange}
@@ -105,6 +106,7 @@ export function TodayQueueView({
                     ))}
                 </SelectContent>
               </Select>
+            </div>
             </div>
 
             <TodayPatientList

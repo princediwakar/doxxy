@@ -1,7 +1,7 @@
 // Path: app/(app)/patients/PatientsPageClient.tsx
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { PersonStanding, Plus, Search, X, ArrowLeft } from "lucide-react";
@@ -17,13 +17,15 @@ import type { DbPatientByClinic, PatientDetail } from "@/types/core";
 import type { Patient } from "@/types/patients";
 
 interface PatientsPageClientProps {
-  serverPatients: DbPatientByClinic[];
+  initialPatients: DbPatientByClinic[];
+  totalPatientCount: number;
   initialPatientId: string | null;
   initialPatientDetail: PatientDetail | null;
 }
 
 export function PatientsPageClient({
-  serverPatients,
+  initialPatients,
+  totalPatientCount,
   initialPatientId,
   initialPatientDetail,
 }: PatientsPageClientProps) {
@@ -41,11 +43,97 @@ export function PatientsPageClient({
   const [isNewPatientModalOpen, setIsNewPatientModalOpen] = useState(false);
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false);
 
-  const patients = searchResults ?? serverPatients;
+  // ── Pagination state ──
+  const [allPatients, setAllPatients] = useState<DbPatientByClinic[]>(initialPatients);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const hasMore = allPatients.length < totalPatientCount;
+
+  // ── Refs ──
+  const hasMoreRef = useRef(hasMore);
+  const currentPageRef = useRef(currentPage);
+  const activeClinicIdRef = useRef(activeClinicId);
+  const isLoadingMoreRef = useRef(false);
+  
+  // The crucial ref that explicitly tracks your scrolling middle column
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+
+  hasMoreRef.current = hasMore;
+  currentPageRef.current = currentPage;
+  activeClinicIdRef.current = activeClinicId;
+
+  // ── Intelligent Realtime Merge ──
+  useEffect(() => {
+    setAllPatients((prev) => {
+      // If no scrolling has happened, accept the fresh Page 1 payload entirely
+      if (currentPageRef.current === 1) return initialPatients;
+
+      // If user has scrolled, merge the fresh Page 1 data with the older, accumulated data
+      const freshPageOneIds = new Set(initialPatients.map((p) => p.id));
+      const olderPatients = prev.filter((p) => !freshPageOneIds.has(p.id));
+      return [...initialPatients, ...olderPatients];
+    });
+  }, [initialPatients]);
+
+  // ── Infinite Scroll Execution ──
+  const loadMore = useCallback(async () => {
+    if (!hasMoreRef.current || isLoadingMoreRef.current) return;
+    
+    isLoadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    
+    try {
+      const nextPage = currentPageRef.current + 1;
+      const result = await queryPatientSearch(activeClinicIdRef.current ?? "", "", { page: nextPage });
+      
+      setAllPatients((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const newPatients = result.patients.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...newPatients];
+      });
+      setCurrentPage(nextPage);
+    } catch (error) {
+      console.error("🚨 [loadMore] API CALL FAILED:", error); // Do not silence this
+    } finally {
+      isLoadingMoreRef.current = false;
+      setIsLoadingMore(false);
+    }
+  }, []);
+
+  // ── Observer Registration ──
   const isSearchActive = searchQuery.trim().length > 0;
+
+  const sentinelRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+      
+      if (!node || isSearchActive) return;
+
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            loadMore();
+          }
+        },
+        { 
+          // Hard-wired to your specific layout column
+          root: scrollContainerRef.current, 
+          rootMargin: "100px" 
+        }
+      );
+      
+      observerRef.current.observe(node);
+    },
+    [isSearchActive, loadMore]
+  );
+
+  // ── Compute visible patients ──
   const isInitialPatient = selectedPatientId === initialPatientId;
 
-  // ── React Query: detail for selected patient ──
   const { data: remoteDetail, isLoading: isLoadingDetail } = useQuery({
     queryKey: ["patient", selectedPatientId, "detail"],
     queryFn: () => queryPatientDetail(activeClinicId ?? "", selectedPatientId!),
@@ -57,6 +145,17 @@ export function PatientsPageClient({
     isInitialPatient ? initialPatientDetail :
     selectedPatientId && selectedPatientId !== initialPatientId ? (remoteDetail ?? null) :
     null;
+
+  const patients = useMemo(() => {
+    if (isSearchActive) return searchResults ?? [];
+
+    const list = [...allPatients];
+    if (selectedPatientId && patientDetail?.patient && !list.some((p) => p.id === selectedPatientId)) {
+      list.unshift(patientDetail.patient);
+    }
+
+    return list;
+  }, [isSearchActive, searchResults, allPatients, selectedPatientId, patientDetail]);
 
   // ── Realtime ──
   const patientsQueryKeys = useMemo(
@@ -88,7 +187,7 @@ export function PatientsPageClient({
         const result = await queryPatientSearch(activeClinicId ?? "", searchQuery);
         setSearchResults(result.patients);
       } catch {
-        // queryPatientSearch throws on error — leave results unchanged
+        // Leave results unchanged
       } finally {
         setIsSearching(false);
       }
@@ -135,7 +234,7 @@ export function PatientsPageClient({
       <div className="relative mb-4 shrink-0">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
-          placeholder="Search patients by name..."
+          placeholder="Search patients..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9 pr-9"
@@ -150,7 +249,8 @@ export function PatientsPageClient({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* THE CONTAINER: ref explicitly attached here */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
         {isSearching ? (
           <div className="flex justify-center py-12">
             <Spinner />
@@ -168,13 +268,22 @@ export function PatientsPageClient({
               <button
                 key={patient.id}
                 onClick={() => handlePatientClick(patient.id)}
-                className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                className={`w-full text-left px-3 py-2 rounded-lg transition-colors flex items-center gap-3 ${
                   patient.id === selectedPatientId
-                    ? "bg-primary/10 border-primary/30"
-                    : "bg-card hover:bg-accent"
+                    ? "bg-primary/10 ring-1 ring-primary/20"
+                    : "hover:bg-muted/50"
                 }`}
               >
-                <div className="flex justify-between items-start">
+                {(() => {
+                  const g = (patient.gender || "").toLowerCase();
+                  const color = g === "male" ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : g === "female" ? "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400" : "bg-primary/10 text-primary";
+                  return (
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${color}`}>
+                      <span className="text-[10px] font-semibold">{patient.name?.[0]?.toUpperCase() || "?"}</span>
+                    </div>
+                  );
+                })()}
+                <div className="flex justify-between items-start min-w-0 flex-1">
                   <div className="min-w-0">
                     <p className="font-medium truncate">{patient.name}</p>
                     <p className="text-sm text-muted-foreground truncate">
@@ -189,6 +298,18 @@ export function PatientsPageClient({
                 </div>
               </button>
             ))}
+            
+            {hasMore && !isSearchActive && (
+              <div ref={sentinelRef} className="flex justify-center py-2">
+                {isLoadingMore ? (
+                  <Spinner />
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={loadMore}>
+                    Load More
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -228,7 +349,6 @@ export function PatientsPageClient({
         </div>
       </div>
 
-      {/* Mobile: toggle */}
       <div className="flex lg:hidden flex-1 min-h-0 flex-col">
         {mobileDetailOpen ? (
           <div className="flex flex-col h-full">
