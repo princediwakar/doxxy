@@ -30,7 +30,7 @@ const LayoutServer = ({
       serverActiveClinicId={serverActiveClinicId}
     >
       <TooltipProvider delayDuration={150} skipDelayDuration={0} disableHoverableContent>
-        <div className="flex min-h-screen bg-muted/90">
+        <div className="flex h-full overflow-hidden bg-muted/90">
           <MobileHeader />
 
           <SidebarLayout>

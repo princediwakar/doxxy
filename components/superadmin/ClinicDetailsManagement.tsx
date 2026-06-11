@@ -197,7 +197,7 @@ const ClinicDetailsManagement = () => {
   }
 
   return (
-    <div className="space-y-6 px-4 md:px-0 w-full max-w-full overflow-hidden">
+    <div className="space-y-6 px-4 sm:px-6 w-full max-w-full overflow-hidden">
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
@@ -236,7 +236,7 @@ const ClinicDetailsManagement = () => {
               ))}
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-6 border border-border rounded-lg p-4 md:p-6 w-full max-w-full overflow-hidden">
+            <form onSubmit={handleSubmit} className="space-y-6 border border-border rounded-lg p-4 sm:p-6 w-full max-w-full overflow-hidden">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {/* Clinic Name */}
                 <div className="space-y-2">

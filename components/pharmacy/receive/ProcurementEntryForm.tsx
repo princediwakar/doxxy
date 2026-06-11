@@ -1,4 +1,4 @@
-// components/pharamacy/ProcurementEntrySheet.tsx
+// components/pharamacy/ProcurementEntryForm.tsx
 "use client";
 import { logger } from "@/lib/logger";
 import React, { useEffect, useRef, useState } from "react";
@@ -11,29 +11,21 @@ import { queryKeys } from "@/lib/query-keys";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { procurementSchema, ProcurementFormValues } from "@/types/pharmacy";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UploadCloud, Save, Loader2, Sparkles, X, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { SupplierFields } from "./SupplierFields";
-import { ProcurementItemsTable } from "./ProcurementItemsTable";
+import { SupplierFields } from "../SupplierFields";
+import { ProcurementItemsTable } from "../ProcurementItemsTable";
 
-interface ProcurementEntrySheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface ProcurementEntryFormProps {
+  onCancel: () => void;
+  initialFile?: File;
 }
 
-export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySheetProps) {
+export function ProcurementEntryForm({ onCancel, initialFile }: ProcurementEntryFormProps) {
   const { activeClinicId, user } = useAppState();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -171,9 +163,23 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
     name: "items",
   });
 
+
+  // Auto-process a file dropped via SmartInventoryDropzone
+  const initialFileProcessed = useRef(false);
   useEffect(() => {
-    if (open) resetExtraction();
-  }, [open]);
+    if (initialFile && !initialFileProcessed.current && activeClinicId) {
+      initialFileProcessed.current = true;
+      (async () => {
+        try {
+          const url = await uploadBillImage(initialFile, activeClinicId);
+          await handleExtract(url);
+        } catch {
+          // uploadBillImage already toasts on error
+        }
+      })();
+    }
+    
+  }, [initialFile, activeClinicId]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -209,33 +215,18 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
       onSuccess: () => {
         form.reset();
         resetExtraction();
-        onOpenChange(false);
+        onCancel();
       },
     });
   };
   const unmappedCount = fields.filter((_, i) => !form.watch(`items.${i}.medicine_id`)).length;
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="bottom"
-        className="h-[95vh] rounded-t-xl sm:max-w-none flex flex-col p-0 border-t-0 shadow-2xl [&>button:last-of-type]:hidden"
-      >
-        <div className="flex flex-col h-full bg-background">
-          <SheetHeader className="px-6 py-4 border-b bg-card">
+    <div className="flex flex-col h-full w-full animate-in fade-in duration-300">
+      <div className="flex-none p-4 sm:p-6 border-b border-border/50 bg-background/50">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div>
-                <SheetTitle className="text-xl flex items-center gap-2">
-                  <SheetClose asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="shrink-0 -ml-2"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </SheetClose>
-                  Add New Stock
+                <h2 className="text-xl font-semibold flex items-center gap-2 text-foreground tracking-tight">
+                  Invoice Details
                   {isExtracting && (
                     <Badge
                       variant="secondary"
@@ -256,26 +247,12 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                       {extractionStats.matched}/{extractionStats.total} matched
                     </Badge>
                   )}
-                </SheetTitle>
-                <SheetDescription>
+                </h2>
+                <p className="text-sm text-muted-foreground">
                   Add new medicines to your stock. Upload a bill image to auto-fill details.
-                </SheetDescription>
+                </p>
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 w-full sm:w-auto">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading || isExtracting}
-                  className="w-full sm:w-auto justify-center bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-200"
-                >
-                  {isUploading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <UploadCloud className="w-4 h-4 mr-2" />
-                  )}
-                  Scan Bill
-                </Button>
                 <Input
                   ref={fileInputRef}
                   type="file"
@@ -283,16 +260,6 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                   className="hidden"
                   onChange={handleFileUpload}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => cameraInputRef.current?.click()}
-                  disabled={isUploading || isExtracting}
-                  className="w-full sm:w-auto justify-center md:hidden"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Take Photo
-                </Button>
                 <Input
                   ref={cameraInputRef}
                   type="file"
@@ -301,18 +268,6 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                   className="hidden"
                   onChange={handleFileUpload}
                 />
-                <Button
-                  onClick={form.handleSubmit(onSubmit)}
-                  disabled={saveMutation.isPending || isExtracting || isUploading}
-                  className="w-full sm:w-auto justify-center"
-                >
-                  {saveMutation.isPending ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
-                  Save to Stock
-                </Button>
               </div>
             </div>
             {unmappedCount > 0 && fields.length > 0 && !isExtracting && (
@@ -323,13 +278,13 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                 </span>
               </div>
             )}
-          </SheetHeader>
+          </div>
 
-          <ScrollArea className="flex-1 p-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             <form
               id="procurement-form"
               onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-8 max-w-[1400px] mx-auto"
+              className="space-y-8 max-w-5xl mx-auto"
             >
               <SupplierFields form={form} />
               <ProcurementItemsTable
@@ -340,9 +295,43 @@ export function ProcurementEntrySheet({ open, onOpenChange }: ProcurementEntrySh
                 createMedicine={createMedicine}
               />
             </form>
-          </ScrollArea>
+          </div>
+
+          {/* ── Sticky Bottom Footer ──────────────────────────────────────────────── */}
+          <div className="flex-none border-t bg-background px-4 sm:px-6 py-4 flex items-center justify-between gap-6 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center gap-3">
+            <Button type="button" variant="ghost" onClick={onCancel} className="text-muted-foreground hover:text-destructive">
+              Cancel
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="hidden sm:flex border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 text-indigo-600 dark:border-indigo-900/50 dark:hover:bg-indigo-900/30 dark:text-indigo-400 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isExtracting}
+            >
+              {isExtracting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Sparkles className="w-4 h-4 mr-2" />}
+              {isExtracting ? "Scanning AI..." : "Scan Bill"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={isUploading || isExtracting}
+              className="flex sm:hidden"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              Take Photo
+            </Button>
+            <Button type="submit" form="procurement-form" size="default" className="shadow-md bg-foreground text-background hover:bg-foreground/90" disabled={isExtracting || form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Save to Stock
+            </Button>
+          </div>
         </div>
-      </SheetContent>
-    </Sheet>
+    </div>
   );
 }

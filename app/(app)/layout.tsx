@@ -1,3 +1,4 @@
+// app/(app)/layout.tsx
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
@@ -50,7 +51,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       serverProfileName={profileName}
       serverActiveClinicId={activeClinic?.clinic_id ?? null}
     >
-      <main>{children}</main>
+      {children}
     </LayoutServer>
   );
 }

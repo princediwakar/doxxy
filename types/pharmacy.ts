@@ -111,3 +111,83 @@ export const inventoryItemSchema = z.object({
 });
 
 export type InventoryItemFormValues = z.infer<typeof inventoryItemSchema>;
+
+// ============================================================================
+// BULK IMPORT TYPES (Column mapping, state machine, procurement groups)
+// ============================================================================
+
+export type ImportMode = 'opening_balance' | 'single_vendor' | 'multi_vendor';
+
+export type ColumnField =
+  | 'medicineName' | 'batchNo' | 'expiryDate'
+  | 'qty' | 'mrp' | 'purchasePrice'
+  | 'supplierName' | 'invoiceNumber' | 'invoiceDate';
+
+export type ColumnMapping = Record<ColumnField, number | null>;
+
+export interface ParsedFile {
+  headers: string[];
+  rows: string[][];
+  rawRows: (string | number | null)[][];
+}
+
+export interface ValidatedRow {
+  _rowIndex: number;
+  medicineName: string;
+  medicineId?: number | null;
+  batchNo: string;
+  expiryDate: string;
+  qty: number;
+  mrp: number;
+  purchasePrice: number;
+  supplierName?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+}
+
+export interface ErrorRow {
+  _rowIndex: number;
+  rawName: string;
+  errors: string[];
+}
+
+export interface BulkProcurementItem {
+  medicine_name: string;
+  medicine_id?: number | null;
+  batch_number: string;
+  expiry_date: string;
+  quantity: number;
+  unit_price: number;
+  mrp: number;
+  total_price: number;
+}
+
+export interface BulkProcurementGroup {
+  supplier_name: string;
+  invoice_number: string;
+  invoice_date: string;
+  total_amount: number;
+  procurement_type: 'INVOICE' | 'OPENING_BALANCE' | 'RECONCILIATION';
+  items: BulkProcurementItem[];
+}
+
+export interface ImportResult {
+  procurements_created: number;
+  inventory_inserted: number;
+  inventory_updated: number;
+  error?: string;
+}
+
+/**
+ * Discriminated union state machine — flow: Upload → Map → Intent → Validate → Preview.
+ *
+ * Intent is shown only when no Supplier Name column was mapped (AI or manual).
+ * If a supplier column IS mapped, multi-vendor mode is auto-inferred and Intent is skipped.
+ */
+export type ImportStep =
+  | { type: 'upload' }
+  | { type: 'parsing';     parsed: ParsedFile; mapping: ColumnMapping }
+  | { type: 'config';      parsed: ParsedFile; mapping: ColumnMapping }
+  | { type: 'preview';     mode: ImportMode; parsed: ParsedFile; mapping: ColumnMapping; groups: BulkProcurementGroup[]; mergeAll: boolean; validCount: number; errors: ErrorRow[] }
+  | { type: 'importing';   groups: BulkProcurementGroup[] }
+  | { type: 'done';        result: ImportResult };

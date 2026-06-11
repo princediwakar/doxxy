@@ -28,7 +28,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
           isCollapsed ? "lg:ml-16" : "lg:ml-56"
         )}
       >
-        <main className="md:p-4 mx-auto min-h-screen max-w-full overflow-x-hidden flex flex-col">
+        <main className="md:p-4 mx-auto h-full max-w-full overflow-hidden flex flex-col">
           {children}
         </main>
       </div>

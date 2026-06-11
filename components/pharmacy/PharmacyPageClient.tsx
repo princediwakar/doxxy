@@ -3,16 +3,15 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventoryTab } from "@/components/pharmacy/InventoryTab";
 import { ProcurementsHistoryTab } from "@/components/pharmacy/ProcurementsHistoryTab";
-import { ProcurementEntrySheet } from "@/components/pharmacy/ProcurementEntrySheet";
 import { PharmacyNewSale } from "@/components/pharmacy/PharmacyNewSale";
-import { InventoryBulkImport } from "@/components/pharmacy/InventoryBulkImport";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Package, Plus, UploadCloud, AlertTriangle, ShoppingBag, X,
+  Package, AlertTriangle, Plus, ShoppingBag, X,
 } from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
@@ -27,11 +26,11 @@ export default function PharmacyPageClient({
   serverInventory,
   serverProcurements,
 }: PharmacyPageClientProps) {
-  const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);
-  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [alertDismissed, setAlertDismissed] = useState(false);
   const { activeClinicId } = useAppState();
   const router = useRouter();
+
+
 
   const pharmacyQueryKeys = useMemo(
     () => [["pharmacy_inventory"], ["pharmacy_procurements"]] as unknown[][],
@@ -61,7 +60,7 @@ export default function PharmacyPageClient({
   return (
     <div className="space-y-0">
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div className="border-b bg-card px-4 py-5 sm:px-6">
+      <div className="border-b border-border/50 bg-card px-4 py-4 sm:px-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
@@ -77,27 +76,16 @@ export default function PharmacyPageClient({
 
           {/* Actions row */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Primary — walk-in sale */}
             <PharmacyNewSale />
-            {/* Secondary — add via AI scan */}
             <Button
-              id="pharmacy-add-stock-btn"
               variant="outline"
-              onClick={() => setIsEntrySheetOpen(true)}
+              asChild
               className="gap-2 shrink-0"
             >
-              <Plus className="w-4 h-4" />
-              Add Stock
-            </Button>
-            {/* Tertiary — bulk CSV/Excel import */}
-            <Button
-              id="pharmacy-import-btn"
-              variant="ghost"
-              onClick={() => setIsBulkImportOpen(true)}
-              className="gap-2 shrink-0 text-muted-foreground"
-            >
-              <UploadCloud className="w-4 h-4" />
-              Import
+              <Link href="/pharmacy/receive">
+                <Plus className="h-4 w-4" />
+                Add Stock
+              </Link>
             </Button>
           </div>
         </div>
@@ -172,40 +160,49 @@ export default function PharmacyPageClient({
         </div>
       )}
 
-      {/* ── Tabs ────────────────────────────────────────────────────────── */}
-      <div className="px-4 pt-4 sm:px-6">
-        <Tabs defaultValue="inventory" className="w-full">
-          <TabsList className="mb-4">
-            <TabsTrigger value="inventory" className="gap-1.5 text-sm">
-              <Package className="h-3.5 w-3.5" />
-              Stock
-              {serverInventory.length > 0 && (
+      {/* ── Empty State: Hero Dropzone (Day 0 Onboarding) ─────────────────── */}
+      {serverInventory.length === 0 ? (
+        <div className="flex flex-col items-center justify-center px-4 py-20 sm:px-6">
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted/50">
+            <Package className="h-8 w-8 text-muted-foreground/30" />
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight">Welcome to your pharmacy</h2>
+          <p className="mt-2 text-sm text-muted-foreground max-w-sm text-center">
+            Start by scanning a purchase invoice or importing inventory from a spreadsheet.
+          </p>
+          <Button asChild className="mt-8 w-full max-w-xs gap-2">
+            <Link href="/pharmacy/receive">
+              <Plus className="h-4 w-4" /> Add Stock
+            </Link>
+          </Button>
+        </div>
+      ) : (
+        /* ── Tabs (Populated State) ───────────────────────────────────── */
+        <div className="px-4 pt-4 sm:px-6">
+          <Tabs defaultValue="inventory" className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="inventory" className="gap-1.5 text-sm">
+                <Package className="h-3.5 w-3.5" />
+                Stock
                 <Badge variant="secondary" className="ml-1 text-xs h-4 px-1.5 rounded-full">{stats.uniqueSkus}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="procurements" className="gap-1.5 text-sm">
-              <ShoppingBag className="h-3.5 w-3.5" />
-              Purchase Records
-            </TabsTrigger>
-          </TabsList>
+              </TabsTrigger>
+              <TabsTrigger value="procurements" className="gap-1.5 text-sm">
+                <ShoppingBag className="h-3.5 w-3.5" />
+                Purchase Records
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="inventory" className="border-none p-0">
-            <InventoryTab inventory={serverInventory} onOpenBulkImport={() => setIsBulkImportOpen(true)} />
-          </TabsContent>
-          <TabsContent value="procurements" className="border-none p-0">
-            <ProcurementsHistoryTab procurements={serverProcurements} />
-          </TabsContent>
-        </Tabs>
-      </div>
+            <TabsContent value="inventory" className="border-none p-0">
+              <InventoryTab inventory={serverInventory} />
+            </TabsContent>
+            <TabsContent value="procurements" className="border-none p-0">
+              <ProcurementsHistoryTab procurements={serverProcurements} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      )}
 
-      <ProcurementEntrySheet
-        open={isEntrySheetOpen}
-        onOpenChange={setIsEntrySheetOpen}
-      />
-      <InventoryBulkImport
-        open={isBulkImportOpen}
-        onOpenChange={setIsBulkImportOpen}
-      />
+
     </div>
   );
 }

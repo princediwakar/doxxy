@@ -108,7 +108,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} h-dvh overflow-hidden`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

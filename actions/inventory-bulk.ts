@@ -13,6 +13,10 @@ export interface BulkImportRow {
   mrp: number;
   purchasePrice: number;
   mergeWithExisting?: boolean;  // true = add qty to existing batch, false = new batch entry
+  // Procurement metadata — populated when supplier/invoice columns are present in the spreadsheet
+  supplierName?: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;   // YYYY-MM-DD
 }
 
 export interface BulkImportResult {
@@ -22,6 +26,10 @@ export interface BulkImportResult {
   error?: string;
 }
 
+/**
+ * @deprecated Use `saveBulkProcurements` from `actions/inventory.ts` for all new bulk flows.
+ * Retained as a direct inventory-only fallback until the procurement-linked flow is proven stable.
+ */
 export async function bulkImportInventory(input: {
   clinicId: string;
   rows: BulkImportRow[];

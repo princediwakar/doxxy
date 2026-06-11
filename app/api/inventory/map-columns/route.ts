@@ -63,6 +63,9 @@ Map each header to one of these target fields (or null if it doesn't match):
 - qty: Quantity or stock count
 - mrp: MRP, selling price, or retail price
 - purchasePrice: Purchase price, cost price, or rate
+- supplierName: Vendor name, supplier name, or distributor name
+- invoiceNumber: Bill number, invoice number, or reference number
+- invoiceDate: Date of the invoice or bill
 
 Return ONLY valid JSON in this exact shape:
 {
@@ -72,7 +75,10 @@ Return ONLY valid JSON in this exact shape:
     "expiryDate": <column_index_or_null>,
     "qty": <column_index_or_null>,
     "mrp": <column_index_or_null>,
-    "purchasePrice": <column_index_or_null>
+    "purchasePrice": <column_index_or_null>,
+    "supplierName": <column_index_or_null>,
+    "invoiceNumber": <column_index_or_null>,
+    "invoiceDate": <column_index_or_null>
   }
 }
 

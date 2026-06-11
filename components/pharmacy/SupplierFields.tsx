@@ -11,7 +11,7 @@ interface SupplierFieldsProps {
 
 export function SupplierFields({ form }: SupplierFieldsProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border rounded-xl bg-card shadow-sm">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6  rounded-xl bg-card shadow-sm">
       <div className="space-y-2">
         <Label className="text-sm font-semibold text-muted-foreground">Supplier / Dealer</Label>
         <Input {...form.register("supplier_name")} placeholder="Enter supplier name" className="bg-background" />

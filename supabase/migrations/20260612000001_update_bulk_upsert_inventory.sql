@@ -1,10 +1,11 @@
--- Path: supabase/migrations/20260611000004_bulk_upsert_inventory_rpc.sql
--- Atomic bulk inventory upsert. Replaces the serial insert/update loop in inventory-bulk.ts.
--- Handles merge vs. new-batch logic entirely in PostgreSQL. Different expiry = different batch.
+-- Path: supabase/migrations/20260612000001_update_bulk_upsert_inventory.sql
+-- Adds optional p_reference_id (procurement UUID) so stock_transactions can be traced
+-- back to the procurement that created them. Previously hardcoded NULL.
 
 CREATE OR REPLACE FUNCTION bulk_upsert_inventory(
     p_rows JSONB,
-    p_clinic_id UUID
+    p_clinic_id UUID,
+    p_reference_id UUID DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -62,14 +63,11 @@ BEGIN
                 quantity_change, reference_type, reference_id
             ) VALUES (
                 p_clinic_id, v_existing_id, 'procurement',
-                v_quantity, 'bulk_import', NULL
+                v_quantity, 'bulk_import', p_reference_id
             );
 
         ELSE
             -- If batch number already exists with a different expiry, disambiguate
-            -- by appending the expiry. Same batch number + different expiry = different
-            -- physical batch. The unique constraint on (clinic, medicine, batch) forces
-            -- us to encode the distinction in the batch_number value.
             IF v_existing_id IS NOT NULL THEN
                 v_batch_number := v_batch_number || ' (Exp: ' || to_char(v_expiry_date, 'YYYY-MM') || ')';
             END IF;
@@ -90,7 +88,7 @@ BEGIN
             )
             SELECT
                 p_clinic_id, inserted.id, 'procurement',
-                v_quantity, 'bulk_import', NULL
+                v_quantity, 'bulk_import', p_reference_id
             FROM inserted;
 
             v_inserted := v_inserted + 1;

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  AlertTriangle, PackageX, Pencil, ChevronDown, ChevronRight, Search, SlidersHorizontal, UploadCloud,
+  AlertTriangle, Pencil, ChevronDown, ChevronRight, Search, SlidersHorizontal,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -98,26 +98,6 @@ function StatusBadge({ status, compact }: { status: BatchStatus; compact?: boole
   return <Badge className={cn(cls, "bg-green-500 border-0 text-white")}>In Stock</Badge>;
 }
 
-// ── Empty State ─────────────────────────────────────────────────────────────────
-
-function EmptyState({ onImport }: { onImport: () => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted/60">
-        <PackageX className="h-10 w-10 text-muted-foreground/40" />
-      </div>
-      <h3 className="text-lg font-semibold">No stock yet</h3>
-      <p className="mt-1.5 text-sm text-muted-foreground max-w-xs">
-        Your pharmacy inventory is empty. Add stock by scanning a purchase invoice or import from a spreadsheet.
-      </p>
-      <Button onClick={onImport} className="mt-6 gap-2" variant="outline">
-        <UploadCloud className="h-4 w-4" />
-        Import from CSV / Excel
-      </Button>
-    </div>
-  );
-}
-
 // ── Main Component ─────────────────────────────────────────────────────────────
 
 interface InventoryTabProps {
@@ -197,9 +177,7 @@ export function InventoryTab({ inventory, onOpenBulkImport }: InventoryTabProps)
     return groups;
   }, [allGroups, searchQuery, filterStatus]);
 
-  if (inventory.length === 0) {
-    return <EmptyState onImport={onOpenBulkImport ?? (() => {})} />;
-  }
+  if (inventory.length === 0) return null;
 
   const activeFilters = filterStatus !== "all" ? 1 : 0;
 
