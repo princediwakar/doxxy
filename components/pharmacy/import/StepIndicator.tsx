@@ -5,17 +5,15 @@ import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ImportStep } from '@/types/pharmacy';
 
-const STEPS = ['Upload', 'Map', 'Intent', 'Validate', 'Preview'] as const;
+const STEPS = ['Upload', 'Map', 'Preview'] as const;
 
 const STEP_INDEX: Partial<Record<ImportStep['type'], number>> = {
   upload:      0,
   parsing:     0,
-  mapping:     1,
-  intent:      2,
-  validation:  3,
-  preview:     4,
-  importing:   4,
-  done:        5,
+  config:      1,
+  preview:     2,
+  importing:   2,
+  done:        3,
 };
 
 export function StepIndicator({ step }: { step: ImportStep }) {
