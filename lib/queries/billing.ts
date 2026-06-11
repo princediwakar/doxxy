@@ -54,7 +54,7 @@ export async function getBillingContext(
       .from('patients')
       .select('id, name, phone, email, uhid')
       .eq('clinic_id', clinicId)
-      .order('created_at', { ascending: false }),
+      .order('name'),
   ]);
 
   if (appointmentsResult.error) throw new Error(appointmentsResult.error.message);
