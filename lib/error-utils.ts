@@ -204,8 +204,8 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   email: 'A patient with this email already exists in your clinic.',
   phone: 'A patient with this phone number already exists in your clinic.',
   appointment: 'A bill already exists for this appointment. Please edit the existing bill instead.',
-  patients_gender: 'Please select a gender (Male, Female, or Other).',
-  gender_check: 'Please select a gender (Male, Female, or Other).',
+  patients_gender: 'Please select a gender (Male or Female).',
+  gender_check: 'Please select a gender (Male or Female).',
   billing_type_check: 'Please select a valid billing type.',
   status_check: 'Please select a valid status.',
 };

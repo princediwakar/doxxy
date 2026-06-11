@@ -46,8 +46,8 @@ export async function createPatient(data: Omit<DbPatientInsert, 'uhid'> & { clin
   if (!data.gender) {
     return { error: "Please select a gender." };
   }
-  if (data.gender && !['Male', 'Female', 'Other'].includes(data.gender)) {
-    return { error: "Gender must be Male, Female, or Other." };
+  if (data.gender && !['Male', 'Female'].includes(data.gender)) {
+    return { error: "Gender must be Male or Female." };
   }
 
   const supabase = await createServerSupabase();
@@ -72,8 +72,8 @@ export async function updatePatient(id: string, data: Partial<DbPatientUpdate>) 
   if (data.gender !== undefined && !data.gender) {
     return { error: "Please select a gender." };
   }
-  if (data.gender !== undefined && !['Male', 'Female', 'Other'].includes(data.gender)) {
-    return { error: "Gender must be Male, Female, or Other." };
+  if (data.gender !== undefined && !['Male', 'Female'].includes(data.gender)) {
+    return { error: "Gender must be Male or Female." };
   }
 
   const supabase = await createServerSupabase();

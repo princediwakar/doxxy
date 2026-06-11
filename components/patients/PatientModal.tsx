@@ -190,7 +190,7 @@ export const PatientModal = ({
                   <FormLabel>Gender</FormLabel>
                     <FormControl>
                     <div className="flex flex-wrap gap-2">
-                      {['Male', 'Female', 'Other'].map(genderOption => (
+                      {['Male', 'Female'].map(genderOption => (
                         <Button
                           key={genderOption}
                           type="button"

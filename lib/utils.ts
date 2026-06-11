@@ -143,7 +143,7 @@ export function getAge(dateOfBirth?: string | null, returnAsString: boolean = fa
   return returnAsString ? `${age} year${age !== 1 ? 's' : ''}` : age;
 }
 
-// Returns a gender display string or icon (M/F/Male/Female/Other)
+// Returns a gender display string or icon (M/F/Male/Female)
 // Optionally returns a React element with an icon if passed a flag
 export function renderGender(gender?: string | null, withIcon = false): string | React.ReactNode {
   if (!gender) return '-';
@@ -151,11 +151,11 @@ export function renderGender(gender?: string | null, withIcon = false): string |
   if (withIcon) {
     if (g.startsWith('m')) return React.createElement('span', { title: 'Male' }, '♂️');
     if (g.startsWith('f')) return React.createElement('span', { title: 'Female' }, '♀️');
-    return React.createElement('span', { title: 'Other' }, '⚧️');
+    return '-';
   }
   if (g.startsWith('m')) return 'M';
   if (g.startsWith('f')) return 'F';
-  return gender;
+  return '-';
 }
 
 export function normalizeIndianPhone(raw: string): string {
