@@ -1,5 +1,6 @@
 // src/components/billing/BillingModal.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Edit, Printer, Download, MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -51,6 +52,13 @@ import { useAppState } from "@/contexts/AppStateContext";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
+import type { Patient } from "@/types/patients";
+import { PatientCombobox } from "@/components/ui/patient-combobox";
+
+const PatientModal = dynamic(() =>
+  import("@/components/patients/PatientModal").then((m) => m.PatientModal),
+  { ssr: false }
+);
 
 interface BillingModalProps {
   open: boolean;
@@ -76,7 +84,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   const {
     form,
     appointments,
-    patients,
     appointmentsError,
     calculateTotals,
     addServiceItem,
@@ -108,6 +115,9 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   useRealtimeSubscription({ table: "bills", clinicId: activeClinicId ?? "", queryKeys: billingQueryKeys });
 
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [showPatientModal, setShowPatientModal] = useState(false);
+  const [newPatientName, setNewPatientName] = useState("");
+  const [overridePatient, setOverridePatient] = useState<{ id: string; name: string; uhid: string } | null>(null);
   const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);
 
   const onSubmit = async (values: BillingFormValues) => {
@@ -228,7 +238,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
           if (result.success) {
             toast.success("Sent via WhatsApp successfully", { id: toastId });
 
-            // Also send the billing_invoice_delivery template notification
             const billDate = billData.created_at
               ? new Date(billData.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
               : new Date().toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
@@ -246,7 +255,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 { type: "text", text: totalAmount },
                 { type: "text", text: billDate },
               ],
-            }).catch(() => {}); // fire-and-forget; PDF already delivered
+            }).catch(() => {});
           } else if (isMetaConfigError(result)) {
             toast.error("WhatsApp setup incomplete. Add a payment method and verify your number in the Meta Business dashboard to send messages.", { duration: Infinity, closeButton: true, id: toastId });
           } else {
@@ -395,32 +404,36 @@ export const BillingModal: React.FC<BillingModalProps> = ({
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-6 p-1 pb-4"
             >
-              {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="patient_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Patient</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={mode === "view" || !!appointment}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select patient" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {patients?.map((patient) => (
-                            <SelectItem key={patient.id} value={patient.id}>
-                              {patient.name} {patient.uhid}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Patient</FormLabel>
+                        {mode !== "view" && !appointment && (
+                          <Button
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-xs"
+                            onClick={() => { setNewPatientName(""); setShowPatientModal(true); }}
+                          >
+                            + New Patient
+                          </Button>
+                        )}
+                      </div>
+                      <FormControl>
+                        <PatientCombobox
+                          value={field.value}
+                          onPatientSelect={(patient) => { field.onChange(patient.id); setOverridePatient(null); }}
+                          onClear={() => { field.onChange(''); setOverridePatient(null); }}
+                          disabled={mode === "view" || !!appointment}
+                          onCreateNew={(query) => { setNewPatientName(query); setShowPatientModal(true); }}
+                          overridePatient={overridePatient}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -498,7 +511,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 />
               </div>
 
-              {/* Service Items */}
               <ServiceItemsSection
                 serviceItems={form.watch("service_items") || []}
                 onUpdateItem={updateServiceItem}
@@ -508,7 +520,6 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                 mode={mode}
               />
 
-              {/* Calculation Summary */}
               <div className="bg-muted/50 p-4 rounded-lg space-y-2">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
@@ -538,6 +549,20 @@ export const BillingModal: React.FC<BillingModalProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showPatientModal && (
+        <PatientModal
+          open={showPatientModal}
+          onOpenChange={setShowPatientModal}
+          patient={null}
+          initialName={newPatientName}
+          onPatientCreated={(newPatient: Patient) => {
+            form.setValue('patient_id', newPatient.id, { shouldDirty: false });
+            setOverridePatient({ id: newPatient.id, name: newPatient.name, uhid: newPatient.uhid || '' });
+            setShowPatientModal(false);
+          }}
+        />
+      )}
     </Dialog>
   );
 };
