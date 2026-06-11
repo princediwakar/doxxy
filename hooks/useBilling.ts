@@ -163,6 +163,12 @@ export const useBilling = ({ bill, patient, appointment, mode = 'create', open }
         if ('code' in result && result.code) err.code = result.code;
         throw err;
       }
+      // Surface soft stock warnings without blocking bill save
+      if ('warnings' in result && Array.isArray(result.warnings) && result.warnings.length > 0) {
+        for (const warning of result.warnings as string[]) {
+          toast.warning(warning, { duration: 6000 });
+        }
+      }
       if ('data' in result && result.data) {
         return result.data as DbBill;
       }

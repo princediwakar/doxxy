@@ -1,4 +1,5 @@
 "use client";
+// Path: components/pharmacy/PharmacyPageClient.tsx
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,8 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InventoryTab } from "@/components/pharmacy/InventoryTab";
 import { ProcurementsHistoryTab } from "@/components/pharmacy/ProcurementsHistoryTab";
 import { ProcurementEntrySheet } from "@/components/pharmacy/ProcurementEntrySheet";
+import { PharmacyNewSale } from "@/components/pharmacy/PharmacyNewSale";
+import { InventoryBulkImport } from "@/components/pharmacy/InventoryBulkImport";
 import { Button } from "@/components/ui/button";
-import { Plus, Package } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Package, Plus, UploadCloud, AlertTriangle, ShoppingBag, X,
+} from "lucide-react";
 import { useAppState } from "@/contexts/AppStateContext";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import type { InventoryItemWithMedicine, DbProcurement } from "@/types/core";
@@ -22,6 +28,8 @@ export default function PharmacyPageClient({
   serverProcurements,
 }: PharmacyPageClientProps) {
   const [isEntrySheetOpen, setIsEntrySheetOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
+  const [alertDismissed, setAlertDismissed] = useState(false);
   const { activeClinicId } = useAppState();
   const router = useRouter();
 
@@ -32,40 +40,171 @@ export default function PharmacyPageClient({
   useRealtimeSubscription({ table: "inventory_items", clinicId: activeClinicId ?? "", queryKeys: pharmacyQueryKeys, onChange: () => router.refresh() });
   useRealtimeSubscription({ table: "procurements", clinicId: activeClinicId ?? "", queryKeys: pharmacyQueryKeys, onChange: () => router.refresh() });
 
+  const today = new Date();
+  const nextMonth = new Date();
+  nextMonth.setMonth(today.getMonth() + 1);
+
+  const stats = useMemo(() => {
+    const uniqueSkus = new Set(serverInventory.map((i) => i.medicine_id)).size;
+    const totalUnits = serverInventory.reduce((s, i) => s + i.current_stock, 0);
+    const lowStock = serverInventory.filter((i) => i.current_stock > 0 && i.current_stock <= i.reorder_level).length;
+    const expiringSoon = serverInventory.filter((i) => {
+      const exp = new Date(i.expiry_date);
+      return exp > today && exp <= nextMonth;
+    }).length;
+    const expired = serverInventory.filter((i) => new Date(i.expiry_date) < today).length;
+    return { uniqueSkus, totalUnits, lowStock, expiringSoon, expired };
+  }, [serverInventory]);
+
+  const showAlert = !alertDismissed && (stats.lowStock > 0 || stats.expiringSoon > 0 || stats.expired > 0);
+
   return (
-    <div className="space-y-6 p-4">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start space-y-4 sm:space-y-0">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-muted">
-            <Package className="w-5 h-5" />
+    <div className="space-y-0">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="border-b bg-card px-4 py-5 sm:px-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+              <Package className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">Pharmacy</h1>
+              <p className="hidden text-sm text-muted-foreground sm:block">
+                Inventory · Dispensing · Purchase Records
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold">Pharmacy Store</h1>
-            <p className="hidden sm:block text-muted-foreground">Manage medicine stock, track expiry dates, and add new purchases.</p>
+
+          {/* Actions row */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Primary — walk-in sale */}
+            <PharmacyNewSale />
+            {/* Secondary — add via AI scan */}
+            <Button
+              id="pharmacy-add-stock-btn"
+              variant="outline"
+              onClick={() => setIsEntrySheetOpen(true)}
+              className="gap-2 shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              Add Stock
+            </Button>
+            {/* Tertiary — bulk CSV/Excel import */}
+            <Button
+              id="pharmacy-import-btn"
+              variant="ghost"
+              onClick={() => setIsBulkImportOpen(true)}
+              className="gap-2 shrink-0 text-muted-foreground"
+            >
+              <UploadCloud className="w-4 h-4" />
+              Import
+            </Button>
           </div>
         </div>
-        <Button onClick={() => setIsEntrySheetOpen(true)} className="gap-2 bg-primary shrink-0">
-          <Plus className="w-4 h-4" />
-          Add Stock
-        </Button>
+
+        {/* ── Stats row ──────────────────────────────────────────────── */}
+        {serverInventory.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: "SKUs", value: stats.uniqueSkus, sub: "medicines" },
+              { label: "Total Units", value: stats.totalUnits.toLocaleString(), sub: "in stock" },
+              {
+                label: "Low Stock",
+                value: stats.lowStock,
+                sub: "items",
+                accent: stats.lowStock > 0 ? "text-amber-600" : undefined,
+              },
+              {
+                label: "Expiring",
+                value: stats.expiringSoon + stats.expired,
+                sub: "in 30 days",
+                accent: stats.expiringSoon + stats.expired > 0 ? "text-orange-600" : undefined,
+              },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="flex flex-col gap-0.5 rounded-lg border bg-background px-4 py-2.5"
+              >
+                <span className={`text-xl font-bold tabular-nums ${stat.accent ?? "text-foreground"}`}>
+                  {stat.value}
+                </span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xs font-medium text-muted-foreground">{stat.label}</span>
+                  <span className="text-[10px] text-muted-foreground/60">{stat.sub}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <Tabs defaultValue="inventory" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="inventory" className="text-sm">Stock</TabsTrigger>
-          <TabsTrigger value="procurements" className="text-sm">Purchase Records</TabsTrigger>
-        </TabsList>
-        <TabsContent value="inventory" className="border-none p-0">
-          <InventoryTab inventory={serverInventory} />
-        </TabsContent>
-        <TabsContent value="procurements" className="border-none p-0">
-          <ProcurementsHistoryTab procurements={serverProcurements} />
-        </TabsContent>
-      </Tabs>
+      {/* ── Alert Banner ────────────────────────────────────────────────── */}
+      {showAlert && (
+        <div className="flex items-start justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-900 dark:bg-amber-950/30">
+          <div className="flex items-start gap-2 text-amber-800 dark:text-amber-200">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="space-x-2">
+              {stats.expired > 0 && (
+                <span>
+                  <strong>{stats.expired}</strong> expired batch{stats.expired > 1 ? "es" : ""} in stock.
+                </span>
+              )}
+              {stats.expiringSoon > 0 && (
+                <span>
+                  <strong>{stats.expiringSoon}</strong> batch{stats.expiringSoon > 1 ? "es" : ""} expiring within 30 days.
+                </span>
+              )}
+              {stats.lowStock > 0 && (
+                <span>
+                  <strong>{stats.lowStock}</strong> medicine{stats.lowStock > 1 ? "s" : ""} below reorder level.
+                </span>
+              )}
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0 text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+            onClick={() => setAlertDismissed(true)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* ── Tabs ────────────────────────────────────────────────────────── */}
+      <div className="px-4 pt-4 sm:px-6">
+        <Tabs defaultValue="inventory" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="inventory" className="gap-1.5 text-sm">
+              <Package className="h-3.5 w-3.5" />
+              Stock
+              {serverInventory.length > 0 && (
+                <Badge variant="secondary" className="ml-1 text-xs h-4 px-1.5 rounded-full">{stats.uniqueSkus}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="procurements" className="gap-1.5 text-sm">
+              <ShoppingBag className="h-3.5 w-3.5" />
+              Purchase Records
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="inventory" className="border-none p-0">
+            <InventoryTab inventory={serverInventory} onOpenBulkImport={() => setIsBulkImportOpen(true)} />
+          </TabsContent>
+          <TabsContent value="procurements" className="border-none p-0">
+            <ProcurementsHistoryTab procurements={serverProcurements} />
+          </TabsContent>
+        </Tabs>
+      </div>
 
       <ProcurementEntrySheet
         open={isEntrySheetOpen}
         onOpenChange={setIsEntrySheetOpen}
+      />
+      <InventoryBulkImport
+        open={isBulkImportOpen}
+        onOpenChange={setIsBulkImportOpen}
       />
     </div>
   );

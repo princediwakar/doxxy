@@ -1,3 +1,4 @@
+// Path: actions/inventory.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -123,17 +124,12 @@ export async function saveFullProcurement(input: SaveFullProcurementInput) {
   const nameToIdMap = new Map<string, number>();
 
   if (uniqueUnmapped.length > 0) {
-    const { data: createdMeds, error: medError } = await supabase
-      .from('medicines')
-      .upsert(
-        uniqueUnmapped.map((name) => ({ name, is_auto_created: true })),
-        { onConflict: 'name', ignoreDuplicates: false },
-      )
-      .select('id, name');
+    const { data: allMeds, error: medError } = await supabase
+      .rpc('get_or_create_medicines', { med_names: uniqueUnmapped });
 
     if (medError) return { error: medError.message };
 
-    for (const med of createdMeds ?? []) {
+    for (const med of allMeds ?? []) {
       nameToIdMap.set(med.name, med.id);
     }
   }
@@ -183,25 +179,54 @@ export async function saveFullProcurement(input: SaveFullProcurementInput) {
     .insert(itemInserts);
   if (itemsError) return { error: itemsError.message };
 
-  // 4. Upsert inventory_items
+  // 4. Batch-upsert inventory_items (replaces N+1 loop)
+  // Pre-fetch all potentially matching existing items in a single query.
+  const { data: existingItems } = await supabase
+    .from('inventory_items')
+    .select('id, medicine_id, batch_number, current_stock')
+    .eq('clinic_id', input.clinicId)
+    .in('medicine_id', inventoryUpserts.map((u) => u.medicine_id));
+
+  const existingMap = new Map<string, { id: string; current_stock: number }>();
+  for (const item of existingItems ?? []) {
+    existingMap.set(`${item.medicine_id}::${item.batch_number}`, {
+      id: item.id,
+      current_stock: item.current_stock,
+    });
+  }
+
   for (const inv of inventoryUpserts) {
-    const { data: existing } = await supabase
-      .from('inventory_items')
-      .select('id, current_stock')
-      .eq('clinic_id', input.clinicId)
-      .eq('medicine_id', inv.medicine_id)
-      .eq('batch_number', inv.batch_number)
-      .maybeSingle();
+    const key = `${inv.medicine_id}::${inv.batch_number}`;
+    const existing = existingMap.get(key);
+
+    let inventoryItemId: string | null = null;
 
     if (existing) {
       await supabase
         .from('inventory_items')
         .update({
           current_stock: existing.current_stock + inv.current_stock,
+          updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id);
+      inventoryItemId = existing.id;
     } else {
-      await supabase.from('inventory_items').insert(inv);
+      const { data: inserted } = await supabase
+        .from('inventory_items')
+        .insert(inv)
+        .select('id')
+        .single();
+      inventoryItemId = inserted?.id ?? null;
+    }
+
+    // Write procurement audit trail
+    if (inventoryItemId && procurement?.id) {
+      await supabase.rpc('log_procurement_stock', {
+        p_inventory_item_id: inventoryItemId,
+        p_quantity: inv.current_stock,
+        p_procurement_id: procurement.id,
+        p_clinic_id: input.clinicId,
+      });
     }
   }
 

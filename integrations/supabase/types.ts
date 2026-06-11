@@ -1229,6 +1229,54 @@ export type Database = {
           },
         ]
       }
+      stock_transactions: {
+        Row: {
+          clinic_id: string
+          created_at: string | null
+          id: string
+          inventory_item_id: string
+          quantity_change: number
+          reference_id: string | null
+          reference_type: string | null
+          transaction_type: string
+        }
+        Insert: {
+          clinic_id: string
+          created_at?: string | null
+          id?: string
+          inventory_item_id: string
+          quantity_change: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type: string
+        }
+        Update: {
+          clinic_id?: string
+          created_at?: string | null
+          id?: string
+          inventory_item_id?: string
+          quantity_change?: number
+          reference_id?: string | null
+          reference_type?: string | null
+          transaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_transactions_clinic_id_fkey"
+            columns: ["clinic_id"]
+            isOneToOne: false
+            referencedRelation: "clinics"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_transactions_inventory_item_id_fkey"
+            columns: ["inventory_item_id"]
+            isOneToOne: false
+            referencedRelation: "inventory_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transcription_jobs: {
         Row: {
           created_at: string
@@ -1339,6 +1387,19 @@ export type Database = {
         }
         Returns: Json
       }
+      bulk_process_stock_delta: {
+        Args: {
+          p_bill_id: string
+          p_clinic_id: string
+          p_to_decrement: Json
+          p_to_restore: Json
+        }
+        Returns: undefined
+      }
+      bulk_upsert_inventory: {
+        Args: { p_clinic_id: string; p_rows: Json }
+        Returns: Json
+      }
       calculate_clinic_credit_usage: {
         Args: { clinic_id_param: string }
         Returns: {
@@ -1435,6 +1496,15 @@ export type Database = {
         Returns: string
       }
       debug_invitation_flow: { Args: { user_email: string }; Returns: Json }
+      decrement_stock_and_log: {
+        Args: {
+          p_bill_id: string
+          p_clinic_id: string
+          p_inventory_item_id: string
+          p_quantity: number
+        }
+        Returns: undefined
+      }
       delete_consultation: {
         Args: { p_consultation_id: string }
         Returns: boolean
@@ -1628,6 +1698,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_or_create_medicines: {
+        Args: { med_names: string[] }
+        Returns: {
+          id: number
+          name: string
+        }[]
+      }
       get_patients_by_clinic: {
         Args: { _clinic_id: string; _limit?: number; _offset?: number }
         Returns: {
@@ -1766,6 +1843,15 @@ export type Database = {
         Args: { check_clinic_id: string }
         Returns: boolean
       }
+      log_procurement_stock: {
+        Args: {
+          p_clinic_id: string
+          p_inventory_item_id: string
+          p_procurement_id: string
+          p_quantity: number
+        }
+        Returns: undefined
+      }
       match_invoice_item_single: {
         Args: { search_term: string }
         Returns: {
@@ -1785,6 +1871,15 @@ export type Database = {
         }[]
       }
       normalize_medicine_term: { Args: { term: string }; Returns: string }
+      restore_stock_and_log: {
+        Args: {
+          p_bill_id: string
+          p_clinic_id: string
+          p_inventory_item_id: string
+          p_quantity: number
+        }
+        Returns: undefined
+      }
       search_medicines: {
         Args: { limit_count?: number; search_term?: string }
         Returns: {

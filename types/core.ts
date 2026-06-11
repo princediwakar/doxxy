@@ -182,6 +182,14 @@ export type DbProcurementItemInsert = Database['public']['Tables']['procurement_
 /** Update type for procurement_items table */
 export type DbProcurementItemUpdate = Database['public']['Tables']['procurement_items']['Update'];
 
+/** Wrapper type for stock_transactions table */
+export type DbStockTransaction = Database['public']['Tables']['stock_transactions']['Row'];
+/** Insert type for stock_transactions table */
+export type DbStockTransactionInsert = Database['public']['Tables']['stock_transactions']['Insert'];
+
+/** Stock transaction type discriminator */
+export type StockTransactionType = 'sale' | 'procurement' | 'manual_adjustment' | 'sale_reversal';
+
 /** Wrapper type for monthly_billing_cycles table */
 export type DbMonthlyBillingCycle = Database['public']['Tables']['monthly_billing_cycles']['Row'];
 /** Insert type for monthly_billing_cycles table */

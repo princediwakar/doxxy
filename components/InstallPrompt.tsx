@@ -44,6 +44,8 @@ function ShareIcon() {
 
 const DISMISSAL_KEY = 'install-prompt-dismissed'
 const DISMISSAL_DAYS = 7
+const SHOWN_KEY = 'install-prompt-shown'
+const SHOWN_COOLDOWN_HOURS = 24
 
 export function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
@@ -68,27 +70,36 @@ export function InstallPrompt() {
       if (daysSince < DISMISSAL_DAYS) return
     }
 
+    const shownAt = localStorage.getItem(SHOWN_KEY)
+    if (shownAt) {
+      const hoursSince = (Date.now() - parseInt(shownAt)) / (1000 * 60 * 60)
+      if (hoursSince < SHOWN_COOLDOWN_HOURS) return
+    }
+
     if (plat === 'chromium') {
       const bipHandler = (e: Event) => {
-        // Prevent Chrome 67 and earlier from automatically showing the prompt
         e.preventDefault()
-        // Stash the event so it can be triggered later by a USER ACTION.
         setDeferredPrompt(e as BeforeInstallPromptEvent)
         setDismissed(false)
+        localStorage.setItem(SHOWN_KEY, Date.now().toString())
       }
-      
+
       window.addEventListener('beforeinstallprompt', bipHandler)
 
       const installedHandler = () => {
         setDeferredPrompt(null)
         setShowManual(false)
         setShowSuccessModal(true)
+        localStorage.removeItem(SHOWN_KEY)
       }
       window.addEventListener('appinstalled', installedHandler)
 
       return () => {
         window.removeEventListener('beforeinstallprompt', bipHandler)
         window.removeEventListener('appinstalled', installedHandler)
+        if (localStorage.getItem(SHOWN_KEY)) {
+          localStorage.setItem(DISMISSAL_KEY, Date.now().toString())
+        }
       }
     }
 
