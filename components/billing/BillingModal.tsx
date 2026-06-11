@@ -1,5 +1,6 @@
 // src/components/billing/BillingModal.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useQueryClient } from "@tanstack/react-query";
 import { FileText, Edit, Printer, Download, MessageCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -51,6 +52,12 @@ import { useAppState } from "@/contexts/AppStateContext";
 import { useRealtimeSubscription } from "@/hooks/useRealtimeSubscription";
 import type { Bill, AppointmentForBilling } from "@/types/billing";
 import type { DbPatient } from "@/types/core";
+import type { Patient } from "@/types/patients";
+
+const PatientModal = dynamic(() =>
+  import("@/components/patients/PatientModal").then((m) => m.PatientModal),
+  { ssr: false }
+);
 
 interface BillingModalProps {
   open: boolean;
@@ -108,6 +115,7 @@ export const BillingModal: React.FC<BillingModalProps> = ({
   useRealtimeSubscription({ table: "bills", clinicId: activeClinicId ?? "", queryKeys: billingQueryKeys });
 
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [showPatientModal, setShowPatientModal] = useState(false);
   const [isGeneratingDocument, setIsGeneratingDocument] = useState(false);
 
   const onSubmit = async (values: BillingFormValues) => {
@@ -402,7 +410,20 @@ export const BillingModal: React.FC<BillingModalProps> = ({
                   name="patient_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Patient</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Patient</FormLabel>
+                        {mode !== "view" && !appointment && (
+                          <Button
+                            type="button"
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-xs text-primary"
+                            onClick={() => setShowPatientModal(true)}
+                          >
+                            + New Patient
+                          </Button>
+                        )}
+                      </div>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
@@ -538,6 +559,19 @@ export const BillingModal: React.FC<BillingModalProps> = ({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {showPatientModal && (
+        <PatientModal
+          open={showPatientModal}
+          onOpenChange={setShowPatientModal}
+          patient={null}
+          onPatientCreated={(newPatient: Patient) => {
+            form.setValue('patient_id', newPatient.id);
+            queryClient.invalidateQueries({ queryKey: ['billing-context'] });
+            setShowPatientModal(false);
+          }}
+        />
+      )}
     </Dialog>
   );
 };
